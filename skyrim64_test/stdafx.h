@@ -27,6 +27,7 @@
 #include "dinput8.h"
 #include "window.h"
 #include "threading.h"
+#include "achievements.h"
 
 extern ULONG_PTR g_ModuleBase;
 extern ULONG_PTR g_ModuleSize;

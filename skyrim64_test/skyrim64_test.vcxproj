@@ -146,6 +146,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="achievements.h" />
     <ClInclude Include="d3d11.h" />
     <ClInclude Include="d3dconv.h" />
     <ClInclude Include="dinput8.h" />
