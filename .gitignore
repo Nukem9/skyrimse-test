@@ -35,4 +35,5 @@
 *.iobj
 *.opendb
 
+.vs/
 !detours.lib
