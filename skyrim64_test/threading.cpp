@@ -21,10 +21,20 @@ DWORD_PTR WINAPI hk_SetThreadAffinityMask(HANDLE hThread, DWORD_PTR dwThreadAffi
 	return SetThreadAffinityMask(hThread, result);
 }
 
+VOID WINAPI hk_Sleep(DWORD dwMilliseconds)
+{
+	// Use the PAUSE instruction instead if the wait is under 2ms
+	if (dwMilliseconds > 1)
+		return Sleep(dwMilliseconds);
+
+	_mm_pause();
+}
+
 void PatchThreading()
 {
 	PatchIAT(hk_SetThreadPriority, "kernel32.dll", "SetThreadPriority");
 	PatchIAT(hk_SetThreadAffinityMask, "kernel32.dll", "SetThreadAffinityMask");
+	PatchIAT(hk_Sleep, "kernel32.dll", "Sleep");
 
 	timeBeginPeriod(1);
 }
