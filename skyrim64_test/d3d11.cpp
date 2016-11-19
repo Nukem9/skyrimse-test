@@ -76,6 +76,6 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 
 void PatchD3D11()
 {
-	PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");
 	PatchIAT(hk_CreateDXGIFactory, "dxgi.dll", "CreateDXGIFactory");
+	PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");
 }

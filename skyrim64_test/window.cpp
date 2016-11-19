@@ -8,8 +8,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (wParam)
 		{
-		case VK_LWIN:// Left windows key
-		case VK_RWIN:// Right windows key
+		case VK_LWIN:		// Left windows key
+		case VK_RWIN:		// Right windows key
+		case VK_LSHIFT:		// Left shift
+		case VK_RSHIFT:		// Right shift
+		case VK_CAPITAL:	// Caps lock
 			return DefWindowProcA(hwnd, uMsg, wParam, lParam);
 		}
 	}

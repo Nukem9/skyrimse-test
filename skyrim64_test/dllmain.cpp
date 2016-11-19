@@ -23,16 +23,16 @@ void ApplyPatches()
 
 	if (hKernel32)
 	{
-		*(FARPROC*)&SetProcessUserModeExceptionPolicyPtr = GetProcAddress(hKernel32, "SetProcessUserModeExceptionPolicy");
-		*(FARPROC*)&GetProcessUserModeExceptionPolicyPtr = GetProcAddress(hKernel32, "GetProcessUserModeExceptionPolicy");
-	}
+		*(FARPROC *)&SetProcessUserModeExceptionPolicyPtr = GetProcAddress(hKernel32, "SetProcessUserModeExceptionPolicy");
+		*(FARPROC *)&GetProcessUserModeExceptionPolicyPtr = GetProcAddress(hKernel32, "GetProcessUserModeExceptionPolicy");
 
-	if (SetProcessUserModeExceptionPolicyPtr && GetProcessUserModeExceptionPolicyPtr)
-	{
-		DWORD flags = 0;
+		if (SetProcessUserModeExceptionPolicyPtr && GetProcessUserModeExceptionPolicyPtr)
+		{
+			DWORD flags = 0;
 
-		if (GetProcessUserModeExceptionPolicyPtr(&flags))
-			SetProcessUserModeExceptionPolicyPtr(flags & ~PROCESS_CALLBACK_FILTER_ENABLED);
+			if (GetProcessUserModeExceptionPolicyPtr(&flags))
+				SetProcessUserModeExceptionPolicyPtr(flags & ~PROCESS_CALLBACK_FILTER_ENABLED);
+		}
 	}
 
 	DWORD oldMode = 0;

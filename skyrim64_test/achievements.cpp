@@ -53,7 +53,7 @@ void PatchAchievements()
 
 		PatchMemory(addr, (PBYTE)patch->BytePatch, patch->PatchSize);
 
-		// Patch applied, so we're done here
+		// Patch applied, we're done here
 		break;
 	}
 }
