@@ -180,6 +180,7 @@
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="threading.cpp" />
     <ClCompile Include="util.cpp" />
+    <ClCompile Include="vtabledumper.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
