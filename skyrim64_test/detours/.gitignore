@@ -1,0 +1,13 @@
+*.user
+*.suo
+*.sdf
+*.ipch
+*.log
+*.opensdf
+*.vcxproj.filters
+*.nvuser
+*.opendb
+*.db
+*.tlog
+*.idb
+*.log

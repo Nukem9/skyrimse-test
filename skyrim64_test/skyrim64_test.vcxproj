@@ -183,6 +183,11 @@
     <ClCompile Include="vtabledumper.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="detours\detours\detours.vcxproj">
+      <Project>{06e30c65-d79a-4fec-8a60-b36d907e6601}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
