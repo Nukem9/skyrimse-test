@@ -275,4 +275,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
+  </ItemGroup>
 </Project>
