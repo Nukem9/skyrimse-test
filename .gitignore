@@ -36,4 +36,10 @@
 *.opendb
 
 .vs/
-!detours.lib
+/x64
+*.pdb
+*.lib
+*.log
+*.ilk
+*.sdf
+/skyrim64_test/x64/
