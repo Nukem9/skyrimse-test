@@ -18,7 +18,9 @@
 #pragma comment(lib, "dxguid.lib")
 
 #include "detours/Detours.h"
-#pragma comment(lib, "detours/detours.lib")
+
+// Implicitly Linked by VS
+//#pragma comment(lib, "detours/detours.lib")
 
 #include "util.h"
 #include "dump.h"
