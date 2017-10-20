@@ -18,50 +18,9 @@ namespace vfs
 			throw "Something went horribly wrong. Bad code.";
 	}
 
-    static std::string DriveToDos(const std::string &Drive)
-    {
-        // "E:\Program Files (x86)\Steam\" -> "E:"
-        std::regex driveRegex("([A-z]:)");
-
-        std::smatch matches;
-        if (!std::regex_search(Drive, matches, driveRegex))
-            return "";
-
-        return util::TrimSlash("\\??\\" + matches[1].str());
-    }
-
-    static std::string DriveToDevice(const std::string &Drive)
-    {
-        // "E:\Program Files (x86)\Steam\" -> "E:"
-        std::regex driveRegex("([A-z]:)");
-
-        std::smatch matches;
-        if (!std::regex_search(Drive, matches, driveRegex))
-            return "";
-
-        wchar_t targetPaths[512];
-        if (QueryDosDeviceW(str::wide(matches[1].str()).c_str(), targetPaths, ARRAYSIZE(targetPaths)) == 0)
-            return "";
-
-        return util::TrimSlash(str::narrow(targetPaths));
-    }
-
-    static std::string DriveToGuid(const std::string &Drive)
-    {
-        // "E:\Program Files (x86)\Steam\" -> "E:"
-        std::regex driveRegex("([A-z]:)");
-
-        std::smatch matches;
-        if (!std::regex_search(Drive, matches, driveRegex))
-            return "";
-
-        std::wstring volume = str::wide(matches[1].str() + "\\");
-        wchar_t volumeGuid[50];
-        if (GetVolumeNameForVolumeMountPointW(volume.c_str(), volumeGuid, ARRAYSIZE(volumeGuid)) == 0)
-            return "";
-
-        return util::TrimSlash(str::narrow(volumeGuid));
-    }
+	std::string DriveToDos(const std::string &Drive);
+	std::string DriveToDevice(const std::string &Drive);
+	std::string DriveToGuid(const std::string &Drive);
 
     struct VfsEntry
     {

@@ -10,6 +10,51 @@ namespace vfs
 {
     std::vector<VfsManager *> Managers;
 
+	std::string DriveToDos(const std::string &Drive)
+	{
+		// "E:\Program Files (x86)\Steam\" -> "E:"
+		std::regex driveRegex("([A-z]:)");
+
+		std::smatch matches;
+		if (!std::regex_search(Drive, matches, driveRegex))
+			return "";
+
+		return util::TrimSlash("\\??\\" + matches[1].str());
+	}
+
+	std::string DriveToDevice(const std::string &Drive)
+	{
+		// "E:\Program Files (x86)\Steam\" -> "E:"
+		std::regex driveRegex("([A-z]:)");
+
+		std::smatch matches;
+		if (!std::regex_search(Drive, matches, driveRegex))
+			return "";
+
+		wchar_t targetPaths[512];
+		if (QueryDosDeviceW(str::wide(matches[1].str()).c_str(), targetPaths, ARRAYSIZE(targetPaths)) == 0)
+			return "";
+
+		return util::TrimSlash(str::narrow(targetPaths));
+	}
+
+	std::string DriveToGuid(const std::string &Drive)
+	{
+		// "E:\Program Files (x86)\Steam\" -> "E:"
+		std::regex driveRegex("([A-z]:)");
+
+		std::smatch matches;
+		if (!std::regex_search(Drive, matches, driveRegex))
+			return "";
+
+		std::wstring volume = str::wide(matches[1].str() + "\\");
+		wchar_t volumeGuid[50];
+		if (GetVolumeNameForVolumeMountPointW(volume.c_str(), volumeGuid, ARRAYSIZE(volumeGuid)) == 0)
+			return "";
+
+		return util::TrimSlash(str::narrow(volumeGuid));
+	}
+
     bool VfsManager::ResolvePhysicalPath(std::string &VirtPath, std::string &RealPath)
     {
         VfsEntry *current = &r;
