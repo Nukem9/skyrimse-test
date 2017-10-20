@@ -35,5 +35,10 @@
 *.iobj
 *.opendb
 
+# VS2017
 .vs/
+
+# VTune
+*/*My Amplifier Results*/
+
 !detours.lib
