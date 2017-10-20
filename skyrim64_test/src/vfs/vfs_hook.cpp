@@ -1,8 +1,14 @@
 #include "vfs_hook.h"
-#include "../../detours/Detours.h"
 #include "vfs.h"
+#include "../../detours/Detours.h"
 
-__declspec(thread) bool InRecursiveCall = false;
+// Some other WinAPI functions are necessary, but they use our hooked code path
+__declspec(thread) bool InRecursiveCall;
+
+// Declare these as per-thread to prevent allocating/freeing buffers over and over (RewriteObjectAttributes)
+__declspec(thread) UNICODE_STRING ThreadStringAttr;
+__declspec(thread) wchar_t ThreadStringAttrBuffer[vfs::NT_MAX_PATH + 1];
+__declspec(thread) wchar_t ThreadObjPath[vfs::NT_MAX_PATH + 1];
 
 #define StartsWith(x, y) (_wcsnicmp((x), (y), wcslen(y)) == 0)
 #define US_StartsWith(x, y) (((x)->Length / sizeof(wchar_t)) >= wcslen(y) && _wcsnicmp(((x)->Buffer), (y), wcslen(y)) == 0)
@@ -130,9 +136,10 @@ bool RewriteObjectAttributes(POBJECT_ATTRIBUTES Attributes, POBJECT_ATTRIBUTES O
 
     size_t nameLength  = (Attributes->ObjectName->Length / sizeof(WCHAR));
     bool caseSensitive = (Attributes->Attributes & OBJ_CASE_INSENSITIVE) == 0;
-    wchar_t *objPath   = nullptr;
 
-    // Build the full path if necessary
+	vfs::BUG_IF(nameLength > vfs::NT_MAX_PATH);
+
+    // if (RootDirectory) => Combine RootDirectory+ObjectName
     if (Attributes->RootDirectory)
     {
         if (US_StartsWith(Attributes->ObjectName, L"\\??\\") || US_StartsWith(Attributes->ObjectName, L"\\\\?\\") || US_StartsWith(Attributes->ObjectName, L"\\\\.\\") || US_StartsWith(Attributes->ObjectName, L"\\Device\\"))
@@ -141,51 +148,34 @@ bool RewriteObjectAttributes(POBJECT_ATTRIBUTES Attributes, POBJECT_ATTRIBUTES O
             goto __fakeroot;
         }
 
-        //
-        // We might need to allocate a larger buffer
-        //
-        // "If the function fails because lpszFilePath is too small
-        //  to hold the string plus the terminating null character,
-        //  the return value is the required buffer size, in TCHARs.
-        //  This value includes the size of the terminating null character."
-        //
-        DWORD len = GetFinalPathNameByHandleW(Attributes->RootDirectory, nullptr, 0, VOLUME_NAME_DOS);
+		// This call can never fail due to a buffer size as it exceeds NTFS maximum length. However,
+		// if it's not a DOS path, it will fail.
+        DWORD len = GetFinalPathNameByHandleW(Attributes->RootDirectory, ThreadObjPath, ARRAYSIZE(ThreadObjPath), VOLUME_NAME_DOS);
 
-        if (len == 0)
-            return false;
-        //throw "Failed GetFinalPathNameByHandleW";
+		if (len == 0)
+			return false;
 
-        objPath = new wchar_t[len + nameLength + 2];
-        len     = GetFinalPathNameByHandleW(Attributes->RootDirectory, objPath, len, VOLUME_NAME_DOS);
-
-        if (len == 0)
-            throw "Failed GetFinalPathNameByHandleW";
-
-        // Append '\' to the last root directory if necessary
+        // Append '\' to the last root directory
         if (Attributes->ObjectName->Buffer[0] != L'\0')
         {
-            objPath[len]     = L'\\';
-            objPath[len + 1] = L'\0';
+			ThreadObjPath[len]     = L'\\';
+			ThreadObjPath[len + 1] = L'\0';
         }
 
         // Append relative directory
-        wcsncat_s(objPath, len + nameLength + 2, Attributes->ObjectName->Buffer, nameLength);
+        wcsncat_s(ThreadObjPath, ARRAYSIZE(ThreadObjPath), Attributes->ObjectName->Buffer, nameLength);
     }
     else
     {
     __fakeroot:
-        // Non-relative path - do a simple copy
-        size_t len = nameLength;
-        objPath    = new wchar_t[len + 1];
-
-        memcpy(objPath, Attributes->ObjectName->Buffer, len * sizeof(wchar_t));
-        objPath[len] = L'\0';
+        // Absolute path - do a simple copy
+        memcpy(ThreadObjPath, Attributes->ObjectName->Buffer, nameLength * sizeof(wchar_t));
+		ThreadObjPath[nameLength] = L'\0';
     }
 
-    wchar_t *data            = objPath;
-    vfs::VfsManager *manager = GetManager(&data);
+    wchar_t *relativeVirtPath = ThreadObjPath;
+    vfs::VfsManager *manager  = GetManager(&relativeVirtPath);
 
-    // 'data' is now the relative virtual path
     if (manager)
     {
 		//vfs::BUG_IF(caseSensitive);
@@ -193,10 +183,9 @@ bool RewriteObjectAttributes(POBJECT_ATTRIBUTES Attributes, POBJECT_ATTRIBUTES O
         std::string physPath;
         std::wstring physPathW;
 
-        if (!manager->ResolvePhysicalPath(vfs::str::narrow(data), physPath))
+        if (!manager->ResolvePhysicalPath(vfs::str::narrow(relativeVirtPath), physPath))
         {
-            printf("Unable to resolve alias. Dir: %ws\n", objPath);
-            delete[] objPath;
+            printf("Unable to resolve alias. Dir: %ws\n", ThreadObjPath);
             return false;
         }
 
@@ -209,70 +198,52 @@ bool RewriteObjectAttributes(POBJECT_ATTRIBUTES Attributes, POBJECT_ATTRIBUTES O
 
         memcpy(Out, Attributes, sizeof(OBJECT_ATTRIBUTES));
         Out->RootDirectory             = nullptr;
-        Out->ObjectName                = new UNICODE_STRING;
-        Out->ObjectName->Buffer        = new wchar_t[len];
+        Out->ObjectName                = &ThreadStringAttr;
+        Out->ObjectName->Buffer        = ThreadStringAttrBuffer;
         Out->ObjectName->Length        = (USHORT)((len - 1) * sizeof(wchar_t)); // Excludes null character
         Out->ObjectName->MaximumLength = Out->ObjectName->Length;
 
         memcpy(&Out->ObjectName->Buffer[0], L"\\??\\", 4 * sizeof(wchar_t));
         memcpy(&Out->ObjectName->Buffer[4], physPathW.c_str(), physPathW.length() * sizeof(wchar_t));
         Out->ObjectName->Buffer[len - 1] = L'\0';
-
-        delete[] objPath;
         return true;
     }
 
-    delete[] objPath;
     return false;
 }
 
 decltype(&NtOpenFile) ptrNtOpenFile;
 NTSTATUS NTAPI hk_NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, ULONG ShareAccess, ULONG OpenOptions)
 {
-    OBJECT_ATTRIBUTES newAttributes;
-    if (!InRecursiveCall && RewriteObjectAttributes(ObjectAttributes, &newAttributes))
-    {
-        InRecursiveCall = true;
+	OBJECT_ATTRIBUTES newAttributes;
 
-        NTSTATUS ret = ptrNtOpenFile(FileHandle, DesiredAccess, &newAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+	if (!InRecursiveCall)
+	{
+		InRecursiveCall = true;
 
-        delete[] newAttributes.ObjectName->Buffer;
-        delete newAttributes.ObjectName;
+		if (RewriteObjectAttributes(ObjectAttributes, &newAttributes))
+			ObjectAttributes = &newAttributes;
 
-        InRecursiveCall = false;
-        return ret;
-    }
+		InRecursiveCall = false;
+	}
 
     return ptrNtOpenFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
 }
 
 decltype(&NtCreateFile) ptrNtCreateFile;
-NTSTATUS hk_NtCreateFile(
-    _Out_ PHANDLE FileHandle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_ POBJECT_ATTRIBUTES ObjectAttributes,
-    _Out_ PIO_STATUS_BLOCK IoStatusBlock,
-    _In_opt_ PLARGE_INTEGER AllocationSize,
-    _In_ ULONG FileAttributes,
-    _In_ ULONG ShareAccess,
-    _In_ ULONG CreateDisposition,
-    _In_ ULONG CreateOptions,
-    _In_ PVOID EaBuffer,
-    _In_ ULONG EaLength)
+NTSTATUS hk_NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess, ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength)
 {
-    OBJECT_ATTRIBUTES newAttributes;
-    if (!InRecursiveCall && RewriteObjectAttributes(ObjectAttributes, &newAttributes))
-    {
-        InRecursiveCall = true;
+	OBJECT_ATTRIBUTES newAttributes;
 
-        NTSTATUS ret = ptrNtCreateFile(FileHandle, DesiredAccess, &newAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
+	if (!InRecursiveCall)
+	{
+		InRecursiveCall = true;
 
-        delete[] newAttributes.ObjectName->Buffer;
-        delete newAttributes.ObjectName;
+		if (RewriteObjectAttributes(ObjectAttributes, &newAttributes))
+			ObjectAttributes = &newAttributes;
 
-        InRecursiveCall = false;
-        return ret;
-    }
+		InRecursiveCall = false;
+	}
 
     return ptrNtCreateFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
 }
