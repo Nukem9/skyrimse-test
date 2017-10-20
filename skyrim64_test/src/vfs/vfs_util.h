@@ -5,10 +5,7 @@
 namespace vfs::str
 {
 	std::wstring wide(const std::string &s);
-	const wchar_t *wide_c(const std::string &s);
-
 	std::string narrow(const wchar_t *s);
-	const char *narrow_c(const wchar_t *s);
 }
 
 namespace vfs::util

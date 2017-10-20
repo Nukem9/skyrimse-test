@@ -188,7 +188,7 @@ bool RewriteObjectAttributes(POBJECT_ATTRIBUTES Attributes, POBJECT_ATTRIBUTES O
     // 'data' is now the relative virtual path
     if (manager)
     {
-		vfs::BUG_IF(caseSensitive);
+		//vfs::BUG_IF(caseSensitive);
 
         std::string physPath;
         std::wstring physPathW;
@@ -229,28 +229,12 @@ bool RewriteObjectAttributes(POBJECT_ATTRIBUTES Attributes, POBJECT_ATTRIBUTES O
 decltype(&NtOpenFile) ptrNtOpenFile;
 NTSTATUS NTAPI hk_NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, ULONG ShareAccess, ULONG OpenOptions)
 {
-	if (ObjectAttributes->ObjectName)
-	{
-		printf("OF ---------------------\n");
-		printf("OF ObjectName: %wZ\n", ObjectAttributes->ObjectName);
-		fflush(stdout);
-	}
-
     OBJECT_ATTRIBUTES newAttributes;
     if (!InRecursiveCall && RewriteObjectAttributes(ObjectAttributes, &newAttributes))
     {
         InRecursiveCall = true;
 
         NTSTATUS ret = ptrNtOpenFile(FileHandle, DesiredAccess, &newAttributes, IoStatusBlock, ShareAccess, OpenOptions);
-		printf("TEST: %wZ\n", newAttributes.ObjectName);
-		fflush(stdout);
-
-        if (ret < 0)
-        {
-            //printf("NTSTATUS FAILURE: %X\n", ret);
-            //printf("TEST: %wZ\n", newAttributes.ObjectName);
-            //fflush(stdout);
-        }
 
         delete[] newAttributes.ObjectName->Buffer;
         delete newAttributes.ObjectName;
@@ -276,28 +260,12 @@ NTSTATUS hk_NtCreateFile(
     _In_ PVOID EaBuffer,
     _In_ ULONG EaLength)
 {
-    if (ObjectAttributes->ObjectName)
-    {
-        printf("CF ---------------------\n");
-        printf("CF ObjectName: %wZ\n", ObjectAttributes->ObjectName);
-		fflush(stdout);
-    }
-
     OBJECT_ATTRIBUTES newAttributes;
     if (!InRecursiveCall && RewriteObjectAttributes(ObjectAttributes, &newAttributes))
     {
         InRecursiveCall = true;
 
         NTSTATUS ret = ptrNtCreateFile(FileHandle, DesiredAccess, &newAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
-		printf("TEST: %wZ\n", newAttributes.ObjectName);
-
-        if (ret < 0)
-        {
-            //printf("CF NTSTATUS FAILURE: %X\n", ret);
-            //printf("CF TEST: %wZ\n", newAttributes.ObjectName);
-        }
-
-        fflush(stdout);
 
         delete[] newAttributes.ObjectName->Buffer;
         delete newAttributes.ObjectName;

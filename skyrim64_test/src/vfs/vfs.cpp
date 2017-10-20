@@ -332,10 +332,6 @@ namespace vfs
         sys->RootGuidW       = str::wide(sys->RootGuid);
         sys->RootGuidFullW   = str::wide(sys->RootGuid + sys->MountPoint.substr(2));
 
-        AllocConsole();
-        //freopen("C:\\out.txt", "w", stdout);
-        //freopen("CONOUT$", "w", stderr);
-
         printf("%s\n", sys->MountPoint.c_str());
         printf("%s\n", sys->RealPath.c_str());
         printf("%s\n", sys->RootDos.c_str());

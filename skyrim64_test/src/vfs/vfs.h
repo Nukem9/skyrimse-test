@@ -73,7 +73,7 @@ namespace vfs
         bool IsAlias; // Equivalent to a symbolic link
 
         VfsEntry(bool File)
-            : IsFile(File)
+            : Parent(nullptr), IsFile(File), IsAlias(false)
         {
         }
     };

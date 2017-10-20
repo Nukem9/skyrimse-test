@@ -20,11 +20,6 @@ namespace vfs::str
 		return ret;
 	}
 
-	const wchar_t *wide_c(const std::string &s)
-	{
-		return wide(s).c_str();
-	}
-
 	std::string narrow(const wchar_t *s)
 	{
 		size_t srcLen = wcslen(s);
@@ -46,11 +41,6 @@ namespace vfs::str
 
 		return ret;
 	}
-
-	const char *narrow_c(const wchar_t *s)
-	{
-		return narrow(s).c_str();
-	}
 }
 
 namespace vfs::util
@@ -58,9 +48,6 @@ namespace vfs::util
 	// "It makes the path conform to the NTFS standard"
 	// https://stackoverflow.com/a/24703223 (modified)
 	//const static std::regex RegexNTFSPath(R"reg(^[a-zA-Z]:(\\(((?![<>:"\/\\|?*]).)+((?<![ .])\\)?)*)?$)reg");
-
-	const static std::regex FwdSlash("\\/");			// Matches '/'
-	const static std::regex DoubleSlash(R"(\\\\)");		// Matches '\\'
 
 	bool PathIsValid(const std::string &Path)
 	{
@@ -83,9 +70,48 @@ namespace vfs::util
 
 	void NormalizePath(std::string &Path)
 	{
-		// '/'  => '\'
+		// '/' => '\'
+		char *rawStr = Path.data();
+
+		for (char *ptr = rawStr; *ptr; ptr++)
+		{
+			if (*ptr == '/')
+				*ptr = '\\';
+		}
+
 		// '\\' => '\'
-		Path = TrimSlash(std::regex_replace(std::regex_replace(Path, FwdSlash, "\\"), DoubleSlash, "\\"));
+		char *out = rawStr;
+
+		for (char *ptr = out;;)
+		{
+			*out = *ptr;
+
+			if (*ptr == '\0')
+				break;
+
+			out++;
+			ptr++;
+
+			// Eat as many slashes as possible
+			if (*ptr == '\\')
+			{
+				while (*ptr == '\\')
+					ptr++;
+
+				*out++ = '\\';
+			}
+		}
+
+		// Trim the final '\'
+		size_t newLen = (size_t)(out - rawStr);
+
+		if (newLen > 0 && rawStr[newLen - 1] == '\\')
+		{
+			rawStr[newLen - 1] = '\0';
+			newLen--;
+		}
+
+		Path.resize(newLen);
 	}
 
 	void SplitPath(const std::string &In, std::string &Path, std::string &Part)
