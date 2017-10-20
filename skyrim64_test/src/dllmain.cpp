@@ -20,27 +20,29 @@ HMODULE g_DllD3D11;
 void once();
 void LoadModules()
 {
-	once();
+    once();
 
-	//SetCurrentDirectoryA(R"(E:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition\test\)");
-	{
-		// X3DAudio HRTF is a drop-in replacement for x3daudio1_7.dll
-		g_Dll3DAudio = LoadLibraryA("test\\x3daudio1_7.dll");
+    // X3DAudio HRTF is a drop-in replacement for x3daudio1_7.dll
+    g_Dll3DAudio = LoadLibraryA("test\\x3daudio1_7.dll");
 
-		// Reshade is a drop-in replacement for DXGI.dll
-		g_DllReshade = LoadLibraryA("test\\r_dxgi.dll");
-		g_DllDXGI = (g_DllReshade) ? g_DllReshade : GetModuleHandleA("dxgi.dll");
+    if (g_Dll3DAudio)
+    {
+        PatchIAT(GetProcAddress(g_Dll3DAudio, "X3DAudioCalculate"), "x3daudio1_7.dll", "X3DAudioCalculate");
+        PatchIAT(GetProcAddress(g_Dll3DAudio, "X3DAudioInitialize"), "x3daudio1_7.dll", "X3DAudioInitialize");
+    }
 
-		// ENB is a drop-in replacement for D3D11.dll
-		LoadLibraryA("test\\d3dcompiler_46e.dll");
+    // Reshade is a drop-in replacement for DXGI.dll
+    g_DllReshade = LoadLibraryA("test\\r_dxgi.dll");
+    g_DllDXGI    = (g_DllReshade) ? g_DllReshade : GetModuleHandleA("dxgi.dll");
 
-		g_DllEnb = LoadLibraryA("test\\d3d11.dll");
-		g_DllD3D11 = (g_DllEnb) ? g_DllEnb : GetModuleHandleA("d3d11.dll");
-	}
-	//SetCurrentDirectoryA(R"(E:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition\)");
+    // ENB is a drop-in replacement for D3D11.dll
+    LoadLibraryA("test\\d3dcompiler_46e.dll");
 
-	// SKSE64 loads by itself in the root dir
-	g_DllSKSE = LoadLibraryA("skse64_1_5_3.dll");
+    g_DllEnb   = LoadLibraryA("test\\d3d11.dll");
+    g_DllD3D11 = (g_DllEnb) ? g_DllEnb : GetModuleHandleA("d3d11.dll");
+
+    // SKSE64 loads by itself in the root dir
+    g_DllSKSE = LoadLibraryA("skse64_1_5_3.dll");
 
     // Check if VTune is active
     const char *libttPath = getenv("INTEL_LIBITTNOTIFY64");
@@ -49,9 +51,6 @@ void LoadModules()
         libttPath = "libittnotify.dll";
 
     g_DllVTune = LoadLibraryA(libttPath);
-
-	PatchIAT(GetProcAddress(g_Dll3DAudio, "X3DAudioCalculate"), "x3daudio1_7.dll", "X3DAudioCalculate");
-	PatchIAT(GetProcAddress(g_Dll3DAudio, "X3DAudioInitialize"), "x3daudio1_7.dll", "X3DAudioInitialize");
 }
 
 void DoHook();
@@ -86,8 +85,8 @@ void ApplyPatches()
     SetErrorMode(0);
     SetThreadErrorMode(0, &oldMode);
 
-	DoHook();
-	LoadModules();
+    DoHook();
+    LoadModules();
 
     // Now hook everything
     PatchThreading();

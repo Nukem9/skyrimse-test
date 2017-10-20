@@ -1,3 +1,4 @@
+#include <future>
 #include "../stdafx.h"
 
 #define WM_APP_THREAD_TASK		(WM_APP + 1)
@@ -6,6 +7,7 @@
 HWND g_SkyrimWindow;
 WNDPROC g_OriginalWndProc;
 extern IDXGISwapChain *g_SwapChain;
+DWORD MessageThreadId;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -92,9 +94,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-#include <future>
-DWORD GlobalThreadId;
-
 DWORD WINAPI MessageThread(LPVOID)
 {
 	SetThreadName(GetCurrentThreadId(), "Game Message Loop");
@@ -142,7 +141,7 @@ HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWin
 
 	// Wait for completion...
 	auto taskVar = threadTask.get_future();
-	PostThreadMessage(GlobalThreadId, WM_APP_THREAD_TASK, (WPARAM)&threadTask, 0);
+	PostThreadMessage(MessageThreadId, WM_APP_THREAD_TASK, (WPARAM)&threadTask, 0);
 
 	return taskVar.get();
 }
@@ -150,7 +149,7 @@ HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWin
 void PatchWindow()
 {
 	PatchMemory(g_ModuleBase + 0x5ADE40, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
-	CreateThread(nullptr, 0, MessageThread, nullptr, 0, &GlobalThreadId);
+	CreateThread(nullptr, 0, MessageThread, nullptr, 0, &MessageThreadId);
 
 	PatchIAT(hk_CreateWindowExA, "user32.dll", "CreateWindowExA");
 }

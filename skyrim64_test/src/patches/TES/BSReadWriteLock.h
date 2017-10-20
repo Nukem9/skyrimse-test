@@ -13,7 +13,6 @@ private:
     enum : int32_t
     {
         READER   = 4,
-        UPGRADED = 2,
         WRITER   = 1
     };
 

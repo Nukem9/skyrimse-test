@@ -36,7 +36,7 @@ bool BSReadWriteLock::TryAcquireRead()
 	// so here we are optimizing for the common (lock success) case.
 	int32_t value = m_Bits.fetch_add(READER, std::memory_order_acquire);
 
-	if (value & (WRITER | UPGRADED))
+	if (value & WRITER)
 	{
 		m_Bits.fetch_add(-READER, std::memory_order_release);
 		return false;
@@ -58,13 +58,11 @@ void BSReadWriteLock::AcquireWrite()
 
 void BSReadWriteLock::ReleaseWrite()
 {
-	static_assert(READER > WRITER + UPGRADED, "Wrong bits!");
-
 	if (--m_WriteCount > 0)
 		return;
 
 	m_ThreadId.store(0, std::memory_order_release);
-	m_Bits.fetch_and(~(WRITER | UPGRADED), std::memory_order_release);
+	m_Bits.fetch_and(~WRITER, std::memory_order_release);
 }
 
 bool BSReadWriteLock::TryAcquireWrite()
