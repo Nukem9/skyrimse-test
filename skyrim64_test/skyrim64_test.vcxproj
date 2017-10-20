@@ -88,6 +88,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\patches\steam.h" />
     <ClInclude Include="src\patches\TES\BSThread_Win32.h" />
     <ClInclude Include="src\patches\TES\BSTScatterTable.h" />
     <ClInclude Include="src\profiler_internal.h" />
@@ -155,6 +156,7 @@
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\d3dx9_release.cpp" />
     <ClCompile Include="src\dump.cpp" />
+    <ClCompile Include="src\patches\steam.cpp" />
     <ClCompile Include="src\patches\TES\BSThread_Win32.cpp" />
     <ClCompile Include="src\profiler.cpp" />
     <ClCompile Include="src\typeinfo\hk_typeinfo.cpp" />

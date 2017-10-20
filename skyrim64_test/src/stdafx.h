@@ -36,6 +36,7 @@
 #include "patches/threading.h"
 #include "patches/achievements.h"
 #include "patches/settings.h"
+#include "patches/steam.h"
 
 #include "patches/TES/BSReadWriteLock.h"
 #include "patches/TES/MemoryManager.h"

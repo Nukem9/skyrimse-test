@@ -93,6 +93,7 @@ void ApplyPatches()
     PatchWindow();
     PatchDInput();
     PatchD3D11();
+	PatchSteam();
     //PatchAchievements();
     PatchSettings();
     //PatchMemory();
