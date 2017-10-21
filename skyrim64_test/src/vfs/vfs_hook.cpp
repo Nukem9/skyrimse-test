@@ -212,46 +212,85 @@ bool RewriteObjectAttributes(POBJECT_ATTRIBUTES Attributes, POBJECT_ATTRIBUTES O
     return false;
 }
 
-decltype(&NtOpenFile) ptrNtOpenFile;
-NTSTATUS NTAPI hk_NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, ULONG ShareAccess, ULONG OpenOptions)
+void RewriteObjectAttributesSafe(POBJECT_ATTRIBUTES *Attributes, POBJECT_ATTRIBUTES TempBuffer)
 {
-	OBJECT_ATTRIBUTES newAttributes;
-
 	if (!InRecursiveCall)
 	{
 		InRecursiveCall = true;
 
-		if (RewriteObjectAttributes(ObjectAttributes, &newAttributes))
-			ObjectAttributes = &newAttributes;
+		if (RewriteObjectAttributes(*Attributes, TempBuffer))
+			*Attributes = TempBuffer;
 
 		InRecursiveCall = false;
 	}
+}
 
+#define REWRITE_ATTRIBUTES(attrs) OBJECT_ATTRIBUTES newAttributes; RewriteObjectAttributesSafe((attrs), &newAttributes);
+
+decltype(&NtCreateFile) ptrNtCreateFile;
+NTSTATUS hk_NtCreateFile(
+	PHANDLE FileHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes,
+	PIO_STATUS_BLOCK IoStatusBlock,
+	PLARGE_INTEGER AllocationSize,
+	ULONG FileAttributes,
+	ULONG ShareAccess,
+	ULONG CreateDisposition,
+	ULONG CreateOptions,
+	PVOID EaBuffer,
+	ULONG EaLength)
+{
+	REWRITE_ATTRIBUTES(&ObjectAttributes);
+	return ptrNtCreateFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
+}
+
+decltype(&NtDeleteFile) ptrNtDeleteFile;
+NTSTATUS NTAPI hk_NtDeleteFile(
+	POBJECT_ATTRIBUTES ObjectAttributes)
+{
+	REWRITE_ATTRIBUTES(&ObjectAttributes);
+	return ptrNtDeleteFile(ObjectAttributes);
+}
+
+decltype(&NtOpenFile) ptrNtOpenFile;
+NTSTATUS NTAPI hk_NtOpenFile(
+	PHANDLE FileHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes,
+	PIO_STATUS_BLOCK IoStatusBlock,
+	ULONG ShareAccess,
+	ULONG OpenOptions)
+{
+	REWRITE_ATTRIBUTES(&ObjectAttributes);
     return ptrNtOpenFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
 }
 
-decltype(&NtCreateFile) ptrNtCreateFile;
-NTSTATUS hk_NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess, ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength)
+decltype(&NtQueryAttributesFile) ptrNtQueryAttributesFile;
+NTSTATUS NTAPI hk_NtQueryAttributesFile(
+	POBJECT_ATTRIBUTES ObjectAttributes,
+	PFILE_BASIC_INFORMATION FileInformation)
 {
-	OBJECT_ATTRIBUTES newAttributes;
+	REWRITE_ATTRIBUTES(&ObjectAttributes);
+	return ptrNtQueryAttributesFile(ObjectAttributes, FileInformation);
+}
 
-	if (!InRecursiveCall)
-	{
-		InRecursiveCall = true;
-
-		if (RewriteObjectAttributes(ObjectAttributes, &newAttributes))
-			ObjectAttributes = &newAttributes;
-
-		InRecursiveCall = false;
-	}
-
-    return ptrNtCreateFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
+decltype(&NtQueryFullAttributesFile) ptrNtQueryFullAttributesFile;
+NTSTATUS NTAPI hk_NtQueryFullAttributesFile(
+	POBJECT_ATTRIBUTES ObjectAttributes,
+	PFILE_NETWORK_OPEN_INFORMATION FileInformation)
+{
+	REWRITE_ATTRIBUTES(&ObjectAttributes);
+	return ptrNtQueryFullAttributesFile(ObjectAttributes, FileInformation);
 }
 
 void DoHook()
 {
     HMODULE ntdll = GetModuleHandleA("ntdll.dll");
 
-    *(uint8_t **)&ptrNtOpenFile   = Detours::X64::DetourFunction((PBYTE)GetProcAddress(ntdll, "NtOpenFile"), (PBYTE)&hk_NtOpenFile);
-    *(uint8_t **)&ptrNtCreateFile = Detours::X64::DetourFunction((PBYTE)GetProcAddress(ntdll, "NtCreateFile"), (PBYTE)&hk_NtCreateFile);
+	*(uint8_t **)&ptrNtCreateFile = Detours::X64::DetourFunction((PBYTE)GetProcAddress(ntdll, "NtCreateFile"), (PBYTE)&hk_NtCreateFile);
+	*(uint8_t **)&ptrNtDeleteFile = Detours::X64::DetourFunction((PBYTE)GetProcAddress(ntdll, "NtDeleteFile"), (PBYTE)&hk_NtDeleteFile);
+	*(uint8_t **)&ptrNtOpenFile = Detours::X64::DetourFunction((PBYTE)GetProcAddress(ntdll, "NtOpenFile"), (PBYTE)&hk_NtOpenFile);
+	*(uint8_t **)&ptrNtQueryAttributesFile = Detours::X64::DetourFunction((PBYTE)GetProcAddress(ntdll, "NtQueryAttributesFile"), (PBYTE)&hk_NtQueryAttributesFile);
+	*(uint8_t **)&ptrNtQueryFullAttributesFile = Detours::X64::DetourFunction((PBYTE)GetProcAddress(ntdll, "NtQueryFullAttributesFile"), (PBYTE)&hk_NtQueryFullAttributesFile);
 }

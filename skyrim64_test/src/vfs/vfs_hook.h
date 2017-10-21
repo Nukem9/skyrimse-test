@@ -111,3 +111,35 @@ typedef struct _FILE_NAMES_INFORMATION {
 	ULONG FileNameLength;
 	WCHAR FileName[1];
 } FILE_NAMES_INFORMATION, *PFILE_NAMES_INFORMATION;
+
+typedef struct _FILE_BASIC_INFORMATION {
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	ULONG         FileAttributes;
+} FILE_BASIC_INFORMATION, *PFILE_BASIC_INFORMATION;
+
+typedef struct _FILE_NETWORK_OPEN_INFORMATION {
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER AllocationSize;
+	LARGE_INTEGER EndOfFile;
+	ULONG         FileAttributes;
+} FILE_NETWORK_OPEN_INFORMATION, *PFILE_NETWORK_OPEN_INFORMATION;
+
+NTSTATUS NTAPI NtDeleteFile(
+	_In_ POBJECT_ATTRIBUTES ObjectAttributes
+);
+
+NTSTATUS NTAPI NtQueryAttributesFile(
+	_In_  POBJECT_ATTRIBUTES      ObjectAttributes,
+	_Out_ PFILE_BASIC_INFORMATION FileInformation
+);
+
+NTSTATUS NTAPI NtQueryFullAttributesFile(
+	_In_  POBJECT_ATTRIBUTES             ObjectAttributes,
+	_Out_ PFILE_NETWORK_OPEN_INFORMATION FileInformation
+);
