@@ -47,9 +47,6 @@
     <ClInclude Include="src\dump.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui_impl_dx11.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -95,6 +92,12 @@
     <ClInclude Include="src\patches\patches.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\imgui_impl_dx11.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\ui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -120,9 +123,6 @@
     </ClCompile>
     <ClCompile Include="src\dump.cpp">
       <Filter>Source Files\patches</Filter>
-    </ClCompile>
-    <ClCompile Include="src\imgui_impl_dx11.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\stdafx.cpp">
       <Filter>Source Files</Filter>
@@ -263,6 +263,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\steam.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\imgui_impl_dx11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\ui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

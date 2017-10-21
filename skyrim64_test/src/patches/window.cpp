@@ -55,7 +55,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(hwnd, uMsg, wParam, lParam);
 		}
 
-		ImGui_ImplDX11_WndProcHandler(hwnd, uMsg, wParam, lParam);
+		ui::HandleInput(hwnd, uMsg, wParam, lParam);
 		return 0;
 	}
 

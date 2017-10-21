@@ -21,7 +21,7 @@
 #pragma comment(lib, "detours/detours.lib")
 
 #include "../imgui/imgui.h"
-#include "imgui_impl_dx11.h"
+#include "ui/ui.h"
 
 #include <jemalloc/jemalloc.h>
 

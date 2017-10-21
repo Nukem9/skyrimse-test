@@ -8,8 +8,6 @@ AutoPtr<BSTScatterTable<uint32_t, TESForm *> *, 0x1EDD238> GlobalFormList;
 std::unordered_map<uint32_t, TESForm *> g_FormMap[TES_FORM_MASTER_COUNT];
 BSReadWriteLock g_FormLocks[TES_FORM_MASTER_COUNT];
 
-extern bool enableCache;
-
 namespace Bitmap
 {
     const uint32_t EntrySize  = (TES_FORM_INDEX_COUNT / 32) * sizeof(LONG);
@@ -128,7 +126,7 @@ void UpdateFormCache(uint32_t FormId, TESForm *Value, bool Invalidate)
 
 bool GetFormCache(uint32_t FormId, TESForm *&Form)
 {
-	if (!enableCache)
+	if (!ui::opt::EnableCache)
 		return false;
 
     ProfileCounterInc("Cache Lookups");
