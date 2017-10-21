@@ -126,7 +126,7 @@ HRESULT APIENTRY ProxyIDirectInputDevice8A::GetDeviceState(DWORD cbData, LPVOID 
 
 			io.MousePos.x = max(io.MousePos.x, 0);
 			io.MousePos.y = max(io.MousePos.y, 0);
-			io.MouseWheel = max(min(ptr->lZ, 1), -1);
+			io.MouseWheel = max(min((float)ptr->lZ, 1), -1);
 		}
 	}
 
