@@ -1,6 +1,6 @@
 #include "../../stdafx.h"
 
-const char *NextThreadName;
+std::atomic<const char *> NextThreadName;
 
 void MyLogFunc2(const char *Format, ...);
 
@@ -19,7 +19,7 @@ bool hk_sub_140C06440(uintptr_t a1, int a2, const char *a3)
 LPTHREAD_START_ROUTINE BSThreadEntryFunc;
 DWORD WINAPI hk_BSThreadEntryFunc(LPVOID lpArg)
 {
-    auto name      = NextThreadName;
+    auto name      = NextThreadName.load();
     auto tid       = GetCurrentThreadId();
     NextThreadName = nullptr;
 
