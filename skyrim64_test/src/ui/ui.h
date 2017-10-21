@@ -11,6 +11,12 @@ namespace ui
 	void HandleInput(HWND Wnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	void Render();
 
+	void RenderMenubar();
+	void RenderFramerate();
+	void RenderSynchronization();
+	void RenderTESFormCache();
+	void RenderMemory();
+
 	namespace log
 	{
 		void Draw();
