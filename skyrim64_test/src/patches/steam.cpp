@@ -1,5 +1,10 @@
 #include "../stdafx.h"
 
+typedef void *ISteamUser;
+typedef void *ISteamFriends;
+typedef void *ISteamUserStats;
+class CCallbackBase;
+
 bool SteamAPI_Init()
 {
 	// Goal: Prevent Steam from spamming my friends with "X is now playing" when I restart

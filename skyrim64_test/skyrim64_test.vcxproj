@@ -88,13 +88,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\patches\steam.h" />
+    <ClInclude Include="src\patches\patches.h" />
     <ClInclude Include="src\patches\TES\BSThread_Win32.h" />
     <ClInclude Include="src\patches\TES\BSTScatterTable.h" />
     <ClInclude Include="src\profiler_internal.h" />
-    <ClInclude Include="src\patches\achievements.h" />
     <ClInclude Include="src\ansel.h" />
-    <ClInclude Include="src\patches\d3d11.h" />
     <ClInclude Include="src\d3dconv.h" />
     <ClInclude Include="src\patches\dinput8.h" />
     <ClInclude Include="src\dump.h" />
@@ -109,15 +107,12 @@
     <ClInclude Include="src\imgui_impl_dx11.h" />
     <ClInclude Include="src\patches\TES\MemoryManager.h" />
     <ClInclude Include="src\patches\TES\BSReadWriteLock.h" />
-    <ClInclude Include="src\patches\settings.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\patches\TES\TESForm.h" />
-    <ClInclude Include="src\patches\threading.h" />
     <ClInclude Include="src\vfs\vfs.h" />
     <ClInclude Include="src\vfs\vfs_hook.h" />
     <ClInclude Include="src\vfs\vfs_util.h" />
     <ClInclude Include="src\xutil.h" />
-    <ClInclude Include="src\patches\window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="jemalloc\arena.c" />

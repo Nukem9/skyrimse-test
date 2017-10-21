@@ -30,13 +30,8 @@
 #include "ansel.h"
 #include "profiler.h"
 
-#include "patches/d3d11.h"
+#include "patches/patches.h"
 #include "patches/dinput8.h"
-#include "patches/window.h"
-#include "patches/threading.h"
-#include "patches/achievements.h"
-#include "patches/settings.h"
-#include "patches/steam.h"
 
 #include "patches/TES/BSReadWriteLock.h"
 #include "patches/TES/MemoryManager.h"

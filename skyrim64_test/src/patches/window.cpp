@@ -1,12 +1,11 @@
-#include <future>
 #include "../stdafx.h"
+#include <future>
 
 #define WM_APP_THREAD_TASK		(WM_APP + 1)
 #define WM_APP_UPDATE_CURSOR	(WM_APP + 2)
 
 HWND g_SkyrimWindow;
 WNDPROC g_OriginalWndProc;
-extern IDXGISwapChain *g_SwapChain;
 DWORD MessageThreadId;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
