@@ -14,19 +14,6 @@ namespace ui
 
     bool show_another_window = true;
 
-    __int64 lastFrameAlloc;
-    __int64 lastFrameFree;
-    __int64 lastFrameByte;
-
-    LARGE_INTEGER frameEnd;
-    int64_t lastFrame;
-
-    __int64 tickSum;
-    __int64 deltaList[32];
-    int counter;
-
-	double averageFps;
-
     char *format_commas(int64_t n, char *out)
     {
         int c;
@@ -119,37 +106,11 @@ namespace ui
 
     void Render()
     {
-        QueryPerformanceCounter(&frameEnd);
-
         ImGui::GetIO().MouseDrawCursor = true;
 
         ImGui_ImplDX11_NewFrame();
         {
             log::Draw();
-
-            LARGE_INTEGER ticksPerSecond;
-            QueryPerformanceFrequency(&ticksPerSecond);
-
-            if (lastFrame == 0)
-                lastFrame = frameEnd.QuadPart;
-
-            __int64 delta = frameEnd.QuadPart - lastFrame;
-            lastFrame     = frameEnd.QuadPart;
-
-            tickSum -= deltaList[counter];
-            tickSum += delta;
-            deltaList[counter++] = delta;
-
-            if (counter >= 32)
-                counter = 0;
-
-            double frameTimeMs = 1000 * (delta / (double)ticksPerSecond.QuadPart);
-
-            if (frameTimeMs >= 100.0)
-                log::Add("FRAME HITCH WARNING (%g ms)\n", frameTimeMs);
-
-            double averageFrametime = ((double)tickSum / 32.0) / (double)ticksPerSecond.QuadPart;
-            averageFps       = 1.0 / averageFrametime;
 
 			RenderMenubar();
 			RenderFramerate();
@@ -214,7 +175,7 @@ namespace ui
 
 		if (ImGui::Begin("Framerate", &showFPSWindow))
 		{
-			ImGui::Text("FPS: %.2f", averageFps);
+			ImGui::Text("FPS: %.2f", g_AverageFps);
 			ImGui::Spacing();
 			ImGui::Text("Havok fMaxTime: %.2f FPS", 1.0f / test);
 			ImGui::Text("Havok fMaxTimeComplex: %.2f FPS", 1.0f / test);
