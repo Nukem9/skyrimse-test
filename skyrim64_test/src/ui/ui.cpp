@@ -1,5 +1,6 @@
 #include "../stdafx.h"
 #include "imgui_impl_dx11.h"
+#include "imgui_ext.h"
 
 namespace ui::opt
 {
@@ -11,8 +12,7 @@ namespace ui
     bool showFPSWindow;
     bool showTESFormWindow;
     bool showLockWindow;
-
-    bool show_another_window = true;
+	bool showMemoryWindow;
 
     char *format_commas(int64_t n, char *out)
     {
@@ -47,6 +47,8 @@ namespace ui
     void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext)
     {
         ImGui_ImplDX11_Init(Wnd, Device, DeviceContext);
+
+		ImGui::GetIO().MouseDrawCursor = true;
 
         // Dark theme
         ImGuiStyle &style = ImGui::GetStyle();
@@ -106,64 +108,67 @@ namespace ui
 
     void Render()
     {
-        ImGui::GetIO().MouseDrawCursor = true;
-
         ImGui_ImplDX11_NewFrame();
         {
-            log::Draw();
-
 			RenderMenubar();
 			RenderFramerate();
 			RenderSynchronization();
 			RenderTESFormCache();
 			RenderMemory();
-        }
+
+			log::Draw();
+		}
         ImGui::Render();
     }
 
 	void RenderMenubar()
 	{
-		if (ImGui::BeginMainMenuBar())
+		if (!ImGui::BeginMainMenuBar())
+			return;
+
+		// Empty space for MSI afterburner display
+		if (ImGui::BeginMenu("                        ", false))
+			ImGui::EndMenu();
+
+		// Module info, all disabled
+		if (ImGui::BeginMenu("Modules"))
 		{
-			if (ImGui::BeginMenu("                        ", false))
-				ImGui::EndMenu();
-
-			if (ImGui::BeginMenu("Modules"))
-			{
-				ImGui::MenuItem("X3DAudio HRTF", g_Dll3DAudio ? "Detected" : "Not Detected");
-				ImGui::MenuItem("ReShade", g_DllReshade ? "Detected" : "Not Detected");
-				ImGui::MenuItem("ENB", g_DllEnb ? "Detected" : "Not Detected");
-				ImGui::MenuItem("SKSE64", g_DllSKSE ? "Detected" : "Not Detected");
-				ImGui::MenuItem("VTune", g_DllVTune ? "Detected" : "Not Detected");
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Windows"))
-			{
-				if (ImGui::MenuItem("Framerate"))
-					showFPSWindow = true;
-
-				if (ImGui::MenuItem("TESForm Cache"))
-					showTESFormWindow = true;
-
-				if (ImGui::MenuItem("Synchronization"))
-					showLockWindow = true;
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Game"))
-			{
-				bool g_BlockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
-
-				if (ImGui::MenuItem("Block Input", nullptr, &g_BlockInput))
-					ProxyIDirectInputDevice8A::ToggleGlobalInput(!g_BlockInput);
-
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndMainMenuBar();
+			ImGui::MenuItem("X3DAudio HRTF", g_Dll3DAudio ? "Detected" : "Not Detected");
+			ImGui::MenuItem("ReShade", g_DllReshade ? "Detected" : "Not Detected");
+			ImGui::MenuItem("ENB", g_DllEnb ? "Detected" : "Not Detected");
+			ImGui::MenuItem("SKSE64", g_DllSKSE ? "Detected" : "Not Detected");
+			ImGui::MenuItem("VTune", g_DllVTune ? "Detected" : "Not Detected");
+			ImGui::EndMenu();
 		}
+
+		if (ImGui::BeginMenu("Windows"))
+		{
+			if (ImGui::MenuItem("Framerate"))
+				showFPSWindow = true;
+
+			if (ImGui::MenuItem("Synchronization"))
+				showLockWindow = true;
+
+			if (ImGui::MenuItem("Memory"))
+				showMemoryWindow = true;
+
+			if (ImGui::MenuItem("TESForm Cache"))
+				showTESFormWindow = true;
+
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Game"))
+		{
+			bool g_BlockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
+
+			if (ImGui::MenuItem("Block Input", nullptr, &g_BlockInput))
+				ProxyIDirectInputDevice8A::ToggleGlobalInput(!g_BlockInput);
+
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMainMenuBar();
 	}
 
 	void RenderFramerate()
@@ -190,21 +195,63 @@ namespace ui
 
 		if (ImGui::Begin("Synchronization", &showLockWindow))
 		{
-			ImGui::Text("Per Frame");
-			ImGui::Separator();
-			ImGui::Indent();
-			ImGui::Text("Time acquiring read locks: %.5f seconds", ProfileGetDeltaTime("Read Lock Time"));
-			ImGui::Text("Time acquiring write locks: %.5f seconds", ProfileGetDeltaTime("Write Lock Time"));
-			ImGui::Unindent();
+			if (ImGui::BeginGroupSplitter("Per Frame"))
+			{
+				ImGui::Text("Time acquiring read locks: %.5f seconds", ProfileGetDeltaTime("Read Lock Time"));
+				ImGui::Text("Time acquiring write locks: %.5f seconds", ProfileGetDeltaTime("Write Lock Time"));
+				ImGui::EndGroupSplitter();
+			}
 
-			ImGui::Spacing();
-			ImGui::Text("Global");
-			ImGui::Separator();
-			ImGui::Indent();
-			ImGui::Text("Time acquiring read locks: %.5f seconds", ProfileGetTime("Read Lock Time"));
-			ImGui::Text("Time acquiring write locks: %.5f seconds", ProfileGetTime("Write Lock Time"));
-			ImGui::Unindent();
+			if (ImGui::BeginGroupSplitter("Global"))
+			{
+				ImGui::Text("Time acquiring read locks: %.5f seconds", ProfileGetTime("Read Lock Time"));
+				ImGui::Text("Time acquiring write locks: %.5f seconds", ProfileGetTime("Write Lock Time"));
+				ImGui::EndGroupSplitter();
+			}
 		}
+
+		ImGui::End();
+	}
+
+	void RenderMemory()
+	{
+		if (!showMemoryWindow)
+			return;
+
+		if (ImGui::Begin("Memory", &showMemoryWindow))
+		{
+			if (ImGui::BeginGroupSplitter("Per Frame"))
+			{
+				int64_t allocCount = ProfileGetDeltaValue("Alloc Count");
+				int64_t freeCount = ProfileGetDeltaValue("Free Count");
+				int64_t byteCount = ProfileGetDeltaValue("Byte Count");
+				double allocTime = ProfileGetDeltaTime("Time Spent Allocating");
+				double freeTime = ProfileGetDeltaTime("Time Spent Freeing");
+
+				ImGui::Text("Allocs: %lld", ProfileGetDeltaValue("Alloc Count"));
+				ImGui::Text("Frees: %lld", ProfileGetDeltaValue("Free Count"));
+				ImGui::Text("Bytes: %.3f MB", (double)ProfileGetDeltaValue("Byte Count") / 1024 / 1024);
+				ImGui::Spacing();
+				ImGui::Text("Time spent allocating: %.5f seconds", ProfileGetDeltaTime("Time Spent Allocating"));
+				ImGui::Text("Time spent freeing: %.5f seconds", ProfileGetDeltaTime("Time Spent Freeing"));
+			}
+
+			if (ImGui::BeginGroupSplitter("Global"))
+			{
+				int64_t allocCount = ProfileGetValue("Alloc Count");
+				int64_t freeCount = ProfileGetValue("Free Count");
+
+				ImGui::Text("Allocs: %lld", allocCount);
+				ImGui::Text("Frees: %lld", freeCount);
+				ImGui::Text("Bytes: %.3f MB", (double)ProfileGetValue("Byte Count") / 1024 / 1024);
+				ImGui::Spacing();
+				ImGui::Text("Time spent allocating: %.5f seconds", ProfileGetTime("Time Spent Allocating"));
+				ImGui::Text("Time spent freeing: %.5f seconds", ProfileGetTime("Time Spent Freeing"));
+				ImGui::Spacing();
+				ImGui::Text("Active allocations: %lld", allocCount - freeCount);
+			}
+		}
+
 		ImGui::End();
 	}
 
@@ -213,76 +260,48 @@ namespace ui
 		if (!showTESFormWindow)
 			return;
 
-		char tempBuf1[256];
 		if (ImGui::Begin("TESForm Cache", &showTESFormWindow))
 		{
 			ImGui::Checkbox("Enable Cache", &opt::EnableCache);
 
+			if (ImGui::BeginGroupSplitter("Per Frame"))
 			{
-				ImGui::Text("Per Frame");
-				ImGui::Separator();
-				ImGui::Indent();
-
 				int64_t cacheLookups = ProfileGetDeltaValue("Cache Lookups");
 				int64_t cacheMisses = ProfileGetDeltaValue("Cache Misses");
 				int64_t nullFetches = ProfileGetDeltaValue("Null Fetches");
 
-				ImGui::Text("Lookups: %s", format_commas(cacheLookups, tempBuf1));
-				ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf1));
-				ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf1));
+				char tempBuf[256];
+				ImGui::Text("Lookups: %s", format_commas(cacheLookups, tempBuf));
+				ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf));
+				ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf));
 				ImGui::Spacing();
-				ImGui::Text("Bitmap nullptr fetches: %s (%.2f%%)", format_commas(nullFetches, tempBuf1), ((double)nullFetches / (double)cacheLookups) * 100);
+				ImGui::Text("Bitmap nullptr fetches: %s (%.2f%%)", format_commas(nullFetches, tempBuf), ((double)nullFetches / (double)cacheLookups) * 100);
 				ImGui::Spacing();
 				ImGui::Text("Update time: %.5f seconds", ProfileGetDeltaTime("Cache Update Time"));
 				ImGui::Text("Fetch time: %.5f seconds", ProfileGetDeltaTime("Cache Fetch Time"));
-				ImGui::Unindent();
+				ImGui::EndGroupSplitter();
 			}
 
+			if (ImGui::BeginGroupSplitter("Global"))
 			{
-				ImGui::Spacing();
-				ImGui::Text("Global");
-				ImGui::Separator();
-				ImGui::Indent();
-
 				int64_t cacheLookups = ProfileGetValue("Cache Lookups");
 				int64_t cacheMisses = ProfileGetValue("Cache Misses");
 				int64_t nullFetches = ProfileGetValue("Null Fetches");
 
-				ImGui::Text("Lookups: %s", format_commas(cacheLookups, tempBuf1));
-				ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf1));
-				ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf1));
+				char tempBuf[256];
+				ImGui::Text("Lookups: %s", format_commas(cacheLookups, tempBuf));
+				ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf));
+				ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf));
 				ImGui::Spacing();
-				ImGui::Text("Bitmap nullptr fetches: %s (%.2f%%)", format_commas(nullFetches, tempBuf1), ((double)nullFetches / (double)cacheLookups) * 100);
+				ImGui::Text("Bitmap nullptr fetches: %s (%.2f%%)", format_commas(nullFetches, tempBuf), ((double)nullFetches / (double)cacheLookups) * 100);
 				ImGui::Spacing();
 				ImGui::Text("Update time: %.5f seconds", ProfileGetTime("Cache Update Time"));
 				ImGui::Text("Fetch time: %.5f seconds", ProfileGetTime("Cache Fetch Time"));
-				ImGui::Unindent();
+				ImGui::EndGroupSplitter();
 			}
 		}
-		ImGui::End();
-	}
 
-	void RenderMemory()
-	{
-		/*
-		ImGui::Begin("Memory", &show_another_window);
-		ImGui::Text("Allocs: %lld", tempAllocCount);
-		ImGui::Text("Frees: %lld", tempFreeCount);
-		ImGui::Text("Bytes: %.3f MB", (double)tempByteCount / 1024 / 1024);
-		ImGui::Spacing();
-		ImGui::Spacing();
-		ImGui::Text("Frame alloc delta: %lld", tempAllocCount - lastFrameAlloc);
-		ImGui::Text("Frame free delta: %lld", tempFreeCount - lastFrameFree);
-		ImGui::Text("Frame byte delta: %.3f MB", (double)(tempByteCount - lastFrameByte) / 1024 / 1024);
-		ImGui::Spacing();
-		ImGui::Spacing();
-		ImGui::Text("Active allocations: %lld", tempAllocCount - tempFreeCount);
-		ImGui::Spacing();
-		ImGui::Spacing();
-		ImGui::Text("Time spent allocating memory: %.5f seconds", (double)timeSpentAllocating / ticksPerSecond.QuadPart);
-		ImGui::Text("Time spent freeing memory: %.5f seconds", (double)timeSpentFreeing / ticksPerSecond.QuadPart);
 		ImGui::End();
-		*/
 	}
 }
 

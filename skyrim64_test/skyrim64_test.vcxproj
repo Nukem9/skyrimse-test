@@ -104,6 +104,7 @@
     <ClInclude Include="imgui\stb_rect_pack.h" />
     <ClInclude Include="imgui\stb_textedit.h" />
     <ClInclude Include="imgui\stb_truetype.h" />
+    <ClInclude Include="src\ui\imgui_ext.h" />
     <ClInclude Include="src\ui\imgui_impl_dx11.h" />
     <ClInclude Include="src\patches\TES\MemoryManager.h" />
     <ClInclude Include="src\patches\TES\BSReadWriteLock.h" />
@@ -159,6 +160,7 @@
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\ui\imgui_ext.cpp" />
     <ClCompile Include="src\ui\imgui_impl_dx11.cpp" />
     <ClCompile Include="src\patches\TES\MemoryManager.cpp" />
     <ClCompile Include="src\patches\TES\BSReadWriteLock.cpp" />

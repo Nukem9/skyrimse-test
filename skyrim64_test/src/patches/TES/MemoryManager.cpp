@@ -1,12 +1,5 @@
 #include "../../stdafx.h"
 
-__int64 allocCount = 0;
-__int64 byteCount = 0;
-__int64 freeCount = 0;
-
-__int64 timeSpentAllocating = 0;
-__int64 timeSpentFreeing = 0;
-
 //
 // Kill the original heap allocations
 //

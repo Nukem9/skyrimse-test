@@ -14,8 +14,8 @@ namespace ui
 	void RenderMenubar();
 	void RenderFramerate();
 	void RenderSynchronization();
-	void RenderTESFormCache();
 	void RenderMemory();
+	void RenderTESFormCache();
 
 	namespace log
 	{
