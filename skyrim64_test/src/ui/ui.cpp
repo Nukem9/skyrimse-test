@@ -4,7 +4,7 @@
 
 namespace ui::opt
 {
-    bool EnableCache;
+    bool EnableCache = true;
 }
 
 namespace ui
@@ -13,6 +13,7 @@ namespace ui
     bool showTESFormWindow;
     bool showLockWindow;
 	bool showMemoryWindow;
+	bool showLogWindow;
 
     char *format_commas(int64_t n, char *out)
     {
@@ -116,7 +117,8 @@ namespace ui
 			RenderTESFormCache();
 			RenderMemory();
 
-			log::Draw();
+			if (showLogWindow)
+				log::Draw();
 		}
         ImGui::Render();
     }
@@ -143,18 +145,11 @@ namespace ui
 
 		if (ImGui::BeginMenu("Windows"))
 		{
-			if (ImGui::MenuItem("Framerate"))
-				showFPSWindow = true;
-
-			if (ImGui::MenuItem("Synchronization"))
-				showLockWindow = true;
-
-			if (ImGui::MenuItem("Memory"))
-				showMemoryWindow = true;
-
-			if (ImGui::MenuItem("TESForm Cache"))
-				showTESFormWindow = true;
-
+			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
+			ImGui::MenuItem("Framerate", nullptr, &showFPSWindow);
+			ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
+			ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
+			ImGui::MenuItem("TESForm Cache", nullptr, &showTESFormWindow);
 			ImGui::EndMenu();
 		}
 
