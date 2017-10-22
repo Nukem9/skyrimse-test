@@ -1,62 +1,32 @@
 #include "../../stdafx.h"
 
 //
-// Kill the original heap allocations
-//
-LPVOID WINAPI hk_VirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect)
-{
-	// Kill MemoryHeap
-	static PVOID tracker = nullptr;
-
-	if ((dwSize == 0x80000000 || dwSize == 0x20000000) || (lpAddress && lpAddress == tracker))
-	{
-		if (!tracker)
-			tracker = VirtualAlloc(nullptr, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-
-		return tracker;
-	}
-
-	// Kill BSSmallBlockAllocator
-	if (dwSize > (900 * 1024 * 1024))
-		return nullptr;
-
-	// Kill hkMemoryAllocator
-	if (dwSize > (500 * 1024 * 1024))
-	{
-		*(DWORD *)((g_ModuleBase + 0x2FC4090 + 8) + 0xB8) = 0x40000;
-		dwSize = 0x40000 + 0x40000;
-	}
-
-	return VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
-}
-
-//
 // VS2015 CRT hijacked functions
 //
 void *__fastcall hk_calloc(size_t Count, size_t Size)
 {
 	// The allocated memory is always zeroed
-	return Scaleform_HeapAlloc(nullptr, Count * Size, 0, false);
+	return MemoryManager_Alloc(nullptr, Count * Size, 0, false);
 }
 
 void *__fastcall hk_malloc(size_t Size)
 {
-	return Scaleform_HeapAlloc(nullptr, Size, 0, false);
+	return MemoryManager_Alloc(nullptr, Size, 0, false);
 }
 
 void *__fastcall hk_aligned_malloc(size_t Size, size_t Alignment)
 {
-	return Scaleform_HeapAlloc(nullptr, Size, (int)Alignment, true);
+	return MemoryManager_Alloc(nullptr, Size, (int)Alignment, true);
 }
 
 void __fastcall hk_free(void *Block)
 {
-	return Scaleform_HeapFree(nullptr, Block, false);
+	return MemoryManager_Free(nullptr, Block, false);
 }
 
 void __fastcall hk_aligned_free(void *Block)
 {
-	return Scaleform_HeapFree(nullptr, Block, true);
+	return MemoryManager_Free(nullptr, Block, true);
 }
 
 size_t __fastcall hk_msize(void *Block)
@@ -67,7 +37,7 @@ size_t __fastcall hk_msize(void *Block)
 //
 // Internal engine heap allocator backed by VirtualAlloc()
 //
-void *Scaleform_HeapAlloc(void *Heap, size_t Size, unsigned int Alignment, bool Aligned)
+void *MemoryManager_Alloc(void *Heap, size_t Size, unsigned int Alignment, bool Aligned)
 {
 	ProfileCounterInc("Alloc Count");
 	ProfileCounterAdd("Byte Count", Size);
@@ -112,7 +82,7 @@ void *Scaleform_HeapAlloc(void *Heap, size_t Size, unsigned int Alignment, bool 
 	return memset(ptr, 0, Size);
 }
 
-void Scaleform_HeapFree(void *Heap, void *Memory, bool Aligned)
+void MemoryManager_Free(void *Heap, void *Memory, bool Aligned)
 {
 	ProfileCounterInc("Free Count");
 	ProfileTimer("Time Spent Freeing");
@@ -129,8 +99,6 @@ void PatchMemory()
 	option = true;  je_mallctl("background_thread", nullptr, nullptr, &option, sizeof(bool));
 	option = false; je_mallctl("prof.active", nullptr, nullptr, &option, sizeof(bool));
 
-	PatchIAT(hk_VirtualAlloc, "kernel32.dll", "VirtualAlloc");
-
 	PatchIAT(hk_calloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc");
 	PatchIAT(hk_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc");
 	PatchIAT(hk_aligned_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc");
@@ -138,6 +106,11 @@ void PatchMemory()
 	PatchIAT(hk_aligned_free, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free");
 	PatchIAT(hk_msize, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize");
 
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xBE3E90), (PBYTE)&Scaleform_HeapAlloc, Detours::X64Option::USE_PUSH_RET);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xBE4190), (PBYTE)&Scaleform_HeapFree, Detours::X64Option::USE_PUSH_RET);
+	PatchMemory(g_ModuleBase + 0x59A090, (PBYTE)"\xC3", 1);// [3GB] MemoryManager - Default/Static/File heaps
+	PatchMemory(g_ModuleBase + 0x599CA0, (PBYTE)"\xC3", 1);// [1GB] BSSmallBlockAllocator
+	// [128MB] BSScaleformSysMemMapper is untouched due to complexity
+	// [512MB] hkMemoryAllocator is untouched due to complexity
+
+	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC008C0), (PBYTE)&MemoryManager_Alloc);
+	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC00BC0), (PBYTE)&MemoryManager_Free);
 }

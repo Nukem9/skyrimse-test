@@ -94,9 +94,9 @@ void ApplyPatches()
     PatchDInput();
     PatchD3D11();
 	PatchSteam();
-    //PatchAchievements();
+    PatchAchievements();
     PatchSettings();
-    //PatchMemory();
+    PatchMemory();
     PatchLocks();
     PatchTESForm();
     PatchBSThread();
