@@ -3,7 +3,7 @@
 #include <array>
 #include <unordered_map>
 
-#define PROFILER_ENABLED
+//#define PROFILER_ENABLED
 
 #ifdef PROFILER_ENABLED
 #define WTFTEST(x) x
@@ -29,8 +29,10 @@
 #define ProfileTimer(Name)
 
 #define ProfileGetValue(Name)			(0)
+#define ProfileGetDeltaValue(Name)		(0)
 //#define ProfileGetDouble(Name)			(0.0)
 #define ProfileGetTime(Name)			(0.0)
+#define ProfileGetDeltaTime(Name)		(0.0)
 #endif
 
 #ifdef PROFILER_ENABLED

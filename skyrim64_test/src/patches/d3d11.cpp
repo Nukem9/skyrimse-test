@@ -38,9 +38,9 @@ int TickDeltaIndex;
 
 HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval, UINT Flags)
 {
-	ui::Render();
+    ui::Render();
 
-	// FPS calculation code
+    // FPS calculation code
     LARGE_INTEGER ticksPerSecond;
     QueryPerformanceFrequency(&ticksPerSecond);
 
@@ -182,21 +182,22 @@ bool StartsWith(const char *Buf, const char *Str)
 
 void MyLogFunc2(const char *Format, ...)
 {
-    va_list va;
-    va_start(va, Format);
-
     if (StartsWith(Format, " %s asking for random") || StartsWith(Format, " %s got a quest back") || StartsWith(Format, " %s failed to get"))
         return;
 
+    va_list va;
+    va_start(va, Format);
     logva(Format, va);
+    va_end(va);
 }
 
 int MyLogFunc(const char *Format, ...)
 {
     va_list va;
     va_start(va, Format);
-
     logva(Format, va);
+    va_end(va);
+
     return 0;
 }
 
