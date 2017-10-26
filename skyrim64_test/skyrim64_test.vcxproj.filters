@@ -101,6 +101,9 @@
     <ClInclude Include="src\ui\imgui_ext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphicsRenderTargetManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -275,6 +278,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\imgui_ext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphicsRenderTargetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

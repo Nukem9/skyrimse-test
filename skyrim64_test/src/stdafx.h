@@ -37,6 +37,7 @@
 #include "patches/TES/MemoryManager.h"
 #include "patches/TES/TESForm.h"
 #include "patches/TES/BSThread_Win32.h"
+#include "patches/TES/BSGraphicsRenderTargetManager.h"
 
 extern ULONG_PTR g_ModuleBase;
 extern ULONG_PTR g_ModuleSize;
