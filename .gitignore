@@ -40,5 +40,9 @@
 
 # VTune
 */*My Amplifier Results*/
+*/*My Inspector Results*/
+
+# Nsight
+*.nvuser
 
 !detours.lib
