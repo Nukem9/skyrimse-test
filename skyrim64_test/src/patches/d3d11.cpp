@@ -64,7 +64,7 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
     double averageFrametime = (TickSum / 32.0) / (double)ticksPerSecond.QuadPart;
     g_AverageFps            = 1.0 / averageFrametime;
 
-    if (frameTimeMs >= 100.0)
+    if (ui::opt::LogHitches && frameTimeMs >= 100.0)
         ui::log::Add("FRAME HITCH WARNING (%g ms)\n", frameTimeMs);
 
     return (This->*ptrPresent)(SyncInterval, Flags);

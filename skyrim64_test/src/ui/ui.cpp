@@ -5,6 +5,7 @@
 namespace ui::opt
 {
     bool EnableCache = true;
+	bool LogHitches = true;
 }
 
 namespace ui
@@ -155,6 +156,8 @@ namespace ui
 
         if (ImGui::BeginMenu("Game"))
         {
+			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
+
             bool g_BlockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
 
             if (ImGui::MenuItem("Block Input", nullptr, &g_BlockInput))

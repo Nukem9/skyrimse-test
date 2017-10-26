@@ -5,6 +5,7 @@ namespace ui
 	namespace opt
 	{
 		extern bool EnableCache;
+		extern bool LogHitches;
 	}
 
 	void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext);
