@@ -27,6 +27,7 @@ typedef struct tagTHREADNAME_INFO
 #define STATIC_CONSTRUCTOR(Id, Lambda) struct { static void Id(){ static_constructor<&Id>::c; Lambda(); } };
 
 intptr_t FindPattern(const std::vector<unsigned char>& data, intptr_t baseAddress, const unsigned char *lpPattern, const char *pszMask, intptr_t offset, intptr_t resultUsage);
+uintptr_t FindPatternSimple(uintptr_t StartAddress, uintptr_t MaxSize, const BYTE *ByteMask, const char *Mask);
 void PatchMemory(ULONG_PTR Address, PBYTE Data, SIZE_T Size);
 void SetThreadName(DWORD dwThreadID, const char *ThreadName);
 

@@ -56,6 +56,29 @@ intptr_t FindPattern(const std::vector<unsigned char>& data, intptr_t baseAddres
 	return 0;
 }
 
+uintptr_t FindPatternSimple(uintptr_t StartAddress, uintptr_t MaxSize, const BYTE *ByteMask, const char *Mask)
+{
+	auto compare = [](const BYTE *pData, const BYTE *bMask, const char *szMask)
+	{
+		for (; *szMask; ++szMask, ++pData, ++bMask)
+		{
+			if (*szMask == 'x' && *pData != *bMask)
+				return false;
+		}
+
+		return *szMask == '\0';
+	};
+
+	const size_t maskLen = strlen(Mask);
+	for (uintptr_t i = 0; i < MaxSize - maskLen; i++)
+	{
+		if (compare((BYTE *)(StartAddress + i), ByteMask, Mask))
+			return StartAddress + i;
+	}
+
+	return 0;
+}
+
 void PatchMemory(ULONG_PTR Address, PBYTE Data, SIZE_T Size)
 {
 	DWORD d = 0;

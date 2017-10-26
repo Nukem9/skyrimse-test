@@ -10,3 +10,5 @@ void PatchSettings();
 void PatchSteam();
 void PatchThreading();
 void PatchWindow();
+void ExperimentalPatchEmptyFunctions();
+void ExperimentalPatchMemInit();
