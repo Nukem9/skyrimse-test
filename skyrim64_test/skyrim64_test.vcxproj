@@ -90,6 +90,7 @@
   <ItemGroup>
     <ClInclude Include="src\patches\patches.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsRenderTargetManager.h" />
+    <ClInclude Include="src\patches\TES\BSShaderManager.h" />
     <ClInclude Include="src\patches\TES\BSThread_Win32.h" />
     <ClInclude Include="src\patches\TES\BSTScatterTable.h" />
     <ClInclude Include="src\profiler_internal.h" />
