@@ -1,16 +1,97 @@
 #pragma once
 
+#pragma pack(push, 8)
+struct BSConstantBufferInfo
+{
+	ID3D11Buffer *m_Buffer;	// Selected from pool in Load*ShaderFromFile()
+	void *m_Data;			// m_ConstantBufferData = DeviceContext->Map(m_ConstantBuffer)
+
+	// Based on shader load flags, these **CAN BE NULL**. At least one of the
+	// pointers is guaranteed to be non-null.
+};
+
+struct BSComputeBufferInfo
+{
+	ID3D11Buffer *m_Buffer;	// Always a nullptr
+	void *m_Data;			// Static buffer inside the exe .data section. Can be null.
+	uint32_t m_UnknownIndex;// Compute shaders do something special but I don't remember
+							// off the top of my head. Optional buffer index?
+};
+
+struct BSVertexShader
+{
+	uint32_t m_Unknown;					// Probably technique dword
+	ID3D11VertexShader *m_Shader;
+	uint32_t m_ShaderLength;			// Raw bytecode length
+	BSConstantBufferInfo CBuffer1;
+	BSConstantBufferInfo CBuffer2;
+	BSConstantBufferInfo CBuffer3;		// Most commonly used buffer
+	char _pad2[0x8];					// Probably flags qword
+	uint8_t m_ConstantOffsets[20];		// Actual offset is multiplied by 4
+	// Raw bytecode appended after this
+};
+static_assert(offsetof(BSVertexShader, m_Shader) == 0x8, "");
+static_assert(offsetof(BSVertexShader, m_ShaderLength) == 0x10, "");
+static_assert(offsetof(BSVertexShader, CBuffer1) == 0x18, "");
+static_assert(offsetof(BSVertexShader, CBuffer2) == 0x28, "");
+static_assert(offsetof(BSVertexShader, CBuffer3) == 0x38, "");
+static_assert(offsetof(BSVertexShader, m_ConstantOffsets) == 0x50, "");
+static_assert(sizeof(BSVertexShader) == 0x68, "");
+
+struct BSPixelShader
+{
+	uint32_t m_Unknown;					// Probably technique dword
+	ID3D11PixelShader *m_Shader;
+	BSConstantBufferInfo CBuffer1;
+	BSConstantBufferInfo CBuffer2;
+	BSConstantBufferInfo CBuffer3;		// Most commonly used buffer
+	uint8_t m_ConstantOffsets[64];		// Actual offset is multiplied by 4
+	// Bytecode is *not* appended
+};
+static_assert(offsetof(BSPixelShader, m_Shader) == 0x8, "");
+static_assert(offsetof(BSPixelShader, CBuffer1) == 0x10, "");
+static_assert(offsetof(BSPixelShader, CBuffer2) == 0x20, "");
+static_assert(offsetof(BSPixelShader, CBuffer3) == 0x30, "");
+static_assert(offsetof(BSPixelShader, m_ConstantOffsets) == 0x40, "");
+static_assert(sizeof(BSPixelShader) == 0x80, "");
+
+struct BSComputeShader
+{
+	char _pad0[0x8];
+	BSComputeBufferInfo CBuffer1;
+	char _pad0[0x8];
+	BSComputeBufferInfo CBuffer2;
+	char _pad0[0x8];
+	BSComputeBufferInfo CBuffer3;
+	ID3D11ComputeShader *m_Shader;
+	uint32_t m_Unknown;					// Probably technique dword
+	uint32_t m_ShaderLength;			// Raw bytecode length
+	uint8_t m_ConstantOffsets[32];		// Actual offset is multiplied by 4
+	// Raw bytecode appended after this
+};
+static_assert(offsetof(BSComputeShader, CBuffer1) == 0x8, "");
+static_assert(offsetof(BSComputeShader, CBuffer2) == 0x28, "");
+static_assert(offsetof(BSComputeShader, CBuffer3) == 0x48, "");
+static_assert(offsetof(BSComputeShader, m_Shader) == 0x60, "");
+static_assert(offsetof(BSComputeShader, m_Unknown) == 0x68, "");
+static_assert(offsetof(BSComputeShader, m_ShaderLength) == 0x6C, "");
+static_assert(offsetof(BSComputeShader, m_ConstantOffsets) == 0x70, "");
+static_assert(sizeof(BSComputeShader) == 0x90, "");
+#pragma pack(pop)
+
 //
-// All constants ripped directly from CreationKit.exe.
+// *** SHADER CONSTANTS ***
+//
+// Everything ripped directly from CreationKit.exe.
 //
 // GetString() returns the name used in the HLSL source code.
-// GetSize() is multiplied by sizeof(float4) to get the real buffer offset.
+// GetSize() is multiplied by sizeof(float) to get the real CBuffer size.
 //
-// NOTE: In the creation kit, there is a copy-paste error making each placeholder
-// say "BSLightingShaderX" instead of the real function name.
+// NOTE: In the creation kit, there is a copy-paste error with the placeholder
+// saying "BSLightingShaderX" instead of the real function name.
 //
 
-#define PLACEHOLDER "Add-your-constant-to-" __FUNCTION__
+#define BSSM_PLACEHOLDER "Add-your-constant-to-" __FUNCTION__
 
 // BSBloodSplatterShader
 // BSDistantTreeShader
@@ -34,7 +115,7 @@ namespace BSBloodSplatterShaderVertexConstants
 		case 2:return "Ctrl";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -61,7 +142,7 @@ namespace BSBloodSplatterShaderPixelConstants
 		case 0:return "Alpha";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -89,7 +170,7 @@ namespace BSDistantTreeShaderVertexConstants
 		case 8:return "IndexScale";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -123,7 +204,7 @@ namespace BSDistantTreeShaderPixelConstants
 		case 1:return "AmbientColor";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -157,7 +238,7 @@ namespace BSGrassShaderVertexConstants
 		case 14:return "padding";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -191,7 +272,7 @@ namespace BSGrassShaderPixelConstants
 {
 	static const char *GetString(int Index)
 	{
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -225,7 +306,7 @@ namespace BSParticleShaderVertexConstants
 		case 14:return "Wind";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -265,7 +346,7 @@ namespace BSParticleShaderPixelConstants
 		case 1:return "TextureSize";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -291,7 +372,7 @@ namespace BSSkyShaderVertexConstants
 		case 6:return "VParams";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -323,7 +404,7 @@ namespace BSSkyShaderPixelConstants
 		case 0:return "PParams";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -356,7 +437,7 @@ namespace BSXShaderVertexConstants
 		case 13:return "MatProj";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -402,7 +483,7 @@ namespace BSXShaderPixelConstants
 		case 17:return "LightingInfluence";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -454,7 +535,7 @@ namespace BSLightingShaderVertexConstants
 		case 14:return "Wind";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -520,7 +601,7 @@ namespace BSLightingShaderPixelConstants
 		case 35:return "CharacterLightParams";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -581,7 +662,7 @@ namespace BSUtilityShaderVertexConstants
 		case 8:return "Bones";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -623,7 +704,7 @@ namespace BSUtilityShaderPixelConstants
 		case 13:return "FocusShadowFadeParam";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -677,7 +758,7 @@ namespace BSWaterShaderVertexConstants
 		case 11:return "CellTexCoordOffset";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
@@ -737,7 +818,7 @@ namespace BSWaterShaderPixelConstants
 		case 24:return "VPOSOffset";
 		}
 
-		return PLACEHOLDER;
+		return BSSM_PLACEHOLDER;
 	}
 
 	static int GetSize(int Index, unsigned int Flags = 0)
