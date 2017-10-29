@@ -158,6 +158,7 @@
     <ClCompile Include="src\patches\experimental.cpp" />
     <ClCompile Include="src\patches\steam.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphicsRenderTargetManager.cpp" />
+    <ClCompile Include="src\patches\TES\BSShaderManager.cpp" />
     <ClCompile Include="src\patches\TES\BSThread_Win32.cpp" />
     <ClCompile Include="src\profiler.cpp" />
     <ClCompile Include="src\typeinfo\hk_typeinfo.cpp" />

@@ -1,5 +1,13 @@
 #pragma once
 
+#define CONSTANT_BUFFER_PER_GEOMETRY  0
+#define CONSTANT_BUFFER_PER_MATERIAL  1
+#define CONSTANT_BUFFER_PER_TECHNIQUE 2
+
+#define SHADER_TYPE_VERTEX 0
+#define SHADER_TYPE_PIXEL 1
+#define SHADER_TYPE_COMPUTE 2
+
 #pragma pack(push, 8)
 struct BSConstantBufferInfo
 {
@@ -20,38 +28,40 @@ struct BSComputeBufferInfo
 
 struct BSVertexShader
 {
-	uint32_t m_Unknown;					// Probably technique dword
+	uint32_t m_Unknown;					// Probably technique index
 	ID3D11VertexShader *m_Shader;
 	uint32_t m_ShaderLength;			// Raw bytecode length
-	BSConstantBufferInfo CBuffer1;
-	BSConstantBufferInfo CBuffer2;
-	BSConstantBufferInfo CBuffer3;		// Most commonly used buffer
-	char _pad2[0x8];					// Probably flags qword
+	BSConstantBufferInfo m_PerGeometry;
+	BSConstantBufferInfo m_PerMaterial;
+	BSConstantBufferInfo m_PerTechnique;
+	uint64_t m_ShaderInputFlags;		// Flags for VSMain() inputs
 	uint8_t m_ConstantOffsets[20];		// Actual offset is multiplied by 4
 	// Raw bytecode appended after this
 };
+
 static_assert(offsetof(BSVertexShader, m_Shader) == 0x8, "");
 static_assert(offsetof(BSVertexShader, m_ShaderLength) == 0x10, "");
-static_assert(offsetof(BSVertexShader, CBuffer1) == 0x18, "");
-static_assert(offsetof(BSVertexShader, CBuffer2) == 0x28, "");
-static_assert(offsetof(BSVertexShader, CBuffer3) == 0x38, "");
+static_assert(offsetof(BSVertexShader, m_PerGeometry) == 0x18, "");
+static_assert(offsetof(BSVertexShader, m_PerMaterial) == 0x28, "");
+static_assert(offsetof(BSVertexShader, m_PerTechnique) == 0x38, "");
+static_assert(offsetof(BSVertexShader, m_ShaderInputFlags) == 0x48, "");
 static_assert(offsetof(BSVertexShader, m_ConstantOffsets) == 0x50, "");
 static_assert(sizeof(BSVertexShader) == 0x68, "");
 
 struct BSPixelShader
 {
-	uint32_t m_Unknown;					// Probably technique dword
+	uint32_t m_Unknown;					// Probably technique index
 	ID3D11PixelShader *m_Shader;
-	BSConstantBufferInfo CBuffer1;
-	BSConstantBufferInfo CBuffer2;
-	BSConstantBufferInfo CBuffer3;		// Most commonly used buffer
+	BSConstantBufferInfo m_PerGeometry;
+	BSConstantBufferInfo m_PerMaterial;
+	BSConstantBufferInfo m_PerTechnique;
 	uint8_t m_ConstantOffsets[64];		// Actual offset is multiplied by 4
 	// Bytecode is *not* appended
 };
 static_assert(offsetof(BSPixelShader, m_Shader) == 0x8, "");
-static_assert(offsetof(BSPixelShader, CBuffer1) == 0x10, "");
-static_assert(offsetof(BSPixelShader, CBuffer2) == 0x20, "");
-static_assert(offsetof(BSPixelShader, CBuffer3) == 0x30, "");
+static_assert(offsetof(BSPixelShader, m_PerGeometry) == 0x10, "");
+static_assert(offsetof(BSPixelShader, m_PerMaterial) == 0x20, "");
+static_assert(offsetof(BSPixelShader, m_PerTechnique) == 0x30, "");
 static_assert(offsetof(BSPixelShader, m_ConstantOffsets) == 0x40, "");
 static_assert(sizeof(BSPixelShader) == 0x80, "");
 
@@ -59,9 +69,9 @@ struct BSComputeShader
 {
 	char _pad0[0x8];
 	BSComputeBufferInfo CBuffer1;
-	char _pad0[0x8];
+	char _pad1[0x8];
 	BSComputeBufferInfo CBuffer2;
-	char _pad0[0x8];
+	char _pad2[0x8];
 	BSComputeBufferInfo CBuffer3;
 	ID3D11ComputeShader *m_Shader;
 	uint32_t m_Unknown;					// Probably technique dword
