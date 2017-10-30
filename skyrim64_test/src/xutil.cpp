@@ -1,6 +1,4 @@
 #include "stdafx.h"
-#include <ittnotify.h>
-#pragma comment(lib, "libittnotify.lib")
 
 /**
 * @brief Scans a given chunk of data for the given pattern and mask.

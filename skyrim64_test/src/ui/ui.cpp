@@ -144,6 +144,20 @@ namespace ui
             ImGui::EndMenu();
         }
 
+		if (g_DllVTune && ImGui::BeginMenu("VTune"))
+		{
+			if (ImGui::MenuItem("Start Collection"))
+				__itt_resume();
+
+			if (ImGui::MenuItem("Stop Collection"))
+				__itt_pause();
+
+			if (ImGui::MenuItem("Detach"))
+				__itt_detach();
+
+			ImGui::EndMenu();
+		}
+
         if (ImGui::BeginMenu("Windows"))
         {
             ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);

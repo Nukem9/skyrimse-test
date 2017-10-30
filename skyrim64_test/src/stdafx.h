@@ -20,6 +20,9 @@
 #include "../detours/Detours.h"
 #pragma comment(lib, "detours/detours.lib")
 
+#include <ittnotify.h>
+#pragma comment(lib, "libittnotify.lib")
+
 #include "../imgui/imgui.h"
 #include "ui/ui.h"
 
@@ -38,6 +41,7 @@
 #include "patches/TES/TESForm.h"
 #include "patches/TES/BSThread_Win32.h"
 #include "patches/TES/BSGraphicsRenderTargetManager.h"
+#include "patches/TES/BSShaderManager.h"
 
 extern ULONG_PTR g_ModuleBase;
 extern ULONG_PTR g_ModuleSize;
