@@ -4,9 +4,12 @@
 #define CONSTANT_BUFFER_PER_MATERIAL  1
 #define CONSTANT_BUFFER_PER_TECHNIQUE 2
 
-#define SHADER_TYPE_VERTEX 0
-#define SHADER_TYPE_PIXEL 1
-#define SHADER_TYPE_COMPUTE 2
+enum class BSSM_SHADER_TYPE
+{
+	VERTEX,
+	PIXEL,
+	COMPUTE,
+};
 
 #pragma pack(push, 8)
 struct BSConstantBufferInfo
