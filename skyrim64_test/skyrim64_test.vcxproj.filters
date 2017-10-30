@@ -295,5 +295,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
+    <None Include="src\patches\TES\BSShaderConstants.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
