@@ -4,6 +4,8 @@
 #define CONSTANT_BUFFER_PER_MATERIAL  1
 #define CONSTANT_BUFFER_PER_TECHNIQUE 2
 
+#define DO_ALPHA_TEST_FLAG 0x10000
+
 enum class BSSM_SHADER_TYPE
 {
 	VERTEX,
@@ -31,7 +33,7 @@ struct BSComputeBufferInfo
 
 struct BSVertexShader
 {
-	uint32_t m_Unknown;					// Probably technique index
+	uint32_t m_TechniqueID;				// Bit flags
 	ID3D11VertexShader *m_Shader;
 	uint32_t m_ShaderLength;			// Raw bytecode length
 	BSConstantBufferInfo m_PerGeometry;
@@ -41,7 +43,7 @@ struct BSVertexShader
 	uint8_t m_ConstantOffsets[20];		// Actual offset is multiplied by 4
 	// Raw bytecode appended after this
 };
-
+static_assert(offsetof(BSVertexShader, m_TechniqueID) == 0x0, "");
 static_assert(offsetof(BSVertexShader, m_Shader) == 0x8, "");
 static_assert(offsetof(BSVertexShader, m_ShaderLength) == 0x10, "");
 static_assert(offsetof(BSVertexShader, m_PerGeometry) == 0x18, "");
@@ -53,14 +55,15 @@ static_assert(sizeof(BSVertexShader) == 0x68, "");
 
 struct BSPixelShader
 {
-	uint32_t m_Unknown;					// Probably technique index
+	uint32_t m_TechniqueID;				// Bit flags
 	ID3D11PixelShader *m_Shader;
 	BSConstantBufferInfo m_PerGeometry;
 	BSConstantBufferInfo m_PerMaterial;
 	BSConstantBufferInfo m_PerTechnique;
 	uint8_t m_ConstantOffsets[64];		// Actual offset is multiplied by 4
-	// Bytecode is *not* appended
+	// Bytecode is not appended
 };
+static_assert(offsetof(BSPixelShader, m_TechniqueID) == 0x0, "");
 static_assert(offsetof(BSPixelShader, m_Shader) == 0x8, "");
 static_assert(offsetof(BSPixelShader, m_PerGeometry) == 0x10, "");
 static_assert(offsetof(BSPixelShader, m_PerMaterial) == 0x20, "");
@@ -106,769 +109,1303 @@ static_assert(sizeof(BSComputeShader) == 0x90, "");
 
 #define BSSM_PLACEHOLDER "Add-your-constant-to-" __FUNCTION__
 
-// BSBloodSplatterShader
-// BSDistantTreeShader
-// BSGrassShader
-// BSParticleShader
-// BSSkyShader
-// BSEffectShader
-// BSLightingShader
-// BSUtilityShader
-// BSWaterShader
+// TODO: BSLightingShader needs samplers. Game/CK doesn't have them defined anywhere.
+// TODO: Constants need types defined in BSShaderConstants.inl
 
-#pragma region BloodSplatterShader
-namespace BSBloodSplatterShaderVertexConstants
+namespace BSBloodSplatterShader
 {
-	static const char *GetString(int Index)
+	namespace VSConstants
 	{
-		switch (Index)
+		static const char *GetString(int Index)
 		{
-		case 0:return "WorldViewProj";
-		case 1:return "LightLoc";
-		case 2:return "Ctrl";
+			switch (Index)
+			{
+			case 0:return "WorldViewProj";
+			case 1:return "LightLoc";
+			case 2:return "Ctrl";
+			}
+
+			return BSSM_PLACEHOLDER;
 		}
 
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		switch (Index)
+		static int GetSize(int Index, unsigned int Flags = 0)
 		{
-		case 0:
-			return 4;
-		case 1:
-		case 2:// This one needs to be checked
-			return 1;
-		}
+			switch (Index)
+			{
+			case 0:
+				return 4;
+			case 1:
+			case 2:
+				return 1;
+			}
 
-		return 0;
-	}
-}
-
-namespace BSBloodSplatterShaderPixelConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "Alpha";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		return Index == 0;
-	}
-}
-#pragma endregion
-
-#pragma region DistantTreeShader
-namespace BSDistantTreeShaderVertexConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "InstanceData";
-		case 1:return "WorldViewProj";
-		case 2:return "World";
-		case 3:return "PreviousWorld";
-		case 4:return "FogParam";
-		case 5:return "FogNearColor";
-		case 6:return "FogFarColor";
-		case 7:return "DiffuseDir";
-		case 8:return "IndexScale";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		switch (Index)
-		{
-		case 0:
-			return 150;
-		case 1:
-		case 2:
-		case 3:
-			return 4;
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-			return 1;
-		}
-
-		return 0;
-	}
-}
-
-namespace BSDistantTreeShaderPixelConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "DiffuseColor";
-		case 1:return "AmbientColor";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		return !Index || Index == 1;
-	}
-}
-#pragma endregion
-
-#pragma region GrassShader
-namespace BSGrassShaderVertexConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "WorldViewProj";
-		case 1:return "WorldView";
-		case 2:return "World";
-		case 3:return "PreviousWorld";
-		case 4:return "FogNearColor";
-		case 5:return "WindVector";
-		case 6:return "WindTimer";
-		case 7:return "DirLightDirection";
-		case 8:return "PreviousWindTimer";
-		case 9:return "DirLightColor";
-		case 10:return "AlphaParam1";
-		case 11:return "AmbientColor";
-		case 12:return "AlphaParam2";
-		case 13:return "ScaleMask";
-		case 14:return "padding";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		switch (Index)
-		{
-		case 0:
-		case 1:
-		case 2:
-		case 3:
-			return 4;
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
-		case 10:
-		case 11:
-		case 12:
-		case 13:
-		case 14:
-			return 1;
-		}
-
-		return 0;
-	}
-}
-
-namespace BSGrassShaderPixelConstants
-{
-	static const char *GetString(int Index)
-	{
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		return 0;
-	}
-}
-#pragma endregion
-
-#pragma region ParticleShader
-namespace BSParticleShaderVertexConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "WorldViewProj";
-		case 1:return "PrevWorldViewProj";
-		case 2:return "PrecipitationOcclusionWorldViewProj";
-		case 3:return "fVars0";
-		case 4:return "fVars1";
-		case 5:return "fVars2";
-		case 6:return "fVars3";
-		case 7:return "fVars4";
-		case 8:return "Color1";
-		case 9:return "Color2";
-		case 10:return "Color3";
-		case 11:return "Velocity";
-		case 12:return "Acceleration";
-		case 13:return "ScaleAdjust";
-		case 14:return "Wind";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		switch (Index)
-		{
-		case 0:
-		case 1:
-		case 2:
-			return 4;
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
-		case 10:
-		case 11:
-		case 12:
-		case 13:
-		case 14:
-			return 1;
-		}
-
-		return 0;
-	}
-}
-
-namespace BSParticleShaderPixelConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "ColorScale";
-		case 1:return "TextureSize";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		return !Index || Index == 1;
-	}
-}
-#pragma endregion
-
-#pragma region SkyShader
-namespace BSSkyShaderVertexConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "WorldViewProj";
-		case 1:return "World";
-		case 2:return "PreviousWorld";
-		case 3:return "BlendColor";
-		case 4:return "EyePosition";
-		case 5:return "TexCoordOff";
-		case 6:return "VParams";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		switch (Index)
-		{
-		case 0:
-		case 1:
-		case 2:
-			return 4;
-		case 3:
-			return 3;
-		case 4:
-		case 5:
-		case 6:
-			return 1;
-		}
-
-		return 0;
-	}
-}
-
-namespace BSSkyShaderPixelConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "PParams";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		return Index == 0;
-	}
-}
-#pragma endregion
-
-#pragma region EffectShader
-namespace BSXShaderVertexConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "World";
-		case 1:return "PreviousWorld";
-		case 2:return "Bones";
-		case 3:return "EyePosition";
-		case 4:return "FogParam";
-		case 5:return "FogNearColor";
-		case 6:return "FogFarColor";
-		case 7:return "FalloffData";
-		case 8:return "SoftMaterialVSParams";
-		case 9:return "TexcoordOffset";
-		case 10:return "TexcoordOffsetMembrane";
-		case 11:return "SubTexOffset";
-		case 12:return "PosAdjust";
-		case 13:return "MatProj";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		switch (Index)
-		{
-		case 0:
-		case 1:
-		case 13:
-			return 3;
-		case 3:
-		case 12:
-			return 1;
-		}
-
-		return 0;
-	}
-}
-
-namespace BSXShaderPixelConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "PropertyColor";
-		case 1:return "AlphaTestRef";
-		case 2:return "MembraneRimColor";
-		case 3:return "MembraneVars";
-		case 4:return "PLightPositionX";
-		case 5:return "PLightPositionY";
-		case 6:return "PLightPositionZ";
-		case 7:return "PLightingRadiusInverseSquared";
-		case 8:return "PLightColorR";
-		case 9:return "PLightColorG";
-		case 10:return "PLightColorB";
-		case 11:return "DLightColor";
-		case 12:return "VPOSOffset";
-		case 13:return "CameraData";
-		case 14:return "FilteringParam";
-		case 15:return "BaseColor";
-		case 16:return "BaseColorScale";
-		case 17:return "LightingInfluence";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		switch (Index)
-		{
-		case 0:
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
-		case 10:
-		case 11:
-		case 12:
-			return 1;
-		}
-
-		return 0;
-	}
-}
-#pragma endregion
-
-#pragma region LightingShader
-namespace BSLightingShaderVertexConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "WorldViewProj";
-		case 1:return "PrevWorldViewProj";
-		case 2:return "PrecipitationOcclusionWorldViewProj";
-		case 3:return "fVars0";
-		case 4:return "fVars1";
-		case 5:return "fVars2";
-		case 6:return "fVars3";
-		case 7:return "fVars4";
-		case 8:return "Color1";
-		case 9:return "Color2";
-		case 10:return "Color3";
-		case 11:return "Velocity";
-		case 12:return "Acceleration";
-		case 13:return "ScaleAdjust";
-		case 14:return "Wind";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		switch (Index)
-		{
-		case 0:
-		case 1:
-		case 6:
-			return 3;
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-			return 1;
-		}
-
-		return 0;
-	}
-}
-
-namespace BSLightingShaderPixelConstants
-{
-	static const char *GetString(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "NumLightNumShadowLight";
-		case 1:return "PointLightPosition";
-		case 2:return "PointLightColor";
-		case 3:return "DirLightDirection";
-		case 4:return "DirLightColor";
-		case 5:return "DirectionalAmbient";
-		case 6:return "AmbientSpecularTintAndFresnelPower";
-		case 7:return "MaterialData";
-		case 8:return "EmitColor";
-		case 9:return "AlphaTestRef";
-		case 10:return "ShadowLightMaskSelect";
-		case 11:return "VPOSOffset";
-		case 12:return "ProjectedUVParams";
-		case 13:return "ProjectedUVParams2";
-		case 14:return "ProjectedUVParams3";
-		case 15:return "SplitDistance";
-		case 16:return "SSRParams";
-		case 17:return "WorldMapOverlayParametersPS";
-		case 18:return "AmbientColor";
-		case 19:return "FogColor";
-		case 20:return "ColourOutputClamp";
-		case 21:return "EnvmapData";
-		case 22:return "ParallaxOccData";
-		case 23:return "TintColor";
-		case 24:return "LODTexParams";
-		case 25:return "SpecularColor";
-		case 26:return "SparkleParams";
-		case 27:return "MultiLayerParallaxData";
-		case 28:return "LightingEffectParams";
-		case 29:return "IBLParams";
-		case 30:return "LandscapeTexture1to4IsSnow";
-		case 31:return "LandscapeTexture5to6IsSnow";
-		case 32:return "LandscapeTexture1to4IsSpecPower";
-		case 33:return "LandscapeTexture5to6IsSpecPower";
-		case 34:return "SnowRimLightParameters";
-		case 35:return "CharacterLightParams";
-		}
-
-		return BSSM_PLACEHOLDER;
-	}
-
-	static int GetSize(int Index, unsigned int Flags = 0)
-	{
-		int v2 = 1;
-
-		if ((unsigned int)(Index - 1) <= 1)
-			v2 = (Flags >> 3) & 7;
-
-		switch (Index)
-		{
-		case 5:
-			return 3;
-		case 6:
-		case 16:
-		case 17:
-		case 18:
-		case 19:
-		case 20:
-		case 21:
-		case 22:
-		case 23:
-		case 24:
-		case 25:
-		case 26:
-		case 27:
-		case 28:
-		case 29:
-		case 30:
-		case 31:
-		case 32:
-		case 33:
-		case 34:
-		case 35:
 			return 0;
 		}
+	}
 
-		return v2;
+	namespace PSConstants
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "Alpha";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+				return 1;
+			}
+
+			return 0;
+		}
+	}
+
+	namespace Samplers
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "BloodColor";
+			case 1:return "BloodAlpha";
+			case 2:return "FlareColor";
+			case 3:return "FlareHDR";
+			default: __debugbreak();
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+	}
+
+	namespace Techniques
+	{
+		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
+		{
+			switch (Technique & ~DO_ALPHA_TEST_FLAG)
+			{
+			case 0: strcpy_s(Buffer, BufferSize, "Splatter"); break;
+			case 1: strcpy_s(Buffer, BufferSize, "Flare"); break;
+			default: __debugbreak();
+			}
+
+			if (Technique & DO_ALPHA_TEST_FLAG)
+				strcat_s(Buffer, BufferSize, " AlphaTest");
+		}
 	}
 }
-#pragma endregion
 
-#pragma region UtilityShader
-namespace BSUtilityShaderVertexConstants
+namespace BSDistantTreeShader
 {
-	static const char *GetString(int Index)
+	namespace VSConstants
 	{
-		switch (Index)
+		static const char *GetString(int Index)
 		{
-		case 0:return "World";
-		case 1:return "TexcoordOffset";
-		case 2:return "EyePos";
-		case 3:return "HighDetailRange";
-		case 4:return "ParabolaParam";
-		case 5:return "ShadowFadeParam";
-		case 6:return "TreeParams";
-		case 7:return "WaterParams";
-		case 8:return "Bones";
+			switch (Index)
+			{
+			case 0:return "InstanceData";
+			case 1:return "WorldViewProj";
+			case 2:return "World";
+			case 3:return "PreviousWorld";
+			case 4:return "FogParam";
+			case 5:return "FogNearColor";
+			case 6:return "FogFarColor";
+			case 7:return "DiffuseDir";
+			case 8:return "IndexScale";
+			}
+
+			return BSSM_PLACEHOLDER;
 		}
 
-		return BSSM_PLACEHOLDER;
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+				return 150;
+			case 1:
+			case 2:
+			case 3:
+				return 4;
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+				return 1;
+			}
+
+			return 0;
+		}
 	}
 
-	static int GetSize(int Index, unsigned int Flags = 0)
+	namespace PSConstants
 	{
-		switch (Index)
+		static const char *GetString(int Index)
 		{
-		case 0:
-			return 3;
-		case 2:
-		case 5:
-		case 6:
-		case 7:
-			return 1;
+			switch (Index)
+			{
+			case 0:return "DiffuseColor";
+			case 1:return "AmbientColor";
+			}
+
+			return BSSM_PLACEHOLDER;
 		}
 
-		return 0;
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+			case 1:
+				return 1;
+			}
+
+			return 0;
+		}
+	}
+
+	namespace Samplers
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "Diffuse";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+	}
+
+	namespace Techniques
+	{
+		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
+		{
+			switch (Technique & ~DO_ALPHA_TEST_FLAG)
+			{
+			case 0: strcpy_s(Buffer, BufferSize, "DistantTreeBlock"); break;
+			case 1: strcpy_s(Buffer, BufferSize, "Depth"); break;
+			default: __debugbreak();
+			}
+
+			if (Technique & DO_ALPHA_TEST_FLAG)
+				strcat_s(Buffer, BufferSize, " AlphaTest");
+		}
 	}
 }
 
-namespace BSUtilityShaderPixelConstants
+namespace BSGrassShader
 {
-	static const char *GetString(int Index)
+	namespace VSConstants
 	{
-		switch (Index)
+		static const char *GetString(int Index)
 		{
-		case 0:return "AlphaTestRef";
-		case 1:return "RefractionPower";
-		case 2:return "DebugColor";
-		case 3:return "BaseColor";
-		case 4:return "PropertyColor";
-		case 5:return "FocusShadowMapProj";
-		case 6:return "ShadowMapProj";
-		case 7:return "ShadowSampleParam";
-		case 8:return "ShadowLightParam";
-		case 9:return "ShadowFadeParam";
-		case 10:return "VPOSOffset";
-		case 11:return "EndSplitDistances";
-		case 12:return "StartSplitDistances";
-		case 13:return "FocusShadowFadeParam";
+			switch (Index)
+			{
+			case 0:return "WorldViewProj";
+			case 1:return "WorldView";
+			case 2:return "World";
+			case 3:return "PreviousWorld";
+			case 4:return "FogNearColor";
+			case 5:return "WindVector";
+			case 6:return "WindTimer";
+			case 7:return "DirLightDirection";
+			case 8:return "PreviousWindTimer";
+			case 9:return "DirLightColor";
+			case 10:return "AlphaParam1";
+			case 11:return "AmbientColor";
+			case 12:return "AlphaParam2";
+			case 13:return "ScaleMask";
+			case 14:return "padding";
+			}
+
+			return BSSM_PLACEHOLDER;
 		}
 
-		return BSSM_PLACEHOLDER;
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+				return 4;
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+			case 14:
+				return 1;
+			}
+
+			return 0;
+		}
 	}
 
-	static int GetSize(int Index, unsigned int Flags = 0)
+	namespace PSConstants
 	{
-		if (Index == 6 && Flags & (1u << 21))
-			return 9;
-
-		switch (Index)
+		static const char *GetString(int Index)
 		{
-		case 0:
-		case 2:
-		case 3:
-		case 4:
-		case 7:
-		case 8:
-		case 9:
-		case 10:
-		case 11:
-		case 12:
-		case 13:
-			return 1;
-		case 5:
-			return 12;
-		case 6:
-			return 4;
+			return BSSM_PLACEHOLDER;
 		}
 
-		return 0;
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			return 0;
+		}
+	}
+
+	namespace Samplers
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "BaseSampler";
+			case 1:return "ShadowMaskSampler";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+	}
+
+	namespace Techniques
+	{
+		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
+		{
+			switch (Technique & ~DO_ALPHA_TEST_FLAG)
+			{
+			case 0: strcpy_s(Buffer, BufferSize, "VertexL"); break;
+			case 1: strcpy_s(Buffer, BufferSize, "FlatL"); break;
+			case 2: strcpy_s(Buffer, BufferSize, "FlatL_Slope"); break;
+			case 3: strcpy_s(Buffer, BufferSize, "VertexL_Slope"); break;
+			case 4: strcpy_s(Buffer, BufferSize, "VertexL_Billboard"); break;
+			case 5: strcpy_s(Buffer, BufferSize, "FlatL_Billboard"); break;
+			case 6: strcpy_s(Buffer, BufferSize, "FlatL_Slope_Billboard"); break;
+			case 7: strcpy_s(Buffer, BufferSize, "VertexL_Slope_Billboard"); break;
+			case 8: strcpy_s(Buffer, BufferSize, "RenderDepth"); break;
+			default: __debugbreak();
+			}
+
+			if (Technique & DO_ALPHA_TEST_FLAG)
+				strcat_s(Buffer, BufferSize, " AlphaTest");
+		}
 	}
 }
-#pragma endregion
 
-#pragma region WaterShader
-namespace BSWaterShaderVertexConstants
+namespace BSParticleShader
 {
-	static const char *GetString(int Index)
+	namespace VSConstants
 	{
-		switch (Index)
+		static const char *GetString(int Index)
 		{
-		case 0:return "WorldViewProj";
-		case 1:return "World";
-		case 2:return "PreviousWorld";
-		case 3:return "QPosAdjust";
-		case 4:return "ObjectUV";
-		case 5:return "NormalsScroll0";
-		case 6:return "NormalsScroll1";
-		case 7:return "NormalsScale";
-		case 8:return "VSFogParam";
-		case 9:return "VSFogNearColor";
-		case 10:return "VSFogFarColor";
-		case 11:return "CellTexCoordOffset";
+			switch (Index)
+			{
+			case 0:return "WorldViewProj";
+			case 1:return "PrevWorldViewProj";
+			case 2:return "PrecipitationOcclusionWorldViewProj";
+			case 3:return "fVars0";
+			case 4:return "fVars1";
+			case 5:return "fVars2";
+			case 6:return "fVars3";
+			case 7:return "fVars4";
+			case 8:return "Color1";
+			case 9:return "Color2";
+			case 10:return "Color3";
+			case 11:return "Velocity";
+			case 12:return "Acceleration";
+			case 13:return "ScaleAdjust";
+			case 14:return "Wind";
+			}
+
+			return BSSM_PLACEHOLDER;
 		}
 
-		return BSSM_PLACEHOLDER;
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+			case 1:
+			case 2:
+				return 4;
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+			case 14:
+				return 1;
+			}
+
+			return 0;
+		}
 	}
 
-	static int GetSize(int Index, unsigned int Flags = 0)
+	namespace PSConstants
 	{
-		switch (Index)
+		static const char *GetString(int Index)
 		{
-		case 0:
-		case 1:
-		case 2:
-			return 4;
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
-		case 10:
-		case 11:
-			return 1;
+			switch (Index)
+			{
+			case 0:return "ColorScale";
+			case 1:return "TextureSize";
+			}
+
+			return BSSM_PLACEHOLDER;
 		}
 
-		return 0;
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			return !Index || Index == 1;
+		}
+	}
+
+	namespace Samplers
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "SourceTexture";
+			case 1:return "GrayscaleTexture";
+			case 2:return "PrecipitationOcclusionTexture";
+			case 3:return "UnderwaterMask";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+	}
+
+	namespace Techniques
+	{
+		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
+		{
+			switch (Technique)
+			{
+			case 0: strcpy_s(Buffer, BufferSize, "Particles"); break;
+			case 1: strcpy_s(Buffer, BufferSize, "ParticlesGryColor"); break;
+			case 2: strcpy_s(Buffer, BufferSize, "ParticlesGryAlpha"); break;
+			case 3: strcpy_s(Buffer, BufferSize, "ParticlesGryColorAlpha"); break;
+			case 4: strcpy_s(Buffer, BufferSize, "EnvCubeSnow"); break;
+			case 5: strcpy_s(Buffer, BufferSize, "EnvCubeRain"); break;
+			default: __debugbreak();
+			}
+		}
 	}
 }
 
-namespace BSWaterShaderPixelConstants
+namespace BSSkyShader
 {
-	static const char *GetString(int Index)
+	namespace VSConstants
 	{
-		switch (Index)
+		static const char *GetString(int Index)
 		{
-		case 0:return "TextureProj";
-		case 1:return "ShallowColor";
-		case 2:return "DeepColor";
-		case 3:return "ReflectionColor";
-		case 4:return "FresnelRI";
-		case 5:return "BlendRadius";
-		case 6:return "PosAdjust";
-		case 7:return "ReflectPlane";
-		case 8:return "CameraData";
-		case 9:return "ProjData";
-		case 10:return "VarAmounts";
-		case 11:return "FogParam";
-		case 12:return "FogNearColor";
-		case 13:return "FogFarColor";
-		case 14:return "SunDir";
-		case 15:return "SunColor";
-		case 16:return "NumLights";
-		case 17:return "LightPos";
-		case 18:return "LightColor";
-		case 19:return "WaterParams";
-		case 20:return "DepthControl";
-		case 21:return "SSRParams";
-		case 22:return "SSRParams2";
-		case 23:return "NormalsAmplitude";
-		case 24:return "VPOSOffset";
+			switch (Index)
+			{
+			case 0:return "WorldViewProj";
+			case 1:return "World";
+			case 2:return "PreviousWorld";
+			case 3:return "BlendColor";
+			case 4:return "EyePosition";
+			case 5:return "TexCoordOff";
+			case 6:return "VParams";
+			}
+
+			return BSSM_PLACEHOLDER;
 		}
 
-		return BSSM_PLACEHOLDER;
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+			case 1:
+			case 2:
+				return 4;
+			case 3:
+				return 3;
+			case 4:
+			case 5:
+			case 6:
+				return 1;
+			}
+
+			return 0;
+		}
 	}
 
-	static int GetSize(int Index, unsigned int Flags = 0)
+	namespace PSConstants
 	{
-		switch (Index)
+		static const char *GetString(int Index)
 		{
-		case 0:
-			return 4;
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
-		case 10:
-		case 11:
-		case 12:
-		case 13:
-		case 14:
-		case 15:
-		case 16:
-		case 19:
-		case 20:
-		case 21:
-		case 22:
-		case 23:
-		case 24:
-			return 1;
-		case 17:
-		case 18:
-			return 8;
+			switch (Index)
+			{
+			case 0:return "PParams";
+			}
+
+			return BSSM_PLACEHOLDER;
 		}
 
-		return 0;
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			return Index == 0;
+		}
+	}
+
+	namespace Samplers
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "BaseSampler";
+			case 1:return "BlendSampler";
+			case 2:return "NoiseGradSampler";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+	}
+
+	namespace Techniques
+	{
+		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
+		{
+			switch (Technique)
+			{
+			case 0: strcpy_s(Buffer, BufferSize, "SunOcclude"); break;
+			case 1: strcpy_s(Buffer, BufferSize, "SunGlare"); break;
+			case 2: strcpy_s(Buffer, BufferSize, "MoonAndStarsMask"); break;
+			case 3: strcpy_s(Buffer, BufferSize, "Stars"); break;
+			case 4: strcpy_s(Buffer, BufferSize, "Clouds"); break;
+			case 5: strcpy_s(Buffer, BufferSize, "CloudsLerp"); break;
+			case 6: strcpy_s(Buffer, BufferSize, "CloudsFade"); break;
+			case 7: strcpy_s(Buffer, BufferSize, "Texture"); break;
+			case 8: strcpy_s(Buffer, BufferSize, "Sky"); break;
+			default: __debugbreak();
+			}
+		}
 	}
 }
-#pragma endregion
+
+namespace BSXShader
+{
+	namespace VSConstants
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "World";
+			case 1:return "PreviousWorld";
+			case 2:return "Bones";
+			case 3:return "EyePosition";
+			case 4:return "FogParam";
+			case 5:return "FogNearColor";
+			case 6:return "FogFarColor";
+			case 7:return "FalloffData";
+			case 8:return "SoftMaterialVSParams";
+			case 9:return "TexcoordOffset";
+			case 10:return "TexcoordOffsetMembrane";
+			case 11:return "SubTexOffset";
+			case 12:return "PosAdjust";
+			case 13:return "MatProj";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+			case 1:
+			case 13:
+				return 3;
+			case 3:
+			case 12:
+				return 1;
+			}
+
+			return 0;
+		}
+	}
+
+	namespace PSConstants
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "PropertyColor";
+			case 1:return "AlphaTestRef";
+			case 2:return "MembraneRimColor";
+			case 3:return "MembraneVars";
+			case 4:return "PLightPositionX";
+			case 5:return "PLightPositionY";
+			case 6:return "PLightPositionZ";
+			case 7:return "PLightingRadiusInverseSquared";
+			case 8:return "PLightColorR";
+			case 9:return "PLightColorG";
+			case 10:return "PLightColorB";
+			case 11:return "DLightColor";
+			case 12:return "VPOSOffset";
+			case 13:return "CameraData";
+			case 14:return "FilteringParam";
+			case 15:return "BaseColor";
+			case 16:return "BaseColorScale";
+			case 17:return "LightingInfluence";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+			case 12:
+				return 1;
+			}
+
+			return 0;
+		}
+	}
+
+	namespace Samplers
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "BaseSampler";
+			case 1:return "NormalSampler";
+			case 2:return "NoiseSampler";
+			case 3:return "DepthSampler";
+			case 4:return "GrayscaleSampler";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+	}
+
+	namespace Techniques
+	{
+		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
+		{
+			LONG bits = Technique;
+
+			strcpy_s(Buffer, BufferSize, "");
+
+			if (Technique & 0x1)
+				strcat_s(Buffer, BufferSize, "Vc ");
+			if (Technique & 0x80)
+				strcat_s(Buffer, BufferSize, "I ");
+			if (Technique & 0x40)
+				strcat_s(Buffer, BufferSize, "Tex ");
+			if (Technique & 0x8)
+				strcat_s(Buffer, BufferSize, "Sk ");
+			if (Technique & 0x10)
+				strcat_s(Buffer, BufferSize, "N ");
+			if (Technique & 0x20)
+				strcat_s(Buffer, BufferSize, "BT ");
+			if (_bittest(&bits, 8))
+				strcat_s(Buffer, BufferSize, "Fo ");
+			if (_bittest(&bits, 10))
+				strcat_s(Buffer, BufferSize, "Ab ");
+			if (_bittest(&bits, 11))
+				strcat_s(Buffer, BufferSize, "Mb ");
+			if (_bittest(&bits, 12))
+				strcat_s(Buffer, BufferSize, "Ptcl ");
+			if (_bittest(&bits, 13))
+				strcat_s(Buffer, BufferSize, "Sptcl ");
+			if (_bittest(&bits, 14))
+				strcat_s(Buffer, BufferSize, "Blood ");
+			if (_bittest(&bits, 15))
+				strcat_s(Buffer, BufferSize, "Mem ");
+			if (_bittest(&bits, 16))
+				strcat_s(Buffer, BufferSize, "Lit ");
+			if (_bittest(&bits, 17))
+				strcat_s(Buffer, BufferSize, "Projuv ");
+			if (_bittest(&bits, 18))
+				strcat_s(Buffer, BufferSize, "Soft ");
+
+			if ((Technique & 0x180000) == 0x180000)
+				strcat_s(Buffer, BufferSize, "Grayca ");
+			else if (_bittest(&bits, 19))
+				strcat_s(Buffer, BufferSize, "Grayc ");
+			else if (_bittest(&bits, 20))
+				strcat_s(Buffer, BufferSize, "Graya ");
+
+			if (_bittest(&bits, 21))
+				strcat_s(Buffer, BufferSize, "Notexa ");
+			if (_bittest(&bits, 22))
+				strcat_s(Buffer, BufferSize, "Mbdecal ");
+			if (_bittest(&bits, 23))
+				strcat_s(Buffer, BufferSize, "At ");
+			if (_bittest(&bits, 24))
+				strcat_s(Buffer, BufferSize, "Sky ");
+			if (_bittest(&bits, 26))
+				strcat_s(Buffer, BufferSize, "Opaque ");
+
+			// Remove the trailing space
+			size_t len = strlen(Buffer);
+
+			if (len > 0)
+				Buffer[len - 1] = '\0';
+		}
+	}
+}
+
+namespace BSLightingShader
+{
+	namespace VSConstants
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "WorldViewProj";
+			case 1:return "PrevWorldViewProj";
+			case 2:return "PrecipitationOcclusionWorldViewProj";
+			case 3:return "fVars0";
+			case 4:return "fVars1";
+			case 5:return "fVars2";
+			case 6:return "fVars3";
+			case 7:return "fVars4";
+			case 8:return "Color1";
+			case 9:return "Color2";
+			case 10:return "Color3";
+			case 11:return "Velocity";
+			case 12:return "Acceleration";
+			case 13:return "ScaleAdjust";
+			case 14:return "Wind";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+			case 1:
+			case 6:
+				return 3;
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+				return 1;
+			}
+
+			return 0;
+		}
+	}
+
+	namespace PSConstants
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "NumLightNumShadowLight";
+			case 1:return "PointLightPosition";
+			case 2:return "PointLightColor";
+			case 3:return "DirLightDirection";
+			case 4:return "DirLightColor";
+			case 5:return "DirectionalAmbient";
+			case 6:return "AmbientSpecularTintAndFresnelPower";
+			case 7:return "MaterialData";
+			case 8:return "EmitColor";
+			case 9:return "AlphaTestRef";
+			case 10:return "ShadowLightMaskSelect";
+			case 11:return "VPOSOffset";
+			case 12:return "ProjectedUVParams";
+			case 13:return "ProjectedUVParams2";
+			case 14:return "ProjectedUVParams3";
+			case 15:return "SplitDistance";
+			case 16:return "SSRParams";
+			case 17:return "WorldMapOverlayParametersPS";
+			case 18:return "AmbientColor";
+			case 19:return "FogColor";
+			case 20:return "ColourOutputClamp";
+			case 21:return "EnvmapData";
+			case 22:return "ParallaxOccData";
+			case 23:return "TintColor";
+			case 24:return "LODTexParams";
+			case 25:return "SpecularColor";
+			case 26:return "SparkleParams";
+			case 27:return "MultiLayerParallaxData";
+			case 28:return "LightingEffectParams";
+			case 29:return "IBLParams";
+			case 30:return "LandscapeTexture1to4IsSnow";
+			case 31:return "LandscapeTexture5to6IsSnow";
+			case 32:return "LandscapeTexture1to4IsSpecPower";
+			case 33:return "LandscapeTexture5to6IsSpecPower";
+			case 34:return "SnowRimLightParameters";
+			case 35:return "CharacterLightParams";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			int v2 = 1;
+
+			if ((unsigned int)(Index - 1) <= 1)
+				v2 = (Flags >> 3) & 7;
+
+			switch (Index)
+			{
+			case 5:
+				return 3;
+			case 6:
+			case 16:
+			case 17:
+			case 18:
+			case 19:
+			case 20:
+			case 21:
+			case 22:
+			case 23:
+			case 24:
+			case 25:
+			case 26:
+			case 27:
+			case 28:
+			case 29:
+			case 30:
+			case 31:
+			case 32:
+			case 33:
+			case 34:
+			case 35:
+				return 0;
+			}
+
+			return v2;
+		}
+	}
+
+	namespace Samplers
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			default: __debugbreak();
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+	}
+
+	namespace Techniques
+	{
+		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
+		{
+			LONG bits = Technique;
+
+			sprintf_s(Buffer, BufferSize, "%dSh%d ", (Technique >> 3) & 7, (Technique >> 6) & 7);
+			uint32_t v6 = (Technique >> 24) & 0x3F;
+
+			if (Technique & 0x1)
+				strcat_s(Buffer, BufferSize, "Vc ");
+			if (Technique & 0x2)
+				strcat_s(Buffer, BufferSize, "Sk ");
+			if (Technique & 0x4)
+				strcat_s(Buffer, BufferSize, "Msn ");
+			if (_bittest(&bits, 9))
+				strcat_s(Buffer, BufferSize, "Spc ");
+			if (_bittest(&bits, 10))
+				strcat_s(Buffer, BufferSize, "Sss ");
+			if (_bittest(&bits, 13))
+				strcat_s(Buffer, BufferSize, "Shd ");
+			if (_bittest(&bits, 14))
+				strcat_s(Buffer, BufferSize, "DfSh ");
+			if (_bittest(&bits, 11))
+				strcat_s(Buffer, BufferSize, "Rim ");
+			if (_bittest(&bits, 12))
+				strcat_s(Buffer, BufferSize, "Bk ");
+			if (Technique & 0x8000 && v6 != 6)
+				strcat_s(Buffer, BufferSize, "Projuv ");
+			if (_bittest(&bits, 17))
+				strcat_s(Buffer, BufferSize, "Aspc ");
+			if (_bittest(&bits, 18))
+				strcat_s(Buffer, BufferSize, "Wmap ");
+			if (_bittest(&bits, 20))
+				strcat_s(Buffer, BufferSize, "Atest ");
+			if (_bittest(&bits, 21))
+				strcat_s(Buffer, BufferSize, "Snow ");
+			if (_bittest(&bits, 19))
+				strcat_s(Buffer, BufferSize, "BaseSnow ");
+			if (Technique & 0x8000 && v6 == 6)
+				strcat_s(Buffer, BufferSize, "DwDecals ");
+			if (_bittest(&bits, 23))
+				strcat_s(Buffer, BufferSize, "Aam ");
+
+			switch (v6)
+			{
+			case 0:break;
+			case 1:strcat_s(Buffer, BufferSize, "Envmap "); break;
+			case 2:strcat_s(Buffer, BufferSize, "Glowmap "); break;
+			case 3:strcat_s(Buffer, BufferSize, "Parallax "); break;
+			case 4:strcat_s(Buffer, BufferSize, "Facegen "); break;
+			case 5:strcat_s(Buffer, BufferSize, "FacegenRGBTint "); break;
+			case 6:strcat_s(Buffer, BufferSize, "Hair "); break;
+			case 7:strcat_s(Buffer, BufferSize, "ParallaxOcc "); break;
+			case 8:strcat_s(Buffer, BufferSize, "MTLand "); break;
+			case 9:strcat_s(Buffer, BufferSize, "LODLand "); break;
+			// 10 is missing. Wtf?
+			case 11:strcat_s(Buffer, BufferSize, "MultiLayerParallax "); break;
+			case 12:strcat_s(Buffer, BufferSize, "Tree "); break;
+			case 13:strcat_s(Buffer, BufferSize, "LODObj "); break;
+			case 14:strcat_s(Buffer, BufferSize, "MultiIndexTriShapeSnow "); break;
+			case 15:strcat_s(Buffer, BufferSize, "LODObjHD "); break;
+			case 16:strcat_s(Buffer, BufferSize, "Eye "); break;
+			case 18:strcat_s(Buffer, BufferSize, "LODLandNoise "); break;
+			case 19:strcat_s(Buffer, BufferSize, "MTLandLODBlend "); break;
+			default:strcat_s(Buffer, BufferSize, "? "); break;
+			}
+
+			// Remove the trailing space
+			size_t len = strlen(Buffer);
+
+			if (len > 0)
+				Buffer[len - 1] = '\0';
+		}
+	}
+}
+
+namespace BSUtilityShader
+{
+	namespace VSConstants
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "World";
+			case 1:return "TexcoordOffset";
+			case 2:return "EyePos";
+			case 3:return "HighDetailRange";
+			case 4:return "ParabolaParam";
+			case 5:return "ShadowFadeParam";
+			case 6:return "TreeParams";
+			case 7:return "WaterParams";
+			case 8:return "Bones";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+				return 3;
+			case 2:
+			case 5:
+			case 6:
+			case 7:
+				return 1;
+			}
+
+			return 0;
+		}
+	}
+
+	namespace PSConstants
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "AlphaTestRef";
+			case 1:return "RefractionPower";
+			case 2:return "DebugColor";
+			case 3:return "BaseColor";
+			case 4:return "PropertyColor";
+			case 5:return "FocusShadowMapProj";
+			case 6:return "ShadowMapProj";
+			case 7:return "ShadowSampleParam";
+			case 8:return "ShadowLightParam";
+			case 9:return "ShadowFadeParam";
+			case 10:return "VPOSOffset";
+			case 11:return "EndSplitDistances";
+			case 12:return "StartSplitDistances";
+			case 13:return "FocusShadowFadeParam";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			if (Index == 6 && Flags & (1u << 21))
+				return 9;
+
+			switch (Index)
+			{
+			case 0:
+			case 2:
+			case 3:
+			case 4:
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+				return 1;
+			case 5:
+				return 12;
+			case 6:
+				return 4;
+			}
+
+			return 0;
+		}
+	}
+
+	namespace Samplers
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "BaseSampler";
+			case 1:return "NormalSampler";
+			case 2:return "DepthSampler";
+			case 3:return "ShadowMapSampler";
+			case 4:return "ShadowMapSamplerComp";
+			case 5:return "StencilSampler";
+			case 6:return "FocusShadowMapSamplerComp";
+			case 7:return "GrayscaleSampler";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+	}
+
+	namespace Techniques
+	{
+		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
+		{
+			LONG bits = Technique;
+
+			strcpy_s(Buffer, BufferSize, "");
+
+			if (Technique & 0x1)
+				strcat_s(Buffer, BufferSize, "Vc ");
+			if (Technique & 0x2)
+				strcat_s(Buffer, BufferSize, "T ");
+			if (Technique & 0x4)
+				strcat_s(Buffer, BufferSize, "Sk ");
+			if (Technique & 0x8)
+				strcat_s(Buffer, BufferSize, "N ");
+			if (Technique & 0x10)
+				strcat_s(Buffer, BufferSize, "BT ");
+			if (Technique & 0x20)
+				strcat_s(Buffer, BufferSize, "L ");
+			if (Technique & 0x80)
+				strcat_s(Buffer, BufferSize, "At ");
+			if (_bittest(&bits, 8))
+				strcat_s(Buffer, BufferSize, "Llod ");
+			if (Technique & 0x200)
+				strcat_s(Buffer, BufferSize, "Norm ");
+			if (_bittest(&bits, 10))
+				strcat_s(Buffer, BufferSize, "NFall ");
+			if (_bittest(&bits, 11))
+				strcat_s(Buffer, BufferSize, "NClamp ");
+			if (Technique & 0x1000)
+				strcat_s(Buffer, BufferSize, "NClear ");
+			if (_bittest(&bits, 13))
+				strcat_s(Buffer, BufferSize, "Depth ");
+			if (_bittest(&bits, 14))
+				strcat_s(Buffer, BufferSize, "Sm ");
+			if (Technique & 0x8000)
+				strcat_s(Buffer, BufferSize, "Smclamp ");
+			if (_bittest(&bits, 16))
+				strcat_s(Buffer, BufferSize, "Smpb ");
+			if (_bittest(&bits, 17))
+				strcat_s(Buffer, BufferSize, "DbgCol ");
+			if (_bittest(&bits, 18))
+				strcat_s(Buffer, BufferSize, "Pssm ");
+			if (_bittest(&bits, 19))
+				strcat_s(Buffer, BufferSize, "SilCol ");
+			if (_bittest(&bits, 20))
+				strcat_s(Buffer, BufferSize, "GryMsk ");
+			if (_bittest(&bits, 21))
+				strcat_s(Buffer, BufferSize, "Shdwmsk ");
+			if (_bittest(&bits, 22))
+				strcat_s(Buffer, BufferSize, "ShdwmskSpot ");
+			if (_bittest(&bits, 23))
+				strcat_s(Buffer, BufferSize, "ShdwmskPb ");
+			if (_bittest(&bits, 24))
+				strcat_s(Buffer, BufferSize, "ShdwmskDpb ");
+			if (_bittest(&bits, 25))
+				strcat_s(Buffer, BufferSize, "BaseTex ");
+			if (_bittest(&bits, 28))
+				strcat_s(Buffer, BufferSize, "FogOfWar ");
+			if ((Technique & 0x1200) == 0x1200)
+				strcat_s(Buffer, BufferSize, "Stencil ");
+			if (_bittest(&bits, 29u))
+				strcat_s(Buffer, BufferSize, "OpaqEffs ");
+			if (Technique & 0x8000)
+				strcat_s(Buffer, BufferSize, "OpqFGAlpha ");
+			if ((Technique & 0x14000) == 0x10000)
+				strcat_s(Buffer, BufferSize, "Aam ");
+
+			// Remove the trailing space
+			size_t len = strlen(Buffer);
+
+			if (len > 0)
+				Buffer[len - 1] = '\0';
+		}
+	}
+}
+
+namespace BSWaterShader
+{
+	namespace VSConstants
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "WorldViewProj";
+			case 1:return "World";
+			case 2:return "PreviousWorld";
+			case 3:return "QPosAdjust";
+			case 4:return "ObjectUV";
+			case 5:return "NormalsScroll0";
+			case 6:return "NormalsScroll1";
+			case 7:return "NormalsScale";
+			case 8:return "VSFogParam";
+			case 9:return "VSFogNearColor";
+			case 10:return "VSFogFarColor";
+			case 11:return "CellTexCoordOffset";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+			case 1:
+			case 2:
+				return 4;
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+				return 1;
+			}
+
+			return 0;
+		}
+	}
+
+	namespace PSConstants
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "TextureProj";
+			case 1:return "ShallowColor";
+			case 2:return "DeepColor";
+			case 3:return "ReflectionColor";
+			case 4:return "FresnelRI";
+			case 5:return "BlendRadius";
+			case 6:return "PosAdjust";
+			case 7:return "ReflectPlane";
+			case 8:return "CameraData";
+			case 9:return "ProjData";
+			case 10:return "VarAmounts";
+			case 11:return "FogParam";
+			case 12:return "FogNearColor";
+			case 13:return "FogFarColor";
+			case 14:return "SunDir";
+			case 15:return "SunColor";
+			case 16:return "NumLights";
+			case 17:return "LightPos";
+			case 18:return "LightColor";
+			case 19:return "WaterParams";
+			case 20:return "DepthControl";
+			case 21:return "SSRParams";
+			case 22:return "SSRParams2";
+			case 23:return "NormalsAmplitude";
+			case 24:return "VPOSOffset";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+
+		static int GetSize(int Index, unsigned int Flags = 0)
+		{
+			switch (Index)
+			{
+			case 0:
+				return 4;
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+			case 14:
+			case 15:
+			case 16:
+			case 19:
+			case 20:
+			case 21:
+			case 22:
+			case 23:
+			case 24:
+				return 1;
+			case 17:
+			case 18:
+				return 8;
+			}
+
+			return 0;
+		}
+	}
+
+	namespace Samplers
+	{
+		static const char *GetString(int Index)
+		{
+			switch (Index)
+			{
+			case 0:return "ReflectionSampler";
+			case 1:return "RefractionSampler";
+			case 2:return "DisplacementSampler";
+			case 3:return "CubeMapSampler";
+			case 4:return "Normals01Sampler";
+			case 5:return "Normals02Sampler";
+			case 6:return "Normals03Sampler";
+			case 7:return "DepthSampler";
+			case 8:return "FlowMapSampler";
+			case 9:return "FlowMapNormalsSampler";
+			case 10:return "SSReflectionSampler";
+			case 11:return "RawSSReflectionSampler";
+			}
+
+			return BSSM_PLACEHOLDER;
+		}
+	}
+
+	namespace Techniques
+	{
+		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
+		{
+			LONG bits = Technique;
+
+			strcpy_s(Buffer, BufferSize, "");
+
+			if (Technique & 0x1)
+				strcat_s(Buffer, BufferSize, "Vc ");
+			if (Technique & 0x2)
+				strcat_s(Buffer, BufferSize, "NTex ");
+			if (Technique & 0x80)
+				strcat_s(Buffer, BufferSize, "Va ");
+			if (Technique & 0x20)
+				strcat_s(Buffer, BufferSize, "Int ");
+			if (Technique & 0x40)
+				strcat_s(Buffer, BufferSize, "Disp ");
+			if (Technique & 4)
+			{
+				if (!_bittest(&bits, 8))
+					strcat_s(Buffer, BufferSize, "Refl ");
+				else
+					strcat_s(Buffer, BufferSize, "Cube ");
+			}
+			if (Technique & 0x8)
+				strcat_s(Buffer, BufferSize, "Refr ");
+			if (Technique & 0x10)
+				strcat_s(Buffer, BufferSize, "Dpth ");
+
+			switch ((Technique >> 11) & 0xF)
+			{
+			case 8:strcat_s(Buffer, BufferSize, "Underwater "); break;
+			case 9:strcat_s(Buffer, BufferSize, "LOD "); break;
+			case 10:strcat_s(Buffer, BufferSize, "Stencil "); break;
+			case 11:strcat_s(Buffer, BufferSize, "Simple "); break;
+
+			// Anything under 8 is actually an index (NUM_SPECULAR_LIGHTS)
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+				strcat_s(Buffer, BufferSize, "Specular ");
+				break;
+			}
+
+			// Remove the trailing space
+			size_t len = strlen(Buffer);
+
+			if (len > 0)
+				Buffer[len - 1] = '\0';
+		}
+	}
+}

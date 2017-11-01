@@ -8,19 +8,20 @@ struct RemapEntry
 	const char *Type;
 	int Group;
 	int Index;
+	const char *ParamTypeOverride;
 };
 
 const RemapEntry VertexEntries[] =
 {
 #define REMAP_VERTEX_UNUSED(ShaderType, GroupType)
-#define REMAP_VERTEX(ShaderType, GroupType, ParameterIndex) { ShaderType, GroupType, ParameterIndex },
+#define REMAP_VERTEX(ShaderType, GroupType, ParameterIndex, ParamType) { ShaderType, GroupType, ParameterIndex, ParamType },
 #include "BSShaderConstants.inl"
 };
 
 const RemapEntry PixelEntries[] =
 {
 #define REMAP_PIXEL_UNUSED(ShaderType, GroupType)
-#define REMAP_PIXEL(ShaderType, GroupType, ParameterIndex) { ShaderType, GroupType, ParameterIndex },
+#define REMAP_PIXEL(ShaderType, GroupType, ParameterIndex, ParamType) { ShaderType, GroupType, ParameterIndex, ParamType },
 #include "BSShaderConstants.inl"
 };
 
@@ -57,10 +58,29 @@ const RemapEntry *GetEntryForPixelShader(const char *Type, int ParamIndex)
 }
 
 const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, int ConstantIndex);
+void GetShaderTechniqueName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, char *Buffer, size_t BufferSize, uint32_t Technique);
 
 class ShaderDecoder
 {
+public:
+	~ShaderDecoder()
+	{
+		if (m_ShaderData)
+			delete[] m_ShaderData;
+	}
+
+	void SetShaderData(void *Buffer, size_t BufferSize)
+	{
+		m_ShaderData = new char[BufferSize];
+		m_ShaderDataLen = BufferSize;
+
+		memcpy(m_ShaderData, Buffer, BufferSize);
+	}
+
 protected:
+	void *m_ShaderData;
+	size_t m_ShaderDataLen;
+
 	char m_Type[256];
 	BSSM_SHADER_TYPE m_CodeType;
 
@@ -73,6 +93,8 @@ protected:
 
 	ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType)
 	{
+		m_ShaderData = nullptr;
+		m_ShaderDataLen = 0;
 		strcpy_s(m_Type, Type);
 		m_CodeType = CodeType;
 	}
@@ -132,18 +154,14 @@ public:
 	{
 		m_Shader = Shader;
 
+		// Guarantee that the folder exists
 		char buf[1024];
 		sprintf_s(buf, "C:\\myfolder\\%s\\", Type);
-		mkdir(buf);
-
-		sprintf_s(buf, "C:\\myfolder\\%s\\vs_%llX.txt", Type, Shader);
-		m_File = fopen(buf, "w");
+		_mkdir(buf);
 	}
 
 	~VertexShaderDecoder()
 	{
-		if (m_File)
-			fclose(m_File);
 	}
 
 	void DumpShaderInfo()
@@ -185,6 +203,32 @@ public:
 			}
 		}
 
+		char technique[1024];
+		GetShaderTechniqueName(m_Type, m_CodeType, technique, ARRAYSIZE(technique), m_Shader->m_TechniqueID);
+
+		for (int i = 0;; i++)
+		{
+			if (technique[i] == '\0')
+				break;
+
+			if (technique[i] == ' ')
+				technique[i] = '_';
+		}
+
+		char buf1[1024];
+		sprintf_s(buf1, "C:\\myfolder\\%s\\%s_%s_%X.vs.txt", m_Type, m_Type, technique, m_Shader->m_TechniqueID);
+
+		// Something went really wrong if the shader exists already
+		if (GetFileAttributesA(buf1) != INVALID_FILE_ATTRIBUTES)
+			__debugbreak();
+
+		m_File = fopen(buf1, "w");
+
+		fprintf(m_File, "// %s\n", m_Type);
+		fprintf(m_File, "// TechniqueID: 0x%X\n", m_Shader->m_TechniqueID);
+		fprintf(m_File, "// Input flags: 0x%llX\n//\n", m_Shader->m_ShaderInputFlags);
+		fprintf(m_File, "// Technique: %s\n\n", technique);
+
 		DumpCBuffer(&m_Shader->m_PerGeometry, geoIndexes, 0);// Constant buffer 0 : register(b0)
 		DumpCBuffer(&m_Shader->m_PerMaterial, matIndexes, 1);// Constant buffer 1 : register(b1)
 		DumpCBuffer(&m_Shader->m_PerTechnique, tecIndexes, 2);// Constant buffer 2 : register(b2)
@@ -193,14 +237,16 @@ public:
 		for (auto& entry : undefinedIndexes)
 			fprintf(m_File, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
 
+		fclose(m_File);
+
 		// Now write raw HLSL
 		char buf[1024];
-		sprintf_s(buf, "C:\\myfolder\\%s\\vs_%llX.hlsl", m_Type, m_Shader);
+		sprintf_s(buf, "C:\\myfolder\\%s\\%s_%s_%X.vs.hlsl", m_Type, m_Type, technique, m_Shader->m_TechniqueID);
 		FILE *f = fopen(buf, "wb");
 
-		if (f)
+		if (m_ShaderData && f)
 		{
-			fwrite((void *)((uintptr_t)m_Shader + sizeof(BSVertexShader)), 1, m_Shader->m_ShaderLength, f);
+			fwrite(m_ShaderData, 1, m_ShaderDataLen, f);
 			fclose(f);
 		}
 	}
@@ -217,28 +263,65 @@ private:
 		}
 
 		if (Buffer->m_Data)
-			fprintf(m_File, "// Static buffer: Unmapped\n");
+			fprintf(m_File, "// Unmapped\n");
 
 		fprintf(m_File, "cbuffer %s : register(%s)\n{\n", GetGroupName(GroupIndex), GetGroupRegister(GroupIndex));
 
 		// Don't print any variables if this buffer is undefined
 		if (Buffer->m_Buffer)
 		{
-			// Sort each variable by their offset in the buffer
+			// Sort each variable by offset
 			std::sort(Params.begin(), Params.end(),
 				[this](ParamIndexPair& a1, ParamIndexPair& a2)
 			{
 				return m_Shader->m_ConstantOffsets[a1.Index] < m_Shader->m_ConstantOffsets[a2.Index];
 			});
 
-			// Now dump it to the file
 			for (auto& entry : Params)
 			{
-				uint8_t cbOffset = m_Shader->m_ConstantOffsets[entry.Index];
-				int padding = max(40 - strlen(entry.Name), 0);
+				// Generate the variable and type name
+				char varName[256];
 
-				fprintf(m_File, "\tfloat4 %s;", entry.Name);
-				for (int i = 0; i < padding; i++) fprintf(m_File, " ");
+				if (entry.Remap->ParamTypeOverride)
+				{
+					int index;
+					if (sscanf_s(entry.Remap->ParamTypeOverride, "float4[%d]", &index) == 1)
+						sprintf_s(varName, "float4 %s[%d]", entry.Name, index);
+					else
+						sprintf_s(varName, "%s %s", entry.Remap->ParamTypeOverride, entry.Name);
+				}
+				else
+				{
+					// Undefined variable type; default to float4
+					sprintf_s(varName, "float4 %s", entry.Name);
+				}
+
+				// Convert cbOffset to packoffset(c0) or packoffset(c0.x) or packoffset(c0.y) or .... to enforce compiler
+				// buffer ordering
+				uint8_t cbOffset = m_Shader->m_ConstantOffsets[entry.Index];
+				char packOffset[64];
+
+				switch (cbOffset % 4)
+				{
+				case 0:sprintf_s(packOffset, "packoffset(c%d)", cbOffset / 4); break;  // Normal register on 16 byte boundary
+				case 1:sprintf_s(packOffset, "packoffset(c%d.y)", cbOffset / 4); break;// Requires swizzle index
+				case 2:sprintf_s(packOffset, "packoffset(c%d.z)", cbOffset / 4); break;// Requires swizzle index
+				case 3:sprintf_s(packOffset, "packoffset(c%d.w)", cbOffset / 4); break;// Requires swizzle index
+				default:__debugbreak(); break;
+				}
+
+				fprintf(m_File, "\t%s", varName);
+
+				// Add space alignment
+				for (int i = 45 - max(0, strlen(varName)); i > 0; i--)
+					fprintf(m_File, " ");
+
+				fprintf(m_File, ": %s;", packOffset);
+
+				// Add space alignment
+				for (int i = 20 - max(0, strlen(packOffset)); i > 0; i--)
+					fprintf(m_File, " ");
+
 				fprintf(m_File, "// @ %d - 0x%04X\n", cbOffset, cbOffset * 4);
 			}
 		}
@@ -260,18 +343,14 @@ public:
 	{
 		m_Shader = Shader;
 
+		// Guarantee that the folder exists
 		char buf[1024];
 		sprintf_s(buf, "C:\\myfolder\\%s\\", Type);
-		mkdir(buf);
-
-		sprintf_s(buf, "C:\\myfolder\\%s\\ps_%llX.txt", Type, Shader);
-		m_File = fopen(buf, "w");
+		_mkdir(buf);
 	}
 
 	~PixelShaderDecoder()
 	{
-		if (m_File)
-			fclose(m_File);
 	}
 
 	void DumpShaderInfo()
@@ -313,6 +392,31 @@ public:
 			}
 		}
 
+		char technique[1024];
+		GetShaderTechniqueName(m_Type, m_CodeType, technique, ARRAYSIZE(technique), m_Shader->m_TechniqueID);
+
+		for (int i = 0;; i++)
+		{
+			if (technique[i] == '\0')
+				break;
+
+			if (technique[i] == ' ')
+				technique[i] = '_';
+		}
+
+		char buf1[1024];
+		sprintf_s(buf1, "C:\\myfolder\\%s\\%s_%s_%X.ps.txt", m_Type, m_Type, technique, m_Shader->m_TechniqueID);
+
+		// Something went really wrong if the shader exists already
+		if (GetFileAttributesA(buf1) != INVALID_FILE_ATTRIBUTES)
+			__debugbreak();
+
+		m_File = fopen(buf1, "w");
+
+		fprintf(m_File, "// %s\n", m_Type);
+		fprintf(m_File, "// TechniqueID: 0x%X\n//\n", m_Shader->m_TechniqueID);
+		fprintf(m_File, "// Technique: %s\n\n", technique);
+
 		DumpCBuffer(&m_Shader->m_PerGeometry, geoIndexes, 0); // Constant buffer 0 : register(b0)
 		DumpCBuffer(&m_Shader->m_PerMaterial, matIndexes, 1); // Constant buffer 1 : register(b1)
 		DumpCBuffer(&m_Shader->m_PerTechnique, tecIndexes, 2);// Constant buffer 2 : register(b2)
@@ -320,6 +424,19 @@ public:
 		// Dump undefined variables
 		for (auto& entry : undefinedIndexes)
 			fprintf(m_File, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
+
+		fclose(m_File);
+
+		// Now write raw HLSL
+		char buf[1024];
+		sprintf_s(buf, "C:\\myfolder\\%s\\%s_%s_%X.ps.hlsl", m_Type, m_Type, technique, m_Shader->m_TechniqueID);
+		FILE *f = fopen(buf, "wb");
+
+		if (m_ShaderData && f)
+		{
+			fwrite(m_ShaderData, 1, m_ShaderDataLen, f);
+			fclose(f);
+		}
 	}
 
 private:
@@ -334,28 +451,65 @@ private:
 		}
 
 		if (Buffer->m_Data)
-			fprintf(m_File, "// Static buffer: Unmapped\n");
+			fprintf(m_File, "// Unmapped\n");
 
 		fprintf(m_File, "cbuffer %s : register(%s)\n{\n", GetGroupName(GroupIndex), GetGroupRegister(GroupIndex));
 
 		// Don't print any variables if this buffer is undefined
 		if (Buffer->m_Buffer)
 		{
-			// Sort each variable by their offset in the buffer
+			// Sort each variable by offset
 			std::sort(Params.begin(), Params.end(),
 				[this](ParamIndexPair& a1, ParamIndexPair& a2)
 			{
 				return m_Shader->m_ConstantOffsets[a1.Index] < m_Shader->m_ConstantOffsets[a2.Index];
 			});
 
-			// Now dump it to the file
 			for (auto& entry : Params)
 			{
-				uint8_t cbOffset = m_Shader->m_ConstantOffsets[entry.Index];
-				int padding = max(40 - strlen(entry.Name), 0);
+				// Generate the variable and type name
+				char varName[256];
 
-				fprintf(m_File, "\tfloat4 %s;", entry.Name);
-				for (int i = 0; i < padding; i++) fprintf(m_File, " ");
+				if (entry.Remap->ParamTypeOverride)
+				{
+					int index;
+					if (sscanf_s(entry.Remap->ParamTypeOverride, "float4[%d]", &index) == 1)
+						sprintf_s(varName, "float4 %s[%d]", entry.Name, index);
+					else
+						sprintf_s(varName, "%s %s", entry.Remap->ParamTypeOverride, entry.Name);
+				}
+				else
+				{
+					// Undefined variable type; default to float4
+					sprintf_s(varName, "float4 %s", entry.Name);
+				}
+
+				// Convert cbOffset to packoffset(c0) or packoffset(c0.x) or packoffset(c0.y) or .... to enforce compiler
+				// buffer ordering
+				uint8_t cbOffset = m_Shader->m_ConstantOffsets[entry.Index];
+				char packOffset[64];
+
+				switch (cbOffset % 4)
+				{
+				case 0:sprintf_s(packOffset, "packoffset(c%d)", cbOffset / 4); break;  // Normal register on 16 byte boundary
+				case 1:sprintf_s(packOffset, "packoffset(c%d.y)", cbOffset / 4); break;// Requires swizzle index
+				case 2:sprintf_s(packOffset, "packoffset(c%d.z)", cbOffset / 4); break;// Requires swizzle index
+				case 3:sprintf_s(packOffset, "packoffset(c%d.w)", cbOffset / 4); break;// Requires swizzle index
+				default:__debugbreak(); break;
+				}
+
+				fprintf(m_File, "\t%s", varName);
+
+				// Add space alignment
+				for (int i = 45 - max(0, strlen(varName)); i > 0; i--)
+					fprintf(m_File, " ");
+
+				fprintf(m_File, ": %s;", packOffset);
+
+				// Add space alignment
+				for (int i = 20 - max(0, strlen(packOffset)); i > 0; i--)
+					fprintf(m_File, " ");
+
 				fprintf(m_File, "// @ %d - 0x%04X\n", cbOffset, cbOffset * 4);
 			}
 		}
@@ -364,128 +518,78 @@ private:
 	}
 };
 
-void DumpVertexShader(BSVertexShader *Shader, const char *Type, std::function<const char *(int)> GetConstantFunc, std::function<int(int, int)> GetSizeFunc)
-{
-	VertexShaderDecoder decoder(Type, Shader);
-	decoder.DumpShaderInfo();
-}
-
 void DumpVertexShader(BSVertexShader *Shader, const char *Type)
 {
-	std::function<const char *(int)> constantFunc = [](int) { return "UNKNOWN VERTEX SHADER TYPE"; };
-	std::function<int(int,int)> sizeFunc = [](int, int) { return 0; };
-
 	if (!_stricmp(Type, "BloodSplatter"))
 	{
-		constantFunc = BSBloodSplatterShaderVertexConstants::GetString;
-		sizeFunc = BSBloodSplatterShaderVertexConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "DistantTree"))
 	{
-		constantFunc = BSDistantTreeShaderVertexConstants::GetString;
-		sizeFunc = BSDistantTreeShaderVertexConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "RunGrass"))
 	{
-		constantFunc = BSGrassShaderVertexConstants::GetString;
-		sizeFunc = BSGrassShaderVertexConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Particle"))
 	{
-		constantFunc = BSParticleShaderVertexConstants::GetString;
-		sizeFunc = BSParticleShaderVertexConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Sky"))
 	{
-		constantFunc = BSSkyShaderVertexConstants::GetString;
-		sizeFunc = BSSkyShaderVertexConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Effect"))
 	{
-		constantFunc = BSXShaderVertexConstants::GetString;
-		sizeFunc = BSXShaderVertexConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Lighting"))
 	{
-		constantFunc = BSLightingShaderVertexConstants::GetString;
-		sizeFunc = BSLightingShaderVertexConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Utility"))
 	{
-		constantFunc = BSUtilityShaderVertexConstants::GetString;
-		sizeFunc = BSUtilityShaderVertexConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Water"))
 	{
-		constantFunc = BSWaterShaderVertexConstants::GetString;
-		sizeFunc = BSWaterShaderVertexConstants::GetSize;
 	}
 	else
 		return;
 
-	DumpVertexShader(Shader, Type, constantFunc, sizeFunc);
-}
-
-void DumpPixelShader(BSPixelShader *Shader, const char *Type, std::function<const char *(int)> GetConstantFunc, std::function<int(int, int)> GetSizeFunc)
-{
-	PixelShaderDecoder decoder(Type, Shader);
+	VertexShaderDecoder decoder(Type, Shader);
+	decoder.SetShaderData((void *)((uintptr_t)Shader + sizeof(BSVertexShader)), Shader->m_ShaderLength);
 	decoder.DumpShaderInfo();
 }
 
-void DumpPixelShader(BSPixelShader *Shader, const char *Type)
+void DumpPixelShader(BSPixelShader *Shader, const char *Type, void *Buffer, size_t BufferLen)
 {
-	std::function<const char *(int)> constantFunc = [](int) { return "UNKNOWN PIXEL SHADER TYPE"; };
-	std::function<int(int, int)> sizeFunc = [](int, int) { return 0; };
-
 	if (!_stricmp(Type, "BloodSplatter"))
 	{
-		constantFunc = BSBloodSplatterShaderPixelConstants::GetString;
-		sizeFunc = BSBloodSplatterShaderPixelConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "DistantTree"))
 	{
-		constantFunc = BSDistantTreeShaderPixelConstants::GetString;
-		sizeFunc = BSDistantTreeShaderPixelConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "RunGrass"))
 	{
-		constantFunc = BSGrassShaderPixelConstants::GetString;
-		sizeFunc = BSGrassShaderPixelConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Particle"))
 	{
-		constantFunc = BSParticleShaderPixelConstants::GetString;
-		sizeFunc = BSParticleShaderPixelConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Sky"))
 	{
-		constantFunc = BSSkyShaderPixelConstants::GetString;
-		sizeFunc = BSSkyShaderPixelConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Effect"))
 	{
-		constantFunc = BSXShaderPixelConstants::GetString;
-		sizeFunc = BSXShaderPixelConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Lighting"))
 	{
-		constantFunc = BSLightingShaderPixelConstants::GetString;
-		sizeFunc = BSLightingShaderPixelConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Utility"))
 	{
-		constantFunc = BSUtilityShaderPixelConstants::GetString;
-		sizeFunc = BSUtilityShaderPixelConstants::GetSize;
 	}
 	else if (!_stricmp(Type, "Water"))
 	{
-		constantFunc = BSWaterShaderPixelConstants::GetString;
-		sizeFunc = BSWaterShaderPixelConstants::GetSize;
 	}
 	else
 		return;
 
-	DumpPixelShader(Shader, Type, constantFunc, sizeFunc);
+	PixelShaderDecoder decoder(Type, Shader);
+	decoder.SetShaderData(Buffer, BufferLen);
+	decoder.DumpShaderInfo();
 }
 
 const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, int ConstantIndex)
@@ -494,46 +598,46 @@ const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeT
 	{
 	case BSSM_SHADER_TYPE::VERTEX:
 		if (!_stricmp(ShaderType, "BloodSplatter"))
-			return BSBloodSplatterShaderVertexConstants::GetString(ConstantIndex);
+			return BSBloodSplatterShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "DistantTree"))
-			return BSDistantTreeShaderVertexConstants::GetString(ConstantIndex);
+			return BSDistantTreeShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "RunGrass"))
-			return BSGrassShaderVertexConstants::GetString(ConstantIndex);
+			return BSGrassShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Particle"))
-			return BSParticleShaderVertexConstants::GetString(ConstantIndex);
+			return BSParticleShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Sky"))
-			return BSSkyShaderVertexConstants::GetString(ConstantIndex);
+			return BSSkyShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Effect"))
-			return BSXShaderVertexConstants::GetString(ConstantIndex);
+			return BSXShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Lighting"))
-			return BSLightingShaderVertexConstants::GetString(ConstantIndex);
+			return BSLightingShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Utility"))
-			return BSUtilityShaderVertexConstants::GetString(ConstantIndex);
+			return BSUtilityShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Water"))
-			return BSWaterShaderVertexConstants::GetString(ConstantIndex);
+			return BSWaterShader::VSConstants::GetString(ConstantIndex);
 
 		// TODO: ImageSpace
 		break;
 
 	case BSSM_SHADER_TYPE::PIXEL:
 		if (!_stricmp(ShaderType, "BloodSplatter"))
-			return BSBloodSplatterShaderPixelConstants::GetString(ConstantIndex);
+			return BSBloodSplatterShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "DistantTree"))
-			return BSDistantTreeShaderPixelConstants::GetString(ConstantIndex);
+			return BSDistantTreeShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "RunGrass"))
-			return BSGrassShaderPixelConstants::GetString(ConstantIndex);
+			return BSGrassShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Particle"))
-			return BSParticleShaderPixelConstants::GetString(ConstantIndex);
+			return BSParticleShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Sky"))
-			return BSSkyShaderPixelConstants::GetString(ConstantIndex);
+			return BSSkyShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Effect"))
-			return BSXShaderPixelConstants::GetString(ConstantIndex);
+			return BSXShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Lighting"))
-			return BSLightingShaderPixelConstants::GetString(ConstantIndex);
+			return BSLightingShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Utility"))
-			return BSUtilityShaderPixelConstants::GetString(ConstantIndex);
+			return BSUtilityShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Water"))
-			return BSWaterShaderPixelConstants::GetString(ConstantIndex);
+			return BSWaterShader::PSConstants::GetString(ConstantIndex);
 
 		// TODO: ImageSpace
 		break;
@@ -544,6 +648,40 @@ const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeT
 	}
 
 	return nullptr;
+}
+
+void GetShaderTechniqueName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, char *Buffer, size_t BufferSize, uint32_t Technique)
+{
+	switch (CodeType)
+	{
+	case BSSM_SHADER_TYPE::VERTEX:
+	case BSSM_SHADER_TYPE::PIXEL:
+		if (!_stricmp(ShaderType, "BloodSplatter"))
+			return BSBloodSplatterShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(ShaderType, "DistantTree"))
+			return BSDistantTreeShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(ShaderType, "RunGrass"))
+			return BSGrassShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(ShaderType, "Particle"))
+			return BSParticleShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(ShaderType, "Sky"))
+			return BSSkyShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(ShaderType, "Effect"))
+			return BSXShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(ShaderType, "Lighting"))
+			return BSLightingShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(ShaderType, "Utility"))
+			return BSUtilityShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(ShaderType, "Water"))
+			return BSWaterShader::Techniques::GetString(Technique, Buffer, BufferSize);
+
+		// TODO: ImageSpace
+		break;
+
+	case BSSM_SHADER_TYPE::COMPUTE:
+		// TODO
+		break;
+	}
 }
 
 void DumpComputeShader(BSComputeShader *Shader)
