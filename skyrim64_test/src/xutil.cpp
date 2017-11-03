@@ -113,3 +113,11 @@ void SetThreadName(DWORD dwThreadID, const char *ThreadName)
 	{
 	}
 }
+
+void Trim(char *Buffer, char C)
+{
+	size_t len = strlen(Buffer);
+
+	if (len > 0 && Buffer[len - 1] == C)
+		Buffer[len - 1] = '\0';
+}

@@ -25,6 +25,41 @@ const RemapEntry PixelEntries[] =
 #include "BSShaderConstants.inl"
 };
 
+void GetInputLayoutString(uint64_t InputLayoutFlags, char *Buffer, size_t BufferSize)
+{
+	strcpy_s(Buffer, BufferSize, "");
+
+	auto isSet = [InputLayoutFlags](uint64_t Bits)
+	{
+		return (InputLayoutFlags & Bits) == Bits;
+	};
+
+	// Skyrim always uses some default layout params, these ones are optional
+	if (isSet(0x401000000000FFull))
+		strcat_s(Buffer, BufferSize, "0:POSITION, ");
+	if (isSet(0x80200000000F00ull))
+		strcat_s(Buffer, BufferSize, "0:TEXCOORD, ");
+	if (isSet(0x10040000000F000ull))
+		strcat_s(Buffer, BufferSize, "1:TEXCOORD2, ");
+	if (isSet(0x2008000000F0000ull))
+		strcat_s(Buffer, BufferSize, "0:NORMAL, ");
+	if (isSet(0x401000000F00000ull))
+		strcat_s(Buffer, BufferSize, "0:BINORMAL, ");
+	if (isSet(0x80200000F000000ull))
+		strcat_s(Buffer, BufferSize, "0:COLOR, ");
+	if (isSet(0x10040000F0000000ull))
+		strcat_s(Buffer, BufferSize, "0:BLENDWEIGHT, ");
+	if (isSet(0x2008000F00000000ull))
+		strcat_s(Buffer, BufferSize, "3:TEXCOORD, ");
+	if (isSet(0x401000F000000000ull))
+		strcat_s(Buffer, BufferSize, "2:TEXCOORD, ");
+	if (isSet(0x80200F0000000000ull))
+		strcat_s(Buffer, BufferSize, "4:TEXCOORD, ");
+
+	Trim(Buffer, ' ');
+	Trim(Buffer, ',');
+}
+
 const RemapEntry *GetEntryForVertexShader(const char *Type, int ParamIndex)
 {
 	for (int i = 0; i < ARRAYSIZE(VertexEntries); i++)
@@ -59,6 +94,7 @@ const RemapEntry *GetEntryForPixelShader(const char *Type, int ParamIndex)
 
 const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, int ConstantIndex);
 void GetShaderTechniqueName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, char *Buffer, size_t BufferSize, uint32_t Technique);
+const char *GetShaderSamplerName(const char *ShaderType, int ConstantIndex);
 
 class ShaderDecoder
 {
@@ -224,10 +260,14 @@ public:
 
 		m_File = fopen(buf1, "w");
 
+		//char inputLayout[1024];
+		//GetInputLayoutString(m_Shader->m_InputLayoutFlags, inputLayout, ARRAYSIZE(inputLayout));
+
 		fprintf(m_File, "// %s\n", m_Type);
 		fprintf(m_File, "// TechniqueID: 0x%X\n", m_Shader->m_TechniqueID);
-		fprintf(m_File, "// Input flags: 0x%llX\n//\n", m_Shader->m_ShaderInputFlags);
+		fprintf(m_File, "// Input flags: 0x%llX\n//\n", m_Shader->m_InputLayoutFlags);
 		fprintf(m_File, "// Technique: %s\n\n", technique);
+		//fprintf(m_File, "// Input layout: %s\n\n", inputLayout);
 
 		DumpCBuffer(&m_Shader->m_PerGeometry, geoIndexes, 0);// Constant buffer 0 : register(b0)
 		DumpCBuffer(&m_Shader->m_PerMaterial, matIndexes, 1);// Constant buffer 1 : register(b1)
@@ -416,6 +456,19 @@ public:
 		fprintf(m_File, "// %s\n", m_Type);
 		fprintf(m_File, "// TechniqueID: 0x%X\n//\n", m_Shader->m_TechniqueID);
 		fprintf(m_File, "// Technique: %s\n\n", technique);
+
+		// Dump samplers
+		for (int i = 0;; i++)
+		{
+			const char *name = GetShaderSamplerName(m_Type, i);
+
+			if (strstr(name, "Add-your-"))
+				break;
+
+			fprintf(m_File, "// Sampler[%d]: %s\n", i, name);
+		}
+
+		fprintf(m_File, "\n");
 
 		DumpCBuffer(&m_Shader->m_PerGeometry, geoIndexes, 0); // Constant buffer 0 : register(b0)
 		DumpCBuffer(&m_Shader->m_PerMaterial, matIndexes, 1); // Constant buffer 1 : register(b1)
@@ -682,6 +735,32 @@ void GetShaderTechniqueName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, c
 		// TODO
 		break;
 	}
+}
+
+const char *GetShaderSamplerName(const char *ShaderType, int ConstantIndex)
+{
+	if (!_stricmp(ShaderType, "BloodSplatter"))
+		return BSBloodSplatterShader::Samplers::GetString(ConstantIndex);
+	else if (!_stricmp(ShaderType, "DistantTree"))
+		return BSDistantTreeShader::Samplers::GetString(ConstantIndex);
+	else if (!_stricmp(ShaderType, "RunGrass"))
+		return BSGrassShader::Samplers::GetString(ConstantIndex);
+	else if (!_stricmp(ShaderType, "Particle"))
+		return BSParticleShader::Samplers::GetString(ConstantIndex);
+	else if (!_stricmp(ShaderType, "Sky"))
+		return BSSkyShader::Samplers::GetString(ConstantIndex);
+	else if (!_stricmp(ShaderType, "Effect"))
+		return BSXShader::Samplers::GetString(ConstantIndex);
+	else if (!_stricmp(ShaderType, "Lighting"))
+		return BSLightingShader::Samplers::GetString(ConstantIndex);
+	else if (!_stricmp(ShaderType, "Utility"))
+		return BSUtilityShader::Samplers::GetString(ConstantIndex);
+	else if (!_stricmp(ShaderType, "Water"))
+		return BSWaterShader::Samplers::GetString(ConstantIndex);
+
+	// TODO: Compute?
+	// TODO: ImageSpace
+	return nullptr;
 }
 
 void DumpComputeShader(BSComputeShader *Shader)

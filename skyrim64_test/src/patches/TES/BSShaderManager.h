@@ -39,7 +39,7 @@ struct BSVertexShader
 	BSConstantBufferInfo m_PerGeometry;
 	BSConstantBufferInfo m_PerMaterial;
 	BSConstantBufferInfo m_PerTechnique;
-	uint64_t m_ShaderInputFlags;		// Flags for VSMain() inputs
+	uint64_t m_InputLayoutFlags;		// ID3D11Device::CreateInputLayout (for VSMain())
 	uint8_t m_ConstantOffsets[20];		// Actual offset is multiplied by 4
 	// Raw bytecode appended after this
 };
@@ -49,7 +49,7 @@ static_assert(offsetof(BSVertexShader, m_ShaderLength) == 0x10, "");
 static_assert(offsetof(BSVertexShader, m_PerGeometry) == 0x18, "");
 static_assert(offsetof(BSVertexShader, m_PerMaterial) == 0x28, "");
 static_assert(offsetof(BSVertexShader, m_PerTechnique) == 0x38, "");
-static_assert(offsetof(BSVertexShader, m_ShaderInputFlags) == 0x48, "");
+static_assert(offsetof(BSVertexShader, m_InputLayoutFlags) == 0x48, "");
 static_assert(offsetof(BSVertexShader, m_ConstantOffsets) == 0x50, "");
 static_assert(sizeof(BSVertexShader) == 0x68, "");
 
@@ -177,7 +177,6 @@ namespace BSBloodSplatterShader
 			case 1:return "BloodAlpha";
 			case 2:return "FlareColor";
 			case 3:return "FlareHDR";
-			default: __debugbreak();
 			}
 
 			return BSSM_PLACEHOLDER;
@@ -781,11 +780,7 @@ namespace BSXShader
 			if (_bittest(&bits, 26))
 				strcat_s(Buffer, BufferSize, "Opaque ");
 
-			// Remove the trailing space
-			size_t len = strlen(Buffer);
-
-			if (len > 0)
-				Buffer[len - 1] = '\0';
+			Trim(Buffer, ' ');
 		}
 	}
 }
@@ -929,7 +924,7 @@ namespace BSLightingShader
 		{
 			switch (Index)
 			{
-			default: __debugbreak();
+			//default: __debugbreak();
 			}
 
 			return BSSM_PLACEHOLDER;
@@ -1004,11 +999,7 @@ namespace BSLightingShader
 			default:strcat_s(Buffer, BufferSize, "? "); break;
 			}
 
-			// Remove the trailing space
-			size_t len = strlen(Buffer);
-
-			if (len > 0)
-				Buffer[len - 1] = '\0';
+			Trim(Buffer, ' ');
 		}
 	}
 }
@@ -1195,11 +1186,7 @@ namespace BSUtilityShader
 			if ((Technique & 0x14000) == 0x10000)
 				strcat_s(Buffer, BufferSize, "Aam ");
 
-			// Remove the trailing space
-			size_t len = strlen(Buffer);
-
-			if (len > 0)
-				Buffer[len - 1] = '\0';
+			Trim(Buffer, ' ');
 		}
 	}
 }
@@ -1401,11 +1388,7 @@ namespace BSWaterShader
 				break;
 			}
 
-			// Remove the trailing space
-			size_t len = strlen(Buffer);
-
-			if (len > 0)
-				Buffer[len - 1] = '\0';
+			Trim(Buffer, ' ');
 		}
 	}
 }

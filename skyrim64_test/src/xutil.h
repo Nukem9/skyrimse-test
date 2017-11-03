@@ -1,5 +1,6 @@
 #pragma once
 
+#include <type_traits>
 #pragma warning(disable:4094) // untagged 'struct' declared no symbols
 
 template<void(*ctor)()>
@@ -30,8 +31,8 @@ intptr_t FindPattern(const std::vector<unsigned char>& data, intptr_t baseAddres
 uintptr_t FindPatternSimple(uintptr_t StartAddress, uintptr_t MaxSize, const BYTE *ByteMask, const char *Mask);
 void PatchMemory(ULONG_PTR Address, PBYTE Data, SIZE_T Size);
 void SetThreadName(DWORD dwThreadID, const char *ThreadName);
+void Trim(char *Buffer, char C);
 
-#include <type_traits>
 
 template<typename T, uintptr_t Offset = 0>
 class AutoPtr
