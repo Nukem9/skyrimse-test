@@ -95,6 +95,7 @@ const RemapEntry *GetEntryForPixelShader(const char *Type, int ParamIndex)
 const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, int ConstantIndex);
 void GetShaderTechniqueName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, char *Buffer, size_t BufferSize, uint32_t Technique);
 const char *GetShaderSamplerName(const char *ShaderType, int ConstantIndex);
+std::vector<std::pair<const char *, const char *>> GetShaderDefines(const char *ShaderType, uint32_t Technique);
 
 class ShaderDecoder
 {
@@ -268,6 +269,13 @@ public:
 		fprintf(m_File, "// Input flags: 0x%llX\n//\n", m_Shader->m_InputLayoutFlags);
 		fprintf(m_File, "// Technique: %s\n\n", technique);
 		//fprintf(m_File, "// Input layout: %s\n\n", inputLayout);
+
+		for (const auto& define : GetShaderDefines(m_Type, m_Shader->m_TechniqueID))
+		{
+			fprintf(m_File, "#define %s %s\n", define.first, define.second);
+		}
+
+		fprintf(m_File, "\n\n");
 
 		DumpCBuffer(&m_Shader->m_PerGeometry, geoIndexes, 0);// Constant buffer 0 : register(b0)
 		DumpCBuffer(&m_Shader->m_PerMaterial, matIndexes, 1);// Constant buffer 1 : register(b1)
@@ -456,6 +464,13 @@ public:
 		fprintf(m_File, "// %s\n", m_Type);
 		fprintf(m_File, "// TechniqueID: 0x%X\n//\n", m_Shader->m_TechniqueID);
 		fprintf(m_File, "// Technique: %s\n\n", technique);
+
+		for (const auto& define : GetShaderDefines(m_Type, m_Shader->m_TechniqueID))
+		{
+			fprintf(m_File, "#define %s %s\n", define.first, define.second);
+		}
+
+		fprintf(m_File, "\n\n");
 
 		// Dump samplers
 		for (int i = 0;; i++)
@@ -761,6 +776,32 @@ const char *GetShaderSamplerName(const char *ShaderType, int ConstantIndex)
 	// TODO: Compute?
 	// TODO: ImageSpace
 	return nullptr;
+}
+
+std::vector<std::pair<const char *, const char *>> GetShaderDefines(const char *ShaderType, uint32_t Technique)
+{
+	if (!_stricmp(ShaderType, "BloodSplatter"))
+		return BSBloodSplatterShader::Defines::GetArray(Technique);
+	else if (!_stricmp(ShaderType, "DistantTree"))
+		return BSDistantTreeShader::Defines::GetArray(Technique);
+	else if (!_stricmp(ShaderType, "RunGrass"))
+		return BSGrassShader::Defines::GetArray(Technique);
+	else if (!_stricmp(ShaderType, "Particle"))
+		return BSParticleShader::Defines::GetArray(Technique);
+	else if (!_stricmp(ShaderType, "Sky"))
+		return BSSkyShader::Defines::GetArray(Technique);
+	else if (!_stricmp(ShaderType, "Effect"))
+		return BSXShader::Defines::GetArray(Technique);
+	else if (!_stricmp(ShaderType, "Lighting"))
+		return BSLightingShader::Defines::GetArray(Technique);
+	else if (!_stricmp(ShaderType, "Utility"))
+		return BSUtilityShader::Defines::GetArray(Technique);
+	else if (!_stricmp(ShaderType, "Water"))
+		return BSWaterShader::Defines::GetArray(Technique);
+
+	// TODO: Compute?
+	// TODO: ImageSpace
+	return std::vector<std::pair<const char *, const char *>>();
 }
 
 void DumpComputeShader(BSComputeShader *Shader)

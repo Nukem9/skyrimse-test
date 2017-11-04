@@ -1,5 +1,8 @@
 #pragma once
 
+#pragma push_macro("TEST_BIT") 
+#define TEST_BIT(index) (Technique & (1u << (index)))
+
 #define CONSTANT_BUFFER_PER_GEOMETRY  0
 #define CONSTANT_BUFFER_PER_MATERIAL  1
 #define CONSTANT_BUFFER_PER_TECHNIQUE 2
@@ -103,7 +106,7 @@ static_assert(sizeof(BSComputeShader) == 0x90, "");
 // GetString() returns the name used in the HLSL source code.
 // GetSize() is multiplied by sizeof(float) to get the real CBuffer size.
 //
-// NOTE: In the creation kit, there is a copy-paste error with the placeholder
+// NOTE: In the creation kit, there are copy-paste errors with the placeholder
 // saying "BSLightingShaderX" instead of the real function name.
 //
 
@@ -187,15 +190,32 @@ namespace BSBloodSplatterShader
 	{
 		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
 		{
-			switch (Technique & ~DO_ALPHA_TEST_FLAG)
+			switch (Technique)
 			{
-			case 0: strcpy_s(Buffer, BufferSize, "Splatter"); break;
-			case 1: strcpy_s(Buffer, BufferSize, "Flare"); break;
-			default: __debugbreak();
+			case 0:strcpy_s(Buffer, BufferSize, "Splatter"); break;
+			case 1:strcpy_s(Buffer, BufferSize, "Flare"); break;
+			default:__debugbreak();
 			}
 
-			if (Technique & DO_ALPHA_TEST_FLAG)
+			if (Technique)
 				strcat_s(Buffer, BufferSize, " AlphaTest");
+		}
+	}
+
+	namespace Defines
+	{
+		static auto GetArray(uint32_t Technique)
+		{
+			std::vector<std::pair<const char *, const char *>> defines;
+
+			switch (Technique)
+			{
+			case 0:defines.emplace_back("SPLATTER", ""); break;
+			case 1:defines.emplace_back("FLARE", ""); break;
+			default:/* Apparently returns nothing */break;
+			}
+
+			return defines;
 		}
 	}
 }
@@ -295,6 +315,26 @@ namespace BSDistantTreeShader
 
 			if (Technique & DO_ALPHA_TEST_FLAG)
 				strcat_s(Buffer, BufferSize, " AlphaTest");
+		}
+	}
+
+	namespace Defines
+	{
+		static auto GetArray(uint32_t Technique)
+		{
+			std::vector<std::pair<const char *, const char *>> defines;
+
+			switch (Technique & ~DO_ALPHA_TEST_FLAG)
+			{
+			case 0:break;
+			case 1:defines.emplace_back("RENDER_DEPTH", ""); break;
+			default:__debugbreak(); break;
+			}
+
+			if (Technique & DO_ALPHA_TEST_FLAG)
+				defines.emplace_back("DO_ALPHA_TEST", "");
+
+			return defines;
 		}
 	}
 }
@@ -401,6 +441,33 @@ namespace BSGrassShader
 
 			if (Technique & DO_ALPHA_TEST_FLAG)
 				strcat_s(Buffer, BufferSize, " AlphaTest");
+		}
+	}
+
+	namespace Defines
+	{
+		static auto GetArray(uint32_t Technique)
+		{
+			std::vector<std::pair<const char *, const char *>> defines;
+
+			switch (Technique & ~DO_ALPHA_TEST_FLAG)
+			{
+			case 0:defines.emplace_back("VERTLIT", ""); break;
+			case 1:break;
+			case 2:defines.emplace_back("SOPE", ""); break;
+			case 3:defines.emplace_back("VERTLIT", ""); defines.emplace_back("SLOPE", ""); break;
+			case 4:defines.emplace_back("VERTLIT", ""); defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); break;
+			case 5:defines.emplace_back("BILLBOARD", ""); break;
+			case 6:defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); break;
+			case 7:defines.emplace_back("VERTLIT", ""); defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); break;
+			case 8:defines.emplace_back("RENDER_DEPTH", ""); break;
+			default:__debugbreak(); break;
+			}
+
+			if (Technique & DO_ALPHA_TEST_FLAG)
+				defines.emplace_back("DO_ALPHA_TEST", "");
+
+			return defines;
 		}
 	}
 }
@@ -511,6 +578,27 @@ namespace BSParticleShader
 			}
 		}
 	}
+
+	namespace Defines
+	{
+		static auto GetArray(uint32_t Technique)
+		{
+			std::vector<std::pair<const char *, const char *>> defines;
+
+			switch (Technique)
+			{
+			case 0:break;
+			case 1:defines.emplace_back("GRAYSCALE_TO_COLOR", ""); break;
+			case 2:defines.emplace_back("GRAYSCALE_TO_ALPHA", ""); break;
+			case 3:defines.emplace_back("GRAYSCALE_TO_COLOR", ""); defines.emplace_back("GRAYSCALE_TO_ALPHA", ""); break;
+			case 4:defines.emplace_back("ENVCUBE", ""); defines.emplace_back("SNOW", ""); break;
+			case 5:defines.emplace_back("ENVCUBE", ""); defines.emplace_back("RAIN", ""); break;
+			default:__debugbreak(); break;
+			}
+
+			return defines;
+		}
+	}
 }
 
 namespace BSSkyShader
@@ -603,6 +691,30 @@ namespace BSSkyShader
 			case 8: strcpy_s(Buffer, BufferSize, "Sky"); break;
 			default: __debugbreak();
 			}
+		}
+	}
+
+	namespace Defines
+	{
+		static auto GetArray(uint32_t Technique)
+		{
+			std::vector<std::pair<const char *, const char *>> defines;
+
+			switch (Technique)
+			{
+			case 0:defines.emplace_back("OCCLUSION", ""); break;
+			case 1:defines.emplace_back("TEX", ""); defines.emplace_back("DITHER", ""); break;
+			case 2:defines.emplace_back("TEX", ""); defines.emplace_back("MOONMASK", ""); break;
+			case 3:defines.emplace_back("HORIZFADE", ""); break;
+			case 4:defines.emplace_back("TEX", ""); defines.emplace_back("CLOUDS", ""); break;
+			case 5:defines.emplace_back("TEX", ""); defines.emplace_back("CLOUDS", ""); defines.emplace_back("TEXLERP", ""); break;
+			case 6:defines.emplace_back("TEX", ""); defines.emplace_back("CLOUDS", ""); defines.emplace_back("TEXFADE", ""); break;
+			case 7:defines.emplace_back("TEX", ""); break;
+			case 8:defines.emplace_back("DITHER", ""); break;
+			default:__debugbreak(); break;
+			}
+
+			return defines;
 		}
 	}
 }
@@ -781,6 +893,44 @@ namespace BSXShader
 				strcat_s(Buffer, BufferSize, "Opaque ");
 
 			Trim(Buffer, ' ');
+		}
+	}
+
+	namespace Defines
+	{
+		static auto GetArray(uint32_t Technique)
+		{
+			std::vector<std::pair<const char *, const char *>> defines;
+
+			if (TEST_BIT(0)) defines.emplace_back("VC", "");
+			if (TEST_BIT(1)) defines.emplace_back("TEXCOORD", "");
+			if (TEST_BIT(2)) defines.emplace_back("TEXCOORD_INDEX", "");
+			if (TEST_BIT(3)) defines.emplace_back("SKINNED", "");
+			if (TEST_BIT(4)) defines.emplace_back("NORMALS", "");
+			if (TEST_BIT(5)) defines.emplace_back("BINORMAL_TANGENT", "");
+			if (TEST_BIT(6)) defines.emplace_back("TEXTURE", "");
+			if (TEST_BIT(7)) defines.emplace_back("INDEXED_TEXTURE", "");
+			if (TEST_BIT(8)) defines.emplace_back("FALLOFF", "");
+			// 9?
+			if (TEST_BIT(10)) defines.emplace_back("ADDBLEND", "");
+			if (TEST_BIT(11)) defines.emplace_back("MULTBLEND", "");
+			if (TEST_BIT(12)) defines.emplace_back("PARTICLES", "");
+			if (TEST_BIT(13)) defines.emplace_back("STRIP_PARTICLES", "");
+			if (TEST_BIT(14)) defines.emplace_back("BLOOD", "");
+			if (TEST_BIT(15)) defines.emplace_back("MEMBRANE", "");
+			if (TEST_BIT(16)) defines.emplace_back("LIGHTING", "");
+			if (TEST_BIT(17)) defines.emplace_back("PROJECTED_UV", "");
+			if (TEST_BIT(18)) defines.emplace_back("SOFT", "");
+			if (TEST_BIT(19)) defines.emplace_back("GRAYSCALE_TO_COLOR", "");
+			if (TEST_BIT(20)) defines.emplace_back("GRAYSCALE_TO_ALPHA", "");
+			if (TEST_BIT(21)) defines.emplace_back("IGNORE_TEX_ALPHA", "");
+			if (TEST_BIT(22)) defines.emplace_back("MULTBLEND_DECAL", "");
+			if (TEST_BIT(23)) defines.emplace_back("ALPHA_TEST", "");
+			if (TEST_BIT(24)) defines.emplace_back("SKY_OBJECT", "");
+			if (TEST_BIT(25)) defines.emplace_back("MSN_SPU_SKINNED", "");
+			if (TEST_BIT(26)) defines.emplace_back("MOTIONVECTORS_NORMALS", "");
+
+			return defines;
 		}
 	}
 }
@@ -977,7 +1127,7 @@ namespace BSLightingShader
 
 			switch (v6)
 			{
-			case 0:break;
+			case 0:strcat_s(Buffer, BufferSize, "None "); break;
 			case 1:strcat_s(Buffer, BufferSize, "Envmap "); break;
 			case 2:strcat_s(Buffer, BufferSize, "Glowmap "); break;
 			case 3:strcat_s(Buffer, BufferSize, "Parallax "); break;
@@ -994,12 +1144,69 @@ namespace BSLightingShader
 			case 14:strcat_s(Buffer, BufferSize, "MultiIndexTriShapeSnow "); break;
 			case 15:strcat_s(Buffer, BufferSize, "LODObjHD "); break;
 			case 16:strcat_s(Buffer, BufferSize, "Eye "); break;
+			// 17 is missing. Wtf?
 			case 18:strcat_s(Buffer, BufferSize, "LODLandNoise "); break;
 			case 19:strcat_s(Buffer, BufferSize, "MTLandLODBlend "); break;
 			default:strcat_s(Buffer, BufferSize, "? "); break;
 			}
 
 			Trim(Buffer, ' ');
+		}
+	}
+
+	namespace Defines
+	{
+		static auto GetArray(uint32_t Technique)
+		{
+			std::vector<std::pair<const char *, const char *>> defines;
+			uint32_t v3 = (Technique >> 24) & 0x3F;
+
+			if (TEST_BIT(0)) defines.emplace_back("VC", "");
+			if (TEST_BIT(1)) defines.emplace_back("SKINNED", "");
+			if (TEST_BIT(2)) defines.emplace_back("MODELSPACENORMALS", "");
+			if (TEST_BIT(9)) defines.emplace_back("SPECULAR", "");
+			if (TEST_BIT(10)) defines.emplace_back("SOFT_LIGHTING", "");
+			if (TEST_BIT(13)) defines.emplace_back("SHADOW_DIR", "");
+			if (TEST_BIT(14)) defines.emplace_back("DEFSHADOW", "");
+			if (TEST_BIT(11)) defines.emplace_back("RIM_LIGHTING", "");
+			if (TEST_BIT(12)) defines.emplace_back("BACK_LIGHTING", "");
+			if (TEST_BIT(15) && v3 != 6) defines.emplace_back("PROJECTED_UV", "");
+			if (TEST_BIT(16)) defines.emplace_back("ANISO_LIGHTING", "");
+			if (TEST_BIT(17)) defines.emplace_back("AMBIENT_SPECULAR", "");
+			if (TEST_BIT(18)) defines.emplace_back("WORLD_MAP", "");
+			if (TEST_BIT(20)) defines.emplace_back("DO_ALPHA_TEST", "");
+			if (TEST_BIT(21)) defines.emplace_back("SNOW", "");
+			if (TEST_BIT(19)) defines.emplace_back("BASE_OBJECT_IS_SNOW", "");
+			if (TEST_BIT(22)) defines.emplace_back("CHARACTER_LIGHT", "");
+			if (TEST_BIT(15) && v3 == 6) defines.emplace_back("DEPTH_WRITE_DECALS", "");
+			if (TEST_BIT(23)) defines.emplace_back("ADDITIONAL_ALPHA_MASK", "");
+
+			switch (v3)
+			{
+			case 0:break;
+			case 1:defines.emplace_back("ENVMAP", ""); break;
+			case 2:defines.emplace_back("GLOWMAP", ""); break;
+			case 3:defines.emplace_back("PARALLAX", ""); break;
+			case 4:defines.emplace_back("FACEGEN", ""); break;
+			case 5:defines.emplace_back("FACEGEN_RGB_TINT", ""); break;
+			case 6:defines.emplace_back("HAIR", ""); break;
+			case 7:defines.emplace_back("PARALLAX_OCC", ""); break;
+			case 8:defines.emplace_back("MULTI_TEXTURE", "LANDSCAPE"); break;
+			case 9:defines.emplace_back("LODLANDSCAPE", ""); break;
+			case 10:/* I have no idea what this does */break;
+			case 11:defines.emplace_back("MULTI_LAYER_PARALLAX", ""); defines.emplace_back("ENVMAP", ""); break;
+			case 12:defines.emplace_back("TREE_ANIM", ""); break;
+			case 13:defines.emplace_back("LOBOBJECTS", ""); break;
+			case 14:defines.emplace_back("MULTI_INDEX", "SPARKLE"); break;
+			case 15:defines.emplace_back("LODOBJECTSHD", ""); break;
+			case 16:defines.emplace_back("EYE", ""); break;
+			case 17:defines.emplace_back("CLOUD", "INSTANCED"); break;
+			case 18:defines.emplace_back("LODLANDSCAPE", "LODLANDNOISE"); break;
+			case 19:defines.emplace_back("MULTI_TEXTURE", ""); defines.emplace_back("LANDSCAPE", "LOD_LAND_BLEND"); break;
+			default:__debugbreak(); break;
+			}
+
+			return defines;
 		}
 	}
 }
@@ -1187,6 +1394,106 @@ namespace BSUtilityShader
 				strcat_s(Buffer, BufferSize, "Aam ");
 
 			Trim(Buffer, ' ');
+		}
+	}
+
+	namespace Defines
+	{
+		static auto GetArray(uint32_t Technique)
+		{
+			std::vector<std::pair<const char *, const char *>> defines;
+
+			if (TEST_BIT(0)) defines.emplace_back("VC", "");
+			if (TEST_BIT(1)) defines.emplace_back("TEXTURE", "");
+			if (TEST_BIT(2)) defines.emplace_back("SKINNED", "");
+			if (TEST_BIT(3)) defines.emplace_back("NORMALS", "");
+			if (TEST_BIT(4)) defines.emplace_back("BINORMAL_TANGENT", "");
+			// 5,6 ?
+			if (TEST_BIT(7)) defines.emplace_back("ALPHA_TEST", "");
+			if (TEST_BIT(8) && (Technique & 0x600000)) defines.emplace_back("FOCUS_SHADOW", "");
+			if (TEST_BIT(8)) defines.emplace_back("LOD_LANDSCAPE", "");
+			if (TEST_BIT(9) && !TEST_BIT(12)) defines.emplace_back("RENDER_NORMAL", "");
+			if (TEST_BIT(10)) defines.emplace_back("RENDER_NORMAL_FALLOFF", "");
+			if (TEST_BIT(11)) defines.emplace_back("RENDER_NORMAL_CLAMP", "");
+			if (TEST_BIT(12) && !TEST_BIT(9)) defines.emplace_back("RENDER_NORMAL_CLEAR", "");
+			if (TEST_BIT(13)) defines.emplace_back("RENDER_DEPTH", "");
+
+			if ((Technique & 0x20004000) == 0x4000)
+			{
+				defines.emplace_back("RENDER_SHADOWMAP", "");
+
+				if (TEST_BIT(16))
+					defines.emplace_back("RENDER_SHADOWMAP_PB", "");
+			}
+			else
+			{
+				if (TEST_BIT(16))
+					defines.emplace_back("ADDITIONAL_ALPHA_MASK", "");
+			}
+
+			if (TEST_BIT(20)) defines.emplace_back("GRAYSCALE_MASK", "");
+			if (TEST_BIT(21)) defines.emplace_back("RENDER_SHADOWMASK", "");
+			if (TEST_BIT(22)) defines.emplace_back("RENDER_SHADOWMASKSPOT", "");
+			if (TEST_BIT(23)) defines.emplace_back("RENDER_SHADOWMASKPB", "");
+			if (TEST_BIT(24)) defines.emplace_back("RENDER_SHADOWMASKDPB", "");
+			if (TEST_BIT(25)) defines.emplace_back("RENDER_BASE_TEXTURE", "");
+			if (TEST_BIT(26)) defines.emplace_back("TREE_ANIM", "");
+			if (TEST_BIT(27)) defines.emplace_back("LOD_OBJECT", "");
+			if (TEST_BIT(28)) defines.emplace_back("LOCALMAP_FOGOFWAR", "");
+			if (TEST_BIT(9) && TEST_BIT(12)) defines.emplace_back("STENCIL_ABOVE_WATER", "");
+
+			if (TEST_BIT(29))
+			{
+				defines.emplace_back("OPAQUE_EFFECT", "");
+
+				if (TEST_BIT(15))
+					defines.emplace_back("GRAYSCALE_TO_ALPHA", "");
+			}
+			else
+			{
+				if (TEST_BIT(15))
+					defines.emplace_back("RENDER_SHADOWMAP_CLAMPED", "");
+			}
+
+			if (Technique & 0x1E00000)
+			{
+				uint32_t temp = 0;
+				if (TEST_BIT(17)) temp |= 1;
+				if (TEST_BIT(18)) temp |= 2;
+				if (TEST_BIT(19)) temp |= 4;
+
+				switch ((temp <= 4) ? temp : 4)
+				{
+				case 0:defines.emplace_back("SHADOWFILTER", "0"); break;
+				case 1:defines.emplace_back("SHADOWFILTER", "1"); break;
+				case 2:defines.emplace_back("SHADOWFILTER", "2"); break;
+				case 3:defines.emplace_back("SHADOWFILTER", "3"); break;
+				case 4:defines.emplace_back("SHADOWFILTER", "4"); break;
+				}
+			}
+			else if ((Technique & 0x20004000) == 0x4000 || TEST_BIT(13))
+			{
+				if (TEST_BIT(17))
+					defines.emplace_back("DEPTH_WRITE_DECALS", "");
+			}
+			else
+			{
+				if (TEST_BIT(17) || TEST_BIT(19))
+					defines.emplace_back("DEBUG_COLOR", "");
+
+				if (TEST_BIT(18))
+					defines.emplace_back("DEBUG_SHADOWSPLIT", "");
+			}
+
+			defines.emplace_back("SHADOWSPLITCOUNT", "3");
+
+			if ((Technique & 0x14000) != 0x14000 &&
+				((Technique & 0x20004000) == 0x4000 || (Technique & 0x1E02000) == 0x2000) &&
+				!(Technique & 0x80) &&
+				(Technique & 0x14000) != 0x10000)
+				defines.emplace_back("NO_PIXEL_SHADER", "");
+
+			return defines;
 		}
 	}
 }
@@ -1391,4 +1698,51 @@ namespace BSWaterShader
 			Trim(Buffer, ' ');
 		}
 	}
+
+	namespace Defines
+	{
+		static auto GetArray(uint32_t Technique)
+		{
+			std::vector<std::pair<const char *, const char *>> defines;
+
+			defines.emplace_back("WATER", "");
+			defines.emplace_back("FOG", "");
+
+			if (TEST_BIT(0)) defines.emplace_back("VC", "");
+			if (TEST_BIT(1)) defines.emplace_back("NORMAL_TEXCOORD", "");
+			if (TEST_BIT(2)) defines.emplace_back("REFLECTIONS", "");
+			if (TEST_BIT(3)) defines.emplace_back("REFRACTIONS", "");
+			if (TEST_BIT(4)) defines.emplace_back("DEPTH", "");
+			if (TEST_BIT(5)) defines.emplace_back("INTERIOR", "");
+			if (TEST_BIT(6)) defines.emplace_back("WADING", "");
+			if (TEST_BIT(7)) defines.emplace_back("VERTEX_ALPHA_DEPTH", "");
+			if (TEST_BIT(8)) defines.emplace_back("CUBEMAP", "");
+			if (TEST_BIT(9)) defines.emplace_back("FLOWMAP", "");
+			if (TEST_BIT(10)) defines.emplace_back("BLEND_NORMALS", "");
+
+			if (((Technique >> 11) & 0xF) < 8)
+				defines.emplace_back("SPECULAR", "");
+
+			switch ((Technique >> 11) & 0xF)
+			{
+			case 8:defines.emplace_back("UNDERWATER", ""); break;
+			case 9:defines.emplace_back("LOD", ""); break;
+			case 10:defines.emplace_back("STENCIL", ""); break;
+			case 11:defines.emplace_back("SIMPLE", ""); break;
+
+			case 0:defines.emplace_back("NUM_SPECULAR_LIGHTS", "0"); break;
+			case 1:defines.emplace_back("NUM_SPECULAR_LIGHTS", "1"); break;
+			case 2:defines.emplace_back("NUM_SPECULAR_LIGHTS", "2"); break;
+			case 3:defines.emplace_back("NUM_SPECULAR_LIGHTS", "3"); break;
+			case 4:defines.emplace_back("NUM_SPECULAR_LIGHTS", "4"); break;
+			case 5:defines.emplace_back("NUM_SPECULAR_LIGHTS", "5"); break;
+			case 6:defines.emplace_back("NUM_SPECULAR_LIGHTS", "6"); break;
+			case 7:defines.emplace_back("NUM_SPECULAR_LIGHTS", "7"); break;
+			}
+
+			return defines;
+		}
+	}
 }
+
+#pragma pop_macro("TEST_BIT")
