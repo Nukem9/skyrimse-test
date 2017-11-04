@@ -98,6 +98,101 @@ static_assert(offsetof(BSComputeShader, m_ConstantOffsets) == 0x70, "");
 static_assert(sizeof(BSComputeShader) == 0x90, "");
 #pragma pack(pop)
 
+class ShaderDecoder
+{
+protected:
+	struct ParamIndexPair
+	{
+		int Index;
+		const char *Name;
+		const struct RemapEntry *Remap;
+	};
+
+	void *m_HlslData;
+	size_t m_HlslDataLen;
+
+	char m_Type[256];
+	BSSM_SHADER_TYPE m_CodeType;
+
+public:
+	ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType);
+	~ShaderDecoder();
+
+	void SetShaderData(void *Buffer, size_t BufferSize);
+	void DumpShader();
+
+protected:
+	void DumpShaderInfo();
+	void DumpCBuffer(FILE *File, BSConstantBufferInfo *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex);
+
+	virtual uint32_t GetTechnique() = 0;
+	virtual const uint8_t *GetConstantArray() = 0;
+	virtual size_t GetConstantArraySize() = 0;
+	virtual void DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined) = 0;
+
+	const char *GetGroupName(int Index);
+	const char *GetGroupRegister(int Index);
+	const char *GetConstantName(int Index);
+	void GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t Technique);
+	const char *GetSamplerName(int Index);
+	std::vector<std::pair<const char *, const char *>> GetDefineArray(uint32_t Technique);
+};
+
+class VertexShaderDecoder : public ShaderDecoder
+{
+private:
+	BSVertexShader *m_Shader;
+
+public:
+	VertexShaderDecoder(const char *Type, BSVertexShader *Shader);
+
+private:
+	virtual uint32_t GetTechnique() override
+	{
+		return m_Shader->m_TechniqueID;
+	}
+
+	virtual const uint8_t *GetConstantArray() override
+	{
+		return m_Shader->m_ConstantOffsets;
+	}
+
+	virtual size_t GetConstantArraySize() override
+	{
+		return ARRAYSIZE(BSVertexShader::m_ConstantOffsets);
+	}
+
+	virtual void DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined) override;
+	void GetInputLayoutString(char *Buffer, size_t BufferSize);
+};
+
+class PixelShaderDecoder : public ShaderDecoder
+{
+private:
+	BSPixelShader *m_Shader;
+
+public:
+	PixelShaderDecoder(const char *Type, BSPixelShader *Shader);
+
+private:
+	virtual uint32_t GetTechnique() override
+	{
+		return m_Shader->m_TechniqueID;
+	}
+
+	virtual const uint8_t *GetConstantArray() override
+	{
+		return m_Shader->m_ConstantOffsets;
+	}
+
+	virtual size_t GetConstantArraySize() override
+	{
+		return ARRAYSIZE(BSPixelShader::m_ConstantOffsets);
+	}
+
+	virtual void DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined) override;
+};
+
 //
 // *** SHADER CONSTANTS ***
 //
@@ -1072,11 +1167,7 @@ namespace BSLightingShader
 	{
 		static const char *GetString(int Index)
 		{
-			switch (Index)
-			{
-			//default: __debugbreak();
-			}
-
+			// TODO
 			return BSSM_PLACEHOLDER;
 		}
 	}

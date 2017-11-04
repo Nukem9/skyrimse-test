@@ -1,7 +1,6 @@
 #include "../../stdafx.h"
 #include <direct.h>
 #include <D3D11Shader.h>
-#include <D3Dcompiler.h>
 
 struct RemapEntry
 {
@@ -24,41 +23,6 @@ const RemapEntry PixelEntries[] =
 #define REMAP_PIXEL(ShaderType, GroupType, ParameterIndex, ParamType) { ShaderType, GroupType, ParameterIndex, ParamType },
 #include "BSShaderConstants.inl"
 };
-
-void GetInputLayoutString(uint64_t InputLayoutFlags, char *Buffer, size_t BufferSize)
-{
-	strcpy_s(Buffer, BufferSize, "");
-
-	auto isSet = [InputLayoutFlags](uint64_t Bits)
-	{
-		return (InputLayoutFlags & Bits) == Bits;
-	};
-
-	// Skyrim always uses some default layout params, these ones are optional
-	if (isSet(0x401000000000FFull))
-		strcat_s(Buffer, BufferSize, "0:POSITION, ");
-	if (isSet(0x80200000000F00ull))
-		strcat_s(Buffer, BufferSize, "0:TEXCOORD, ");
-	if (isSet(0x10040000000F000ull))
-		strcat_s(Buffer, BufferSize, "1:TEXCOORD2, ");
-	if (isSet(0x2008000000F0000ull))
-		strcat_s(Buffer, BufferSize, "0:NORMAL, ");
-	if (isSet(0x401000000F00000ull))
-		strcat_s(Buffer, BufferSize, "0:BINORMAL, ");
-	if (isSet(0x80200000F000000ull))
-		strcat_s(Buffer, BufferSize, "0:COLOR, ");
-	if (isSet(0x10040000F0000000ull))
-		strcat_s(Buffer, BufferSize, "0:BLENDWEIGHT, ");
-	if (isSet(0x2008000F00000000ull))
-		strcat_s(Buffer, BufferSize, "3:TEXCOORD, ");
-	if (isSet(0x401000F000000000ull))
-		strcat_s(Buffer, BufferSize, "2:TEXCOORD, ");
-	if (isSet(0x80200F0000000000ull))
-		strcat_s(Buffer, BufferSize, "4:TEXCOORD, ");
-
-	Trim(Buffer, ' ');
-	Trim(Buffer, ',');
-}
 
 const RemapEntry *GetEntryForVertexShader(const char *Type, int ParamIndex)
 {
@@ -93,498 +57,443 @@ const RemapEntry *GetEntryForPixelShader(const char *Type, int ParamIndex)
 }
 
 const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, int ConstantIndex);
-void GetShaderTechniqueName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, char *Buffer, size_t BufferSize, uint32_t Technique);
-const char *GetShaderSamplerName(const char *ShaderType, int ConstantIndex);
-std::vector<std::pair<const char *, const char *>> GetShaderDefines(const char *ShaderType, uint32_t Technique);
 
-class ShaderDecoder
+ShaderDecoder::ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType)
 {
-public:
-	~ShaderDecoder()
+	m_HlslData = nullptr;
+	m_HlslDataLen = 0;
+	strcpy_s(m_Type, Type);
+	m_CodeType = CodeType;
+
+	// Guarantee that the sub-folder exists
+	char buf[1024];
+	sprintf_s(buf, "C:\\myfolder\\%s\\", Type);
+	_mkdir(buf);
+}
+
+ShaderDecoder::~ShaderDecoder()
+{
+	if (m_HlslData)
+		delete[] m_HlslData;
+}
+
+void ShaderDecoder::SetShaderData(void *Buffer, size_t BufferSize)
+{
+	m_HlslData = new char[BufferSize];
+	m_HlslDataLen = BufferSize;
+
+	memcpy(m_HlslData, Buffer, BufferSize);
+}
+
+void ShaderDecoder::DumpShader()
+{
+	DumpShaderInfo();
+}
+
+void ShaderDecoder::DumpShaderInfo()
+{
+	// Build a list of all constants used
+	std::vector<ParamIndexPair> geoIndexes;
+	std::vector<ParamIndexPair> matIndexes;
+	std::vector<ParamIndexPair> tecIndexes;
+	std::vector<ParamIndexPair> undefinedIndexes;
+
+	for (int i = 0; i < GetConstantArraySize(); i++)
 	{
-		if (m_ShaderData)
-			delete[] m_ShaderData;
-	}
+		const char *name = GetConstantName(i);
 
-	void SetShaderData(void *Buffer, size_t BufferSize)
-	{
-		m_ShaderData = new char[BufferSize];
-		m_ShaderDataLen = BufferSize;
+		if (strstr(name, "Add-your-"))
+			break;
 
-		memcpy(m_ShaderData, Buffer, BufferSize);
-	}
+		const RemapEntry *remapData = nullptr;
 
-protected:
-	void *m_ShaderData;
-	size_t m_ShaderDataLen;
-
-	char m_Type[256];
-	BSSM_SHADER_TYPE m_CodeType;
-
-	struct ParamIndexPair
-	{
-		int Index;
-		const char *Name;
-		const RemapEntry *Remap;
-	};
-
-	ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType)
-	{
-		m_ShaderData = nullptr;
-		m_ShaderDataLen = 0;
-		strcpy_s(m_Type, Type);
-		m_CodeType = CodeType;
-	}
-
-	const char *GetGroupName(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "PerGeometry";
-		case 1:return "PerMaterial";
-		case 2:return "PerTechnique";
-		}
-
-		return nullptr;
-	}
-
-	const char *GetGroupRegister(int Index)
-	{
-		switch (Index)
-		{
-		case 0:return "b0";
-		case 1:return "b1";
-		case 2:return "b2";
-		}
-
-		return nullptr;
-	}
-
-	const char *GetConstantName(int Index)
-	{
-		return GetShaderConstantName(m_Type, m_CodeType, Index);
-	}
-
-	int GetConstantArraySize()
-	{
 		switch (m_CodeType)
 		{
-		case BSSM_SHADER_TYPE::VERTEX: return ARRAYSIZE(BSVertexShader::m_ConstantOffsets);
-		case BSSM_SHADER_TYPE::PIXEL:  return ARRAYSIZE(BSPixelShader::m_ConstantOffsets);
-		case BSSM_SHADER_TYPE::COMPUTE:return 0;
+		case BSSM_SHADER_TYPE::VERTEX: remapData = GetEntryForVertexShader(m_Type, i); break;
+		case BSSM_SHADER_TYPE::PIXEL: remapData = GetEntryForPixelShader(m_Type, i); break;
+		default: remapData = nullptr; break;
 		}
 
-		return 0;
-	}
-};
-
-class VertexShaderDecoder : public ShaderDecoder
-{
-public:
-
-private:
-	BSVertexShader *m_Shader;
-	FILE *m_File;
-
-public:
-	VertexShaderDecoder(const char *Type, BSVertexShader *Shader) : ShaderDecoder(Type, BSSM_SHADER_TYPE::VERTEX)
-	{
-		m_Shader = Shader;
-
-		// Guarantee that the folder exists
-		char buf[1024];
-		sprintf_s(buf, "C:\\myfolder\\%s\\", Type);
-		_mkdir(buf);
-	}
-
-	~VertexShaderDecoder()
-	{
-	}
-
-	void DumpShaderInfo()
-	{
-		// Build a list of all constants used here
-		std::vector<ParamIndexPair> geoIndexes;
-		std::vector<ParamIndexPair> matIndexes;
-		std::vector<ParamIndexPair> tecIndexes;
-		std::vector<ParamIndexPair> undefinedIndexes;
-
-		for (int i = 0; i < GetConstantArraySize(); i++)
+		if (!remapData)
 		{
-			const char *name = GetConstantName(i);
-
-			if (strstr(name, "Add-your-"))
-				break;
-
-			auto remapData = GetEntryForVertexShader(m_Type, i);
-
-			if (!remapData)
+			// Indicates some kind of error
+			undefinedIndexes.push_back({ i, name, nullptr });
+		}
+		else
+		{
+			switch (remapData->Group)
 			{
-				// Indicates some kind of error here
-				undefinedIndexes.push_back({ i, name, nullptr });
+			case 0:
+				geoIndexes.push_back({ i, name, remapData });
+				break;
+			case 1:
+				matIndexes.push_back({ i, name, remapData });
+				break;
+			case 2:
+				tecIndexes.push_back({ i, name, remapData });
+				break;
+			}
+		}
+	}
+
+	// Technique name string (delimited by underscores)
+	char technique[1024];
+	GetTechniqueName(technique, ARRAYSIZE(technique), GetTechnique());
+
+	for (int i = 0;; i++)
+	{
+		if (technique[i] == '\0')
+			break;
+
+		if (technique[i] == ' ')
+			technique[i] = '_';
+	}
+
+	DumpShaderSpecific(technique, geoIndexes, matIndexes, tecIndexes, undefinedIndexes);
+}
+
+void ShaderDecoder::DumpCBuffer(FILE *File, BSConstantBufferInfo *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex)
+{
+	D3D11_BUFFER_DESC desc;
+
+	if (Buffer->m_Buffer)
+	{
+		Buffer->m_Buffer->GetDesc(&desc);
+		fprintf(File, "// Dynamic buffer: Size = %d (0x%X)\n", desc.ByteWidth, desc.ByteWidth);
+	}
+
+	if (Buffer->m_Data)
+		fprintf(File, "// Unmapped\n");
+
+	fprintf(File, "cbuffer %s : register(%s)\n{\n", GetGroupName(GroupIndex), GetGroupRegister(GroupIndex));
+
+	// Buffer undefined? Don't print anything
+	if (Buffer->m_Buffer)
+	{
+		// Sort each variable by offset
+		std::sort(Params.begin(), Params.end(),
+			[this](ParamIndexPair& a1, ParamIndexPair& a2)
+		{
+			return GetConstantArray()[a1.Index] < GetConstantArray()[a2.Index];
+		});
+
+		for (auto& entry : Params)
+		{
+			// Generate var and type names
+			char varName[256];
+
+			if (entry.Remap->ParamTypeOverride)
+			{
+				int index;
+				if (sscanf_s(entry.Remap->ParamTypeOverride, "float4[%d]", &index) == 1)
+					sprintf_s(varName, "float4 %s[%d]", entry.Name, index);
+				else
+					sprintf_s(varName, "%s %s", entry.Remap->ParamTypeOverride, entry.Name);
 			}
 			else
 			{
-				switch (remapData->Group)
-				{
-				case 0:
-					geoIndexes.push_back({ i, name, remapData });
-					break;
-				case 1:
-					matIndexes.push_back({ i, name, remapData });
-					break;
-				case 2:
-					tecIndexes.push_back({ i, name, remapData });
-					break;
-				}
+				// Undefined type; default to float4
+				sprintf_s(varName, "float4 %s", entry.Name);
 			}
-		}
 
-		char technique[1024];
-		GetShaderTechniqueName(m_Type, m_CodeType, technique, ARRAYSIZE(technique), m_Shader->m_TechniqueID);
+			// Convert cbOffset to packoffset(c0) or packoffset(c0.x) or packoffset(c0.y) or .... to enforce compiler
+			// offset ordering
+			uint8_t cbOffset = GetConstantArray()[entry.Index];
+			char packOffset[64];
 
-		for (int i = 0;; i++)
-		{
-			if (technique[i] == '\0')
-				break;
+			switch (cbOffset % 4)
+			{
+			case 0:sprintf_s(packOffset, "packoffset(c%d)", cbOffset / 4); break;  // Normal register on 16 byte boundary
+			case 1:sprintf_s(packOffset, "packoffset(c%d.y)", cbOffset / 4); break;// Requires swizzle index
+			case 2:sprintf_s(packOffset, "packoffset(c%d.z)", cbOffset / 4); break;// Requires swizzle index
+			case 3:sprintf_s(packOffset, "packoffset(c%d.w)", cbOffset / 4); break;// Requires swizzle index
+			default:__debugbreak(); break;
+			}
 
-			if (technique[i] == ' ')
-				technique[i] = '_';
-		}
+			fprintf(File, "\t%s", varName);
 
-		char buf1[1024];
-		sprintf_s(buf1, "C:\\myfolder\\%s\\%s_%s_%X.vs.txt", m_Type, m_Type, technique, m_Shader->m_TechniqueID);
+			// Add space alignment
+			for (size_t i = 45 - max(0, strlen(varName)); i > 0; i--)
+				fprintf(File, " ");
 
-		// Something went really wrong if the shader exists already
-		if (GetFileAttributesA(buf1) != INVALID_FILE_ATTRIBUTES)
-			__debugbreak();
+			fprintf(File, ": %s;", packOffset);
 
-		m_File = fopen(buf1, "w");
+			// Add space alignment
+			for (size_t i = 20 - max(0, strlen(packOffset)); i > 0; i--)
+				fprintf(File, " ");
 
-		//char inputLayout[1024];
-		//GetInputLayoutString(m_Shader->m_InputLayoutFlags, inputLayout, ARRAYSIZE(inputLayout));
-
-		fprintf(m_File, "// %s\n", m_Type);
-		fprintf(m_File, "// TechniqueID: 0x%X\n", m_Shader->m_TechniqueID);
-		fprintf(m_File, "// Input flags: 0x%llX\n//\n", m_Shader->m_InputLayoutFlags);
-		fprintf(m_File, "// Technique: %s\n\n", technique);
-		//fprintf(m_File, "// Input layout: %s\n\n", inputLayout);
-
-		for (const auto& define : GetShaderDefines(m_Type, m_Shader->m_TechniqueID))
-		{
-			fprintf(m_File, "#define %s %s\n", define.first, define.second);
-		}
-
-		fprintf(m_File, "\n\n");
-
-		DumpCBuffer(&m_Shader->m_PerGeometry, geoIndexes, 0);// Constant buffer 0 : register(b0)
-		DumpCBuffer(&m_Shader->m_PerMaterial, matIndexes, 1);// Constant buffer 1 : register(b1)
-		DumpCBuffer(&m_Shader->m_PerTechnique, tecIndexes, 2);// Constant buffer 2 : register(b2)
-
-		// Dump undefined variables
-		for (auto& entry : undefinedIndexes)
-			fprintf(m_File, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
-
-		fclose(m_File);
-
-		// Now write raw HLSL
-		char buf[1024];
-		sprintf_s(buf, "C:\\myfolder\\%s\\%s_%s_%X.vs.hlsl", m_Type, m_Type, technique, m_Shader->m_TechniqueID);
-		FILE *f = fopen(buf, "wb");
-
-		if (m_ShaderData && f)
-		{
-			fwrite(m_ShaderData, 1, m_ShaderDataLen, f);
-			fclose(f);
+			fprintf(File, "// @ %d - 0x%04X\n", cbOffset, cbOffset * 4);
 		}
 	}
 
-private:
-	void DumpCBuffer(BSConstantBufferInfo *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex)
-	{
-		D3D11_BUFFER_DESC desc;
+	fprintf(File, "}\n\n");
+}
 
-		if (Buffer->m_Buffer)
-		{
-			Buffer->m_Buffer->GetDesc(&desc);
-			fprintf(m_File, "// Dynamic buffer: Size = %d (0x%X)\n", desc.ByteWidth, desc.ByteWidth);
-		}
-
-		if (Buffer->m_Data)
-			fprintf(m_File, "// Unmapped\n");
-
-		fprintf(m_File, "cbuffer %s : register(%s)\n{\n", GetGroupName(GroupIndex), GetGroupRegister(GroupIndex));
-
-		// Don't print any variables if this buffer is undefined
-		if (Buffer->m_Buffer)
-		{
-			// Sort each variable by offset
-			std::sort(Params.begin(), Params.end(),
-				[this](ParamIndexPair& a1, ParamIndexPair& a2)
-			{
-				return m_Shader->m_ConstantOffsets[a1.Index] < m_Shader->m_ConstantOffsets[a2.Index];
-			});
-
-			for (auto& entry : Params)
-			{
-				// Generate the variable and type name
-				char varName[256];
-
-				if (entry.Remap->ParamTypeOverride)
-				{
-					int index;
-					if (sscanf_s(entry.Remap->ParamTypeOverride, "float4[%d]", &index) == 1)
-						sprintf_s(varName, "float4 %s[%d]", entry.Name, index);
-					else
-						sprintf_s(varName, "%s %s", entry.Remap->ParamTypeOverride, entry.Name);
-				}
-				else
-				{
-					// Undefined variable type; default to float4
-					sprintf_s(varName, "float4 %s", entry.Name);
-				}
-
-				// Convert cbOffset to packoffset(c0) or packoffset(c0.x) or packoffset(c0.y) or .... to enforce compiler
-				// buffer ordering
-				uint8_t cbOffset = m_Shader->m_ConstantOffsets[entry.Index];
-				char packOffset[64];
-
-				switch (cbOffset % 4)
-				{
-				case 0:sprintf_s(packOffset, "packoffset(c%d)", cbOffset / 4); break;  // Normal register on 16 byte boundary
-				case 1:sprintf_s(packOffset, "packoffset(c%d.y)", cbOffset / 4); break;// Requires swizzle index
-				case 2:sprintf_s(packOffset, "packoffset(c%d.z)", cbOffset / 4); break;// Requires swizzle index
-				case 3:sprintf_s(packOffset, "packoffset(c%d.w)", cbOffset / 4); break;// Requires swizzle index
-				default:__debugbreak(); break;
-				}
-
-				fprintf(m_File, "\t%s", varName);
-
-				// Add space alignment
-				for (int i = 45 - max(0, strlen(varName)); i > 0; i--)
-					fprintf(m_File, " ");
-
-				fprintf(m_File, ": %s;", packOffset);
-
-				// Add space alignment
-				for (int i = 20 - max(0, strlen(packOffset)); i > 0; i--)
-					fprintf(m_File, " ");
-
-				fprintf(m_File, "// @ %d - 0x%04X\n", cbOffset, cbOffset * 4);
-			}
-		}
-
-		fprintf(m_File, "}\n\n");
-	}
-};
-
-class PixelShaderDecoder : public ShaderDecoder
+const char *ShaderDecoder::GetGroupName(int Index)
 {
-public:
-
-private:
-	BSPixelShader *m_Shader;
-	FILE *m_File;
-
-public:
-	PixelShaderDecoder(const char *Type, BSPixelShader *Shader) : ShaderDecoder(Type, BSSM_SHADER_TYPE::PIXEL)
+	switch (Index)
 	{
-		m_Shader = Shader;
-
-		// Guarantee that the folder exists
-		char buf[1024];
-		sprintf_s(buf, "C:\\myfolder\\%s\\", Type);
-		_mkdir(buf);
+	case 0:return "PerGeometry";
+	case 1:return "PerMaterial";
+	case 2:return "PerTechnique";
 	}
 
-	~PixelShaderDecoder()
+	return nullptr;
+}
+
+const char *ShaderDecoder::GetGroupRegister(int Index)
+{
+	switch (Index)
 	{
+	case 0:return "b0";
+	case 1:return "b1";
+	case 2:return "b2";
 	}
 
-	void DumpShaderInfo()
+	return nullptr;
+}
+
+const char *ShaderDecoder::GetConstantName(int Index)
+{
+	return GetShaderConstantName(m_Type, m_CodeType, Index);
+}
+
+void ShaderDecoder::GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t Technique)
+{
+	switch (m_CodeType)
 	{
-		// Build a list of all constants used here
-		std::vector<ParamIndexPair> geoIndexes;
-		std::vector<ParamIndexPair> matIndexes;
-		std::vector<ParamIndexPair> tecIndexes;
-		std::vector<ParamIndexPair> undefinedIndexes;
+	case BSSM_SHADER_TYPE::VERTEX:
+	case BSSM_SHADER_TYPE::PIXEL:
+		if (!_stricmp(m_Type, "BloodSplatter"))
+			return BSBloodSplatterShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(m_Type, "DistantTree"))
+			return BSDistantTreeShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(m_Type, "RunGrass"))
+			return BSGrassShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(m_Type, "Particle"))
+			return BSParticleShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(m_Type, "Sky"))
+			return BSSkyShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(m_Type, "Effect"))
+			return BSXShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(m_Type, "Lighting"))
+			return BSLightingShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(m_Type, "Utility"))
+			return BSUtilityShader::Techniques::GetString(Technique, Buffer, BufferSize);
+		else if (!_stricmp(m_Type, "Water"))
+			return BSWaterShader::Techniques::GetString(Technique, Buffer, BufferSize);
 
-		for (int i = 0; i < GetConstantArraySize(); i++)
-		{
-			const char *name = GetConstantName(i);
+		// TODO: ImageSpace
+		break;
 
-			if (strstr(name, "Add-your-"))
-				break;
+	case BSSM_SHADER_TYPE::COMPUTE:
+		// TODO
+		break;
+	}
+}
 
-			auto remapData = GetEntryForPixelShader(m_Type, i);
+const char *ShaderDecoder::GetSamplerName(int Index)
+{
+	if (!_stricmp(m_Type, "BloodSplatter"))
+		return BSBloodSplatterShader::Samplers::GetString(Index);
+	else if (!_stricmp(m_Type, "DistantTree"))
+		return BSDistantTreeShader::Samplers::GetString(Index);
+	else if (!_stricmp(m_Type, "RunGrass"))
+		return BSGrassShader::Samplers::GetString(Index);
+	else if (!_stricmp(m_Type, "Particle"))
+		return BSParticleShader::Samplers::GetString(Index);
+	else if (!_stricmp(m_Type, "Sky"))
+		return BSSkyShader::Samplers::GetString(Index);
+	else if (!_stricmp(m_Type, "Effect"))
+		return BSXShader::Samplers::GetString(Index);
+	else if (!_stricmp(m_Type, "Lighting"))
+		return BSLightingShader::Samplers::GetString(Index);
+	else if (!_stricmp(m_Type, "Utility"))
+		return BSUtilityShader::Samplers::GetString(Index);
+	else if (!_stricmp(m_Type, "Water"))
+		return BSWaterShader::Samplers::GetString(Index);
 
-			if (!remapData)
-			{
-				// Indicates some kind of error here
-				undefinedIndexes.push_back({ i, name, nullptr });
-			}
-			else
-			{
-				switch (remapData->Group)
-				{
-				case 0:
-					geoIndexes.push_back({ i, name, remapData });
-					break;
-				case 1:
-					matIndexes.push_back({ i, name, remapData });
-					break;
-				case 2:
-					tecIndexes.push_back({ i, name, remapData });
-					break;
-				}
-			}
-		}
+	// TODO: Compute
+	// TODO: ImageSpace
+	return nullptr;
+}
 
-		char technique[1024];
-		GetShaderTechniqueName(m_Type, m_CodeType, technique, ARRAYSIZE(technique), m_Shader->m_TechniqueID);
+std::vector<std::pair<const char *, const char *>> ShaderDecoder::GetDefineArray(uint32_t Technique)
+{
+	if (!_stricmp(m_Type, "BloodSplatter"))
+		return BSBloodSplatterShader::Defines::GetArray(Technique);
+	else if (!_stricmp(m_Type, "DistantTree"))
+		return BSDistantTreeShader::Defines::GetArray(Technique);
+	else if (!_stricmp(m_Type, "RunGrass"))
+		return BSGrassShader::Defines::GetArray(Technique);
+	else if (!_stricmp(m_Type, "Particle"))
+		return BSParticleShader::Defines::GetArray(Technique);
+	else if (!_stricmp(m_Type, "Sky"))
+		return BSSkyShader::Defines::GetArray(Technique);
+	else if (!_stricmp(m_Type, "Effect"))
+		return BSXShader::Defines::GetArray(Technique);
+	else if (!_stricmp(m_Type, "Lighting"))
+		return BSLightingShader::Defines::GetArray(Technique);
+	else if (!_stricmp(m_Type, "Utility"))
+		return BSUtilityShader::Defines::GetArray(Technique);
+	else if (!_stricmp(m_Type, "Water"))
+		return BSWaterShader::Defines::GetArray(Technique);
 
-		for (int i = 0;; i++)
-		{
-			if (technique[i] == '\0')
-				break;
+	// TODO: Compute
+	// TODO: ImageSpace
+	return std::vector<std::pair<const char *, const char *>>();
+}
 
-			if (technique[i] == ' ')
-				technique[i] = '_';
-		}
+VertexShaderDecoder::VertexShaderDecoder(const char *Type, BSVertexShader *Shader) : ShaderDecoder(Type, BSSM_SHADER_TYPE::VERTEX)
+{
+	m_Shader = Shader;
+}
 
-		char buf1[1024];
-		sprintf_s(buf1, "C:\\myfolder\\%s\\%s_%s_%X.ps.txt", m_Type, m_Type, technique, m_Shader->m_TechniqueID);
+void VertexShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined)
+{
+	char buf1[1024];
+	sprintf_s(buf1, "C:\\myfolder\\%s\\%s_%s_%X.vs.txt", m_Type, m_Type, TechName, m_Shader->m_TechniqueID);
 
-		// Something went really wrong if the shader exists already
-		if (GetFileAttributesA(buf1) != INVALID_FILE_ATTRIBUTES)
-			__debugbreak();
+	// Something went really wrong if the shader exists already
+	if (GetFileAttributesA(buf1) != INVALID_FILE_ATTRIBUTES)
+		__debugbreak();
 
-		m_File = fopen(buf1, "w");
+	FILE *m_File = fopen(buf1, "w");
 
-		fprintf(m_File, "// %s\n", m_Type);
-		fprintf(m_File, "// TechniqueID: 0x%X\n//\n", m_Shader->m_TechniqueID);
-		fprintf(m_File, "// Technique: %s\n\n", technique);
+	//char inputLayout[1024];
+	//GetInputLayoutString(m_Shader->m_InputLayoutFlags, inputLayout, ARRAYSIZE(inputLayout));
 
-		for (const auto& define : GetShaderDefines(m_Type, m_Shader->m_TechniqueID))
-		{
-			fprintf(m_File, "#define %s %s\n", define.first, define.second);
-		}
+	fprintf(m_File, "// %s\n", m_Type);
+	fprintf(m_File, "// TechniqueID: 0x%X\n", m_Shader->m_TechniqueID);
+	fprintf(m_File, "// Input flags: 0x%llX\n//\n", m_Shader->m_InputLayoutFlags);
+	fprintf(m_File, "// Technique: %s\n\n", TechName);
+	//fprintf(m_File, "// Input layout: %s\n\n", inputLayout);
 
-		fprintf(m_File, "\n\n");
-
-		// Dump samplers
-		for (int i = 0;; i++)
-		{
-			const char *name = GetShaderSamplerName(m_Type, i);
-
-			if (strstr(name, "Add-your-"))
-				break;
-
-			fprintf(m_File, "// Sampler[%d]: %s\n", i, name);
-		}
-
-		fprintf(m_File, "\n");
-
-		DumpCBuffer(&m_Shader->m_PerGeometry, geoIndexes, 0); // Constant buffer 0 : register(b0)
-		DumpCBuffer(&m_Shader->m_PerMaterial, matIndexes, 1); // Constant buffer 1 : register(b1)
-		DumpCBuffer(&m_Shader->m_PerTechnique, tecIndexes, 2);// Constant buffer 2 : register(b2)
-
-		// Dump undefined variables
-		for (auto& entry : undefinedIndexes)
-			fprintf(m_File, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
-
-		fclose(m_File);
-
-		// Now write raw HLSL
-		char buf[1024];
-		sprintf_s(buf, "C:\\myfolder\\%s\\%s_%s_%X.ps.hlsl", m_Type, m_Type, technique, m_Shader->m_TechniqueID);
-		FILE *f = fopen(buf, "wb");
-
-		if (m_ShaderData && f)
-		{
-			fwrite(m_ShaderData, 1, m_ShaderDataLen, f);
-			fclose(f);
-		}
+	for (const auto& define : GetDefineArray(m_Shader->m_TechniqueID))
+	{
+		fprintf(m_File, "#define %s %s\n", define.first, define.second);
 	}
 
-private:
-	void DumpCBuffer(BSConstantBufferInfo *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex)
+	fprintf(m_File, "\n\n");
+
+	DumpCBuffer(m_File, &m_Shader->m_PerGeometry, PerGeo, 0); // Constant buffer 0 : register(b0)
+	DumpCBuffer(m_File, &m_Shader->m_PerMaterial, PerMat, 1); // Constant buffer 1 : register(b1)
+	DumpCBuffer(m_File, &m_Shader->m_PerTechnique, PerTec, 2);// Constant buffer 2 : register(b2)
+
+	// Dump undefined variables
+	for (auto& entry : Undefined)
+		fprintf(m_File, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
+
+	fclose(m_File);
+
+	// Now write raw HLSL
+	char buf[1024];
+	sprintf_s(buf, "C:\\myfolder\\%s\\%s_%s_%X.vs.hlsl", m_Type, m_Type, TechName, m_Shader->m_TechniqueID);
+	FILE *f = fopen(buf, "wb");
+
+	if (m_HlslData && f)
 	{
-		D3D11_BUFFER_DESC desc;
-
-		if (Buffer->m_Buffer)
-		{
-			Buffer->m_Buffer->GetDesc(&desc);
-			fprintf(m_File, "// Dynamic buffer: Size = %d (0x%X)\n", desc.ByteWidth, desc.ByteWidth);
-		}
-
-		if (Buffer->m_Data)
-			fprintf(m_File, "// Unmapped\n");
-
-		fprintf(m_File, "cbuffer %s : register(%s)\n{\n", GetGroupName(GroupIndex), GetGroupRegister(GroupIndex));
-
-		// Don't print any variables if this buffer is undefined
-		if (Buffer->m_Buffer)
-		{
-			// Sort each variable by offset
-			std::sort(Params.begin(), Params.end(),
-				[this](ParamIndexPair& a1, ParamIndexPair& a2)
-			{
-				return m_Shader->m_ConstantOffsets[a1.Index] < m_Shader->m_ConstantOffsets[a2.Index];
-			});
-
-			for (auto& entry : Params)
-			{
-				// Generate the variable and type name
-				char varName[256];
-
-				if (entry.Remap->ParamTypeOverride)
-				{
-					int index;
-					if (sscanf_s(entry.Remap->ParamTypeOverride, "float4[%d]", &index) == 1)
-						sprintf_s(varName, "float4 %s[%d]", entry.Name, index);
-					else
-						sprintf_s(varName, "%s %s", entry.Remap->ParamTypeOverride, entry.Name);
-				}
-				else
-				{
-					// Undefined variable type; default to float4
-					sprintf_s(varName, "float4 %s", entry.Name);
-				}
-
-				// Convert cbOffset to packoffset(c0) or packoffset(c0.x) or packoffset(c0.y) or .... to enforce compiler
-				// buffer ordering
-				uint8_t cbOffset = m_Shader->m_ConstantOffsets[entry.Index];
-				char packOffset[64];
-
-				switch (cbOffset % 4)
-				{
-				case 0:sprintf_s(packOffset, "packoffset(c%d)", cbOffset / 4); break;  // Normal register on 16 byte boundary
-				case 1:sprintf_s(packOffset, "packoffset(c%d.y)", cbOffset / 4); break;// Requires swizzle index
-				case 2:sprintf_s(packOffset, "packoffset(c%d.z)", cbOffset / 4); break;// Requires swizzle index
-				case 3:sprintf_s(packOffset, "packoffset(c%d.w)", cbOffset / 4); break;// Requires swizzle index
-				default:__debugbreak(); break;
-				}
-
-				fprintf(m_File, "\t%s", varName);
-
-				// Add space alignment
-				for (int i = 45 - max(0, strlen(varName)); i > 0; i--)
-					fprintf(m_File, " ");
-
-				fprintf(m_File, ": %s;", packOffset);
-
-				// Add space alignment
-				for (int i = 20 - max(0, strlen(packOffset)); i > 0; i--)
-					fprintf(m_File, " ");
-
-				fprintf(m_File, "// @ %d - 0x%04X\n", cbOffset, cbOffset * 4);
-			}
-		}
-
-		fprintf(m_File, "}\n\n");
+		fwrite(m_HlslData, 1, m_HlslDataLen, f);
+		fclose(f);
 	}
-};
+}
+
+void VertexShaderDecoder::GetInputLayoutString(char *Buffer, size_t BufferSize)
+{
+	strcpy_s(Buffer, BufferSize, "");
+
+	auto isSet = [this](uint64_t Bits)
+	{
+		return (m_Shader->m_InputLayoutFlags & Bits) == Bits;
+	};
+
+	// Skyrim always uses some default layout params, these ones are optional
+	if (isSet(0x401000000000FFull))
+		strcat_s(Buffer, BufferSize, "0:POSITION, ");
+	if (isSet(0x80200000000F00ull))
+		strcat_s(Buffer, BufferSize, "0:TEXCOORD, ");
+	if (isSet(0x10040000000F000ull))
+		strcat_s(Buffer, BufferSize, "1:TEXCOORD2, ");
+	if (isSet(0x2008000000F0000ull))
+		strcat_s(Buffer, BufferSize, "0:NORMAL, ");
+	if (isSet(0x401000000F00000ull))
+		strcat_s(Buffer, BufferSize, "0:BINORMAL, ");
+	if (isSet(0x80200000F000000ull))
+		strcat_s(Buffer, BufferSize, "0:COLOR, ");
+	if (isSet(0x10040000F0000000ull))
+		strcat_s(Buffer, BufferSize, "0:BLENDWEIGHT, ");
+	if (isSet(0x2008000F00000000ull))
+		strcat_s(Buffer, BufferSize, "3:TEXCOORD, ");
+	if (isSet(0x401000F000000000ull))
+		strcat_s(Buffer, BufferSize, "2:TEXCOORD, ");
+	if (isSet(0x80200F0000000000ull))
+		strcat_s(Buffer, BufferSize, "4:TEXCOORD, ");
+
+	Trim(Buffer, ' ');
+	Trim(Buffer, ',');
+}
+
+PixelShaderDecoder::PixelShaderDecoder(const char *Type, BSPixelShader *Shader) : ShaderDecoder(Type, BSSM_SHADER_TYPE::PIXEL)
+{
+	m_Shader = Shader;
+}
+
+void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined)
+{
+	char buf1[1024];
+	sprintf_s(buf1, "C:\\myfolder\\%s\\%s_%s_%X.ps.txt", m_Type, m_Type, TechName, m_Shader->m_TechniqueID);
+
+	// Something went really wrong if the shader exists already
+	if (GetFileAttributesA(buf1) != INVALID_FILE_ATTRIBUTES)
+		__debugbreak();
+
+	FILE *m_File = fopen(buf1, "w");
+
+	fprintf(m_File, "// %s\n", m_Type);
+	fprintf(m_File, "// TechniqueID: 0x%X\n//\n", m_Shader->m_TechniqueID);
+	fprintf(m_File, "// Technique: %s\n\n", TechName);
+
+	for (const auto& define : GetDefineArray(m_Shader->m_TechniqueID))
+	{
+		fprintf(m_File, "#define %s %s\n", define.first, define.second);
+	}
+
+	fprintf(m_File, "\n\n");
+
+	// Dump samplers
+	for (int i = 0;; i++)
+	{
+		const char *name = GetSamplerName(i);
+
+		if (strstr(name, "Add-your-"))
+			break;
+
+		fprintf(m_File, "// Sampler[%d]: %s\n", i, name);
+	}
+
+	fprintf(m_File, "\n");
+
+	DumpCBuffer(m_File, &m_Shader->m_PerGeometry, PerGeo, 0); // Constant buffer 0 : register(b0)
+	DumpCBuffer(m_File, &m_Shader->m_PerMaterial, PerMat, 1); // Constant buffer 1 : register(b1)
+	DumpCBuffer(m_File, &m_Shader->m_PerTechnique, PerTec, 2);// Constant buffer 2 : register(b2)
+
+	// Dump undefined variables
+	for (auto& entry : Undefined)
+		fprintf(m_File, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
+
+	fclose(m_File);
+
+	// Now write raw HLSL
+	char buf[1024];
+	sprintf_s(buf, "C:\\myfolder\\%s\\%s_%s_%X.ps.hlsl", m_Type, m_Type, TechName, m_Shader->m_TechniqueID);
+	FILE *f = fopen(buf, "wb");
+
+	if (m_HlslData && f)
+	{
+		fwrite(m_HlslData, 1, m_HlslDataLen, f);
+		fclose(f);
+	}
+}
 
 void DumpVertexShader(BSVertexShader *Shader, const char *Type)
 {
@@ -620,7 +529,7 @@ void DumpVertexShader(BSVertexShader *Shader, const char *Type)
 
 	VertexShaderDecoder decoder(Type, Shader);
 	decoder.SetShaderData((void *)((uintptr_t)Shader + sizeof(BSVertexShader)), Shader->m_ShaderLength);
-	decoder.DumpShaderInfo();
+	decoder.DumpShader();
 }
 
 void DumpPixelShader(BSPixelShader *Shader, const char *Type, void *Buffer, size_t BufferLen)
@@ -657,7 +566,7 @@ void DumpPixelShader(BSPixelShader *Shader, const char *Type, void *Buffer, size
 
 	PixelShaderDecoder decoder(Type, Shader);
 	decoder.SetShaderData(Buffer, BufferLen);
-	decoder.DumpShaderInfo();
+	decoder.DumpShader();
 }
 
 const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, int ConstantIndex)
@@ -716,96 +625,6 @@ const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeT
 	}
 
 	return nullptr;
-}
-
-void GetShaderTechniqueName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, char *Buffer, size_t BufferSize, uint32_t Technique)
-{
-	switch (CodeType)
-	{
-	case BSSM_SHADER_TYPE::VERTEX:
-	case BSSM_SHADER_TYPE::PIXEL:
-		if (!_stricmp(ShaderType, "BloodSplatter"))
-			return BSBloodSplatterShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(ShaderType, "DistantTree"))
-			return BSDistantTreeShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(ShaderType, "RunGrass"))
-			return BSGrassShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(ShaderType, "Particle"))
-			return BSParticleShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(ShaderType, "Sky"))
-			return BSSkyShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(ShaderType, "Effect"))
-			return BSXShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(ShaderType, "Lighting"))
-			return BSLightingShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(ShaderType, "Utility"))
-			return BSUtilityShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(ShaderType, "Water"))
-			return BSWaterShader::Techniques::GetString(Technique, Buffer, BufferSize);
-
-		// TODO: ImageSpace
-		break;
-
-	case BSSM_SHADER_TYPE::COMPUTE:
-		// TODO
-		break;
-	}
-}
-
-const char *GetShaderSamplerName(const char *ShaderType, int ConstantIndex)
-{
-	if (!_stricmp(ShaderType, "BloodSplatter"))
-		return BSBloodSplatterShader::Samplers::GetString(ConstantIndex);
-	else if (!_stricmp(ShaderType, "DistantTree"))
-		return BSDistantTreeShader::Samplers::GetString(ConstantIndex);
-	else if (!_stricmp(ShaderType, "RunGrass"))
-		return BSGrassShader::Samplers::GetString(ConstantIndex);
-	else if (!_stricmp(ShaderType, "Particle"))
-		return BSParticleShader::Samplers::GetString(ConstantIndex);
-	else if (!_stricmp(ShaderType, "Sky"))
-		return BSSkyShader::Samplers::GetString(ConstantIndex);
-	else if (!_stricmp(ShaderType, "Effect"))
-		return BSXShader::Samplers::GetString(ConstantIndex);
-	else if (!_stricmp(ShaderType, "Lighting"))
-		return BSLightingShader::Samplers::GetString(ConstantIndex);
-	else if (!_stricmp(ShaderType, "Utility"))
-		return BSUtilityShader::Samplers::GetString(ConstantIndex);
-	else if (!_stricmp(ShaderType, "Water"))
-		return BSWaterShader::Samplers::GetString(ConstantIndex);
-
-	// TODO: Compute?
-	// TODO: ImageSpace
-	return nullptr;
-}
-
-std::vector<std::pair<const char *, const char *>> GetShaderDefines(const char *ShaderType, uint32_t Technique)
-{
-	if (!_stricmp(ShaderType, "BloodSplatter"))
-		return BSBloodSplatterShader::Defines::GetArray(Technique);
-	else if (!_stricmp(ShaderType, "DistantTree"))
-		return BSDistantTreeShader::Defines::GetArray(Technique);
-	else if (!_stricmp(ShaderType, "RunGrass"))
-		return BSGrassShader::Defines::GetArray(Technique);
-	else if (!_stricmp(ShaderType, "Particle"))
-		return BSParticleShader::Defines::GetArray(Technique);
-	else if (!_stricmp(ShaderType, "Sky"))
-		return BSSkyShader::Defines::GetArray(Technique);
-	else if (!_stricmp(ShaderType, "Effect"))
-		return BSXShader::Defines::GetArray(Technique);
-	else if (!_stricmp(ShaderType, "Lighting"))
-		return BSLightingShader::Defines::GetArray(Technique);
-	else if (!_stricmp(ShaderType, "Utility"))
-		return BSUtilityShader::Defines::GetArray(Technique);
-	else if (!_stricmp(ShaderType, "Water"))
-		return BSWaterShader::Defines::GetArray(Technique);
-
-	// TODO: Compute?
-	// TODO: ImageSpace
-	return std::vector<std::pair<const char *, const char *>>();
-}
-
-void DumpComputeShader(BSComputeShader *Shader)
-{
 }
 
 void ValidateShaderParamTable()
