@@ -204,6 +204,8 @@ private:
 // NOTE: In the creation kit, there are copy-paste errors with the placeholder
 // saying "BSLightingShaderX" instead of the real function name.
 //
+// NOTE: BSXShader/BSLightingShader/BSUtilityShader have variable-size constant types
+//
 
 #define BSSM_PLACEHOLDER "Add-your-constant-to-" __FUNCTION__
 
@@ -1053,6 +1055,7 @@ namespace BSLightingShader
 			case 12:return "Acceleration";
 			case 13:return "ScaleAdjust";
 			case 14:return "Wind";
+			case 15:return "UNKNOWN_NAME";
 			}
 
 			return BSSM_PLACEHOLDER;
@@ -1128,6 +1131,7 @@ namespace BSLightingShader
 		{
 			int v2 = 1;
 
+			// PointLightPosition/PointLightColor variable size array
 			if ((unsigned int)(Index - 1) <= 1)
 				v2 = (Flags >> 3) & 7;
 

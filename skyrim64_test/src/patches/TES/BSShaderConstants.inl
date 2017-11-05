@@ -40,12 +40,12 @@ REMAP_PIXEL("BloodSplatter", PER_TEC, 0, "float")
 REMAP_VERTEX("DistantTree", PER_GEO, 4, "float4")
 REMAP_VERTEX("DistantTree", PER_GEO, 5, "float4")
 REMAP_VERTEX("DistantTree", PER_GEO, 6, "float4")
-REMAP_VERTEX("DistantTree", PER_GEO, 7, 0)// Guessed based on cbuffer offset. "Offset: 0x0000 DiffuseDir"
+REMAP_VERTEX("DistantTree", PER_GEO, 7, 0)			// Guessed based on cbuffer offset. "Offset: 0x0000 DiffuseDir"
 REMAP_VERTEX_UNUSED("DistantTree", PER_MAT)
 REMAP_VERTEX("DistantTree", PER_TEC, 1, "float4x4")
 REMAP_VERTEX("DistantTree", PER_TEC, 2, "float4x4")
 REMAP_VERTEX("DistantTree", PER_TEC, 3, "float4x4")
-REMAP_VERTEX("DistantTree", PER_TEC, 8, 0)// Guessed based on cbuffer offset. "Offset: 0x00C0 IndexScale"
+REMAP_VERTEX("DistantTree", PER_TEC, 8, 0)			// Guessed based on cbuffer offset. "Offset: 0x00C0 IndexScale"
 
 REMAP_PIXEL("DistantTree", PER_GEO, 0, "float4")
 REMAP_PIXEL("DistantTree", PER_GEO, 1, "float4")
@@ -87,7 +87,7 @@ REMAP_PIXEL_UNUSED("RunGrass", PER_TEC)
 REMAP_VERTEX("Particle", PER_GEO, 13, 0)
 REMAP_VERTEX_UNUSED("Particle", PER_MAT)
 REMAP_VERTEX("Particle", PER_TEC, 0, "float4x4")
-REMAP_VERTEX("Particle", PER_TEC, 1, "float4x4")// Guessed based on cbuffer offset. "Offset: 0x0040 PrevWorldViewProj"
+REMAP_VERTEX("Particle", PER_TEC, 1, "float4x4")	// Guessed based on cbuffer offset. "Offset: 0x0040 PrevWorldViewProj"
 REMAP_VERTEX("Particle", PER_TEC, 2, "float4x4")
 REMAP_VERTEX("Particle", PER_TEC, 3, 0)
 REMAP_VERTEX("Particle", PER_TEC, 4, 0)
@@ -116,38 +116,38 @@ REMAP_VERTEX("Sky", PER_TEC, 1, "float4x4")
 REMAP_VERTEX("Sky", PER_TEC, 2, "float4x4")
 REMAP_VERTEX("Sky", PER_TEC, 3, "float4[3]")
 REMAP_VERTEX("Sky", PER_TEC, 4, "float3")
-REMAP_VERTEX("Sky", PER_TEC, 5, "float2")// At least float2
+REMAP_VERTEX("Sky", PER_TEC, 5, "float2")			// At least float2
 REMAP_VERTEX("Sky", PER_TEC, 6, "float")
 
 REMAP_PIXEL_UNUSED("Sky", PER_GEO)
 REMAP_PIXEL_UNUSED("Sky", PER_MAT)
-REMAP_PIXEL("Sky", PER_TEC, 0, "float2")// At least float2
+REMAP_PIXEL("Sky", PER_TEC, 0, "float2")			// At least float2
 
 //
 // BSEffectShader
 //
-REMAP_VERTEX("Effect", PER_GEO, 4, 0)
-REMAP_VERTEX("Effect", PER_GEO, 5, 0)
-REMAP_VERTEX("Effect", PER_GEO, 6, 0)
-REMAP_VERTEX("Effect", PER_MAT, 7, 0)
+REMAP_VERTEX("Effect", PER_GEO, 4, "float4")
+REMAP_VERTEX("Effect", PER_GEO, 5, "float4")
+REMAP_VERTEX("Effect", PER_GEO, 6, "float4")
+REMAP_VERTEX("Effect", PER_MAT, 7, "float4")
 REMAP_VERTEX("Effect", PER_MAT, 8, 0)
-REMAP_VERTEX("Effect", PER_MAT, 9, 0)
-REMAP_VERTEX("Effect", PER_TEC, 0, 0)// float3x4 // TODO/WARNING: The game code actually writes a float4x4 here if certain flags are set...
-REMAP_VERTEX("Effect", PER_TEC, 1, 0)// float3x4 // TODO/WARNING: The game code actually writes a float4x4 here if certain flags are set...
-REMAP_VERTEX("Effect", PER_TEC, 3, 0)// float3
-REMAP_VERTEX("Effect", PER_TEC, 10, 0)// float4
-REMAP_VERTEX("Effect", PER_TEC, 12, 0)// float2
-REMAP_VERTEX("Effect", PER_TEC, 13, 0)// float4x4
+REMAP_VERTEX("Effect", PER_MAT, 9, "float4")
+REMAP_VERTEX("Effect", PER_TEC, 0, "float3x4")		// WARNING: The game code always writes a float4x4 here. Shader has a float3x4...
+REMAP_VERTEX("Effect", PER_TEC, 1, "float3x4")		// WARNING: The game code always writes a float4x4 here. Shader has a float3x4...
+REMAP_VERTEX("Effect", PER_TEC, 3, 0)
+REMAP_VERTEX("Effect", PER_TEC, 10, "float4")
+REMAP_VERTEX("Effect", PER_TEC, 12, 0)
+REMAP_VERTEX("Effect", PER_TEC, 13, "float4x4")		// WARNING: The game code always writes a float4x4 here. Unknown shader type.
 
-REMAP_PIXEL("Effect", PER_GEO, 12, 0)
-REMAP_PIXEL("Effect", PER_GEO, 13, 0)
-REMAP_PIXEL("Effect", PER_GEO, 14, 0)
-REMAP_PIXEL("Effect", PER_MAT, 15, 0)
+REMAP_PIXEL("Effect", PER_GEO, 12, "float2")
+REMAP_PIXEL("Effect", PER_GEO, 13, "float4")
+REMAP_PIXEL("Effect", PER_GEO, 14, "float2")
+REMAP_PIXEL("Effect", PER_MAT, 15, "float4")
 REMAP_PIXEL("Effect", PER_MAT, 16, 0)
 REMAP_PIXEL("Effect", PER_MAT, 17, 0)
 REMAP_PIXEL("Effect", PER_TEC, 0, 0)
 REMAP_PIXEL("Effect", PER_TEC, 1, 0)
-REMAP_PIXEL("Effect", PER_TEC, 2, 0)
+REMAP_PIXEL("Effect", PER_TEC, 2, "float4")
 REMAP_PIXEL("Effect", PER_TEC, 3, 0)
 REMAP_PIXEL("Effect", PER_TEC, 4, 0)
 REMAP_PIXEL("Effect", PER_TEC, 5, 0)
@@ -162,30 +162,30 @@ REMAP_PIXEL("Effect", PER_TEC, 11, 0)
 // BSLightingShader
 //
 REMAP_VERTEX("Lighting", PER_GEO, 12, 0)
-REMAP_VERTEX("Lighting", PER_GEO, 13, 0)
-REMAP_VERTEX("Lighting", PER_GEO, 14, 0)
-REMAP_VERTEX("Lighting", PER_GEO, 15, 0)// WARNING/FIXME: There's another parameter after Wind?...Name can't be found anywhere. Index 15.
+REMAP_VERTEX("Lighting", PER_GEO, 13, "float4")
+REMAP_VERTEX("Lighting", PER_GEO, 14, "float4")
+REMAP_VERTEX("Lighting", PER_GEO, 15, "float4")		// FIXME: There's another parameter after Wind?...Name can't be found anywhere. Index 15.
 REMAP_VERTEX("Lighting", PER_MAT, 9, 0)
 REMAP_VERTEX("Lighting", PER_MAT, 10, 0)
 REMAP_VERTEX("Lighting", PER_MAT, 11, 0)
-REMAP_VERTEX("Lighting", PER_TEC, 0, 0)
-REMAP_VERTEX("Lighting", PER_TEC, 1, 0)// Guessed based on cbuffer offset. "Offset: 0x0030 PrevWorldViewProj"
-REMAP_VERTEX("Lighting", PER_TEC, 2, 0)
-REMAP_VERTEX("Lighting", PER_TEC, 3, 0)
+REMAP_VERTEX("Lighting", PER_TEC, 0, "float3x4")
+REMAP_VERTEX("Lighting", PER_TEC, 1, "float3x4")	// Guessed based on cbuffer offset. "Offset: 0x0030 PrevWorldViewProj"
+REMAP_VERTEX("Lighting", PER_TEC, 2, "float3")
+REMAP_VERTEX("Lighting", PER_TEC, 3, "float4")
 REMAP_VERTEX("Lighting", PER_TEC, 4, 0)
 REMAP_VERTEX("Lighting", PER_TEC, 5, 0)
-REMAP_VERTEX("Lighting", PER_TEC, 6, 0)
-REMAP_VERTEX("Lighting", PER_TEC, 7, 0)// Guessed based on cbuffer offset. "Offset: 0x00D0 fVars4"
+REMAP_VERTEX("Lighting", PER_TEC, 6, "float4[3]")
+REMAP_VERTEX("Lighting", PER_TEC, 7, 0)				// Guessed based on cbuffer offset. "Offset: 0x00D0 fVars4"
 REMAP_VERTEX("Lighting", PER_TEC, 8, 0)
 
-REMAP_PIXEL("Lighting", PER_GEO, 11, 0)// This is doing something weird....
-REMAP_PIXEL("Lighting", PER_GEO, 19, 0)
+REMAP_PIXEL("Lighting", PER_GEO, 11, 0)				// This is doing something weird....
+REMAP_PIXEL("Lighting", PER_GEO, 19, "float4")
 REMAP_PIXEL("Lighting", PER_GEO, 20, 0)
 REMAP_PIXEL("Lighting", PER_MAT, 6, 0)
 REMAP_PIXEL("Lighting", PER_MAT, 21, 0)
 REMAP_PIXEL("Lighting", PER_MAT, 22, 0)
 REMAP_PIXEL("Lighting", PER_MAT, 23, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 24, 0)
+REMAP_PIXEL("Lighting", PER_MAT, 24, "float4")
 REMAP_PIXEL("Lighting", PER_MAT, 25, 0)
 REMAP_PIXEL("Lighting", PER_MAT, 26, 0)
 REMAP_PIXEL("Lighting", PER_MAT, 27, 0)
@@ -196,22 +196,22 @@ REMAP_PIXEL("Lighting", PER_MAT, 31, 0)
 REMAP_PIXEL("Lighting", PER_MAT, 32, 0)
 REMAP_PIXEL("Lighting", PER_MAT, 33, 0)
 REMAP_PIXEL("Lighting", PER_MAT, 34, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 0, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 1, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 2, 0)
+REMAP_PIXEL("Lighting", PER_TEC, 0, "float2")
+REMAP_PIXEL("Lighting", PER_TEC, 1, "float4[7]")	// WARNING: The size of this can apparently change
+REMAP_PIXEL("Lighting", PER_TEC, 2, "float4[7]")	// WARNING: The size of this can apparently change
 REMAP_PIXEL("Lighting", PER_TEC, 3, 0)
 REMAP_PIXEL("Lighting", PER_TEC, 4, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 5, 0)// float3x4
+REMAP_PIXEL("Lighting", PER_TEC, 5, "float3x4")
 REMAP_PIXEL("Lighting", PER_TEC, 7, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 8, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 9, 0)// float       // Guessed based on cbuffer offset. "Offset: 0x0040 AlphaTestRef"
+REMAP_PIXEL("Lighting", PER_TEC, 8, "float4")
+REMAP_PIXEL("Lighting", PER_TEC, 9, "float")		// Guessed based on cbuffer offset. "Offset: 0x0040 AlphaTestRef"
 REMAP_PIXEL("Lighting", PER_TEC, 10, 0)
 REMAP_PIXEL("Lighting", PER_TEC, 12, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 13, 0)// Guessed based on cbuffer offset. "Offset: 0x0090 ProjectedUVParams2"
-REMAP_PIXEL("Lighting", PER_TEC, 14, 0)// Guessed based on cbuffer offset. "Offset: 0x00A0 ProjectedUVParams3"
+REMAP_PIXEL("Lighting", PER_TEC, 13, 0)				// Guessed based on cbuffer offset. "Offset: 0x0090 ProjectedUVParams2"
+REMAP_PIXEL("Lighting", PER_TEC, 14, 0)				// Guessed based on cbuffer offset. "Offset: 0x00A0 ProjectedUVParams3"
 REMAP_PIXEL("Lighting", PER_TEC, 16, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 17, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 35, 0)// Guessed based on cbuffer offset. "Offset: 0x00E0 CharacterLightParams"
+REMAP_PIXEL("Lighting", PER_TEC, 17, "float4")
+REMAP_PIXEL("Lighting", PER_TEC, 35, 0)				// Guessed based on cbuffer offset. "Offset: 0x00E0 CharacterLightParams"
 
 //
 // BSUtilityShader
@@ -219,7 +219,7 @@ REMAP_PIXEL("Lighting", PER_TEC, 35, 0)// Guessed based on cbuffer offset. "Offs
 REMAP_VERTEX("Utility", PER_GEO, 3, 0)
 REMAP_VERTEX("Utility", PER_GEO, 4, 0)
 REMAP_VERTEX("Utility", PER_MAT, 1, 0)
-REMAP_VERTEX("Utility", PER_TEC, 0, 0)// float4x4
+REMAP_VERTEX("Utility", PER_TEC, 0, "float4x4")
 REMAP_VERTEX("Utility", PER_TEC, 2, 0)
 REMAP_VERTEX("Utility", PER_TEC, 5, 0)
 REMAP_VERTEX("Utility", PER_TEC, 6, 0)
@@ -229,13 +229,14 @@ REMAP_PIXEL("Utility", PER_GEO, 7, 0)
 REMAP_PIXEL("Utility", PER_GEO, 10, 0)
 REMAP_PIXEL("Utility", PER_GEO, 11, 0)
 REMAP_PIXEL("Utility", PER_GEO, 12, 0)
+REMAP_PIXEL("Utility", PER_GEO, 13, 0)				// Guessed based on cbuffer offset. "Offset: 0x0040 FocusShadowFadeParam"
 REMAP_PIXEL("Utility", PER_MAT, 1, 0)
 REMAP_PIXEL("Utility", PER_MAT, 3, 0)
 REMAP_PIXEL("Utility", PER_TEC, 0, 0)
 REMAP_PIXEL("Utility", PER_TEC, 2, 0)
 REMAP_PIXEL("Utility", PER_TEC, 4, 0)
-REMAP_PIXEL("Utility", PER_TEC, 5, 0)
-REMAP_PIXEL("Utility", PER_TEC, 6, 0)
+REMAP_PIXEL("Utility", PER_TEC, 5, "float3x4[4]")
+REMAP_PIXEL("Utility", PER_TEC, 6, "float3x4[3]")
 REMAP_PIXEL("Utility", PER_TEC, 8, 0)
 
 //

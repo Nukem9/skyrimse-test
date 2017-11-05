@@ -184,11 +184,13 @@ void ShaderDecoder::DumpCBuffer(FILE *File, BSConstantBufferInfo *Buffer, std::v
 
 			if (entry.Remap->ParamTypeOverride)
 			{
-				int index;
-				if (sscanf_s(entry.Remap->ParamTypeOverride, "float4[%d]", &index) == 1)
-					sprintf_s(varName, "float4 %s[%d]", entry.Name, index);
+				const char *start = entry.Remap->ParamTypeOverride;
+				const char *end = strchr(start, '[');
+
+				if (end)
+					sprintf_s(varName, "%.*s %s%s", strlen(start) - strlen(end), start, entry.Name, end);
 				else
-					sprintf_s(varName, "%s %s", entry.Remap->ParamTypeOverride, entry.Name);
+					sprintf_s(varName, "%s %s", start, entry.Name);
 			}
 			else
 			{
@@ -358,33 +360,35 @@ void VertexShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<P
 	if (GetFileAttributesA(buf1) != INVALID_FILE_ATTRIBUTES)
 		__debugbreak();
 
-	FILE *m_File = fopen(buf1, "w");
+	FILE *file = fopen(buf1, "w");
 
 	//char inputLayout[1024];
 	//GetInputLayoutString(m_Shader->m_InputLayoutFlags, inputLayout, ARRAYSIZE(inputLayout));
 
-	fprintf(m_File, "// %s\n", m_Type);
-	fprintf(m_File, "// TechniqueID: 0x%X\n", m_Shader->m_TechniqueID);
-	fprintf(m_File, "// Input flags: 0x%llX\n//\n", m_Shader->m_InputLayoutFlags);
-	fprintf(m_File, "// Technique: %s\n\n", TechName);
-	//fprintf(m_File, "// Input layout: %s\n\n", inputLayout);
+	fprintf(file, "// %s\n", m_Type);
+	fprintf(file, "// TechniqueID: 0x%X\n", m_Shader->m_TechniqueID);
+	fprintf(file, "// Input flags: 0x%llX\n//\n", m_Shader->m_InputLayoutFlags);
+	fprintf(file, "// Technique: %s\n\n", TechName);
+	//fprintf(file, "// Input layout: %s\n\n", inputLayout);
 
-	for (const auto& define : GetDefineArray(m_Shader->m_TechniqueID))
+	// Defines
+	if (auto& defs = GetDefineArray(m_Shader->m_TechniqueID); defs.size() > 0)
 	{
-		fprintf(m_File, "#define %s %s\n", define.first, define.second);
+		for (const auto& define : defs)
+			fprintf(file, "#define %s %s\n", define.first, define.second);
+
+		fprintf(file, "\n");
 	}
 
-	fprintf(m_File, "\n\n");
-
-	DumpCBuffer(m_File, &m_Shader->m_PerGeometry, PerGeo, 0); // Constant buffer 0 : register(b0)
-	DumpCBuffer(m_File, &m_Shader->m_PerMaterial, PerMat, 1); // Constant buffer 1 : register(b1)
-	DumpCBuffer(m_File, &m_Shader->m_PerTechnique, PerTec, 2);// Constant buffer 2 : register(b2)
+	DumpCBuffer(file, &m_Shader->m_PerGeometry, PerGeo, 0); // Constant buffer 0 : register(b0)
+	DumpCBuffer(file, &m_Shader->m_PerMaterial, PerMat, 1); // Constant buffer 1 : register(b1)
+	DumpCBuffer(file, &m_Shader->m_PerTechnique, PerTec, 2);// Constant buffer 2 : register(b2)
 
 	// Dump undefined variables
 	for (auto& entry : Undefined)
-		fprintf(m_File, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
+		fprintf(file, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
 
-	fclose(m_File);
+	fclose(file);
 
 	// Now write raw HLSL
 	char buf[1024];
@@ -447,20 +451,22 @@ void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<Pa
 	if (GetFileAttributesA(buf1) != INVALID_FILE_ATTRIBUTES)
 		__debugbreak();
 
-	FILE *m_File = fopen(buf1, "w");
+	FILE *file = fopen(buf1, "w");
 
-	fprintf(m_File, "// %s\n", m_Type);
-	fprintf(m_File, "// TechniqueID: 0x%X\n//\n", m_Shader->m_TechniqueID);
-	fprintf(m_File, "// Technique: %s\n\n", TechName);
+	fprintf(file, "// %s\n", m_Type);
+	fprintf(file, "// TechniqueID: 0x%X\n//\n", m_Shader->m_TechniqueID);
+	fprintf(file, "// Technique: %s\n\n", TechName);
 
-	for (const auto& define : GetDefineArray(m_Shader->m_TechniqueID))
+	// Defines
+	if (auto& defs = GetDefineArray(m_Shader->m_TechniqueID); defs.size() > 0)
 	{
-		fprintf(m_File, "#define %s %s\n", define.first, define.second);
+		for (auto& define : defs)
+			fprintf(file, "#define %s %s\n", define.first, define.second);
+
+		fprintf(file, "\n");
 	}
 
-	fprintf(m_File, "\n\n");
-
-	// Dump samplers
+	// Samplers
 	for (int i = 0;; i++)
 	{
 		const char *name = GetSamplerName(i);
@@ -468,20 +474,20 @@ void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<Pa
 		if (strstr(name, "Add-your-"))
 			break;
 
-		fprintf(m_File, "// Sampler[%d]: %s\n", i, name);
+		fprintf(file, "// Sampler[%d]: %s\n", i, name);
 	}
 
-	fprintf(m_File, "\n");
+	fprintf(file, "\n");
 
-	DumpCBuffer(m_File, &m_Shader->m_PerGeometry, PerGeo, 0); // Constant buffer 0 : register(b0)
-	DumpCBuffer(m_File, &m_Shader->m_PerMaterial, PerMat, 1); // Constant buffer 1 : register(b1)
-	DumpCBuffer(m_File, &m_Shader->m_PerTechnique, PerTec, 2);// Constant buffer 2 : register(b2)
+	DumpCBuffer(file, &m_Shader->m_PerGeometry, PerGeo, 0); // Constant buffer 0 : register(b0)
+	DumpCBuffer(file, &m_Shader->m_PerMaterial, PerMat, 1); // Constant buffer 1 : register(b1)
+	DumpCBuffer(file, &m_Shader->m_PerTechnique, PerTec, 2);// Constant buffer 2 : register(b2)
 
 	// Dump undefined variables
 	for (auto& entry : Undefined)
-		fprintf(m_File, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
+		fprintf(file, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
 
-	fclose(m_File);
+	fclose(file);
 
 	// Now write raw HLSL
 	char buf[1024];
