@@ -3,6 +3,8 @@
 #pragma push_macro("TEST_BIT") 
 #define TEST_BIT(index) (Technique & (1u << (index)))
 
+#define BAD_SHADER 0x11223344
+
 #define CONSTANT_BUFFER_PER_GEOMETRY  0
 #define CONSTANT_BUFFER_PER_MATERIAL  1
 #define CONSTANT_BUFFER_PER_TECHNIQUE 2
@@ -1322,17 +1324,17 @@ namespace BSLightingShader
 			case 5:defines.emplace_back("FACEGEN_RGB_TINT", ""); break;
 			case 6:defines.emplace_back("HAIR", ""); break;
 			case 7:defines.emplace_back("PARALLAX_OCC", ""); break;
-			case 8:defines.emplace_back("MULTI_TEXTURE", "LANDSCAPE"); break;
+			case 8:defines.emplace_back("MULTI_TEXTURE", ""); defines.emplace_back("LANDSCAPE", ""); break;
 			case 9:defines.emplace_back("LODLANDSCAPE", ""); break;
 			case 10:/* I have no idea what this does */break;
 			case 11:defines.emplace_back("MULTI_LAYER_PARALLAX", ""); defines.emplace_back("ENVMAP", ""); break;
 			case 12:defines.emplace_back("TREE_ANIM", ""); break;
 			case 13:defines.emplace_back("LOBOBJECTS", ""); break;
-			case 14:defines.emplace_back("MULTI_INDEX", "SPARKLE"); break;
+			case 14:defines.emplace_back("MULTI_INDEX", "SPARKLE"); defines.emplace_back("SPARKLE", ""); break;
 			case 15:defines.emplace_back("LODOBJECTSHD", ""); break;
 			case 16:defines.emplace_back("EYE", ""); break;
-			case 17:defines.emplace_back("CLOUD", "INSTANCED"); break;
-			case 18:defines.emplace_back("LODLANDSCAPE", "LODLANDNOISE"); break;
+			case 17:defines.emplace_back("CLOUD", ""); defines.emplace_back("INSTANCED", ""); break;
+			case 18:defines.emplace_back("LODLANDSCAPE", ""); defines.emplace_back("LODLANDNOISE", ""); break;
 			case 19:defines.emplace_back("MULTI_TEXTURE", ""); defines.emplace_back("LANDSCAPE", "LOD_LAND_BLEND"); break;
 			default:__debugbreak(); break;
 			}
