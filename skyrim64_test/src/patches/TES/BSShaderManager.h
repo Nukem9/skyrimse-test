@@ -134,7 +134,7 @@ protected:
 	const char *GetGroupRegister(int Index);
 	const char *GetConstantName(int Index);
 	void GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t Technique);
-	const char *GetSamplerName(int Index);
+	const char *GetSamplerName(int Index, uint32_t Technique);
 	std::vector<std::pair<const char *, const char *>> GetDefineArray(uint32_t Technique);
 };
 
@@ -208,9 +208,6 @@ private:
 //
 
 #define BSSM_PLACEHOLDER "Add-your-constant-to-" __FUNCTION__
-
-// TODO: BSLightingShader needs samplers. Game/CK doesn't have them defined anywhere.
-// TODO: Constants need types defined in BSShaderConstants.inl
 
 namespace BSBloodSplatterShader
 {
@@ -1127,13 +1124,13 @@ namespace BSLightingShader
 			return BSSM_PLACEHOLDER;
 		}
 
-		static int GetSize(int Index, unsigned int Flags = 0)
+		static int GetSize(int Index, uint32_t Technique)
 		{
 			int v2 = 1;
 
 			// PointLightPosition/PointLightColor variable size array
 			if ((unsigned int)(Index - 1) <= 1)
-				v2 = (Flags >> 3) & 7;
+				v2 = (Technique >> 3) & 7;
 
 			switch (Index)
 			{
@@ -1169,9 +1166,50 @@ namespace BSLightingShader
 
 	namespace Samplers
 	{
-		static const char *GetString(int Index)
+		static const char *GetString(int Index, uint32_t Technique)
 		{
-			// TODO
+			uint32_t subType = (Technique >> 24) & 0x3F;
+
+			if (TEST_BIT(18))
+			{
+				switch (Index)
+				{
+				case 12:return "WorldMapOverlayNormalSampler";
+				case 13:return "WorldMapOverlayNormalSnowSampler";
+				}
+			}
+
+			if (TEST_BIT(15) && subType != 6)
+			{
+				switch (Index)
+				{
+				case 3:return "ProjectedDiffuseSampler";
+				case 8:return "ProjectedNormalSampler";
+				case 10:return "ProjectedNormalDetailSampler";
+				case 11:return "ProjectedNoiseSampler";
+				}
+			}
+
+			switch (Index)
+			{
+			case 0:return "DiffuseSampler";
+			case 1:return "NormalSampler";
+			case 2:return "SpecularSampler";
+			case 3:return "HeightSampler";
+			case 4:return "EnvSampler";
+			case 5:return "EnvMaskSampler";
+			case 6:return "GlowSampler";
+			case 7:return "LandscapeNormalSampler";
+			case 8:return "MultiLayerParallaxSampler";
+			case 9:return "BackLightMaskSampler";
+			case 10:return "ProjectedNormalDetailSampler";
+			case 11:return "ProjectedNoiseSampler";
+			case 12:return "SubSurfaceSampler";
+			case 13:return "LODBlendSampler";
+			case 14:return "ShadowMaskSampler";
+			case 15:return "LODNoiseSampler";
+			}
+
 			return BSSM_PLACEHOLDER;
 		}
 	}
@@ -1180,47 +1218,45 @@ namespace BSLightingShader
 	{
 		static void GetString(uint32_t Technique, char *Buffer, size_t BufferSize)
 		{
-			LONG bits = Technique;
-
 			sprintf_s(Buffer, BufferSize, "%dSh%d ", (Technique >> 3) & 7, (Technique >> 6) & 7);
-			uint32_t v6 = (Technique >> 24) & 0x3F;
+			uint32_t subType = (Technique >> 24) & 0x3F;
 
-			if (Technique & 0x1)
+			if (TEST_BIT(0))
 				strcat_s(Buffer, BufferSize, "Vc ");
-			if (Technique & 0x2)
+			if (TEST_BIT(1))
 				strcat_s(Buffer, BufferSize, "Sk ");
-			if (Technique & 0x4)
+			if (TEST_BIT(2))
 				strcat_s(Buffer, BufferSize, "Msn ");
-			if (_bittest(&bits, 9))
+			if (TEST_BIT(9))
 				strcat_s(Buffer, BufferSize, "Spc ");
-			if (_bittest(&bits, 10))
+			if (TEST_BIT(10))
 				strcat_s(Buffer, BufferSize, "Sss ");
-			if (_bittest(&bits, 13))
+			if (TEST_BIT(13))
 				strcat_s(Buffer, BufferSize, "Shd ");
-			if (_bittest(&bits, 14))
+			if (TEST_BIT(14))
 				strcat_s(Buffer, BufferSize, "DfSh ");
-			if (_bittest(&bits, 11))
+			if (TEST_BIT(11))
 				strcat_s(Buffer, BufferSize, "Rim ");
-			if (_bittest(&bits, 12))
+			if (TEST_BIT(12))
 				strcat_s(Buffer, BufferSize, "Bk ");
-			if (Technique & 0x8000 && v6 != 6)
+			if (TEST_BIT(15) && subType != 6)
 				strcat_s(Buffer, BufferSize, "Projuv ");
-			if (_bittest(&bits, 17))
+			if (TEST_BIT(17))
 				strcat_s(Buffer, BufferSize, "Aspc ");
-			if (_bittest(&bits, 18))
+			if (TEST_BIT(18))
 				strcat_s(Buffer, BufferSize, "Wmap ");
-			if (_bittest(&bits, 20))
+			if (TEST_BIT(20))
 				strcat_s(Buffer, BufferSize, "Atest ");
-			if (_bittest(&bits, 21))
+			if (TEST_BIT(21))
 				strcat_s(Buffer, BufferSize, "Snow ");
-			if (_bittest(&bits, 19))
+			if (TEST_BIT(19))
 				strcat_s(Buffer, BufferSize, "BaseSnow ");
-			if (Technique & 0x8000 && v6 == 6)
+			if (TEST_BIT(15) && subType == 6)
 				strcat_s(Buffer, BufferSize, "DwDecals ");
-			if (_bittest(&bits, 23))
+			if (TEST_BIT(23))
 				strcat_s(Buffer, BufferSize, "Aam ");
 
-			switch (v6)
+			switch (subType)
 			{
 			case 0:strcat_s(Buffer, BufferSize, "None "); break;
 			case 1:strcat_s(Buffer, BufferSize, "Envmap "); break;
@@ -1254,7 +1290,7 @@ namespace BSLightingShader
 		static auto GetArray(uint32_t Technique)
 		{
 			std::vector<std::pair<const char *, const char *>> defines;
-			uint32_t v3 = (Technique >> 24) & 0x3F;
+			uint32_t subType = (Technique >> 24) & 0x3F;
 
 			if (TEST_BIT(0)) defines.emplace_back("VC", "");
 			if (TEST_BIT(1)) defines.emplace_back("SKINNED", "");
@@ -1265,7 +1301,7 @@ namespace BSLightingShader
 			if (TEST_BIT(14)) defines.emplace_back("DEFSHADOW", "");
 			if (TEST_BIT(11)) defines.emplace_back("RIM_LIGHTING", "");
 			if (TEST_BIT(12)) defines.emplace_back("BACK_LIGHTING", "");
-			if (TEST_BIT(15) && v3 != 6) defines.emplace_back("PROJECTED_UV", "");
+			if (TEST_BIT(15) && subType != 6) defines.emplace_back("PROJECTED_UV", "");
 			if (TEST_BIT(16)) defines.emplace_back("ANISO_LIGHTING", "");
 			if (TEST_BIT(17)) defines.emplace_back("AMBIENT_SPECULAR", "");
 			if (TEST_BIT(18)) defines.emplace_back("WORLD_MAP", "");
@@ -1273,10 +1309,10 @@ namespace BSLightingShader
 			if (TEST_BIT(21)) defines.emplace_back("SNOW", "");
 			if (TEST_BIT(19)) defines.emplace_back("BASE_OBJECT_IS_SNOW", "");
 			if (TEST_BIT(22)) defines.emplace_back("CHARACTER_LIGHT", "");
-			if (TEST_BIT(15) && v3 == 6) defines.emplace_back("DEPTH_WRITE_DECALS", "");
+			if (TEST_BIT(15) && subType == 6) defines.emplace_back("DEPTH_WRITE_DECALS", "");
 			if (TEST_BIT(23)) defines.emplace_back("ADDITIONAL_ALPHA_MASK", "");
 
-			switch (v3)
+			switch (subType)
 			{
 			case 0:break;
 			case 1:defines.emplace_back("ENVMAP", ""); break;

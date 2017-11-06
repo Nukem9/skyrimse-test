@@ -294,7 +294,7 @@ void ShaderDecoder::GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t T
 	}
 }
 
-const char *ShaderDecoder::GetSamplerName(int Index)
+const char *ShaderDecoder::GetSamplerName(int Index, uint32_t Technique)
 {
 	if (!_stricmp(m_Type, "BloodSplatter"))
 		return BSBloodSplatterShader::Samplers::GetString(Index);
@@ -309,7 +309,7 @@ const char *ShaderDecoder::GetSamplerName(int Index)
 	else if (!_stricmp(m_Type, "Effect"))
 		return BSXShader::Samplers::GetString(Index);
 	else if (!_stricmp(m_Type, "Lighting"))
-		return BSLightingShader::Samplers::GetString(Index);
+		return BSLightingShader::Samplers::GetString(Index, Technique);
 	else if (!_stricmp(m_Type, "Utility"))
 		return BSUtilityShader::Samplers::GetString(Index);
 	else if (!_stricmp(m_Type, "Water"))
@@ -469,7 +469,7 @@ void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<Pa
 	// Samplers
 	for (int i = 0;; i++)
 	{
-		const char *name = GetSamplerName(i);
+		const char *name = GetSamplerName(i, m_Shader->m_TechniqueID);
 
 		if (strstr(name, "Add-your-"))
 			break;
