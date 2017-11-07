@@ -1,4 +1,4 @@
-#include "../stdafx.h"
+#include "../common.h"
 
 typedef void *ISteamUser;
 typedef void *ISteamFriends;

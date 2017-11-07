@@ -1,4 +1,5 @@
-#include "stdafx.h"
+#include <ittnotify.h>
+#include "common.h"
 
 /**
 * @brief Scans a given chunk of data for the given pattern and mask.

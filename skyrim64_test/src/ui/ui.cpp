@@ -1,4 +1,5 @@
-#include "../stdafx.h"
+#include <ittnotify.h>
+#include "../common.h"
 #include "imgui_ext.h"
 #include "imgui_impl_dx11.h"
 

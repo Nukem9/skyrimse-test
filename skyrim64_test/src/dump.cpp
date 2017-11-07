@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 
 void ApplyPatches();
 BOOL WINAPI hk_QueryPerformanceCounter(LARGE_INTEGER *lpPerformanceCount)

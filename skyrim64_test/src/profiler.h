@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <array>
 #include <unordered_map>
 

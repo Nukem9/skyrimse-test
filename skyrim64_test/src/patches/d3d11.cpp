@@ -1,5 +1,6 @@
-#include "../stdafx.h"
+#include "../common.h"
 #include "../ui/ui.h"
+#include "TES/BSShaderManager.h"
 
 // BSGraphicsRenderer
 

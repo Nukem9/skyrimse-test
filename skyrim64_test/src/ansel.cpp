@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 
 HMODULE g_AnselModule;
 void(*g_AnselInit)(Ansel::ConfigData *conf);

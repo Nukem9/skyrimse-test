@@ -1,4 +1,4 @@
-#include "../stdafx.h"
+#include "../common.h"
 
 std::shared_mutex ProxyIDirectInputDevice8A::m_Mutex;
 std::vector<IDirectInputDevice8A *> ProxyIDirectInputDevice8A::m_Devices;

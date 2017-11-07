@@ -1,4 +1,5 @@
-#include "../../stdafx.h"
+#include "../../common.h"
+#include "BSReadWriteLock.h"
 
 BSReadWriteLock *BSReadWriteLock::Initialize()
 {

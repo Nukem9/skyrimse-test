@@ -1,6 +1,6 @@
+#include "vfs_util.h"
 #include "vfs.h"
 #include "../xutil.h"
-#include "vfs_util.h"
 
 #define IS_OP_EMPTY_DIR(x) ((x)[0] == '\0')                                    // Empty path
 #define IS_OP_CURR_DIR(x) ((x)[0] == '.' && (x)[1] == '\0')                    // '.'

@@ -1,6 +1,6 @@
-#include "vfs_util.h"
-#include <regex>
 #include <Windows.h>
+#include <regex>
+#include "vfs_util.h"
 
 namespace vfs::str
 {

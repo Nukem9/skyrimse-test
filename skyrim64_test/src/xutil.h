@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <type_traits>
 #pragma warning(disable:4094) // untagged 'struct' declared no symbols
 

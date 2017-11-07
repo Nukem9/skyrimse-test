@@ -1,4 +1,5 @@
-#include "stdafx.h"
+#include "common.h"
+#include "patches/patches.h"
 
 ULONG_PTR g_ModuleBase;
 ULONG_PTR g_ModuleSize;

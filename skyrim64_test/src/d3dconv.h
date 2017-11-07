@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Windows.h>
 #include <DirectXMath.h>
 
 #define D3D_EXPORT	extern "C" __declspec(dllexport)

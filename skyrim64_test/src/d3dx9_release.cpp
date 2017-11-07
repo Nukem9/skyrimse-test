@@ -1,5 +1,5 @@
-#include "stdafx.h"
 #include "d3dconv.h"
+#include "xutil.h"
 
 #ifndef _DEBUG
 

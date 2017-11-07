@@ -1,4 +1,5 @@
-#include "../../stdafx.h"
+#include "../../common.h"
+#include "MemoryManager.h"
 
 //
 // VS2015 CRT hijacked functions

@@ -47,9 +47,6 @@
     <ClInclude Include="src\dump.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\typeinfo\hk_typeinfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -110,6 +107,9 @@
     <ClInclude Include="src\patches\TES\BSShaderProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -135,9 +135,6 @@
     </ClCompile>
     <ClCompile Include="src\dump.cpp">
       <Filter>Source Files\patches</Filter>
-    </ClCompile>
-    <ClCompile Include="src\stdafx.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\typeinfo\hk_typeinfo.cpp">
       <Filter>Source Files</Filter>

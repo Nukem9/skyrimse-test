@@ -110,7 +110,7 @@
     <ClInclude Include="src\ui\imgui_impl_dx11.h" />
     <ClInclude Include="src\patches\TES\MemoryManager.h" />
     <ClInclude Include="src\patches\TES\BSReadWriteLock.h" />
-    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\common.h" />
     <ClInclude Include="src\patches\TES\TESForm.h" />
     <ClInclude Include="src\ui\ui.h" />
     <ClInclude Include="src\vfs\vfs.h" />
@@ -170,7 +170,6 @@
     <ClCompile Include="src\patches\TES\MemoryManager.cpp" />
     <ClCompile Include="src\patches\TES\BSReadWriteLock.cpp" />
     <ClCompile Include="src\patches\settings.cpp" />
-    <ClCompile Include="src\stdafx.cpp" />
     <ClCompile Include="src\patches\TES\TESForm.cpp" />
     <ClCompile Include="src\patches\threading.cpp" />
     <ClCompile Include="src\ui\ui.cpp" />

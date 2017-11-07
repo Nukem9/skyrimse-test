@@ -1,4 +1,4 @@
-#include "../stdafx.h"
+#include "../common.h"
 
 // Hooks that probably don't do anything
 

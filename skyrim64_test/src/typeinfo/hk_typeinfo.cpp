@@ -1,6 +1,6 @@
-#include "../stdafx.h"
-#include "hk_typeinfo.h"
 #include <map>
+#include "../common.h"
+#include "hk_typeinfo.h"
 
 std::map<hk_ClassMember::Type, const char *> HavokTypeMap
 {

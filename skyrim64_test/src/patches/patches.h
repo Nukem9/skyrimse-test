@@ -12,3 +12,10 @@ void PatchThreading();
 void PatchWindow();
 void ExperimentalPatchEmptyFunctions();
 void ExperimentalPatchMemInit();
+
+// TES patches
+void PatchBSGraphicsRenderTargetManager();
+void PatchLocks();
+void PatchBSThread();
+void PatchMemory();
+void PatchTESForm();

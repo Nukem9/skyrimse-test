@@ -1,4 +1,5 @@
-#include "../../stdafx.h"
+#include "../../common.h"
+#include "BSGraphicsRenderTargetManager.h"
 
 void SetName(uintptr_t Resource, const char *Format, ...)
 {

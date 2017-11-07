@@ -1,4 +1,4 @@
-#include "../stdafx.h"
+#include "../common.h"
 #include <future>
 
 #define WM_APP_THREAD_TASK		(WM_APP + 1)

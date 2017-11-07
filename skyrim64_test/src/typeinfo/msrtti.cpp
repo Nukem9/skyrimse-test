@@ -1,6 +1,6 @@
-#include "../stdafx.h"
 #include <typeinfo>
 #include <unordered_map>
+#include "../common.h"
 
 std::vector<ULONG_PTR> RTTIPointers;
 std::unordered_map<ULONG_PTR, ULONG_PTR> RTTIPointerReferenceMap;

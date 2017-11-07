@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "common.h"
 
 #ifdef PROFILER_ENABLED
 namespace Profiler

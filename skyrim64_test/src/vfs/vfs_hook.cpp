@@ -1,6 +1,6 @@
-#include "vfs_hook.h"
-#include "vfs.h"
 #include "../../detours/Detours.h"
+#include "vfs.h"
+#include "vfs_hook.h"
 
 // Some other WinAPI functions are necessary, but they use our hooked code path
 __declspec(thread) bool InRecursiveCall;

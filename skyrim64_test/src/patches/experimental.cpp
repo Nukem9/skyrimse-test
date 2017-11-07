@@ -1,4 +1,4 @@
-#include "../stdafx.h"
+#include "../common.h"
 
 #define IS_RETURN_FALSE(x) (*(BYTE *)(x + 0) == 0x32 && *(BYTE *)(x + 1) == 0xC0 && *(BYTE *)(x + 2) == 0xC3) // xor al, al; retn
 #define IS_RETURN_TRUE(x)  (*(BYTE *)(x + 0) == 0xB0 && *(BYTE *)(x + 1) == 0x01 && *(BYTE *)(x + 2) == 0xC3) // mov al, 1; retn

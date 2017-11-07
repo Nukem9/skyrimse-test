@@ -1,6 +1,8 @@
-#include "../../stdafx.h"
-#include "BSTScatterTable.h"
 #include <unordered_map>
+#include "../../common.h"
+#include "BSTScatterTable.h"
+#include "BSReadWriteLock.h"
+#include "TESForm.h"
 
 AutoPtr<BSReadWriteLock, 0x1EDD6D0> GlobalFormLock;
 AutoPtr<BSTScatterTable<uint32_t, TESForm *> *, 0x1EDD238> GlobalFormList;

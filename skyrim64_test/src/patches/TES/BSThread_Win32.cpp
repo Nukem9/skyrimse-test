@@ -1,4 +1,5 @@
-#include "../../stdafx.h"
+#include <atomic>
+#include "../../common.h"
 
 std::atomic<const char *> NextThreadName;
 std::atomic<int> NextTaskletIndex;
