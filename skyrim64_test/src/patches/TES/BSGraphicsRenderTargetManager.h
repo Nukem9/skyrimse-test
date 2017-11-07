@@ -1,5 +1,7 @@
 #pragma once
 
+// RENDER_TARGET_NONE = -1
+
 static const char *g_RenderTargetNames[] =
 {
 	"RENDER_TARGET_FRAMEBUFFER",

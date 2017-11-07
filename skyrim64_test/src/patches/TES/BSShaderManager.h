@@ -4,18 +4,20 @@
 #define TEST_BIT(index) (Technique & (1u << (index)))
 
 #define BAD_SHADER 0x11223344
-
-#define CONSTANT_BUFFER_PER_GEOMETRY  0
-#define CONSTANT_BUFFER_PER_MATERIAL  1
-#define CONSTANT_BUFFER_PER_TECHNIQUE 2
-
 #define DO_ALPHA_TEST_FLAG 0x10000
+
+enum class BSSM_GROUP_TYPE
+{
+	PER_GEO,	// PerGeometry
+	PER_MAT,	// PerMaterial
+	PER_TEC,	// PerTechnique
+};
 
 enum class BSSM_SHADER_TYPE
 {
-	VERTEX,
-	PIXEL,
-	COMPUTE,
+	VERTEX,		// BSVertexShader
+	PIXEL,		// BSPixelShader
+	COMPUTE,	// BSComputeShader
 };
 
 #pragma pack(push, 8)
@@ -100,6 +102,8 @@ static_assert(offsetof(BSComputeShader, m_ConstantOffsets) == 0x70, "");
 static_assert(sizeof(BSComputeShader) == 0x90, "");
 #pragma pack(pop)
 
+namespace BSShaderMappings { struct Entry; }
+
 class ShaderDecoder
 {
 protected:
@@ -107,7 +111,7 @@ protected:
 	{
 		int Index;
 		const char *Name;
-		const struct RemapEntry *Remap;
+		const struct BSShaderMappings::Entry *Remap;
 	};
 
 	void *m_HlslData;
@@ -210,6 +214,63 @@ private:
 //
 
 #define BSSM_PLACEHOLDER "Add-your-constant-to-" __FUNCTION__
+
+namespace BSShaderMappings
+{
+	struct Entry
+	{
+		const char *Type;
+		BSSM_GROUP_TYPE Group;
+		int Index;
+		const char *ParamTypeOverride;
+	};
+
+	const Entry Vertex[] =
+	{
+#define REMAP_VERTEX_UNUSED(ShaderType, GroupType)
+#define REMAP_VERTEX(ShaderType, GroupType, ParameterIndex, ParamType) { ShaderType, (BSSM_GROUP_TYPE)GroupType, ParameterIndex, ParamType },
+#include "BSShaderConstants.inl"
+	};
+
+	const Entry Pixel[] =
+	{
+#define REMAP_PIXEL_UNUSED(ShaderType, GroupType)
+#define REMAP_PIXEL(ShaderType, GroupType, ParameterIndex, ParamType) { ShaderType, (BSSM_GROUP_TYPE)GroupType, ParameterIndex, ParamType },
+#include "BSShaderConstants.inl"
+	};
+
+	static const Entry *GetEntryForVertexShader(const char *Type, int ParamIndex)
+	{
+		for (int i = 0; i < ARRAYSIZE(Vertex); i++)
+		{
+			if (_stricmp(Vertex[i].Type, Type) != 0)
+				continue;
+
+			if (Vertex[i].Index != ParamIndex)
+				continue;
+
+			return &Vertex[i];
+		}
+
+		return nullptr;
+	}
+
+	static const Entry *GetEntryForPixelShader(const char *Type, int ParamIndex)
+	{
+		for (int i = 0; i < ARRAYSIZE(Pixel); i++)
+		{
+			if (_stricmp(Pixel[i].Type, Type) != 0)
+				continue;
+
+			if (Pixel[i].Index != ParamIndex)
+				continue;
+
+			return &Pixel[i];
+		}
+
+		return nullptr;
+	}
+}
 
 namespace BSBloodSplatterShader
 {

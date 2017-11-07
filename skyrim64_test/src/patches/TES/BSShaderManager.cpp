@@ -1,60 +1,6 @@
-#include "../../stdafx.h"
 #include <direct.h>
-#include <D3D11Shader.h>
-
-struct RemapEntry
-{
-	const char *Type;
-	int Group;
-	int Index;
-	const char *ParamTypeOverride;
-};
-
-const RemapEntry VertexEntries[] =
-{
-#define REMAP_VERTEX_UNUSED(ShaderType, GroupType)
-#define REMAP_VERTEX(ShaderType, GroupType, ParameterIndex, ParamType) { ShaderType, GroupType, ParameterIndex, ParamType },
-#include "BSShaderConstants.inl"
-};
-
-const RemapEntry PixelEntries[] =
-{
-#define REMAP_PIXEL_UNUSED(ShaderType, GroupType)
-#define REMAP_PIXEL(ShaderType, GroupType, ParameterIndex, ParamType) { ShaderType, GroupType, ParameterIndex, ParamType },
-#include "BSShaderConstants.inl"
-};
-
-const RemapEntry *GetEntryForVertexShader(const char *Type, int ParamIndex)
-{
-	for (int i = 0; i < ARRAYSIZE(VertexEntries); i++)
-	{
-		if (_stricmp(VertexEntries[i].Type, Type) != 0)
-			continue;
-
-		if (VertexEntries[i].Index != ParamIndex)
-			continue;
-
-		return &VertexEntries[i];
-	}
-
-	return nullptr;
-}
-
-const RemapEntry *GetEntryForPixelShader(const char *Type, int ParamIndex)
-{
-	for (int i = 0; i < ARRAYSIZE(PixelEntries); i++)
-	{
-		if (_stricmp(PixelEntries[i].Type, Type) != 0)
-			continue;
-
-		if (PixelEntries[i].Index != ParamIndex)
-			continue;
-
-		return &PixelEntries[i];
-	}
-
-	return nullptr;
-}
+#include "../../common.h"
+#include "BSShaderManager.h"
 
 const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, int ConstantIndex);
 
@@ -105,13 +51,12 @@ void ShaderDecoder::DumpShaderInfo()
 		if (strstr(name, "Add-your-"))
 			break;
 
-		const RemapEntry *remapData = nullptr;
+		const BSShaderMappings::Entry *remapData = nullptr;
 
 		switch (m_CodeType)
 		{
-		case BSSM_SHADER_TYPE::VERTEX: remapData = GetEntryForVertexShader(m_Type, i); break;
-		case BSSM_SHADER_TYPE::PIXEL: remapData = GetEntryForPixelShader(m_Type, i); break;
-		default: remapData = nullptr; break;
+		case BSSM_SHADER_TYPE::VERTEX: remapData = BSShaderMappings::GetEntryForVertexShader(m_Type, i); break;
+		case BSSM_SHADER_TYPE::PIXEL: remapData = BSShaderMappings::GetEntryForPixelShader(m_Type, i); break;
 		}
 
 		if (!remapData)
@@ -188,7 +133,7 @@ void ShaderDecoder::DumpCBuffer(FILE *File, BSConstantBufferInfo *Buffer, std::v
 				const char *end = strchr(start, '[');
 
 				if (end)
-					sprintf_s(varName, "%.*s %s%s", strlen(start) - strlen(end), start, entry.Name, end);
+					sprintf_s(varName, "%.*s %s%s", (int)(strlen(start) - strlen(end)), start, entry.Name, end);
 				else
 					sprintf_s(varName, "%s %s", start, entry.Name);
 			}
@@ -643,7 +588,7 @@ void ValidateShaderParamTable()
 	// Duplicate/invalid param indexes
 	// Duplicate/invalid param names
 	//
-	auto doValidation = [](const RemapEntry *Entries, size_t EntryCount, BSSM_SHADER_TYPE CodeType)
+	auto doValidation = [](const BSShaderMappings::Entry *Entries, size_t EntryCount, BSSM_SHADER_TYPE CodeType)
 	{
 		const char *lastType = "";
 		std::vector<std::string> paramNames;
@@ -658,13 +603,13 @@ void ValidateShaderParamTable()
 				paramIndexes.clear();
 			}
 
-			const int group = Entries[i].Group;
+			const BSSM_GROUP_TYPE group = Entries[i].Group;
 			const int index = Entries[i].Index;
 
 			// Group must be Geometry, Material, or Technique
-			if (group != CONSTANT_BUFFER_PER_GEOMETRY &&
-				group != CONSTANT_BUFFER_PER_MATERIAL &&
-				group != CONSTANT_BUFFER_PER_TECHNIQUE)
+			if (group != BSSM_GROUP_TYPE::PER_GEO &&
+				group != BSSM_GROUP_TYPE::PER_MAT &&
+				group != BSSM_GROUP_TYPE::PER_TEC)
 				printf("VALIDATION FAILURE: Group type for [%s, param index %d] is %d\n", lastType, index, group);
 
 			// Check for dupe indexes
@@ -696,6 +641,6 @@ void ValidateShaderParamTable()
 		}
 	};
 
-	doValidation(VertexEntries, ARRAYSIZE(VertexEntries), BSSM_SHADER_TYPE::VERTEX);
-	doValidation(PixelEntries, ARRAYSIZE(PixelEntries), BSSM_SHADER_TYPE::PIXEL);
+	doValidation(BSShaderMappings::Vertex, ARRAYSIZE(BSShaderMappings::Vertex), BSSM_SHADER_TYPE::VERTEX);
+	doValidation(BSShaderMappings::Pixel, ARRAYSIZE(BSShaderMappings::Pixel), BSSM_SHADER_TYPE::PIXEL);
 }
