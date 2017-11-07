@@ -56,5 +56,3 @@ public:
 	static void ToggleGlobalInput(bool EnableInput);
 	static bool GlobalInputAllowed();
 };
-
-void PatchDInput();

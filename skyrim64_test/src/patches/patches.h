@@ -6,6 +6,7 @@ extern double g_AverageFps;         // d3d11.cpp
 
 void PatchAchievements();
 void PatchD3D11();
+void PatchDInput();
 void PatchSettings();
 void PatchSteam();
 void PatchThreading();

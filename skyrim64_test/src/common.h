@@ -28,7 +28,6 @@
 #include "profiler.h"
 
 #include "patches/patches.h"
-#include "patches/dinput8.h"
 
 extern ULONG_PTR g_ModuleBase;
 extern ULONG_PTR g_ModuleSize;

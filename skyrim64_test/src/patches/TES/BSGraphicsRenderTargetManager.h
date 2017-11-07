@@ -120,5 +120,3 @@ static const char *g_RenderTargetNames[] =
 	"RENDER_TARGET_SNOW_SWAP",
 	"RENDER_TARGET_CUBEMAP_REFLECTIONS"
 };
-
-void PatchBSGraphicsRenderTargetManager();

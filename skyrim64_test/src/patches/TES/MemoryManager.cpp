@@ -4,30 +4,32 @@
 //
 // VS2015 CRT hijacked functions
 //
+MemoryManager *fakeManager = nullptr;
+
 void *__fastcall hk_calloc(size_t Count, size_t Size)
 {
 	// The allocated memory is always zeroed
-	return MemoryManager_Alloc(nullptr, Count * Size, 0, false);
+	return fakeManager->Alloc(Count * Size, 0, false);
 }
 
 void *__fastcall hk_malloc(size_t Size)
 {
-	return MemoryManager_Alloc(nullptr, Size, 0, false);
+	return fakeManager->Alloc(Size, 0, false);
 }
 
 void *__fastcall hk_aligned_malloc(size_t Size, size_t Alignment)
 {
-	return MemoryManager_Alloc(nullptr, Size, (int)Alignment, true);
+	return fakeManager->Alloc(Size, (int)Alignment, true);
 }
 
 void __fastcall hk_free(void *Block)
 {
-	return MemoryManager_Free(nullptr, Block, false);
+	return fakeManager->Free(Block, false);
 }
 
 void __fastcall hk_aligned_free(void *Block)
 {
-	return MemoryManager_Free(nullptr, Block, true);
+	return fakeManager->Free(Block, true);
 }
 
 size_t __fastcall hk_msize(void *Block)
@@ -38,7 +40,7 @@ size_t __fastcall hk_msize(void *Block)
 //
 // Internal engine heap allocator backed by VirtualAlloc()
 //
-void *MemoryManager_Alloc(void *Heap, size_t Size, unsigned int Alignment, bool Aligned)
+void *MemoryManager::Alloc(size_t Size, uint32_t Alignment, bool Aligned)
 {
 	ProfileCounterInc("Alloc Count");
 	ProfileCounterAdd("Byte Count", Size);
@@ -83,7 +85,7 @@ void *MemoryManager_Alloc(void *Heap, size_t Size, unsigned int Alignment, bool 
 	return memset(ptr, 0, Size);
 }
 
-void MemoryManager_Free(void *Heap, void *Memory, bool Aligned)
+void MemoryManager::Free(void *Memory, bool Aligned)
 {
 	ProfileCounterInc("Free Count");
 	ProfileTimer("Time Spent Freeing");
@@ -112,6 +114,6 @@ void PatchMemory()
 	// [128MB] BSScaleformSysMemMapper is untouched due to complexity
 	// [512MB] hkMemoryAllocator is untouched due to complexity
 
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC008C0), (PBYTE)&MemoryManager_Alloc);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC00BC0), (PBYTE)&MemoryManager_Free);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC008C0), &MemoryManager::Alloc);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC00BC0), &MemoryManager::Free);
 }

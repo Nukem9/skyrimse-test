@@ -1,4 +1,5 @@
 #include "../common.h"
+#include "dinput8.h"
 
 std::shared_mutex ProxyIDirectInputDevice8A::m_Mutex;
 std::vector<IDirectInputDevice8A *> ProxyIDirectInputDevice8A::m_Devices;

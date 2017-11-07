@@ -7,5 +7,3 @@ struct TESForm
 {
 	// placeholder
 };
-
-void PatchTESForm();

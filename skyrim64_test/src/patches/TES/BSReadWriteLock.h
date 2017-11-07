@@ -53,5 +53,3 @@ public:
     void Deinitialize();
 };
 static_assert(sizeof(BSScopedRWLock) <= 0x8, "Lock must fit inside the original game structure");
-
-void PatchLocks();

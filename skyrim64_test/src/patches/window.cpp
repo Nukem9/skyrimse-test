@@ -1,5 +1,6 @@
-#include "../common.h"
 #include <future>
+#include "../common.h"
+#include "dinput8.h"
 
 #define WM_APP_THREAD_TASK		(WM_APP + 1)
 #define WM_APP_UPDATE_CURSOR	(WM_APP + 2)

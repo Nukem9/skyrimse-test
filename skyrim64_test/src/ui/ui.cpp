@@ -1,5 +1,6 @@
 #include <ittnotify.h>
 #include "../common.h"
+#include "../patches/dinput8.h"
 #include "imgui_ext.h"
 #include "imgui_impl_dx11.h"
 
