@@ -156,6 +156,7 @@
     <ClCompile Include="src\d3dx9_release.cpp" />
     <ClCompile Include="src\dump.cpp" />
     <ClCompile Include="src\patches\experimental.cpp" />
+    <ClCompile Include="src\patches\logging.cpp" />
     <ClCompile Include="src\patches\steam.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphicsRenderTargetManager.cpp" />
     <ClCompile Include="src\patches\TES\BSShaderManager.cpp" />

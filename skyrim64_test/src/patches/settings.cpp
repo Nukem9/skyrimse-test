@@ -9,7 +9,7 @@ struct
 } const Settings[] =
 {
 	// '!' means the variable is never used in the engine. It's included here anyway.
-	// '?' means used by engine. Descrption not written or use is unknown.
+	// '?' means used by engine. Description not written or use is unknown.
 
 	// Skyrim.ini
 	{ "General",	"fDefaultFov",					"90.000" },	//  Field of view

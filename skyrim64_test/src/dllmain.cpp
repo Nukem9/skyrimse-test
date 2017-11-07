@@ -102,6 +102,7 @@ void ApplyPatches()
     PatchTESForm();
     PatchBSThread();
 	PatchBSGraphicsRenderTargetManager();
+	PatchLogging();
 
 	ExperimentalPatchEmptyFunctions();
 	ExperimentalPatchMemInit();
