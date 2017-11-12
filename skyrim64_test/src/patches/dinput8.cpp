@@ -270,5 +270,5 @@ bool ProxyIDirectInputDevice8A::GlobalInputAllowed()
 
 void PatchDInput()
 {
-	Detours::IATHook((PBYTE)GetModuleHandleA(nullptr), "dinput8.dll", "DirectInput8Create", (PBYTE)hk_DirectInput8Create);
+	PatchIAT(hk_DirectInput8Create, "dinput8.dll", "DirectInput8Create");
 }

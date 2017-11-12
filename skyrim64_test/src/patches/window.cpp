@@ -148,7 +148,7 @@ HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWin
 
 void PatchWindow()
 {
-	PatchMemory(g_ModuleBase + 0x5ADE40, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
+	PatchMemory(g_ModuleBase + 0x5AF2E0, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
 	CreateThread(nullptr, 0, MessageThread, nullptr, 0, &MessageThreadId);
 
 	PatchIAT(hk_CreateWindowExA, "user32.dll", "CreateWindowExA");

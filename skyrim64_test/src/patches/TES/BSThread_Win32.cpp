@@ -10,7 +10,7 @@ bool hk_sub_140C06440(uintptr_t a1, int a2, const char *a3)
     NextThreadName = _strdup(a3);
     bool result    = sub_140C06440(a1, a2, a3);
 
-    while (NextThreadName)
+    while (NextThreadName.load())
         Sleep(1);
 
     return result;
@@ -27,7 +27,7 @@ DWORD WINAPI hk_BSThreadEntryFunc(LPVOID lpArg)
         SetThreadName(tid, name);
 
     ui::log::Add("Created thread \"%s\" (ID %d)\n", name, tid);
-    return ((LPTHREAD_START_ROUTINE)(g_ModuleBase + 0xC0BCE0))(lpArg);
+    return ((LPTHREAD_START_ROUTINE)(g_ModuleBase + 0xC0D190))(lpArg);
 }
 
 LPTHREAD_START_ROUTINE TaskletEntryFunc;
@@ -44,7 +44,7 @@ DWORD WINAPI hk_TaskletEntryFunc(LPVOID lpArg)
 
 void PatchBSThread()
 {
-    *(uint8_t **)&sub_140C06440     = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC06440), (PBYTE)&hk_sub_140C06440);
-    *(uint8_t **)&BSThreadEntryFunc = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC06630), (PBYTE)&hk_BSThreadEntryFunc);
-    *(uint8_t **)&TaskletEntryFunc  = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC39A60), (PBYTE)&hk_TaskletEntryFunc);
+    *(uint8_t **)&sub_140C06440     = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC078F0), (PBYTE)&hk_sub_140C06440);
+    *(uint8_t **)&BSThreadEntryFunc = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC07AE0), (PBYTE)&hk_BSThreadEntryFunc);
+    *(uint8_t **)&TaskletEntryFunc  = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC3AF10), (PBYTE)&hk_TaskletEntryFunc);
 }

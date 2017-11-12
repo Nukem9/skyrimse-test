@@ -79,8 +79,8 @@ void ExperimentalPatchEmptyFunctions()
 	}
 
 	// Actual patching
-	uintptr_t rdataStart = g_ModuleBase + 0x151C1F0;
-	uintptr_t rdataEnd = g_ModuleBase + 0x1DC9000;
+	uintptr_t rdataStart = g_ModuleBase + 0x15231F0;
+	uintptr_t rdataEnd = g_ModuleBase + 0x1DD5000;
 
 	auto doPatch = [&](uintptr_t Src, uintptr_t Dest)
 	{

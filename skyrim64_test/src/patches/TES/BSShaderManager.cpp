@@ -68,13 +68,13 @@ void ShaderDecoder::DumpShaderInfo()
 		{
 			switch (remapData->Group)
 			{
-			case 0:
+			case BSSM_GROUP_TYPE::PER_GEO:
 				geoIndexes.push_back({ i, name, remapData });
 				break;
-			case 1:
+			case BSSM_GROUP_TYPE::PER_MAT:
 				matIndexes.push_back({ i, name, remapData });
 				break;
-			case 2:
+			case BSSM_GROUP_TYPE::PER_TEC:
 				tecIndexes.push_back({ i, name, remapData });
 				break;
 			}

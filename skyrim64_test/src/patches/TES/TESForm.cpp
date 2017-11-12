@@ -4,8 +4,8 @@
 #include "BSReadWriteLock.h"
 #include "TESForm.h"
 
-AutoPtr<BSReadWriteLock, 0x1EDD6D0> GlobalFormLock;
-AutoPtr<BSTScatterTable<uint32_t, TESForm *> *, 0x1EDD238> GlobalFormList;
+AutoPtr<BSReadWriteLock, 0x1EEA0D0> GlobalFormLock;
+AutoPtr<BSTScatterTable<uint32_t, TESForm *> *, 0x1EE9C38> GlobalFormList;
 
 std::unordered_map<uint32_t, TESForm *> g_FormMap[TES_FORM_MASTER_COUNT];
 BSReadWriteLock g_FormLocks[TES_FORM_MASTER_COUNT];
@@ -176,7 +176,7 @@ bool GetFormCache(uint32_t FormId, TESForm *&Form)
 
 void CRC32_Lazy(int *out, int idIn)
 {
-    ((void (*)(int *, int))(g_ModuleBase + 0xC04B50))(out, idIn);
+    ((void (*)(int *, int))(g_ModuleBase + 0xC06000))(out, idIn);
 }
 
 TESForm *GetFormById(unsigned int FormId)
@@ -235,10 +235,10 @@ void PatchTESForm()
 {
     Bitmap::TryInitRange();
 
-	origFunc0 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1948C0), &UnknownFormFunction0);
-	origFunc1 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x195FC0), &UnknownFormFunction1);
-	origFunc2 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x195CF0), &UnknownFormFunction2);
-	origFunc3 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1968B0), &UnknownFormFunction3);
+	origFunc0 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x194940), &UnknownFormFunction0);
+	origFunc1 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196040), &UnknownFormFunction1);
+	origFunc2 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x195D70), &UnknownFormFunction2);
+	origFunc3 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196930), &UnknownFormFunction3);
 
-    Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x194300), &GetFormById);
+    Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x194380), &GetFormById);
 }

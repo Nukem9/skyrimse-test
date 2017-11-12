@@ -110,7 +110,7 @@ void ApplyPatches()
 	// Broken printf statement that triggers invalid_parameter_handler(), "%08" should really be "%08X"
 	const char *newFormat = "World object count changed on object '%s' %08X from %i to %i";
 
-	PatchMemory(g_ModuleBase + 0x168EE80, (PBYTE)newFormat, strlen(newFormat) + 1);
+	PatchMemory(g_ModuleBase + 0x1696030, (PBYTE)newFormat, strlen(newFormat) + 1);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)

@@ -37,5 +37,5 @@ __int64 hk_sub_140D68A20(__int64 a1, unsigned int a2, __int64 a3, __int64 a4)
 
 void PatchBSGraphicsRenderTargetManager()
 {
-	sub_140D68A20 = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xD68A20), (PBYTE)hk_sub_140D68A20);
+	sub_140D68A20 = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xD69ED0), (PBYTE)hk_sub_140D68A20);
 }
