@@ -113,6 +113,18 @@
     <ClInclude Include="src\patches\TES\BSShaderRenderTargets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="xbyak\xbyak_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xbyak\xbyak_mnemonic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xbyak\xbyak_bin2hex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xbyak\xbyak.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
