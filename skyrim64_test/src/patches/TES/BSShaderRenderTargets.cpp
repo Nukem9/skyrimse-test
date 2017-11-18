@@ -3,7 +3,10 @@
 
 namespace BSShaderRenderTargets
 {
-	ID3D11DepthStencilView *g_DepthStencils[DEPTH_STENCIL_COUNT];
+	ID3D11Texture2D *g_DepthStencilTextures[DEPTH_STENCIL_COUNT];
+	ID3D11DepthStencilView *g_DepthStencils[DEPTH_STENCIL_COUNT][128][2];
+
+	ID3D11Texture2D *g_RenderTargetTextures[RENDER_TARGET_COUNT];
 	ID3D11RenderTargetView *g_RenderTargets[RENDER_TARGET_COUNT];
 
 	static const char *Debug_DepthStencilNames[DEPTH_STENCIL_COUNT] =

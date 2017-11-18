@@ -313,6 +313,9 @@
     <ClCompile Include="src\patches\TES\BSShaderRenderTargets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\patches\d3d11_dc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />

@@ -54,7 +54,9 @@ void LoadModules()
     g_DllVTune = LoadLibraryA(libttPath);
 }
 
+void PatchReferences();
 void DoHook();
+void AddThreadTls();
 void ApplyPatches()
 {
     // Called once the exe has been unpacked. Before applying code modifications:
@@ -89,9 +91,14 @@ void ApplyPatches()
     DoHook();
     LoadModules();
 
+	SetThreadName(GetCurrentThreadId(), "Main Thread");
+
+	AddThreadTls();
+	PatchReferences();
+
     // Now hook everything
     PatchThreading();
-    PatchWindow();
+    //PatchWindow();
     PatchDInput();
     PatchD3D11();
 	PatchSteam();
@@ -117,9 +124,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 {
     if (ul_reason_for_call == DLL_PROCESS_ATTACH)
     {
-        DisableThreadLibraryCalls(hModule);
         EnableDumpBreakpoint();
-
         return TRUE;
     }
 

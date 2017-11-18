@@ -27,9 +27,23 @@ __int64 hk_CreateDepthStencil(__int64 a1, unsigned int aStencilIndex, __int64 a3
 	// Set name for use in VS's/nvidia's debugger
 	uintptr_t v1 = a1 + (0x98 * aStencilIndex);
 
-	SetName(v1 + 0x1FB8, GetStencilName(aStencilIndex));
+	SetName(v1 + 0x1FB8, "%s TEX2D", GetStencilName(aStencilIndex));
 
-	g_DepthStencils[aStencilIndex] = *(ID3D11DepthStencilView **)(v1 + 0x1FB8);
+	for (int i = 0; i < *(int *)(a4 + 8); i++)
+	{
+		if (i >= 128)
+			__debugbreak();
+
+		unsigned int v15 = 19 * aStencilIndex;
+
+		SetName(a1 + 0x1FC0 + 8 * (v15 + i), "%s SLICE%d DSV0", GetStencilName(aStencilIndex), i);
+		SetName(a1 + 0x2000 + 8 * (v15 + i), "%s SLICE%d DSV1", GetStencilName(aStencilIndex), i);
+
+		g_DepthStencils[aStencilIndex][i][0] = *(ID3D11DepthStencilView **)(a1 + 0x1FC0 + 8 * (v15 + i));
+		g_DepthStencils[aStencilIndex][i][1] = *(ID3D11DepthStencilView **)(a1 + 0x2000 + 8 * (v15 + i));
+	}
+
+	g_DepthStencilTextures[aStencilIndex] = *(ID3D11Texture2D **)(v1 + 0x1FB8);
 	return ret;
 }
 
@@ -49,6 +63,7 @@ __int64 hk_CreateRenderTarget(__int64 a1, unsigned int aTargetIndex, __int64 a3,
 	SetName(v13 + 2656, "%s COPY TEX2D", GetTargetName(aTargetIndex));
 	SetName(v13 + 2680, "%s COPY SRV", GetTargetName(aTargetIndex));
 
+	g_RenderTargetTextures[aTargetIndex] = *(ID3D11Texture2D **)(v13 + 2648);
 	g_RenderTargets[aTargetIndex] = *(ID3D11RenderTargetView **)(v13 + 2664);
 	return ret;
 }

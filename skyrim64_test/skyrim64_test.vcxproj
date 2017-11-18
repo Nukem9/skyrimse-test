@@ -156,6 +156,7 @@
     <ClCompile Include="src\patches\achievements.cpp" />
     <ClCompile Include="src\patches\d3d11.cpp" />
     <ClCompile Include="src\d3dx9_debug.cpp" />
+    <ClCompile Include="src\patches\d3d11_dc.cpp" />
     <ClCompile Include="src\patches\dinput8.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\d3dx9_release.cpp" />
