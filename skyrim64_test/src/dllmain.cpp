@@ -54,9 +54,7 @@ void LoadModules()
     g_DllVTune = LoadLibraryA(libttPath);
 }
 
-void PatchReferences();
 void DoHook();
-void AddThreadTls();
 void ApplyPatches()
 {
     // Called once the exe has been unpacked. Before applying code modifications:
@@ -92,9 +90,6 @@ void ApplyPatches()
     LoadModules();
 
 	SetThreadName(GetCurrentThreadId(), "Main Thread");
-
-	AddThreadTls();
-	PatchReferences();
 
     // Now hook everything
     PatchThreading();

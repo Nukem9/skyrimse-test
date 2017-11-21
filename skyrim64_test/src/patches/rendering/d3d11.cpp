@@ -1,7 +1,7 @@
-#include "../common.h"
-#include "../ui/ui.h"
-#include "TES/BSShaderManager.h"
-#include "TES/BSShaderRenderTargets.h"
+#include "../../common.h"
+#include "../../ui/ui.h"
+#include "../TES/BSShaderManager.h"
+#include "../TES/BSShaderRenderTargets.h"
 
 // BSGraphicsRenderer
 
@@ -17,11 +17,14 @@ struct BSGraphicsRendererGlobals
 	HWND			m_Window;
 
 	//
-	// These fields are all related to per-frame execution
+	// These are pools for efficient data uploads to the GPU. Each frame can use any buffer as long as there
+	// is sufficient space. If there's no space left, delay execution until m_CommandListEndEvents[] says a buffer
+	// is no longer in use.
 	//
-	ID3D11Buffer		*m_DynamicIndexVertexBuffers[3];// DYNAMIC (VERTEX | INDEX) CPU_ACCESS_WRITE
+	ID3D11Buffer		*m_DynamicBuffers[3];			// DYNAMIC (VERTEX | INDEX) CPU_ACCESS_WRITE
 	uint32_t			m_CurrentDynamicBufferIndex;
-	uint32_t			m_LastQueryTime;				// Some counter for m_EventQueries (Actual use unknown)
+
+	uint32_t			m_FrameDataUsedSize;			// Use in relation with m_CommandListEndEvents[]
 	ID3D11Buffer		*m_UnknownIndexBuffer;			// DEFAULT INDEX CPU_ACCESS_NONE
 	ID3D11Buffer		*m_UnknownVertexBuffer;			// DEFAULT VERTEX CPU_ACCESS_NONE
 	ID3D11InputLayout	*m_UnknownInputLayout;
@@ -30,8 +33,8 @@ struct BSGraphicsRendererGlobals
 	uint32_t			m_UnknownCounter2;				// No limits
 	void				*m_UnknownStaticBuffer[64];
 	uint32_t			m_UnknownCounter3;				// 0 to 5
-	bool				m_EventQueryPending[3];
-	ID3D11Query			*m_EventQueries[3];				// D3D11_QUERY_EVENT (Triple buffering; 3 pre-rendered frame queue)
+	bool				m_EventQueryFinished[3];
+	ID3D11Query			*m_CommandListEndEvents[3];		// D3D11_QUERY_EVENT (Waits for a series of commands to finish execution)
 
 	float m_UnknownFloats1[3][4];						// Probably a matrix
 
@@ -95,16 +98,16 @@ struct BSGraphicsRendererGlobals
 	ID3D11UnorderedAccessView *m_CSUAVResources[8];
 	char __zz2[0x2A0];
 };
-const BSGraphicsRendererGlobals *GraphicsGlobals = (BSGraphicsRendererGlobals *)0x14304BEF0;
+BSGraphicsRendererGlobals *GraphicsGlobals = nullptr;
 
 static_assert(sizeof(BSGraphicsRendererGlobals) == 0x25A0, "");
 CHECK_OFFSET(m_Viewport, 0x14304BEF0);
 CHECK_OFFSET(qword_14304BF00, 0x14304BF00);
 CHECK_OFFSET(m_Device, 0x14304BF08);
 CHECK_OFFSET(m_Window, 0x14304BF10);
-CHECK_OFFSET(m_DynamicIndexVertexBuffers, 0x14304BF18);
+CHECK_OFFSET(m_DynamicBuffers, 0x14304BF18);
 CHECK_OFFSET(m_CurrentDynamicBufferIndex, 0x14304BF30);
-CHECK_OFFSET(m_LastQueryTime, 0x14304BF34);
+CHECK_OFFSET(m_FrameDataUsedSize, 0x14304BF34);
 CHECK_OFFSET(m_UnknownIndexBuffer, 0x14304BF38);
 CHECK_OFFSET(m_UnknownVertexBuffer, 0x14304BF40);
 CHECK_OFFSET(m_UnknownInputLayout, 0x14304BF48);
@@ -113,8 +116,8 @@ CHECK_OFFSET(m_UnknownCounter, 0x14304BF58);
 CHECK_OFFSET(m_UnknownCounter2, 0x14304BF5C);
 CHECK_OFFSET(m_UnknownStaticBuffer, 0x14304BF60);
 CHECK_OFFSET(m_UnknownCounter3, 0x14304C160);
-CHECK_OFFSET(m_EventQueryPending, 0x14304C164);
-CHECK_OFFSET(m_EventQueries, 0x14304C168);
+CHECK_OFFSET(m_EventQueryFinished, 0x14304C164);
+CHECK_OFFSET(m_CommandListEndEvents, 0x14304C168);
 CHECK_OFFSET(m_UnknownFloats1, 0x14304C180);
 CHECK_OFFSET(qword_14304C1B0, 0x14304C1B0);
 CHECK_OFFSET(qword_14304C930, 0x14304C930);
@@ -161,7 +164,6 @@ CHECK_OFFSET(m_CSSamplerSetting2, 0x14304E0B0);
 CHECK_OFFSET(m_DSSamplers, 0x14304E0F0);
 CHECK_OFFSET(m_CSUAVResources, 0x14304E1B0);
 
-
 IDXGISwapChain *g_SwapChain;
 ID3D11DeviceContext2 *g_DeviceContext;
 double g_AverageFps;
@@ -203,7 +205,7 @@ int TickDeltaIndex;
 
 HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval, UINT Flags)
 {
-    ui::Render();
+    //ui::Render();
 
     // FPS calculation code
     LARGE_INTEGER ticksPerSecond;
@@ -292,7 +294,63 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 	return hr;
 }
 
-void SetThisThreadContext(ID3D11DeviceContext2 *ctx);
+void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
+{
+//	GraphicsGlobals = (BSGraphicsRendererGlobals *)tlsGlob;
+
+	uint32_t frameDataOffset = GraphicsGlobals->m_FrameDataUsedSize;
+	uint32_t frameBufferIndex = GraphicsGlobals->m_CurrentDynamicBufferIndex;
+	uint32_t newFrameDataSzie = GraphicsGlobals->m_FrameDataUsedSize + AllocationSize;
+
+	//
+	// Check if this request would exceed the allocated buffer size for the currently executing command list. If it does,
+	// we end the current query and move on to the next buffer.
+	//
+	if (newFrameDataSzie > 0x400000)
+	{
+		newFrameDataSzie = AllocationSize;
+		frameDataOffset = 0;
+
+		GraphicsGlobals->m_EventQueryFinished[GraphicsGlobals->m_CurrentDynamicBufferIndex] = false;
+		g_DeviceContext->End(GraphicsGlobals->m_CommandListEndEvents[GraphicsGlobals->m_CurrentDynamicBufferIndex]);
+
+		frameBufferIndex++;
+
+		if (frameBufferIndex >= 3)
+			frameBufferIndex = 0;
+	}
+	
+	//
+	// This will **suspend execution** until the buffer we want is no longer in use. The query encapsulates a list of commands
+	// using said buffer.
+	//
+	if (!GraphicsGlobals->m_EventQueryFinished[frameBufferIndex])
+	{
+		ID3D11Query *query = GraphicsGlobals->m_CommandListEndEvents[frameBufferIndex];
+		BOOL data;
+
+		HRESULT hr = g_DeviceContext->GetData(query, &data, sizeof(data), 0);
+
+		for (; FAILED(hr) || data == FALSE; hr = g_DeviceContext->GetData(query, &data, sizeof(data), D3D11_ASYNC_GETDATA_DONOTFLUSH))
+			Sleep(1);
+
+		GraphicsGlobals->m_EventQueryFinished[frameBufferIndex] = (data == TRUE);
+	}
+	
+	D3D11_MAPPED_SUBRESOURCE resource;
+	if (FAILED(g_DeviceContext->Map(GraphicsGlobals->m_DynamicBuffers[frameBufferIndex], 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &resource)))
+	{
+		//TLS_DeviceContext->Map(GraphicsGlobals->m_DynamicBuffers[frameBufferIndex], 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+		//*AllocationOffset = 0;
+		//frameDataOffset = 0;
+	}
+
+	GraphicsGlobals->m_CurrentDynamicBufferIndex = frameBufferIndex;
+	*AllocationOffset = frameDataOffset;
+	GraphicsGlobals->m_FrameDataUsedSize = newFrameDataSzie;
+
+	return (void *)((uintptr_t)resource.pData + frameDataOffset);
+}
 
 #include <thread>
 uint8_t *sub_1412E1600;
@@ -347,7 +405,7 @@ __int64 __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	ID3D11CommandList *list;
 	__int64 res;
 	std::thread t([&list, a1, a2, a3, &res]() {
-		SetThisThreadContext(dc1);
+//		SetThisThreadContext(dc1);
 		res = ((decltype(&hk_sub_1412E1600))sub_1412E1600)(a1, a2, a3);
 		dc1->FinishCommandList(FALSE, &list);
 	});
@@ -593,6 +651,7 @@ void hook()
 
 	hooked = true;
 
+	//uintptr_t ptr = *(uintptr_t *)(&tlsGlob[0x10]);
 	uintptr_t ptr = *(uintptr_t *)(g_ModuleBase + 0x304BF00);
 	ID3D11Device *dev = *(ID3D11Device **)(ptr + 56);
 	IDXGISwapChain *swap = *(IDXGISwapChain **)(ptr + 96);
@@ -614,8 +673,10 @@ void hook()
 
 	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)swap, &hk_IDXGISwapChain_Present, 8);
 
-	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
-	*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1C10, (PBYTE)&hk_sub_1412E1C10);
+	//Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF00, (PBYTE)&sub_140D6BF00);
+
+	//*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
+	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1C10, (PBYTE)&hk_sub_1412E1C10);
 
 	//*(PBYTE *)&CreateVertexShader = Detours::X64::DetourClassVTable(*(PBYTE *)dev, &hk_CreateVertexShader, 12);
 	//*(PBYTE *)&CreatePixelShader = Detours::X64::DetourClassVTable(*(PBYTE *)dev, &hk_CreatePixelShader, 15);
@@ -645,8 +706,6 @@ HRESULT WINAPI hk_ID3D11DeviceContext_Map(ID3D11DeviceContext *This, ID3D11Resou
 
 	return (This->*Map)(pResource, Subresource, MapType, MapFlags, pMappedResource);
 }
-
-void UpdateContextTest(ID3D11DeviceContext2 *ctx);
 
 HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
     IDXGIAdapter *pAdapter,
@@ -691,7 +750,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
             pAdapter,
             DriverType,
             Software,
-            Flags,
+            Flags | D3D11_CREATE_DEVICE_DEBUG,
             &testFeatureLevels[i],
             1,
             SDKVersion,
@@ -733,8 +792,6 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	g_DeviceContext = newContext;
 	g_SwapChain = *ppSwapChain;
 
-	UpdateContextTest(newContext);
-
 	// Create deferred contexts for later frame use
 	newDev->CreateDeferredContext2(0, &dc1);
 	newDev->CreateDeferredContext2(0, &dc2);
@@ -749,8 +806,10 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
 	*(PBYTE *)&Map = Detours::X64::DetourClassVTable(*(PBYTE *)newContext, &hk_ID3D11DeviceContext_Map, 14);
 
-	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
-	*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1C10, (PBYTE)&hk_sub_1412E1C10);
+	//*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
+	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1C10, (PBYTE)&hk_sub_1412E1C10);
+
+	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF00, (PBYTE)&sub_140D6BF00);
 
 	//*(PBYTE *)&CreateVertexShader = Detours::X64::DetourClassVTable(*(PBYTE *)*ppDevice, &hk_CreateVertexShader, 12);
 	//*(PBYTE *)&CreatePixelShader = Detours::X64::DetourClassVTable(*(PBYTE *)*ppDevice, &hk_CreatePixelShader, 15);
@@ -779,6 +838,6 @@ void PatchD3D11()
 
 	*(PBYTE *)&BuildShaderBundle = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1336140), (PBYTE)&hk_BuildShaderBundle);
 
-    PatchIAT(hk_CreateDXGIFactory, "dxgi.dll", "CreateDXGIFactory");
-    PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");
+    //PatchIAT(hk_CreateDXGIFactory, "dxgi.dll", "CreateDXGIFactory");
+    //PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");
 }

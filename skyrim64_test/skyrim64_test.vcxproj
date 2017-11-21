@@ -47,7 +47,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\include;E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\jemalloc\include\msvc_compat;E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\jemalloc\include;$(IncludePath)</IncludePath>
+    <IncludePath>E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\zydis\src;E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\zydis\include;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\include;E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\jemalloc\include\msvc_compat;E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\jemalloc\include;$(IncludePath)</IncludePath>
     <LibraryPath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\lib64;$(LibraryPath)</LibraryPath>
     <TargetName>d3dx9_42</TargetName>
   </PropertyGroup>
@@ -88,6 +88,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\patches\patches.h" />
+    <ClInclude Include="src\patches\rendering\codegen.h" />
+    <ClInclude Include="src\patches\rendering\common.h" />
+    <ClInclude Include="src\patches\rendering\d3d11_tls.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsRenderTargetManager.h" />
     <ClInclude Include="src\patches\TES\BSShaderManager.h" />
     <ClInclude Include="src\patches\TES\BSShaderProperty.h" />
@@ -154,15 +157,17 @@
     <ClCompile Include="jemalloc\witness.c" />
     <ClCompile Include="src\ansel.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />
-    <ClCompile Include="src\patches\d3d11.cpp" />
+    <ClCompile Include="src\patches\rendering\codegen.cpp" />
+    <ClCompile Include="src\patches\rendering\d3d11.cpp" />
     <ClCompile Include="src\d3dx9_debug.cpp" />
-    <ClCompile Include="src\patches\d3d11_dc.cpp" />
+    <ClCompile Include="src\patches\rendering\d3d11_dc.cpp" />
     <ClCompile Include="src\patches\dinput8.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\d3dx9_release.cpp" />
     <ClCompile Include="src\dump.cpp" />
     <ClCompile Include="src\patches\experimental.cpp" />
     <ClCompile Include="src\patches\logging.cpp" />
+    <ClCompile Include="src\patches\rendering\d3d11_tls.cpp" />
     <ClCompile Include="src\patches\steam.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphicsRenderTargetManager.cpp" />
     <ClCompile Include="src\patches\TES\BSShaderManager.cpp" />
@@ -187,9 +192,21 @@
     <ClCompile Include="src\xutil.cpp" />
     <ClCompile Include="src\typeinfo\msrtti.cpp" />
     <ClCompile Include="src\patches\window.cpp" />
+    <ClCompile Include="zydis\src\Decoder.c" />
+    <ClCompile Include="zydis\src\DecoderData.c" />
+    <ClCompile Include="zydis\src\FormatHelper.c" />
+    <ClCompile Include="zydis\src\Formatter.c" />
+    <ClCompile Include="zydis\src\MetaInfo.c" />
+    <ClCompile Include="zydis\src\Mnemonic.c" />
+    <ClCompile Include="zydis\src\Register.c" />
+    <ClCompile Include="zydis\src\SharedData.c" />
+    <ClCompile Include="zydis\src\Utils.c" />
+    <ClCompile Include="zydis\src\Zydis.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
+    <None Include="src\patches\rendering\d3d11_tls_patchlist.inl" />
+    <None Include="src\patches\rendering\d3d11_tls_xreflist.inl" />
     <None Include="src\patches\TES\BSShaderConstants.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

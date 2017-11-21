@@ -125,6 +125,15 @@
     <ClInclude Include="xbyak\xbyak.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\rendering\codegen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\rendering\d3d11_tls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\rendering\common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -164,9 +173,6 @@
       <Filter>Source Files\patches</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\dinput8.cpp">
-      <Filter>Source Files\patches</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\d3d11.cpp">
       <Filter>Source Files\patches</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSReadWriteLock.cpp">
@@ -313,13 +319,58 @@
     <ClCompile Include="src\patches\TES\BSShaderRenderTargets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\d3d11_dc.cpp">
+    <ClCompile Include="zydis\src\Decoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zydis\src\DecoderData.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zydis\src\FormatHelper.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zydis\src\Formatter.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zydis\src\MetaInfo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zydis\src\Mnemonic.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zydis\src\Register.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zydis\src\SharedData.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zydis\src\Utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="zydis\src\Zydis.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\rendering\d3d11.cpp">
+      <Filter>Source Files\patches</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\rendering\d3d11_dc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\rendering\codegen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\rendering\d3d11_tls.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
     <None Include="src\patches\TES\BSShaderConstants.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="src\patches\rendering\d3d11_tls_patchlist.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="src\patches\rendering\d3d11_tls_xreflist.inl">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>
