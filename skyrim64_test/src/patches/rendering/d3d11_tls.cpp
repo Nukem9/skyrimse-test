@@ -34,12 +34,12 @@ VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
 		// New thread, redirect TLS[_tls_index] to main thread's TLS[_tls_index]
 		uintptr_t *currentTlsBlock = (uintptr_t *)(__readgsqword(0x58) + _tls_index * sizeof(void *));
 
-		g_ThreadTLSMaps.insert_or_assign(GetCurrentThreadId(), *currentTlsBlock);
-		*currentTlsBlock = g_MainTLSBlock;
-
 		char buf[1024];
 		sprintf_s(buf, "TLS Base: 0x%llX\n", *currentTlsBlock);
 		OutputDebugStringA(buf);
+
+		g_ThreadTLSMaps.insert_or_assign(GetCurrentThreadId(), *currentTlsBlock);
+		*currentTlsBlock = g_MainTLSBlock;
 	}
 	else if (Reason == DLL_THREAD_DETACH)
 	{
@@ -55,6 +55,26 @@ VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
 		*(uintptr_t *)(__readgsqword(0x58) + _tls_index * sizeof(void *)) = (uintptr_t)found->second;
 		g_ThreadTLSMaps.erase(found);
 	}
+}
+
+uintptr_t GetMyTls()
+{
+	return g_ThreadTLSMaps[GetCurrentThreadId()];
+}
+
+uintptr_t GetMainTls()
+{
+	return g_MainTLSBlock;
+}
+
+void TLS_RevertThread()
+{
+	*(uintptr_t *)(__readgsqword(0x58) + _tls_index * sizeof(void *)) = (uintptr_t)g_ThreadTLSMaps[GetCurrentThreadId()];
+}
+
+void TLS_RestoreThread()
+{
+	*(uintptr_t *)(__readgsqword(0x58) + _tls_index * sizeof(void *)) = g_MainTLSBlock;
 }
 
 uintptr_t GetTlsOffset(void *Variable)

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "patches/rendering/d3d11_tls.h"
 #include "patches/patches.h"
 
 ULONG_PTR g_ModuleBase;
@@ -86,6 +87,7 @@ void ApplyPatches()
     SetErrorMode(0);
     SetThreadErrorMode(0, &oldMode);
 
+	InitializeTLSHooks();
     DoHook();
     LoadModules();
 

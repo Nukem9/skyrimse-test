@@ -1,7 +1,5 @@
 #include "common.h"
 
-extern "C" unsigned int _tls_index;
-
 ZydisDecoder g_Decoder;
 uintptr_t g_CodeRegion;
 
@@ -18,7 +16,6 @@ void CreateXbyakPatches()
 	freopen("C:\\out.txt", "w", stdout);
 
 #if TLS_DEBUG_MEMORY_ACCESS
-	AddVectoredExceptionHandler(TRUE, MyUnhandledExceptionFilter);
 	PageGuard_Monitor(g_ModuleBase + BSGRAPHICS_BASE_OFFSET, BSGRAPHICS_PATCH_SIZE);
 
 	char buffer[512];

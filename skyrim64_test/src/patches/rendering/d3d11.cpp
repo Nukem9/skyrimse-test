@@ -352,8 +352,304 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 	return (void *)((uintptr_t)resource.pData + frameDataOffset);
 }
 
+extern thread_local char BSGraphics_TLSGlob[0x4000];
+
+void DC_Init();
+void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int));
+void DC_WaitDeferred();
+
+void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
+{
+	float v3; // xmm0_4
+	uint32_t v6; // ecx
+	bool v7; // si
+	__int64 v8; // r8
+	__int64 v10; // r8
+	uint32_t v13; // ecx
+	__int64 v16; // r8
+	__int64 v17; // rcx
+	uint32_t v18; // eax
+	int v19; // eax
+	int v20; // eax
+	uint32_t v21; // eax
+	uint32_t v22; // ecx
+	float v15; // xmm0_4
+
+	auto graphicsGlobals = (BSGraphicsRendererGlobals *)BSGraphics_TLSGlob;
+
+	if (!annotation)
+	{
+		DC_Init();
+		graphicsGlobals->m_DeviceContext->QueryInterface<ID3DUserDefinedAnnotation>(&annotation);
+	}
+
+	auto RenderBatchTechnique1 = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3770);
+	auto RenderBatchTechnique2 = (void(__fastcall *)(__int64 *a1, unsigned int a2, __int64 a3))(g_ModuleBase + 0x131CB70);
+
+	if (*(uint64_t *)(a1 + 16))
+	{
+		if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5) && *(DWORD *)&graphicsGlobals->__zz0[32] != 4)
+		{
+			*(DWORD *)&graphicsGlobals->__zz0[32] = 4;
+			v6 = graphicsGlobals->dword_14304DEB0 & 0xFFFFFFFB;
+			if (*(DWORD *)&graphicsGlobals->__zz0[36] != 4)
+				v6 = graphicsGlobals->dword_14304DEB0 | 4;
+			graphicsGlobals->dword_14304DEB0 = v6;
+		}
+		v7 = (a2 & 0xA) != 0;
+
+		if (!(a2 & 0xA))
+			((void(__fastcall *)(float))(g_ModuleBase + 0x12F87B0))(v3);
+			//sub_1412F87B0(v3);
+
+		// RenderBatches
+		annotation->BeginEvent(L"RenderBatches");
+		{
+			DC_RenderDeferred(a1, a2, [](__int64 a1, unsigned int a2) {
+				auto rbt1 = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3770);
+
+				rbt1(a1, 1, 0x5C00002F, a2, -1);
+			});
+
+			DC_WaitDeferred();
+		}
+		annotation->EndEvent();
+
+		// LowAniso
+		annotation->BeginEvent(L"LowAniso");
+		{
+			__int64 v9; // rcx
+			v9 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 184i64);
+			if (v9)
+			{
+				if (*(BYTE *)(v9 + 38) & 1)
+					RenderBatchTechnique2((__int64 *)v9, a2, v8);
+				else
+					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 9);
+			}
+		}
+		annotation->EndEvent();
+
+		// RenderGrass
+		annotation->BeginEvent(L"RenderGrass");
+		{
+			RenderBatchTechnique1(a1, 0x5C000030, 0x5C00005C, a2, -1);
+		}
+		annotation->EndEvent();
+
+		// RenderNoShadowGroup
+		annotation->BeginEvent(L"RenderNoShadowGroup");
+		{
+			__int64 v11; // rcx
+			v11 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 176i64);
+			if (v11)
+			{
+				if (*(BYTE *)(v11 + 38) & 1)
+					RenderBatchTechnique2((__int64 *)v11, a2, v10);
+				else
+					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 8);
+			}
+		}
+		annotation->EndEvent();
+
+		// RenderLODObjects
+		annotation->BeginEvent(L"RenderLODObjects");
+		{
+			__int64 v12; // rcx
+			v12 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 120i64);
+			if (v12)
+			{
+				if (*(BYTE *)(v12 + 38) & 1)
+					RenderBatchTechnique2((__int64 *)v12, a2, v10);
+				else
+					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 1);
+			}
+			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5) && *(DWORD *)&graphicsGlobals->__zz0[32] != 3)
+			{
+				*(DWORD *)&graphicsGlobals->__zz0[32] = 3;
+				v13 = graphicsGlobals->dword_14304DEB0 & 0xFFFFFFFB;
+				if (*(DWORD *)&graphicsGlobals->__zz0[36] != 3)
+					v13 = graphicsGlobals->dword_14304DEB0 | 4;
+				graphicsGlobals->dword_14304DEB0 = v13;
+			}
+		}
+		annotation->EndEvent();
+
+		// RenderLODLand
+		annotation->BeginEvent(L"RenderLODLand");
+		{
+			__int64 v14; // rcx
+			v14 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 112i64);
+			if (v14)
+			{
+				if (*(BYTE *)(v14 + 38) & 1)
+					RenderBatchTechnique2((__int64 *)v14, a2, v10);
+				else
+					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 0);
+			}
+
+			if (!v7)
+				((void(__fastcall *)())(g_ModuleBase + 0x12F8910))();
+			//sub_1412F8910();
+		}
+		annotation->EndEvent();
+
+		// RenderSky
+		annotation->BeginEvent(L"RenderSky");
+		{
+			if (graphicsGlobals->__zz0[76] != 1)
+			{
+				graphicsGlobals->dword_14304DEB0 |= 0x100u;
+				graphicsGlobals->__zz0[76] = 1;
+			}
+			v15 = graphicsGlobals->float_14304DF68;
+			if (graphicsGlobals->float_14304DF68 != 0.50196081)
+			{
+				graphicsGlobals->dword_14304DEB0 |= 0x200u;
+				graphicsGlobals->float_14304DF68 = 0.50196081;
+			}
+			RenderBatchTechnique1(a1, 0x5C00005D, 0x5C000064, a2, -1);
+		}
+		annotation->EndEvent();
+
+		// RenderSkyClouds
+		annotation->BeginEvent(L"RenderSkyClouds");
+		{
+			if (*(DWORD *)&graphicsGlobals->__zz0[72] != 11)
+			{
+				graphicsGlobals->dword_14304DEB0 |= 0x80u;
+				*(DWORD *)&graphicsGlobals->__zz0[72] = 11;
+			}
+			v17 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 216i64);
+			if (v17)
+			{
+				if (*(BYTE *)(v17 + 38) & 1)
+					RenderBatchTechnique2((__int64 *)v17, a2, v16);
+				else
+					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 13);
+			}
+			if (*(DWORD *)&graphicsGlobals->__zz0[72] != 1)
+			{
+				graphicsGlobals->dword_14304DEB0 |= 0x80u;
+				*(DWORD *)&graphicsGlobals->__zz0[72] = 1;
+			}
+		}
+		annotation->EndEvent();
+
+		if (!v7)
+			((void(__fastcall *)(float))(g_ModuleBase + 0x12F87B0))(v15);
+		//sub_1412F87B0(v15);
+
+		if (*(DWORD *)&graphicsGlobals->__zz0[72] != 10)
+		{
+			graphicsGlobals->dword_14304DEB0 |= 0x80u;
+			*(DWORD *)&graphicsGlobals->__zz0[72] = 10;
+		}
+
+		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E2450))(a1, a2);
+		//sub_1412E2450(a1, a2);
+
+		// BlendedDecals
+		annotation->BeginEvent(L"RenderSkyClouds");
+		{
+			if (*(DWORD *)&graphicsGlobals->__zz0[72] != 11)
+			{
+				graphicsGlobals->dword_14304DEB0 |= 0x80u;
+				*(DWORD *)&graphicsGlobals->__zz0[72] = 11;
+			}
+
+			((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E25F0))(a1, a2);
+			//sub_1412E25F0(a1, a2);
+		}
+		annotation->EndEvent();
+
+		v18 = graphicsGlobals->dword_14304DEB0;
+		if (*(DWORD *)&graphicsGlobals->__zz0[64])
+		{
+			v18 = graphicsGlobals->dword_14304DEB0 | 0x80;
+			*(DWORD *)&graphicsGlobals->__zz0[64] = 0;
+			graphicsGlobals->dword_14304DEB0 |= 0x80u;
+		}
+		if (*(DWORD *)&graphicsGlobals->__zz0[72] != 1)
+		{
+			*(DWORD *)&graphicsGlobals->__zz0[72] = 1;
+			graphicsGlobals->dword_14304DEB0 = v18 | 0x80;
+		}
+
+		auto sub_14131F100 = (char(__fastcall *)(__int64 a1, unsigned int a2, unsigned int a3))(g_ModuleBase + 0x131F100);
+		auto sub_140D744B0 = (__int64(__fastcall *)())(g_ModuleBase + 0xD744B0);
+		auto sub_140D69E70 = (__int64(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0xD69E70);
+		auto sub_140D69D30 = (__int64(__fastcall *)(float *a1, float a2, float a3, float a4, int a5))(g_ModuleBase + 0xD69D30);
+		auto sub_1412FD120 = (signed __int64(__fastcall *)())(g_ModuleBase + 0x12FD120);
+		auto sub_140D74350 = (__int64(__fastcall *)(__int64 a1, unsigned int a2, int a3, int a4, char a5))(g_ModuleBase + 0xD74350);
+		auto sub_140D74370 = (void(__fastcall *)(__int64 a1, uint32_t a2, int a3, uint32_t a4))(g_ModuleBase + 0xD74370);
+		auto sub_140D69990 = (void(__fastcall *)(__int64 a1, char a2))(g_ModuleBase + 0xD69990);
+		auto sub_1412FADA0 = (__int64(__fastcall *)())(g_ModuleBase + 0x12FADA0);
+		auto sub_140D69DA0 = (void(__fastcall *)(DWORD *a1))(g_ModuleBase + 0xD69DA0);
+
+		float *flt_14304E490 = (float *)(g_ModuleBase + 0x304E490);
+
+		if ((a2 & 0x80u) != 0 && sub_14131F100(*(uint64_t *)(a1 + 304), 0x5C000071u, 0x5C006071u))
+		{
+			v19 = sub_140D744B0();
+			(*(void(__fastcall **)(ID3D11DeviceContext *, __int64, uint64_t))(*(uint64_t *)graphicsGlobals->m_DeviceContext
+				+ 376i64))(
+					graphicsGlobals->m_DeviceContext,
+					*(__int64*)(g_ModuleBase + 0x3050870),
+					*(uint64_t *)&flt_14304E490[38 * v19 + 2030]);
+		}
+
+		// RenderWaterStencil
+		annotation->BeginEvent(L"RenderWaterStencil");
+		{
+			if (sub_14131F100(*(uint64_t *)(a1 + 304), 0x5C00006Du, 0x5C000070u))
+			{
+				sub_140D69E70((__int64)flt_14304E490, 2u);
+				sub_140D69D30(flt_14304E490, 0.0, 0.0, 0.0, 0);
+				v20 = sub_1412FD120();
+				sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 0, v20, 3, 1);
+				sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 1u, 7, 3, 1);
+				sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);
+				sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);
+				sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);
+				RenderBatchTechnique1(a1, 0x5C00006D, 0x5C000070, a2, -1);
+				sub_140D69DA0((DWORD *)flt_14304E490);
+				*(DWORD *)(*(uint64_t *)((*(uint64_t*)(g_ModuleBase + 0x31F5810)) + 496) + 44i64) = 1;
+			}
+		}
+		annotation->EndEvent();
+
+		if (a2 & 0x40)
+		{
+			sub_140D74370((__int64)(g_ModuleBase + 0x3051B20), 0xFFFFFFFF, 3, 0);
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 1u, -1, 3, 1);
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);
+			sub_140D69990((__int64)flt_14304E490, 1);
+			sub_1412FADA0();
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 0, 1, 3, 1);
+			v21 = sub_140D744B0();
+			sub_140D74370((__int64)(g_ModuleBase + 0x3051B20), v21, 3, 0);
+			if (*(DWORD *)&graphicsGlobals->__zz0[32] != 1)
+			{
+				*(DWORD *)&graphicsGlobals->__zz0[32] = 1;
+				v22 = graphicsGlobals->dword_14304DEB0 & 0xFFFFFFFB;
+				if (*(DWORD *)&graphicsGlobals->__zz0[36] != 1)
+					v22 = graphicsGlobals->dword_14304DEB0 | 4;
+				graphicsGlobals->dword_14304DEB0 = v22;
+			}
+		}
+
+		if (!v7)
+			((void(__fastcall *)())(g_ModuleBase + 0x12F8910))();
+		//sub_1412F8910();
+	}
+}
+
 #include <thread>
 uint8_t *sub_1412E1600;
+/*
 __int64 __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 {
 	if (annotation)
@@ -427,7 +723,7 @@ __int64 __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		annotation->EndEvent();
 	return res;
 }
-
+*/
 uint8_t *sub_1412E1C10;
 __int64 __fastcall hk_sub_1412E1C10(__int64 a1, unsigned int a2, float a3)
 {
@@ -645,14 +941,16 @@ HRESULT WINAPI hk_CreateComputeShader(ID3D11Device *This, const void *pShaderByt
 
 void hook()
 {
+	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
+
 	return;
 	if (hooked)
 		return;
 
 	hooked = true;
 
-	//uintptr_t ptr = *(uintptr_t *)(&tlsGlob[0x10]);
-	uintptr_t ptr = *(uintptr_t *)(g_ModuleBase + 0x304BF00);
+	uintptr_t ptr = *(uintptr_t *)(&BSGraphics_TLSGlob[0x10]);
+	//uintptr_t ptr = *(uintptr_t *)(g_ModuleBase + 0x304BF00);
 	ID3D11Device *dev = *(ID3D11Device **)(ptr + 56);
 	IDXGISwapChain *swap = *(IDXGISwapChain **)(ptr + 96);
 
@@ -675,7 +973,7 @@ void hook()
 
 	//Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF00, (PBYTE)&sub_140D6BF00);
 
-	//*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
+	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1C10, (PBYTE)&hk_sub_1412E1C10);
 
 	//*(PBYTE *)&CreateVertexShader = Detours::X64::DetourClassVTable(*(PBYTE *)dev, &hk_CreateVertexShader, 12);
@@ -820,6 +1118,9 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
     return hr;
 }
 
+void CreateXbyakCodeBlock();
+void CreateXbyakPatches();
+
 void PatchD3D11()
 {
     // Grab the original function pointers
@@ -835,6 +1136,9 @@ void PatchD3D11()
         // Couldn't find one of the exports
         __debugbreak();
     }
+
+	CreateXbyakCodeBlock();
+	CreateXbyakPatches();
 
 	*(PBYTE *)&BuildShaderBundle = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1336140), (PBYTE)&hk_BuildShaderBundle);
 
