@@ -87,7 +87,7 @@ void ApplyPatches()
     SetErrorMode(0);
     SetThreadErrorMode(0, &oldMode);
 
-	InitializeTLSHooks();
+	InitializeTLSMain();
     DoHook();
     LoadModules();
 

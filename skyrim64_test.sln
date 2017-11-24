@@ -1,9 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim64_test", "skyrim64_test\skyrim64_test.vcxproj", "{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6} = {0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim64_tls_mt", "skyrim64_tls_mt\skyrim64_tls_mt.vcxproj", "{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,10 @@ Global
 		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.Debug|x64.Build.0 = Debug|x64
 		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.Release|x64.ActiveCfg = Release|x64
 		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.Release|x64.Build.0 = Release|x64
+		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Debug|x64.ActiveCfg = Debug|x64
+		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Debug|x64.Build.0 = Debug|x64
+		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Release|x64.ActiveCfg = Release|x64
+		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

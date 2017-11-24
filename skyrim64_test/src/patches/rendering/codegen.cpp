@@ -88,8 +88,8 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 #if TLS_DEBUG_ENABLE
 	const uint32_t structMemberOffset = Patch->Offset;
 #else
-	// offsetof(IMAGE_TLS_DIRECTORY->StartAddressOfRawData, tlsGlob) + offsetof(BSGraphicsRendererGlobals, var)
-	const uint32_t structMemberOffset = GetTlsOffset(&BSGraphics_TLSGlob) + Patch->Offset;
+	// offsetof(IMAGE_TLS_DIRECTORY->StartAddressOfRawData, BSGraphicsRendererGlobals) + offsetof(BSGraphicsRendererGlobals, var)
+	const uint32_t structMemberOffset = BSGRAPHICS_TLS_BASE_OFFSET + Patch->Offset;
 #endif
 
 	auto& s = GetFreeScratch(Patch->Register, Patch->Base, Patch->Index);	// Scratch register
