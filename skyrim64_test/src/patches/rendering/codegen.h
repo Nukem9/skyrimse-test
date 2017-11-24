@@ -105,7 +105,9 @@ const PatchEntry XrefGeneratedPatches[] =
 #undef DO_THREADING_PATCH_IMM
 };
 
-static std::unordered_map<uintptr_t, int> XrefGeneratedShufps
+static_assert(std::extent<decltype(XrefGeneratedPatches)>::value == std::extent<decltype(XrefList)>::value, "WARNING: Array sizes differ");
+
+const std::unordered_map<uintptr_t, int> XrefGeneratedShufps
 ({
 #define DO_THREADING_PATCH_REG(TYPE, EXE_OFFSET, REG, OFFSET, MEM_SIZE, B, I, S)
 #define DO_THREADING_PATCH_IMM(TYPE, EXE_OFFSET, IMM, OFFSET, MEM_SIZE, B, I, S)

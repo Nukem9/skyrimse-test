@@ -51,7 +51,8 @@ void CreateXbyakPatches()
 		WriteCodeHook(g_ModuleBase + patch.ExeOffset, codeCache[codeCRC]);
 	}
 
-	fflush(stdout);
+	DWORD old;
+	VirtualProtect((LPVOID)g_CodeRegion, TLS_INSTRUCTION_MEMORY_REGION_SIZE, PAGE_EXECUTE_READ, &old);
 }
 
 void CreateXbyakCodeBlock()
@@ -99,7 +100,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 	if (Patch->Base != ZYDIS_REGISTER_RIP)
 	{
 #if TLS_DEBUG_ENABLE
-		// Sanity check the base, which **must** be the exe base address
+		// Sanity check the base register, which **must** be the exe base address
 		if (Patch->ExeOffset != 0xD6BF68 && Patch->ExeOffset != 0xD6BF4E && Patch->ExeOffset != 0xD6BFD3)
 		{
 			Xbyak::Label label1;
@@ -173,7 +174,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 		case PatchType::MOVAPS_REG_MEM:movaps(xmmReg, memop); break;	// movaps  xmm, [address]
 		case PatchType::MOVAPS_MEM_REG:movaps(memop, xmmReg); break;	// movaps  [address], xmm
 
-		case PatchType::SHUFPS_REG_MEM:shufps(xmmReg, memop, XrefGeneratedShufps[Patch->ExeOffset]); break;	// shufps xmm, [address], imm8
+		case PatchType::SHUFPS_REG_MEM:shufps(xmmReg, memop, XrefGeneratedShufps.at(Patch->ExeOffset)); break;	// shufps xmm, [address], imm8
 
 		case PatchType::MOVSD_REG_MEM:movsd(xmmReg, memop); break;		// movsd  xmm, [address]
 		case PatchType::MOVSD_MEM_REG:movsd(memop, xmmReg); break;		// movsd  [address], xmm
@@ -238,11 +239,12 @@ void PatchCodeGen::SetTlsBase(const Xbyak::Reg64& Register)
 	//
 	// ((BYTE *)TEB->Tls + tlsBaseOffset) which is really TEB->Tls[tls_index]
 	//
-	const uint32_t tlsBaseOffset = _tls_index * sizeof(void *);
+	const uint32_t tlsBaseOffset = g_TlsIndex * sizeof(void *);
 
 	// mov rax, qword ptr GS:[0x58]
 	// mov rax, qword ptr DS:[rax + tlsBaseOffset]
-	putSeg(gs); mov(Register, Xbyak::Address(32, false, 0x58));
+	putSeg(gs);
+	mov(Register, Xbyak::Address(32, false, 0x58));
 	mov(Register, ptr[Register + tlsBaseOffset]);
 #endif
 }
@@ -501,38 +503,38 @@ const Xbyak::Xmm& PatchCodeGen::ZydisToXbyakXmm(ZydisRegister Register)
 {
 	switch (Register)
 	{
-	case ZYDIS_REGISTER_XMM0:return xm0;
-	case ZYDIS_REGISTER_XMM1:return xm1;
-	case ZYDIS_REGISTER_XMM2:return xm2;
-	case ZYDIS_REGISTER_XMM3:return xm3;
-	case ZYDIS_REGISTER_XMM4:return xm4;
-	case ZYDIS_REGISTER_XMM5:return xm5;
-	case ZYDIS_REGISTER_XMM6:return xm6;
-	case ZYDIS_REGISTER_XMM7:return xm7;
-	case ZYDIS_REGISTER_XMM8:return xm8;
-	case ZYDIS_REGISTER_XMM9:return xm9;
-	case ZYDIS_REGISTER_XMM10:return xm10;
-	case ZYDIS_REGISTER_XMM11:return xm11;
-	case ZYDIS_REGISTER_XMM12:return xm12;
-	case ZYDIS_REGISTER_XMM13:return xm13;
-	case ZYDIS_REGISTER_XMM14:return xm14;
-	case ZYDIS_REGISTER_XMM15:return xm15;
-	case ZYDIS_REGISTER_XMM16:return xm16;
-	case ZYDIS_REGISTER_XMM17:return xm17;
-	case ZYDIS_REGISTER_XMM18:return xm18;
-	case ZYDIS_REGISTER_XMM19:return xm19;
-	case ZYDIS_REGISTER_XMM20:return xm20;
-	case ZYDIS_REGISTER_XMM21:return xm21;
-	case ZYDIS_REGISTER_XMM22:return xm22;
-	case ZYDIS_REGISTER_XMM23:return xm23;
-	case ZYDIS_REGISTER_XMM24:return xm24;
-	case ZYDIS_REGISTER_XMM25:return xm25;
-	case ZYDIS_REGISTER_XMM26:return xm26;
-	case ZYDIS_REGISTER_XMM27:return xm27;
-	case ZYDIS_REGISTER_XMM28:return xm28;
-	case ZYDIS_REGISTER_XMM29:return xm29;
-	case ZYDIS_REGISTER_XMM30:return xm30;
-	case ZYDIS_REGISTER_XMM31:return xm31;
+	case ZYDIS_REGISTER_XMM0:return xmm0;
+	case ZYDIS_REGISTER_XMM1:return xmm1;
+	case ZYDIS_REGISTER_XMM2:return xmm2;
+	case ZYDIS_REGISTER_XMM3:return xmm3;
+	case ZYDIS_REGISTER_XMM4:return xmm4;
+	case ZYDIS_REGISTER_XMM5:return xmm5;
+	case ZYDIS_REGISTER_XMM6:return xmm6;
+	case ZYDIS_REGISTER_XMM7:return xmm7;
+	case ZYDIS_REGISTER_XMM8:return xmm8;
+	case ZYDIS_REGISTER_XMM9:return xmm9;
+	case ZYDIS_REGISTER_XMM10:return xmm10;
+	case ZYDIS_REGISTER_XMM11:return xmm11;
+	case ZYDIS_REGISTER_XMM12:return xmm12;
+	case ZYDIS_REGISTER_XMM13:return xmm13;
+	case ZYDIS_REGISTER_XMM14:return xmm14;
+	case ZYDIS_REGISTER_XMM15:return xmm15;
+	case ZYDIS_REGISTER_XMM16:return xmm16;
+	case ZYDIS_REGISTER_XMM17:return xmm17;
+	case ZYDIS_REGISTER_XMM18:return xmm18;
+	case ZYDIS_REGISTER_XMM19:return xmm19;
+	case ZYDIS_REGISTER_XMM20:return xmm20;
+	case ZYDIS_REGISTER_XMM21:return xmm21;
+	case ZYDIS_REGISTER_XMM22:return xmm22;
+	case ZYDIS_REGISTER_XMM23:return xmm23;
+	case ZYDIS_REGISTER_XMM24:return xmm24;
+	case ZYDIS_REGISTER_XMM25:return xmm25;
+	case ZYDIS_REGISTER_XMM26:return xmm26;
+	case ZYDIS_REGISTER_XMM27:return xmm27;
+	case ZYDIS_REGISTER_XMM28:return xmm28;
+	case ZYDIS_REGISTER_XMM29:return xmm29;
+	case ZYDIS_REGISTER_XMM30:return xmm30;
+	case ZYDIS_REGISTER_XMM31:return xmm31;
 	}
 
 	__debugbreak();
@@ -708,7 +710,7 @@ void WriteCodeHook(uintptr_t TargetAddress, void *Code)
 	data[0] = 0xE8;
 	*(uint32_t *)&data[1] = (uint32_t)((uintptr_t)Code - TargetAddress - 5);
 
-	// Pad nops so it shows up nicely in the debugger
+	// Pad with nops so it shows up nicely in the debugger
 	switch (instruction.length - 5)
 	{
 	case 1: data[5] = 0x90; break;
