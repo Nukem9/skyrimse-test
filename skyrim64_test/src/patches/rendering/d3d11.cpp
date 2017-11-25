@@ -1522,7 +1522,6 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 
 	uint32_t v6; // ecx
 	bool v7; // si
-	uint32_t v13; // ecx
 	uint32_t v18; // eax
 	int v20; // eax
 
@@ -1605,7 +1604,7 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5) && *(DWORD *)&graphicsGlobals->__zz0[32] != 3)
 			{
 				*(DWORD *)&graphicsGlobals->__zz0[32] = 3;
-				v13 = graphicsGlobals->dword_14304DEB0 & 0xFFFFFFFB;
+				uint32_t v13 = graphicsGlobals->dword_14304DEB0 & 0xFFFFFFFB;
 				if (*(DWORD *)&graphicsGlobals->__zz0[36] != 3)
 					v13 = graphicsGlobals->dword_14304DEB0 | 4;
 				graphicsGlobals->dword_14304DEB0 = v13;
@@ -1750,7 +1749,7 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 
 		if ((a2 & 0x80u) != 0 && sub_14131F100(*(uint64_t *)(a1 + 304), 0x5C000071u, 0x5C006071u))
 		{
-			int aiTarget = sub_140D744B0();
+			int aiSource = sub_140D744B0();
 
 // 			bAssert(aiSource != aiTarget &&
 // 				aiSource < DEPTH_STENCIL_COUNT &&
@@ -1758,7 +1757,7 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 // 				aiSource != DEPTH_STENCIL_TARGET_NONE &&
 // 				aiTarget != DEPTH_STENCIL_TARGET_NONE);
 
-			graphicsGlobals->m_DeviceContext->CopyResource(*(ID3D11Resource **)(g_ModuleBase + 0x3050870), *((ID3D11Resource **)flt_14304E490 + 19 * v13 + 1015));
+			graphicsGlobals->m_DeviceContext->CopyResource(*(ID3D11Resource **)(g_ModuleBase + 0x3050870), *((ID3D11Resource **)flt_14304E490 + 19 * aiSource + 1015));
 		}
 
 		// RenderWaterStencil
