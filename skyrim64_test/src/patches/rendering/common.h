@@ -40,7 +40,7 @@ struct BSGraphicsRendererGlobals
 	void *qword_14304C1B0[6][40];						// Wtf? (Probably a weird sampler state setup)
 	void *qword_14304C930[2][3][12][2];					// Wtf?
 	void *qword_14304CDB0[7][2][13][2];					// Wtf?
-	ID3D11SamplerState *qword_14304D910[6][5];						// CSSamplers[Option1][Option2]
+	ID3D11SamplerState *qword_14304D910[6][5];			// Samplers[Option1][Option2] (Used for PS and CS)
 
 														//
 														// Vertex/Pixel shader constant buffers. Set during load-time (CreateShaderBundle).
@@ -72,7 +72,7 @@ struct BSGraphicsRendererGlobals
 	uint32_t dword_14304DEB0;							// Flags; probably global technique modifiers
 	uint32_t m_PSResourceModifiedBits;					// Flags
 	uint32_t m_PSSamplerModifiedBits;					// Flags
-	uint32_t m_DSResourceModifiedBits;					// Flags
+	uint32_t m_CSResourceModifiedBits;					// Flags
 	uint32_t m_CSSamplerModifiedBits;					// Flags
 	uint32_t m_CSUAVModifiedBits;						// Flags
 
@@ -92,7 +92,7 @@ struct BSGraphicsRendererGlobals
 	uint32_t m_CSSamplerSetting1[16];
 	uint32_t m_CSSamplerSetting2[16];
 
-	ID3D11ShaderResourceView *m_DSResources[16];
+	ID3D11ShaderResourceView *m_CSResources[16];
 	char __zz1[0x40];
 	ID3D11UnorderedAccessView *m_CSUAVResources[8];
 	char __zz2[0x2A0];
@@ -146,7 +146,7 @@ CHECK_OFFSET(m_FrameDurationStringHandle, 0x14304DEA8);
 CHECK_OFFSET(dword_14304DEB0, 0x14304DEB0);
 CHECK_OFFSET(m_PSResourceModifiedBits, 0x14304DEB4);
 CHECK_OFFSET(m_PSSamplerModifiedBits, 0x14304DEB8);
-CHECK_OFFSET(m_DSResourceModifiedBits, 0x14304DEBC);
+CHECK_OFFSET(m_CSResourceModifiedBits, 0x14304DEBC);
 CHECK_OFFSET(m_CSSamplerModifiedBits, 0x14304DEC0);
 CHECK_OFFSET(m_CSUAVModifiedBits, 0x14304DEC4);
 CHECK_OFFSET(dword_14304DEC8, 0x14304DEC8);
@@ -160,5 +160,5 @@ CHECK_OFFSET(m_PSSamplerSetting2, 0x14304DFAC);
 CHECK_OFFSET(m_PSResources, 0x14304DFF0);
 CHECK_OFFSET(m_CSSamplerSetting1, 0x14304E070);
 CHECK_OFFSET(m_CSSamplerSetting2, 0x14304E0B0);
-CHECK_OFFSET(m_DSResources, 0x14304E0F0);
+CHECK_OFFSET(m_CSResources, 0x14304E0F0);
 CHECK_OFFSET(m_CSUAVResources, 0x14304E1B0);
