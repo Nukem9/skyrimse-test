@@ -1,168 +1,11 @@
-#include "../../common.h"
+#include "common.h"
 #include "../../ui/ui.h"
 #include "../TES/BSShaderManager.h"
 #include "../TES/BSShaderRenderTargets.h"
+#include "../TES/BSSpinLock.h"
+#include "../TES/MemoryContextTracker.h"
 
 // BSGraphicsRenderer
-
-#define CHECK_OFFSET(member, actualAddr) static_assert(offsetof(BSGraphicsRendererGlobals, member) == (actualAddr - 0x14304BEF0), "")
-
-struct BSGraphicsRendererGlobals
-{
-	float			m_Viewport[4];						// CHECK THIS!!
-
-	void *qword_14304BF00;								// Unknown class pointer
-
-	ID3D11Device	*m_Device;
-	HWND			m_Window;
-
-	//
-	// These are pools for efficient data uploads to the GPU. Each frame can use any buffer as long as there
-	// is sufficient space. If there's no space left, delay execution until m_CommandListEndEvents[] says a buffer
-	// is no longer in use.
-	//
-	ID3D11Buffer		*m_DynamicBuffers[3];			// DYNAMIC (VERTEX | INDEX) CPU_ACCESS_WRITE
-	uint32_t			m_CurrentDynamicBufferIndex;
-
-	uint32_t			m_FrameDataUsedSize;			// Use in relation with m_CommandListEndEvents[]
-	ID3D11Buffer		*m_UnknownIndexBuffer;			// DEFAULT INDEX CPU_ACCESS_NONE
-	ID3D11Buffer		*m_UnknownVertexBuffer;			// DEFAULT VERTEX CPU_ACCESS_NONE
-	ID3D11InputLayout	*m_UnknownInputLayout;
-	ID3D11InputLayout	*m_UnknownInputLayout2;
-	uint32_t			m_UnknownCounter;				// 0 to 63
-	uint32_t			m_UnknownCounter2;				// No limits
-	void				*m_UnknownStaticBuffer[64];
-	uint32_t			m_UnknownCounter3;				// 0 to 5
-	bool				m_EventQueryFinished[3];
-	ID3D11Query			*m_CommandListEndEvents[3];		// D3D11_QUERY_EVENT (Waits for a series of commands to finish execution)
-
-	float m_UnknownFloats1[3][4];						// Probably a matrix
-
-	void *qword_14304C1B0[6][40];						// Wtf? (Probably a weird sampler state setup)
-	void *qword_14304C930[2][3][12][2];					// Wtf?
-	void *qword_14304CDB0[7][2][13][2];					// Wtf?
-	void *qword_14304D910[6][5];						// Wtf?
-
-	//
-	// Vertex/Pixel shader constant buffers. Set during load-time (CreateShaderBundle).
-	//
-	uint32_t		m_NextConstantBufferIndex;
-	ID3D11Buffer	*m_ConstantBuffers1[4];				// Sizes: 3840 bytes
-	ID3D11Buffer	*m_TempConstantBuffer1;				// 16 bytes
-	void			*qword_14304DA30;					// CHECK THIS!! It's never assigned a value
-	ID3D11Buffer	*m_ConstantBuffers2[19];			// Sizes: 16, 32, 48, ... 304 bytes
-	void			*qword_14304DAD0;					// CHECK THIS!! It's never assigned a value
-	ID3D11Buffer	*m_ConstantBuffers3[9];				// Sizes: 16, 32, 48, ... 144 bytes
-	void			*qword_14304DB20;					// CHECK THIS!! It's never assigned a value
-	ID3D11Buffer	*m_ConstantBuffers4[27];			// Sizes: 16, 32, 48, ... 432 bytes
-	void			*qword_14304DC00;					// CHECK THIS!! It's never assigned a value
-	ID3D11Buffer	*m_ConstantBuffers5[19];			// Sizes: 16, 32, 48, ... 304 bytes
-	void			*qword_14304DCA0;					// CHECK THIS!! It's never assigned a value
-	ID3D11Buffer	*m_ConstantBuffers6[19];			// Sizes: 16, 32, 48, ... 304 bytes
-	void			*qword_14304DD40;					// CHECK THIS!! It's never assigned a value
-	ID3D11Buffer	*m_ConstantBuffers7[39];			// Sizes: 16, 32, 48, ... 624 bytes
-	ID3D11Buffer	*m_TempConstantBuffer2;				// 576 bytes
-	ID3D11Buffer	*m_TempConstantBuffer3;				// 720 bytes
-	ID3D11Buffer	*m_TempConstantBuffer4;				// 16 bytes
-
-	IDXGIOutput *m_DXGIAdapterOutput;
-	ID3D11DeviceContext *m_DeviceContext;
-
-	void *m_FrameDurationStringHandle;					// "Frame Duration" but stored in their global string pool
-
-	uint32_t dword_14304DEB0;							// Flags; probably global technique modifiers
-	uint32_t m_PSResourceModifiedBits;					// Flags
-	uint32_t m_PSSamplerModifiedBits;					// Flags
-	uint32_t m_DSSamplerModifiedBits;					// Flags
-	uint32_t m_CSSamplerModifiedBits;					// Flags
-	uint32_t m_CSUAVModifiedBits;						// Flags
-
-	uint32_t dword_14304DEC8[8];
-
-	uint32_t rshadowState_iDepthStencil;				// Index
-	uint32_t rshadowState_iDepthStencilSlice;			// Index
-	uint32_t iRenderTargetIndexes[5][2];				// Index[0] = Base target, Index[1] = Slice target
-
-	char __zz0[0x50];
-	float float_14304DF68;								// Possibly something to do with diffuse
-
-	uint32_t m_PSSamplerSetting1[16];
-	uint32_t m_PSSamplerSetting2[16];
-	ID3D11ShaderResourceView *m_PSResources[16];
-
-	uint32_t m_CSSamplerSetting1[16];
-	uint32_t m_CSSamplerSetting2[16];
-
-	ID3D11SamplerState *m_DSSamplers[16];
-	char __zz1[0x40];
-	ID3D11UnorderedAccessView *m_CSUAVResources[8];
-	char __zz2[0x2A0];
-};
-BSGraphicsRendererGlobals *GraphicsGlobals = nullptr;
-
-static_assert(sizeof(BSGraphicsRendererGlobals) == 0x25A0, "");
-CHECK_OFFSET(m_Viewport, 0x14304BEF0);
-CHECK_OFFSET(qword_14304BF00, 0x14304BF00);
-CHECK_OFFSET(m_Device, 0x14304BF08);
-CHECK_OFFSET(m_Window, 0x14304BF10);
-CHECK_OFFSET(m_DynamicBuffers, 0x14304BF18);
-CHECK_OFFSET(m_CurrentDynamicBufferIndex, 0x14304BF30);
-CHECK_OFFSET(m_FrameDataUsedSize, 0x14304BF34);
-CHECK_OFFSET(m_UnknownIndexBuffer, 0x14304BF38);
-CHECK_OFFSET(m_UnknownVertexBuffer, 0x14304BF40);
-CHECK_OFFSET(m_UnknownInputLayout, 0x14304BF48);
-CHECK_OFFSET(m_UnknownInputLayout2, 0x14304BF50);
-CHECK_OFFSET(m_UnknownCounter, 0x14304BF58);
-CHECK_OFFSET(m_UnknownCounter2, 0x14304BF5C);
-CHECK_OFFSET(m_UnknownStaticBuffer, 0x14304BF60);
-CHECK_OFFSET(m_UnknownCounter3, 0x14304C160);
-CHECK_OFFSET(m_EventQueryFinished, 0x14304C164);
-CHECK_OFFSET(m_CommandListEndEvents, 0x14304C168);
-CHECK_OFFSET(m_UnknownFloats1, 0x14304C180);
-CHECK_OFFSET(qword_14304C1B0, 0x14304C1B0);
-CHECK_OFFSET(qword_14304C930, 0x14304C930);
-CHECK_OFFSET(qword_14304CDB0, 0x14304CDB0);
-CHECK_OFFSET(qword_14304D910, 0x14304D910);
-CHECK_OFFSET(m_NextConstantBufferIndex, 0x14304DA00);
-CHECK_OFFSET(m_ConstantBuffers1, 0x14304DA08);
-CHECK_OFFSET(m_TempConstantBuffer1, 0x14304DA28);
-CHECK_OFFSET(qword_14304DA30, 0x14304DA30);
-CHECK_OFFSET(m_ConstantBuffers2, 0x14304DA38);
-CHECK_OFFSET(qword_14304DAD0, 0x14304DAD0);
-CHECK_OFFSET(m_ConstantBuffers3, 0x14304DAD8);
-CHECK_OFFSET(qword_14304DB20, 0x14304DB20);
-CHECK_OFFSET(m_ConstantBuffers4, 0x14304DB28);
-CHECK_OFFSET(qword_14304DC00, 0x14304DC00);
-CHECK_OFFSET(m_ConstantBuffers5, 0x14304DC08);
-CHECK_OFFSET(qword_14304DCA0, 0x14304DCA0);
-CHECK_OFFSET(m_ConstantBuffers6, 0x14304DCA8);
-CHECK_OFFSET(qword_14304DD40, 0x14304DD40);
-CHECK_OFFSET(m_ConstantBuffers7, 0x14304DD48);
-CHECK_OFFSET(m_TempConstantBuffer2, 0x14304DE80);
-CHECK_OFFSET(m_TempConstantBuffer3, 0x14304DE88);
-CHECK_OFFSET(m_TempConstantBuffer4, 0x14304DE90);
-CHECK_OFFSET(m_DXGIAdapterOutput, 0x14304DE98);
-CHECK_OFFSET(m_DeviceContext, 0x14304DEA0);
-CHECK_OFFSET(m_FrameDurationStringHandle, 0x14304DEA8);
-CHECK_OFFSET(dword_14304DEB0, 0x14304DEB0);
-CHECK_OFFSET(m_PSResourceModifiedBits, 0x14304DEB4);
-CHECK_OFFSET(m_PSSamplerModifiedBits, 0x14304DEB8);
-CHECK_OFFSET(m_DSSamplerModifiedBits, 0x14304DEBC);
-CHECK_OFFSET(m_CSSamplerModifiedBits, 0x14304DEC0);
-CHECK_OFFSET(m_CSUAVModifiedBits, 0x14304DEC4);
-CHECK_OFFSET(dword_14304DEC8, 0x14304DEC8);
-CHECK_OFFSET(rshadowState_iDepthStencil, 0x14304DEE8);
-CHECK_OFFSET(rshadowState_iDepthStencilSlice, 0x14304DEEC);
-CHECK_OFFSET(iRenderTargetIndexes, 0x14304DEF0);
-CHECK_OFFSET(__zz0, 0x14304DF18);
-CHECK_OFFSET(float_14304DF68, 0x14304DF68);
-CHECK_OFFSET(m_PSSamplerSetting1, 0x14304DF6C);
-CHECK_OFFSET(m_PSSamplerSetting2, 0x14304DFAC);
-CHECK_OFFSET(m_PSResources, 0x14304DFF0);
-CHECK_OFFSET(m_CSSamplerSetting1, 0x14304E070);
-CHECK_OFFSET(m_CSSamplerSetting2, 0x14304E0B0);
-CHECK_OFFSET(m_DSSamplers, 0x14304E0F0);
-CHECK_OFFSET(m_CSUAVResources, 0x14304E1B0);
 
 IDXGISwapChain *g_SwapChain;
 ID3D11DeviceContext2 *g_DeviceContext;
@@ -201,7 +44,6 @@ int64_t LastFrame;
 int64_t TickSum;
 int64_t TickDeltas[32];
 int TickDeltaIndex;
-
 
 HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval, UINT Flags)
 {
@@ -281,26 +123,70 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_MENUBG]);				// Dirty 99% of the time
 
 		g_DeviceContext->DiscardResource(g_DepthStencilTextures[DEPTH_STENCIL_TARGET_MAIN]);
-		g_DeviceContext->DiscardResource(g_DepthStencilTextures[DEPTH_STENCIL_TARGET_SHADOWMAPS_ESRAM]);// Uses 2 4096x4096 slices and both are overwritten. Note: They clear both
+		//g_DeviceContext->DiscardResource(g_DepthStencilTextures[DEPTH_STENCIL_TARGET_SHADOWMAPS_ESRAM]);// Uses 2 4096x4096 slices and both are overwritten. Note: They clear both
 																										// slices SEPARATELY (i.e clear s0, render s0, clear s1, render s1) which
 																										// may cause dependency issues on slice 1. I hope this fixes it.
 
 		const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		g_DeviceContext->ClearRenderTargetView(g_RenderTargets[RENDER_TARGET_RAW_WATER], black);
-		g_DeviceContext->ClearRenderTargetView(g_RenderTargets[RENDER_TARGET_MENUBG], black);		// Fixes flickering in the system menu, but background screen is black
+		//g_DeviceContext->ClearRenderTargetView(g_RenderTargets[RENDER_TARGET_RAW_WATER], black);
+		//g_DeviceContext->ClearRenderTargetView(g_RenderTargets[RENDER_TARGET_MENUBG], black);		// Fixes flickering in the system menu, but background screen is black
 	}
 	annotation->EndEvent();
 
 	return hr;
 }
 
+extern thread_local bool m_TestBuffer;
+bool test = false;
+ID3D11Buffer *testbuffer;
+
 void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 {
-//	GraphicsGlobals = (BSGraphicsRendererGlobals *)tlsGlob;
+	auto globals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
-	uint32_t frameDataOffset = GraphicsGlobals->m_FrameDataUsedSize;
-	uint32_t frameBufferIndex = GraphicsGlobals->m_CurrentDynamicBufferIndex;
-	uint32_t newFrameDataSzie = GraphicsGlobals->m_FrameDataUsedSize + AllocationSize;
+	uint32_t frameDataOffset = globals->m_FrameDataUsedSize;
+	uint32_t frameBufferIndex = globals->m_CurrentDynamicBufferIndex;
+	uint32_t newFrameDataSzie = globals->m_FrameDataUsedSize + AllocationSize;
+
+	if (true)
+	{
+		if (!test)
+		{
+			test = true;
+
+			D3D11_BUFFER_DESC desc;
+			desc.ByteWidth = 100 * 1024;
+			desc.Usage = D3D11_USAGE_DYNAMIC;
+			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			desc.MiscFlags = 0;
+			desc.StructureByteStride = 0;
+
+			if (FAILED(globals->m_Device->CreateBuffer(&desc, nullptr, &testbuffer)))
+				__debugbreak();
+		}
+
+		if (AllocationSize > 100 * 1024)
+			__debugbreak();
+
+		D3D11_MAPPED_SUBRESOURCE mapping;
+		if (FAILED(globals->m_DeviceContext->Map(testbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping)))
+			__debugbreak();
+
+		globals->m_DynamicBuffers[0] = testbuffer;
+		globals->m_CurrentDynamicBufferIndex = 0;
+		*AllocationOffset = 0;
+		globals->m_FrameDataUsedSize = AllocationSize;
+
+		// Invalidate the others for sanity checking
+		globals->m_DynamicBuffers[1] = (ID3D11Buffer *)0x101010101;
+		globals->m_DynamicBuffers[2] = (ID3D11Buffer *)0x101010101;
+		globals->m_CommandListEndEvents[0] = (ID3D11Query *)0x101010101;
+		globals->m_CommandListEndEvents[1] = (ID3D11Query *)0x101010101;
+		globals->m_CommandListEndEvents[2] = (ID3D11Query *)0x101010101;
+
+		return mapping.pData;
+	}
 
 	//
 	// Check if this request would exceed the allocated buffer size for the currently executing command list. If it does,
@@ -311,8 +197,8 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 		newFrameDataSzie = AllocationSize;
 		frameDataOffset = 0;
 
-		GraphicsGlobals->m_EventQueryFinished[GraphicsGlobals->m_CurrentDynamicBufferIndex] = false;
-		g_DeviceContext->End(GraphicsGlobals->m_CommandListEndEvents[GraphicsGlobals->m_CurrentDynamicBufferIndex]);
+		globals->m_EventQueryFinished[globals->m_CurrentDynamicBufferIndex] = false;
+		globals->m_DeviceContext->End(globals->m_CommandListEndEvents[globals->m_CurrentDynamicBufferIndex]);
 
 		frameBufferIndex++;
 
@@ -321,46 +207,1324 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 	}
 	
 	//
-	// This will **suspend execution** until the buffer we want is no longer in use. The query encapsulates a list of commands
+	// This will **suspend execution** until the buffer we want is no longer in use. The query waits on a list of commands
 	// using said buffer.
 	//
-	if (!GraphicsGlobals->m_EventQueryFinished[frameBufferIndex])
+	if (!globals->m_EventQueryFinished[frameBufferIndex])
 	{
-		ID3D11Query *query = GraphicsGlobals->m_CommandListEndEvents[frameBufferIndex];
+		ID3D11Query *query = globals->m_CommandListEndEvents[frameBufferIndex];
 		BOOL data;
 
-		HRESULT hr = g_DeviceContext->GetData(query, &data, sizeof(data), 0);
+		HRESULT hr = globals->m_DeviceContext->GetData(query, &data, sizeof(data), 0);
 
-		for (; FAILED(hr) || data == FALSE; hr = g_DeviceContext->GetData(query, &data, sizeof(data), D3D11_ASYNC_GETDATA_DONOTFLUSH))
+		for (; FAILED(hr) || data == FALSE; hr = globals->m_DeviceContext->GetData(query, &data, sizeof(data), D3D11_ASYNC_GETDATA_DONOTFLUSH))
 			Sleep(1);
 
-		GraphicsGlobals->m_EventQueryFinished[frameBufferIndex] = (data == TRUE);
+		globals->m_EventQueryFinished[frameBufferIndex] = (data == TRUE);
 	}
 	
 	D3D11_MAPPED_SUBRESOURCE resource;
-	if (FAILED(g_DeviceContext->Map(GraphicsGlobals->m_DynamicBuffers[frameBufferIndex], 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &resource)))
-	{
-		//TLS_DeviceContext->Map(GraphicsGlobals->m_DynamicBuffers[frameBufferIndex], 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-		//*AllocationOffset = 0;
-		//frameDataOffset = 0;
-	}
+	globals->m_DeviceContext->Map(globals->m_DynamicBuffers[frameBufferIndex], 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &resource);
 
-	GraphicsGlobals->m_CurrentDynamicBufferIndex = frameBufferIndex;
+	globals->m_CurrentDynamicBufferIndex = frameBufferIndex;
 	*AllocationOffset = frameDataOffset;
-	GraphicsGlobals->m_FrameDataUsedSize = newFrameDataSzie;
+	globals->m_FrameDataUsedSize = newFrameDataSzie;
 
 	return (void *)((uintptr_t)resource.pData + frameDataOffset);
 }
 
-extern thread_local char BSGraphics_TLSGlob[0x4000];
-
-void DC_Init();
 void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int));
 void DC_WaitDeferred();
 
+AutoPtr<uint64_t, 0x31F5490> qword_1431F5490;
+
+AutoPtr<uint64_t, 0x32A8218> qword_1432A8218;
+AutoPtr<uint32_t, 0x32A8214> dword_1432A8214;
+AutoPtr<uint64_t, 0x34B5220> qword_1434B5220;
+
+AutoPtr<BYTE, 0x31F54CD> byte_1431F54CD;
+
+AutoPtr<DWORD, 0x1E32FDC> dword_141E32FDC;
+
+bool sub_14131E8F0(__int64 a1, unsigned int a2, signed int *a3);
+void sub_14131F910(__int64 a1, __int64 a2);
+bool sub_14131E7B0(__int64 a1, DWORD *a2, signed int *a3, __int64 *a4);
+void sub_14131D6E0(__int64 a1);
+__int64 sub_141320350(__int64 a1, __int64 a2);
+__int64 sub_1413203B0(__int64 a1, __int64 a2);
+unsigned __int64 *sub_141320370(__int64 a1, unsigned __int64 *a2);
+signed __int64 *sub_1413203D0(__int64 a1, signed __int64 *a2);
+__int64 sub_14131ED70(uint64_t *a1, unsigned int a2, unsigned __int8 a3, unsigned int a4);
+
+void operator_delete(__int64 a1, __int64 a2)
+{
+	((void(__fastcall *)(void *))(g_ModuleBase + 0x01026F0))((void *)a1);
+}
+
+void sub_1401C49C0(__int64 a1, __int64(__fastcall *a2)(uint64_t, __int64), __int64 a3)
+{
+	__int64 v3; // r9
+	__int64(__fastcall *v4)(uint64_t, __int64); // r8
+	__int64 v5; // rbx
+	__int64 v6; // rax
+	__int64 v7; // rsi
+	__int64 v8; // rdi
+	__int64(__fastcall *v9)(uint64_t, __int64); // [rsp+58h] [rbp+10h]
+	__int64 v10; // [rsp+60h] [rbp+18h]
+
+	v10 = a3;
+	v9 = a2;
+	v3 = a3;
+	v4 = a2;
+	v5 = a1;
+	if (*(uint64_t *)(a1 + 8))
+	{
+		while (1)
+		{
+			v6 = *(uint64_t *)(v5 + 8);
+			v7 = *(uint64_t *)(v6 + 8);
+			*(uint64_t *)(v6 + 8) = 0i64;
+			if (v4)
+				break;
+			v8 = *(uint64_t *)(v5 + 8);
+			if (v8)
+			{
+				sub_1401C49C0(*(uint64_t *)(v5 + 8), 0i64, 0i64);
+				operator_delete(v8, 16i64);
+				goto LABEL_6;
+			}
+		LABEL_7:
+			*(uint64_t *)(v5 + 8) = v7;
+			if (!v7)
+			{
+				*(DWORD *)v5 = 0;
+				return;
+			}
+		}
+		v4(*(uint64_t *)(v5 + 8), v3);
+	LABEL_6:
+		v3 = v10;
+		v4 = v9;
+		goto LABEL_7;
+	}
+	*(DWORD *)a1 = 0;
+}
+
+void sub_1412ACFE0(__int64 a1)
+{
+	qword_1431F5490 = a1;
+}
+
+void sub_14131CAE0(uint64_t *a1)
+{
+	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
+
+	a1[1] = 0i64;
+	a1[2] = 0i64;
+
+	if (*a1)
+		sub_14131D6E0(*a1);
+
+	*((WORD *)a1 + 18) = 0;
+}
+
+void sub_14131D6E0(__int64 a1)
+{
+	__int64 v1; // rbp
+	unsigned int v4; // er15
+	unsigned __int64 *v5; // rax
+	unsigned __int64 v6; // rdi
+	unsigned __int64 v7; // r14
+	__int64 v8; // rdx
+	signed __int64 v9; // rcx
+	__int64 v10; // rax
+	__int64 v11; // rsi
+	__int64 v12; // rdi
+	__int64 v13[2]; // [rsp+28h] [rbp-50h]
+	char v14[16]; // [rsp+38h] [rbp-40h]
+
+	v1 = a1;
+
+	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
+
+	v4 = 0;
+	v5 = (unsigned __int64 *)sub_141320350(a1 + 32, (__int64)&v13); // BSTScatterTable::begin()
+	v6 = *v5;
+	v7 = v5[1];
+	v8 = *(uint64_t *)sub_1413203B0(v1 + 32, (__int64)&v14);// BSTScatterTable::end()
+	while (v6 != v8)
+	{
+		// This code uses both BSTScatterTable and BSTArray
+		// Also an inlined function. "Pass still has passes"
+		if (v6)
+			v4 = *(DWORD *)(v6 + 4);
+		v9 = *(uint64_t *)(v1 + 8) + 48i64 * v4;
+		*(uint64_t *)v9 = 0i64;
+		*(uint64_t *)(v9 + 8) = 0i64;
+		*(uint64_t *)(v9 + 16) = 0i64;
+		*(uint64_t *)(v9 + 24) = 0i64;
+		*(uint64_t *)(v9 + 32) = 0i64;
+		*(DWORD *)(v9 + 40) = 0;
+		do
+			v6 += 16i64;
+		while (v6 < v7 && !*(uint64_t *)(v6 + 8));
+	}
+
+	// This entire block is some inlined function
+	if (*(uint64_t *)(v1 + 96))
+	{
+		do
+		{
+			v10 = *(uint64_t *)(v1 + 96);
+			v11 = *(uint64_t *)(v10 + 8);
+			*(uint64_t *)(v10 + 8) = 0i64;
+			if (true /*sub_14131F910*/)
+			{
+				sub_14131F910(*(uint64_t *)(v1 + 96), g_ModuleBase + 0x34B5230);
+			}
+			else
+			{
+				v12 = *(uint64_t *)(v1 + 96);
+				if (v12)
+				{
+					sub_1401C49C0(*(uint64_t *)(v1 + 96), 0i64, 0i64);
+					operator_delete(v12, 16i64);
+				}
+			}
+			*(uint64_t *)(v1 + 96) = v11;
+		} while (v11);
+	}
+
+	*(DWORD *)(v1 + 88) = 0;
+}
+
+char sub_14131E700(__int64 a1, DWORD *a2, __int64 a3, __int64 a4)
+{
+	int v4; // er10
+	unsigned int v5; // er11
+	__int64 v6; // rbp
+	__int64 v7; // rdi
+	DWORD *v8; // rsi
+	__int64 v9; // rbx
+	__int64 v10; // rdx
+	signed __int64 v11; // rax
+
+	v4 = *a2;
+	v5 = 0;
+	v6 = a4;
+	v7 = a3;
+	v8 = a2;
+	v9 = a1;
+	if (!*a2)
+		return sub_14131E7B0(a1, a2, (signed int *)a3, (__int64 *)a4);
+	v10 = *(uint64_t *)(a1 + 72);
+	if (v10)
+	{
+		v11 = v10 + 16i64 * (v4 & (unsigned int)(*(DWORD *)(a1 + 44) - 1));
+		if (*(uint64_t *)(v11 + 8))
+		{
+			while (*(DWORD *)v11 != v4)
+			{
+				v11 = *(uint64_t *)(v11 + 8);
+				if (v11 == *(uint64_t *)(a1 + 56))
+					goto LABEL_8;
+			}
+			v5 = *(DWORD *)(v11 + 4);
+		}
+	}
+
+LABEL_8:
+	if (!sub_14131E8F0(a1, v5, (signed int *)a3))
+	{
+		a4 = v6;
+		a3 = v7;
+		a2 = v8;
+		a1 = v9;
+		return sub_14131E7B0(a1, a2, (signed int *)a3, (__int64 *)a4);
+	}
+	return 1;
+}
+
+bool sub_14131E7B0(__int64 a1, DWORD *a2, signed int *a3, __int64 *a4)
+{
+	signed int *v4; // r14
+	DWORD *v5; // rsi
+	__int64 v6; // rbx
+	__int64 v7; // rax
+	unsigned int v8; // ecx
+	unsigned int v9; // ebp
+	__int64 v10; // rdi
+	__int64 v11; // r8
+	signed __int64 v12; // rcx
+	bool i; // zf
+
+	v4 = a3;
+	v5 = a2;
+	v6 = a1;
+	v7 = *a4;
+	if (!*a4 || !*(uint64_t *)(v7 + 8) && !*(DWORD *)v7)
+		return 0;
+	v8 = *(DWORD *)v7;
+	for (*a2 = *(DWORD *)v7; v8 < *(DWORD *)(v6 + 80); *a2 = *(DWORD *)v7)
+	{
+		v7 = *(uint64_t *)(v7 + 8);
+		if (!v7)
+			return 0;
+		v8 = *(DWORD *)v7;
+	}
+	if (v8 > *(DWORD *)(v6 + 84))
+		return 0;
+	v9 = 0;
+	if (*(BYTE *)(v6 + 108))
+	{
+		v10 = *(uint64_t *)(v6 + 96);
+		if (v10)
+		{
+			*(uint64_t *)(v6 + 96) = *(uint64_t *)(v10 + 8);
+			*(DWORD *)(v6 + 88) = *(DWORD *)v10;
+			*(uint64_t *)(v10 + 8) = 0i64;
+			if (true /*sub_14131F910*/)
+			{
+				sub_14131F910(v10, g_ModuleBase + 0x34B5230);
+			}
+			else
+			{
+				sub_1401C49C0(v10, 0i64, 0i64);
+				operator_delete(v10, 16i64);
+			}
+		}
+		else
+		{
+			*(DWORD *)(v6 + 88) = 0;
+		}
+	}
+	else
+	{
+		*a4 = *(uint64_t *)(*a4 + 8);
+	}
+	v11 = *(uint64_t *)(v6 + 72);
+	if (v11)
+	{
+		// BSTScatterTable
+		v12 = v11 + 16i64 * (*v5 & (unsigned int)(*(DWORD *)(v6 + 44) - 1));
+		for (i = *(uint64_t *)(v12 + 8) == 0i64; !i; i = v12 == *(uint64_t *)(v6 + 56))
+		{
+			if (*(DWORD *)v12 == *v5)
+			{
+				v9 = *(DWORD *)(v12 + 4);
+				return sub_14131E8F0(v6, v9, v4);
+			}
+			v12 = *(uint64_t *)(v12 + 8);
+		}
+	}
+	return sub_14131E8F0(v6, v9, v4);
+}
+
+bool sub_14131E8F0(__int64 a1, unsigned int a2, signed int *a3)
+{
+	signed int *v3; // r9
+	signed int v4; // eax
+	bool v5; // zf
+	signed __int64 v6; // r8
+
+	v3 = a3;
+	if ((unsigned int)*a3 > 4)
+		*a3 = 0;
+	v4 = *a3;
+	v5 = *a3 == 5;
+	if (*a3 < 5)
+	{
+		v6 = *a3;
+		do
+		{
+			// BSTArray
+			if (*(uint64_t *)(*(uint64_t *)(a1 + 8) + 8 * (6i64 * a2 + v6)))
+			{
+				*v3 = v4;
+				v4 = 5;
+				v6 = 5i64;
+			}
+			++v4;
+			++v6;
+			v5 = v4 == 5;
+		} while (v4 < 5);
+	}
+	if (v5)
+		*v3 = 0;
+	return v4 == 6;
+}
+
+#define LODWORD(x) (*(DWORD *)(&x))
+
+char sub_14131E960(__int64 a1, unsigned int *a2, unsigned int *a3, __int64 a4, unsigned int a5)
+{
+	__int64 v6; // r11
+	unsigned int v7; // ebx
+	unsigned int *v8; // r15
+	unsigned int *v9; // r13
+	__int64 v10; // rsi
+	signed __int64 v11; // r9
+	unsigned __int8 v12; // di
+	signed int v13; // eax
+	bool v14; // r10
+	bool v15; // zf
+	__int64 v16; // r8
+	char v17; // cl
+	signed __int64 v18; // r9
+	__int64 v19; // r14
+	uint64_t *v20; // rbx
+	__int64 v21; // rcx
+	signed __int64 v22; // rdx
+	__int64 v24; // [rsp+68h] [rbp+20h]
+
+	auto& GraphicsGlobals = *(BSGraphicsRendererGlobals *)GetThreadedGlobals();
+
+	v24 = a4;
+	v6 = *(uint64_t *)(a1 + 72);
+	v7 = 0;
+	v8 = a3;
+	v9 = a2;
+	v10 = a1;
+
+	// BSTScatterTree
+	if (v6)
+	{
+		v11 = v6 + 16i64 * (*a2 & (*(DWORD *)(a1 + 44) - 1));
+		if (*(uint64_t *)(v11 + 8))
+		{
+			while (*(DWORD *)v11 != *a2)
+			{
+				v11 = *(uint64_t *)(v11 + 8);
+				if (v11 == *(uint64_t *)(a1 + 56))
+					goto LABEL_7;
+			}
+			v7 = *(DWORD *)(v11 + 4);
+		}
+	}
+LABEL_7:
+	v12 = 0;
+	v13 = *(DWORD *)&GraphicsGlobals.__zz0[52];
+	v14 = (a5 & 0x108) != 0;
+	v15 = *a3 == 0;
+	v16 = GraphicsGlobals.dword_14304DEB0;
+	if (v15)
+	{
+		if (!v14 && *(DWORD *)&GraphicsGlobals.__zz0[52] != 1)
+		{
+			v13 = 1;
+			v16 = GraphicsGlobals.dword_14304DEB0 | 0x20;
+			*(DWORD *)&GraphicsGlobals.__zz0[52] = 1;
+			GraphicsGlobals.dword_14304DEB0 |= 0x20u;
+		}
+		v17 = GraphicsGlobals.__zz0[76];
+		if (GraphicsGlobals.__zz0[76])
+		{
+			v17 = 0;
+			LODWORD(v16) = v16 | 0x100;
+			GraphicsGlobals.__zz0[76] = 0;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+		v18 = *(unsigned int *)&GraphicsGlobals.__zz0[68];
+		if (*(DWORD *)&GraphicsGlobals.__zz0[68])
+		{
+			v18 = 0i64;
+			LODWORD(v16) = v16 | 0x80;
+			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+	}
+	else
+	{
+		v17 = GraphicsGlobals.__zz0[76];
+		v18 = *(unsigned int *)&GraphicsGlobals.__zz0[68];
+	}
+	if (*v8 == 2)
+	{
+		if (!v14 && v13)
+		{
+			v13 = 0;
+			v16 = (unsigned int)v16 | 0x20;
+			*(DWORD *)&GraphicsGlobals.__zz0[52] = 0;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+		if (v17)
+		{
+			v17 = 0;
+			LODWORD(v16) = v16 | 0x100;
+			GraphicsGlobals.__zz0[76] = 0;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+		if ((DWORD)v18)
+		{
+			v18 = 0i64;
+			LODWORD(v16) = v16 | 0x80;
+			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+	}
+	if (*v8 == 3)
+	{
+		if (!v14 && v13)
+		{
+			v13 = 0;
+			v16 = (unsigned int)v16 | 0x20;
+			*(DWORD *)&GraphicsGlobals.__zz0[52] = 0;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+		if (v17 != 1)
+		{
+			v17 = 1;
+			LODWORD(v16) = v16 | 0x100;
+			GraphicsGlobals.__zz0[76] = 1;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+		v12 = 1;
+		if (byte_1431F54CD && (DWORD)v18 != 1)
+		{
+			LODWORD(v16) = v16 | 0x80;
+			*(DWORD *)&GraphicsGlobals.__zz0[68] = 1;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+			v18 = 1i64;
+		}
+	}
+	if (*v8 == 1)
+	{
+		if (!v14 && v13 != 1)
+		{
+			v13 = 1;
+			v16 = (unsigned int)v16 | 0x20;
+			*(DWORD *)&GraphicsGlobals.__zz0[52] = 1;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+		if (v17 != 1)
+		{
+			v17 = 1;
+			LODWORD(v16) = v16 | 0x100;
+			GraphicsGlobals.__zz0[76] = 1;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+		v12 = 1;
+		if (byte_1431F54CD && (DWORD)v18 != 1)
+		{
+			LODWORD(v16) = v16 | 0x80;
+			*(DWORD *)&GraphicsGlobals.__zz0[68] = 1;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+			v18 = 1i64;
+		}
+	}
+	if (*v8 == 4)
+	{
+		if (!v14 && v13 != 1)
+		{
+			v16 = (unsigned int)v16 | 0x20;
+			*(DWORD *)&GraphicsGlobals.__zz0[52] = 1;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+		if (v17 != 1)
+		{
+			LODWORD(v16) = v16 | 0x100;
+			GraphicsGlobals.__zz0[76] = 1;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+		v12 = 1;
+		if ((DWORD)v18)
+		{
+			v18 = 0i64;
+			LODWORD(v16) = v16 | 0x80;
+			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
+			GraphicsGlobals.dword_14304DEB0 = v16;
+		}
+	}
+	v19 = v7;
+	v20 = *(uint64_t **)(*(uint64_t *)(v10 + 8) + 8 * ((signed int)*v8 + 6i64 * v7));
+	if (v20)
+	{
+		do
+		{
+			sub_14131ED70(v20, *v9, v12, a5);
+			v20 = (uint64_t *)v20[6];
+		} while (v20);
+		v18 = *(unsigned int *)&GraphicsGlobals.__zz0[68];
+		v16 = GraphicsGlobals.dword_14304DEB0;
+	}
+	if (*(BYTE *)(v10 + 108))
+	{
+		v21 = *v8;
+		v22 = *(uint64_t *)(v10 + 8) + 48 * v19;
+		*(DWORD *)(v22 + 40) &= ~(1 << v21);
+		*(uint64_t *)(v22 + 8 * v21) = 0i64;
+		v18 = *(unsigned int *)&GraphicsGlobals.__zz0[68];
+		v16 = GraphicsGlobals.dword_14304DEB0;
+	}
+	if (qword_1432A8218)
+	{
+		(*(void(__fastcall **)(__int64, uint64_t, __int64, signed __int64))(*(uint64_t *)qword_1432A8218.get() + 24i64))(
+			qword_1432A8218,
+			(unsigned int)dword_1432A8214,
+			v16,
+			v18);
+		LODWORD(v18) = *(DWORD *)&GraphicsGlobals.__zz0[68];
+		LODWORD(v16) = GraphicsGlobals.dword_14304DEB0;
+	}
+	qword_1432A8218 = 0i64;
+	dword_1432A8214 = 0;
+	qword_1434B5220 = 0i64;
+	if ((DWORD)v18)
+	{
+		*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
+		GraphicsGlobals.dword_14304DEB0 = v16 | 0x80;
+	}
+	++*v8;
+	return sub_14131E700(v10, (DWORD *)v9, (__int64)v8, v24);
+}
+
+char sub_14131ECE0(__int64 a1, DWORD *a2, __int64 a3, __int64 a4)
+{
+	__int64 v4; // r11
+	__int64 v5; // r10
+	unsigned int v6; // ebx
+	signed __int64 v7; // rax
+	signed __int64 v8; // rcx
+
+	v4 = *(uint64_t *)(a1 + 72);
+	v5 = a1;
+	v6 = 0;
+	if (v4)
+	{
+		// BSTScatterTable
+		v7 = v4 + 16i64 * (*a2 & (unsigned int)(*(DWORD *)(a1 + 44) - 1));
+		if (*(uint64_t *)(v7 + 8))
+		{
+			while (*(DWORD *)v7 != *a2)
+			{
+				v7 = *(uint64_t *)(v7 + 8);
+				if (v7 == *(uint64_t *)(a1 + 56))
+					goto LABEL_7;
+			}
+			v6 = *(DWORD *)(v7 + 4);
+		}
+	}
+LABEL_7:
+	if (*(BYTE *)(a1 + 108))
+	{
+		v8 = *(uint64_t *)(a1 + 8) + 48i64 * v6;
+		*(uint64_t *)v8 = 0i64;
+		*(uint64_t *)(v8 + 8) = 0i64;
+		*(uint64_t *)(v8 + 16) = 0i64;
+		*(uint64_t *)(v8 + 24) = 0i64;
+		*(uint64_t *)(v8 + 32) = 0i64;
+		*(DWORD *)(v8 + 40) = 0;
+	}
+	return sub_14131E700(v5, a2, a3, a4);
+}
+
+__int64 sub_14131ED70(uint64_t *a1, unsigned int a2, unsigned __int8 a3, unsigned int a4)
+{
+	unsigned int v5; // ebp
+	__int64 v6; // r14
+	unsigned __int8 v7; // r15
+	__int64 v8; // rsi
+	uint64_t *v9; // rbx
+	__int64 result; // rax
+	__int64 v11; // rdi
+	bool v12; // zf
+
+	auto sub_14131EFF0 = (__int64(__fastcall *)(unsigned int a1, __int64 a2))(g_ModuleBase + 0x131EFF0);
+	auto sub_14131F450 = (__int64(__fastcall *)(__int64 *a1, __int64 a2, unsigned int a3))(g_ModuleBase + 0x131F450);
+	auto sub_14131F1F0 = (__int64(__fastcall *)(__int64 *a1, char a2, unsigned int a3))(g_ModuleBase + 0x131F1F0);
+	auto sub_14131F2A0 = (__int64(__fastcall *)(__int64 a1, unsigned __int8 a2, unsigned int a3))(g_ModuleBase + 0x131F2A0);
+
+	v5 = a4;
+	v6 = *a1;
+	v7 = a3;
+	v8 = a1[2];
+	v9 = a1;
+	if (dword_1432A8214 == a2 && a2 != 0x5C006076 && v6 == qword_1432A8218
+		|| (dword_141E32FDC = a2, result = sub_14131EFF0(a2, v6), (BYTE)result))
+	{
+		v11 = v9[1];
+		if (v11)
+			v11 = *(uint64_t *)(v11 + 120);
+		if (v11 != qword_1434B5220)
+		{
+			if (v11)
+				(*(void(__fastcall **)(__int64, __int64))(*(uint64_t *)v6 + 32i64))(v6, v11);
+			qword_1434B5220 = v11;
+		}
+		v12 = *(uint64_t *)(v8 + 304) == 0i64;
+		*(BYTE *)(v8 + 264) = *((BYTE *)v9 + 30);
+		if (v12)
+		{
+			if (*(BYTE *)(v8 + 265) & 8)
+				result = sub_14131F450((__int64 *)v9, v7, v5);
+			else
+				result = sub_14131F1F0((__int64 *)v9, v7, v5);
+		}
+		else
+		{
+			result = sub_14131F2A0((__int64)v9, v7, v5);
+		}
+	}
+	return result;
+}
+
+void sub_14131F090()
+{
+	if (qword_1432A8218)
+		(*(void(__fastcall **)(__int64, uint64_t))(*(uint64_t *)qword_1432A8218.get() + 24i64))(
+			qword_1432A8218,
+			(unsigned int)dword_1432A8214);
+
+	qword_1432A8218 = 0i64;
+	dword_1432A8214 = 0;
+	qword_1434B5220 = 0i64;
+}
+
+void sub_14131F910(__int64 a1, __int64 a2)
+{
+	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
+
+	if (a2)
+	{
+		BSSpinLock& lock = *(BSSpinLock *)(a2 + 8);
+
+		lock.Acquire();
+		*(uint64_t *)(a1 + 8) = *(uint64_t *)a2;
+		*(uint64_t *)a2 = a1;
+		lock.Release();
+	}
+	else if (a1)
+	{
+		sub_1401C49C0(a1, 0i64, 0i64);
+		operator_delete(a1, (unsigned int)(a2 + 16));
+	}
+}
+
+void sub_14131F9F0(__int64 *a1, unsigned int a2, __int64 a3)
+{
+	unsigned int v4; // ebp
+	__int64 *v5; // rdi
+	__int64 result; // rax
+	__int64 v7; // rbx
+	unsigned int v8; // edx
+	__int64 v9; // rcx
+	bool v10; // r8
+
+	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+
+	v4 = a2;
+	v5 = a1;
+	if (*a1)
+	{
+		if (qword_1432A8218)
+			result = (*(__int64(__fastcall **)(__int64, uint64_t, __int64))(*(uint64_t *)qword_1432A8218.get() + 24i64))(
+				qword_1432A8218,
+				(unsigned int)dword_1432A8214,
+				a3);
+		qword_1432A8218 = 0i64;
+		dword_1432A8214 = 0;
+		qword_1434B5220 = 0i64;
+		v7 = *v5;
+		if (*v5)
+		{
+			while (1)
+			{
+				v8 = *(DWORD *)(v7 + 24);
+				if (*(uint64_t *)(v7 + 16))
+					break;
+			LABEL_18:
+				v7 = *(uint64_t *)(v7 + 48);
+				if (!v7)
+					goto LABEL_19;
+			}
+			if ((v4 & 0x108) == 0)
+			{
+				if (*(uint64_t *)(*(uint64_t *)(v7 + 8) + 56i64) & 0x1000000000i64)
+				{
+					if (!*(DWORD *)&GraphicsGlobals->__zz0[52])
+						goto LABEL_13;
+					*(DWORD *)&GraphicsGlobals->__zz0[52] = 0;
+				}
+				else
+				{
+					if (*(DWORD *)&GraphicsGlobals->__zz0[52] == 1)
+						goto LABEL_13;
+					*(DWORD *)&GraphicsGlobals->__zz0[52] = 1;
+				}
+				GraphicsGlobals->dword_14304DEB0 |= 0x20u;
+			}
+		LABEL_13:
+			v9 = *(uint64_t *)(*(uint64_t *)(v7 + 16) + 288i64);
+			v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
+			result = sub_14131ED70((uint64_t *)v7, v8, v10, v4);
+			goto LABEL_18;
+		}
+	LABEL_19:
+		if (!(v4 & 0x108) && *(DWORD *)&GraphicsGlobals->__zz0[52] != 1)
+		{
+			GraphicsGlobals->dword_14304DEB0 |= 0x20u;
+			*(DWORD *)&GraphicsGlobals->__zz0[52] = 1;
+		}
+		*v5 = 0i64;
+		v5[1] = 0i64;
+		if (qword_1432A8218)
+			result = (*(__int64(__fastcall **)(__int64, uint64_t, __int64))(*(uint64_t *)qword_1432A8218.get() + 24i64))(
+				qword_1432A8218,
+				(unsigned int)dword_1432A8214,
+				a3);
+		qword_1432A8218 = 0i64;
+		dword_1432A8214 = 0;
+		qword_1434B5220 = 0i64;
+	}
+}
+
+__int64 sub_141320350(__int64 a1, __int64 a2)
+{
+	__int64 v2; // rbx
+
+	v2 = a2;
+	sub_141320370(a1 + 8, (unsigned __int64 *)a2);
+	return v2;
+}
+
+unsigned __int64 *sub_141320370(__int64 a1, unsigned __int64 *a2)
+{
+	__int64 v2; // r9
+	unsigned __int64 v3; // rax
+	unsigned __int64 v4; // r8
+	unsigned __int64 *result; // rax
+
+	v2 = *(uint64_t *)(a1 + 32);
+	v3 = 0i64;
+	v4 = 0i64;
+	if (v2)
+	{
+		v3 = *(uint64_t *)(a1 + 32);
+		v4 = v2 + 16i64 * *(unsigned int *)(a1 + 4);
+		while (v3 < v4 && !*(uint64_t *)(v3 + 8))
+			v3 += 16i64;
+	}
+	*a2 = v3;
+	result = a2;
+	a2[1] = v4;
+	return result;
+}
+
+__int64 sub_1413203B0(__int64 a1, __int64 a2)
+{
+	__int64 v2; // rbx
+
+	v2 = a2;
+	sub_1413203D0(a1 + 8, (signed __int64 *)a2);
+	return v2;
+}
+
+signed __int64 *sub_1413203D0(__int64 a1, signed __int64 *a2)
+{
+	__int64 v2; // r8
+	signed __int64 v3; // rax
+
+	v2 = *(uint64_t *)(a1 + 32);
+	if (v2)
+	{
+		v3 = v2 + 16i64 * *(unsigned int *)(a1 + 4);
+		*a2 = v3;
+		a2[1] = v3;
+	}
+	else
+	{
+		*a2 = 0i64;
+		a2[1] = 0i64;
+	}
+	return a2;
+}
+
+void RenderBatchTechnique1(__int64 a1, int a2, int a3, int a4, int a5)
+{
+	// a1 = BSShaderAccumulator
+
+	__int64 *v10; // r14
+	__int64 v11; // rsi
+	char v12; // al
+	__int64 v14; // [rsp+60h] [rbp+8h]
+
+	sub_1412ACFE0(a1);
+
+	if (a5 <= -1)
+	{
+		v11 = *(uint64_t *)(a1 + 304);
+		v10 = 0i64;
+	}
+	else
+	{
+		v10 = *(__int64 **)(*(uint64_t *)(a1 + 304) + 8i64 * a5 + 112);
+		v11 = *v10;
+	}
+
+	*(DWORD *)(a1 + 312) = 0;
+
+	if (v11)
+	{
+		*(DWORD *)(v11 + 80) = a2;
+		*(DWORD *)(v11 + 84) = a3;
+		*(DWORD *)(a1 + 316) = 0;
+		v14 = v11 + 88;
+		*(BYTE *)(a1 + 320) = sub_14131E700(v11, (DWORD *)(a1 + 312), a1 + 316, (__int64)&v14);
+	}
+	else
+	{
+		*(BYTE *)(a1 + 320) = 0;
+	}
+
+	if (*(BYTE *)(a1 + 320))
+	{
+		do
+		{
+			if ((unsigned int)(*(DWORD *)(a1 + 312) - 0x5C000058) <= 3 && (*(BYTE *)(a1 + 296) || *(BYTE *)(a1 + 297)))
+				v12 = sub_14131ECE0(v11, (DWORD *)(a1 + 312), a1 + 316, (__int64)&v14);
+			else
+				v12 = sub_14131E960(v11, (unsigned int *)(a1 + 312), (unsigned int *)(a1 + 316), (__int64)&v14, a4);
+
+			*(BYTE *)(a1 + 320) = v12;
+		} while (v12);
+	}
+
+	if (v10)
+		sub_14131CAE0((uint64_t *)v10);
+
+	sub_14131F090();
+}
+
+void RenderBatchTechnique2(__int64 a1, unsigned int a2, __int64 a3)
+{
+	// a1 = BSShaderAccumulator
+
+	__int64 v4; // r14
+	__int64 v5; // rcx
+	__int64 v6; // rbx
+	__int64 v7; // rax
+	__int64 v8; // rsi
+	__int64 v9; // rdi
+
+	v4 = a1;
+	if (*(BYTE *)(a1 + 38) & 1)
+	{
+		sub_14131F9F0((__int64 *)(a1 + 8), a2, a3);
+	}
+	else
+	{
+		v5 = *(uint64_t *)a1;
+		if (!v5)
+			goto LABEL_14;
+		(*(void(__fastcall **)(__int64, signed __int64, signed __int64, uint64_t, signed __int64))(*(uint64_t *)v5 + 24i64))(
+			v5,
+			1i64,
+			0x5C006074i64,
+			a2,
+			-2i64);
+	}
+	v6 = *(uint64_t *)v4;
+	if (*(uint64_t *)v4)
+	{
+		if (!*(BYTE *)(v6 + 108))
+			return;
+		if (*(uint64_t *)(v6 + 96))
+		{
+			do
+			{
+				v7 = *(uint64_t *)(v6 + 96);
+				v8 = *(uint64_t *)(v7 + 8);
+				*(uint64_t *)(v7 + 8) = 0i64;
+				if (true /*sub_14131F910*/)
+				{
+					sub_14131F910(*(uint64_t *)(v6 + 96), g_ModuleBase + 0x34B5230);
+				}
+				else
+				{
+					v9 = *(uint64_t *)(v6 + 96);
+					if (v9)
+					{
+						sub_1401C49C0(*(uint64_t *)(v6 + 96), 0i64, 0i64);
+						operator_delete(v9, 16i64);
+					}
+				}
+				*(uint64_t *)(v6 + 96) = v8;
+			} while (v8);
+		}
+		*(DWORD *)(v6 + 88) = 0;
+	}
+LABEL_14:
+	*(WORD *)(v4 + 36) = 0;
+}
+
+void CommitShaderChanges(bool Unknown)
+{
+	auto graphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+
+	uint32_t v1; // edx
+	uint64_t *v3; // r8
+	unsigned int v4; // edi
+	__int64 v5; // rdx
+	uint32_t *v6; // rbx
+	ID3D11RenderTargetView **v7; // rsi
+	__int64 v8; // rax
+	ID3D11RenderTargetView *v9; // rdx
+	int v10; // edx
+	__int64 v11; // rbx
+	signed __int64 v12; // rcx
+	signed __int64 v13; // r8
+	float v14; // xmm0_4
+	float v15; // xmm0_4
+	float v16; // xmm0_4
+	unsigned __int64 v17; // rbx
+	uint64_t v18; // rcx
+	__int64 v19; // rdi
+	int v20; // ebx
+	int v21; // edx
+	uint32_t v22; // eax
+	unsigned int j; // eax
+	__int64 v24; // rdx
+	unsigned int k; // eax
+	__int64 v26; // rdx
+	unsigned int l; // eax
+	__int64 v28; // rdx
+	unsigned int m; // eax
+	__int64 v30; // rdx
+	__int64 result; // rax
+	__int64 v32; // rdx
+	__int64 v33; // [rsp+20h] [rbp-88h]
+	int *i; // [rsp+28h] [rbp-80h]
+	float *v35; // [rsp+30h] [rbp-78h]
+	ID3D11RenderTargetView *v34[8];
+	int v37; // [rsp+B8h] [rbp+10h]
+	int v38; // [rsp+C0h] [rbp+18h]
+	__int64 v39; // [rsp+C8h] [rbp+20h]
+
+	v1 = graphicsGlobals->dword_14304DEB0;
+	if (!graphicsGlobals->dword_14304DEB0)
+		goto LABEL_63;
+	if (graphicsGlobals->dword_14304DEB0 & 1)
+	{
+		v3 = (uint64_t *)graphicsGlobals->qword_14304BF00;
+		if (graphicsGlobals->iRenderTargetIndexes[0][0] == -1)
+		{
+			v6 = graphicsGlobals->iRenderTargetIndexes[1];
+			v7 = v34;
+			v4 = 0;
+			do
+			{
+				v8 = (signed int)*(v6 - 12);
+				if ((DWORD)v8 == -1)
+					break;
+				v9 = (ID3D11RenderTargetView *)*((uint64_t *)v3 + 6 * v8 + 0x14B);
+				*v7 = v9;
+				if (!*v6)
+				{
+					graphicsGlobals->m_DeviceContext->ClearRenderTargetView(
+						v9,
+						(const FLOAT *)v3 + 2522);          // ClearRenderTargetView
+
+					v3 = (uint64_t *)graphicsGlobals->qword_14304BF00;
+					*v6 = 4;
+				}
+				++v4;
+				++v7;
+				++v6;
+			} while (v4 < 8);
+		}
+		else
+		{
+			v4 = 1;
+			v5 = *((uint64_t *)graphicsGlobals->qword_14304BF00
+				+ (signed int)graphicsGlobals->iRenderTargetIndexes[0][1]
+				+ 8i64 * (signed int)graphicsGlobals->iRenderTargetIndexes[0][0]
+				+ 1242);
+			v34[0] = *((ID3D11RenderTargetView **)graphicsGlobals->qword_14304BF00
+				+ (signed int)graphicsGlobals->iRenderTargetIndexes[0][1]
+				+ 8i64 * (signed int)graphicsGlobals->iRenderTargetIndexes[0][0]
+				+ 1242);
+			if (!*(DWORD *)&graphicsGlobals->__zz0[4])
+			{
+				graphicsGlobals->m_DeviceContext->ClearRenderTargetView((ID3D11RenderTargetView *)v5, (float *)(char *)graphicsGlobals->qword_14304BF00 + 10088);
+
+				v3 = (uint64_t *)graphicsGlobals->qword_14304BF00;
+				*(DWORD *)&graphicsGlobals->__zz0[4] = 4;
+			}
+		}
+		v10 = *(DWORD *)graphicsGlobals->__zz0;
+		if (*(DWORD *)graphicsGlobals->__zz0 <= 2u || *(DWORD *)graphicsGlobals->__zz0 == 6)
+		{
+			*((BYTE *)v3 + 34) = 0;
+			v10 = *(DWORD *)graphicsGlobals->__zz0;
+			v3 = (uint64_t *)graphicsGlobals->qword_14304BF00;
+		}
+		if (graphicsGlobals->rshadowState_iDepthStencil == -1)
+		{
+			v11 = 0i64;
+		LABEL_28:
+			graphicsGlobals->m_DeviceContext->OMSetRenderTargets(// OMSetRenderTargets
+				v4,
+				v34,
+				(ID3D11DepthStencilView *)v11);
+
+			v1 = graphicsGlobals->dword_14304DEB0;
+			goto LABEL_29;
+		}
+		v12 = graphicsGlobals->rshadowState_iDepthStencilSlice
+			+ 19i64 * (signed int)graphicsGlobals->rshadowState_iDepthStencil;
+		if (*((BYTE *)v3 + 34))
+			v11 = v3[v12 + 1022];
+		else
+			v11 = v3[v12 + 1014];
+		if (!v11)
+			goto LABEL_28;
+		if (v10 && v10 != 6)
+		{
+			if (v10 == 2)
+			{
+				v13 = 2i64;
+			}
+			else
+			{
+				if (v10 != 1)
+					goto LABEL_28;
+				v13 = 1i64;
+			}
+		}
+		else
+		{
+			v13 = 3i64;
+		}
+
+		graphicsGlobals->m_DeviceContext->ClearDepthStencilView(// ClearDepthStencilView
+			(ID3D11DepthStencilView *)v11,
+			v13,
+			1.0f,
+			0);
+
+		*(DWORD *)graphicsGlobals->__zz0 = 4;
+		goto LABEL_28;
+	}
+
+LABEL_29:
+	// OMSetDepthStencilState
+	if (v1 & 0xC)
+	{
+		graphicsGlobals->m_DeviceContext->OMSetDepthStencilState(
+			(ID3D11DepthStencilState *)graphicsGlobals->qword_14304C1B0[0][*(signed int *)&graphicsGlobals->__zz0[40] + 40i64 * *(signed int *)&graphicsGlobals->__zz0[32]],
+			*(UINT *)&graphicsGlobals->__zz0[44]);
+
+		v1 = graphicsGlobals->dword_14304DEB0;
+	}
+
+	if (v1 & 0x1070)
+	{
+		void *wtf = graphicsGlobals->qword_14304C930[0][0][0][*(signed int *)&graphicsGlobals->__zz0[60]
+			+ 2
+			* (*(signed int *)&graphicsGlobals->__zz0[56]
+				+ 12
+				* (*(signed int *)&graphicsGlobals->__zz0[52]
+					+ 3i64 * *(signed int *)&graphicsGlobals->__zz0[48]))];
+
+		graphicsGlobals->m_DeviceContext->RSSetState((ID3D11RasterizerState *)wtf);
+
+		v1 = graphicsGlobals->dword_14304DEB0;
+		if (graphicsGlobals->dword_14304DEB0 & 0x40)
+		{
+			if (*(float *)&graphicsGlobals->__zz0[24] != *(float *)&graphicsGlobals->__zz2[640]
+				|| (v14 = *(float *)&graphicsGlobals->__zz0[28],
+					*(float *)&graphicsGlobals->__zz0[28] != *(float *)&graphicsGlobals->__zz2[644]))
+			{
+				v14 = *(float *)&graphicsGlobals->__zz2[644];
+				*(DWORD *)&graphicsGlobals->__zz0[24] = *(DWORD *)&graphicsGlobals->__zz2[640];
+				v1 = graphicsGlobals->dword_14304DEB0 | 2;
+				*(DWORD *)&graphicsGlobals->__zz0[28] = *(DWORD *)&graphicsGlobals->__zz2[644];
+				graphicsGlobals->dword_14304DEB0 |= 2u;
+			}
+			if (*(DWORD *)&graphicsGlobals->__zz0[56])
+			{
+				v15 = v14 - graphicsGlobals->m_UnknownFloats1[0][*(signed int *)&graphicsGlobals->__zz0[56]];
+				v1 |= 2u;
+				graphicsGlobals->dword_14304DEB0 = v1;
+				*(float *)&graphicsGlobals->__zz0[28] = v15;
+			}
+		}
+	}
+
+	// RSSetViewports
+	if (v1 & 2)
+	{
+		graphicsGlobals->m_DeviceContext->RSSetViewports(1, (D3D11_VIEWPORT *)&graphicsGlobals->__zz0[8]);
+
+		v1 = graphicsGlobals->dword_14304DEB0;
+	}
+
+	// OMSetBlendState
+	if ((v1 & 0x80u) != 0)
+	{
+		float *blendFactor = (float *)(g_ModuleBase + 0x1E2C168);
+
+		void *wtf = graphicsGlobals->qword_14304CDB0[0][0][0][*(unsigned int *)&graphicsGlobals->__zz2[656]
+			+ 2
+			* (*(signed int *)&graphicsGlobals->__zz0[72]
+				+ 13
+				* (*(signed int *)&graphicsGlobals->__zz0[68]
+					+ 2i64 * *(signed int *)&graphicsGlobals->__zz0[64]))];
+
+		graphicsGlobals->m_DeviceContext->OMSetBlendState((ID3D11BlendState *)wtf, blendFactor, 0xFFFFFFFF);
+
+		v1 = graphicsGlobals->dword_14304DEB0;
+	}
+
+	if (v1 & 0x300)
+	{
+		D3D11_MAPPED_SUBRESOURCE resource;
+		graphicsGlobals->m_DeviceContext->Map(graphicsGlobals->m_TempConstantBuffer1, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+
+		if (graphicsGlobals->__zz0[76])
+			v16 = graphicsGlobals->float_14304DF68;
+		else
+			v16 = 0.0;
+
+		*(float *)resource.pData = v16;
+
+		graphicsGlobals->m_DeviceContext->Unmap(graphicsGlobals->m_TempConstantBuffer1, 0);
+
+		v1 = graphicsGlobals->dword_14304DEB0;
+	}
+
+	// Shader input layout creation + updates
+	if (!Unknown && _bittest((const LONG *)&v1, 0xAu))
+	{
+		uint32_t& dword_141E2C144 = *(uint32_t *)(g_ModuleBase + 0x1E2C144);
+		uint64_t& qword_141E2C160 = *(uint64_t *)(g_ModuleBase + 0x1E2C160);
+
+		uint64_t *off_141E2C150 = *(uint64_t **)(g_ModuleBase + 0x1E2C150);
+
+		auto sub_140C06080 = (__int64(__fastcall *)(DWORD *a1, unsigned __int64 a2))(g_ModuleBase + 0xC06080);
+		auto sub_140D705F0 = (__int64(__fastcall *)(unsigned __int64 a1))(g_ModuleBase + 0xD705F0);
+		auto sub_140D72740 = (char(__fastcall *)(__int64 a1, __int64 a2, int a3, __int64 *a4, int64_t *a5))(g_ModuleBase + 0xD72740);
+		auto sub_140D735D0 = (void(__fastcall *)(__int64 a1))(g_ModuleBase + 0xD735D0);
+
+
+		v17 = *(uint64_t *)graphicsGlobals->__zz2 & *(uint64_t *)(*(uint64_t *)&graphicsGlobals->__zz2[8] + 72i64);
+		v35 = (float *)(*(uint64_t *)graphicsGlobals->__zz2 & *(uint64_t *)(*(uint64_t *)&graphicsGlobals->__zz2[8] + 72i64));
+		sub_140C06080((DWORD *)&v37, (unsigned __int64)v35);
+		if (qword_141E2C160
+			&& (v18 = qword_141E2C160 + 24i64 * (v37 & (unsigned int)(dword_141E2C144 - 1)),
+				*(uint64_t *)(qword_141E2C160 + 24i64 * (v37 & (unsigned int)(dword_141E2C144 - 1)) + 16)))
+		{
+			while (*(uint64_t *)v18 != v17)
+			{
+				v18 = *(uint64_t *)(v18 + 16);
+				if ((void *)v18 == off_141E2C150)
+					goto LABEL_53;
+			}
+			v19 = *(uint64_t *)(v18 + 8);
+		}
+		else
+		{
+		LABEL_53:
+			v39 = sub_140D705F0(v17);                 // IACreateInputLayout
+			v19 = v39;
+			if (v39 || v17 != 0x300000000407i64)
+			{
+				sub_140C06080((DWORD *)&v38, v17);
+				v20 = v38;
+				for (i = &v37; !sub_140D72740((__int64)(g_ModuleBase + 0x1E2C140), qword_141E2C160, v20, (__int64 *)&v35, &v39); i = &v37)
+					sub_140D735D0((__int64)(g_ModuleBase + 0x1E2C140));
+			}
+		}
+
+		graphicsGlobals->m_DeviceContext->IASetInputLayout((ID3D11InputLayout *)v19);
+		v1 = graphicsGlobals->dword_14304DEB0;
+	}
+
+	if (_bittest((const LONG *)&v1, 0xBu))
+	{
+		graphicsGlobals->m_DeviceContext->IASetPrimitiveTopology((D3D11_PRIMITIVE_TOPOLOGY)*(unsigned int *)&graphicsGlobals->__zz2[24]);
+		v1 = graphicsGlobals->dword_14304DEB0;
+	}
+
+	v21 = v1 & 0x400;
+	v22 = 0;
+
+	if (Unknown)
+		v22 = v21;
+
+	graphicsGlobals->dword_14304DEB0 = v22;
+
+LABEL_63:
+	// Computer shader unordered access views (resources)
+	for (uint32_t j = graphicsGlobals->m_CSUAVModifiedBits; graphicsGlobals->m_CSUAVModifiedBits; j = graphicsGlobals->m_CSUAVModifiedBits)
+	{
+		DWORD v24;
+		_BitScanForward(&v24, j);
+
+		graphicsGlobals->m_CSUAVModifiedBits = j & ~(1 << v24);
+
+		graphicsGlobals->m_DeviceContext->CSSetUnorderedAccessViews(v24, 1, &graphicsGlobals->m_CSUAVResources[v24], nullptr);
+	}
+
+	// Pixel shader samplers
+	for (uint32_t k = graphicsGlobals->m_PSSamplerModifiedBits; graphicsGlobals->m_PSSamplerModifiedBits; k = graphicsGlobals->m_PSSamplerModifiedBits)
+	{
+		DWORD v26;
+		_BitScanForward(&v26, k);
+
+		graphicsGlobals->m_PSSamplerModifiedBits = k & ~(1 << v26);
+
+		char *ptr = (char *)graphicsGlobals->qword_14304D910 + 8 * ((signed int)graphicsGlobals->m_PSSamplerSetting2[v26] + 5i64 * (signed int)graphicsGlobals->m_PSSamplerSetting1[v26]);
+
+		if (ptr != (char *)&graphicsGlobals->qword_14304D910[graphicsGlobals->m_PSSamplerSetting1[v26]][graphicsGlobals->m_PSSamplerSetting2[v26]])
+			__debugbreak();
+
+		graphicsGlobals->m_DeviceContext->PSSetSamplers(v26, 1, &graphicsGlobals->qword_14304D910[graphicsGlobals->m_PSSamplerSetting1[v26]][graphicsGlobals->m_PSSamplerSetting2[v26]]);
+	}
+
+	// Pixel shader resources
+	for (uint32_t l = graphicsGlobals->m_PSResourceModifiedBits; graphicsGlobals->m_PSResourceModifiedBits; l = graphicsGlobals->m_PSResourceModifiedBits)
+	{
+		DWORD v28;
+		_BitScanForward(&v28, l);
+
+		graphicsGlobals->m_PSResourceModifiedBits = l & ~(1 << v28);
+
+		graphicsGlobals->m_DeviceContext->PSSetShaderResources(v28, 1, &graphicsGlobals->m_PSResources[v28]);
+	}
+
+	// Computer shader samplers
+	for (uint32_t m = graphicsGlobals->m_CSSamplerModifiedBits; graphicsGlobals->m_CSSamplerModifiedBits; m = graphicsGlobals->m_CSSamplerModifiedBits)
+	{
+		DWORD v30;
+		_BitScanForward(&v30, m);
+
+		graphicsGlobals->m_CSSamplerModifiedBits = m & ~(1 << v30);
+
+		char *ptr = (char *)&graphicsGlobals->qword_14304D910 + 8 * ((signed int)graphicsGlobals->m_CSSamplerSetting2[v30] + 5i64 * (signed int)graphicsGlobals->m_CSSamplerSetting1[v30]);
+
+		if (ptr != (char *)&graphicsGlobals->qword_14304D910[graphicsGlobals->m_CSSamplerSetting1[v30]][graphicsGlobals->m_CSSamplerSetting2[v30]])
+			__debugbreak();
+
+		graphicsGlobals->m_DeviceContext->CSSetSamplers(v30, 1, &graphicsGlobals->qword_14304D910[graphicsGlobals->m_CSSamplerSetting1[v30]][graphicsGlobals->m_CSSamplerSetting2[v30]]);
+	}
+
+	// Domain shader resources
+	for (uint32_t n = graphicsGlobals->m_DSResourceModifiedBits; graphicsGlobals->m_DSResourceModifiedBits; n = graphicsGlobals->m_DSResourceModifiedBits)
+	{
+		DWORD v32;
+		_BitScanForward(&v32, n);
+
+		graphicsGlobals->m_DSResourceModifiedBits = n & ~(1 << v32);
+
+		graphicsGlobals->m_DeviceContext->CSSetShaderResources(v32, 1, graphicsGlobals->m_DSResources);
+	}
+}
+
 void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 {
-	float v3; // xmm0_4
+	// a1 = BSShaderAccumulator
+
 	uint32_t v6; // ecx
 	bool v7; // si
 	__int64 v8; // r8
@@ -369,22 +1533,15 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	__int64 v16; // r8
 	__int64 v17; // rcx
 	uint32_t v18; // eax
-	int v19; // eax
 	int v20; // eax
 	uint32_t v21; // eax
 	uint32_t v22; // ecx
 	float v15; // xmm0_4
 
-	auto graphicsGlobals = (BSGraphicsRendererGlobals *)BSGraphics_TLSGlob;
-
-	if (!annotation)
-	{
-		DC_Init();
-		graphicsGlobals->m_DeviceContext->QueryInterface<ID3DUserDefinedAnnotation>(&annotation);
-	}
+	auto graphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
 	auto RenderBatchTechnique1 = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3770);
-	auto RenderBatchTechnique2 = (void(__fastcall *)(__int64 *a1, unsigned int a2, __int64 a3))(g_ModuleBase + 0x131CB70);
+	auto RenderBatchTechnique2 = (void(__fastcall *)(__int64 a1, unsigned int a2, __int64 a3))(g_ModuleBase + 0x131CB70);
 
 	if (*(uint64_t *)(a1 + 16))
 	{
@@ -399,19 +1556,13 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		v7 = (a2 & 0xA) != 0;
 
 		if (!(a2 & 0xA))
-			((void(__fastcall *)(float))(g_ModuleBase + 0x12F87B0))(v3);
-			//sub_1412F87B0(v3);
+			((void(__fastcall *)())(g_ModuleBase + 0x12F87B0))();
+			//sub_1412F87B0();
 
 		// RenderBatches
 		annotation->BeginEvent(L"RenderBatches");
 		{
-			DC_RenderDeferred(a1, a2, [](__int64 a1, unsigned int a2) {
-				auto rbt1 = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3770);
-
-				rbt1(a1, 1, 0x5C00002F, a2, -1);
-			});
-
-			DC_WaitDeferred();
+			RenderBatchTechnique1(a1, 1, 0x5C00002F, a2, -1);
 		}
 		annotation->EndEvent();
 
@@ -422,8 +1573,9 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			v9 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 184i64);
 			if (v9)
 			{
+				v8 = 0xc0c0c0c0c0c0c0c;
 				if (*(BYTE *)(v9 + 38) & 1)
-					RenderBatchTechnique2((__int64 *)v9, a2, v8);
+					RenderBatchTechnique2(v9, a2, v8);
 				else
 					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 9);
 			}
@@ -444,8 +1596,9 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			v11 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 176i64);
 			if (v11)
 			{
+				v10 = 0xc0c0c0c0c0c0c0c;
 				if (*(BYTE *)(v11 + 38) & 1)
-					RenderBatchTechnique2((__int64 *)v11, a2, v10);
+					RenderBatchTechnique2(v11, a2, v10);
 				else
 					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 8);
 			}
@@ -459,8 +1612,9 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			v12 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 120i64);
 			if (v12)
 			{
+				v10 = 0xc0c0c0c0c0c0c0c;
 				if (*(BYTE *)(v12 + 38) & 1)
-					RenderBatchTechnique2((__int64 *)v12, a2, v10);
+					RenderBatchTechnique2(v12, a2, v10);
 				else
 					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 1);
 			}
@@ -482,8 +1636,9 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			v14 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 112i64);
 			if (v14)
 			{
+				v10 = 0xc0c0c0c0c0c0c0c;
 				if (*(BYTE *)(v14 + 38) & 1)
-					RenderBatchTechnique2((__int64 *)v14, a2, v10);
+					RenderBatchTechnique2(v14, a2, v10);
 				else
 					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 0);
 			}
@@ -497,21 +1652,42 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		// RenderSky
 		annotation->BeginEvent(L"RenderSky");
 		{
+			DC_RenderDeferred(a1, a2, [](__int64 a1, unsigned int a2) {
+				auto rbt1 = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3770);
+				auto graphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+
 			if (graphicsGlobals->__zz0[76] != 1)
 			{
 				graphicsGlobals->dword_14304DEB0 |= 0x100u;
 				graphicsGlobals->__zz0[76] = 1;
 			}
-			v15 = graphicsGlobals->float_14304DF68;
+			float v15 = graphicsGlobals->float_14304DF68;
 			if (graphicsGlobals->float_14304DF68 != 0.50196081)
 			{
 				graphicsGlobals->dword_14304DEB0 |= 0x200u;
-				graphicsGlobals->float_14304DF68 = 0.50196081;
+				graphicsGlobals->float_14304DF68 = 0.50196081f;
 			}
-			RenderBatchTechnique1(a1, 0x5C00005D, 0x5C000064, a2, -1);
+			rbt1(a1, 0x5C00005D, 0x5C000064, a2, -1);
+			});
 		}
+		DC_WaitDeferred();
 		annotation->EndEvent();
-
+		/*
+		annotation->BeginEvent(L"RenderSky");
+		if (graphicsGlobals->__zz0[76] != 1)
+		{
+			graphicsGlobals->dword_14304DEB0 |= 0x100u;
+			graphicsGlobals->__zz0[76] = 1;
+		}
+		float v15 = graphicsGlobals->float_14304DF68;
+		if (graphicsGlobals->float_14304DF68 != 0.50196081)
+		{
+			graphicsGlobals->dword_14304DEB0 |= 0x200u;
+			graphicsGlobals->float_14304DF68 = 0.50196081f;
+		}
+		RenderBatchTechnique1(a1, 0x5C00005D, 0x5C000064, a2, -1);
+		annotation->EndEvent();
+		*/
 		// RenderSkyClouds
 		annotation->BeginEvent(L"RenderSkyClouds");
 		{
@@ -523,8 +1699,9 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			v17 = *(uint64_t *)(*(uint64_t *)(a1 + 304) + 216i64);
 			if (v17)
 			{
+				v16 = 0xc0c0c0c0c0c0c0c;
 				if (*(BYTE *)(v17 + 38) & 1)
-					RenderBatchTechnique2((__int64 *)v17, a2, v16);
+					RenderBatchTechnique2(v17, a2, v16);
 				else
 					RenderBatchTechnique1(a1, 1, 0x5C006074, a2, 13);
 			}
@@ -535,6 +1712,8 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			}
 		}
 		annotation->EndEvent();
+
+		v15 = graphicsGlobals->float_14304DF68;
 
 		if (!v7)
 			((void(__fastcall *)(float))(g_ModuleBase + 0x12F87B0))(v15);
@@ -550,7 +1729,7 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		//sub_1412E2450(a1, a2);
 
 		// BlendedDecals
-		annotation->BeginEvent(L"RenderSkyClouds");
+		annotation->BeginEvent(L"BlendedDecals");
 		{
 			if (*(DWORD *)&graphicsGlobals->__zz0[72] != 11)
 			{
@@ -591,12 +1770,15 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 
 		if ((a2 & 0x80u) != 0 && sub_14131F100(*(uint64_t *)(a1 + 304), 0x5C000071u, 0x5C006071u))
 		{
-			v19 = sub_140D744B0();
-			(*(void(__fastcall **)(ID3D11DeviceContext *, __int64, uint64_t))(*(uint64_t *)graphicsGlobals->m_DeviceContext
-				+ 376i64))(
-					graphicsGlobals->m_DeviceContext,
-					*(__int64*)(g_ModuleBase + 0x3050870),
-					*(uint64_t *)&flt_14304E490[38 * v19 + 2030]);
+			int aiTarget = sub_140D744B0();
+
+// 			bAssert(aiSource != aiTarget &&
+// 				aiSource < DEPTH_STENCIL_COUNT &&
+// 				aiTarget < DEPTH_STENCIL_COUNT &&
+// 				aiSource != DEPTH_STENCIL_TARGET_NONE &&
+// 				aiTarget != DEPTH_STENCIL_TARGET_NONE);
+
+			graphicsGlobals->m_DeviceContext->CopyResource(*(ID3D11Resource **)(g_ModuleBase + 0x3050870), *(ID3D11Resource **)&flt_14304E490[38 * aiTarget + 2030]);
 		}
 
 		// RenderWaterStencil
@@ -649,81 +1831,7 @@ void __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 
 #include <thread>
 uint8_t *sub_1412E1600;
-/*
-__int64 __fastcall hk_sub_1412E1600(__int64 a1, unsigned int a2, float a3)
-{
-	if (annotation)
-		annotation->BeginEvent(L"sub_1412E1600");
 
-	D3D11_PRIMITIVE_TOPOLOGY topo;
-	ID3D11RenderTargetView *rtvs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
-	ID3D11DepthStencilView *dsv;
-
-	memset(rtvs, 0, sizeof(rtvs));
-	dsv = nullptr;
-
-	ID3D11Buffer *psbuf[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
-	ID3D11Buffer *vsbuf[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
-	ID3D11Buffer *csbuf[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
-	ID3D11ShaderResourceView *srvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
-	ID3D11ShaderResourceView *vsrvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
-	ID3D11SamplerState *pssamplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-	ID3D11SamplerState *vssamplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-	ID3D11SamplerState *cssamplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-	ID3D11UnorderedAccessView *views[D3D11_1_UAV_SLOT_COUNT];
-
-	g_DeviceContext->CSGetUnorderedAccessViews(0, D3D11_1_UAV_SLOT_COUNT, views);
-	g_DeviceContext->PSGetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, pssamplers);
-	g_DeviceContext->VSGetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, vssamplers);
-	g_DeviceContext->CSGetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, cssamplers);
-	g_DeviceContext->PSGetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srvs);
-	g_DeviceContext->VSGetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, vsrvs);
-	g_DeviceContext->PSGetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, psbuf);
-	g_DeviceContext->VSGetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, vsbuf);
-	g_DeviceContext->CSGetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, csbuf);
-	g_DeviceContext->OMGetRenderTargets(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, rtvs, &dsv);
-	g_DeviceContext->IAGetPrimitiveTopology(&topo);
-
-	dc1->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED);
-	dc1->OMSetRenderTargets(D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, rtvs, dsv);
-	dc1->PSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, psbuf);
-	dc1->VSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, vsbuf);
-	dc1->CSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, csbuf);
-	dc1->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srvs);
-	dc1->VSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, vsrvs);
-	dc1->PSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, pssamplers);
-	dc1->VSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, vssamplers);
-	dc1->CSSetSamplers(0, D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, cssamplers);
-	dc1->CSSetUnorderedAccessViews(0, D3D11_1_UAV_SLOT_COUNT, views, nullptr);
-
-	//SetThisThreadContext(dc1);
-
-	ID3D11CommandList *list;
-	__int64 res;
-	std::thread t([&list, a1, a2, a3, &res]() {
-//		SetThisThreadContext(dc1);
-		res = ((decltype(&hk_sub_1412E1600))sub_1412E1600)(a1, a2, a3);
-		dc1->FinishCommandList(FALSE, &list);
-	});
-	t.join();
-
-	//__int64 res = ((decltype(&hk_sub_1412E1600))sub_1412E1600)(a1, a2, a3);
-
-	//SetThisThreadContext(g_DeviceContext);
-
-	g_DeviceContext->ExecuteCommandList(list, TRUE);
-	list->Release();
-
-	for (int i = 0; i < 8; i++)
-		if (rtvs[i]) rtvs[i]->Release();
-
-	if (dsv) dsv->Release();
-
-	if (annotation)
-		annotation->EndEvent();
-	return res;
-}
-*/
 uint8_t *sub_1412E1C10;
 __int64 __fastcall hk_sub_1412E1C10(__int64 a1, unsigned int a2, float a3)
 {
@@ -939,17 +2047,15 @@ HRESULT WINAPI hk_CreateComputeShader(ID3D11Device *This, const void *pShaderByt
 	return (This->*CreateComputeShader)(pShaderBytecode, BytecodeLength, pClassLinkage, ppComputeShader);
 }
 
+void DC_Init(ID3D11DeviceContext2 *ImmediateContext, ID3D11DeviceContext2 **DeferredContexts, int DeferredContextCount);
 void hook()
 {
-	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
-
-	return;
 	if (hooked)
 		return;
 
 	hooked = true;
 
-	uintptr_t ptr = *(uintptr_t *)(&BSGraphics_TLSGlob[0x10]);
+	uintptr_t ptr = *(uintptr_t *)(&GetMainGlobals()->qword_14304BF00);
 	//uintptr_t ptr = *(uintptr_t *)(g_ModuleBase + 0x304BF00);
 	ID3D11Device *dev = *(ID3D11Device **)(ptr + 56);
 	IDXGISwapChain *swap = *(IDXGISwapChain **)(ptr + 96);
@@ -971,9 +2077,12 @@ void hook()
 
 	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)swap, &hk_IDXGISwapChain_Present, 8);
 
-	//Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF00, (PBYTE)&sub_140D6BF00);
+	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC10, (PBYTE)&CommitShaderChanges);
+	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF00, (PBYTE)&sub_140D6BF00);
+	//*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
 
-	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
+	DC_Init(g_DeviceContext, &dc1, 1);
+
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1C10, (PBYTE)&hk_sub_1412E1C10);
 
 	//*(PBYTE *)&CreateVertexShader = Detours::X64::DetourClassVTable(*(PBYTE *)dev, &hk_CreateVertexShader, 12);
@@ -1091,8 +2200,8 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	g_SwapChain = *ppSwapChain;
 
 	// Create deferred contexts for later frame use
-	newDev->CreateDeferredContext2(0, &dc1);
-	newDev->CreateDeferredContext2(0, &dc2);
+	//newDev->CreateDeferredContext2(0, &dc1);
+	//newDev->CreateDeferredContext2(0, &dc2);
 
 	OutputDebugStringA("Created everything\n");
 
@@ -1101,13 +2210,13 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
     ui::log::Add("Created D3D11 device with feature level %X...\n", level);
 
     // Now hook the render function
-	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
-	*(PBYTE *)&Map = Detours::X64::DetourClassVTable(*(PBYTE *)newContext, &hk_ID3D11DeviceContext_Map, 14);
+	//*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
+	//*(PBYTE *)&Map = Detours::X64::DetourClassVTable(*(PBYTE *)newContext, &hk_ID3D11DeviceContext_Map, 14);
 
 	//*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1600, (PBYTE)&hk_sub_1412E1600);
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1C10, (PBYTE)&hk_sub_1412E1C10);
 
-	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF00, (PBYTE)&sub_140D6BF00);
+	//Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF00, (PBYTE)&sub_140D6BF00);
 
 	//*(PBYTE *)&CreateVertexShader = Detours::X64::DetourClassVTable(*(PBYTE *)*ppDevice, &hk_CreateVertexShader, 12);
 	//*(PBYTE *)&CreatePixelShader = Detours::X64::DetourClassVTable(*(PBYTE *)*ppDevice, &hk_CreatePixelShader, 15);

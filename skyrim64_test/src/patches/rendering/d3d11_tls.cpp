@@ -4,7 +4,7 @@
 #pragma comment (linker, "/INCLUDE:p_tls_callback1")
 #pragma const_seg(push)
 #pragma const_seg(".CRT$XLAAA")
-EXTERN_C const PIMAGE_TLS_CALLBACK p_tls_callback1 = TLSPatcherCallback;
+extern "C" const PIMAGE_TLS_CALLBACK p_tls_callback1 = TLSPatcherCallback;
 #pragma const_seg(pop)
 
 // Defined in CRT headers somewhere. Used purely for sanity checking.
@@ -83,7 +83,6 @@ void InitializeTLSMain()
 	}
 	ReleaseSRWLockExclusive(&g_TLSDataLock);
 }
-
 
 void InitializeTLSDll()
 {
