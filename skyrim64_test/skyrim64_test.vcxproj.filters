@@ -140,6 +140,12 @@
     <ClInclude Include="src\patches\TES\MemoryContextTracker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShaderAccumulator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSBatchRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -368,6 +374,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSSpinLock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSBatchRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShaderAccumulator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

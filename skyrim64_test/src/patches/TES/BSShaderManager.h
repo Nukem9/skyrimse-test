@@ -1,10 +1,19 @@
 #pragma once
 
-#pragma push_macro("TEST_BIT") 
-#define TEST_BIT(index) (Technique & (1u << (index)))
-
 #define BAD_SHADER 0x11223344
 #define DO_ALPHA_TEST_FLAG 0x10000
+
+#define BSSM_DISTANTTREE_DEPTH 0x5C00002F
+#define BSSM_GRASS_DIRONLY_LF 0x5C000030
+#define BSSM_GRASS_SHADOW_L 0x5C000058
+#define BSSM_GRASS_SHADOW_LS 0x5C000059
+#define BSSM_GRASS_SHADOW_LB 0x5C00005A
+#define BSSM_GRASS_SHADOW_LSB 0x5C00005B
+#define BSSM_SKYBASEPRE 0x5C00005D
+#define BSSM_SKY_CLOUDSFADE 0x5C000064
+#define BSSM_WATER_STENCIL 0x5C00006D
+#define BSSM_WATER_DISPLACEMENT_STENCIL_Vc 0x5C000070
+#define BSSM_BLOOD_SPLATTER 0x5C006074
 
 enum class BSSM_GROUP_TYPE
 {
@@ -212,6 +221,8 @@ private:
 //
 // NOTE: BSXShader/BSLightingShader/BSUtilityShader have variable-size constant types
 //
+#pragma push_macro("TEST_BIT") 
+#define TEST_BIT(index) (Technique & (1u << (index)))
 
 #define BSSM_PLACEHOLDER "Add-your-constant-to-" __FUNCTION__
 
@@ -1939,4 +1950,5 @@ namespace BSWaterShader
 	}
 }
 
+#undef TEST_BIT
 #pragma pop_macro("TEST_BIT")
