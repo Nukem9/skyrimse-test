@@ -109,11 +109,11 @@ void PatchMemory()
 	PatchIAT(hk_aligned_free, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free");
 	PatchIAT(hk_msize, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize");
 
-	PatchMemory(g_ModuleBase + 0x59B530, (PBYTE)"\xC3", 1);// [3GB] MemoryManager - Default/Static/File heaps
-	PatchMemory(g_ModuleBase + 0x59B140, (PBYTE)"\xC3", 1);// [1GB] BSSmallBlockAllocator
+	PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);// [3GB] MemoryManager - Default/Static/File heaps
+	PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);// [1GB] BSSmallBlockAllocator
 	// [128MB] BSScaleformSysMemMapper is untouched due to complexity
 	// [512MB] hkMemoryAllocator is untouched due to complexity
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC01D70), &MemoryManager::Alloc);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC02070), &MemoryManager::Free);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC01DA0), &MemoryManager::Alloc);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC020A0), &MemoryManager::Free);
 }

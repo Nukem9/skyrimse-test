@@ -70,6 +70,6 @@ __int64 hk_CreateRenderTarget(__int64 a1, unsigned int aTargetIndex, __int64 a3,
 
 void PatchBSGraphicsRenderTargetManager()
 {
-	CreateDepthStencil = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xD6A300), (PBYTE)hk_CreateDepthStencil);
-	CreateRenderTarget = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xD69ED0), (PBYTE)hk_CreateRenderTarget);
+	CreateDepthStencil = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xD6A330), (PBYTE)hk_CreateDepthStencil);
+	CreateRenderTarget = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xD69F00), (PBYTE)hk_CreateRenderTarget);
 }

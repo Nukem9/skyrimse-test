@@ -109,19 +109,19 @@ void BSScopedRWLock::Deinitialize()
 
 void PatchLocks()
 {
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06DC0), &BSReadWriteLock::Initialize);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06DE0), &BSReadWriteLock::AcquireRead);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC070A0), &BSReadWriteLock::ReleaseRead);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06E60), &BSReadWriteLock::AcquireWrite);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC070B0), &BSReadWriteLock::ReleaseWrite);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07050), &BSReadWriteLock::TryAcquireWrite);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC070E0), &BSReadWriteLock::IsWriteOwner);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06DF0), &BSReadWriteLock::Initialize);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06E10), &BSReadWriteLock::AcquireRead);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC070D0), &BSReadWriteLock::ReleaseRead);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06E90), &BSReadWriteLock::AcquireWrite);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC070E0), &BSReadWriteLock::ReleaseWrite);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07080), &BSReadWriteLock::TryAcquireWrite);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07110), &BSReadWriteLock::IsWriteOwner);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07100), &BSScopedRWLock::Initialize);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07150), &BSScopedRWLock::Deinitialize);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07130), &BSScopedRWLock::Initialize);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07180), &BSScopedRWLock::Deinitialize);
 
 	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xBE9010), &BSSpinLock::AcquireWrite);	// EnterUpgradeableReaderLock -- check parent function
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06F60), &BSReadWriteLock::UpgradeRead);		// UpgdateToWriteLock -- this is a no-op
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06F90), &BSReadWriteLock::UpgradeRead);		// UpgdateToWriteLock -- this is a no-op
 	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xBE9270), &BSSpinLock::ReleaseWrite);	// ExitUpgradeableReaderLock -- name might be wrong
 
 	// C05B30 - Enter any lock mode, returns true if entered write, false if read (no sleep time!), but it's unused by game.

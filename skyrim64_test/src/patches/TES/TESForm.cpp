@@ -176,7 +176,7 @@ bool GetFormCache(uint32_t FormId, TESForm *&Form)
 
 void CRC32_Lazy(int *out, int idIn)
 {
-    ((void (*)(int *, int))(g_ModuleBase + 0xC06000))(out, idIn);
+    ((void (*)(int *, int))(g_ModuleBase + 0xC06030))(out, idIn);
 }
 
 TESForm *GetFormById(unsigned int FormId)
@@ -235,10 +235,9 @@ void PatchTESForm()
 {
     Bitmap::TryInitRange();
 
-	origFunc0 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x194940), &UnknownFormFunction0);
-	origFunc1 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196040), &UnknownFormFunction1);
-	origFunc2 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x195D70), &UnknownFormFunction2);
-	origFunc3 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196930), &UnknownFormFunction3);
-
-    Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x194380), &GetFormById);
+	origFunc0 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x194970), &UnknownFormFunction0);
+	origFunc1 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196070), &UnknownFormFunction1);
+	origFunc2 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x195DA0), &UnknownFormFunction2);
+	origFunc3 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196960), &UnknownFormFunction3);
+    Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1943B0), &GetFormById);
 }

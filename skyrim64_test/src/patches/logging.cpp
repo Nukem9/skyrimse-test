@@ -67,9 +67,9 @@ int hk_sprintf_s(char *DstBuf, size_t SizeInBytes, const char *Format, ...)
 
 void PatchLogging()
 {
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1CDFB0), (PBYTE)&LogFunc1);
+	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1CDFE0), (PBYTE)&LogFunc1);
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1660D0), (PBYTE)&LogFunc2);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x578F40), (PBYTE)&LogFunc2);
+	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x578F70), (PBYTE)&LogFunc2);
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x179C40), (PBYTE)&LogFunc3);
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x142550), (PBYTE)&hk_sprintf_s);
 }
