@@ -13,7 +13,7 @@ signed __int64 *sub_1413203D0(__int64 a1, signed __int64 *a2);
 
 void operator_delete(__int64 a1, __int64 a2)
 {
-	((void(__fastcall *)(void *))(g_ModuleBase + 0x01026F0))((void *)a1);
+	((void(__fastcall *)(void *))(g_ModuleBase + 0x1026F0))((void *)a1);
 }
 
 void sub_1401C49C0(__int64 a1, __int64(__fastcall *a2)(uint64_t, __int64), __int64 a3)
@@ -103,10 +103,10 @@ __int64 sub_14131ED70(uint64_t *a1, unsigned int a2, unsigned __int8 a3, unsigne
 	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
 	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
 
-	auto sub_14131EFF0 = (__int64(__fastcall *)(unsigned int a1, __int64 a2))(g_ModuleBase + 0x131EFF0);
-	auto sub_14131F450 = (__int64(__fastcall *)(__int64 *a1, __int64 a2, unsigned int a3))(g_ModuleBase + 0x131F450);
-	auto sub_14131F1F0 = (__int64(__fastcall *)(__int64 *a1, char a2, unsigned int a3))(g_ModuleBase + 0x131F1F0);
-	auto sub_14131F2A0 = (__int64(__fastcall *)(__int64 a1, unsigned __int8 a2, unsigned int a3))(g_ModuleBase + 0x131F2A0);
+	auto sub_14131EFF0 = (__int64(__fastcall *)(unsigned int a1, __int64 a2))(g_ModuleBase + 0x131F350);
+	auto sub_14131F450 = (__int64(__fastcall *)(__int64 *a1, __int64 a2, unsigned int a3))(g_ModuleBase + 0x131F7B0);
+	auto sub_14131F1F0 = (__int64(__fastcall *)(__int64 *a1, char a2, unsigned int a3))(g_ModuleBase + 0x131F550);
+	auto sub_14131F2A0 = (__int64(__fastcall *)(__int64 a1, unsigned __int8 a2, unsigned int a3))(g_ModuleBase + 0x131F600);
 
 	v5 = a4;
 	v6 = *a1;
@@ -292,22 +292,23 @@ void BSBatchRenderer::PassInfo::Render(unsigned int a2)
 	__int64 a1 = (__int64)this;
 
 	__int64 v4; // r14
-	__int64 v5; // rcx
 	__int64 v6; // rbx
 	__int64 v7; // rax
 	__int64 v8; // rsi
 	__int64 v9; // rdi
 
 	v4 = a1;
-	if (*(BYTE *)(a1 + 38) & 1)
+	if (this->UnkByte1 & 1)
 	{
 		sub_14131F9F0((__int64 *)(a1 + 8), a2);
 	}
 	else
 	{
-		v5 = *(uint64_t *)a1;
-		if (!v5)
+		if (!this->m_BatchRenderer)
 			goto LABEL_14;
+
+		uint64_t v5 = (uint64_t)this->m_BatchRenderer;
+
 		(*(void(__fastcall **)(__int64, signed __int64, signed __int64, uint64_t, signed __int64))(*(uint64_t *)v5 + 24i64))(
 			v5,
 			1i64,
@@ -315,7 +316,9 @@ void BSBatchRenderer::PassInfo::Render(unsigned int a2)
 			a2,
 			-2i64);
 	}
+
 	v6 = *(uint64_t *)v4;
+
 	if (*(uint64_t *)v4)
 	{
 		if (!*(BYTE *)(v6 + 108))
@@ -345,33 +348,34 @@ void BSBatchRenderer::PassInfo::Render(unsigned int a2)
 		}
 		*(DWORD *)(v6 + 88) = 0;
 	}
+
 LABEL_14:
-	*(WORD *)(v4 + 36) = 0;
+	this->UnkWord1 = 0;
 }
 
 void BSBatchRenderer::PassInfo::Unregister()
 {
-	__int64 *a1 = (__int64 *)this;
-
 	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
 
-	a1[1] = 0i64;
-	a1[2] = 0i64;
+	this->UnkPtr2 = 0;
+	this->UnkPtr3 = 0;
 
-	if (*a1)
-		sub_14131D6E0(*a1);
+	if (this->m_BatchRenderer)
+		sub_14131D6E0((__int64)this->m_BatchRenderer);
 
-	*((WORD *)a1 + 18) = 0;
+	this->UnkWord1 = 0;
 }
 
 bool BSBatchRenderer::HasTechniquePasses(uint32_t StartTech, uint32_t EndTech)
 {
-	auto sub_14131F100 = (char(__fastcall *)(__int64 a1, unsigned int a2, unsigned int a3))(g_ModuleBase + 0x131F100);
+	auto sub_14131F100 = (char(__fastcall *)(__int64 a1, unsigned int a2, unsigned int a3))(g_ModuleBase + 0x131F460);
 	return sub_14131F100((__int64)this, StartTech, EndTech);
 }
 
-bool BSBatchRenderer::sub_14131E8F0(__int64 a1, unsigned int a2, signed int *a3)
+bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, signed int *a3)
 {
+	__int64 a1 = (__int64)this;
+
 	signed int *v3; // r9
 	signed int v4; // eax
 	bool v5; // zf
@@ -424,7 +428,7 @@ char BSBatchRenderer::sub_14131E700(uint32_t *a2, __int64 a3, __int64 a4)
 	v8 = a2;
 	v9 = a1;
 	if (!*a2)
-		return sub_14131E7B0(a1, a2, (signed int *)a3, (__int64 *)a4);
+		return sub_14131E7B0(a2, (signed int *)a3, (__int64 *)a4);
 
 	// Inlined function here
 	v10 = *(uint64_t *)(a1 + 72);
@@ -444,13 +448,13 @@ char BSBatchRenderer::sub_14131E700(uint32_t *a2, __int64 a3, __int64 a4)
 	}
 
 LABEL_8:
-	if (!sub_14131E8F0(a1, v5, (signed int *)a3))
+	if (!sub_14131E8F0(v5, (signed int *)a3))
 	{
 		a4 = v6;
 		a3 = v7;
 		a2 = v8;
 		a1 = v9;
-		return sub_14131E7B0(a1, a2, (signed int *)a3, (__int64 *)a4);
+		return sub_14131E7B0(a2, (signed int *)a3, (__int64 *)a4);
 	}
 	return 1;
 }
@@ -497,7 +501,7 @@ LABEL_7:
 	return sub_14131E700(a2, a3, a4);
 }
 
-bool BSBatchRenderer::sub_14131E7B0(__int64 a1, uint32_t *a2, signed int *a3, __int64 *a4)
+bool BSBatchRenderer::sub_14131E7B0(uint32_t *a2, signed int *a3, __int64 *a4)
 {
 	signed int *v4; // r14
 	uint32_t *v5; // rsi
@@ -509,6 +513,8 @@ bool BSBatchRenderer::sub_14131E7B0(__int64 a1, uint32_t *a2, signed int *a3, __
 	__int64 v11; // r8
 	signed __int64 v12; // rcx
 	bool i; // zf
+
+	__int64 a1 = (__int64)this;
 
 	v4 = a3;
 	v5 = a2;
@@ -565,12 +571,12 @@ bool BSBatchRenderer::sub_14131E7B0(__int64 a1, uint32_t *a2, signed int *a3, __
 			if (*(DWORD *)v12 == *v5)
 			{
 				v9 = *(DWORD *)(v12 + 4);
-				return sub_14131E8F0(v6, v9, v4);
+				return sub_14131E8F0(v9, v4);
 			}
 			v12 = *(uint64_t *)(v12 + 8);
 		}
 	}
-	return sub_14131E8F0(v6, v9, v4);
+	return sub_14131E8F0(v9, v4);
 }
 
 char BSBatchRenderer::sub_14131E960(unsigned int *a2, unsigned int *a3, __int64 a4, unsigned int a5)
@@ -861,6 +867,7 @@ void BSBatchRenderer::sub_14131D6E0(__int64 a1)
 				v12 = *(uint64_t *)(v1 + 96);
 				if (v12)
 				{
+					// BSGraphics::Renderer::CleanupCommandBuffer or similar name (????)
 					sub_1401C49C0(*(uint64_t *)(v1 + 96), 0i64, 0i64);
 					operator_delete(v12, 16i64);
 				}

@@ -101,7 +101,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 	{
 #if TLS_DEBUG_ENABLE
 		// Sanity check the base register, which **must** be the exe base address
-		if (Patch->ExeOffset != 0xD6BF68 && Patch->ExeOffset != 0xD6BF4E && Patch->ExeOffset != 0xD6BFD3)
+		if (Patch->ExeOffset != 0xD6BF7E && Patch->ExeOffset != 0xD6BF98 && Patch->ExeOffset != 0xD6C003)
 		{
 			Xbyak::Label label1;
 			Xbyak::Label label2;
@@ -130,7 +130,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 			auto& index = ZydisToXbyak(Patch->Index);
 			uint32_t scale = max(Patch->Scale, 1);
 
-			if (Patch->ExeOffset == 0xD6BF68 || Patch->ExeOffset == 0xD6BF4E || Patch->ExeOffset == 0xD6BFD3)
+			if (Patch->ExeOffset == 0xD6BF7E || Patch->ExeOffset == 0xD6BF98 || Patch->ExeOffset == 0xD6C003)
 				memop = mem[s + rbx * 1 + structMemberOffset];
 			else
 				memop = mem[base + index * scale + structMemberOffset];

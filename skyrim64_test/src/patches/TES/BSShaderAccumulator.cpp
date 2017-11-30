@@ -63,7 +63,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		v7 = (a2 & 0xA) != 0;
 
 		if (!(a2 & 0xA))
-			((void(__fastcall *)())(g_ModuleBase + 0x12F87B0))();
+			((void(__fastcall *)())(g_ModuleBase + 0x12F8B10))();
 
 		// RenderBatches
 		annotation->BeginEvent(L"RenderBatches");
@@ -152,7 +152,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			}
 
 			if (!v7)
-				((void(__fastcall *)())(g_ModuleBase + 0x12F8910))();
+				((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
 		}
 		annotation->EndEvent();
 
@@ -161,7 +161,6 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		annotation->BeginEvent(L"RenderSky");
 		{
 		DC_RenderDeferred(a1, a2, [](__int64 a1, unsigned int a2) {
-		auto rbt1 = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3770);
 		auto graphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
 		if (graphicsGlobals->__zz0[76] != 1)
@@ -231,7 +230,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			*(DWORD *)&graphicsGlobals->__zz0[72] = 10;
 		}
 
-		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E2450))(a1, a2);
+		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E27B0))(a1, a2);
 
 		// BlendedDecals
 		annotation->BeginEvent(L"BlendedDecals");
@@ -243,7 +242,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 				*(DWORD *)&graphicsGlobals->__zz0[72] = 11;
 			}
 
-			((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E25F0))(a1, a2);
+			((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E2950))(a1, a2);
 		}
 		annotation->EndEvent();
 
@@ -260,15 +259,15 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 			graphicsGlobals->dword_14304DEB0 = v18 | 0x80;
 		}
 
-		auto sub_140D744B0 = (int(__fastcall *)())(g_ModuleBase + 0xD744B0);
-		auto sub_140D69E70 = (__int64(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0xD69E70);
-		auto sub_140D69D30 = (__int64(__fastcall *)(float *a1, float a2, float a3, float a4, int a5))(g_ModuleBase + 0xD69D30);
-		auto sub_1412FD120 = (signed __int64(__fastcall *)())(g_ModuleBase + 0x12FD120);
-		auto sub_140D74350 = (__int64(__fastcall *)(__int64 a1, unsigned int a2, int a3, int a4, char a5))(g_ModuleBase + 0xD74350);
-		auto sub_140D74370 = (void(__fastcall *)(__int64 a1, uint32_t a2, int a3, uint32_t a4))(g_ModuleBase + 0xD74370);
-		auto sub_140D69990 = (void(__fastcall *)(__int64 a1, char a2))(g_ModuleBase + 0xD69990);
-		auto sub_1412FADA0 = (__int64(__fastcall *)())(g_ModuleBase + 0x12FADA0);
-		auto sub_140D69DA0 = (void(__fastcall *)(DWORD *a1))(g_ModuleBase + 0xD69DA0);
+		auto sub_140D744B0 = (int(__fastcall *)())(g_ModuleBase + 0xD744E0);
+		auto sub_140D69E70 = (__int64(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0xD69EA0);
+		auto sub_140D69D30 = (__int64(__fastcall *)(float *a1, float a2, float a3, float a4, int a5))(g_ModuleBase + 0xD69D60);
+		auto sub_1412FD120 = (signed __int64(__fastcall *)())(g_ModuleBase + 0x12FD480);
+		auto sub_140D74350 = (__int64(__fastcall *)(__int64 a1, unsigned int a2, int a3, int a4, char a5))(g_ModuleBase + 0xD74380);
+		auto sub_140D74370 = (void(__fastcall *)(__int64 a1, uint32_t a2, int a3, uint32_t a4))(g_ModuleBase + 0xD743A0);
+		auto sub_140D69990 = (void(__fastcall *)(__int64 a1, char a2))(g_ModuleBase + 0xD699C0);
+		auto sub_1412FADA0 = (__int64(__fastcall *)())(g_ModuleBase + 0x12FB100);
+		auto sub_140D69DA0 = (void(__fastcall *)(DWORD *a1))(g_ModuleBase + 0xD69DD0);
 
 		DWORD *flt_14304E490 = (DWORD *)(g_ModuleBase + 0x304E490);
 
@@ -328,20 +327,20 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		}
 
 		if (!v7)
-			((void(__fastcall *)())(g_ModuleBase + 0x12F8910))();
+			((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
 	}
 }
 
 void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, int a4, int PassType)
 {
-	//auto RenderTechniques = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3770);
+	//auto RenderTechniques = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3AD0);
 	__int64 a1 = (__int64)this;
 
 	BSBatchRenderer::PassInfo *subPass = nullptr;
 	BSBatchRenderer *batch = nullptr;
 
 	AcquireSRWLockExclusive(&srwtest);
-	sub_1412ACFE0(a1);
+	SetCurrentAccumulator(this);
 
 	if (PassType <= -1)
 	{
