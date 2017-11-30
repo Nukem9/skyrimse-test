@@ -222,7 +222,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		annotation->EndEvent();
 
 		if (!v7)
-			((void(__fastcall *)())(g_ModuleBase + 0x12F87B0))();
+			((void(__fastcall *)())(g_ModuleBase + 0x12F8B10))();
 
 		if (*(DWORD *)&graphicsGlobals->__zz0[72] != 10)
 		{
