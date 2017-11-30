@@ -66,8 +66,8 @@ void InitializeTLSMain()
 
 	AcquireSRWLockExclusive(&g_TLSDataLock);
 	{
-		InterlockedExchangePointer((volatile PVOID *)&g_MainTLSBlock, block);
 		InterlockedExchange(&g_MainThreadId, threadId);
+		InterlockedExchangePointer((volatile PVOID *)&g_MainTLSBlock, block);
 
 		g_ThreadTLSMaps.insert_or_assign(g_MainThreadId, *currentTlsBlock);
 		*currentTlsBlock = g_MainTLSBlock;
