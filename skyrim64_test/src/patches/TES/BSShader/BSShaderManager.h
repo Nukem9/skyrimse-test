@@ -1,7 +1,6 @@
 #pragma once
 
 #define BAD_SHADER 0x11223344
-#define DO_ALPHA_TEST_FLAG 0x10000
 
 #define BSSM_DISTANTTREE_DEPTH 0x5C00002F
 #define BSSM_GRASS_DIRONLY_LF 0x5C000030
@@ -15,13 +14,6 @@
 #define BSSM_WATER_DISPLACEMENT_STENCIL_Vc 0x5C000070
 #define BSSM_BLOOD_SPLATTER 0x5C006074
 
-enum class BSSM_GROUP_TYPE
-{
-	PER_GEO,	// PerGeometry
-	PER_MAT,	// PerMaterial
-	PER_TEC,	// PerTechnique
-};
-
 enum class BSSM_SHADER_TYPE
 {
 	VERTEX,		// BSVertexShader
@@ -29,8 +21,19 @@ enum class BSSM_SHADER_TYPE
 	COMPUTE,	// BSComputeShader
 };
 
+enum class BSSM_GROUP_TYPE
+{
+	PER_GEO,	// PerGeometry
+	PER_MAT,	// PerMaterial
+	PER_TEC,	// PerTechnique
+};
+
 #pragma pack(push, 8)
-struct BSConstantBufferInfo
+struct BSRenderPass
+{
+};
+
+struct BSConstantGroup
 {
 	ID3D11Buffer *m_Buffer;	// Selected from pool in Load*ShaderFromFile()
 	void *m_Data;			// m_ConstantBufferData = DeviceContext->Map(m_ConstantBuffer)
@@ -38,77 +41,6 @@ struct BSConstantBufferInfo
 	// Based on shader load flags, these **CAN BE NULL**. At least one of the
 	// pointers is guaranteed to be non-null.
 };
-
-struct BSComputeBufferInfo
-{
-	ID3D11Buffer *m_Buffer;	// Always a nullptr
-	void *m_Data;			// Static buffer inside the exe .data section. Can be null.
-	uint32_t m_UnknownIndex;// Compute shaders do something special but I don't remember
-							// off the top of my head. Optional buffer index?
-};
-
-struct BSVertexShader
-{
-	uint32_t m_TechniqueID;				// Bit flags
-	ID3D11VertexShader *m_Shader;
-	uint32_t m_ShaderLength;			// Raw bytecode length
-	BSConstantBufferInfo m_PerGeometry;
-	BSConstantBufferInfo m_PerMaterial;
-	BSConstantBufferInfo m_PerTechnique;
-	uint64_t m_InputLayoutFlags;		// ID3D11Device::CreateInputLayout (for VSMain())
-	uint8_t m_ConstantOffsets[20];		// Actual offset is multiplied by 4
-	// Raw bytecode appended after this
-};
-static_assert(offsetof(BSVertexShader, m_TechniqueID) == 0x0, "");
-static_assert(offsetof(BSVertexShader, m_Shader) == 0x8, "");
-static_assert(offsetof(BSVertexShader, m_ShaderLength) == 0x10, "");
-static_assert(offsetof(BSVertexShader, m_PerGeometry) == 0x18, "");
-static_assert(offsetof(BSVertexShader, m_PerMaterial) == 0x28, "");
-static_assert(offsetof(BSVertexShader, m_PerTechnique) == 0x38, "");
-static_assert(offsetof(BSVertexShader, m_InputLayoutFlags) == 0x48, "");
-static_assert(offsetof(BSVertexShader, m_ConstantOffsets) == 0x50, "");
-static_assert(sizeof(BSVertexShader) == 0x68, "");
-
-struct BSPixelShader
-{
-	uint32_t m_TechniqueID;				// Bit flags
-	ID3D11PixelShader *m_Shader;
-	BSConstantBufferInfo m_PerGeometry;
-	BSConstantBufferInfo m_PerMaterial;
-	BSConstantBufferInfo m_PerTechnique;
-	uint8_t m_ConstantOffsets[64];		// Actual offset is multiplied by 4
-	// Bytecode is not appended
-};
-static_assert(offsetof(BSPixelShader, m_TechniqueID) == 0x0, "");
-static_assert(offsetof(BSPixelShader, m_Shader) == 0x8, "");
-static_assert(offsetof(BSPixelShader, m_PerGeometry) == 0x10, "");
-static_assert(offsetof(BSPixelShader, m_PerMaterial) == 0x20, "");
-static_assert(offsetof(BSPixelShader, m_PerTechnique) == 0x30, "");
-static_assert(offsetof(BSPixelShader, m_ConstantOffsets) == 0x40, "");
-static_assert(sizeof(BSPixelShader) == 0x80, "");
-
-struct BSComputeShader
-{
-	char _pad0[0x8];
-	BSComputeBufferInfo CBuffer1;
-	char _pad1[0x8];
-	BSComputeBufferInfo CBuffer2;
-	char _pad2[0x8];
-	BSComputeBufferInfo CBuffer3;
-	ID3D11ComputeShader *m_Shader;
-	uint32_t m_Unknown;					// Probably technique dword
-	uint32_t m_ShaderLength;			// Raw bytecode length
-	uint8_t m_ConstantOffsets[32];		// Actual offset is multiplied by 4
-	// Raw bytecode appended after this
-};
-static_assert(offsetof(BSComputeShader, CBuffer1) == 0x8, "");
-static_assert(offsetof(BSComputeShader, CBuffer2) == 0x28, "");
-static_assert(offsetof(BSComputeShader, CBuffer3) == 0x48, "");
-static_assert(offsetof(BSComputeShader, m_Shader) == 0x60, "");
-static_assert(offsetof(BSComputeShader, m_Unknown) == 0x68, "");
-static_assert(offsetof(BSComputeShader, m_ShaderLength) == 0x6C, "");
-static_assert(offsetof(BSComputeShader, m_ConstantOffsets) == 0x70, "");
-static_assert(sizeof(BSComputeShader) == 0x90, "");
 #pragma pack(pop)
 
 namespace BSShaderMappings { struct Entry; }
@@ -138,7 +70,7 @@ public:
 
 protected:
 	void DumpShaderInfo();
-	void DumpCBuffer(FILE *File, BSConstantBufferInfo *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex);
+	void DumpCBuffer(FILE *File, BSConstantGroup *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex);
 
 	virtual uint32_t GetTechnique() = 0;
 	virtual const uint8_t *GetConstantArray() = 0;
@@ -151,61 +83,6 @@ protected:
 	void GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t Technique);
 	const char *GetSamplerName(int Index, uint32_t Technique);
 	std::vector<std::pair<const char *, const char *>> GetDefineArray(uint32_t Technique);
-};
-
-class VertexShaderDecoder : public ShaderDecoder
-{
-private:
-	BSVertexShader *m_Shader;
-
-public:
-	VertexShaderDecoder(const char *Type, BSVertexShader *Shader);
-
-private:
-	virtual uint32_t GetTechnique() override
-	{
-		return m_Shader->m_TechniqueID;
-	}
-
-	virtual const uint8_t *GetConstantArray() override
-	{
-		return m_Shader->m_ConstantOffsets;
-	}
-
-	virtual size_t GetConstantArraySize() override
-	{
-		return ARRAYSIZE(BSVertexShader::m_ConstantOffsets);
-	}
-
-	virtual void DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined) override;
-	void GetInputLayoutString(char *Buffer, size_t BufferSize);
-};
-
-class PixelShaderDecoder : public ShaderDecoder
-{
-private:
-	BSPixelShader *m_Shader;
-
-public:
-	PixelShaderDecoder(const char *Type, BSPixelShader *Shader);
-
-private:
-	virtual uint32_t GetTechnique() override
-	{
-		return m_Shader->m_TechniqueID;
-	}
-
-	virtual const uint8_t *GetConstantArray() override
-	{
-		return m_Shader->m_ConstantOffsets;
-	}
-
-	virtual size_t GetConstantArraySize() override
-	{
-		return ARRAYSIZE(BSPixelShader::m_ConstantOffsets);
-	}
-
-	virtual void DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined) override;
 };
 
 //
@@ -224,6 +101,7 @@ private:
 #pragma push_macro("TEST_BIT") 
 #define TEST_BIT(index) (Technique & (1u << (index)))
 
+#define DO_ALPHA_TEST_FLAG 0x10000
 #define BSSM_PLACEHOLDER "Add-your-constant-to-" __FUNCTION__
 
 namespace BSShaderMappings

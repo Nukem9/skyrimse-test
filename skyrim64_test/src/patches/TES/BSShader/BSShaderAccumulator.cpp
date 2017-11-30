@@ -1,7 +1,7 @@
-#include "../rendering/common.h"
-#include "../../common.h"
+#include "../../rendering/common.h"
+#include "../../../common.h"
+#include "../BSBatchRenderer.h"
 #include "BSShaderManager.h"
-#include "BSBatchRenderer.h"
 #include "BSShaderAccumulator.h"
 
 extern ID3DUserDefinedAnnotation *annotation;
@@ -10,13 +10,14 @@ SRWLOCK srwtest = SRWLOCK_INIT;
 void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int));
 void DC_WaitDeferred();
 
-static void sub_1412ACFE0(__int64 a1)
+static void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator)
 {
 	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
+	// BSShaderManager::pCurrentShaderAccumulator
 	uint64_t& qword_1431F5490 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3600);
 
-	qword_1431F5490 = a1;
+	qword_1431F5490 = (uint64_t)Accumulator;
 }
 
 static void sub_14131F090()
@@ -36,6 +37,35 @@ static void sub_14131F090()
 	qword_1432A8218 = 0i64;
 	dword_1432A8214 = 0;
 	qword_1434B5220 = 0i64;
+}
+
+void BSGraphics__Renderer__SetTextureFilterMode(uint32_t Index, uint32_t Mode)
+{
+	auto *GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+
+	if (GraphicsGlobals->m_PSSamplerSetting2[Index] != Mode)
+	{
+		GraphicsGlobals->m_PSSamplerSetting2[1] = Mode;
+		GraphicsGlobals->m_PSSamplerModifiedBits |= 1 << Index;
+	}
+}
+
+void BSGraphics__Renderer__SetTextureMode(uint32_t Index, uint32_t Setting1, uint32_t Setting2)
+{
+	auto *GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+
+	if (GraphicsGlobals->m_PSSamplerSetting1[Index] != Setting1)
+	{
+		GraphicsGlobals->m_PSSamplerSetting1[1] = Setting1;
+		GraphicsGlobals->m_PSSamplerModifiedBits |= 1 << Index;
+	}
+
+	// Probably "Filter Mode"
+	if (GraphicsGlobals->m_PSSamplerSetting2[Index] != Setting2)
+	{
+		GraphicsGlobals->m_PSSamplerSetting2[1] = Setting2;
+		GraphicsGlobals->m_PSSamplerModifiedBits |= 1 << Index;
+	}
 }
 
 void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)

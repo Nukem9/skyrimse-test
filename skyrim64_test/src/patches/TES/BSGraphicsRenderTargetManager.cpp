@@ -1,6 +1,6 @@
 #include "../../common.h"
+#include "BSShader/BSShaderRenderTargets.h"
 #include "BSGraphicsRenderTargetManager.h"
-#include "BSShaderRenderTargets.h"
 
 using namespace BSShaderRenderTargets;
 

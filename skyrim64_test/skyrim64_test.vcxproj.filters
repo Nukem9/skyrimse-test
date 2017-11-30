@@ -101,16 +101,7 @@
     <ClInclude Include="src\patches\TES\BSGraphicsRenderTargetManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShaderManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShaderProperty.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShaderRenderTargets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="xbyak\xbyak_util.h">
@@ -140,10 +131,43 @@
     <ClInclude Include="src\patches\TES\MemoryContextTracker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShaderAccumulator.h">
+    <ClInclude Include="src\patches\TES\BSBatchRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSBatchRenderer.h">
+    <ClInclude Include="src\patches\TES\BSTArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiRefObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderRenderTargets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderAccumulator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSVertexShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSPixelShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSComputeShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -322,13 +346,7 @@
     <ClCompile Include="src\patches\experimental.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShaderManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\logging.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShaderRenderTargets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="zydis\src\Decoder.c">
@@ -379,19 +397,37 @@
     <ClCompile Include="src\patches\TES\BSBatchRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShaderAccumulator.cpp">
+    <ClCompile Include="src\patches\TES\BSShader\BSShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderRenderTargets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderAccumulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSPixelShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSVertexShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
-    <None Include="src\patches\TES\BSShaderConstants.inl">
-      <Filter>Header Files</Filter>
-    </None>
     <None Include="src\patches\rendering\d3d11_tls_patchlist.inl">
       <Filter>Header Files</Filter>
     </None>
     <None Include="src\patches\rendering\d3d11_tls_xreflist.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="src\patches\TES\BSShader\BSShaderConstants.inl">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>

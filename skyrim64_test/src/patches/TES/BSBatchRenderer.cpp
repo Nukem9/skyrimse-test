@@ -1,7 +1,7 @@
 #include "../rendering/common.h"
 #include "../../common.h"
+#include "BSShader/BSShaderManager.h"
 #include "MemoryContextTracker.h"
-#include "BSShaderManager.h"
 #include "BSSpinLock.h"
 #include "BSBatchRenderer.h"
 

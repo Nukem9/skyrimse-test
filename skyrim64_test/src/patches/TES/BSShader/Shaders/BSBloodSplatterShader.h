@@ -1,6 +1,7 @@
 #pragma once
 
-#include "BSShader.h"
+#include "../BSShader.h"
+
 /*
 class BSBloodSplatterShader : public BSShader
 {

@@ -1,9 +1,7 @@
 #pragma once
 
-#include "NiObject.h"
+#include "../NiObject.h"
 #include "BSShaderManager.h"
-
-struct BSRenderPass;
 
 class NiBoneMatrixSetterI
 {

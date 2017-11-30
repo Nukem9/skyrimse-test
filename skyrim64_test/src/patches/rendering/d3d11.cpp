@@ -1,10 +1,12 @@
 #include "common.h"
 #include "../../ui/ui.h"
-#include "../TES/BSShaderManager.h"
-#include "../TES/BSShaderRenderTargets.h"
+#include "../TES/BSShader/BSPixelShader.h"
+#include "../TES/BSShader/BSVertexShader.h"
+#include "../TES/BSShader/BSShaderManager.h"
+#include "../TES/BSShader/BSShaderRenderTargets.h"
 #include "../TES/BSSpinLock.h"
 #include "../TES/MemoryContextTracker.h"
-#include "../TES/BSShaderAccumulator.h"
+#include "../TES/BSShader/BSShaderAccumulator.h"
 #include "../TES/BSBatchRenderer.h"
 
 // BSGraphicsRenderer

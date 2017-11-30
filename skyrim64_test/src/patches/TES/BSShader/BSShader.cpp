@@ -1,4 +1,6 @@
-#include "../../common.h"
+#include "../../../common.h"
+#include "BSVertexShader.h"
+#include "BSPixelShader.h"
 #include "BSShader.h"
 
 void BSShader::SetupMaterial()
