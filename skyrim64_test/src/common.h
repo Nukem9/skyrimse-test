@@ -12,21 +12,33 @@
 #pragma comment(lib, "D3DCompiler.lib")
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
-#pragma comment(lib, "libittnotify.lib")
 
+// Intel VTune
+#ifdef SKYRIM64_USE_VTUNE
+#include <ittnotify.h>
+#pragma comment(lib, "libittnotify.lib")
+#endif
+
+// Jemalloc
+#include <jemalloc/jemalloc.h>
+
+// Detours
+#ifdef _DEBUG
+#include "../detours/Detours.h"
+#pragma comment(lib, "detours/detours_debug.lib")
+#else
 #include "../detours/Detours.h"
 #pragma comment(lib, "detours/detours.lib")
+#endif
 
+// ImGui
 #include "../imgui/imgui.h"
 #include "ui/ui.h"
-
-#include <jemalloc/jemalloc.h>
 
 #include "xutil.h"
 #include "dump.h"
 #include "ansel.h"
 #include "profiler.h"
-
 #include "patches/patches.h"
 
 extern ULONG_PTR g_ModuleBase;

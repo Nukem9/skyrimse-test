@@ -1,4 +1,3 @@
-#include <ittnotify.h>
 #include "common.h"
 
 /**
@@ -95,7 +94,7 @@ void SetThreadName(DWORD dwThreadID, const char *ThreadName)
 	if (!ThreadName)
 		return;
 
-#ifdef ITT_PLATFORM
+#ifdef SKYRIM64_USE_VTUNE
 	if (dwThreadID == GetCurrentThreadId())
 		__itt_thread_set_name(ThreadName);
 #endif

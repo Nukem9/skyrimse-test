@@ -44,20 +44,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\include;$(ProjectDir)zydis\src;$(ProjectDir)zydis\include;$(ProjectDir)jemalloc\include\msvc_compat;$(ProjectDir)jemalloc\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\lib64;$(LibraryPath)</LibraryPath>
+    <TargetName>d3dx9_42</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\zydis\src;E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\zydis\include;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\include;E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\jemalloc\include\msvc_compat;E:\Projects\Skyrim\SkyrimSETest\skyrim64_test\jemalloc\include;$(IncludePath)</IncludePath>
+    <IncludePath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\include;$(ProjectDir)zydis\src;$(ProjectDir)zydis\include;$(ProjectDir)jemalloc\include\msvc_compat;$(ProjectDir)jemalloc\include;$(IncludePath)</IncludePath>
     <LibraryPath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\lib64;$(LibraryPath)</LibraryPath>
     <TargetName>d3dx9_42</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_REENTRANT;JEMALLOC_EXPORT=;_DEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

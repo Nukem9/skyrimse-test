@@ -46,6 +46,7 @@ void LoadModules()
     // SKSE64 loads by itself in the root dir
     g_DllSKSE = LoadLibraryA("skse64_1_5_3.dll");
 
+#ifdef SKYRIM64_USE_VTUNE
     // Check if VTune is active
     const char *libttPath = getenv("INTEL_LIBITTNOTIFY64");
 
@@ -53,6 +54,7 @@ void LoadModules()
         libttPath = "libittnotify.dll";
 
     g_DllVTune = LoadLibraryA(libttPath);
+#endif
 }
 
 void DoHook();

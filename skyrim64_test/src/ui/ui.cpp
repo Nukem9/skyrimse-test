@@ -1,4 +1,3 @@
-#include <ittnotify.h>
 #include "../common.h"
 #include "../patches/dinput8.h"
 #include "imgui_ext.h"
@@ -146,6 +145,7 @@ namespace ui
             ImGui::EndMenu();
         }
 
+#ifdef SKYRIM64_USE_VTUNE
 		if (g_DllVTune && ImGui::BeginMenu("VTune"))
 		{
 			if (ImGui::MenuItem("Start Collection"))
@@ -159,6 +159,7 @@ namespace ui
 
 			ImGui::EndMenu();
 		}
+#endif
 
         if (ImGui::BeginMenu("Windows"))
         {
