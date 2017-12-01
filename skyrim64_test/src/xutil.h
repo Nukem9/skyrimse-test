@@ -91,4 +91,19 @@ public:
 	{
 		return (T *)m_RawAddress;
 	}
+
+	inline void operator = (const T& Value)
+	{
+		*(T *)m_RawAddress = Value;
+	}
+
+	T& get()
+	{
+		return *(T *)m_RawAddress;
+	}
+
+	inline operator T () const
+	{
+		return *(T *)m_RawAddress;
+	}
 };

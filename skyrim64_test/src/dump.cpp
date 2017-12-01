@@ -18,15 +18,13 @@ BOOL WINAPI hk_QueryPerformanceCounter(LARGE_INTEGER *lpPerformanceCount)
 
 void EnableCookieHack()
 {
-	// Validate DOS Header
+	// Validate DOS and NT headers
 	uintptr_t moduleBase		= (uintptr_t)GetModuleHandle(nullptr);
 	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)moduleBase;
+	PIMAGE_NT_HEADERS64 ntHeaders = (PIMAGE_NT_HEADERS64)(moduleBase + dosHeader->e_lfanew);
 
 	if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
 		__debugbreak();
-
-	// Validate PE Header and 64-bit module type
-	PIMAGE_NT_HEADERS64 ntHeaders = (PIMAGE_NT_HEADERS64)(moduleBase + dosHeader->e_lfanew);
 
 	if (ntHeaders->Signature != IMAGE_NT_SIGNATURE)
 		__debugbreak();
