@@ -1,5 +1,9 @@
 #pragma once
 
+#define SKYRIM64_USE_VTUNE		0
+#define SKYRIM64_USE_VFS		0
+#define SKYRIM64_USE_PROFILER	0
+
 #include <windows.h>
 #include <stdio.h>
 #include <vector>
@@ -14,7 +18,7 @@
 #pragma comment(lib, "dxguid.lib")
 
 // Intel VTune
-#ifdef SKYRIM64_USE_VTUNE
+#if SKYRIM64_USE_VTUNE
 #include <ittnotify.h>
 #pragma comment(lib, "libittnotify.lib")
 #endif

@@ -94,7 +94,7 @@ void SetThreadName(DWORD dwThreadID, const char *ThreadName)
 	if (!ThreadName)
 		return;
 
-#ifdef SKYRIM64_USE_VTUNE
+#if SKYRIM64_USE_VTUNE
 	if (dwThreadID == GetCurrentThreadId())
 		__itt_thread_set_name(ThreadName);
 #endif

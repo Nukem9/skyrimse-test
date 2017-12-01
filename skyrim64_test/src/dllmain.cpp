@@ -20,10 +20,10 @@ HMODULE g_DllDXGI;
 HMODULE g_DllD3D11;
 
 void once();
+void DoHook();
+
 void LoadModules()
 {
-    once();
-
     // X3DAudio HRTF is a drop-in replacement for x3daudio1_7.dll
     g_Dll3DAudio = LoadLibraryA("test\\x3daudio1_7.dll");
 
@@ -46,7 +46,7 @@ void LoadModules()
     // SKSE64 loads by itself in the root dir
     g_DllSKSE = LoadLibraryA("skse64_1_5_3.dll");
 
-#ifdef SKYRIM64_USE_VTUNE
+#if SKYRIM64_USE_VTUNE
     // Check if VTune is active
     const char *libttPath = getenv("INTEL_LIBITTNOTIFY64");
 
@@ -57,7 +57,6 @@ void LoadModules()
 #endif
 }
 
-void DoHook();
 void ApplyPatches()
 {
     // Called once the exe has been unpacked. Before applying code modifications:
@@ -89,9 +88,13 @@ void ApplyPatches()
     SetErrorMode(0);
     SetThreadErrorMode(0, &oldMode);
 
-	InitializeTLSMain();
+#if SKYRIM64_USE_VFS
+	once();
     DoHook();
-    LoadModules();
+#endif
+
+	InitializeTLSMain();
+	//LoadModules();
 
 	SetThreadName(GetCurrentThreadId(), "Main Thread");
 
@@ -99,7 +102,7 @@ void ApplyPatches()
     PatchThreading();
     //PatchWindow();
     PatchDInput();
-    PatchD3D11();
+    //PatchD3D11();
 	PatchSteam();
     PatchAchievements();
     PatchSettings();

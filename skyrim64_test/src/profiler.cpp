@@ -1,6 +1,6 @@
 #include "common.h"
 
-#ifdef PROFILER_ENABLED
+#if SKYRIM64_USE_PROFILER
 namespace Profiler
 {
     namespace Internal
@@ -72,4 +72,4 @@ namespace Profiler
 		return (double)GetDeltaValue(CRC) / (double)Internal::CpuFrequency;
 	}
 }
-#endif // PROFILER_ENABLED
+#endif // SKYRIM64_USE_PROFILER

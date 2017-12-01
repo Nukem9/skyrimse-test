@@ -145,7 +145,7 @@ namespace ui
             ImGui::EndMenu();
         }
 
-#ifdef SKYRIM64_USE_VTUNE
+#if SKYRIM64_USE_VTUNE
 		if (g_DllVTune && ImGui::BeginMenu("VTune"))
 		{
 			if (ImGui::MenuItem("Start Collection"))

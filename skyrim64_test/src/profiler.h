@@ -4,9 +4,7 @@
 #include <array>
 #include <unordered_map>
 
-//#define PROFILER_ENABLED
-
-#ifdef PROFILER_ENABLED
+#if SKYRIM64_USE_PROFILER
 #define WTFTEST(x) x
 
 #ifdef _DEBUG
@@ -21,7 +19,6 @@
 
 #define ProfileGetValue(Name)			Profiler::GetValue<Profiler::Internal::CRC32(Name)>()
 #define ProfileGetDeltaValue(Name)		Profiler::GetDeltaValue<Profiler::Internal::CRC32(Name)>()
-//#define ProfileGetDouble(Name)			((double)Profiler::GetValue<Profiler::Internal::CRC32(Name)>())
 #define ProfileGetTime(Name)			Profiler::GetTime<Profiler::Internal::CRC32(Name)>()
 #define ProfileGetDeltaTime(Name)		Profiler::GetDeltaTime<Profiler::Internal::CRC32(Name)>()
 #else
@@ -31,12 +28,11 @@
 
 #define ProfileGetValue(Name)			(0)
 #define ProfileGetDeltaValue(Name)		(0)
-//#define ProfileGetDouble(Name)			(0.0)
 #define ProfileGetTime(Name)			(0.0)
 #define ProfileGetDeltaTime(Name)		(0.0)
 #endif
 
-#ifdef PROFILER_ENABLED
+#if SKYRIM64_USE_PROFILER
 namespace Profiler
 {
 	namespace Internal
@@ -134,4 +130,4 @@ namespace Profiler
 		return GetDeltaTime(CRC);
 	}
 }
-#endif // PROFILER_ENABLED
+#endif // SKYRIM64_USE_PROFILER
