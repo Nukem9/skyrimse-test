@@ -4,6 +4,27 @@
 #include <type_traits>
 #pragma warning(disable:4094) // untagged 'struct' declared no symbols
 
+#define VTABLE_FUNCTION_INDEX(Function) vtable_index_util::getIndexOf(&Function)
+
+class vtable_index_util
+{
+private:
+	typedef int(*VtableIndexFn)();
+	static vtable_index_util *GlobalInstance;
+
+public:
+	static vtable_index_util *Instance();
+
+	template<typename T>
+	static int getIndexOf(T ptr)
+	{
+		return (Instance()->**((decltype(&ForceVtableReference)*)(&ptr)))();
+	}
+
+private:
+	virtual int ForceVtableReference();
+};
+
 template<void(*ctor)()>
 struct static_constructor
 {

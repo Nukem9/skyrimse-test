@@ -121,3 +121,69 @@ void Trim(char *Buffer, char C)
 	if (len > 0 && Buffer[len - 1] == C)
 		Buffer[len - 1] = '\0';
 }
+
+vtable_index_util *vtable_index_util::GlobalInstance;
+
+vtable_index_util *vtable_index_util::Instance()
+{
+	if (!GlobalInstance)
+	{
+		GlobalInstance = new vtable_index_util;
+		GlobalInstance->ForceVtableReference();
+
+		// Overwrite this class's vtable pointers
+		static const VtableIndexFn VtableIndexArray[] =
+		{
+			[]() -> int { return 0; },
+			[]() -> int { return 1; },
+			[]() -> int { return 2; },
+			[]() -> int { return 3; },
+			[]() -> int { return 4; },
+			[]() -> int { return 5; },
+			[]() -> int { return 6; },
+			[]() -> int { return 7; },
+			[]() -> int { return 8; },
+			[]() -> int { return 9; },
+			[]() -> int { return 10; },
+			[]() -> int { return 11; },
+			[]() -> int { return 12; },
+			[]() -> int { return 13; },
+			[]() -> int { return 14; },
+			[]() -> int { return 15; },
+			[]() -> int { return 16; },
+			[]() -> int { return 17; },
+			[]() -> int { return 18; },
+			[]() -> int { return 19; },
+			[]() -> int { return 20; },
+			[]() -> int { return 21; },
+			[]() -> int { return 22; },
+			[]() -> int { return 23; },
+			[]() -> int { return 24; },
+			[]() -> int { return 25; },
+			[]() -> int { return 26; },
+			[]() -> int { return 27; },
+			[]() -> int { return 28; },
+			[]() -> int { return 29; },
+			[]() -> int { return 30; },
+			[]() -> int { return 31; },
+			[]() -> int { return 32; },
+			[]() -> int { return 33; },
+			[]() -> int { return 34; },
+			[]() -> int { return 35; },
+			[]() -> int { return 36; },
+			[]() -> int { return 37; },
+			[]() -> int { return 38; },
+			[]() -> int { return 39; },
+			[]() -> int { return 40; },
+		};
+
+		*(uintptr_t *)GlobalInstance = (uintptr_t)&VtableIndexArray;
+	}
+
+	return GlobalInstance;
+}
+
+int vtable_index_util::ForceVtableReference()
+{
+	return 0;
+}
