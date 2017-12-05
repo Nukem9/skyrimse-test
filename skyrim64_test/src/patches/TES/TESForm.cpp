@@ -1,4 +1,4 @@
-#include <unordered_map>
+#include "../../../tbb2018/concurrent_unordered_map.h"
 #include "../../common.h"
 #include "BSTScatterTable.h"
 #include "BSReadWriteLock.h"
@@ -6,9 +6,7 @@
 
 AutoPtr<BSReadWriteLock, 0x1EEA0D0> GlobalFormLock;
 AutoPtr<BSTScatterTable<uint32_t, TESForm *> *, 0x1EE9C38> GlobalFormList;
-
-std::unordered_map<uint32_t, TESForm *> g_FormMap[TES_FORM_MASTER_COUNT];
-BSReadWriteLock g_FormLocks[TES_FORM_MASTER_COUNT];
+tbb::concurrent_unordered_map<uint32_t, TESForm *> g_FormMap[TES_FORM_MASTER_COUNT];
 
 namespace Bitmap
 {
@@ -106,24 +104,16 @@ void UpdateFormCache(uint32_t FormId, TESForm *Value, bool Invalidate)
         // Atomic write can be outside of the lock
         Bitmap::SetNull(masterId, baseId);
     }
-    else
-    {
-        if (Invalidate)
-            Bitmap::Unset(masterId, baseId);
+	else
+	{
+		if (Invalidate)
+			Bitmap::Unset(masterId, baseId);
 
-        // Hash map write operation. Always requires a write lock.
-        auto &lock = g_FormLocks[masterId];
-        auto &map  = g_FormMap[masterId];
-
-        lock.AcquireWrite();
-        {
-            if (Invalidate)
-                map.erase(baseId);
-            else
-                map.insert_or_assign(baseId, Value);
-        }
-        lock.ReleaseWrite();
-    }
+		if (Invalidate)
+			g_FormMap[masterId][baseId] = (TESForm *)1;
+		else
+			g_FormMap[masterId][baseId] = Value;
+	}
 }
 
 bool GetFormCache(uint32_t FormId, TESForm *&Form)
@@ -146,30 +136,25 @@ bool GetFormCache(uint32_t FormId, TESForm *&Form)
 
         ProfileCounterInc("Null Fetches");
     }
-    else
-    {
-        auto &lock      = g_FormLocks[masterId];
-        const auto &map = g_FormMap[masterId];
+	else
+	{
+		// Slow method: Check if the hashmap entry exists
+		const auto &map = g_FormMap[masterId];
 
-        // Slow method: get the read lock and check if the entry exists
-        lock.AcquireRead();
-        {
-            if (auto e = map.find(baseId); e != map.end())
-            {
-                hit  = true;
-                Form = e->second;
-            }
-            else
-            {
-                // Total cache miss, worst case scenario
-                hit  = false;
-                Form = nullptr;
+		if (auto e = map.find(baseId); e != map.end() && e->second != (TESForm *)1)
+		{
+			hit = true;
+			Form = e->second;
+		}
+		else
+		{
+			// Total cache miss, worst case scenario
+			hit = false;
+			Form = nullptr;
 
-                ProfileCounterInc("Cache Misses");
-            }
-        }
-        lock.ReleaseRead();
-    }
+			ProfileCounterInc("Cache Misses");
+		}
+	}
 
     return hit;
 }
@@ -189,10 +174,10 @@ TESForm *GetFormById(unsigned int FormId)
 
     // Try to use Bethesda's scatter table which is considerably slower
 	GlobalFormLock->AcquireRead();
-    {
-        if (!GlobalFormList || !GlobalFormList->Get(FormId, formPointer))
-            formPointer = nullptr;
-    }
+
+	if (!GlobalFormList || !GlobalFormList->Get(FormId, formPointer))
+		formPointer = nullptr;
+
 	GlobalFormLock->ReleaseRead();
 
     UpdateFormCache(FormId, formPointer, false);
