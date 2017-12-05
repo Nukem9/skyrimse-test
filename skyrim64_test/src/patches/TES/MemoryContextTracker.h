@@ -5,7 +5,6 @@ class MemoryContextTracker
 private:
 	uint32_t *m_IdPtr;
 	uint32_t m_OldId;
-	uint32_t m_Id;
 
 public:
 	MemoryContextTracker(uint32_t Id, const char *File)
