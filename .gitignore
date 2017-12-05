@@ -37,6 +37,10 @@
 
 # VS2017
 .vs/
+*/x64/Release/
+*/x64/Debug/
+x64/Release/
+x64/Debug/
 
 # VTune
 */*My Amplifier Results*/
