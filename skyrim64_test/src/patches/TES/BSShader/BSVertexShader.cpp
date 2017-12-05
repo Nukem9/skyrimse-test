@@ -32,11 +32,11 @@ void VertexShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<P
 	FILE *file = fopen(buf1, "w");
 
 	//char inputLayout[1024];
-	//GetInputLayoutString(m_Shader->m_InputLayoutFlags, inputLayout, ARRAYSIZE(inputLayout));
+	//GetInputLayoutString(m_Shader->m_VertexDescription, inputLayout, ARRAYSIZE(inputLayout));
 
 	fprintf(file, "// %s\n", m_Type);
 	fprintf(file, "// TechniqueID: 0x%X\n", m_Shader->m_TechniqueID);
-	fprintf(file, "// Input flags: 0x%llX\n//\n", m_Shader->m_InputLayoutFlags);
+	fprintf(file, "// Vertex description: 0x%llX\n//\n", m_Shader->m_VertexDescription);
 	fprintf(file, "// Technique: %s\n\n", TechName);
 	//fprintf(file, "// Input layout: %s\n\n", inputLayout);
 
@@ -77,7 +77,7 @@ void VertexShaderDecoder::GetInputLayoutString(char *Buffer, size_t BufferSize)
 
 	auto isSet = [this](uint64_t Bits)
 	{
-		return (m_Shader->m_InputLayoutFlags & Bits) == Bits;
+		return (m_Shader->m_VertexDescription & Bits) == Bits;
 	};
 
 	// Skyrim always uses some default layout params, these ones are optional

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "BSTArray.h"
+#include "BSShader/BSShaderManager.h"
+
 class BSBatchRenderer
 {
 public:
@@ -17,13 +20,23 @@ public:
 		void Unregister();
 	};
 
+	// ????
+	struct RenderPassGroup
+	{
+		BSRenderPass *m_Pass[5];
+		DWORD UnkDword1;
+
+		void Clear(bool Validate);
+	};
+
 	virtual ~BSBatchRenderer();
 	virtual void VFunc01() = 0;	// Registers a pass?
 	virtual void VFunc02() = 0;	// Registers a pass?
 	virtual void VFunc03() = 0;	// Unknown (render?)
 
+	BSTArray<RenderPassGroup> m_RenderGroups;
 	// BSTScatterTree<>
-	char _pad1[0x48];
+	char _pad1[0x30];
 	uint32_t m_StartingTech;
 	uint32_t m_EndingTech;
 	char _pad2[0x10];
@@ -50,8 +63,10 @@ static_assert(offsetof(BSBatchRenderer::PassInfo, UnkPtr4) == 0x18, "");
 static_assert(offsetof(BSBatchRenderer::PassInfo, UnkWord1) == 0x24, "");
 static_assert(offsetof(BSBatchRenderer::PassInfo, UnkByte1) == 0x26, "");
 
+static_assert(sizeof(BSBatchRenderer::RenderPassGroup) == 0x30, "");
+
 static_assert(sizeof(BSBatchRenderer) == 0x108, "");
-static_assert(offsetof(BSBatchRenderer, _pad1) == 0x8, "");
+//static_assert(offsetof(BSBatchRenderer, _pad1) == 0x8, "");
 static_assert(offsetof(BSBatchRenderer, m_StartingTech) == 0x50, "");
 static_assert(offsetof(BSBatchRenderer, m_EndingTech) == 0x54, "");
 static_assert(offsetof(BSBatchRenderer, iGroupingAlphas) == 0x68, "");

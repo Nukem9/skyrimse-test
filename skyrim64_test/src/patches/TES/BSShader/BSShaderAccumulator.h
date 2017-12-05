@@ -54,6 +54,8 @@ class BSShaderAccumulator : public NiAlphaAccumulator
 public:
 	virtual ~BSShaderAccumulator();
 
+	virtual void StartAccumulating(NiCamera const *) override;
+	virtual void FinishAccumulating() override;
 	virtual void Unknown2();
 	virtual void Unknown3();
 	virtual void Unknown4();

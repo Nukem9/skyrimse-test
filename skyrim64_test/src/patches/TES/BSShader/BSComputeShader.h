@@ -8,7 +8,7 @@ struct BSComputeBufferInfo
 	ID3D11Buffer *m_Buffer;	// Always a nullptr
 	void *m_Data;			// Static buffer inside the exe .data section. Can be null.
 	uint32_t m_UnknownIndex;// Compute shaders do something special but I don't remember
-							// off the top of my head. Optional buffer index?
+							// off the top of my head. Optional UAV buffer index?
 };
 
 struct BSComputeShader

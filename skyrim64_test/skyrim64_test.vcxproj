@@ -97,6 +97,7 @@
     <ClInclude Include="src\patches\TES\BSBatchRenderer.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSComputeShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSPixelShader.h" />
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderMaterial.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSVertexShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsRenderTargetManager.h" />
@@ -186,6 +187,7 @@
     <ClCompile Include="src\patches\steam.cpp" />
     <ClCompile Include="src\patches\TES\BSBatchRenderer.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSPixelShader.cpp" />
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderProperty.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSVertexShader.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphicsRenderTargetManager.cpp" />

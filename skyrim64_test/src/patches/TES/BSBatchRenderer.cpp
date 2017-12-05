@@ -1,6 +1,7 @@
 #include "../rendering/common.h"
 #include "../../common.h"
 #include "BSShader/BSShaderManager.h"
+#include "BSShader/BSShader.h"
 #include "MemoryContextTracker.h"
 #include "BSSpinLock.h"
 #include "BSBatchRenderer.h"
@@ -10,6 +11,80 @@ AutoPtr<DWORD, 0x1E32FDC> dword_141E32FDC;
 
 unsigned __int64 *sub_141320370(__int64 a1, unsigned __int64 *a2);
 signed __int64 *sub_1413203D0(__int64 a1, signed __int64 *a2);
+
+struct RTTIBaseClassArray
+{
+	DWORD arrayOfBaseClassDescriptors[]; // RTTIBaseClassDescriptor *
+};
+
+struct RTTICompleteObjectLocator
+{
+	DWORD signature;		// 32-bit zero, 64-bit one, until loaded
+	DWORD offset;			// Offset of this vtable in the complete class
+	DWORD cdOffset;			// Constructor displacement offset
+	DWORD typeDescriptor;	// TypeDescriptor of the complete class
+	DWORD classDescriptor;	// Describes inheritance hierarchy
+};
+
+struct RTTIClassHierarchyDescriptor
+{
+	DWORD signature;		// Always zero or one
+	DWORD attributes;		// Flags
+	DWORD numBaseClasses;	// Number of classes in baseClassArray
+	DWORD baseClassArray;	// RTTIBaseClassArray
+};
+
+struct PMD
+{
+	int mdisp;	// Member displacement (vftable offset in the class itself)
+	int pdisp;	// Vbtable displacement (vbtable offset, -1: vftable is at displacement PMD.mdisp inside the class)
+	int vdisp;	// Displacement inside vbtable
+};
+
+struct RTTIBaseClassDescriptor
+{
+	DWORD typeDescriptor;		// Type descriptor of the class
+	DWORD numContainedBases;	// Number of nested classes following in the Base Class Array
+	PMD disp;					// Pointer-to-member displacement info
+	DWORD attributes;			// Flags
+};
+
+#define RTTI_BSShaderProperty 0x19A0F78
+#define RTTI_BSBatchRenderer 0x19AC298
+#define RTTI_BSShaderAccumulator 0x19A9FF0
+#define RTTI_BSShader 0x19AD110
+#define RTTI_BSShaderMaterial 0x19AD098
+
+void AssertIsRTTIType(uintptr_t Object, uintptr_t RTTIInfo)
+{
+	__try
+	{
+		RTTIInfo += g_ModuleBase;
+		RTTICompleteObjectLocator *rttiCOL = *(RTTICompleteObjectLocator **)(*(uintptr_t *)Object - sizeof(void *));
+		RTTICompleteObjectLocator *otherrtti = (RTTICompleteObjectLocator *)RTTIInfo;
+
+		if (rttiCOL->typeDescriptor == otherrtti->typeDescriptor)
+			return;
+
+		// Loop through the base classes and check for a match
+		auto object = rttiCOL;
+		auto hierarchy = (RTTIClassHierarchyDescriptor *)(g_ModuleBase + object->classDescriptor);
+		auto baseClassArray = (RTTIBaseClassArray *)(g_ModuleBase + hierarchy->baseClassArray);
+
+		for (DWORD i = 0; i < hierarchy->numBaseClasses; i++)
+		{
+			auto baseClassInfo = (RTTIBaseClassDescriptor *)(g_ModuleBase + baseClassArray->arrayOfBaseClassDescriptors[i]);
+
+			if (baseClassInfo->typeDescriptor == otherrtti->typeDescriptor)
+				return;
+		}
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+	}
+
+	__debugbreak();
+}
 
 void operator_delete(__int64 a1, __int64 a2)
 {
@@ -85,16 +160,11 @@ void sub_14131F910(__int64 a1, __int64 a2)
 	}
 }
 
-__int64 sub_14131ED70(uint64_t *a1, unsigned int a2, unsigned __int8 a3, unsigned int a4)
+void sub_14131ED70(BSRenderPass *a1, unsigned int a2, unsigned __int8 a3, unsigned int a4)
 {
-	unsigned int v5; // ebp
 	__int64 v6; // r14
-	unsigned __int8 v7; // r15
-	__int64 v8; // rsi
-	uint64_t *v9; // rbx
 	__int64 result; // rax
 	__int64 v11; // rdi
-	bool v12; // zf
 
 	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
@@ -104,43 +174,43 @@ __int64 sub_14131ED70(uint64_t *a1, unsigned int a2, unsigned __int8 a3, unsigne
 	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
 
 	auto sub_14131EFF0 = (__int64(__fastcall *)(unsigned int a1, __int64 a2))(g_ModuleBase + 0x131F350);
-	auto sub_14131F450 = (__int64(__fastcall *)(__int64 *a1, __int64 a2, unsigned int a3))(g_ModuleBase + 0x131F7B0);
-	auto sub_14131F1F0 = (__int64(__fastcall *)(__int64 *a1, char a2, unsigned int a3))(g_ModuleBase + 0x131F550);
-	auto sub_14131F2A0 = (__int64(__fastcall *)(__int64 a1, unsigned __int8 a2, unsigned int a3))(g_ModuleBase + 0x131F600);
+	auto sub_14131F450 = (__int64(__fastcall *)(BSRenderPass *a1, __int64 a2, unsigned int a3))(g_ModuleBase + 0x131F7B0);
+	auto sub_14131F1F0 = (__int64(__fastcall *)(BSRenderPass *a1, char a2, unsigned int a3))(g_ModuleBase + 0x131F550);
+	auto sub_14131F2A0 = (__int64(__fastcall *)(BSRenderPass *a1, unsigned __int8 a2, unsigned int a3))(g_ModuleBase + 0x131F600);
 
-	v5 = a4;
-	v6 = *a1;
-	v7 = a3;
-	v8 = a1[2];
-	v9 = a1;
+	v6 = (uint64_t)a1->m_Shader;
+
 	if (dword_1432A8214 == a2 && a2 != 0x5C006076 && v6 == qword_1432A8218
 		|| (dword_141E32FDC = a2, result = sub_14131EFF0(a2, v6), (BYTE)result))
 	{
-		v11 = v9[1];
-		if (v11)
-			v11 = *(uint64_t *)(v11 + 120);
+		BSShaderProperty *property = a1->m_Property;
+
+		if (property)
+			v11 = *(uint64_t *)((uint64_t)property + 120);// v11 = BSShaderProperty ---- (v11 + 120) = BSShaderMaterial *
+		else
+			v11 = 0;
+
+		AssertIsRTTIType((uint64_t)a1->m_Property, RTTI_BSShaderProperty);
+		AssertIsRTTIType(v11, RTTI_BSShaderMaterial);
+		AssertIsRTTIType(v6, RTTI_BSShader);
+
 		if (v11 != qword_1434B5220)
 		{
 			if (v11)
-				(*(void(__fastcall **)(__int64, __int64))(*(uint64_t *)v6 + 32i64))(v6, v11);
+				a1->m_Shader->SetupMaterial((BSShaderMaterial *)v11);
+
 			qword_1434B5220 = v11;
 		}
-		v12 = *(uint64_t *)(v8 + 304) == 0i64;
-		*(BYTE *)(v8 + 264) = *((BYTE *)v9 + 30);
 
-		if (v12)
-		{
-			if (*(BYTE *)(v8 + 265) & 8)
-				result = sub_14131F450((__int64 *)v9, v7, v5);
-			else
-				result = sub_14131F1F0((__int64 *)v9, v7, v5); // v9 = Render pass, *(v9 + 16) = Render pass geometry, *(v9) = BSShader
-		}
+		*(BYTE *)(a1->m_Geometry + 264) = a1->Byte1E;
+
+		if (*(uint64_t *)(a1->m_Geometry + 304))// v8 + 304 == BSGeometry::QSkinPartitions(). NiSkinPartition?
+			sub_14131F2A0(a1, a3, a4);// Something to do with skinning, "Render Error : Skin instance is nullptr"
+		else if (*(BYTE *)(a1->m_Geometry + 265) & 8)// Possibly BSGeometry::NeedsCustomRender
+			sub_14131F450(a1, a3, a4);
 		else
-		{
-			result = sub_14131F2A0((__int64)v9, v7, v5);// Something to do with skinning, "Render Error : Skin instance is nullptr"
-		}
+			sub_14131F1F0(a1, a3, a4); // v9 = Render pass, *(v9 + 16) = Render pass geometry, *(v9) = BSShader
 	}
-	return result;
 }
 
 void sub_14131F9F0(__int64 *a1, unsigned int a2)
@@ -164,6 +234,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 	v5 = a1;
 	if (*a1)
 	{
+		// sub_14131F090();
 		if (qword_1432A8218)
 			result = (*(__int64(__fastcall **)(__int64, uint64_t))(*(uint64_t *)qword_1432A8218 + 24i64))(
 				qword_1432A8218,
@@ -186,7 +257,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 			}
 			if ((v4 & 0x108) == 0)
 			{
-				if (*(uint64_t *)(*(uint64_t *)(v7 + 8) + 56i64) & 0x1000000000i64)
+				if (*(uint64_t *)(*(uint64_t *)(v7 + 8) + 56i64) & 0x1000000000i64)// BSShaderProperty::VertexDesc?
 				{
 					if (!*(DWORD *)&GraphicsGlobals->__zz0[52])
 						goto LABEL_13;
@@ -201,9 +272,9 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 				GraphicsGlobals->dword_14304DEB0 |= 0x20u;
 			}
 		LABEL_13:
-			v9 = *(uint64_t *)(*(uint64_t *)(v7 + 16) + 288i64);
+			v9 = *(uint64_t *)(*(uint64_t *)(v7 + 16) + 288i64);// BSGeometry::GetModelBound?
 			v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
-			result = sub_14131ED70((uint64_t *)v7, v8, v10, v4);
+			sub_14131ED70((BSRenderPass *)v7, v8, v10, v4);
 			goto LABEL_18;
 		}
 	LABEL_19:
@@ -214,6 +285,8 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		}
 		*v5 = 0i64;
 		v5[1] = 0i64;
+
+		// sub_14131F090();
 		if (qword_1432A8218)
 			result = (*(__int64(__fastcall **)(__int64, uint64_t))(*(uint64_t *)qword_1432A8218 + 24i64))(
 				qword_1432A8218,
@@ -376,12 +449,12 @@ bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, signed int *a3)
 {
 	__int64 a1 = (__int64)this;
 
-	signed int *v3; // r9
+	AssertIsRTTIType(a1, RTTI_BSBatchRenderer);
+
 	signed int v4; // eax
 	bool v5; // zf
 	signed __int64 v6; // r8
 
-	v3 = a3;
 	if ((unsigned int)*a3 > 4)
 		*a3 = 0;
 	v4 = *a3;
@@ -392,9 +465,9 @@ bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, signed int *a3)
 		do
 		{
 			// BSTArray
-			if (*(uint64_t *)(*(uint64_t *)(a1 + 8) + 8 * (6i64 * a2 + v6)))
+			if (this->m_RenderGroups[a2].m_Pass[v6])
 			{
-				*v3 = v4;
+				*a3 = v4;
 				v4 = 5;
 				v6 = 5i64;
 			}
@@ -404,7 +477,7 @@ bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, signed int *a3)
 		} while (v4 < 5);
 	}
 	if (v5)
-		*v3 = 0;
+		*a3 = 0;
 	return v4 == 6;
 }
 
@@ -489,15 +562,8 @@ char BSBatchRenderer::sub_14131ECE0(uint32_t *a2, __int64 a3, __int64 a4)
 	}
 LABEL_7:
 	if (*(BYTE *)(a1 + 108))
-	{
-		v8 = *(uint64_t *)(a1 + 8) + 48i64 * v6;
-		*(uint64_t *)v8 = 0i64;
-		*(uint64_t *)(v8 + 8) = 0i64;
-		*(uint64_t *)(v8 + 16) = 0i64;
-		*(uint64_t *)(v8 + 24) = 0i64;
-		*(uint64_t *)(v8 + 32) = 0i64;
-		*(DWORD *)(v8 + 40) = 0;
-	}
+		this->m_RenderGroups[v6].Clear(true);
+
 	return sub_14131E700(a2, a3, a4);
 }
 
@@ -579,233 +645,167 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t *a2, signed int *a3, __int64 *a4)
 	return sub_14131E8F0(v9, v4);
 }
 
+void BSGraphics__Renderer__RasterStateSetCullMode(uint32_t CullMode);
+void sub_14131F090();
+
 char BSBatchRenderer::sub_14131E960(unsigned int *a2, unsigned int *a3, __int64 a4, unsigned int a5)
 {
-	__int64 a1 = (__int64)this;
-
-	__int64 v6; // r11
-	unsigned int v7; // ebx
-	unsigned int *v8; // r15
-	unsigned int *v9; // r13
-	__int64 v10; // rsi
-	signed __int64 v11; // r9
-	unsigned __int8 v12; // di
-	signed int v13; // eax
-	bool v14; // r10
-	bool v15; // zf
-	uint32_t v16; // r8
-	char v17; // cl
-	uint32_t v18; // r9
-	__int64 v19; // r14
-	uint64_t *v20; // rbx
-	__int64 v21; // rcx
-	signed __int64 v22; // rdx
-	__int64 v24; // [rsp+68h] [rbp+20h]
-
 	auto& GraphicsGlobals = *(BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
-	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GetThreadedGlobals() + 0x3010);
-	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GetThreadedGlobals() + 0x3014);
-	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GetThreadedGlobals() + 0x3018);
-	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GetThreadedGlobals() + 0x3500);
+	__int64 a1 = (__int64)this;
 
-	v24 = a4;
-	v6 = *(uint64_t *)(a1 + 72);
-	v7 = 0;
-	v8 = a3;
-	v9 = a2;
-	v10 = a1;
+	__int64 v5; // r11
+	unsigned int v6; // ebx
+	unsigned int *v7; // r15
+	signed __int64 v10; // r9
+	unsigned __int8 v11; // di
+	bool v13; // r10
+
+	v5 = *(uint64_t *)(a1 + 72);
+	v6 = 0;
+	v7 = (unsigned int *)a3;
+
+	AssertIsRTTIType(a1, RTTI_BSBatchRenderer);
 
 	// BSTScatterTree
-	if (v6)
+	if (v5)
 	{
-		v11 = v6 + 16i64 * (*a2 & (*(DWORD *)(a1 + 44) - 1));
-		if (*(uint64_t *)(v11 + 8))
+		v10 = v5 + 16i64 * (*(DWORD *)a2 & (unsigned int)(*(DWORD *)(a1 + 44) - 1));
+		if (*(uint64_t *)(v10 + 8))
 		{
-			while (*(DWORD *)v11 != *a2)
+			while (*(DWORD *)v10 != *(DWORD *)a2)
 			{
-				v11 = *(uint64_t *)(v11 + 8);
-				if (v11 == *(uint64_t *)(a1 + 56))
+				v10 = *(uint64_t *)(v10 + 8);
+				if (v10 == *(uint64_t *)(a1 + 56))
 					goto LABEL_7;
 			}
-			v7 = *(DWORD *)(v11 + 4);
+			v6 = *(DWORD *)(v10 + 4);
 		}
 	}
 LABEL_7:
-	v12 = 0;
-	v13 = *(DWORD *)&GraphicsGlobals.__zz0[52];
-	v14 = (a5 & 0x108) != 0;
-	v15 = *a3 == 0;
-	v16 = GraphicsGlobals.dword_14304DEB0;
-	if (v15)
+	v11 = 0;
+	v13 = (a5 & 0x108) != 0;
+	if (*v7 == 0)
 	{
-		if (!v14 && *(DWORD *)&GraphicsGlobals.__zz0[52] != 1)
-		{
-			v13 = 1;
-			v16 = GraphicsGlobals.dword_14304DEB0 | 0x20;
-			*(DWORD *)&GraphicsGlobals.__zz0[52] = 1;
-			GraphicsGlobals.dword_14304DEB0 |= 0x20u;
-		}
-		v17 = GraphicsGlobals.__zz0[76];
+		if (!v13)
+			BSGraphics__Renderer__RasterStateSetCullMode(1);
+
 		if (GraphicsGlobals.__zz0[76])
 		{
-			v17 = 0;
-			v16 = v16 | 0x100;
 			GraphicsGlobals.__zz0[76] = 0;
-			GraphicsGlobals.dword_14304DEB0 = v16;
+			GraphicsGlobals.dword_14304DEB0 |= 0x100;
 		}
-		v18 = *(unsigned int *)&GraphicsGlobals.__zz0[68];
 		if (*(DWORD *)&GraphicsGlobals.__zz0[68])
 		{
-			v18 = 0i64;
-			v16 = v16 | 0x80;
 			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
-			GraphicsGlobals.dword_14304DEB0 = v16;
+			GraphicsGlobals.dword_14304DEB0 |= 0x80;
+		}
+	}
+	else if (*v7 == 2)
+	{
+		if (!v13)
+			BSGraphics__Renderer__RasterStateSetCullMode(0);
+
+		if (GraphicsGlobals.__zz0[76])
+		{
+			GraphicsGlobals.__zz0[76] = 0;
+			GraphicsGlobals.dword_14304DEB0 |= 0x100;
+		}
+		if (*(DWORD *)&GraphicsGlobals.__zz0[68])
+		{
+			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
+			GraphicsGlobals.dword_14304DEB0 |= 0x80;
+		}
+	}
+	else if (*v7 == 3)
+	{
+		if (!v13)
+			BSGraphics__Renderer__RasterStateSetCullMode(0);
+
+		if (GraphicsGlobals.__zz0[76] != 1)
+		{
+			GraphicsGlobals.__zz0[76] = 1;
+			GraphicsGlobals.dword_14304DEB0 |= 0x100;
+		}
+		v11 = 1;
+		if (byte_1431F54CD && *(DWORD *)&GraphicsGlobals.__zz0[68] != 1)
+		{
+			*(DWORD *)&GraphicsGlobals.__zz0[68] = 1;
+			GraphicsGlobals.dword_14304DEB0 |= 0x80;
+		}
+	}
+	else if (*v7 == 1)
+	{
+		if (!v13)
+			BSGraphics__Renderer__RasterStateSetCullMode(1);
+
+		if (GraphicsGlobals.__zz0[76] != 1)
+		{
+			GraphicsGlobals.__zz0[76] = 1;
+			GraphicsGlobals.dword_14304DEB0 |= 0x100;
+		}
+		v11 = 1;
+		if (byte_1431F54CD && *(DWORD *)&GraphicsGlobals.__zz0[68] != 1)
+		{
+			*(DWORD *)&GraphicsGlobals.__zz0[68] = 1;
+			GraphicsGlobals.dword_14304DEB0 |= 0x80;
+		}
+	}
+	else if (*v7 == 4)
+	{
+		if (!v13)
+			BSGraphics__Renderer__RasterStateSetCullMode(1);
+
+		if (GraphicsGlobals.__zz0[76] != 1)
+		{
+			GraphicsGlobals.__zz0[76] = 1;
+			GraphicsGlobals.dword_14304DEB0 |= 0x100;
+		}
+		v11 = 1;
+		if (*(DWORD *)&GraphicsGlobals.__zz0[68])
+		{
+			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
+			GraphicsGlobals.dword_14304DEB0 |= 0x80;
 		}
 	}
 	else
 	{
-		v17 = GraphicsGlobals.__zz0[76];
-		v18 = *(unsigned int *)&GraphicsGlobals.__zz0[68];
+		__debugbreak();
 	}
-	if (*v8 == 2)
+
+	RenderPassGroup& group = this->m_RenderGroups[v6];
+	BSRenderPass *pass = group.m_Pass[*v7];
+
+	if (pass)
 	{
-		if (!v14 && v13)
+		while (pass)
 		{
-			v13 = 0;
-			v16 = (unsigned int)v16 | 0x20;
-			*(DWORD *)&GraphicsGlobals.__zz0[52] = 0;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-		}
-		if (v17)
-		{
-			v17 = 0;
-			v16 = v16 | 0x100;
-			GraphicsGlobals.__zz0[76] = 0;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-		}
-		if ((DWORD)v18)
-		{
-			v18 = 0i64;
-			v16 = v16 | 0x80;
-			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
-			GraphicsGlobals.dword_14304DEB0 = v16;
+			sub_14131ED70(pass, *a2, v11, a5);
+			pass = (BSRenderPass *)((uint64_t *)pass)[6];
 		}
 	}
-	if (*v8 == 3)
+
+	if (*(BYTE *)(a1 + 108))
 	{
-		if (!v14 && v13)
-		{
-			v13 = 0;
-			v16 = (unsigned int)v16 | 0x20;
-			*(DWORD *)&GraphicsGlobals.__zz0[52] = 0;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-		}
-		if (v17 != 1)
-		{
-			v17 = 1;
-			v16 = v16 | 0x100;
-			GraphicsGlobals.__zz0[76] = 1;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-		}
-		v12 = 1;
-		if (byte_1431F54CD && (DWORD)v18 != 1)
-		{
-			v16 = v16 | 0x80;
-			*(DWORD *)&GraphicsGlobals.__zz0[68] = 1;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-			v18 = 1i64;
-		}
+		__int64 v20 = *v7;
+
+		if (v20 < 0 || v20 >= ARRAYSIZE(group.m_Pass))
+			__debugbreak();
+
+		group.UnkDword1 &= ~(1 << v20);
+		group.m_Pass[v20] = nullptr;
 	}
-	if (*v8 == 1)
-	{
-		if (!v14 && v13 != 1)
-		{
-			v13 = 1;
-			v16 = (unsigned int)v16 | 0x20;
-			*(DWORD *)&GraphicsGlobals.__zz0[52] = 1;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-		}
-		if (v17 != 1)
-		{
-			v17 = 1;
-			v16 = v16 | 0x100;
-			GraphicsGlobals.__zz0[76] = 1;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-		}
-		v12 = 1;
-		if (byte_1431F54CD && (DWORD)v18 != 1)
-		{
-			v16 = v16 | 0x80;
-			*(DWORD *)&GraphicsGlobals.__zz0[68] = 1;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-			v18 = 1i64;
-		}
-	}
-	if (*v8 == 4)
-	{
-		if (!v14 && v13 != 1)
-		{
-			v16 = (unsigned int)v16 | 0x20;
-			*(DWORD *)&GraphicsGlobals.__zz0[52] = 1;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-		}
-		if (v17 != 1)
-		{
-			v16 = v16 | 0x100;
-			GraphicsGlobals.__zz0[76] = 1;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-		}
-		v12 = 1;
-		if ((DWORD)v18)
-		{
-			v18 = 0i64;
-			v16 = v16 | 0x80;
-			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
-			GraphicsGlobals.dword_14304DEB0 = v16;
-		}
-	}
-	v19 = v7;
-	v20 = *(uint64_t **)(*(uint64_t *)(v10 + 8) + 8 * ((signed int)*v8 + 6i64 * v7));
-	if (v20)
-	{
-		do
-		{
-			sub_14131ED70(v20, *v9, v12, a5);
-			v20 = (uint64_t *)v20[6];
-		} while (v20);
-		v18 = *(unsigned int *)&GraphicsGlobals.__zz0[68];
-		v16 = GraphicsGlobals.dword_14304DEB0;
-	}
-	if (*(BYTE *)(v10 + 108))
-	{
-		v21 = *v8;
-		v22 = *(uint64_t *)(v10 + 8) + 48 * v19;
-		*(DWORD *)(v22 + 40) &= ~(1 << v21);
-		*(uint64_t *)(v22 + 8 * v21) = 0i64;
-		v18 = *(unsigned int *)&GraphicsGlobals.__zz0[68];
-		v16 = GraphicsGlobals.dword_14304DEB0;
-	}
-	if (qword_1432A8218)
-	{
-		(*(void(__fastcall **)(__int64, uint64_t, __int64, signed __int64))(*(uint64_t *)qword_1432A8218 + 24i64))(
-			qword_1432A8218,
-			(unsigned int)dword_1432A8214,
-			v16,
-			v18);
-		v18 = *(DWORD *)&GraphicsGlobals.__zz0[68];
-		v16 = GraphicsGlobals.dword_14304DEB0;
-	}
-	qword_1432A8218 = 0i64;
-	dword_1432A8214 = 0;
-	qword_1434B5220 = 0i64;
-	if (v18)
+
+	sub_14131F090();
+
+	if (*(DWORD *)&GraphicsGlobals.__zz0[68])
 	{
 		*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
-		GraphicsGlobals.dword_14304DEB0 = v16 | 0x80;
+		GraphicsGlobals.dword_14304DEB0 |= 0x80;
 	}
-	++*v8;
-	return sub_14131E700((uint32_t *)v9, (__int64)v8, v24);
+
+	++*v7;
+	return sub_14131E700((uint32_t *)a2, (__int64)v7, a4);
 }
 
 void BSBatchRenderer::sub_14131D6E0(__int64 a1)
@@ -823,6 +823,10 @@ void BSBatchRenderer::sub_14131D6E0(__int64 a1)
 	__int64 v13[2]; // [rsp+28h] [rbp-50h]
 	char v14[16]; // [rsp+38h] [rbp-40h]
 
+	AssertIsRTTIType(a1, RTTI_BSBatchRenderer);
+
+	auto *batcher = (BSBatchRenderer *)a1;
+
 	v1 = a1;
 
 	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
@@ -835,16 +839,11 @@ void BSBatchRenderer::sub_14131D6E0(__int64 a1)
 	while (v6 != v8)
 	{
 		// This code uses both BSTScatterTable and BSTArray
-		// Also an inlined function. "Pass still has passes"
+		// Also an inlined function. "Pass still has passes" -- Probably array.clear()
 		if (v6)
 			v4 = *(DWORD *)(v6 + 4);
-		v9 = *(uint64_t *)(v1 + 8) + 48i64 * v4;
-		*(uint64_t *)v9 = 0i64;
-		*(uint64_t *)(v9 + 8) = 0i64;
-		*(uint64_t *)(v9 + 16) = 0i64;
-		*(uint64_t *)(v9 + 24) = 0i64;
-		*(uint64_t *)(v9 + 32) = 0i64;
-		*(DWORD *)(v9 + 40) = 0;
+
+		batcher->m_RenderGroups[v4].Clear(true);
 		do
 			v6 += 16i64;
 		while (v6 < v7 && !*(uint64_t *)(v6 + 8));
@@ -877,4 +876,25 @@ void BSBatchRenderer::sub_14131D6E0(__int64 a1)
 	}
 
 	*(DWORD *)(v1 + 88) = 0;
+}
+
+void BSBatchRenderer::RenderPassGroup::Clear(bool Validate)
+{
+	for (int i = 0; i < ARRAYSIZE(this->m_Pass); i++)
+	{
+		if (Validate && this->m_Pass[i])
+		{
+			//sub_14002288B((__int64)&a1, 255i64, (__int64)"Pass still has passes");
+			//if (qword_14468B560)
+			//	qword_14468B560(&a1, 0i64);
+		}
+
+		// This is removed in public builds?
+		// for (result = *(_QWORD *)(v4 + 8 * v3); result; result = *(_QWORD *)(result + 48))
+		//	*(_BYTE *)(result + 33) = 0;
+
+		this->m_Pass[i] = nullptr;
+	}
+
+	this->UnkDword1 = 0;
 }

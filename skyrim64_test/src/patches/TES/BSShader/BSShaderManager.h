@@ -29,9 +29,29 @@ enum class BSSM_GROUP_TYPE
 };
 
 #pragma pack(push, 8)
+class BSShader;
+class BSShaderProperty;
+
+// This needs to be in its own file
 struct BSRenderPass
 {
+	BSShader *m_Shader;
+	BSShaderProperty *m_Property;
+	uintptr_t m_Geometry;
+	uint32_t Dword18;
+	uint8_t Byte1C;
+	uint8_t Byte1D;
+	uint8_t Byte1E;
+	char _pad[17];
 };
+static_assert(sizeof(BSRenderPass) == 0x30, "");
+static_assert(offsetof(BSRenderPass, m_Shader) == 0x0, "");
+static_assert(offsetof(BSRenderPass, m_Property) == 0x8, "");
+static_assert(offsetof(BSRenderPass, m_Geometry) == 0x10, "");
+static_assert(offsetof(BSRenderPass, Dword18) == 0x18, "");
+static_assert(offsetof(BSRenderPass, Byte1C) == 0x1C, "");
+static_assert(offsetof(BSRenderPass, Byte1D) == 0x1D, "");
+static_assert(offsetof(BSRenderPass, Byte1E) == 0x1E, "");
 
 struct BSConstantGroup
 {

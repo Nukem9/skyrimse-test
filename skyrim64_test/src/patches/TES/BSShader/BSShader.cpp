@@ -3,11 +3,11 @@
 #include "BSPixelShader.h"
 #include "BSShader.h"
 
-void BSShader::SetupMaterial()
+void BSShader::SetupMaterial(BSShaderMaterial const *Material)
 {
 }
 
-void BSShader::RestoreMaterial()
+void BSShader::RestoreMaterial(BSShaderMaterial const *Material)
 {
 }
 

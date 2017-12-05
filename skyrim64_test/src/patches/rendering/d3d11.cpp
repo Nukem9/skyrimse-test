@@ -375,10 +375,16 @@ void CommitShaderChanges(bool Unknown)
 
 	LABEL_29:
 		// OMSetDepthStencilState
-		if (v1 & 0xC)
+		if (v1 & (0x4 | 0x8))
 		{
+			auto test = (ID3D11DepthStencilState *)renderer->m_DepthStates[0][*(signed int *)&renderer->__zz0[40] + 40i64 * *(signed int *)&renderer->__zz0[32]];
+
+			if (test != renderer->m_DepthStates[*(signed int *)&renderer->__zz0[32]][*(signed int *)&renderer->__zz0[40]])
+				__debugbreak();
+
+			// Depth mode, ex mode, stencil mode (order unknown)
 			renderer->m_DeviceContext->OMSetDepthStencilState(
-				(ID3D11DepthStencilState *)renderer->qword_14304C1B0[0][*(signed int *)&renderer->__zz0[40] + 40i64 * *(signed int *)&renderer->__zz0[32]],
+				(ID3D11DepthStencilState *)renderer->m_DepthStates[0][*(signed int *)&renderer->__zz0[40] + 40i64 * *(signed int *)&renderer->__zz0[32]],
 				*(UINT *)&renderer->__zz0[44]);
 
 			v1 = renderer->dword_14304DEB0;
@@ -386,6 +392,7 @@ void CommitShaderChanges(bool Unknown)
 
 		if (v1 & 0x1070)
 		{
+			// Cull mode, depth bias, fill mode, scissor mode, scissor rect (order unknown)
 			void *wtf = renderer->qword_14304C930[0][0][0][*(signed int *)&renderer->__zz0[60]
 				+ 2
 				* (*(signed int *)&renderer->__zz0[56]
@@ -431,6 +438,7 @@ void CommitShaderChanges(bool Unknown)
 		{
 			float *blendFactor = (float *)(g_ModuleBase + 0x1E2C168);
 
+			// Mode, write mode, alpha to coverage, ??? (order unknown)
 			void *wtf = renderer->qword_14304CDB0[0][0][0][*(unsigned int *)&renderer->__zz2[656]
 				+ 2
 				* (*(signed int *)&renderer->__zz0[72]

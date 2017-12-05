@@ -37,7 +37,7 @@ struct BSGraphicsRendererGlobals
 
 	float m_UnknownFloats1[3][4];						// Probably a matrix
 
-	void *qword_14304C1B0[6][40];						// Wtf? (Probably a weird sampler state setup)
+	ID3D11DepthStencilState *m_DepthStates[6][40];		// OMSetDepthStencilState
 	void *qword_14304C930[2][3][12][2];					// Wtf?
 	void *qword_14304CDB0[7][2][13][2];					// Wtf?
 	ID3D11SamplerState *qword_14304D910[6][5];			// Samplers[Option1][Option2] (Used for PS and CS)
@@ -69,7 +69,7 @@ struct BSGraphicsRendererGlobals
 
 	void *m_FrameDurationStringHandle;					// "Frame Duration" but stored in their global string pool
 
-	uint32_t dword_14304DEB0;							// Flags; probably global technique modifiers
+	uint32_t dword_14304DEB0;							// Flags; global state updates
 	uint32_t m_PSResourceModifiedBits;					// Flags
 	uint32_t m_PSSamplerModifiedBits;					// Flags
 	uint32_t m_CSResourceModifiedBits;					// Flags
@@ -118,7 +118,7 @@ CHECK_OFFSET(m_UnknownCounter3, 0x14304C160);
 CHECK_OFFSET(m_EventQueryFinished, 0x14304C164);
 CHECK_OFFSET(m_CommandListEndEvents, 0x14304C168);
 CHECK_OFFSET(m_UnknownFloats1, 0x14304C180);
-CHECK_OFFSET(qword_14304C1B0, 0x14304C1B0);
+CHECK_OFFSET(m_DepthStates, 0x14304C1B0);
 CHECK_OFFSET(qword_14304C930, 0x14304C930);
 CHECK_OFFSET(qword_14304CDB0, 0x14304CDB0);
 CHECK_OFFSET(qword_14304D910, 0x14304D910);

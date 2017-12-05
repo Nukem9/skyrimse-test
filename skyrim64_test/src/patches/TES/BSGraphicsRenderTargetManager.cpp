@@ -22,6 +22,7 @@ void SetName(uintptr_t Resource, const char *Format, ...)
 uint8_t *CreateDepthStencil;
 __int64 hk_CreateDepthStencil(__int64 a1, unsigned int aStencilIndex, __int64 a3, __int64 a4)
 {
+	// BSGraphics::Renderer::CreateDepthStencilTarget
 	__int64 ret = ((decltype(&hk_CreateDepthStencil))CreateDepthStencil)(a1, aStencilIndex, a3, a4);
 
 	// Set name for use in VS's/nvidia's debugger
@@ -50,6 +51,7 @@ __int64 hk_CreateDepthStencil(__int64 a1, unsigned int aStencilIndex, __int64 a3
 uint8_t *CreateRenderTarget;
 __int64 hk_CreateRenderTarget(__int64 a1, unsigned int aTargetIndex, __int64 a3, __int64 a4)
 {
+	// BSGraphics::Renderer::CreateRenderTarget
 	__int64 ret = ((decltype(&hk_CreateRenderTarget))CreateRenderTarget)(a1, aTargetIndex, a3, a4);
 
 	// Set name for use in VS's/nvidia's debugger
