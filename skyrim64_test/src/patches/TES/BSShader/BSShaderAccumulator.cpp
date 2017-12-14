@@ -63,6 +63,28 @@ void BSGraphics__Renderer__AlphaBlendStateSetMode(uint32_t Mode)
 	}
 }
 
+void BSGraphics__Renderer__AlphaBlendStateSetUnknown1(uint32_t Value)
+{
+	auto *renderer = GetThreadedGlobals();
+
+	if (*(DWORD *)&renderer->__zz0[68] != Value)
+	{
+		*(DWORD *)&renderer->__zz0[68] = Value;
+		renderer->dword_14304DEB0 |= 0x80;
+	}
+}
+
+void BSGraphics__Renderer__AlphaBlendStateSetUnknown2(uint32_t Value)
+{
+	auto *renderer = GetThreadedGlobals();
+
+	if (*(DWORD *)&renderer->__zz0[72] != Value)
+	{
+		*(DWORD *)&renderer->__zz0[72] = Value;
+		renderer->dword_14304DEB0 |= 0x80;
+	}
+}
+
 void BSGraphics__Renderer__DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)
 {
 	auto *renderer = GetThreadedGlobals();
@@ -131,7 +153,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
 		BSGraphics__Renderer__DepthStencilStateSetDepthMode(4);
 
-	// v7 = RenderDepthOnly()?
+	// v7 = RenderDepthOnly()? RenderAlphaOnly?
 	bool v7 = (a2 & 0xA) != 0;
 
 	if (!v7)
@@ -237,11 +259,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	// RenderSkyClouds
 	annotation->BeginEvent(L"RenderSkyClouds");
 	{
-		if (*(DWORD *)&graphicsGlobals->__zz0[72] != 11)
-		{
-			graphicsGlobals->dword_14304DEB0 |= 0x80u;
-			*(DWORD *)&graphicsGlobals->__zz0[72] = 11;
-		}
+		BSGraphics__Renderer__AlphaBlendStateSetUnknown2(11);
 
 		auto pass = accumulator->m_MainBatch->m_Passes[13];
 
@@ -253,11 +271,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 13);
 		}
 
-		if (*(DWORD *)&graphicsGlobals->__zz0[72] != 1)
-		{
-			graphicsGlobals->dword_14304DEB0 |= 0x80u;
-			*(DWORD *)&graphicsGlobals->__zz0[72] = 1;
-		}
+		BSGraphics__Renderer__AlphaBlendStateSetUnknown2(1);
 	}
 	annotation->EndEvent();
 
@@ -266,35 +280,20 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 
 	// NormalDecals?...CK doesn't have a specific name for this
 	{
-		if (*(DWORD *)&graphicsGlobals->__zz0[72] != 10)
-		{
-			graphicsGlobals->dword_14304DEB0 |= 0x80u;
-			*(DWORD *)&graphicsGlobals->__zz0[72] = 10;
-		}
-
+		BSGraphics__Renderer__AlphaBlendStateSetUnknown2(10);
 		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E27B0))(a1, a2);
 	}
 
 	// BlendedDecals
 	annotation->BeginEvent(L"BlendedDecals");
 	{
-		// WARNING: Nvidia NSight causes a bug (?) with the water texture somewhere. It gets drawn here.
-		if (*(DWORD *)&graphicsGlobals->__zz0[72] != 11)
-		{
-			graphicsGlobals->dword_14304DEB0 |= 0x80u;
-			*(DWORD *)&graphicsGlobals->__zz0[72] = 11;
-		}
-
+		BSGraphics__Renderer__AlphaBlendStateSetUnknown2(11);
 		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E2950))(a1, a2);
 	}
 	annotation->EndEvent();
 
 	BSGraphics__Renderer__AlphaBlendStateSetMode(0);
-	if (*(DWORD *)&graphicsGlobals->__zz0[72] != 1)
-	{
-		*(DWORD *)&graphicsGlobals->__zz0[72] = 1;
-		graphicsGlobals->dword_14304DEB0 |= 0x80;
-	}
+	BSGraphics__Renderer__AlphaBlendStateSetUnknown2(1);
 
 	auto sub_140D744B0 = (int(__fastcall *)())(g_ModuleBase + 0xD744E0);
 	auto sub_140D69E70 = (__int64(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0xD69EA0);

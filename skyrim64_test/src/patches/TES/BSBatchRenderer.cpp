@@ -234,14 +234,8 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 	v5 = a1;
 	if (*a1)
 	{
-		// sub_14131F090();
-		if (qword_1432A8218)
-			result = (*(__int64(__fastcall **)(__int64, uint64_t))(*(uint64_t *)qword_1432A8218 + 24i64))(
-				qword_1432A8218,
-				(unsigned int)dword_1432A8214);
-		qword_1432A8218 = 0i64;
-		dword_1432A8214 = 0;
-		qword_1434B5220 = 0i64;
+		sub_14131F090();
+
 		v7 = *v5;
 		if (*v5)
 		{
@@ -258,18 +252,9 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 			if ((v4 & 0x108) == 0)
 			{
 				if (*(uint64_t *)(*(uint64_t *)(v7 + 8) + 56i64) & 0x1000000000i64)// BSShaderProperty::VertexDesc?
-				{
-					if (!*(DWORD *)&GraphicsGlobals->__zz0[52])
-						goto LABEL_13;
-					*(DWORD *)&GraphicsGlobals->__zz0[52] = 0;
-				}
+					BSGraphics__Renderer__RasterStateSetCullMode(0);
 				else
-				{
-					if (*(DWORD *)&GraphicsGlobals->__zz0[52] == 1)
-						goto LABEL_13;
-					*(DWORD *)&GraphicsGlobals->__zz0[52] = 1;
-				}
-				GraphicsGlobals->dword_14304DEB0 |= 0x20u;
+					BSGraphics__Renderer__RasterStateSetCullMode(1);
 			}
 		LABEL_13:
 			v9 = *(uint64_t *)(*(uint64_t *)(v7 + 16) + 288i64);// BSGeometry::GetModelBound?
@@ -278,22 +263,13 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 			goto LABEL_18;
 		}
 	LABEL_19:
-		if (!(v4 & 0x108) && *(DWORD *)&GraphicsGlobals->__zz0[52] != 1)
-		{
-			GraphicsGlobals->dword_14304DEB0 |= 0x20u;
-			*(DWORD *)&GraphicsGlobals->__zz0[52] = 1;
-		}
+		if (!(v4 & 0x108))
+			BSGraphics__Renderer__RasterStateSetCullMode(1);
+
 		*v5 = 0i64;
 		v5[1] = 0i64;
 
-		// sub_14131F090();
-		if (qword_1432A8218)
-			result = (*(__int64(__fastcall **)(__int64, uint64_t))(*(uint64_t *)qword_1432A8218 + 24i64))(
-				qword_1432A8218,
-				(unsigned int)dword_1432A8214);
-		qword_1432A8218 = 0i64;
-		dword_1432A8214 = 0;
-		qword_1434B5220 = 0i64;
+		sub_14131F090();
 	}
 }
 
@@ -646,6 +622,7 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t *a2, signed int *a3, __int64 *a4)
 }
 
 void BSGraphics__Renderer__RasterStateSetCullMode(uint32_t CullMode);
+void BSGraphics__Renderer__AlphaBlendStateSetUnknown1(uint32_t Value);
 void sub_14131F090();
 
 char BSBatchRenderer::sub_14131E960(unsigned int *a2, unsigned int *a3, __int64 a4, unsigned int a5)
@@ -656,14 +633,12 @@ char BSBatchRenderer::sub_14131E960(unsigned int *a2, unsigned int *a3, __int64 
 
 	__int64 v5; // r11
 	unsigned int v6; // ebx
-	unsigned int *v7; // r15
 	signed __int64 v10; // r9
 	unsigned __int8 v11; // di
 	bool v13; // r10
 
 	v5 = *(uint64_t *)(a1 + 72);
 	v6 = 0;
-	v7 = (unsigned int *)a3;
 
 	AssertIsRTTIType(a1, RTTI_BSBatchRenderer);
 
@@ -685,7 +660,7 @@ char BSBatchRenderer::sub_14131E960(unsigned int *a2, unsigned int *a3, __int64 
 LABEL_7:
 	v11 = 0;
 	v13 = (a5 & 0x108) != 0;
-	if (*v7 == 0)
+	if (*a3 == 0)
 	{
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(1);
@@ -695,13 +670,10 @@ LABEL_7:
 			GraphicsGlobals.__zz0[76] = 0;
 			GraphicsGlobals.dword_14304DEB0 |= 0x100;
 		}
-		if (*(DWORD *)&GraphicsGlobals.__zz0[68])
-		{
-			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
-			GraphicsGlobals.dword_14304DEB0 |= 0x80;
-		}
+
+		BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
 	}
-	else if (*v7 == 2)
+	else if (*a3 == 2)
 	{
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(0);
@@ -711,13 +683,10 @@ LABEL_7:
 			GraphicsGlobals.__zz0[76] = 0;
 			GraphicsGlobals.dword_14304DEB0 |= 0x100;
 		}
-		if (*(DWORD *)&GraphicsGlobals.__zz0[68])
-		{
-			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
-			GraphicsGlobals.dword_14304DEB0 |= 0x80;
-		}
+
+		BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
 	}
-	else if (*v7 == 3)
+	else if (*a3 == 3)
 	{
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(0);
@@ -727,14 +696,13 @@ LABEL_7:
 			GraphicsGlobals.__zz0[76] = 1;
 			GraphicsGlobals.dword_14304DEB0 |= 0x100;
 		}
+
 		v11 = 1;
-		if (byte_1431F54CD && *(DWORD *)&GraphicsGlobals.__zz0[68] != 1)
-		{
-			*(DWORD *)&GraphicsGlobals.__zz0[68] = 1;
-			GraphicsGlobals.dword_14304DEB0 |= 0x80;
-		}
+
+		if (byte_1431F54CD)
+			BSGraphics__Renderer__AlphaBlendStateSetUnknown1(1);
 	}
-	else if (*v7 == 1)
+	else if (*a3 == 1)
 	{
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(1);
@@ -744,14 +712,13 @@ LABEL_7:
 			GraphicsGlobals.__zz0[76] = 1;
 			GraphicsGlobals.dword_14304DEB0 |= 0x100;
 		}
+
 		v11 = 1;
-		if (byte_1431F54CD && *(DWORD *)&GraphicsGlobals.__zz0[68] != 1)
-		{
-			*(DWORD *)&GraphicsGlobals.__zz0[68] = 1;
-			GraphicsGlobals.dword_14304DEB0 |= 0x80;
-		}
+
+		if (byte_1431F54CD)
+			BSGraphics__Renderer__AlphaBlendStateSetUnknown1(1);
 	}
-	else if (*v7 == 4)
+	else if (*a3 == 4)
 	{
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(1);
@@ -761,12 +728,10 @@ LABEL_7:
 			GraphicsGlobals.__zz0[76] = 1;
 			GraphicsGlobals.dword_14304DEB0 |= 0x100;
 		}
+
 		v11 = 1;
-		if (*(DWORD *)&GraphicsGlobals.__zz0[68])
-		{
-			*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
-			GraphicsGlobals.dword_14304DEB0 |= 0x80;
-		}
+
+		BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
 	}
 	else
 	{
@@ -774,7 +739,7 @@ LABEL_7:
 	}
 
 	RenderPassGroup& group = this->m_RenderGroups[v6];
-	BSRenderPass *pass = group.m_Pass[*v7];
+	BSRenderPass *pass = group.m_Pass[*a3];
 
 	if (pass)
 	{
@@ -787,7 +752,7 @@ LABEL_7:
 
 	if (*(BYTE *)(a1 + 108))
 	{
-		__int64 v20 = *v7;
+		__int64 v20 = *a3;
 
 		if (v20 < 0 || v20 >= ARRAYSIZE(group.m_Pass))
 			__debugbreak();
@@ -798,14 +763,9 @@ LABEL_7:
 
 	sub_14131F090();
 
-	if (*(DWORD *)&GraphicsGlobals.__zz0[68])
-	{
-		*(DWORD *)&GraphicsGlobals.__zz0[68] = 0;
-		GraphicsGlobals.dword_14304DEB0 |= 0x80;
-	}
-
-	++*v7;
-	return sub_14131E700((uint32_t *)a2, (__int64)v7, a4);
+	BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
+	++*a3;
+	return sub_14131E700((uint32_t *)a2, (__int64)a3, a4);
 }
 
 void BSBatchRenderer::sub_14131D6E0(__int64 a1)
