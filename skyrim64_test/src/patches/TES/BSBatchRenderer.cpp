@@ -2,6 +2,7 @@
 #include "../../common.h"
 #include "BSShader/BSShaderManager.h"
 #include "BSShader/BSShader.h"
+#include "BSShader/BSShaderAccumulator.h"
 #include "MemoryContextTracker.h"
 #include "BSSpinLock.h"
 #include "BSBatchRenderer.h"
@@ -217,7 +218,6 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 {
 	unsigned int v4; // ebp
 	__int64 *v5; // rdi
-	__int64 result; // rax
 	__int64 v7; // rbx
 	unsigned int v8; // edx
 	__int64 v9; // rcx
@@ -256,7 +256,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 				else
 					BSGraphics__Renderer__RasterStateSetCullMode(1);
 			}
-		LABEL_13:
+
 			v9 = *(uint64_t *)(*(uint64_t *)(v7 + 16) + 288i64);// BSGeometry::GetModelBound?
 			v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
 			sub_14131ED70((BSRenderPass *)v7, v8, v10, v4);
@@ -516,7 +516,6 @@ char BSBatchRenderer::sub_14131ECE0(uint32_t *a2, __int64 a3, __int64 a4)
 	__int64 v5; // r10
 	unsigned int v6; // ebx
 	signed __int64 v7; // rax
-	signed __int64 v8; // rcx
 
 	v4 = *(uint64_t *)(a1 + 72);
 	v5 = a1;
@@ -621,10 +620,6 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t *a2, signed int *a3, __int64 *a4)
 	return sub_14131E8F0(v9, v4);
 }
 
-void BSGraphics__Renderer__RasterStateSetCullMode(uint32_t CullMode);
-void BSGraphics__Renderer__AlphaBlendStateSetUnknown1(uint32_t Value);
-void sub_14131F090();
-
 char BSBatchRenderer::sub_14131E960(unsigned int *a2, unsigned int *a3, __int64 a4, unsigned int a5)
 {
 	auto& GraphicsGlobals = *(BSGraphicsRendererGlobals *)GetThreadedGlobals();
@@ -665,12 +660,7 @@ LABEL_7:
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(1);
 
-		if (GraphicsGlobals.__zz0[76])
-		{
-			GraphicsGlobals.__zz0[76] = 0;
-			GraphicsGlobals.dword_14304DEB0 |= 0x100;
-		}
-
+		BSGraphics__Renderer__SetUseScrapConstantValue(false);
 		BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
 	}
 	else if (*a3 == 2)
@@ -678,12 +668,7 @@ LABEL_7:
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(0);
 
-		if (GraphicsGlobals.__zz0[76])
-		{
-			GraphicsGlobals.__zz0[76] = 0;
-			GraphicsGlobals.dword_14304DEB0 |= 0x100;
-		}
-
+		BSGraphics__Renderer__SetUseScrapConstantValue(false);
 		BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
 	}
 	else if (*a3 == 3)
@@ -691,11 +676,7 @@ LABEL_7:
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(0);
 
-		if (GraphicsGlobals.__zz0[76] != 1)
-		{
-			GraphicsGlobals.__zz0[76] = 1;
-			GraphicsGlobals.dword_14304DEB0 |= 0x100;
-		}
+		BSGraphics__Renderer__SetUseScrapConstantValue(true);
 
 		v11 = 1;
 
@@ -707,11 +688,7 @@ LABEL_7:
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(1);
 
-		if (GraphicsGlobals.__zz0[76] != 1)
-		{
-			GraphicsGlobals.__zz0[76] = 1;
-			GraphicsGlobals.dword_14304DEB0 |= 0x100;
-		}
+		BSGraphics__Renderer__SetUseScrapConstantValue(true);
 
 		v11 = 1;
 
@@ -723,14 +700,8 @@ LABEL_7:
 		if (!v13)
 			BSGraphics__Renderer__RasterStateSetCullMode(1);
 
-		if (GraphicsGlobals.__zz0[76] != 1)
-		{
-			GraphicsGlobals.__zz0[76] = 1;
-			GraphicsGlobals.dword_14304DEB0 |= 0x100;
-		}
-
+		BSGraphics__Renderer__SetUseScrapConstantValue(true);
 		v11 = 1;
-
 		BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
 	}
 	else
@@ -776,7 +747,6 @@ void BSBatchRenderer::sub_14131D6E0(__int64 a1)
 	unsigned __int64 v6; // rdi
 	unsigned __int64 v7; // r14
 	__int64 v8; // rdx
-	signed __int64 v9; // rcx
 	__int64 v10; // rax
 	__int64 v11; // rsi
 	__int64 v12; // rdi

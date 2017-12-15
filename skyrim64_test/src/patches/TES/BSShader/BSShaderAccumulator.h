@@ -72,3 +72,15 @@ static_assert(sizeof(BSShaderAccumulator) == 0x180, "");
 static_assert(offsetof(BSShaderAccumulator, _pad1) == 0x58, "");
 static_assert(offsetof(BSShaderAccumulator, m_MainBatch) == 0x130, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentTech) == 0x138, "");
+
+void sub_14131F090();
+void BSGraphics__Renderer__RasterStateSetCullMode(uint32_t CullMode);
+void BSGraphics__Renderer__AlphaBlendStateSetMode(uint32_t Mode);
+void BSGraphics__Renderer__AlphaBlendStateSetUnknown1(uint32_t Value);
+void BSGraphics__Renderer__AlphaBlendStateSetUnknown2(uint32_t Value);
+void BSGraphics__Renderer__DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef);
+void BSGraphics__Renderer__DepthStencilStateSetDepthMode(uint32_t Mode);
+void BSGraphics__Renderer__SetTextureFilterMode(uint32_t Index, uint32_t Mode);
+void BSGraphics__Renderer__SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode);
+void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue);
+void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue, float Value);

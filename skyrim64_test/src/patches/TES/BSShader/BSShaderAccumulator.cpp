@@ -141,9 +141,37 @@ void BSGraphics__Renderer__SetTextureMode(uint32_t Index, uint32_t AddressMode, 
 	}
 }
 
+void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue)
+{
+	auto *renderer = GetThreadedGlobals();
+
+	// When UseStoredValue is false, the constant buffer data is zeroed, but float_14304DF68 is saved
+	if (renderer->__zz0[76] != UseStoredValue)
+	{
+		renderer->__zz0[76] = UseStoredValue;
+		renderer->dword_14304DEB0 |= 0x100u;
+	}
+}
+
+void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue, float Value)
+{
+	auto *renderer = GetThreadedGlobals();
+
+	if (renderer->__zz0[76] != UseStoredValue)
+	{
+		renderer->__zz0[76] = UseStoredValue;
+		renderer->dword_14304DEB0 |= 0x100u;
+	}
+
+	if (renderer->float_14304DF68 != Value)
+	{
+		renderer->float_14304DF68 = Value;
+		renderer->dword_14304DEB0 |= 0x200u;
+	}
+}
+
 void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 {
-	// a1 = BSShaderAccumulator
 	auto accumulator = (BSShaderAccumulator *)a1;
 	auto graphicsGlobals = GetThreadedGlobals();
 
@@ -153,7 +181,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
 		BSGraphics__Renderer__DepthStencilStateSetDepthMode(4);
 
-	// v7 = RenderDepthOnly()? RenderAlphaOnly?
+	// v7 = RenderDepthOnly()? RenderAlphaOnly()?
 	bool v7 = (a2 & 0xA) != 0;
 
 	if (!v7)
@@ -242,16 +270,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	// RenderSky
 	annotation->BeginEvent(L"RenderSky");
 	{
-		if (graphicsGlobals->__zz0[76] != 1)
-		{
-			graphicsGlobals->dword_14304DEB0 |= 0x100u;
-			graphicsGlobals->__zz0[76] = 1;
-		}
-		if (graphicsGlobals->float_14304DF68 != 0.50196081f)
-		{
-			graphicsGlobals->dword_14304DEB0 |= 0x200u;
-			graphicsGlobals->float_14304DF68 = 0.50196081f;
-		}
+		BSGraphics__Renderer__SetUseScrapConstantValue(true, 0.50196081f);
 		accumulator->RenderTechniques(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, a2, -1);
 	}
 	annotation->EndEvent();
