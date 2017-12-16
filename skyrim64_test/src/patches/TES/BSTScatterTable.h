@@ -1,59 +1,325 @@
 #pragma once
 
-#pragma pack(push, 8)
-template<typename KeyType, typename ValueType>
-struct BSTScatterTable
+// Special thanks to himika (https://github.com/himika/libSkyrim/blob/2559175f7f30189b7d3681d01b3e055505c3e0d7/Skyrim/include/Skyrim/BSCore/BSTScatterTable.h)
+// for providing most of this (iterators) as a reference.
+
+template<typename Key, typename T>
+struct BSTScatterTableDefaultKVStorage
 {
-    struct LinkEntry
-    {
-        KeyType Key;
-        ValueType Value;
-        LinkEntry *Next; // Can be nullptr
-    };
-
-    char _gap0[4];      //
-    uint32_t Size;      // Total number of entries (including lists)
-    char _gap8[4];      //
-    uint32_t HashBase;  // Entries[CRC32(key) & (HashBase - 1)]
-    char _gap10[8];     //
-    LinkEntry *ListEnd; // Final LinkEntry::Next value points to this
-    BYTE gap20[8];      //
-    LinkEntry *Buckets; // Resizable array of linked lists
-
-    bool Get(KeyType Key, ValueType &Out)
-    {
-        if (this->Buckets)
-        {
-            int keyHash;
-            CRC32_Lazy(&keyHash, Key);
-
-            auto entry = &this->Buckets[keyHash & (this->HashBase - 1)];
-
-            for (bool i = entry->Next == nullptr; !i; i = entry == this->ListEnd)
-            {
-                if (entry->Key == Key)
-                {
-                    Out = entry->Value;
-                    return true;
-                }
-
-                entry = entry->Next;
-            }
-        }
-
-        return false;
-    }
+	Key m_Key;
+	T m_Value;
 };
-#pragma pack(pop)
 
-using __BSTSC = BSTScatterTable<uint32_t, void *>;
+template<typename Key, typename T, class Storage = BSTScatterTableDefaultKVStorage<Key, T>>
+struct BSTScatterTableEntry : public Storage
+{
+	using key_type = Key;
+	using value_type = T;
 
-static_assert(offsetof(__BSTSC, Size) == 0x4, "");
-static_assert(offsetof(__BSTSC, HashBase) == 0xC, "");
-static_assert(offsetof(__BSTSC, ListEnd) == 0x18, "");
-static_assert(offsetof(__BSTSC, Buckets) == 0x28, "");
+	BSTScatterTableEntry *m_Next;
 
-static_assert(sizeof(__BSTSC::LinkEntry) == 0x18, "");
-static_assert(offsetof(__BSTSC::LinkEntry, Key) == 0x0, "");
-static_assert(offsetof(__BSTSC::LinkEntry, Value) == 0x8, "");
-static_assert(offsetof(__BSTSC::LinkEntry, Next) == 0x10, "");
+	bool IsEmpty()
+	{
+		return m_Next == nullptr;
+	}
+};
+
+// struct BSTScatterTableHeapAllocator<
+//		struct BSTScatterTableEntry<unsigned int, class BSTArray<struct SetEventData, class BSTArrayHeapAllocator> const *, struct BSTScatterTableDefaultKVStorage>
+//		>
+template<typename T>
+struct BSTScatterTableHeapAllocator
+{
+	using value_type = typename T::value_type;
+	using pointer = typename T::value_type *;
+	using const_pointer = const typename T::value_type *;
+	using table_entry = T;
+
+	T *Allocate(size_t Count)
+	{
+		throw;
+	}
+};
+
+template<typename T, size_t MaxEntries>
+struct BSTFixedSizeScatterTableAllocator
+{
+	// Doesn't allow any kind of dynamic allocation
+	T m_StaticBuffer[MaxEntries];
+
+	T *Allocate(size_t Count)
+	{
+		if (Count > MaxEntries)
+			throw "FixedSizeScatterTableAllocator: Not enough static memory for map";
+
+		return m_StaticBuffer;
+	}
+};
+
+// struct BSTScatterTableDefaultHashPolicy<
+//		unsigned int
+//		>
+template<typename Key>
+struct BSTScatterTableDefaultHashPolicy
+{
+	size_t operator()(const Key& Value) const
+	{
+		return Value;
+	}
+};
+
+template<typename Key>
+struct BSTScatterTableCRCHashPolicy
+{
+	size_t operator()(const Key& Value) const
+	{
+		Key keyHash;
+		CRC32_Lazy((int *)&keyHash, Value);
+
+		return keyHash;
+	}
+};
+
+// struct BSTScatterTableTraits<
+//		unsigned int,
+//		class BSTArray<struct SetEventData, class BSTArrayHeapAllocator> const *,
+//		struct BSTScatterTableDefaultKVStorage,
+//		struct BSTScatterTableDefaultHashPolicy<unsigned int>,
+//		struct BSTScatterTableHeapAllocator<struct BSTScatterTableEntry<unsigned int, class BSTArray<struct SetEventData, class BSTArrayHeapAllocator> const *, struct BSTScatterTableDefaultKVStorage>>,
+//		8>
+template<
+	typename Key,
+	typename T,
+	class Storage = BSTScatterTableDefaultKVStorage<Key, T>,
+	class Hash = BSTScatterTableDefaultHashPolicy<Key>,
+	class Allocator = BSTScatterTableHeapAllocator<T>,
+	size_t InitialSize = 8
+	>
+struct BSTScatterTableTraits
+{
+	using key_type = Key;
+	using mapped_type = T;
+	using value_type = std::pair<Key, T>;
+	using size_type = size_t;
+	using difference_type = ptrdiff_t;
+	using hasher = Hash;
+	using key_equal = std::equal_to<Key>;
+	using allocator_type = Allocator;
+	using reference = value_type&;
+	using const_reference = const value_type&;
+	using pointer = typename Allocator::pointer;
+	using const_pointer = typename Allocator::const_pointer;
+
+	using table_entry = typename Allocator::table_entry;
+};
+
+template<class Traits>
+class BSTScatterTableKernel : public Traits, public Traits::hasher
+{
+	//
+	// NOTE: There's a "missing" field at offset 0 here because of the minimum base class size
+	// set in Visual Studio (1 byte, aligned to 4)
+	//
+	// When a list is empty, BSTScatterTableEntry::m_Next will be nullptr. If a list is NOT empty
+	// and you hit the end, m_Next will be equal to m_EndOfList.
+	//
+	using table_entry = typename Traits::table_entry;
+
+public:
+	char _pad1[8];						// 0x04  +0
+	uint32_t m_AllocatedEntries;		// 0x0C  +4
+	uint32_t m_UnknownSize1;			// 0x10  +8
+	uint32_t m_UnknownSize2;			// 0x14  +12
+	table_entry *m_EndOfList;			// 0x18  +16
+
+	// @ 0x0 __unused_field
+	// @ 0x8 ????
+	// @ 0xC m_AllocatedEntries
+	// @ 0x10 size
+	// @ 0x14 size
+	// @ 0x18 sentinel
+	// ...
+	// @ 0x28 entries pointer
+};
+
+template<class Traits>
+class BSTScatterTableBase : public BSTScatterTableKernel<Traits>, public Traits::allocator_type
+{
+	//
+	// Same invisible padding as BSTScatterTableKernel in here
+	//
+protected:
+	using key_type = typename Traits::key_type;
+	using mapped_type = typename Traits::mapped_type;
+	using hasher = typename Traits::hasher;
+	using const_reference = typename Traits::const_reference;
+	using pointer = typename Traits::pointer;
+	using const_pointer = typename Traits::const_pointer;
+	using table_entry = typename Traits::table_entry;
+
+	table_entry *m_Buckets;
+
+public:
+	class const_iterator
+	{
+		friend class BSTScatterTableBase;
+
+	private:
+		table_entry *m_CurrentBucket;	// &m_Buckets[0];
+		table_entry *m_FinalBucket;		// &m_Buckets[m_AllocatedEntries];
+
+	public:
+		const_iterator& operator++(int)
+		{
+			do
+				m_CurrentBucket++;
+			while (m_CurrentBucket < m_FinalBucket && m_CurrentBucket->IsEmpty());
+
+			return *this;
+		}
+
+		operator bool() const
+		{
+			return m_CurrentBucket != nullptr;
+		}
+
+		operator const mapped_type() const
+		{
+			return m_CurrentBucket->m_Value;
+		}
+
+		const mapped_type& operator*() const
+		{
+			return m_CurrentBucket->m_Value;
+		}
+		
+		const mapped_type *operator->() const
+		{
+			return m_CurrentBucket->m_Value;
+		}
+
+		bool operator==(const const_iterator& Rhs) const
+		{
+			return m_CurrentBucket == Rhs.m_CurrentBucket;
+		}
+		
+		bool operator!=(const const_iterator& Rhs) const
+		{
+			return m_CurrentBucket != Rhs.m_CurrentBucket;
+		}
+
+	protected:
+		const_iterator(table_entry *Final) : m_CurrentBucket(Final), m_FinalBucket(Final)
+		{
+			// Empty/end() equivalent iterator constructor
+		}
+
+		const_iterator(table_entry *Current, table_entry *Final) : m_CurrentBucket(Current), m_FinalBucket(Final)
+		{
+			// Move to the first valid entry (that contains a value)
+			while (m_CurrentBucket < m_FinalBucket && m_CurrentBucket->IsEmpty())
+				m_CurrentBucket++;
+		}
+	};
+
+	const_iterator begin() const noexcept
+	{
+		if (!m_Buckets)
+			return const_iterator(nullptr);
+
+		return const_iterator(&m_Buckets[0], &m_Buckets[m_AllocatedEntries]);
+	}
+
+	const_iterator end() const noexcept
+	{
+		if (!m_Buckets)
+			return const_iterator(nullptr);
+		
+		return const_iterator(&m_Buckets[m_AllocatedEntries]);
+	}
+
+	const_iterator find(const key_type& Key) const
+	{
+		if (!m_Buckets)
+			return const_iterator(nullptr);
+
+		table_entry *entry = &m_Buckets[hasher()(Key) & (m_AllocatedEntries - 1)];
+
+		if (!entry->IsEmpty())
+		{
+			while (entry != m_EndOfList)
+			{
+				if (entry->m_Key == Key)
+					return const_iterator(entry, &m_Buckets[m_AllocatedEntries]);
+
+				entry = entry->m_Next;
+			}
+		}
+
+		// Key not found
+		return const_iterator(nullptr);
+	}
+
+	bool get(const key_type& Key, mapped_type& Out) const
+	{
+		if (!m_Buckets)
+			return false;
+
+		table_entry *entry = &m_Buckets[hasher()(Key) & (m_AllocatedEntries - 1)];
+
+		if (!entry->IsEmpty())
+		{
+			while (entry != m_EndOfList)
+			{
+				if (entry->m_Key == Key)
+				{
+					Out = entry->m_Value;
+					return true;
+				}
+
+				entry = entry->m_Next;
+			}
+		}
+
+		// Key not found
+		return false;
+	}
+};
+
+// class BSTScatterTable<
+//		unsigned int,
+//		class BSTArray<struct SetEventData, class BSTArrayHeapAllocator> const *,
+//		struct BSTScatterTableDefaultKVStorage,
+//		struct BSTScatterTableDefaultHashPolicy,
+//		struct BSTScatterTableHeapAllocator,
+//		8>
+template<
+	typename Key,
+	typename T,
+	class Storage = BSTScatterTableDefaultKVStorage<Key, T>,
+	class Hash = BSTScatterTableDefaultHashPolicy<Key>,
+	class Allocator = BSTScatterTableHeapAllocator<BSTScatterTableEntry<Key, T>>,
+	size_t InitialSize = 8
+	>
+class BSTScatterTable : public BSTScatterTableBase<BSTScatterTableTraits<Key, T, Storage, Hash, Allocator, InitialSize>>
+{
+};
+
+template<typename Key, typename T>
+struct BSTDefaultScatterTable : public BSTScatterTable<Key, T>
+{
+};
+
+template<typename Key, typename T>
+struct BSTCRCScatterTable : public BSTScatterTable<Key, T, BSTScatterTableDefaultKVStorage<Key, T>, BSTScatterTableCRCHashPolicy<Key>>
+{
+};
+
+using Test2 = BSTDefaultScatterTable<uint32_t, uint32_t>;
+
+static_assert(offsetof(Test2, m_AllocatedEntries) == 0xC, "");
+static_assert(offsetof(Test2, m_UnknownSize1) == 0x10, "");
+static_assert(offsetof(Test2, m_UnknownSize2) == 0x14, "");
+static_assert(offsetof(Test2, m_EndOfList) == 0x18, "");
+//static_assert(offsetof(Test2, m_Buckets) == 0x28, "");
+static_assert(sizeof(Test2) == 0x30, "");

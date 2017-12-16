@@ -742,44 +742,25 @@ LABEL_7:
 void BSBatchRenderer::sub_14131D6E0(__int64 a1)
 {
 	__int64 v1; // rbp
-	unsigned int v4; // er15
-	unsigned __int64 *v5; // rax
-	unsigned __int64 v6; // rdi
-	unsigned __int64 v7; // r14
-	__int64 v8; // rdx
 	__int64 v10; // rax
 	__int64 v11; // rsi
 	__int64 v12; // rdi
-	__int64 v13[2]; // [rsp+28h] [rbp-50h]
-	char v14[16]; // [rsp+38h] [rbp-40h]
 
 	AssertIsRTTIType(a1, RTTI_BSBatchRenderer);
 
 	auto *batcher = (BSBatchRenderer *)a1;
 
-	v1 = a1;
-
 	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
 
-	v4 = 0;
-	v5 = (unsigned __int64 *)sub_141320350(a1 + 32, (__int64)&v13); // BSTScatterTable::begin()
-	v6 = *v5;
-	v7 = v5[1];
-	v8 = *(uint64_t *)sub_1413203B0(v1 + 32, (__int64)&v14);// BSTScatterTable::end()
-	while (v6 != v8)
+	for (auto itr = batcher->m_TechToGroup.begin(); itr != batcher->m_TechToGroup.end(); itr++)
 	{
-		// This code uses both BSTScatterTable and BSTArray
-		// Also an inlined function. "Pass still has passes" -- Probably array.clear()
-		if (v6)
-			v4 = *(DWORD *)(v6 + 4);
-
-		batcher->m_RenderGroups[v4].Clear(true);
-		do
-			v6 += 16i64;
-		while (v6 < v7 && !*(uint64_t *)(v6 + 8));
+		if (itr)
+			batcher->m_RenderGroups[*itr].Clear(true);
 	}
 
 	// This entire block is some inlined function
+	v1 = a1;
+
 	if (*(uint64_t *)(v1 + 96))
 	{
 		do

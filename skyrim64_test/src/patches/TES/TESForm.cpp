@@ -5,7 +5,7 @@
 #include "TESForm.h"
 
 AutoPtr<BSReadWriteLock, 0x1EEA0D0> GlobalFormLock;
-AutoPtr<BSTScatterTable<uint32_t, TESForm *> *, 0x1EE9C38> GlobalFormList;
+AutoPtr<BSTCRCScatterTable<uint32_t, TESForm *> *, 0x1EE9C38> GlobalFormList;
 tbb::concurrent_unordered_map<uint32_t, TESForm *> g_FormMap[TES_FORM_MASTER_COUNT];
 
 namespace Bitmap
@@ -175,7 +175,7 @@ TESForm *GetFormById(unsigned int FormId)
     // Try to use Bethesda's scatter table which is considerably slower
 	GlobalFormLock->AcquireRead();
 
-	if (!GlobalFormList || !GlobalFormList->Get(FormId, formPointer))
+	if (!GlobalFormList || !GlobalFormList->get(FormId, formPointer))
 		formPointer = nullptr;
 
 	GlobalFormLock->ReleaseRead();
