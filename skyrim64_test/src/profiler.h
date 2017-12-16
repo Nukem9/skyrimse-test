@@ -79,19 +79,29 @@ namespace Profiler
 		ScopedTimer() = delete;
 		ScopedTimer(ScopedTimer&) = delete;
 
+		__forceinline void GetTime(LARGE_INTEGER *Counter)
+		{
+#if 0
+			uint32_t temp;
+			Counter->QuadPart = __rdtscp(&temp);
+#else
+			QueryPerformanceCounter(Counter);
+#endif
+		}
+
 	public:
-		inline ScopedTimer(const char *File, const char *Function, const char *Name)
+		__forceinline ScopedTimer(const char *File, const char *Function, const char *Name)
 		{
 			if (!m_Entry.Init)
 				m_Entry = { 0, 0, File, Function, Name, true };
 
-			QueryPerformanceCounter(&m_Start);
+			GetTime(&m_Start);
 		}
 
-		inline ~ScopedTimer()
+		__forceinline ~ScopedTimer()
 		{
 			LARGE_INTEGER endTime;
-			QueryPerformanceCounter(&endTime);
+			GetTime(&endTime);
 
 			InterlockedAdd64(&m_Entry.Value, endTime.QuadPart - m_Start.QuadPart);
 		}
