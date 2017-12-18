@@ -65,34 +65,32 @@ public:
 	{
 	}
 
-	reference Front() {
-		return *reinterpret_cast<_Ty *>(QBuffer());
-	}
-
-	const_reference Front() const {
-		return *reinterpret_cast<const _Ty *>(QBuffer());
-	}
-
 	reference operator[](const size_type Pos)
 	{
-		return *(&Front() + Pos);
+		return (this->_Myfirst()[Pos]);
 	}
 
 	const_reference operator[](const size_type Pos) const
 	{
-		return *(&Front() + Pos);
+		return (this->_Myfirst()[Pos]);
 	}
 
 	reference at(const size_type Pos)
 	{
-		return *(&Front() + Pos);
+		if (Pos < 0 || Pos >= QSize())
+			throw std::out_of_range;
+
+		return (this->_Myfirst()[Pos]);
 	}
 
 	const_reference at(const size_type Pos) const
 	{
-		return *(&Front() + Pos);
-	}
+		if (Pos < 0 || Pos >= QSize())
+			throw std::out_of_range;
 
+		return (this->_Myfirst()[Pos]);
+	}
+	
 	reference front()
 	{
 		return (*this->_Myfirst());

@@ -240,44 +240,44 @@ public:
 
 	const_iterator find(const key_type& Key) const
 	{
-		if (!m_Buckets)
-			return const_iterator(nullptr);
-
-		table_entry *entry = &m_Buckets[hasher()(Key) & (m_AllocatedEntries - 1)];
-
-		if (!entry->IsEmpty())
+		if (m_Buckets)
 		{
-			while (entry != m_EndOfList)
-			{
-				if (entry->m_Key == Key)
-					return const_iterator(entry, &m_Buckets[m_AllocatedEntries]);
+			table_entry *entry = &m_Buckets[hasher()(Key) & (m_AllocatedEntries - 1)];
 
-				entry = entry->m_Next;
+			if (!entry->IsEmpty())
+			{
+				while (entry != m_EndOfList)
+				{
+					if (entry->m_Key == Key)
+						return const_iterator(entry, &m_Buckets[m_AllocatedEntries]);
+
+					entry = entry->m_Next;
+				}
 			}
 		}
 
 		// Key not found
-		return const_iterator(nullptr);
+		return end();
 	}
 
 	bool get(const key_type& Key, mapped_type& Out) const
 	{
-		if (!m_Buckets)
-			return false;
-
-		table_entry *entry = &m_Buckets[hasher()(Key) & (m_AllocatedEntries - 1)];
-
-		if (!entry->IsEmpty())
+		if (m_Buckets)
 		{
-			while (entry != m_EndOfList)
-			{
-				if (entry->m_Key == Key)
-				{
-					Out = entry->m_Value;
-					return true;
-				}
+			table_entry *entry = &m_Buckets[hasher()(Key) & (m_AllocatedEntries - 1)];
 
-				entry = entry->m_Next;
+			if (!entry->IsEmpty())
+			{
+				while (entry != m_EndOfList)
+				{
+					if (entry->m_Key == Key)
+					{
+						Out = entry->m_Value;
+						return true;
+					}
+
+					entry = entry->m_Next;
+				}
 			}
 		}
 
