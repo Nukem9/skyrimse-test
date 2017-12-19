@@ -273,67 +273,6 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 	}
 }
 
-__int64 sub_141320350(__int64 a1, __int64 a2)
-{
-	__int64 v2; // rbx
-
-	v2 = a2;
-	sub_141320370(a1 + 8, (unsigned __int64 *)a2);
-	return v2;
-}
-
-unsigned __int64 *sub_141320370(__int64 a1, unsigned __int64 *a2)
-{
-	__int64 v2; // r9
-	unsigned __int64 v3; // rax
-	unsigned __int64 v4; // r8
-	unsigned __int64 *result; // rax
-
-	v2 = *(uint64_t *)(a1 + 32);
-	v3 = 0i64;
-	v4 = 0i64;
-	if (v2)
-	{
-		v3 = *(uint64_t *)(a1 + 32);
-		v4 = v2 + 16i64 * *(unsigned int *)(a1 + 4);
-		while (v3 < v4 && !*(uint64_t *)(v3 + 8))
-			v3 += 16i64;
-	}
-	*a2 = v3;
-	result = a2;
-	a2[1] = v4;
-	return result;
-}
-
-__int64 sub_1413203B0(__int64 a1, __int64 a2)
-{
-	__int64 v2; // rbx
-
-	v2 = a2;
-	sub_1413203D0(a1 + 8, (signed __int64 *)a2);
-	return v2;
-}
-
-signed __int64 *sub_1413203D0(__int64 a1, signed __int64 *a2)
-{
-	__int64 v2; // r8
-	signed __int64 v3; // rax
-
-	v2 = *(uint64_t *)(a1 + 32);
-	if (v2)
-	{
-		v3 = v2 + 16i64 * *(unsigned int *)(a1 + 4);
-		*a2 = v3;
-		a2[1] = v3;
-	}
-	else
-	{
-		*a2 = 0i64;
-		a2[1] = 0i64;
-	}
-	return a2;
-}
-
 void BSBatchRenderer::PassInfo::Render(unsigned int a2)
 {
 	//auto Render = (void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x131CB70);
@@ -457,87 +396,25 @@ bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, signed int *a3)
 	return v4 == 6;
 }
 
-char BSBatchRenderer::sub_14131E700(uint32_t *a2, __int64 a3, __int64 a4)
+bool BSBatchRenderer::sub_14131E700(uint32_t *a2, __int64 a3, __int64 a4)
 {
-	__int64 a1 = (__int64)this;
-
-	int v4; // er10
-	unsigned int v5; // er11
-	__int64 v6; // rbp
-	__int64 v7; // rdi
-	uint32_t *v8; // rsi
-	__int64 v9; // rbx
-	__int64 v10; // rdx
-	signed __int64 v11; // rax
-
-	v4 = *a2;
-	v5 = 0;
-	v6 = a4;
-	v7 = a3;
-	v8 = a2;
-	v9 = a1;
 	if (!*a2)
 		return sub_14131E7B0(a2, (signed int *)a3, (__int64 *)a4);
 
-	// Inlined function here
-	v10 = *(uint64_t *)(a1 + 72);
-	if (v10)
-	{
-		v11 = v10 + 16i64 * (v4 & (unsigned int)(*(DWORD *)(a1 + 44) - 1));
-		if (*(uint64_t *)(v11 + 8))
-		{
-			while (*(DWORD *)v11 != v4)
-			{
-				v11 = *(uint64_t *)(v11 + 8);
-				if (v11 == *(uint64_t *)(a1 + 56))
-					goto LABEL_8;
-			}
-			v5 = *(DWORD *)(v11 + 4);
-		}
-	}
+	uint32_t groupIndex = m_TechToGroup.get(*a2);
 
-LABEL_8:
-	if (!sub_14131E8F0(v5, (signed int *)a3))
-	{
-		a4 = v6;
-		a3 = v7;
-		a2 = v8;
-		a1 = v9;
+	if (!sub_14131E8F0(groupIndex, (signed int *)a3))
 		return sub_14131E7B0(a2, (signed int *)a3, (__int64 *)a4);
-	}
-	return 1;
+
+	return true;
 }
 
-char BSBatchRenderer::sub_14131ECE0(uint32_t *a2, __int64 a3, __int64 a4)
+bool BSBatchRenderer::sub_14131ECE0(uint32_t *a2, __int64 a3, __int64 a4)
 {
-	__int64 a1 = (__int64)this;
+	uint32_t groupIndex = m_TechToGroup.get(*a2);
 
-	__int64 v4; // r11
-	__int64 v5; // r10
-	unsigned int v6; // ebx
-	signed __int64 v7; // rax
-
-	v4 = *(uint64_t *)(a1 + 72);
-	v5 = a1;
-	v6 = 0;
-	if (v4)
-	{
-		// BSTScatterTable
-		v7 = v4 + 16i64 * (*a2 & (unsigned int)(*(DWORD *)(a1 + 44) - 1));
-		if (*(uint64_t *)(v7 + 8))
-		{
-			while (*(DWORD *)v7 != *a2)
-			{
-				v7 = *(uint64_t *)(v7 + 8);
-				if (v7 == *(uint64_t *)(a1 + 56))
-					goto LABEL_7;
-			}
-			v6 = *(DWORD *)(v7 + 4);
-		}
-	}
-LABEL_7:
-	if (*(BYTE *)(a1 + 108))
-		this->m_RenderGroups[v6].Clear(true);
+	if (*(BYTE *)(((__int64)this) + 108))
+		m_RenderGroups[groupIndex].Clear(true);
 
 	return sub_14131E700(a2, a3, a4);
 }
@@ -549,11 +426,7 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t *a2, signed int *a3, __int64 *a4)
 	__int64 v6; // rbx
 	__int64 v7; // rax
 	unsigned int v8; // ecx
-	unsigned int v9; // ebp
 	__int64 v10; // rdi
-	__int64 v11; // r8
-	signed __int64 v12; // rcx
-	bool i; // zf
 
 	__int64 a1 = (__int64)this;
 
@@ -561,19 +434,22 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t *a2, signed int *a3, __int64 *a4)
 	v5 = a2;
 	v6 = a1;
 	v7 = *a4;
+
 	if (!*a4 || !*(uint64_t *)(v7 + 8) && !*(DWORD *)v7)
-		return 0;
+		return false;
+
 	v8 = *(DWORD *)v7;
 	for (*a2 = *(DWORD *)v7; v8 < *(DWORD *)(v6 + 80); *a2 = *(DWORD *)v7)
 	{
 		v7 = *(uint64_t *)(v7 + 8);
 		if (!v7)
-			return 0;
+			return false;
 		v8 = *(DWORD *)v7;
 	}
+
 	if (v8 > *(DWORD *)(v6 + 84))
-		return 0;
-	v9 = 0;
+		return false;
+
 	// "RenderPasses in active lists are out of order, passes will probably be leaked"
 	if (*(BYTE *)(v6 + 108))
 	{
@@ -602,22 +478,8 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t *a2, signed int *a3, __int64 *a4)
 	{
 		*a4 = *(uint64_t *)(*a4 + 8);
 	}
-	v11 = *(uint64_t *)(v6 + 72);
-	if (v11)
-	{
-		// BSTScatterTable
-		v12 = v11 + 16i64 * (*v5 & (unsigned int)(*(DWORD *)(v6 + 44) - 1));
-		for (i = *(uint64_t *)(v12 + 8) == 0i64; !i; i = v12 == *(uint64_t *)(v6 + 56))
-		{
-			if (*(DWORD *)v12 == *v5)
-			{
-				v9 = *(DWORD *)(v12 + 4);
-				return sub_14131E8F0(v9, v4);
-			}
-			v12 = *(uint64_t *)(v12 + 8);
-		}
-	}
-	return sub_14131E8F0(v9, v4);
+
+	return sub_14131E8F0(m_TechToGroup.get(*v5), v4);
 }
 
 char BSBatchRenderer::sub_14131E960(unsigned int *a2, unsigned int *a3, __int64 a4, unsigned int a5)
@@ -626,99 +488,87 @@ char BSBatchRenderer::sub_14131E960(unsigned int *a2, unsigned int *a3, __int64 
 
 	__int64 a1 = (__int64)this;
 
-	__int64 v5; // r11
-	unsigned int v6; // ebx
-	signed __int64 v10; // r9
-	unsigned __int8 v11; // di
-	bool v13; // r10
-
-	v5 = *(uint64_t *)(a1 + 72);
-	v6 = 0;
-
 	AssertIsRTTIType(a1, RTTI_BSBatchRenderer);
 
-	// BSTScatterTree
-	if (v5)
+	bool unknownFlag2 = false;
+	bool unknownFlag = false;
+	uint32_t groupIndex = m_TechToGroup.get(*a2);
+
+	// Set material render state
 	{
-		v10 = v5 + 16i64 * (*(DWORD *)a2 & (unsigned int)(*(DWORD *)(a1 + 44) - 1));
-		if (*(uint64_t *)(v10 + 8))
+		unknownFlag2 = 0;
+		unknownFlag = (a5 & 0x108) != 0;
+
+		int cullMode = -1;
+		int alphaBlendUnknown = -1;
+		bool useScrapConstant = false;
+
+		switch (*a3)
 		{
-			while (*(DWORD *)v10 != *(DWORD *)a2)
-			{
-				v10 = *(uint64_t *)(v10 + 8);
-				if (v10 == *(uint64_t *)(a1 + 56))
-					goto LABEL_7;
-			}
-			v6 = *(DWORD *)(v10 + 4);
+		case 0:
+			if (!unknownFlag)
+				cullMode = 1;
+
+			useScrapConstant = false;
+			alphaBlendUnknown = 0;
+			break;
+
+		case 1:
+			if (!unknownFlag)
+				cullMode = 1;
+
+			useScrapConstant = true;
+			unknownFlag2 = 1;
+
+			if (byte_1431F54CD)
+				alphaBlendUnknown = 1;
+			break;
+
+		case 2:
+			if (!unknownFlag)
+				cullMode = 0;
+
+			useScrapConstant = false;
+			alphaBlendUnknown = 0;
+			break;
+
+		case 3:
+			if (!unknownFlag)
+				cullMode = 0;
+
+			useScrapConstant = true;
+			unknownFlag2 = 1;
+
+			if (byte_1431F54CD)
+				alphaBlendUnknown = 1;
+			break;
+
+		case 4:
+			if (!unknownFlag)
+				cullMode = 1;
+
+			useScrapConstant = true;
+			unknownFlag2 = 1;
+			alphaBlendUnknown = 0;
+			break;
 		}
-	}
-LABEL_7:
-	v11 = 0;
-	v13 = (a5 & 0x108) != 0;
-	if (*a3 == 0)
-	{
-		if (!v13)
-			BSGraphics__Renderer__RasterStateSetCullMode(1);
 
-		BSGraphics__Renderer__SetUseScrapConstantValue(false);
-		BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
-	}
-	else if (*a3 == 2)
-	{
-		if (!v13)
-			BSGraphics__Renderer__RasterStateSetCullMode(0);
+		if (cullMode != -1)
+			BSGraphics__Renderer__RasterStateSetCullMode(cullMode);
 
-		BSGraphics__Renderer__SetUseScrapConstantValue(false);
-		BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
-	}
-	else if (*a3 == 3)
-	{
-		if (!v13)
-			BSGraphics__Renderer__RasterStateSetCullMode(0);
+		if (alphaBlendUnknown != -1)
+			BSGraphics__Renderer__AlphaBlendStateSetUnknown1(alphaBlendUnknown);
 
-		BSGraphics__Renderer__SetUseScrapConstantValue(true);
-
-		v11 = 1;
-
-		if (byte_1431F54CD)
-			BSGraphics__Renderer__AlphaBlendStateSetUnknown1(1);
-	}
-	else if (*a3 == 1)
-	{
-		if (!v13)
-			BSGraphics__Renderer__RasterStateSetCullMode(1);
-
-		BSGraphics__Renderer__SetUseScrapConstantValue(true);
-
-		v11 = 1;
-
-		if (byte_1431F54CD)
-			BSGraphics__Renderer__AlphaBlendStateSetUnknown1(1);
-	}
-	else if (*a3 == 4)
-	{
-		if (!v13)
-			BSGraphics__Renderer__RasterStateSetCullMode(1);
-
-		BSGraphics__Renderer__SetUseScrapConstantValue(true);
-		v11 = 1;
-		BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
-	}
-	else
-	{
-		__debugbreak();
+		BSGraphics__Renderer__SetUseScrapConstantValue(useScrapConstant);
 	}
 
-	RenderPassGroup& group = this->m_RenderGroups[v6];
+	RenderPassGroup& group = this->m_RenderGroups[groupIndex];
 	BSRenderPass *pass = group.m_Pass[*a3];
 
-	if (pass)
+	while (pass)
 	{
-		while (pass)
-		{
-			sub_14131ED70(pass, *a2, v11, a5);
-			pass = (BSRenderPass *)((uint64_t *)pass)[6];
-		}
+		sub_14131ED70(pass, *a2, unknownFlag2, a5);
+		pass = (BSRenderPass *)((uint64_t *)pass)[6];
 	}
 
 	if (*(BYTE *)(a1 + 108))

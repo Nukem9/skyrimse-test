@@ -284,6 +284,15 @@ public:
 		// Key not found
 		return false;
 	}
+
+	mapped_type get(const key_type& Key) const
+	{
+		// Return a default-constructed T if not found
+		mapped_type temp = mapped_type();
+
+		get(Key, temp);
+		return temp;
+	}
 };
 
 // class BSTScatterTable<

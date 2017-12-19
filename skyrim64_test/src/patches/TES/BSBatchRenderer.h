@@ -49,8 +49,8 @@ public:
 	bool HasTechniquePasses(uint32_t StartTech, uint32_t EndTech);
 
 	bool sub_14131E8F0(unsigned int a2, signed int *a3);
-	char sub_14131E700(uint32_t *a2, __int64 a3, __int64 a4);
-	char sub_14131ECE0(uint32_t *a2, __int64 a3, __int64 a4);
+	bool sub_14131E700(uint32_t *a2, __int64 a3, __int64 a4);
+	bool sub_14131ECE0(uint32_t *a2, __int64 a3, __int64 a4);
 	bool sub_14131E7B0(uint32_t *a2, signed int *a3, __int64 *a4);
 	char sub_14131E960(unsigned int *a2, unsigned int *a3, __int64 a4, unsigned int a5);
 	static void sub_14131D6E0(__int64 a1);
