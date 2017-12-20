@@ -413,7 +413,7 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 
 		*(DWORD *)(a1 + 316) = 0;
 		v14 = (__int64)batch + 88;
-		*(BYTE *)(a1 + 320) = batch->sub_14131E700(&this->m_CurrentTech, a1 + 316, (__int64)&v14);
+		*(BYTE *)(a1 + 320) = batch->sub_14131E700(this->m_CurrentTech, *(uint32_t *)(a1 + 316), (__int64)&v14);
 	}
 	else
 	{
@@ -427,9 +427,9 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 		do
 		{
 			if ((unsigned int)(this->m_CurrentTech - BSSM_GRASS_SHADOW_L) <= 3 && (*(BYTE *)(a1 + 296) || *(BYTE *)(a1 + 297)))// if (is grass shadow) ???
-				v12 = batch->sub_14131ECE0(&this->m_CurrentTech, a1 + 316, (__int64)&v14);
+				v12 = batch->sub_14131ECE0(this->m_CurrentTech, *(uint32_t *)(a1 + 316), (__int64)&v14);// Probably discards pass, returns true if there's remaining sub passes
 			else
-				v12 = batch->sub_14131E960(&this->m_CurrentTech, (unsigned int *)(a1 + 316), (__int64)&v14, a4);
+				v12 = batch->sub_14131E960(this->m_CurrentTech, *(uint32_t *)(a1 + 316), (__int64)&v14, a4);
 
 			*(BYTE *)(a1 + 320) = v12;
 		} while (v12);

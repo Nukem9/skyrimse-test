@@ -43,8 +43,9 @@ struct BSRenderPass
 	uint8_t Byte1D;
 	uint8_t Byte1E;
 	char _pad[17];
+	BSRenderPass *m_Next;
 };
-static_assert(sizeof(BSRenderPass) == 0x30, "");
+// Size unknown
 static_assert(offsetof(BSRenderPass, m_Shader) == 0x0, "");
 static_assert(offsetof(BSRenderPass, m_Property) == 0x8, "");
 static_assert(offsetof(BSRenderPass, m_Geometry) == 0x10, "");
@@ -52,6 +53,7 @@ static_assert(offsetof(BSRenderPass, Dword18) == 0x18, "");
 static_assert(offsetof(BSRenderPass, Byte1C) == 0x1C, "");
 static_assert(offsetof(BSRenderPass, Byte1D) == 0x1D, "");
 static_assert(offsetof(BSRenderPass, Byte1E) == 0x1E, "");
+static_assert(offsetof(BSRenderPass, m_Next) == 0x30, "");
 
 struct BSConstantGroup
 {
