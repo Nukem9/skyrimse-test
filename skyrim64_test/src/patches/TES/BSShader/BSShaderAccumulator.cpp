@@ -7,8 +7,32 @@
 extern ID3DUserDefinedAnnotation *annotation;
 SRWLOCK srwtest = SRWLOCK_INIT;
 
-void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int));
-void DC_WaitDeferred();
+uintptr_t commandDataStart[3];
+uintptr_t commandData[3];
+thread_local int ThreadUsingCommandList;
+
+void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int), int Index);
+void DC_WaitDeferred(int Index);
+
+SRWLOCK testLocks[64];
+
+STATIC_CONSTRUCTOR(__Testing,
+[]{
+	for (int i = 0; i < 64; i++)
+		InitializeSRWLock(&testLocks[i]);
+
+	commandData[0] = (uintptr_t)VirtualAlloc(nullptr, 1 * 1024 * 1024, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	commandDataStart[0] = commandData[0];
+
+	commandData[1] = (uintptr_t)VirtualAlloc(nullptr, 1 * 1024 * 1024, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	commandDataStart[1] = commandData[1];
+
+	commandData[2] = (uintptr_t)VirtualAlloc(nullptr, 1 * 1024 * 1024, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	commandDataStart[2] = commandData[2];
+
+	if (!commandData[0] || !commandData[1] || !commandData[2])
+		__debugbreak();
+})
 
 static void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator)
 {
@@ -22,6 +46,9 @@ static void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accu
 
 void sub_14131F090()
 {
+	if (InsertRenderCommand<ClearStateRenderCommand>())
+		return;
+
 	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
 	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
@@ -43,6 +70,9 @@ void sub_14131F090()
 
 void BSGraphics__Renderer__RasterStateSetCullMode(uint32_t CullMode)
 {
+	if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::RasterStateCullMode, CullMode))
+		return;
+
 	auto *renderer = GetThreadedGlobals();
 
 	if (*(DWORD *)&renderer->__zz0[52] != CullMode)
@@ -54,6 +84,9 @@ void BSGraphics__Renderer__RasterStateSetCullMode(uint32_t CullMode)
 
 void BSGraphics__Renderer__AlphaBlendStateSetMode(uint32_t Mode)
 {
+	if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateMode, Mode))
+		return;
+
 	auto *renderer = GetThreadedGlobals();
 
 	if (*(DWORD *)&renderer->__zz0[64] != Mode)
@@ -65,6 +98,9 @@ void BSGraphics__Renderer__AlphaBlendStateSetMode(uint32_t Mode)
 
 void BSGraphics__Renderer__AlphaBlendStateSetUnknown1(uint32_t Value)
 {
+	if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateUnknown1, Value))
+		return;
+
 	auto *renderer = GetThreadedGlobals();
 
 	if (*(DWORD *)&renderer->__zz0[68] != Value)
@@ -76,6 +112,9 @@ void BSGraphics__Renderer__AlphaBlendStateSetUnknown1(uint32_t Value)
 
 void BSGraphics__Renderer__AlphaBlendStateSetUnknown2(uint32_t Value)
 {
+	if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateUnknown2, Value))
+		return;
+
 	auto *renderer = GetThreadedGlobals();
 
 	if (*(DWORD *)&renderer->__zz0[72] != Value)
@@ -87,6 +126,9 @@ void BSGraphics__Renderer__AlphaBlendStateSetUnknown2(uint32_t Value)
 
 void BSGraphics__Renderer__DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)
 {
+	if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::DepthStencilStateStencilMode, Mode, StencilRef))
+		return;
+
 	auto *renderer = GetThreadedGlobals();
 
 	if (*(DWORD *)&renderer->__zz0[40] != Mode || *(DWORD *)&renderer->__zz0[44] != StencilRef)
@@ -99,6 +141,9 @@ void BSGraphics__Renderer__DepthStencilStateSetStencilMode(uint32_t Mode, uint32
 
 void BSGraphics__Renderer__DepthStencilStateSetDepthMode(uint32_t Mode)
 {
+	if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::DepthStencilStateDepthMode, Mode))
+		return;
+
 	auto *renderer = GetThreadedGlobals();
 
 	if (*(DWORD *)&renderer->__zz0[32] != Mode)
@@ -143,6 +188,9 @@ void BSGraphics__Renderer__SetTextureMode(uint32_t Index, uint32_t AddressMode, 
 
 void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue)
 {
+	if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::UseScrapConstantValue_1, UseStoredValue))
+		return;
+
 	auto *renderer = GetThreadedGlobals();
 
 	// When UseStoredValue is false, the constant buffer data is zeroed, but float_14304DF68 is saved
@@ -155,6 +203,9 @@ void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue)
 
 void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue, float Value)
 {
+	if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::UseScrapConstantValue_2, UseStoredValue, *(uint32_t *)&Value))
+		return;
+
 	auto *renderer = GetThreadedGlobals();
 
 	if (renderer->__zz0[76] != UseStoredValue)
@@ -168,6 +219,55 @@ void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue, float V
 		renderer->float_14304DF68 = Value;
 		renderer->dword_14304DEB0 |= 0x200u;
 	}
+}
+
+void DoRenderCommands(int Index)
+{
+	DC_RenderDeferred(0, Index, [](long long, unsigned int arg2)
+	{
+		// Run everything in the command list...
+		bool endOfList = false;
+
+		for (uintptr_t ptr = commandDataStart[arg2]; !endOfList;)
+		{
+			RenderCommand *cmd = (RenderCommand *)ptr;
+			ptr += cmd->m_Size;
+
+			switch (cmd->m_Type)
+			{
+			case 0:
+				endOfList = true;
+				break;
+
+			case 1:
+				static_cast<ClearStateRenderCommand *>(cmd)->Run();
+				break;
+
+			case 2:
+				static_cast<SetStateRenderCommand *>(cmd)->Run();
+				break;
+
+			case 3:
+				static_cast<DrawGeometryRenderCommand *>(cmd)->Run();
+				break;
+
+			case 4:
+			{
+				auto b = static_cast<LockShaderTypeRenderCommand *>(cmd);
+
+				if (b->m_Lock)
+					AcquireSRWLockExclusive(&testLocks[b->m_LockIndex]);
+				else
+					ReleaseSRWLockExclusive(&testLocks[b->m_LockIndex]);
+			}
+			break;
+
+			default:
+				__debugbreak();
+				break;
+			}
+		}
+	}, Index);
 }
 
 void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
@@ -188,33 +288,81 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		((void(__fastcall *)())(g_ModuleBase + 0x12F8B10))();
 
 	// RenderBatches
-	annotation->BeginEvent(L"RenderBatches");
 	{
-		accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
+
+		ThreadUsingCommandList = 1;
+		commandData[0] = commandDataStart[0];
+
+		//annotation->BeginEvent(L"RenderBatches");
+		{
+			ProfileTimer("RenderBatches");
+
+			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
+		}
+		//annotation->EndEvent();
+
+		InsertRenderCommand<EndListRenderCommand>();
+		ThreadUsingCommandList = 0;
+
+		SetCurrentAccumulator(accumulator);
+		DoRenderCommands(0);
 	}
-	annotation->EndEvent();
 
 	// LowAniso
-	annotation->BeginEvent(L"LowAniso");
 	{
-		auto pass = accumulator->m_MainBatch->m_Passes[9];
+		ThreadUsingCommandList = 2;
+		commandData[1] = commandDataStart[1];
 
-		if (pass)
+		//annotation->BeginEvent(L"LowAniso");
 		{
-			if (pass->UnkByte1 & 1)
-				pass->Render(a2);
-			else
-				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 9);
+			ProfileTimer("LowAniso");
+
+			auto pass = accumulator->m_MainBatch->m_Passes[9];
+
+			if (pass)
+			{
+				if (pass->UnkByte1 & 1)
+					pass->Render(a2);
+				else
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 9);
+			}
 		}
+		//annotation->EndEvent();
+
+		InsertRenderCommand<EndListRenderCommand>();
+		ThreadUsingCommandList = 0;
+
+		SetCurrentAccumulator(accumulator);
+		DoRenderCommands(1);
 	}
-	annotation->EndEvent();
 
 	// RenderGrass
-	annotation->BeginEvent(L"RenderGrass");
 	{
-		accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, a2, -1);
+		ThreadUsingCommandList = 3;
+		commandData[2] = commandDataStart[2];
+
+		//annotation->BeginEvent(L"RenderGrass");
+		{
+			ProfileTimer("RenderGrass");
+
+			accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, a2, -1);
+		}
+		//annotation->EndEvent();
+
+		InsertRenderCommand<EndListRenderCommand>();
+		ThreadUsingCommandList = 0;
+
+		SetCurrentAccumulator(accumulator);
+		DoRenderCommands(2);
 	}
-	annotation->EndEvent();
+
+	{
+		ProfileTimer("DC_WaitDeferred");
+
+		DC_WaitDeferred(0);
+		DC_WaitDeferred(1);
+		DC_WaitDeferred(2);
+	}
 
 	// RenderNoShadowGroup
 	annotation->BeginEvent(L"RenderNoShadowGroup");
@@ -234,6 +382,8 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	// RenderLODObjects
 	annotation->BeginEvent(L"RenderLODObjects");
 	{
+		ProfileTimer("LOD");
+
 		auto pass = accumulator->m_MainBatch->m_Passes[1];
 
 		if (pass)
@@ -252,6 +402,8 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	// RenderLODLand
 	annotation->BeginEvent(L"RenderLODLand");
 	{
+		ProfileTimer("LOD");
+
 		auto pass = accumulator->m_MainBatch->m_Passes[0];
 
 		if (pass)

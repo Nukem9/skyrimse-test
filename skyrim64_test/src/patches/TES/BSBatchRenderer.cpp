@@ -13,6 +13,8 @@ AutoPtr<DWORD, 0x1E32FDC> dword_141E32FDC;
 unsigned __int64 *sub_141320370(__int64 a1, unsigned __int64 *a2);
 signed __int64 *sub_1413203D0(__int64 a1, signed __int64 *a2);
 
+extern SRWLOCK testLocks[64];
+
 struct RTTIBaseClassArray
 {
 	DWORD arrayOfBaseClassDescriptors[]; // RTTIBaseClassDescriptor *
@@ -161,8 +163,39 @@ void sub_14131F910(__int64 a1, __int64 a2)
 	}
 }
 
-void sub_14131ED70(BSRenderPass *a1, unsigned int a2, unsigned __int8 a3, unsigned int a4)
+extern ID3DUserDefinedAnnotation *annotation;
+
+std::wstring wide(const std::string &s)
 {
+	size_t srcLen = s.length();
+
+	if (srcLen <= 0)
+		return L"";
+
+	std::wstring ret;
+	ret.resize(srcLen);
+
+	if (!MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)srcLen, ret.data(), (int)ret.size()))
+		throw "Error converting UTF8 to UTF16";
+
+	return ret;
+}
+
+uint32_t lastTechId;
+
+SRWLOCK locks[64];
+
+STATIC_CONSTRUCTOR(__thing,
+[]{
+	for (int i = 0; i < 64; i++)
+		InitializeSRWLock(&locks[i]);
+});
+
+void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, unsigned int a4)
+{
+	if (InsertRenderCommand<DrawGeometryRenderCommand>(a1, Technique, a3, a4))
+		return;
+
 	__int64 v6; // r14
 	__int64 result; // rax
 	__int64 v11; // rdi
@@ -179,15 +212,23 @@ void sub_14131ED70(BSRenderPass *a1, unsigned int a2, unsigned __int8 a3, unsign
 	auto sub_14131F1F0 = (__int64(__fastcall *)(BSRenderPass *a1, char a2, unsigned int a3))(g_ModuleBase + 0x131F550);
 	auto sub_14131F2A0 = (__int64(__fastcall *)(BSRenderPass *a1, unsigned __int8 a2, unsigned int a3))(g_ModuleBase + 0x131F600);
 
+	auto sub_1412ABF00 = (const char *(__fastcall *)(unsigned int a1))(g_ModuleBase + 0x12ABF00);
+
 	v6 = (uint64_t)a1->m_Shader;
 
-	if (dword_1432A8214 == a2 && a2 != 0x5C006076 && v6 == qword_1432A8218
-		|| (dword_141E32FDC = a2, result = sub_14131EFF0(a2, v6), (BYTE)result))
+	//lastTechId = Technique;
+
+	//char buffer[128];
+	//sprintf_s(buffer, "Technique %s -- %X", sub_1412ABF00(Technique), Technique);
+	//annotation->SetMarker(wide(buffer).c_str());
+
+	if (dword_1432A8214 == Technique && Technique != 0x5C006076 && v6 == qword_1432A8218
+		|| (dword_141E32FDC = Technique, result = sub_14131EFF0(Technique, v6), (BYTE)result))
 	{
 		BSShaderProperty *property = a1->m_Property;
 
 		if (property)
-			v11 = *(uint64_t *)((uint64_t)property + 120);// v11 = BSShaderProperty ---- (v11 + 120) = BSShaderMaterial *
+			v11 = *(uint64_t *)((uint64_t)property + 120);// unknownFlag2 = BSShaderProperty ---- (unknownFlag2 + 120) = BSShaderMaterial *
 		else
 			v11 = 0;
 
@@ -223,10 +264,29 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 	{
 		sub_14131F090();
 
-		for (BSRenderPass *i = (BSRenderPass *)*v5; i; i = i->m_Next)
+		BSRenderPass *i = (BSRenderPass *)*v5;
+
+		int tempIndex = -1;
+		if (i)
+			tempIndex = i->m_Shader->m_Type;
+
+		if (tempIndex != -1)
+		{
+			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
+				AcquireSRWLockExclusive(&testLocks[tempIndex]);
+		}
+
+		int firstType = -1;
+		for (; i; i = i->m_Next)
 		{
 			if (!i->m_Geometry)
 				continue;
+
+			if (firstType == -1)
+				firstType = i->m_Shader->m_Type;
+
+			if (firstType != i->m_Shader->m_Type)
+				__debugbreak();
 
 			if ((a2 & 0x108) == 0)
 			{
@@ -248,6 +308,12 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		v5[1] = 0i64;
 
 		sub_14131F090();
+
+		if (tempIndex != -1)
+		{
+			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
+				ReleaseSRWLockExclusive(&testLocks[tempIndex]);
+		}
 	}
 }
 
@@ -272,6 +338,8 @@ void BSBatchRenderer::PassInfo::Render(unsigned int a2)
 	{
 		if (!this->m_BatchRenderer)
 			goto LABEL_14;
+
+		__debugbreak();
 
 		uint64_t v5 = (uint64_t)this->m_BatchRenderer;
 
@@ -538,23 +606,46 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	// Render this group with a specific render pass list
 	RenderPassArray *passArray = &m_RenderArrays[m_TechToArrayMap.get(Technique)];
 
-	for (BSRenderPass *pass = passArray->m_Pass[SubPassIndex]; pass; pass = pass->m_Next)
-		sub_14131ED70(pass, Technique, unknownFlag2, a5);
+	int tempIndex = -1;
+	if (passArray->m_Pass[SubPassIndex])
+		tempIndex = passArray->m_Pass[SubPassIndex]->m_Shader->m_Type;
 
-	if (*(BYTE *)(a1 + 108))
+	if (tempIndex != -1)
 	{
-		// a1+108 is probably a "remove list" flag after it's rendered, but the memory is not freed yet
-		__int64 v20 = SubPassIndex;
+		if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
+			AcquireSRWLockExclusive(&testLocks[tempIndex]);
+	}
 
-		if (v20 < 0 || v20 >= ARRAYSIZE(passArray->m_Pass))
+	int firstType = -1;
+	for (BSRenderPass *pass = passArray->m_Pass[SubPassIndex]; pass; pass = pass->m_Next)
+	{
+		if (firstType == -1)
+			firstType = pass->m_Shader->m_Type;
+
+		if (pass->m_Shader->m_Type != firstType)
 			__debugbreak();
 
-		passArray->m_PassIndexBits &= ~(1 << v20);
-		passArray->m_Pass[v20] = nullptr;
+		sub_14131ED70(pass, Technique, unknownFlag2, a5);
+	}
+
+	// a1+108 is probably a "remove list" flag after it's rendered, but the memory is not freed yet
+	if (*(BYTE *)(a1 + 108))
+	{
+		if (SubPassIndex < 0 || SubPassIndex >= ARRAYSIZE(passArray->m_Pass))
+			__debugbreak();
+
+		passArray->m_PassIndexBits &= ~(1 << SubPassIndex);
+		passArray->m_Pass[SubPassIndex] = nullptr;
 	}
 
 	sub_14131F090();
 	BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
+
+	if (tempIndex != -1)
+	{
+		if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
+			ReleaseSRWLockExclusive(&testLocks[tempIndex]);
+	}
 
 	SubPassIndex++;
 	return sub_14131E700(Technique, SubPassIndex, a4);
@@ -616,7 +707,7 @@ void BSBatchRenderer::RenderPassArray::Clear(bool Validate)
 			//	qword_14468B560(&a1, 0i64);
 		}
 
-		// This is removed in public builds?
+		// This is removed in public builds? Sets the bool to indicate pass is no longer registered
 		// for (result = *(_QWORD *)(v4 + 8 * v3); result; result = *(_QWORD *)(result + 48))
 		//	*(_BYTE *)(result + 33) = 0;
 

@@ -44,6 +44,7 @@ struct BSRenderPass
 	uint8_t Byte1E;
 	char _pad[17];
 	BSRenderPass *m_Next;
+	void *unkPtr1;
 };
 // Size unknown
 static_assert(offsetof(BSRenderPass, m_Shader) == 0x0, "");

@@ -22,6 +22,7 @@ decltype(&D3D11CreateDeviceAndSwapChain) ptrD3D11CreateDeviceAndSwapChain;
 
 ID3D11DeviceContext2 *dc1; // deferred context
 ID3D11DeviceContext2 *dc2;
+ID3D11DeviceContext2 *dc3;
 
 void UpdateHavokTimer(int FPS)
 {
@@ -140,7 +141,6 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 	return hr;
 }
 
-extern thread_local bool m_TestBuffer;
 bool test = false;
 ID3D11Buffer *testbuffer;
 
@@ -239,6 +239,13 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 #endif
 }
 
+extern uint32_t lastTechId;
+void BSGraphics__Renderer__SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode);
+
+uint32_t opt1;
+uint32_t opt2;
+uint32_t opt3;
+
 void CommitShaderChanges(bool Unknown)
 {
 	auto renderer = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
@@ -268,6 +275,20 @@ void CommitShaderChanges(bool Unknown)
 	int v37; // [rsp+B8h] [rbp+10h]
 	int v38; // [rsp+C0h] [rbp+18h]
 	__int64 v39; // [rsp+C8h] [rbp+20h]
+
+	if (lastTechId == 0x5C00002E)
+	{
+		renderer->dword_14304DEB0 |= 0x80;
+
+		//*(signed int *)&renderer->__zz2[656] = 0;
+		*(signed int *)&renderer->__zz0[64] = 0;
+		*(signed int *)&renderer->__zz0[68] = 0;
+		*(signed int *)&renderer->__zz0[72] = 1;
+	}
+
+	//wchar_t buffer[256];
+	//_swprintf(buffer, L"SETTINGS [%d][%d][%d][%d]", *(unsigned int *)&renderer->__zz2[656], *(signed int *)&renderer->__zz0[64], *(signed int *)&renderer->__zz0[68], *(signed int *)&renderer->__zz0[72]);
+	//annotation->SetMarker(buffer);
 
 	v1 = renderer->dword_14304DEB0;
 	if (renderer->dword_14304DEB0)
@@ -382,22 +403,23 @@ void CommitShaderChanges(bool Unknown)
 			if (test != renderer->m_DepthStates[*(signed int *)&renderer->__zz0[32]][*(signed int *)&renderer->__zz0[40]])
 				__debugbreak();
 
-			// Depth mode, ex mode, stencil mode (order unknown)
+			// OMSetDepthStencilState(m_DepthStates[m_DepthMode][m_StencilMode], m_StencilRef);
 			renderer->m_DeviceContext->OMSetDepthStencilState(
-				(ID3D11DepthStencilState *)renderer->m_DepthStates[0][*(signed int *)&renderer->__zz0[40] + 40i64 * *(signed int *)&renderer->__zz0[32]],
+				renderer->m_DepthStates[*(signed int *)&renderer->__zz0[32]][*(signed int *)&renderer->__zz0[40]],
 				*(UINT *)&renderer->__zz0[44]);
 
 			v1 = renderer->dword_14304DEB0;
 		}
 
-		if (v1 & 0x1070)
+		// RSSetState
+		if (v1 & (0x1000 | 0x40 | 0x20 | 0x10))
 		{
 			// Cull mode, depth bias, fill mode, scissor mode, scissor rect (order unknown)
 			void *wtf = renderer->qword_14304C930[0][0][0][*(signed int *)&renderer->__zz0[60]
 				+ 2
 				* (*(signed int *)&renderer->__zz0[56]
 					+ 12
-					* (*(signed int *)&renderer->__zz0[52]
+					* (*(signed int *)&renderer->__zz0[52]// Cull mode
 						+ 3i64 * *(signed int *)&renderer->__zz0[48]))];
 
 			renderer->m_DeviceContext->RSSetState((ID3D11RasterizerState *)wtf);
@@ -426,7 +448,7 @@ void CommitShaderChanges(bool Unknown)
 		}
 
 		// RSSetViewports
-		if (v1 & 2)
+		if (v1 & 0x2)
 		{
 			renderer->m_DeviceContext->RSSetViewports(1, (D3D11_VIEWPORT *)&renderer->__zz0[8]);
 
@@ -434,24 +456,24 @@ void CommitShaderChanges(bool Unknown)
 		}
 
 		// OMSetBlendState
-		if ((v1 & 0x80u) != 0)
+		if (v1 & 0x80)
 		{
 			float *blendFactor = (float *)(g_ModuleBase + 0x1E2C168);
 
-			// Mode, write mode, alpha to coverage, ??? (order unknown)
+			// Mode, write mode, alpha to coverage, blend state (order unknown)
 			void *wtf = renderer->qword_14304CDB0[0][0][0][*(unsigned int *)&renderer->__zz2[656]
 				+ 2
 				* (*(signed int *)&renderer->__zz0[72]
 					+ 13
 					* (*(signed int *)&renderer->__zz0[68]
-						+ 2i64 * *(signed int *)&renderer->__zz0[64]))];
+						+ 2i64 * *(signed int *)&renderer->__zz0[64]))];// AlphaBlendMode
 
 			renderer->m_DeviceContext->OMSetBlendState((ID3D11BlendState *)wtf, blendFactor, 0xFFFFFFFF);
 
 			v1 = renderer->dword_14304DEB0;
 		}
 
-		if (v1 & 0x300)
+		if (v1 & (0x200 | 0x100))
 		{
 			D3D11_MAPPED_SUBRESOURCE resource;
 			renderer->m_DeviceContext->Map(renderer->m_TempConstantBuffer1, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
@@ -824,6 +846,7 @@ HRESULT WINAPI hk_CreateComputeShader(ID3D11Device *This, const void *pShaderByt
 void DC_Init(ID3D11DeviceContext2 *ImmediateContext, ID3D11DeviceContext2 **DeferredContexts, int DeferredContextCount);
 void hook()
 {
+	//return;
 	if (hooked)
 		return;
 
@@ -846,16 +869,28 @@ void hook()
 	if (FAILED(g_DeviceContext->QueryInterface<ID3DUserDefinedAnnotation>(&annotation)))
 		__debugbreak();
 
-	newDev->CreateDeferredContext2(0, &dc1);
-	newDev->CreateDeferredContext2(0, &dc2);
+	if (FAILED(newDev->CreateDeferredContext2(0, &dc1)))
+		__debugbreak();
 
-	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)swap, &hk_IDXGISwapChain_Present, 8);
+	if (FAILED(newDev->CreateDeferredContext2(0, &dc2)))
+		__debugbreak();
+
+	if (FAILED(newDev->CreateDeferredContext2(0, &dc3)))
+		__debugbreak();
+
+	if (!ptrPresent)
+		*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)swap, &hk_IDXGISwapChain_Present, 8);
 
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&CommitShaderChanges);
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF30, (PBYTE)&sub_140D6BF00);
 	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1960, (PBYTE)&BSShaderAccumulator::sub_1412E1600);
 
-	DC_Init(g_DeviceContext, &dc1, 1);
+	ID3D11DeviceContext2 *contexts[3];
+	contexts[0] = dc1;
+	contexts[1] = dc2;
+	contexts[2] = dc3;
+
+	DC_Init(g_DeviceContext, contexts, ARRAYSIZE(contexts));
 
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1F70, (PBYTE)&hk_sub_1412E1C10);
 }
@@ -927,7 +962,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
             pAdapter,
             DriverType,
             Software,
-            Flags | D3D11_CREATE_DEVICE_DEBUG,
+            Flags,
             &testFeatureLevels[i],
             1,
             SDKVersion,
@@ -980,9 +1015,10 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
     ui::log::Add("Created D3D11 device with feature level %X...\n", level);
 
     // Now hook the render function
-	//*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
+	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
 	//*(PBYTE *)&Map = Detours::X64::DetourClassVTable(*(PBYTE *)newContext, &hk_ID3D11DeviceContext_Map, 14);
 
+	//Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&CommitShaderChanges);
 	//*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1960, (PBYTE)&BSShaderAccumulator::sub_1412E1600);
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1F70, (PBYTE)&hk_sub_1412E1C10);
 
@@ -1013,6 +1049,6 @@ void PatchD3D11()
 
 	*(PBYTE *)&BuildShaderBundle = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x13364A0), (PBYTE)&hk_BuildShaderBundle);
 
-    //PatchIAT(hk_CreateDXGIFactory, "dxgi.dll", "CreateDXGIFactory");
-    //PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");
+    PatchIAT(hk_CreateDXGIFactory, "dxgi.dll", "CreateDXGIFactory");
+    PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");
 }
