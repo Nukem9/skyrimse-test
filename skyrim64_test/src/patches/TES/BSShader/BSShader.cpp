@@ -20,14 +20,14 @@ bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, b
 	bool hasVertexShader = false;
 	BSVertexShader *vertexShader = nullptr;
 
-	// if (m_VertexShaderTable.Get(VertexShaderID, &vertexShader))
-	// hasVertexShader = true;
+	if (m_VertexShaderTable.get(VertexShaderID, vertexShader))
+		hasVertexShader = true;
 	
 	bool hasPixelShader = false;
 	BSPixelShader *pixelShader = nullptr;
 
-	// if (IgnorePixelShader || m_PixelShaderTable.Get(PixelShaderID, &pixelShader))
-	// hasPixelShader = true;
+	if (IgnorePixelShader || m_PixelShaderTable.get(PixelShaderID, pixelShader))
+		hasPixelShader = true;
 
 	if (!hasVertexShader || !hasPixelShader)
 		return false;

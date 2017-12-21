@@ -1,9 +1,13 @@
 #pragma once
 
+#include "../BSTScatterTable.h"
 #include "../NiObject.h"
 #include "BSShaderMaterial.h"
 #include "BSShaderProperty.h"
-#include "BSShaderManager.h"
+
+struct BSVertexShader;
+struct BSPixelShader;
+struct BSRenderPass;
 
 class NiBoneMatrixSetterI
 {
@@ -41,14 +45,15 @@ public:
 	void EndTechnique();
 
 	uint32_t m_Type;
-	char _pad[0x6C];
-	uint32_t m_ActiveTechnique;
+	BSTScatterTable<uint32_t, BSVertexShader *> m_VertexShaderTable;
+	BSTScatterTable<uint32_t, BSPixelShader *> m_PixelShaderTable;
 	const char *m_LoaderType;
 };
-static_assert(sizeof(BSShader) == 0xA0, "");
+static_assert(sizeof(BSShader) == 0x90, "");
 static_assert(offsetof(BSShader, m_Type) == 0x20, "");
-static_assert(offsetof(BSShader, m_ActiveTechnique) == 0x90, "");
-static_assert(offsetof(BSShader, m_LoaderType) == 0x98, "");
+static_assert(offsetof(BSShader, m_VertexShaderTable) == 0x28, "");
+static_assert(offsetof(BSShader, m_PixelShaderTable) == 0x58, "");
+static_assert(offsetof(BSShader, m_LoaderType) == 0x88, "");
 
 STATIC_CONSTRUCTOR(__CheckBSShaderVtable, []
 {

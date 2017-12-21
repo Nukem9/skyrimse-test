@@ -106,6 +106,8 @@
     <ClInclude Include="src\patches\TES\BSShader\BSShaderManager.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShaderProperty.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShaderRenderTargets.h" />
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSDistantTreeShader.h" />
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSGrassShader.h" />
     <ClInclude Include="src\patches\TES\BSSpinLock.h" />
     <ClInclude Include="src\patches\TES\BSTArray.h" />
     <ClInclude Include="src\patches\TES\BSThread_Win32.h" />
