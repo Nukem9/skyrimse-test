@@ -1,18 +1,21 @@
 #pragma once
 
+#include "../NiMain/NiRefObject.h"
 #include "../BSTScatterTable.h"
-#include "../NiObject.h"
-#include "BSShaderMaterial.h"
-#include "BSShaderProperty.h"
 
+struct BSShaderMaterial;
+struct BSRenderPass;
 struct BSVertexShader;
 struct BSPixelShader;
-struct BSRenderPass;
+struct BSIStream;
 
 class NiBoneMatrixSetterI
 {
 public:
-	virtual ~NiBoneMatrixSetterI();
+	virtual ~NiBoneMatrixSetterI()
+	{
+		__debugbreak();
+	}
 
 	virtual void SetBoneMatrix() = 0;
 };
@@ -20,7 +23,7 @@ public:
 class BSReloadShaderI
 {
 public:
-	virtual void ReloadShaders(/*BSIStream **/) = 0;
+	virtual void ReloadShaders(BSIStream *Stream) = 0;
 };
 
 class BSShader : public NiRefObject, public NiBoneMatrixSetterI, public BSReloadShaderI
@@ -36,9 +39,9 @@ public:
 	virtual void SetupGeometry(BSRenderPass *Pass) = 0;
 	virtual void RestoreGeometry(BSRenderPass *Pass) = 0;
 	virtual void GetTechniqueName(uint32_t Technique, char *Buffer, uint32_t BufferSize);
-	virtual void ReloadShaders(bool);
+	virtual void ReloadShaders(bool Unknown);
 
-	virtual void ReloadShaders(/*BSIStream **/) override;
+	virtual void ReloadShaders(BSIStream *Stream) override;
 	virtual void SetBoneMatrix() override;
 
 	bool BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader);

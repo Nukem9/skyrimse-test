@@ -214,23 +214,23 @@ void ShaderDecoder::GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t T
 	case BSSM_SHADER_TYPE::VERTEX:
 	case BSSM_SHADER_TYPE::PIXEL:
 		if (!_stricmp(m_Type, "BloodSplatter"))
-			return BSBloodSplatterShader::Techniques::GetString(Technique, Buffer, BufferSize);
+			return BSShaderInfo::BSBloodSplatterShader::Techniques::GetString(Technique, Buffer, BufferSize);
 		else if (!_stricmp(m_Type, "DistantTree"))
-			return BSDistantTreeShader::Techniques::GetString(Technique, Buffer, BufferSize);
+			return BSShaderInfo::BSDistantTreeShader::Techniques::GetString(Technique, Buffer, BufferSize);
 		else if (!_stricmp(m_Type, "RunGrass"))
-			return BSGrassShader::Techniques::GetString(Technique, Buffer, BufferSize);
+			return BSShaderInfo::BSGrassShader::Techniques::GetString(Technique, Buffer, BufferSize);
 		else if (!_stricmp(m_Type, "Particle"))
-			return BSParticleShader::Techniques::GetString(Technique, Buffer, BufferSize);
+			return BSShaderInfo::BSParticleShader::Techniques::GetString(Technique, Buffer, BufferSize);
 		else if (!_stricmp(m_Type, "Sky"))
-			return BSSkyShader::Techniques::GetString(Technique, Buffer, BufferSize);
+			return BSShaderInfo::BSSkyShader::Techniques::GetString(Technique, Buffer, BufferSize);
 		else if (!_stricmp(m_Type, "Effect"))
-			return BSXShader::Techniques::GetString(Technique, Buffer, BufferSize);
+			return BSShaderInfo::BSXShader::Techniques::GetString(Technique, Buffer, BufferSize);
 		else if (!_stricmp(m_Type, "Lighting"))
-			return BSLightingShader::Techniques::GetString(Technique, Buffer, BufferSize);
+			return BSShaderInfo::BSLightingShader::Techniques::GetString(Technique, Buffer, BufferSize);
 		else if (!_stricmp(m_Type, "Utility"))
-			return BSUtilityShader::Techniques::GetString(Technique, Buffer, BufferSize);
+			return BSShaderInfo::BSUtilityShader::Techniques::GetString(Technique, Buffer, BufferSize);
 		else if (!_stricmp(m_Type, "Water"))
-			return BSWaterShader::Techniques::GetString(Technique, Buffer, BufferSize);
+			return BSShaderInfo::BSWaterShader::Techniques::GetString(Technique, Buffer, BufferSize);
 
 		// TODO: ImageSpace
 		break;
@@ -244,23 +244,23 @@ void ShaderDecoder::GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t T
 const char *ShaderDecoder::GetSamplerName(int Index, uint32_t Technique)
 {
 	if (!_stricmp(m_Type, "BloodSplatter"))
-		return BSBloodSplatterShader::Samplers::GetString(Index);
+		return BSShaderInfo::BSBloodSplatterShader::Samplers::GetString(Index);
 	else if (!_stricmp(m_Type, "DistantTree"))
-		return BSDistantTreeShader::Samplers::GetString(Index);
+		return BSShaderInfo::BSDistantTreeShader::Samplers::GetString(Index);
 	else if (!_stricmp(m_Type, "RunGrass"))
-		return BSGrassShader::Samplers::GetString(Index);
+		return BSShaderInfo::BSGrassShader::Samplers::GetString(Index);
 	else if (!_stricmp(m_Type, "Particle"))
-		return BSParticleShader::Samplers::GetString(Index);
+		return BSShaderInfo::BSParticleShader::Samplers::GetString(Index);
 	else if (!_stricmp(m_Type, "Sky"))
-		return BSSkyShader::Samplers::GetString(Index);
+		return BSShaderInfo::BSSkyShader::Samplers::GetString(Index);
 	else if (!_stricmp(m_Type, "Effect"))
-		return BSXShader::Samplers::GetString(Index);
+		return BSShaderInfo::BSXShader::Samplers::GetString(Index);
 	else if (!_stricmp(m_Type, "Lighting"))
-		return BSLightingShader::Samplers::GetString(Index, Technique);
+		return BSShaderInfo::BSLightingShader::Samplers::GetString(Index, Technique);
 	else if (!_stricmp(m_Type, "Utility"))
-		return BSUtilityShader::Samplers::GetString(Index);
+		return BSShaderInfo::BSUtilityShader::Samplers::GetString(Index);
 	else if (!_stricmp(m_Type, "Water"))
-		return BSWaterShader::Samplers::GetString(Index);
+		return BSShaderInfo::BSWaterShader::Samplers::GetString(Index);
 
 	// TODO: Compute
 	// TODO: ImageSpace
@@ -270,23 +270,23 @@ const char *ShaderDecoder::GetSamplerName(int Index, uint32_t Technique)
 std::vector<std::pair<const char *, const char *>> ShaderDecoder::GetDefineArray(uint32_t Technique)
 {
 	if (!_stricmp(m_Type, "BloodSplatter"))
-		return BSBloodSplatterShader::Defines::GetArray(Technique);
+		return BSShaderInfo::BSBloodSplatterShader::Defines::GetArray(Technique);
 	else if (!_stricmp(m_Type, "DistantTree"))
-		return BSDistantTreeShader::Defines::GetArray(Technique);
+		return BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
 	else if (!_stricmp(m_Type, "RunGrass"))
-		return BSGrassShader::Defines::GetArray(Technique);
+		return BSShaderInfo::BSGrassShader::Defines::GetArray(Technique);
 	else if (!_stricmp(m_Type, "Particle"))
-		return BSParticleShader::Defines::GetArray(Technique);
+		return BSShaderInfo::BSParticleShader::Defines::GetArray(Technique);
 	else if (!_stricmp(m_Type, "Sky"))
-		return BSSkyShader::Defines::GetArray(Technique);
+		return BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
 	else if (!_stricmp(m_Type, "Effect"))
-		return BSXShader::Defines::GetArray(Technique);
+		return BSShaderInfo::BSXShader::Defines::GetArray(Technique);
 	else if (!_stricmp(m_Type, "Lighting"))
-		return BSLightingShader::Defines::GetArray(Technique);
+		return BSShaderInfo::BSLightingShader::Defines::GetArray(Technique);
 	else if (!_stricmp(m_Type, "Utility"))
-		return BSUtilityShader::Defines::GetArray(Technique);
+		return BSShaderInfo::BSUtilityShader::Defines::GetArray(Technique);
 	else if (!_stricmp(m_Type, "Water"))
-		return BSWaterShader::Defines::GetArray(Technique);
+		return BSShaderInfo::BSWaterShader::Defines::GetArray(Technique);
 
 	// TODO: Compute
 	// TODO: ImageSpace
@@ -373,46 +373,46 @@ const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeT
 	{
 	case BSSM_SHADER_TYPE::VERTEX:
 		if (!_stricmp(ShaderType, "BloodSplatter"))
-			return BSBloodSplatterShader::VSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSBloodSplatterShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "DistantTree"))
-			return BSDistantTreeShader::VSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSDistantTreeShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "RunGrass"))
-			return BSGrassShader::VSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSGrassShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Particle"))
-			return BSParticleShader::VSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSParticleShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Sky"))
-			return BSSkyShader::VSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSSkyShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Effect"))
-			return BSXShader::VSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSXShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Lighting"))
-			return BSLightingShader::VSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSLightingShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Utility"))
-			return BSUtilityShader::VSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSUtilityShader::VSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Water"))
-			return BSWaterShader::VSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSWaterShader::VSConstants::GetString(ConstantIndex);
 
 		// TODO: ImageSpace
 		break;
 
 	case BSSM_SHADER_TYPE::PIXEL:
 		if (!_stricmp(ShaderType, "BloodSplatter"))
-			return BSBloodSplatterShader::PSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSBloodSplatterShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "DistantTree"))
-			return BSDistantTreeShader::PSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSDistantTreeShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "RunGrass"))
-			return BSGrassShader::PSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSGrassShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Particle"))
-			return BSParticleShader::PSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSParticleShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Sky"))
-			return BSSkyShader::PSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSSkyShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Effect"))
-			return BSXShader::PSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSXShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Lighting"))
-			return BSLightingShader::PSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSLightingShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Utility"))
-			return BSUtilityShader::PSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSUtilityShader::PSConstants::GetString(ConstantIndex);
 		else if (!_stricmp(ShaderType, "Water"))
-			return BSWaterShader::PSConstants::GetString(ConstantIndex);
+			return BSShaderInfo::BSWaterShader::PSConstants::GetString(ConstantIndex);
 
 		// TODO: ImageSpace
 		break;

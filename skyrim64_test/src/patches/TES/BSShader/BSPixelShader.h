@@ -5,19 +5,29 @@
 
 struct BSPixelShader
 {
-	uint32_t m_TechniqueID;				// Bit flags
-	ID3D11PixelShader *m_Shader;
-	BSConstantGroup m_PerGeometry;
-	BSConstantGroup m_PerMaterial;
-	BSConstantGroup m_PerTechnique;
-	uint8_t m_ConstantOffsets[64];		// Actual offset is multiplied by 4
-										// Bytecode is not appended
+	uint32_t m_TechniqueID;		// Bit flags
+	ID3D11PixelShader *m_Shader;// DirectX handle
+
+	// This must match the BSGraphics::ConstantGroupLevel enum
+	union
+	{
+		struct
+		{
+			BSConstantGroup m_PerTechnique;
+			BSConstantGroup m_PerMaterial;
+			BSConstantGroup m_PerGeometry;
+		};
+
+		BSConstantGroup m_ConstantGroups[3];
+	};
+
+	uint8_t m_ConstantOffsets[64];// Actual offset is multiplied by 4
 };
 static_assert(offsetof(BSPixelShader, m_TechniqueID) == 0x0, "");
 static_assert(offsetof(BSPixelShader, m_Shader) == 0x8, "");
-static_assert(offsetof(BSPixelShader, m_PerGeometry) == 0x10, "");
+static_assert(offsetof(BSPixelShader, m_PerTechnique) == 0x10, "");
 static_assert(offsetof(BSPixelShader, m_PerMaterial) == 0x20, "");
-static_assert(offsetof(BSPixelShader, m_PerTechnique) == 0x30, "");
+static_assert(offsetof(BSPixelShader, m_PerGeometry) == 0x30, "");
 static_assert(offsetof(BSPixelShader, m_ConstantOffsets) == 0x40, "");
 static_assert(sizeof(BSPixelShader) == 0x80, "");
 

@@ -173,6 +173,33 @@
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSGrassShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphicsRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderUtil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiColor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiRefObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiTransform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -424,6 +451,12 @@
     <ClCompile Include="src\patches\TES\BSShader\BSShaderProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphicsRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderUtil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
@@ -434,6 +467,9 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="src\patches\TES\BSShader\BSShaderConstants.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="src\patches\TES\BSShader\BSShaderManagerInfo.inl">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>

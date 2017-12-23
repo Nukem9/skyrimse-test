@@ -21,7 +21,7 @@ struct ThreadData
 	BSGraphicsRendererGlobals *ThreadGlobals;
 };
 
-ThreadData g_ThreadData[4];
+ThreadData g_ThreadData[6];
 
 ID3D11DeviceContext2 *devContext;
 
@@ -80,9 +80,6 @@ void DC_Init(ID3D11DeviceContext2 *ImmediateContext, ID3D11DeviceContext2 **Defe
 {
 	devContext = ImmediateContext;
 
-	if (DeferredContextCount >= 4)
-		__debugbreak();
-
 	for (int i = 0; i < DeferredContextCount; i++)
 	{
 		ThreadData *jobData = &g_ThreadData[i];
@@ -120,11 +117,20 @@ void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigne
 	devContext->VSGetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, vsbuf);
 	devContext->CSGetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, csbuf);
 
+	ID3D11ShaderResourceView *srvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+	ID3D11ShaderResourceView *vsrvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+
+	devContext->PSGetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srvs);
+	devContext->VSGetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, vsrvs);
+
 	auto dc1 = jobData->DeferredContext;
 
 	dc1->PSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, psbuf);
 	dc1->VSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, vsbuf);
 	dc1->CSSetConstantBuffers(0, D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, csbuf);
+
+	dc1->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srvs);
+	dc1->VSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, vsrvs);
 
 	memcpy(jobData->ThreadGlobals, GetMainGlobals(), 0x4000);
 
@@ -134,6 +140,9 @@ void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigne
 	for (int i = 0; i < 14; i++) if (psbuf[i]) psbuf[i]->Release();
 	for (int i = 0; i < 14; i++) if (vsbuf[i]) vsbuf[i]->Release();
 	for (int i = 0; i < 14; i++) if (csbuf[i]) csbuf[i]->Release();
+
+	for (int i = 0; i < 128; i++) if (srvs[i]) srvs[i]->Release();
+	for (int i = 0; i < 128; i++) if (vsrvs[i]) vsrvs[i]->Release();
 }
 
 void DC_WaitDeferred(int Index)
@@ -141,10 +150,14 @@ void DC_WaitDeferred(int Index)
 	ID3D11CommandList *list;
 
 	// While (thread's command list pointer is null) - atomic version that zeros the thread's pointer
-	do
 	{
-		list = (ID3D11CommandList *)InterlockedExchangePointer((PVOID *)&g_ThreadData[Index].CommandList, nullptr);
-	} while (list == nullptr);
+		ProfileTimer("Waiting for command list completion");
+
+		do
+		{
+			list = (ID3D11CommandList *)InterlockedExchangePointer((PVOID *)&g_ThreadData[Index].CommandList, nullptr);
+		} while (list == nullptr);
+	}
 
 	devContext->ExecuteCommandList(list, TRUE);
 	list->Release();

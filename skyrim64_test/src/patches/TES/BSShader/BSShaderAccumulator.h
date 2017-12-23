@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../NiObject.h"
+#include "../NiMain/NiObject.h"
+#include "../BSGraphicsRenderer.h" // TODO remove this
 
 class NiCamera;
 class BSBatchRenderer;
@@ -63,7 +64,8 @@ public:
 	char _pad1[0xD8];
 	BSBatchRenderer *m_MainBatch;
 	uint32_t m_CurrentTech;
-	char _pad[0x44];
+	uint32_t m_CurrentSubPass;
+	char _pad[0x40];
 
 	static void sub_1412E1600(__int64 a1, unsigned int a2, float a3);
 	void RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, int a4, int PassType);
@@ -72,18 +74,9 @@ static_assert(sizeof(BSShaderAccumulator) == 0x180, "");
 static_assert(offsetof(BSShaderAccumulator, _pad1) == 0x58, "");
 static_assert(offsetof(BSShaderAccumulator, m_MainBatch) == 0x130, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentTech) == 0x138, "");
+static_assert(offsetof(BSShaderAccumulator, m_CurrentSubPass) == 0x13C, "");
 
-void sub_14131F090();
-void BSGraphics__Renderer__RasterStateSetCullMode(uint32_t CullMode);
-void BSGraphics__Renderer__AlphaBlendStateSetMode(uint32_t Mode);
-void BSGraphics__Renderer__AlphaBlendStateSetUnknown1(uint32_t Value);
-void BSGraphics__Renderer__AlphaBlendStateSetUnknown2(uint32_t Value);
-void BSGraphics__Renderer__DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef);
-void BSGraphics__Renderer__DepthStencilStateSetDepthMode(uint32_t Mode);
-void BSGraphics__Renderer__SetTextureFilterMode(uint32_t Index, uint32_t Mode);
-void BSGraphics__Renderer__SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode);
-void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue);
-void BSGraphics__Renderer__SetUseScrapConstantValue(bool UseStoredValue, float Value);
+void sub_14131F090(bool RequireZero = false);
 
 struct RenderCommand
 {
@@ -177,35 +170,35 @@ struct SetStateRenderCommand : RenderCommand
 		switch (m_StateType)
 		{
 		case RasterStateCullMode:
-			BSGraphics__Renderer__RasterStateSetCullMode(Data.part1);
+			BSGraphics::Renderer::RasterStateSetCullMode(Data.part1);
 			break;
 
 		case AlphaBlendStateMode:
-			BSGraphics__Renderer__AlphaBlendStateSetMode(Data.part1);
+			BSGraphics::Renderer::AlphaBlendStateSetMode(Data.part1);
 			break;
 
 		case AlphaBlendStateUnknown1:
-			BSGraphics__Renderer__AlphaBlendStateSetUnknown1(Data.part1);
+			BSGraphics::Renderer::AlphaBlendStateSetUnknown1(Data.part1);
 			break;
 
 		case AlphaBlendStateUnknown2:
-			BSGraphics__Renderer__AlphaBlendStateSetUnknown2(Data.part1);
+			BSGraphics::Renderer::AlphaBlendStateSetUnknown2(Data.part1);
 			break;
 
 		case DepthStencilStateStencilMode:
-			BSGraphics__Renderer__DepthStencilStateSetStencilMode(Data.part1, Data.part2);
+			BSGraphics::Renderer::DepthStencilStateSetStencilMode(Data.part1, Data.part2);
 			break;
 
 		case DepthStencilStateDepthMode:
-			BSGraphics__Renderer__DepthStencilStateSetDepthMode(Data.part1);
+			BSGraphics::Renderer::DepthStencilStateSetDepthMode(Data.part1);
 			break;
 
 		case UseScrapConstantValue_1:
-			BSGraphics__Renderer__SetUseScrapConstantValue((bool)Data.part1);
+			BSGraphics::Renderer::SetUseScrapConstantValue((bool)Data.part1);
 			break;
 
 		case UseScrapConstantValue_2:
-			BSGraphics__Renderer__SetUseScrapConstantValue((bool)Data.part1, *(float *)&Data.part2);
+			BSGraphics::Renderer::SetUseScrapConstantValue((bool)Data.part1, *(float *)&Data.part2);
 			break;
 
 		default:
@@ -213,6 +206,8 @@ struct SetStateRenderCommand : RenderCommand
 		}
 	}
 };
+
+#include "BSShaderManager.h"
 
 void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, unsigned int a4);
 struct DrawGeometryRenderCommand : RenderCommand
@@ -242,6 +237,23 @@ struct DrawGeometryRenderCommand : RenderCommand
 
 	void Run()
 	{
+		if (Pass.m_Shader->m_Type == 0 || Pass.m_Shader->m_Type == 5)
+			__debugbreak();
+		/*
+		if (Pass.m_Shader->m_Type == 0 ||	// ???
+			Pass.m_Shader->m_Type == 1 ||	// RunGrass
+			Pass.m_Shader->m_Type == 2 ||	// Sky
+			Pass.m_Shader->m_Type == 3 ||	// Water
+			Pass.m_Shader->m_Type == 4 ||	// BloodSplatter
+			Pass.m_Shader->m_Type == 5 ||	// ???
+			Pass.m_Shader->m_Type == 6 ||	// Lighting
+			Pass.m_Shader->m_Type == 7 ||	// Effect
+			Pass.m_Shader->m_Type == 8 ||	// Utility
+			Pass.m_Shader->m_Type == 9 ||	// DistantTree
+			Pass.m_Shader->m_Type == 10)	// Particle
+			return;
+			*/
+
 		sub_14131ED70(&Pass, Technique, a3, a4);
 	}
 };
@@ -259,7 +271,36 @@ struct LockShaderTypeRenderCommand : RenderCommand
 	}
 };
 
-extern uintptr_t commandData[3];
+struct SetAccumulatorRenderCommand : RenderCommand
+{
+	char data[sizeof(BSShaderAccumulator)];
+
+	SetAccumulatorRenderCommand(BSShaderAccumulator *Accumulator)
+		: RenderCommand(5, sizeof(SetAccumulatorRenderCommand))
+	{
+		memcpy(data, Accumulator, sizeof(BSShaderAccumulator));
+
+		//
+		// **** WARNING ****
+		// The game code shouldn't really be using this pointer after the initial batching
+		// stage, but just to make sure...
+		//
+		if (Accumulator->m_MainBatch)
+			((BSShaderAccumulator *)&data)->m_MainBatch = (BSBatchRenderer *)0xCCCCCCCCDEADBEEF;
+	}
+
+	void Run()
+	{
+		auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+
+		// BSShaderManager::pCurrentShaderAccumulator
+		uint64_t& qword_1431F5490 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3600);
+
+		qword_1431F5490 = (uint64_t)&data;
+	}
+};
+
+extern uintptr_t commandData[6];
 extern thread_local int ThreadUsingCommandList;
 
 template<typename T, class ... Types>

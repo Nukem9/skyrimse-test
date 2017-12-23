@@ -1,19 +1,21 @@
 #include "../rendering/common.h"
 #include "../../common.h"
+#include "BSGraphicsRenderer.h"
 #include "BSShader/BSShaderManager.h"
 #include "BSShader/BSShader.h"
 #include "BSShader/BSShaderAccumulator.h"
 #include "MemoryContextTracker.h"
 #include "BSSpinLock.h"
 #include "BSBatchRenderer.h"
+#include "BSReadWriteLock.h"
 
-AutoPtr<BYTE, 0x31F54CD> byte_1431F54CD;
-AutoPtr<DWORD, 0x1E32FDC> dword_141E32FDC;
+AutoPtr(BYTE, byte_1431F54CD, 0x31F54CD);
+AutoPtr(DWORD, dword_141E32FDC, 0x1E32FDC);
 
 unsigned __int64 *sub_141320370(__int64 a1, unsigned __int64 *a2);
 signed __int64 *sub_1413203D0(__int64 a1, signed __int64 *a2);
 
-extern SRWLOCK testLocks[64];
+extern BSReadWriteLock testLocks[32];
 
 struct RTTIBaseClassArray
 {
@@ -183,18 +185,14 @@ std::wstring wide(const std::string &s)
 
 uint32_t lastTechId;
 
-SRWLOCK locks[64];
-
-STATIC_CONSTRUCTOR(__thing,
-[]{
-	for (int i = 0; i < 64; i++)
-		InitializeSRWLock(&locks[i]);
-});
+SRWLOCK testingLock = SRWLOCK_INIT;
 
 void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, unsigned int a4)
 {
 	if (InsertRenderCommand<DrawGeometryRenderCommand>(a1, Technique, a3, a4))
 		return;
+
+	//AcquireSRWLockExclusive(&testingLock);
 
 	__int64 v6; // r14
 	__int64 result; // rax
@@ -244,15 +242,24 @@ void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, uns
 			qword_1434B5220 = v11;
 		}
 
-		*(BYTE *)(a1->m_Geometry + 264) = a1->Byte1E;
+		*(BYTE *)((uintptr_t)a1->m_Geometry + 264) = a1->Byte1E;
 
-		if (*(uint64_t *)(a1->m_Geometry + 304))// v8 + 304 == BSGeometry::QSkinPartitions(). NiSkinPartition?
+		if (*(uint64_t *)((uintptr_t)a1->m_Geometry + 304))// v8 + 304 == BSGeometry::QSkinPartitions(). NiSkinPartition?
+		{
 			sub_14131F2A0(a1, a3, a4);// Something to do with skinning, "Render Error : Skin instance is nullptr"
-		else if (*(BYTE *)(a1->m_Geometry + 265) & 8)// BSGeometry::NeedsCustomRender()?
+		}
+		else if (*(BYTE *)((uintptr_t)a1->m_Geometry + 265) & 8)// BSGeometry::NeedsCustomRender()?
+		{
 			sub_14131F450(a1, a3, a4);
+		}
 		else
+		{
 			sub_14131F1F0(a1, a3, a4); // v9 = Render pass, *(v9 + 16) = Render pass geometry, *(v9) = BSShader
+		}
+
 	}
+
+	//ReleaseSRWLockExclusive(&testingLock);
 }
 
 void sub_14131F9F0(__int64 *a1, unsigned int a2)
@@ -262,7 +269,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 	v5 = a1;
 	if (*a1)
 	{
-		sub_14131F090();
+		sub_14131F090(true);
 
 		BSRenderPass *i = (BSRenderPass *)*v5;
 
@@ -273,7 +280,8 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		if (tempIndex != -1)
 		{
 			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
-				AcquireSRWLockExclusive(&testLocks[tempIndex]);
+				testLocks[tempIndex].AcquireWrite();
+				//AcquireSRWLockExclusive(&testLocks[tempIndex]);
 		}
 
 		int firstType = -1;
@@ -291,18 +299,18 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 			if ((a2 & 0x108) == 0)
 			{
 				if (*(uint64_t *)((uint64_t)i->m_Property + 56i64) & 0x1000000000i64)// BSShaderProperty::VertexDesc?
-					BSGraphics__Renderer__RasterStateSetCullMode(0);
+					BSGraphics::Renderer::RasterStateSetCullMode(0);
 				else
-					BSGraphics__Renderer__RasterStateSetCullMode(1);
+					BSGraphics::Renderer::RasterStateSetCullMode(1);
 			}
 
-			__int64 v9 = *(uint64_t *)(i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
+			__int64 v9 = *(uint64_t *)((uintptr_t)i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
 			bool v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
 			sub_14131ED70(i, i->Dword18, v10, a2);
 		}
 
 		if ((a2 & 0x108) == 0)
-			BSGraphics__Renderer__RasterStateSetCullMode(1);
+			BSGraphics::Renderer::RasterStateSetCullMode(1);
 
 		v5[0] = 0i64;
 		v5[1] = 0i64;
@@ -312,7 +320,8 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		if (tempIndex != -1)
 		{
 			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
-				ReleaseSRWLockExclusive(&testLocks[tempIndex]);
+				testLocks[tempIndex].ReleaseWrite();
+				//ReleaseSRWLockExclusive(&testLocks[tempIndex]);
 		}
 	}
 }
@@ -595,12 +604,12 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 		}
 
 		if (cullMode != -1)
-			BSGraphics__Renderer__RasterStateSetCullMode(cullMode);
+			BSGraphics::Renderer::RasterStateSetCullMode(cullMode);
 
 		if (alphaBlendUnknown != -1)
-			BSGraphics__Renderer__AlphaBlendStateSetUnknown1(alphaBlendUnknown);
+			BSGraphics::Renderer::AlphaBlendStateSetUnknown1(alphaBlendUnknown);
 
-		BSGraphics__Renderer__SetUseScrapConstantValue(useScrapConstant);
+		BSGraphics::Renderer::SetUseScrapConstantValue(useScrapConstant);
 	}
 
 	// Render this group with a specific render pass list
@@ -613,7 +622,8 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	if (tempIndex != -1)
 	{
 		if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
-			AcquireSRWLockExclusive(&testLocks[tempIndex]);
+			testLocks[tempIndex].AcquireWrite();
+			//AcquireSRWLockExclusive(&testLocks[tempIndex]);
 	}
 
 	int firstType = -1;
@@ -639,12 +649,13 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	}
 
 	sub_14131F090();
-	BSGraphics__Renderer__AlphaBlendStateSetUnknown1(0);
+	BSGraphics::Renderer::AlphaBlendStateSetUnknown1(0);
 
 	if (tempIndex != -1)
 	{
 		if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
-			ReleaseSRWLockExclusive(&testLocks[tempIndex]);
+			testLocks[tempIndex].ReleaseWrite();
+			//ReleaseSRWLockExclusive(&testLocks[tempIndex]);
 	}
 
 	SubPassIndex++;

@@ -1,34 +1,174 @@
+#include "../../../rendering/common.h"
 #include "../../../../common.h"
+#include "../../NiMain/BSGeometry.h"
+#include "../../BSGraphicsRenderer.h"
+#include "../BSShaderManager.h"
 #include "BSBloodSplatterShader.h"
+#include "../BSShaderUtil.h"
 
-/*
+AutoPtr(uintptr_t, qword_143052900, 0x52900);
+AutoPtr(__int64, qword_14304EF00, 0x4EF00);
+
 BSBloodSplatterShader::BSBloodSplatterShader() : BSShader("BloodSplatter")
 {
 	m_Type = 4;
 
 	// Added in FO4:
-	// BSShaderManager::GetTexture("Textures\\Blood\\FXBloodFlare.dds", 1, &BSBloodSplatterShader::spDefaultFlareTexture, 0, 0, 0);
-	// if (!BSBloodSplatterShader::spDefaultFlareTexture && BSShaderManager::pShaderErrorCallback)
+	// BSShaderManager::GetTexture("Textures\\Blood\\FXBloodFlare.dds", 1, &spDefaultFlareTexture, 0, 0, 0);
+	// if (!spDefaultFlareTexture && BSShaderManager::pShaderErrorCallback)
 	//	BSShaderManager::pShaderErrorCallback("BSBloodSplatterShader: Unable to load Textures\\Blood\\FXBloodFlare.dds", 0);
 
-	// NiColorA::Set(&BSBloodSplatterShader::LightLoc, 0.89999998, 0.89999998, 0.0, 0.1);
-	// BSBloodSplatterShader::pInstance = this;
+	LightLoc.Set(0.9f, 0.9f, 0.0f, 0.1f);
+	pInstance = this;
+}
+
+BSBloodSplatterShader::~BSBloodSplatterShader()
+{
+	__debugbreak();
 }
 
 bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 {
-	return false;
+	// Converts technique with runtime flags to actual technique flags during shader load
+	uint32_t rawTechnique;
+
+	if (Technique == BSSM_BLOOD_SPLATTER_FLARE)
+		rawTechnique = RAW_TECHNIQUE_FLARE;
+	else
+		rawTechnique = RAW_TECHNIQUE_SPLATTER;
+
+	// Check if shaders exist
+	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
+	uint32_t pixelShaderTecnique = GetPixelTechnique(rawTechnique);
+
+	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTecnique, false))
+		return false;
+
+	if (rawTechnique == RAW_TECHNIQUE_FLARE)
+	{
+		// Use the sun or nearest light source to draw a water-like "shine reflection" from blood
+		if (iAdaptedLightRenderTarget <= 0)
+		{
+			uintptr_t v9 = *(uintptr_t *)(qword_143052900 + 72);
+
+			if (v9)
+				v9 = *(uintptr_t *)(v9 + 16);            // BSGraphics::Renderer::SetTexture
+			else
+				v9 = 0;
+
+			BSGraphics::Renderer::SetShaderResource(3, (ID3D11ShaderResourceView *)v9);
+		}
+		else
+		{
+			uintptr_t v9 = *(&qword_14304EF00 + 6 * iAdaptedLightRenderTarget);// BSGraphics::RenderTargetManager::SetTextureRenderTarget
+
+			BSGraphics::Renderer::SetShaderResource(3, (ID3D11ShaderResourceView *)v9);
+		}
+
+		BSGraphics::Renderer::SetTextureMode(3, 0, 1);
+		BSGraphics::Renderer::AlphaBlendStateSetMode(5);
+		BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
+	}
+	else if (rawTechnique == RAW_TECHNIQUE_SPLATTER)
+	{
+		BSGraphics::Renderer::AlphaBlendStateSetMode(4);
+		BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
+	}
+
+	m_CurrentRawTechnique = rawTechnique;
+	return true;
 }
 
 void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 {
+	BSGraphics::Renderer::AlphaBlendStateSetMode(0);
+	BSGraphics::Renderer::DepthStencilStateSetDepthMode(3);
+	EndTechnique();
 }
 
-void BSBloodSplatterShader::SetupGeometry(BSRenderPass * Pass)
+void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass)
 {
+	auto *renderer = GetThreadedGlobals();
+
+	BSVertexShader *vs = renderer->m_CurrentVertexShader;
+	BSPixelShader *ps = renderer->m_CurrentPixelShader;
+
+	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+
+	DirectX::XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
+	DirectX::XMMATRIX worldViewProj = DirectX::XMMatrixMultiplyTranspose(geoTransform, *(DirectX::XMMATRIX *)&renderer->__zz2[240]);
+
+	uintptr_t v12 = (uintptr_t)Pass->m_Property;
+
+	// BSBloodSplatterShaderProperty::GetAlpha() * BSShaderProperty::GetAlpha() * fGlobalAlpha?
+	float alpha = (**(float **)(v12 + 168) * *(float *)(v12 + 48)) * fGlobalAlpha;
+
+	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)
+		alpha *= fFlareMult * fAlpha;
+
+	//
+	// PS: p0 float Alpha
+	//
+	pixelCG.Param<float, 0>(ps) = alpha;
+
+	//
+	// VS: p0 float4x4 WorldViewProj
+	// VS: p1 float4 LightLoc
+	// VS: p2 float Ctrl
+	//
+	vertexCG.Param<DirectX::XMMATRIX, 0>(vs)	= worldViewProj;
+	vertexCG.Param<DirectX::XMVECTOR, 1>(vs)	= LightLoc.XmmVector();
+	vertexCG.Param<float, 2>(vs)				= fFlareOffsetScale;
+
+	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
+	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
+	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+
+	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)
+	{
+		uintptr_t v16 = *(uintptr_t *)(*(uintptr_t *)(v12 + 152) + 72i64);// NiTexture
+		if (v16)
+			v16 = *(uintptr_t *)(v16 + 16);// NiTexture::QRendererTexture
+		else
+			v16 = 0i64;
+
+		BSGraphics::Renderer::SetShaderResource(2, (ID3D11ShaderResourceView *)v16);
+		BSGraphics::Renderer::SetTextureMode(2, 0, 1);
+	}
+	else
+	{
+		uintptr_t v19 = *(uintptr_t *)(*(uintptr_t *)(v12 + 136) + 72i64);
+		if (v19)
+			v19 = *(uintptr_t *)(v19 + 16);
+		else
+			v19 = 0i64;
+
+		BSGraphics::Renderer::SetShaderResource(0, (ID3D11ShaderResourceView *)v19);
+		BSGraphics::Renderer::SetTextureMode(0, 0, 1);
+
+		uintptr_t v23 = *(uintptr_t *)(*(uintptr_t *)(v12 + 144) + 72i64);
+		if (v23)
+			v23 = *(uintptr_t *)(v23 + 16);
+		else
+			v23 = 0i64;
+
+		BSGraphics::Renderer::SetShaderResource(1, (ID3D11ShaderResourceView *)v23);
+		BSGraphics::Renderer::SetTextureMode(1, 0, 1);
+	}
 }
 
-void BSBloodSplatterShader::RestoreGeometry(BSRenderPass * Pass)
+void BSBloodSplatterShader::RestoreGeometry(BSRenderPass *Pass)
 {
+	// Empty
 }
-*/
+
+uint32_t BSBloodSplatterShader::GetVertexTechnique(uint32_t RawTechnique)
+{
+	return RawTechnique;
+}
+
+uint32_t BSBloodSplatterShader::GetPixelTechnique(uint32_t RawTechnique)
+{
+	return RawTechnique;
+}

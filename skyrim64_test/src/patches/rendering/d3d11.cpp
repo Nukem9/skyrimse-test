@@ -22,7 +22,6 @@ decltype(&D3D11CreateDeviceAndSwapChain) ptrD3D11CreateDeviceAndSwapChain;
 
 ID3D11DeviceContext2 *dc1; // deferred context
 ID3D11DeviceContext2 *dc2;
-ID3D11DeviceContext2 *dc3;
 
 void UpdateHavokTimer(int FPS)
 {
@@ -240,11 +239,12 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 }
 
 extern uint32_t lastTechId;
-void BSGraphics__Renderer__SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode);
 
 uint32_t opt1;
 uint32_t opt2;
 uint32_t opt3;
+
+SRWLOCK InputLayoutLock = SRWLOCK_INIT;
 
 void CommitShaderChanges(bool Unknown)
 {
@@ -491,6 +491,8 @@ void CommitShaderChanges(bool Unknown)
 		// Shader input layout creation + updates
 		if (!Unknown && _bittest((const LONG *)&v1, 0xAu))
 		{
+			AcquireSRWLockExclusive(&InputLayoutLock);
+
 			uint32_t& dword_141E2C144 = *(uint32_t *)(g_ModuleBase + 0x1E2C144);
 			uint64_t& qword_141E2C160 = *(uint64_t *)(g_ModuleBase + 0x1E2C160);
 
@@ -532,6 +534,8 @@ void CommitShaderChanges(bool Unknown)
 
 			renderer->m_DeviceContext->IASetInputLayout((ID3D11InputLayout *)v19);
 			v1 = renderer->dword_14304DEB0;
+
+			ReleaseSRWLockExclusive(&InputLayoutLock);
 		}
 
 		// IASetPrimitiveTopology
@@ -875,7 +879,20 @@ void hook()
 	if (FAILED(newDev->CreateDeferredContext2(0, &dc2)))
 		__debugbreak();
 
+	ID3D11DeviceContext2 *dc3;
 	if (FAILED(newDev->CreateDeferredContext2(0, &dc3)))
+		__debugbreak();
+
+	ID3D11DeviceContext2 *dc4;
+	if (FAILED(newDev->CreateDeferredContext2(0, &dc4)))
+		__debugbreak();
+
+	ID3D11DeviceContext2 *dc5;
+	if (FAILED(newDev->CreateDeferredContext2(0, &dc5)))
+		__debugbreak();
+
+	ID3D11DeviceContext2 *dc6;
+	if (FAILED(newDev->CreateDeferredContext2(0, &dc6)))
 		__debugbreak();
 
 	if (!ptrPresent)
@@ -885,10 +902,13 @@ void hook()
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF30, (PBYTE)&sub_140D6BF00);
 	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1960, (PBYTE)&BSShaderAccumulator::sub_1412E1600);
 
-	ID3D11DeviceContext2 *contexts[3];
+	ID3D11DeviceContext2 *contexts[6];
 	contexts[0] = dc1;
 	contexts[1] = dc2;
 	contexts[2] = dc3;
+	contexts[3] = dc4;
+	contexts[4] = dc5;
+	contexts[5] = dc6;
 
 	DC_Init(g_DeviceContext, contexts, ARRAYSIZE(contexts));
 

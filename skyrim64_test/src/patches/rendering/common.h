@@ -95,7 +95,10 @@ struct BSGraphicsRendererGlobals
 	ID3D11ShaderResourceView *m_CSResources[16];
 	char __zz1[0x40];
 	ID3D11UnorderedAccessView *m_CSUAVResources[8];
-	char __zz2[0x2A0];
+	char __zz3[0x8];
+	struct BSVertexShader *m_CurrentVertexShader;
+	struct BSPixelShader *m_CurrentPixelShader;
+	char __zz2[0x288];
 };
 
 #define CHECK_OFFSET(member, actualAddr) static_assert(offsetof(BSGraphicsRendererGlobals, member) == (actualAddr - 0x14304BEF0), "")
@@ -162,3 +165,5 @@ CHECK_OFFSET(m_CSSamplerSetting1, 0x14304E070);
 CHECK_OFFSET(m_CSSamplerSetting2, 0x14304E0B0);
 CHECK_OFFSET(m_CSResources, 0x14304E0F0);
 CHECK_OFFSET(m_CSUAVResources, 0x14304E1B0);
+CHECK_OFFSET(m_CurrentVertexShader, 0x14304E1F8);
+CHECK_OFFSET(m_CurrentPixelShader, 0x14304E200);
