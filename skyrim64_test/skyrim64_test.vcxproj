@@ -113,8 +113,12 @@
     <ClInclude Include="src\patches\TES\BSThread_Win32.h" />
     <ClInclude Include="src\patches\TES\BSTScatterTable.h" />
     <ClInclude Include="src\patches\TES\MemoryContextTracker.h" />
-    <ClInclude Include="src\patches\TES\NiObject.h" />
-    <ClInclude Include="src\patches\TES\NiRefObject.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiColor.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiObject.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiRefObject.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiTransform.h" />
     <ClInclude Include="src\profiler_internal.h" />
     <ClInclude Include="src\ansel.h" />
     <ClInclude Include="src\d3dconv.h" />

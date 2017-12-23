@@ -1,6 +1,5 @@
 #pragma once
 
-// Verified
 class NiRefObject
 {
 private:
@@ -28,5 +27,4 @@ public:
 			this->~NiRefObject();
 	}
 };
-
 //static_assert(offsetof(NiRefObject, m_RefCount) == 0x8, "");

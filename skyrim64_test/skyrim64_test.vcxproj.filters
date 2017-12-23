@@ -137,12 +137,6 @@
     <ClInclude Include="src\patches\TES\BSTArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\NiRefObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\BSShader\BSShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>

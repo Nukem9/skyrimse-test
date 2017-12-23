@@ -10,10 +10,10 @@ struct NiRTTI
 {
 };
 
-// Verified
 class NiObject : public NiRefObject
 {
 public:
+	// Verified
 	virtual const NiRTTI *GetRTTI();
 	virtual const void *IsNode();		// const NiNode *
 	virtual void *IsSwitchNode();		// NiSwitchNode *
@@ -51,3 +51,4 @@ public:
 	virtual void *SetGroup(NiObjectGroup *);
 	virtual void *IsNiControllerManager();// NiControllerManager *
 };
+static_assert(sizeof(NiObject) == 0x10);
