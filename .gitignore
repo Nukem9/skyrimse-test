@@ -49,4 +49,7 @@ x64/Debug/
 # Nsight
 *.nvuser
 
+# Intel Threading Building Blocks
+*/tbb2018/
+
 !detours.lib
