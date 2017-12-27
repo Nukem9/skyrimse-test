@@ -148,6 +148,9 @@ class BSTScatterTableBase : public BSTScatterTableKernel<Traits>, public Traits:
 	//
 	// Same invisible padding as BSTScatterTableKernel in here
 	//
+private:
+	const static uint32_t InternalEndOfListMarker = 0x0EFBEADDE;
+
 protected:
 	using key_type = typename Traits::key_type;
 	using mapped_type = typename Traits::mapped_type;
@@ -160,6 +163,15 @@ protected:
 	table_entry *m_Buckets;
 
 public:
+	BSTScatterTableBase()
+	{
+		m_AllocatedEntries	= 0;
+		m_UnknownSize1		= 0;
+		m_UnknownSize2		= 0;
+		m_EndOfList			= (table_entry *)&InternalEndOfListMarker;
+		m_Buckets			= nullptr;
+	}
+
 	class const_iterator
 	{
 		friend class BSTScatterTableBase;
