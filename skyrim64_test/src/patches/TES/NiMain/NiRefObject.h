@@ -3,20 +3,18 @@
 class NiRefObject
 {
 private:
-	//static int ms_uiObjects;
+	inline AutoPtr(int, ms_uiObjects, 0x3038520);
 	unsigned int m_RefCount;
 
 public:
 	NiRefObject() : m_RefCount(0)
 	{
-		__debugbreak();
-		// InterlockedIncrement(&NiRefObject::ms_uiObjects);
+		InterlockedIncrement((volatile long *)&ms_uiObjects);
 	}
 
 	virtual ~NiRefObject()
 	{
-		__debugbreak();
-		// InterlockedDecrement(&NiRefObject::ms_uiObjects);
+		InterlockedDecrement((volatile long *)&ms_uiObjects);
 	}
 
 	virtual void DeleteThis()
