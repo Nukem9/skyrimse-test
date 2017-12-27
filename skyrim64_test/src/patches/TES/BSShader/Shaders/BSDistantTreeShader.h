@@ -4,8 +4,17 @@
 
 class BSDistantTreeShader : public BSShader
 {
+private:
+	enum
+	{
+		RAW_TECHNIQUE_BLOCK = 0,
+		RAW_TECHNIQUE_DEPTH = 1,
+	};
+
+	inline AutoPtr(BSDistantTreeShader *, pInstance, 0x32A7F50);
+
 public:
-	// static BSDistantTreeShader *pInstance;
+	DECLARE_CONSTRUCTOR_HOOK(BSDistantTreeShader);
 
 	BSDistantTreeShader();
 	virtual ~BSDistantTreeShader();
@@ -15,6 +24,7 @@ public:
 	virtual void SetupGeometry(BSRenderPass *Pass) override;	// Implemented
 	virtual void RestoreGeometry(BSRenderPass *Pass) override;	// Nullsub
 
-	// NiBoneMatrixSetterI/BSReloadShaderI unknown
+	uint32_t GetVertexTechnique(uint32_t RawTechnique);
+	uint32_t GetPixelTechnique(uint32_t RawTechnique);
 };
-static_assert(sizeof(BSDistantTreeShader) == 0x90, "");
+static_assert(sizeof(BSDistantTreeShader) == 0x90);

@@ -12,7 +12,8 @@ private:
 		RAW_TECHNIQUE_FLARE = 1,
 	};
 
-	uint32_t m_CurrentRawTechnique;// Is either 0 or 1, set in SetupTechnique(), used in SetupGeometry()
+	// Is either 0 or 1 [enum], set in SetupTechnique(), used in SetupGeometry()
+	uint32_t m_CurrentRawTechnique;
 
 	inline AutoPtr(BSBloodSplatterShader *, pInstance, 0x32573B8);
 	inline AutoPtr(NiColorA, LightLoc, 0x32573B8);
@@ -23,6 +24,8 @@ private:
 	inline AutoPtr(float, fFlareOffsetScale, 0x10);
 
 public:
+	DECLARE_CONSTRUCTOR_HOOK(BSBloodSplatterShader);
+
 	BSBloodSplatterShader();
 	virtual ~BSBloodSplatterShader();
 
@@ -31,10 +34,10 @@ public:
 	virtual void SetupGeometry(BSRenderPass *Pass) override;	// Implemented
 	virtual void RestoreGeometry(BSRenderPass *Pass) override;	// Implemented
 
-	// NiBoneMatrixSetterI/BSReloadShaderI unknown
-
 	uint32_t GetVertexTechnique(uint32_t RawTechnique);
 	uint32_t GetPixelTechnique(uint32_t RawTechnique);
+
+	// float QGlobalAlpha(); fGlobalAlpha
 };
 static_assert(sizeof(BSBloodSplatterShader) == 0x98, "");
 //static_assert(offsetof(BSBloodSplatterShader, m_CurrentRawTechnique) == 0x90, "");

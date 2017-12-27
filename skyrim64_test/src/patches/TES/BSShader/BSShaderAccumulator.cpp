@@ -32,7 +32,7 @@ STATIC_CONSTRUCTOR(__Testing,
 	}
 })
 
-static void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator)
+void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator)
 {
 	// We always run the full function because I'm not sure if the structure
 	// is used anywhere else important.
@@ -44,6 +44,14 @@ static void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accu
 	uint64_t& qword_1431F5490 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3600);
 
 	qword_1431F5490 = (uint64_t)Accumulator;
+}
+
+BSShaderAccumulator *GetCurrentAccumulator()
+{
+	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+
+	// BSShaderManager::pCurrentShaderAccumulator
+	return *(BSShaderAccumulator **)((uintptr_t)GraphicsGlobals + 0x3600);
 }
 
 void sub_14131F090(bool RequireZero)

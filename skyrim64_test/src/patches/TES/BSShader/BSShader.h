@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include "../NiMain/NiRefObject.h"
 #include "../BSTScatterTable.h"
 
@@ -60,12 +61,14 @@ static_assert(offsetof(BSShader, m_LoaderType) == 0x88, "");
 
 STATIC_CONSTRUCTOR(__CheckBSShaderVtable, []
 {
-	if (VTABLE_FUNCTION_INDEX(BSShader::SetupTechnique) != 2) MessageBoxA(nullptr, "Shit's broken", "", 0);
-	if (VTABLE_FUNCTION_INDEX(BSShader::RestoreTechnique) != 3) MessageBoxA(nullptr, "Shit's broken", "", 0);
-	if (VTABLE_FUNCTION_INDEX(BSShader::SetupMaterial) != 4) MessageBoxA(nullptr, "Shit's broken", "", 0);
-	if (VTABLE_FUNCTION_INDEX(BSShader::RestoreMaterial) != 5) MessageBoxA(nullptr, "Shit's broken", "", 0);
-	if (VTABLE_FUNCTION_INDEX(BSShader::SetupGeometry) != 6) MessageBoxA(nullptr, "Shit's broken", "", 0);
-	if (VTABLE_FUNCTION_INDEX(BSShader::RestoreGeometry) != 7) MessageBoxA(nullptr, "Shit's broken", "", 0);
-	if (VTABLE_FUNCTION_INDEX(BSShader::GetTechniqueName) != 8) MessageBoxA(nullptr, "Shit's broken", "", 0);
-	if (vtable_index_util::getIndexOf(static_cast<void(BSShader::*)(bool)>(&BSShader::ReloadShaders)) != 9) MessageBoxA(nullptr, "Shit's broken", "", 0);
+	assert_vtable_index(&BSShader::~BSShader, 0);
+	assert_vtable_index(&BSShader::DeleteThis, 1);
+	assert_vtable_index(&BSShader::SetupTechnique, 2);
+	assert_vtable_index(&BSShader::RestoreTechnique, 3);
+	assert_vtable_index(&BSShader::SetupMaterial, 4);
+	assert_vtable_index(&BSShader::RestoreMaterial, 5);
+	assert_vtable_index(&BSShader::SetupGeometry, 6);
+	assert_vtable_index(&BSShader::RestoreGeometry, 7);
+	assert_vtable_index(&BSShader::GetTechniqueName, 8);
+	assert_vtable_index(static_cast<void(BSShader::*)(bool)>(&BSShader::ReloadShaders), 9);
 });

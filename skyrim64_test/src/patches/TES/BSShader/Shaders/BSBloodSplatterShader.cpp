@@ -5,9 +5,23 @@
 #include "../BSShaderManager.h"
 #include "BSBloodSplatterShader.h"
 #include "../BSShaderUtil.h"
+#include "../../NiMain/NiTexture.h"
+
+//
+// Shader notes:
+//
+// - m_CurrentRawTechnique is an implicit global variable (TODO)
+// - ~BSBloodSplatterShader() not yet implemented
+//
+using namespace DirectX;
 
 AutoPtr(uintptr_t, qword_143052900, 0x52900);
 AutoPtr(__int64, qword_14304EF00, 0x4EF00);
+
+void TestHook1()
+{
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12EF750), &BSBloodSplatterShader::__ctor__);
+}
 
 BSBloodSplatterShader::BSBloodSplatterShader() : BSShader("BloodSplatter")
 {
@@ -49,14 +63,9 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 		// Use the sun or nearest light source to draw a water-like "shine reflection" from blood
 		if (iAdaptedLightRenderTarget <= 0)
 		{
-			uintptr_t v9 = *(uintptr_t *)(qword_143052900 + 72);
+			NiTexture *flareHDRTexture = *(NiTexture **)(qword_143052900 + 72);
 
-			if (v9)
-				v9 = *(uintptr_t *)(v9 + 16);            // BSGraphics::Renderer::SetTexture
-			else
-				v9 = 0;
-
-			BSGraphics::Renderer::SetShaderResource(3, (ID3D11ShaderResourceView *)v9);
+			BSGraphics::Renderer::SetShaderResource(3, flareHDRTexture ? flareHDRTexture->QRendererTexture() : nullptr);
 		}
 		else
 		{
@@ -96,8 +105,8 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass)
 	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
 	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
 
-	DirectX::XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
-	DirectX::XMMATRIX worldViewProj = DirectX::XMMatrixMultiplyTranspose(geoTransform, *(DirectX::XMMATRIX *)&renderer->__zz2[240]);
+	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
+	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
 
 	uintptr_t v12 = (uintptr_t)Pass->m_Property;
 
@@ -117,9 +126,9 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass)
 	// VS: p1 float4 LightLoc
 	// VS: p2 float Ctrl
 	//
-	vertexCG.Param<DirectX::XMMATRIX, 0>(vs)	= worldViewProj;
-	vertexCG.Param<DirectX::XMVECTOR, 1>(vs)	= LightLoc.XmmVector();
-	vertexCG.Param<float, 2>(vs)				= fFlareOffsetScale;
+	vertexCG.Param<XMMATRIX, 0>(vs)	= worldViewProj;
+	vertexCG.Param<XMVECTOR, 1>(vs)	= LightLoc.XmmVector();
+	vertexCG.Param<float, 2>(vs)	= fFlareOffsetScale;
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
 	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
@@ -127,33 +136,21 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass)
 
 	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)
 	{
-		uintptr_t v16 = *(uintptr_t *)(*(uintptr_t *)(v12 + 152) + 72i64);// NiTexture
-		if (v16)
-			v16 = *(uintptr_t *)(v16 + 16);// NiTexture::QRendererTexture
-		else
-			v16 = 0i64;
+		NiTexture *flareColorTexture = *(NiTexture **)(*(uintptr_t *)(v12 + 152) + 72i64);
 
-		BSGraphics::Renderer::SetShaderResource(2, (ID3D11ShaderResourceView *)v16);
+		BSGraphics::Renderer::SetShaderResource(2, flareColorTexture ? flareColorTexture->QRendererTexture() : nullptr);
 		BSGraphics::Renderer::SetTextureMode(2, 0, 1);
 	}
 	else
 	{
-		uintptr_t v19 = *(uintptr_t *)(*(uintptr_t *)(v12 + 136) + 72i64);
-		if (v19)
-			v19 = *(uintptr_t *)(v19 + 16);
-		else
-			v19 = 0i64;
+		NiTexture *bloodColorTexture = *(NiTexture **)(*(uintptr_t *)(v12 + 136) + 72i64);
 
-		BSGraphics::Renderer::SetShaderResource(0, (ID3D11ShaderResourceView *)v19);
+		BSGraphics::Renderer::SetShaderResource(0, bloodColorTexture ? bloodColorTexture->QRendererTexture() : nullptr);
 		BSGraphics::Renderer::SetTextureMode(0, 0, 1);
 
-		uintptr_t v23 = *(uintptr_t *)(*(uintptr_t *)(v12 + 144) + 72i64);
-		if (v23)
-			v23 = *(uintptr_t *)(v23 + 16);
-		else
-			v23 = 0i64;
+		NiTexture *bloodAlphaTexture = *(NiTexture **)(*(uintptr_t *)(v12 + 144) + 72i64);
 
-		BSGraphics::Renderer::SetShaderResource(1, (ID3D11ShaderResourceView *)v23);
+		BSGraphics::Renderer::SetShaderResource(1, bloodAlphaTexture ? bloodAlphaTexture->QRendererTexture() : nullptr);
 		BSGraphics::Renderer::SetTextureMode(1, 0, 1);
 	}
 }

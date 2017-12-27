@@ -192,7 +192,7 @@ void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, uns
 	if (InsertRenderCommand<DrawGeometryRenderCommand>(a1, Technique, a3, a4))
 		return;
 
-	//AcquireSRWLockExclusive(&testingLock);
+	AcquireSRWLockExclusive(&testingLock);
 
 	__int64 v6; // r14
 	__int64 result; // rax
@@ -232,7 +232,7 @@ void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, uns
 
 		AssertIsRTTIType((uint64_t)a1->m_Property, RTTI_BSShaderProperty);
 		AssertIsRTTIType(v11, RTTI_BSShaderMaterial);
-		AssertIsRTTIType(v6, RTTI_BSShader);
+		//AssertIsRTTIType(v6, RTTI_BSShader);
 
 		if (v11 != qword_1434B5220)
 		{
@@ -259,7 +259,7 @@ void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, uns
 
 	}
 
-	//ReleaseSRWLockExclusive(&testingLock);
+	ReleaseSRWLockExclusive(&testingLock);
 }
 
 void sub_14131F9F0(__int64 *a1, unsigned int a2)

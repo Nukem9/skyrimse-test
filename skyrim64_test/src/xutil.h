@@ -49,6 +49,18 @@ typedef struct tagTHREADNAME_INFO
 
 #define STATIC_CONSTRUCTOR(Id, Lambda) struct { static void Id(){ static_constructor<&Id>::c; Lambda(); } };
 
+#define DECLARE_CONSTRUCTOR_HOOK(Class) \
+	static Class *__ctor__(void *Instance) \
+	{ \
+		return new (Instance) Class(); \
+	} \
+	\
+	static Class *__dtor__(Class *Thisptr, unsigned __int8) \
+	{ \
+		Thisptr->~Class(); \
+		return Thisptr; \
+	}
+
 intptr_t FindPattern(const std::vector<unsigned char>& data, intptr_t baseAddress, const unsigned char *lpPattern, const char *pszMask, intptr_t offset, intptr_t resultUsage);
 uintptr_t FindPatternSimple(uintptr_t StartAddress, uintptr_t MaxSize, const BYTE *ByteMask, const char *Mask);
 void PatchMemory(ULONG_PTR Address, PBYTE Data, SIZE_T Size);
@@ -57,3 +69,13 @@ void Trim(char *Buffer, char C);
 
 #define templated(...) __VA_ARGS__
 #define AutoPtr(Type, Name, Offset) static Type& Name = (*(Type *)((uintptr_t)GetModuleHandle(nullptr) + Offset))
+
+#define static_assert_offset(Structure, Member, Offset) { CheckOffset<offsetof(Structure, Member), Offset> templated(__z)__COUNTER__; }
+#define assert_vtable_index(Function, Index) assert(vtable_index_util::getIndexOf(Function) == Index)
+
+template <size_t Offset, size_t RequiredOffset>
+struct CheckOffset
+{
+	static_assert(Offset <= RequiredOffset, "Offset is larger than expected");
+	static_assert(Offset >= RequiredOffset, "Offset is smaller than expected");
+};

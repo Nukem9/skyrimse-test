@@ -4,6 +4,22 @@
 #include "BSShader/BSVertexShader.h"
 #include "BSShader/BSPixelShader.h"
 
+namespace BSGraphics::Utility
+{
+	void CopyNiColorAToFloat(float *Floats, const NiColorA& Color)
+	{
+		Floats[0] = Color.r;
+		Floats[1] = Color.g;
+		Floats[2] = Color.b;
+		Floats[3] = Color.a;
+	}
+
+	void CopyNiColorAToFloat(DirectX::XMVECTOR *Floats, const NiColorA& Color)
+	{
+		*Floats = Color.XmmVector();
+	}
+}
+
 namespace BSGraphics::Renderer
 {
 	void RasterStateSetCullMode(uint32_t CullMode)
@@ -17,6 +33,17 @@ namespace BSGraphics::Renderer
 		{
 			*(DWORD *)&renderer->__zz0[52] = CullMode;
 			renderer->dword_14304DEB0 |= 0x20;
+		}
+	}
+
+	void RasterStateSetUnknown1(uint32_t Value)
+	{
+		auto *renderer = GetThreadedGlobals();
+
+		if (*(DWORD *)&renderer->__zz0[56] != Value)
+		{
+			*(DWORD *)&renderer->__zz0[56] = Value;
+			renderer->dword_14304DEB0 |= 0x40;
 		}
 	}
 
@@ -93,6 +120,17 @@ namespace BSGraphics::Renderer
 				renderer->dword_14304DEB0 |= 0x4;
 			else
 				renderer->dword_14304DEB0 &= ~0x4;
+		}
+	}
+
+	void SetTextureAddressMode(uint32_t Index, uint32_t Mode)
+	{
+		auto *renderer = GetThreadedGlobals();
+
+		if (renderer->m_PSSamplerSetting1[Index] != Mode)
+		{
+			renderer->m_PSSamplerSetting1[Index] = Mode;
+			renderer->m_PSSamplerModifiedBits |= 1 << Index;
 		}
 	}
 
@@ -179,13 +217,18 @@ namespace BSGraphics::Renderer
 		if (temp.m_Buffer)
 		{
 			auto *renderer = GetThreadedGlobals();
-
 			HRESULT hr = renderer->m_DeviceContext->Map(temp.m_Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &temp.m_Map);
 
 			if (FAILED(hr))
 				__debugbreak();
 		}
+		else
+		{
+			temp.m_Map.pData = Shader->m_ConstantGroups[Level].m_Data;
+		}
 
+		// BUGFIX: DirectX expects Skyrim to overwrite the entire buffer. **SKYRIM DOES NOT**, so I'm zeroing it now.
+		memset(temp.m_Map.pData, 0, temp.m_Map.RowPitch);
 		return temp;
 	}
 
@@ -196,14 +239,18 @@ namespace BSGraphics::Renderer
 		if (temp.m_Buffer)
 		{
 			auto *renderer = GetThreadedGlobals();
-
-			ConstantGroup temp(Shader->m_ConstantGroups[Level].m_Buffer);
 			HRESULT hr = renderer->m_DeviceContext->Map(temp.m_Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &temp.m_Map);
 
 			if (FAILED(hr))
 				__debugbreak();
 		}
+		else
+		{
+			temp.m_Map.pData = Shader->m_ConstantGroups[Level].m_Data;
+		}
 
+		// BUGFIX: DirectX expects Skyrim to overwrite the entire buffer. BETHESDA DOESN'T, so I'm zeroing it now.
+		memset(temp.m_Map.pData, 0, temp.m_Map.RowPitch);
 		return temp;
 	}
 

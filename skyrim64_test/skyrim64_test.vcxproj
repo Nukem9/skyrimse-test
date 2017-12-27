@@ -90,6 +90,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShader.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h" />
     <ClInclude Include="src\patches\patches.h" />
     <ClInclude Include="src\patches\rendering\codegen.h" />
@@ -121,6 +122,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiRefObject.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiTexture.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiTransform.h" />
     <ClInclude Include="src\profiler_internal.h" />
     <ClInclude Include="src\ansel.h" />
@@ -206,8 +208,11 @@
     <ClCompile Include="src\patches\TES\BSShader\BSShaderAccumulator.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderManager.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderRenderTargets.cpp" />
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSDistantTreeShader.cpp" />
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSSkyShader.cpp" />
     <ClCompile Include="src\patches\TES\BSSpinLock.cpp" />
     <ClCompile Include="src\patches\TES\BSThread_Win32.cpp" />
+    <ClCompile Include="src\patches\TES\NiMain\NiColor.cpp" />
     <ClCompile Include="src\profiler.cpp" />
     <ClCompile Include="src\typeinfo\hk_typeinfo.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
