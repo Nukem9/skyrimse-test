@@ -1116,7 +1116,7 @@ namespace BSLightingShader
 			case 10:/* I have no idea what this does */break;
 			case 11:defines.emplace_back("MULTI_LAYER_PARALLAX", ""); defines.emplace_back("ENVMAP", ""); break;
 			case 12:defines.emplace_back("TREE_ANIM", ""); break;
-			case 13:defines.emplace_back("LOBOBJECTS", ""); break;
+			case 13:defines.emplace_back("LODOBJECTS", ""); break;
 			case 14:defines.emplace_back("MULTI_INDEX", "SPARKLE"); defines.emplace_back("SPARKLE", ""); break;
 			case 15:defines.emplace_back("LODOBJECTSHD", ""); break;
 			case 16:defines.emplace_back("EYE", ""); break;
