@@ -24,16 +24,18 @@ private:
 	inline AutoPtr(NiColorA, xmmword_143257D58, 0x3257D58);
 	inline AutoPtr(NiColorA, xmmword_143257D68, 0x3257D68);
 
+	const static uintptr_t OriginalVTableBase = 0x1880A60;
+
 public:
 	DECLARE_CONSTRUCTOR_HOOK(BSSkyShader);
 
 	BSSkyShader();
 	virtual ~BSSkyShader();
 
-	virtual bool SetupTechnique(uint32_t Technique) override;	// Implemented
-	virtual void RestoreTechnique(uint32_t Technique) override;	// Implemented
-	virtual void SetupGeometry(BSRenderPass *Pass) override;	// Implemented
-	virtual void RestoreGeometry(BSRenderPass *Pass) override;	// Implemented
+	virtual bool SetupTechnique(uint32_t Technique) override;				// Implemented
+	virtual void RestoreTechnique(uint32_t Technique) override;				// Implemented
+	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t Flags) override;// Implemented
+	virtual void RestoreGeometry(BSRenderPass *Pass) override;				// Implemented
 
 	uint32_t GetRawTechnique(uint32_t Technique);
 	uint32_t GetVertexTechnique(uint32_t RawTechnique);

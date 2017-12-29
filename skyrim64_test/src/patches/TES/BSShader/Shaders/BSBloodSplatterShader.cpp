@@ -43,6 +43,8 @@ BSBloodSplatterShader::~BSBloodSplatterShader()
 
 bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 {
+	BSSHADER_FORWARD_CALL(0, &BSBloodSplatterShader::SetupTechnique, Technique);
+
 	// Converts technique with runtime flags to actual technique flags during shader load
 	uint32_t rawTechnique;
 
@@ -90,13 +92,17 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 
 void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 {
+	BSSHADER_FORWARD_CALL(0, &BSBloodSplatterShader::RestoreTechnique, Technique);
+
 	BSGraphics::Renderer::AlphaBlendStateSetMode(0);
 	BSGraphics::Renderer::DepthStencilStateSetDepthMode(3);
 	EndTechnique();
 }
 
-void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass)
+void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 {
+	BSSHADER_FORWARD_CALL(0, &BSBloodSplatterShader::SetupGeometry, Pass, Flags);
+
 	auto *renderer = GetThreadedGlobals();
 
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
@@ -157,7 +163,7 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass)
 
 void BSBloodSplatterShader::RestoreGeometry(BSRenderPass *Pass)
 {
-	// Empty
+	BSSHADER_FORWARD_CALL(0, &BSBloodSplatterShader::RestoreGeometry, Pass);
 }
 
 uint32_t BSBloodSplatterShader::GetVertexTechnique(uint32_t RawTechnique)

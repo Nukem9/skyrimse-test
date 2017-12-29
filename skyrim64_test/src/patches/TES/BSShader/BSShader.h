@@ -10,6 +10,17 @@ struct BSVertexShader;
 struct BSPixelShader;
 struct BSIStream;
 
+#define BSSHADER_FORWARD_DEBUG 0
+
+#define BSSHADER_FORWARD_CALL(OptionIndex, Func, ...) \
+if (g_ShaderToggles[m_Type][OptionIndex]) \
+{ \
+	static uint32_t vtableIndex = vtable_index_util::getIndexOf(Func); \
+	auto realFunc = Func; \
+	*(uintptr_t *)&realFunc = *(uintptr_t*)(g_ModuleBase + OriginalVTableBase + (8 * vtableIndex)); \
+	return (this->*realFunc)(__VA_ARGS__); \
+}
+
 class NiBoneMatrixSetterI
 {
 public:
@@ -30,6 +41,8 @@ public:
 class BSShader : public NiRefObject, public NiBoneMatrixSetterI, public BSReloadShaderI
 {
 public:
+	static bool g_ShaderToggles[16][3];
+
 	BSShader(const char *LoaderType);
 	virtual ~BSShader();
 
@@ -37,7 +50,7 @@ public:
 	virtual void RestoreTechnique(uint32_t Technique) = 0;
 	virtual void SetupMaterial(BSShaderMaterial const *Material);
 	virtual void RestoreMaterial(BSShaderMaterial const *Material);
-	virtual void SetupGeometry(BSRenderPass *Pass) = 0;
+	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t Flags) = 0;
 	virtual void RestoreGeometry(BSRenderPass *Pass) = 0;
 	virtual void GetTechniqueName(uint32_t Technique, char *Buffer, uint32_t BufferSize);
 	virtual void ReloadShaders(bool Unknown);

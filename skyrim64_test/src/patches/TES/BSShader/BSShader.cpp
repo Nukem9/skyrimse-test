@@ -4,6 +4,8 @@
 #include "BSShader.h"
 #include "../BSGraphicsRenderer.h"
 
+bool BSShader::g_ShaderToggles[16][3];
+
 BSShader::BSShader(const char *LoaderType)
 {
 	m_LoaderType = LoaderType;

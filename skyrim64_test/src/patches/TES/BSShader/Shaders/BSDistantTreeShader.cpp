@@ -10,6 +10,7 @@
 #include "../BSShaderUtil.h"
 #include "../BSShaderManager.h"
 #include "../../NiMain/BSGeometry.h"
+#include "../../NiMain/NiTexture.h"
 
 //
 // Shader notes:
@@ -46,6 +47,8 @@ BSDistantTreeShader::~BSDistantTreeShader()
 
 bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 {
+	BSSHADER_FORWARD_CALL(0, &BSDistantTreeShader::SetupTechnique, Technique);
+
 	// Converts technique with runtime flags to actual technique flags during shader load
 	uint32_t rawTechnique = 0;
 
@@ -57,7 +60,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 		// bAssert("BSDistantTreeShader: bad technique ID");
 
 	if (bUseEarlyZ)
-		rawTechnique |= 0x10000;
+		rawTechnique |= RAW_FLAG_DO_ALPHA;
 
 	// Check if shaders exist
 	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
@@ -139,11 +142,9 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	// if (!qword_1432A7F58)
 	// bAssert("LOD tree texture atlas for current worldspace not found.");
 
-	uintptr_t v41 = *(uintptr_t *)(qword_1432A7F58 + 72);
-	if (v41)
-		v41 = *(uintptr_t *)(v41 + 16);
+	NiTexture *treeLodAtlas = *(NiTexture **)(qword_1432A7F58 + 72);
 
-	BSGraphics::Renderer::SetShaderResource(0, (ID3D11ShaderResourceView *)v41);
+	BSGraphics::Renderer::SetShaderResource(0, treeLodAtlas ? treeLodAtlas->QRendererTexture() : nullptr);
 	BSGraphics::Renderer::SetTextureAddressMode(0, 0);
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
@@ -154,11 +155,13 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 
 void BSDistantTreeShader::RestoreTechnique(uint32_t Technique)
 {
-	// Empty
+	BSSHADER_FORWARD_CALL(0, &BSDistantTreeShader::RestoreTechnique, Technique);
 }
 
-void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass)
+void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 {
+	BSSHADER_FORWARD_CALL(2, &BSDistantTreeShader::SetupGeometry, Pass, Flags);
+
 	auto *renderer = GetThreadedGlobals();
 
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
@@ -194,7 +197,7 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass)
 
 void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass)
 {
-	// Empty
+	BSSHADER_FORWARD_CALL(2, &BSDistantTreeShader::RestoreGeometry, Pass);
 }
 
 uint32_t BSDistantTreeShader::GetVertexTechnique(uint32_t RawTechnique)

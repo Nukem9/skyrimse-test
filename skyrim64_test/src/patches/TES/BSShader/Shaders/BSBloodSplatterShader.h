@@ -23,16 +23,18 @@ private:
 	inline AutoPtr(float, fAlpha, 0x10);
 	inline AutoPtr(float, fFlareOffsetScale, 0x10);
 
+	const static uintptr_t OriginalVTableBase = 0x1879C98;
+
 public:
 	DECLARE_CONSTRUCTOR_HOOK(BSBloodSplatterShader);
 
 	BSBloodSplatterShader();
 	virtual ~BSBloodSplatterShader();
 
-	virtual bool SetupTechnique(uint32_t Technique) override;	// Implemented
-	virtual void RestoreTechnique(uint32_t Technique) override;	// Implemented
-	virtual void SetupGeometry(BSRenderPass *Pass) override;	// Implemented
-	virtual void RestoreGeometry(BSRenderPass *Pass) override;	// Implemented
+	virtual bool SetupTechnique(uint32_t Technique) override;				// Implemented
+	virtual void RestoreTechnique(uint32_t Technique) override;				// Implemented
+	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t Flags) override;// Implemented
+	virtual void RestoreGeometry(BSRenderPass *Pass) override;				// Implemented
 
 	uint32_t GetVertexTechnique(uint32_t RawTechnique);
 	uint32_t GetPixelTechnique(uint32_t RawTechnique);
