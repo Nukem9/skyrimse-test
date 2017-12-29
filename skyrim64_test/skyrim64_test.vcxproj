@@ -209,6 +209,7 @@
     <ClCompile Include="src\patches\TES\BSShader\BSShaderManager.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderRenderTargets.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSDistantTreeShader.cpp" />
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSGrassShader.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSSkyShader.cpp" />
     <ClCompile Include="src\patches\TES\BSSpinLock.cpp" />
     <ClCompile Include="src\patches\TES\BSThread_Win32.cpp" />
