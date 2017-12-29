@@ -101,7 +101,7 @@ void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 
 void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 {
-	BSSHADER_FORWARD_CALL(0, &BSBloodSplatterShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(2, &BSBloodSplatterShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
 
@@ -163,7 +163,7 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 void BSBloodSplatterShader::RestoreGeometry(BSRenderPass *Pass)
 {
-	BSSHADER_FORWARD_CALL(0, &BSBloodSplatterShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(2, &BSBloodSplatterShader::RestoreGeometry, Pass);
 }
 
 uint32_t BSBloodSplatterShader::GetVertexTechnique(uint32_t RawTechnique)
