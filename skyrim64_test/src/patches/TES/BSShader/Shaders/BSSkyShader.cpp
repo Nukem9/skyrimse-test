@@ -16,7 +16,7 @@
 //
 // Shader notes:
 //
-// - None
+// - A global variable update was manually removed in SetupGeometry()
 //
 using namespace DirectX;
 
@@ -167,22 +167,13 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	vertexCG.Param<XMMATRIX, 0>(vs) = XMMatrixMultiplyTranspose(xmmGeoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
 	vertexCG.Param<XMMATRIX, 1>(vs) = XMMatrixTranspose(xmmGeoTransform);
 
-	float v17 = *(float *)&renderer->__zz2[28];
-	float v18 = *(float *)&renderer->__zz2[32];
-	float v19 = *(float *)&renderer->__zz2[36];
-	*(float *)&renderer->__zz2[28] = *(float *)&renderer->__zz2[40];
-	*(float *)&renderer->__zz2[36] = *(float *)&renderer->__zz2[48];
-	*(float *)&renderer->__zz2[32] = *(float *)&renderer->__zz2[44];
-
 	//
 	// VS: p2 float4x4 PreviousWorld
 	//
-	NiTransform previousGeoTransform = Pass->m_Geometry->GetPreviousWorldTransform();
-	vertexCG.Param<XMMATRIX, 2>(vs) = XMMatrixTranspose(BSShaderUtil::GetXMFromNi(previousGeoTransform));
-
-	*(float *)&renderer->__zz2[28] = v17;
-	*(float *)&renderer->__zz2[32] = v18;
-	*(float *)&renderer->__zz2[36] = v19;
+	// NOTE: Unlike BSDistantTreeShader and BSGrassShader, this uses GetPreviousWorldTransform() instead
+	// of GetWorldTransform()...?
+	//
+	vertexCG.Param<XMMATRIX, 2>(vs) = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetPreviousWorldTransform(), *(NiPoint3 *)&renderer->__zz2[40]));
 
 	//
 	// VS: p4 float3 EyePosition (adjusted to relative coordinates, not world)
