@@ -90,6 +90,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShader.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h" />
     <ClInclude Include="src\patches\patches.h" />
@@ -210,6 +211,7 @@
     <ClCompile Include="src\patches\TES\BSShader\BSShaderRenderTargets.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSDistantTreeShader.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSGrassShader.cpp" />
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSLightingShader.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSSkyShader.cpp" />
     <ClCompile Include="src\patches\TES\BSSpinLock.cpp" />
     <ClCompile Include="src\patches\TES\BSThread_Win32.cpp" />
