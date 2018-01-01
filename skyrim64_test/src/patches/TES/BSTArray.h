@@ -31,21 +31,21 @@ class BSTArrayBase
 	friend class __BSTArrayCheckOffsets;
 
 private:
-	uint32_t m_Count;
+	uint32_t m_Size;
 
 public:
-	BSTArrayBase() : m_Count(0)
+	BSTArrayBase() : m_Size(0)
 	{
 	}
 
 	uint32_t QSize()
 	{
-		return m_Count;
+		return m_Size;
 	}
 
 	bool QEmpty()
 	{
-		return m_Count == 0;
+		return m_Size == 0;
 	}
 };
 
@@ -128,9 +128,9 @@ class __BSTArrayCheckOffsets
 	static_assert(offsetof(BSTArrayHeapAllocator, m_Buffer) == 0x0, "");
 	static_assert(offsetof(BSTArrayHeapAllocator, m_AllocSize) == 0x8, "");
 
-	static_assert(offsetof(BSTArrayBase, m_Count) == 0x0, "");
+	static_assert(offsetof(BSTArrayBase, m_Size) == 0x0, "");
 
 	static_assert(offsetof(BSTArray<int>, m_Buffer) == 0x0, "");
 	static_assert(offsetof(BSTArray<int>, m_AllocSize) == 0x8, "");
-	static_assert(offsetof(BSTArray<int>, m_Count) == 0x10, "");
+	static_assert(offsetof(BSTArray<int>, m_Size) == 0x10, "");
 };

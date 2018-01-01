@@ -126,20 +126,11 @@ class BSTScatterTableKernel : public Traits, public Traits::hasher
 	using table_entry = typename Traits::table_entry;
 
 public:
-	char _pad1[8];						// 0x04  +0
-	uint32_t m_AllocatedEntries;		// 0x0C  +4
-	uint32_t m_UnknownSize1;			// 0x10  +8
-	uint32_t m_UnknownSize2;			// 0x14  +12
-	table_entry *m_EndOfList;			// 0x18  +16
-
-	// @ 0x0 __unused_field
-	// @ 0x8 ????
-	// @ 0xC m_AllocatedEntries
-	// @ 0x10 size
-	// @ 0x14 size
-	// @ 0x18 sentinel
-	// ...
-	// @ 0x28 entries pointer
+	char _pad1[8];				// 0x04  +0
+	uint32_t m_Size;			// 0x0C  +4
+	uint32_t m_Free;			// 0x10  +8
+	uint32_t m_LastFree;		// 0x14  +12
+	table_entry *m_Terminator;	// 0x18  +16
 };
 
 template<class Traits>
@@ -160,16 +151,16 @@ protected:
 	using const_pointer = typename Traits::const_pointer;
 	using table_entry = typename Traits::table_entry;
 
-	table_entry *m_Buckets;
+	table_entry *m_Table;
 
 public:
 	BSTScatterTableBase()
 	{
-		m_AllocatedEntries	= 0;
-		m_UnknownSize1		= 0;
-		m_UnknownSize2		= 0;
-		m_EndOfList			= (table_entry *)&InternalEndOfListMarker;
-		m_Buckets			= nullptr;
+		m_Size			= 0;
+		m_Free			= 0;
+		m_LastFree		= 0;
+		m_Terminator	= (table_entry *)&InternalEndOfListMarker;
+		m_Table			= nullptr;
 	}
 
 	class const_iterator
@@ -177,91 +168,91 @@ public:
 		friend class BSTScatterTableBase;
 
 	private:
-		table_entry *m_CurrentBucket;	// &m_Buckets[0];
-		table_entry *m_FinalBucket;		// &m_Buckets[m_AllocatedEntries];
+		table_entry *m_Current;	// &m_Buckets[0];
+		table_entry *m_End;		// &m_Buckets[m_AllocatedEntries];
 
 	public:
 		const_iterator& operator++(int)
 		{
 			do
-				m_CurrentBucket++;
-			while (m_CurrentBucket < m_FinalBucket && m_CurrentBucket->IsEmpty());
+				m_Current++;
+			while (m_Current < m_End && m_Current->IsEmpty());
 
 			return *this;
 		}
 
 		operator bool() const
 		{
-			return m_CurrentBucket != nullptr;
+			return m_Current != nullptr;
 		}
 
 		operator const mapped_type() const
 		{
-			return m_CurrentBucket->m_Value;
+			return m_Current->m_Value;
 		}
 
 		const mapped_type& operator*() const
 		{
-			return m_CurrentBucket->m_Value;
+			return m_Current->m_Value;
 		}
 		
 		const mapped_type *operator->() const
 		{
-			return m_CurrentBucket->m_Value;
+			return m_Current->m_Value;
 		}
 
 		bool operator==(const const_iterator& Rhs) const
 		{
-			return m_CurrentBucket == Rhs.m_CurrentBucket;
+			return m_Current == Rhs.m_Current;
 		}
 		
 		bool operator!=(const const_iterator& Rhs) const
 		{
-			return m_CurrentBucket != Rhs.m_CurrentBucket;
+			return m_Current != Rhs.m_Current;
 		}
 
 	protected:
-		const_iterator(table_entry *Final) : m_CurrentBucket(Final), m_FinalBucket(Final)
+		const_iterator(table_entry *Final) : m_Current(Final), m_End(Final)
 		{
 			// Empty/end() equivalent iterator constructor
 		}
 
-		const_iterator(table_entry *Current, table_entry *Final) : m_CurrentBucket(Current), m_FinalBucket(Final)
+		const_iterator(table_entry *Current, table_entry *Final) : m_Current(Current), m_End(Final)
 		{
 			// Move to the first valid entry (that contains a value)
-			while (m_CurrentBucket < m_FinalBucket && m_CurrentBucket->IsEmpty())
-				m_CurrentBucket++;
+			while (m_Current < m_End && m_Current->IsEmpty())
+				m_Current++;
 		}
 	};
 
 	const_iterator begin() const noexcept
 	{
-		if (!m_Buckets)
+		if (!m_Table)
 			return const_iterator(nullptr);
 
-		return const_iterator(&m_Buckets[0], &m_Buckets[m_AllocatedEntries]);
+		return const_iterator(&m_Table[0], &m_Table[m_Size]);
 	}
 
 	const_iterator end() const noexcept
 	{
-		if (!m_Buckets)
+		if (!m_Table)
 			return const_iterator(nullptr);
 		
-		return const_iterator(&m_Buckets[m_AllocatedEntries]);
+		return const_iterator(&m_Table[m_Size]);
 	}
 
 	const_iterator find(const key_type& Key) const
 	{
-		if (m_Buckets)
+		if (m_Table)
 		{
-			table_entry *entry = &m_Buckets[hasher()(Key) & (m_AllocatedEntries - 1)];
+			table_entry *entry = &m_Table[hasher()(Key) & (m_Size - 1)];
 
 			if (!entry->IsEmpty())
 			{
-				while (entry != m_EndOfList)
+				while (entry != m_Terminator)
 				{
 					if (entry->m_Key == Key)
-						return const_iterator(entry, &m_Buckets[m_AllocatedEntries]);
+						return const_iterator(entry, &m_Table[m_Size]);
 
 					entry = entry->m_Next;
 				}
@@ -274,13 +265,13 @@ public:
 
 	bool get(const key_type& Key, mapped_type& Out) const
 	{
-		if (m_Buckets)
+		if (m_Table)
 		{
-			table_entry *entry = &m_Buckets[hasher()(Key) & (m_AllocatedEntries - 1)];
+			table_entry *entry = &m_Table[hasher()(Key) & (m_Size - 1)];
 
 			if (!entry->IsEmpty())
 			{
-				while (entry != m_EndOfList)
+				while (entry != m_Terminator)
 				{
 					if (entry->m_Key == Key)
 					{
@@ -338,9 +329,9 @@ struct BSTCRCScatterTable : public BSTScatterTable<Key, T, BSTScatterTableDefaul
 
 using Test2 = BSTDefaultScatterTable<uint32_t, uint32_t>;
 
-static_assert(offsetof(Test2, m_AllocatedEntries) == 0xC, "");
-static_assert(offsetof(Test2, m_UnknownSize1) == 0x10, "");
-static_assert(offsetof(Test2, m_UnknownSize2) == 0x14, "");
-static_assert(offsetof(Test2, m_EndOfList) == 0x18, "");
+static_assert(offsetof(Test2, m_Size) == 0xC, "");
+static_assert(offsetof(Test2, m_Free) == 0x10, "");
+static_assert(offsetof(Test2, m_LastFree) == 0x14, "");
+static_assert(offsetof(Test2, m_Terminator) == 0x18, "");
 //static_assert(offsetof(Test2, m_Buckets) == 0x28, "");
 static_assert(sizeof(Test2) == 0x30, "");

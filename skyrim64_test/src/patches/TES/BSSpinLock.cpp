@@ -3,7 +3,7 @@
 
 BSSpinLock::BSSpinLock()
 {
-	m_OwnerThreadId = 0;
+	m_OwningThread = 0;
 	m_LockCount = 0;
 }
 
@@ -51,7 +51,7 @@ void BSSpinLock::Acquire(int InitialAttemps)
 		_mm_lfence();
 	}
 
-	m_OwnerThreadId = GetCurrentThreadId();
+	m_OwningThread = GetCurrentThreadId();
 	_mm_sfence();
 }
 
@@ -66,7 +66,7 @@ void BSSpinLock::Release()
 
 	if (m_LockCount == 1)
 	{
-		m_OwnerThreadId = 0;
+		m_OwningThread = 0;
 		_mm_mfence();
 
 		uint32_t oldCount = InterlockedCompareExchange(&m_LockCount, 0, 1);
@@ -87,5 +87,5 @@ bool BSSpinLock::IsLocked()
 bool BSSpinLock::ThreadOwnsLock()
 {
 	_mm_lfence();
-	return m_OwnerThreadId == GetCurrentThreadId();
+	return m_OwningThread == GetCurrentThreadId();
 }
