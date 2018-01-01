@@ -45,8 +45,7 @@ namespace BSBloodSplatterShader
 		{
 			switch (Index)
 			{
-			case 0:
-				return 1;
+			case 0:return 1;
 			}
 
 			return 0;
@@ -77,7 +76,7 @@ namespace BSBloodSplatterShader
 			{
 			case 0:strcpy_s(Buffer, BufferSize, "Splatter"); break;
 			case 1:strcpy_s(Buffer, BufferSize, "Flare"); break;
-			default:__debugbreak();
+			default:__debugbreak(); break;
 			}
 
 			if (Technique)
@@ -191,9 +190,9 @@ namespace BSDistantTreeShader
 		{
 			switch (Technique & ~DO_ALPHA_TEST_FLAG)
 			{
-			case 0: strcpy_s(Buffer, BufferSize, "DistantTreeBlock"); break;
-			case 1: strcpy_s(Buffer, BufferSize, "Depth"); break;
-			default: __debugbreak();
+			case 0:strcpy_s(Buffer, BufferSize, "DistantTreeBlock"); break;
+			case 1:strcpy_s(Buffer, BufferSize, "Depth"); break;
+			default:__debugbreak(); break;
 			}
 
 			if (Technique & DO_ALPHA_TEST_FLAG)
@@ -310,16 +309,16 @@ namespace BSGrassShader
 		{
 			switch (Technique & ~DO_ALPHA_TEST_FLAG)
 			{
-			case 0: strcpy_s(Buffer, BufferSize, "VertexL"); break;
-			case 1: strcpy_s(Buffer, BufferSize, "FlatL"); break;
-			case 2: strcpy_s(Buffer, BufferSize, "FlatL_Slope"); break;
-			case 3: strcpy_s(Buffer, BufferSize, "VertexL_Slope"); break;
-			case 4: strcpy_s(Buffer, BufferSize, "VertexL_Billboard"); break;
-			case 5: strcpy_s(Buffer, BufferSize, "FlatL_Billboard"); break;
-			case 6: strcpy_s(Buffer, BufferSize, "FlatL_Slope_Billboard"); break;
-			case 7: strcpy_s(Buffer, BufferSize, "VertexL_Slope_Billboard"); break;
-			case 8: strcpy_s(Buffer, BufferSize, "RenderDepth"); break;
-			default: __debugbreak();
+			case 0:strcpy_s(Buffer, BufferSize, "VertexL"); break;
+			case 1:strcpy_s(Buffer, BufferSize, "FlatL"); break;
+			case 2:strcpy_s(Buffer, BufferSize, "FlatL_Slope"); break;
+			case 3:strcpy_s(Buffer, BufferSize, "VertexL_Slope"); break;
+			case 4:strcpy_s(Buffer, BufferSize, "VertexL_Billboard"); break;
+			case 5:strcpy_s(Buffer, BufferSize, "FlatL_Billboard"); break;
+			case 6:strcpy_s(Buffer, BufferSize, "FlatL_Slope_Billboard"); break;
+			case 7:strcpy_s(Buffer, BufferSize, "VertexL_Slope_Billboard"); break;
+			case 8:strcpy_s(Buffer, BufferSize, "RenderDepth"); break;
+			default:__debugbreak(); break;
 			}
 
 			if (Technique & DO_ALPHA_TEST_FLAG)
@@ -451,13 +450,13 @@ namespace BSParticleShader
 		{
 			switch (Technique)
 			{
-			case 0: strcpy_s(Buffer, BufferSize, "Particles"); break;
-			case 1: strcpy_s(Buffer, BufferSize, "ParticlesGryColor"); break;
-			case 2: strcpy_s(Buffer, BufferSize, "ParticlesGryAlpha"); break;
-			case 3: strcpy_s(Buffer, BufferSize, "ParticlesGryColorAlpha"); break;
-			case 4: strcpy_s(Buffer, BufferSize, "EnvCubeSnow"); break;
-			case 5: strcpy_s(Buffer, BufferSize, "EnvCubeRain"); break;
-			default: __debugbreak();
+			case 0:strcpy_s(Buffer, BufferSize, "Particles"); break;
+			case 1:strcpy_s(Buffer, BufferSize, "ParticlesGryColor"); break;
+			case 2:strcpy_s(Buffer, BufferSize, "ParticlesGryAlpha"); break;
+			case 3:strcpy_s(Buffer, BufferSize, "ParticlesGryColorAlpha"); break;
+			case 4:strcpy_s(Buffer, BufferSize, "EnvCubeSnow"); break;
+			case 5:strcpy_s(Buffer, BufferSize, "EnvCubeRain"); break;
+			default:__debugbreak(); break;
 			}
 		}
 	}
@@ -563,16 +562,16 @@ namespace BSSkyShader
 		{
 			switch (Technique)
 			{
-			case 0: strcpy_s(Buffer, BufferSize, "SunOcclude"); break;
-			case 1: strcpy_s(Buffer, BufferSize, "SunGlare"); break;
-			case 2: strcpy_s(Buffer, BufferSize, "MoonAndStarsMask"); break;
-			case 3: strcpy_s(Buffer, BufferSize, "Stars"); break;
-			case 4: strcpy_s(Buffer, BufferSize, "Clouds"); break;
-			case 5: strcpy_s(Buffer, BufferSize, "CloudsLerp"); break;
-			case 6: strcpy_s(Buffer, BufferSize, "CloudsFade"); break;
-			case 7: strcpy_s(Buffer, BufferSize, "Texture"); break;
-			case 8: strcpy_s(Buffer, BufferSize, "Sky"); break;
-			default: __debugbreak();
+			case 0:strcpy_s(Buffer, BufferSize, "SunOcclude"); break;
+			case 1:strcpy_s(Buffer, BufferSize, "SunGlare"); break;
+			case 2:strcpy_s(Buffer, BufferSize, "MoonAndStarsMask"); break;
+			case 3:strcpy_s(Buffer, BufferSize, "Stars"); break;
+			case 4:strcpy_s(Buffer, BufferSize, "Clouds"); break;
+			case 5:strcpy_s(Buffer, BufferSize, "CloudsLerp"); break;
+			case 6:strcpy_s(Buffer, BufferSize, "CloudsFade"); break;
+			case 7:strcpy_s(Buffer, BufferSize, "Texture"); break;
+			case 8:strcpy_s(Buffer, BufferSize, "Sky"); break;
+			default:__debugbreak(); break;
 			}
 		}
 	}
