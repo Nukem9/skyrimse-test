@@ -80,6 +80,8 @@ BSLightingShader::BSLightingShader() : BSShader("Lighting")
 	*(uintptr_t *)((uintptr_t)this + 0x0) = v1;
 	*(uintptr_t *)((uintptr_t)this + 0x10) = v2;
 	*(uintptr_t *)((uintptr_t)this + 0x18) = v3;
+
+	g_ShaderToggles[6][2] = true;
 }
 
 BSLightingShader::~BSLightingShader()
@@ -352,7 +354,7 @@ void SetMultiTextureLandOverrides(__int64 a1)
 
 	if (*(uintptr_t *)(a1 + 248))
 	{
-		NiTexture *result = *(NiTexture **)(result + 72);
+		NiTexture *result = *(NiTexture **)(*(uintptr_t *)(a1 + 248) + 72);
 
 		BSGraphics::Renderer::SetShaderResource(13, result ? result->QRendererTexture() : nullptr);
 		BSGraphics::Renderer::SetTextureAddressMode(13, 0);
@@ -470,8 +472,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		{
 			XMVECTORF32& landscapeTexture5to6IsSpecPower = pixelCG.Param<XMVECTORF32, 33>(ps);
 
-			landscapeTexture5to6IsSpecPower.f[0] = *(float *)(v3 + 324);
-			landscapeTexture5to6IsSpecPower.f[1] = *(float *)(v3 + 320);
+			landscapeTexture5to6IsSpecPower.f[0] = *(float *)(v3 + 320);
+			landscapeTexture5to6IsSpecPower.f[1] = *(float *)(v3 + 324);
 			landscapeTexture5to6IsSpecPower.f[2] = 0.0f;
 			landscapeTexture5to6IsSpecPower.f[3] = 0.0f;
 		}
