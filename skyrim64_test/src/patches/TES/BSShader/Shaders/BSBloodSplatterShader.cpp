@@ -43,7 +43,7 @@ BSBloodSplatterShader::~BSBloodSplatterShader()
 
 bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSBloodSplatterShader::SetupTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSBloodSplatterShader::SetupTechnique, Technique);
 
 	// Converts technique with runtime flags to actual technique flags during shader load
 	uint32_t rawTechnique;
@@ -92,7 +92,7 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 
 void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSBloodSplatterShader::RestoreTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSBloodSplatterShader::RestoreTechnique, Technique);
 
 	BSGraphics::Renderer::AlphaBlendStateSetMode(0);
 	BSGraphics::Renderer::DepthStencilStateSetDepthMode(3);
@@ -101,15 +101,15 @@ void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 
 void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 {
-	BSSHADER_FORWARD_CALL(2, &BSBloodSplatterShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
 
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
 	BSPixelShader *ps = renderer->m_CurrentPixelShader;
 
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
 	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
@@ -138,7 +138,7 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
 	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)
 	{
@@ -163,7 +163,7 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 void BSBloodSplatterShader::RestoreGeometry(BSRenderPass *Pass)
 {
-	BSSHADER_FORWARD_CALL(2, &BSBloodSplatterShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::RestoreGeometry, Pass);
 }
 
 uint32_t BSBloodSplatterShader::GetVertexTechnique(uint32_t RawTechnique)

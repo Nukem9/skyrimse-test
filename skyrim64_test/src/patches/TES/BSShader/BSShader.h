@@ -12,14 +12,16 @@ struct BSIStream;
 
 #define BSSHADER_FORWARD_DEBUG 0
 
-#define BSSHADER_FORWARD_CALL(OptionIndex, Func, ...) \
-if (g_ShaderToggles[m_Type][OptionIndex]) \
+#define BSSHADER_FORWARD_CALL_ALWAYS(OptionIndex, Func, ...) \
 { \
 	static uint32_t vtableIndex = vtable_index_util::getIndexOf(Func); \
 	auto realFunc = Func; \
 	*(uintptr_t *)&realFunc = *(uintptr_t*)(g_ModuleBase + OriginalVTableBase + (8 * vtableIndex)); \
 	return (this->*realFunc)(__VA_ARGS__); \
 }
+
+#define BSSHADER_FORWARD_CALL(OptionIndex, Func, ...) \
+if (g_ShaderToggles[m_Type][BSGraphics::CONSTANT_GROUP_LEVEL_##OptionIndex]) { BSSHADER_FORWARD_CALL_ALWAYS(OptionIndex, Func, __VA_ARGS__) }
 
 class NiBoneMatrixSetterI
 {

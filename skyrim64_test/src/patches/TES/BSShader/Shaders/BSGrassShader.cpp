@@ -59,7 +59,7 @@ BSGrassShader::~BSGrassShader()
 
 bool BSGrassShader::SetupTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSGrassShader::SetupTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSGrassShader::SetupTechnique, Technique);
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -94,12 +94,12 @@ bool BSGrassShader::SetupTechnique(uint32_t Technique)
 
 void BSGrassShader::RestoreTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSGrassShader::RestoreTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSGrassShader::RestoreTechnique, Technique);
 }
 
 void BSGrassShader::SetupMaterial(BSShaderMaterial const *Material)
 {
-	BSSHADER_FORWARD_CALL(1, &BSGrassShader::SetupMaterial, Material);
+	BSSHADER_FORWARD_CALL(MATERIAL, &BSGrassShader::SetupMaterial, Material);
 
 	NiTexture *baseTexture = *(NiTexture **)(*(uintptr_t *)((uintptr_t)Material + 72) + 72i64);
 
@@ -109,12 +109,12 @@ void BSGrassShader::SetupMaterial(BSShaderMaterial const *Material)
 
 void BSGrassShader::RestoreMaterial(BSShaderMaterial const *Material)
 {
-	BSSHADER_FORWARD_CALL(1, &BSGrassShader::RestoreMaterial, Material);
+	BSSHADER_FORWARD_CALL(MATERIAL, &BSGrassShader::RestoreMaterial, Material);
 }
 
 void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 {
-	BSSHADER_FORWARD_CALL(2, &BSGrassShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
@@ -267,12 +267,12 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	// the pData member of D3D11_MAPPED_SUBRESOURCE points because doing so can cause
 	// a significant performance penalty."
 	//
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	memcpy(vertexCG.m_Map.pData, &data, sizeof(VertexConstantData));
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	// Update constant buffer #8 containing InstanceData
 	UpdateGeometryInstanceData(Pass->m_Geometry, Pass->m_Property);
@@ -280,7 +280,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 void BSGrassShader::RestoreGeometry(BSRenderPass *Pass)
 {
-	BSSHADER_FORWARD_CALL(2, &BSGrassShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::RestoreGeometry, Pass);
 }
 
 void BSGrassShader::UpdateFogParameters()

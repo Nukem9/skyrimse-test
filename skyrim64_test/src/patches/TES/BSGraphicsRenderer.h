@@ -9,13 +9,16 @@ namespace BSGraphics
 {
 	enum ConstantGroupLevel
 	{
-		ConstantGroupLevel1 = 0,
-		ConstantGroupLevel2 = 1,
-		ConstantGroupLevel3 = 2,
+		CONSTANT_GROUP_LEVEL_TECHNIQUE = 0x0,
+		CONSTANT_GROUP_LEVEL_MATERIAL = 0x1,
+		CONSTANT_GROUP_LEVEL_GEOMETRY = 0x2,
+		CONSTANT_GROUP_LEVEL_COUNT = 0x3,
 
-		// Grass instance data @ constant buffer 8
-		// Bone matrix setting @ constant buffer 9
-		// Bone matrix setting @ constant buffer 10
+		CONSTANT_GROUP_LEVEL_INSTANCE = 0x8,
+		CONSTANT_GROUP_LEVEL_PREVIOUS_BONES = 0x9,
+		CONSTANT_GROUP_LEVEL_BONES = 0xA,
+		//CONSTANT_GROUP_LEVEL_SUB_INDEX = 0xB,				Unconfirmed (FO4)
+		//CONSTANT_GROUP_LEVEL_FACE_CUSTOMIZATION = 0xC,	Unconfirmed (FO4)
 	};
 
 	class ConstantGroup
@@ -32,10 +35,10 @@ namespace BSGraphics
 		}
 
 		template<typename T, uint32_t ParamIndex, typename ShaderType>
-		T& Param(ShaderType *Shader)
+		T& Param(ShaderType *Shader) const
 		{
-			const uintptr_t data	= (uintptr_t)m_Map.pData;
-			const uintptr_t offset	= Shader->m_ConstantOffsets[ParamIndex] * sizeof(float);
+			uintptr_t data		= (uintptr_t)m_Map.pData;
+			uintptr_t offset	= Shader->m_ConstantOffsets[ParamIndex] * sizeof(float);
 
 			return *(T *)(data + offset);
 		}

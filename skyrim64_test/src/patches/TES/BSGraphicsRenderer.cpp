@@ -269,9 +269,9 @@ namespace BSGraphics::Renderer
 
 		switch (Level)
 		{
-		case ConstantGroupLevel::ConstantGroupLevel1:index = 0; break;
-		case ConstantGroupLevel::ConstantGroupLevel2:index = 1; break;
-		case ConstantGroupLevel::ConstantGroupLevel3:index = 2; break;
+		case CONSTANT_GROUP_LEVEL_TECHNIQUE:index = 0; break;
+		case CONSTANT_GROUP_LEVEL_MATERIAL:index = 1; break;
+		case CONSTANT_GROUP_LEVEL_GEOMETRY:index = 2; break;
 		default:__debugbreak(); break;
 		}
 

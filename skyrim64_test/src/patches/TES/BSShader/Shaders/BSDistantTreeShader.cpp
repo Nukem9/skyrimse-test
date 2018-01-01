@@ -47,7 +47,7 @@ BSDistantTreeShader::~BSDistantTreeShader()
 
 bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSDistantTreeShader::SetupTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSDistantTreeShader::SetupTechnique, Technique);
 
 	// Converts technique with runtime flags to actual technique flags during shader load
 	uint32_t rawTechnique = 0;
@@ -74,8 +74,8 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
 	BSPixelShader *ps = renderer->m_CurrentPixelShader;
 
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel1);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::ConstantGroupLevel::ConstantGroupLevel1);
+	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	// fogParams is of type NiFogProperty *
 	auto sub_1412AC860 = (uintptr_t(__fastcall *)(BYTE))(g_ModuleBase + 0x12AC860);
@@ -149,24 +149,24 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
 	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::ConstantGroupLevel::ConstantGroupLevel1);
+	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 	return true;
 }
 
 void BSDistantTreeShader::RestoreTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSDistantTreeShader::RestoreTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSDistantTreeShader::RestoreTechnique, Technique);
 }
 
 void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 {
-	BSSHADER_FORWARD_CALL(2, &BSDistantTreeShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
 
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
 
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	// Standard world transformation matrix
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
@@ -192,12 +192,12 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	vertexCG.Param<XMMATRIX, 3>(vs) = XMMatrixTranspose(prevGeoTransform);
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 }
 
 void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass)
 {
-	BSSHADER_FORWARD_CALL(2, &BSDistantTreeShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::RestoreGeometry, Pass);
 }
 
 uint32_t BSDistantTreeShader::GetVertexTechnique(uint32_t RawTechnique)

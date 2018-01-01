@@ -54,7 +54,7 @@ BSSkyShader::~BSSkyShader()
 
 bool BSSkyShader::SetupTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSSkyShader::SetupTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSSkyShader::SetupTechnique, Technique);
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -113,7 +113,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 
 void BSSkyShader::RestoreTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSSkyShader::RestoreTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSSkyShader::RestoreTechnique, Technique);
 
 	BSGraphics::Renderer::AlphaBlendStateSetMode(0);
 	BSGraphics::Renderer::AlphaBlendStateSetUnknown2(1);
@@ -125,14 +125,14 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 
 void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 {
-	BSSHADER_FORWARD_CALL(2, &BSSkyShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
 	BSPixelShader *ps = renderer->m_CurrentPixelShader;
 
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	uintptr_t shaderProperty = (uintptr_t)Pass->m_Property;
 	uint32_t propertyType = *(uint32_t *)(shaderProperty + 192);
@@ -253,7 +253,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
 	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
+	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	switch (tlsRawTechnique)
 	{
@@ -332,7 +332,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 void BSSkyShader::RestoreGeometry(BSRenderPass *Pass)
 {
-	BSSHADER_FORWARD_CALL(2, &BSSkyShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::RestoreGeometry, Pass);
 
 	uint32_t propertyType = *(uint32_t *)((uintptr_t)Pass->m_Property + 0xC0);
 

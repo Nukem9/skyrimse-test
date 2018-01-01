@@ -155,7 +155,7 @@ void UpdateFogWindConstants(BSVertexShader *VertexShader, BSGraphics::ConstantGr
 
 bool BSLightingShader::SetupTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSLightingShader::SetupTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSLightingShader::SetupTechnique, Technique);
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -172,8 +172,8 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
 	BSPixelShader *ps = renderer->m_CurrentPixelShader;
 
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel1);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::ConstantGroupLevel::ConstantGroupLevel1);
+	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	BSGraphics::Renderer::SetTextureFilterMode(0, 3);
 	BSGraphics::Renderer::SetTextureFilterMode(1, 3);
@@ -204,11 +204,10 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	case RAW_TECHNIQUE_MTLAND:
 	case RAW_TECHNIQUE_MTLANDLODBLEND:
 	{
-		uintptr_t v17 = qword_143052900;
-
+		// Override all 16 samplers
 		for (int i = 0; i < 16; i++)
 		{
-			NiTexture *v21 = *(NiTexture **)(v17 + 72);
+			NiTexture *v21 = *(NiTexture **)(qword_143052900 + 72);
 
 			BSGraphics::Renderer::SetShaderResource(i, v21 ? v21->QRendererTexture() : nullptr);
 			BSGraphics::Renderer::SetTextureMode(i, 3, 3);
@@ -253,7 +252,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
 	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::ConstantGroupLevel::ConstantGroupLevel1);
+	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	bool shadowed = (rawTechnique & RAW_FLAG_SHADOW_DIR) || (rawTechnique & (RAW_FLAG_UNKNOWN6 | RAW_FLAG_UNKNOWN5 | RAW_FLAG_UNKNOWN4));
 	bool defShadow = (rawTechnique & RAW_FLAG_DEFSHADOW);
@@ -278,7 +277,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 
 void BSLightingShader::RestoreTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(0, &BSLightingShader::RestoreTechnique, Technique);
+	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSLightingShader::RestoreTechnique, Technique);
 
 	if (m_CurrentRawTechnique & RAW_FLAG_DEFSHADOW)
 		BSGraphics::Renderer::SetShaderResource(14, nullptr);
@@ -325,7 +324,7 @@ void sub_14130C220(int a1, __int64 a2, __int64 a3)
 
 void SetMultiTextureLandOverrides(__int64 a1)
 {
-	// This overrides all 16 samplers/input resources for land parameters
+	// This overrides all 16 samplers/input resources for land parameters if set in the property
 	NiTexture *v2 = *(NiTexture **)(*(uintptr_t *)(a1 + 72) + 72i64);
 	NiTexture *v3 = *(NiTexture **)(*(uintptr_t *)(a1 + 88) + 72i64);
 
@@ -368,15 +367,15 @@ __int64 __fastcall sub_141314170(__int64 a1)
 
 void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 {
-	BSSHADER_FORWARD_CALL(1, &BSLightingShader::SetupMaterial, Material);
+	BSSHADER_FORWARD_CALL(MATERIAL, &BSLightingShader::SetupMaterial, Material);
 
 	auto *renderer = GetThreadedGlobals();
 
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
 	BSPixelShader *ps = renderer->m_CurrentPixelShader;
 
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel2);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::ConstantGroupLevel::ConstantGroupLevel2);
+	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
+	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 
 	const uint32_t rawTechnique = m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
@@ -745,17 +744,42 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
 	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::ConstantGroupLevel::ConstantGroupLevel2);
+	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 }
 
 void BSLightingShader::RestoreMaterial(BSShaderMaterial const *Material)
 {
-	BSSHADER_FORWARD_CALL(1, &BSLightingShader::RestoreMaterial, Material);
+	BSSHADER_FORWARD_CALL(MATERIAL, &BSLightingShader::RestoreMaterial, Material);
+}
+
+void UpdateViewProjectionConstants(BSGraphics::ConstantGroup& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust)
+{
+	//
+	// Instead of using the typical 4x4 matrix like everywhere else, someone decided that the
+	// lighting shader is going to use a 4x3 matrix. The missing 4th column is assumed to be
+	// { 0, 0, 0, 1 } in row-major form.
+	//
+	XMMATRIX projMatrix;
+	
+	if (PosAdjust)
+		projMatrix = BSShaderUtil::GetXMFromNiPosAdjust(Transform, *PosAdjust);
+	else
+		projMatrix = BSShaderUtil::GetXMFromNi(Transform);
+
+	//
+	// VS: p0 float4x3 WorldViewProj
+	// -- or --
+	// VS: p1 float4x3 PrevWorldViewProj
+	//
+	if (!IsPreviousWorld)
+		XMStoreFloat4x3(&VertexCG.Param<XMFLOAT4X3, 0>(GetThreadedGlobals()->m_CurrentVertexShader), projMatrix);
+	else
+		XMStoreFloat4x3(&VertexCG.Param<XMFLOAT4X3, 1>(GetThreadedGlobals()->m_CurrentVertexShader), projMatrix);
 }
 
 void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 {
-	BSSHADER_FORWARD_CALL(2, &BSLightingShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, Flags);
 
 	/*
 	v2 = a1;
@@ -777,9 +801,8 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSVertexShader *vs = renderer->m_CurrentVertexShader;
 	BSPixelShader *ps = renderer->m_CurrentPixelShader;
 
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);
-
+	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	v11 = 0;
 	v12 = *(_BYTE *)(v120 + 28);
@@ -788,22 +811,19 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	if (v12 == 3 && *(_QWORD *)(v3 + 56) & 0x100000000i64)
 	{
 		dword_141E3527C = *(_DWORD *)&renderer.__zz0[72];
-		if (*(_DWORD *)&renderer.__zz0[72] != 1)
-		{
-			renderer.dword_14304DEB0 |= 0x80u;
-			*(_DWORD *)&renderer.__zz0[72] = 1;
-		}
+		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(1);
 	}
 
 	v14 = *(_DWORD *)(v2 + 148);
 	v15 = (*(_DWORD *)(v2 + 148) >> 24) & 0x3F;
+
 	switch (v15)
 	{
-	case 1:
-	case 11:
-	case 16:
-		if (!(v14 & 2))
-			sub_14130B0C0((__int64)v8, v104, 0);
+	case RAW_TECHNIQUE_ENVMAP:
+	case RAW_TECHNIQUE_MULTILAYERPARALLAX:
+	case RAW_TECHNIQUE_EYE:
+		if (!(v14 & RAW_FLAG_SKINNED))
+			UpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
 
 		v16 = 0;
 		v102 = 0;
@@ -811,39 +831,30 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		*(_DWORD *)(v10[1] + 4i64 * v105[71]) = *(_DWORD *)(v3 + 260);
 		goto LABEL_20;
 
-	case 8:
-	case 19:
+	case RAW_TECHNIQUE_MTLAND:
+	case RAW_TECHNIQUE_MTLANDLODBLEND:
 		v17 = *(_QWORD *)(v3 + 120);
 		v18 = *(unsigned int *)(v17 + 268);
 		v19 = *(unsigned int *)(v17 + 264);
 		sub_14130BAB0(v8, v5 + 160);
 		break;
 
-	case 9:
-	case 13:
-	case 15:
-	case 18:
-		sub_14130B0C0((__int64)v8, v5 + 124, 0);
-		v20 = *(_DWORD *)&renderer.__zz2[28];
-		v21 = *(_DWORD *)&renderer.__zz2[32];
-		v22 = *(_DWORD *)&renderer.__zz2[36];
-		*(_DWORD *)&renderer.__zz2[28] = *(_DWORD *)&renderer.__zz2[40];
-		*(_QWORD *)&renderer.__zz2[32] = *(_QWORD *)&renderer.__zz2[44];
-		sub_14130B0C0((__int64)v8, v5 + 124, 1u);
-		*(_DWORD *)&renderer.__zz2[28] = v20;
+	case RAW_TECHNIQUE_LODLAND:
+	case RAW_TECHNIQUE_LODOBJ:
+	case RAW_TECHNIQUE_LODOBJHD:
+		UpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
+		UpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, (NiPoint3 *)&renderer->__zz2[40]);
 		v11 = 1;
-		*(_DWORD *)&renderer.__zz2[32] = v21;
-		*(_DWORD *)&renderer.__zz2[36] = v22;
 		break;
 
-	case 12:
+	case RAW_TECHNIQUE_TREE:
 		sub_14130BC60(v8, v3);
 		break;
 	}
 
 	v16 = v102;
 LABEL_20:
-	if (*(_BYTE *)(v119 + 148) & 2)
+	if (*(_BYTE *)(v119 + 148) & RAW_FLAG_SKINNED)
 	{
 		v24 = v104;
 	}
@@ -853,19 +864,12 @@ LABEL_20:
 		v24 = v104;
 		if (v23)
 		{
-			sub_14130B0C0((__int64)v8, v104, 0);
-			v25 = *(_DWORD *)&renderer.__zz2[28];
-			v26 = *(_DWORD *)&renderer.__zz2[32];
+			UpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
+
 			if (vars0 & 0x10)
 				v6 = v104;
-			v27 = *(_DWORD *)&renderer.__zz2[36];
-			*(_DWORD *)&renderer.__zz2[28] = *(_DWORD *)&renderer.__zz2[40];
-			*(_DWORD *)&renderer.__zz2[32] = *(_DWORD *)&renderer.__zz2[44];
-			*(_DWORD *)&renderer.__zz2[36] = *(_DWORD *)&renderer.__zz2[48];
-			sub_14130B0C0((__int64)v8, v6, 1u);
-			*(_DWORD *)&renderer.__zz2[28] = v25;
-			*(_DWORD *)&renderer.__zz2[32] = v26;
-			*(_DWORD *)&renderer.__zz2[36] = v27;
+
+			UpdateViewProjectionConstants(vertexCG, v6, true, (NiPoint3 *)&renderer->__zz2[40]);
 		}
 	}
 	sub_140D422E0(v24, 0i64, (__int64)&v118);
@@ -927,7 +931,7 @@ LABEL_20:
 		sub_14130B390((__int64)v10, v28, (__int64)&v118, v41, v42, v47, v102);
 	}
 	v50 = v119;
-	if (*(_DWORD *)(v119 + 148) & 0x200)
+	if (*(_DWORD *)(v119 + 148) & RAW_FLAG_SPECULAR)
 	{
 		retaddr = 1;
 		*(_DWORD *)(v10[1] + 4i64 * v105[71] + 4) = *(_DWORD *)(v3 + 256);
@@ -944,8 +948,6 @@ LABEL_20:
 		v54 = *(_QWORD *)(qword_143052890 + 72);
 		if (v54)
 			v54 = *(_QWORD *)(v54 + 16);
-		v55 = renderer.m_PSResourceModifiedBits;
-
 
 		BSGraphics::Renderer::SetShaderResource(11, v54);
 		BSGraphics::Renderer::SetTextureMode(11, 3, 1);
@@ -1028,7 +1030,7 @@ LABEL_20:
 		sub_14130BE70((__int64)v10, v61, (_DWORD *)v3, v53);
 	}
 
-	if (*(_DWORD *)(v50 + 148) & 0x40000)
+	if (*(_DWORD *)(v50 + 148) & RAW_FLAG_WORLD_MAP)
 	{
 		v77 = *(_QWORD *)(qword_141E32F90 + 72);
 		if (v77)
@@ -1138,12 +1140,12 @@ LABEL_20:
 
 	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
 	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::ConstantGroupLevel::ConstantGroupLevel3);*/
+	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);*/
 }
 
 void BSLightingShader::RestoreGeometry(BSRenderPass *Pass)
 {
-	BSSHADER_FORWARD_CALL(2, &BSLightingShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::RestoreGeometry, Pass);
 }
 
 uint32_t BSLightingShader::GetRawTechnique(uint32_t Technique)
