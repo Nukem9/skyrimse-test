@@ -5,11 +5,14 @@
 class BSDistantTreeShader : public BSShader
 {
 private:
-	enum
+	enum Techniques
 	{
 		RAW_TECHNIQUE_BLOCK = 0,
 		RAW_TECHNIQUE_DEPTH = 1,
+	};
 
+	enum
+	{
 		RAW_FLAG_DO_ALPHA = 0x10000,
 	};
 

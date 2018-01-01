@@ -6,7 +6,7 @@
 class BSBloodSplatterShader : public BSShader
 {
 private:
-	enum
+	enum Techniques
 	{
 		RAW_TECHNIQUE_SPLATTER = 0,
 		RAW_TECHNIQUE_FLARE = 1,

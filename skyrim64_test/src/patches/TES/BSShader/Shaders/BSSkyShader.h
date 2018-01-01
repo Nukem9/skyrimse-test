@@ -6,7 +6,7 @@
 class BSSkyShader : public BSShader
 {
 private:
-	enum
+	enum Techniques
 	{
 		RAW_TECHNIQUE_SUNOCCLUDE = 0,
 		RAW_TECHNIQUE_SUNGLARE = 1,

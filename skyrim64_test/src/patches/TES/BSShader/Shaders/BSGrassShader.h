@@ -5,7 +5,7 @@
 class BSGrassShader : public BSShader
 {
 private:
-	enum
+	enum Techniques
 	{
 		RAW_TECHNIQUE_VERTEXL = 0,
 		RAW_TECHNIQUE_FLATL = 1,
@@ -16,7 +16,10 @@ private:
 		RAW_TECHNIQUE_FLATL_SLOPE_BILLBOARD = 6,
 		RAW_TECHNIQUE_VERTEXL_SLOPE_BILLBOARD = 7,
 		RAW_TECHNIQUE_RENDERDEPTH = 8,
+	};
 
+	enum
+	{
 		RAW_FLAG_DO_ALPHA = 0x10000,
 	};
 
