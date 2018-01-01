@@ -94,17 +94,17 @@ void BSReadWriteLock::UpgradeRead()
 {
 }
 
-BSScopedRWLock *BSScopedRWLock::Initialize(BSReadWriteLock *Child)
+BSAutoReadAndWriteLock *BSAutoReadAndWriteLock::Initialize(BSReadWriteLock *Child)
 {
-	m_ChildLock = Child;
-	m_ChildLock->AcquireWrite();
+	m_Lock = Child;
+	m_Lock->AcquireWrite();
 
 	return this;
 }
 
-void BSScopedRWLock::Deinitialize()
+void BSAutoReadAndWriteLock::Deinitialize()
 {
-	m_ChildLock->ReleaseWrite();
+	m_Lock->ReleaseWrite();
 }
 
 void PatchLocks()
@@ -117,8 +117,8 @@ void PatchLocks()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07080), &BSReadWriteLock::TryAcquireWrite);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07110), &BSReadWriteLock::IsWriteOwner);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07130), &BSScopedRWLock::Initialize);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07180), &BSScopedRWLock::Deinitialize);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07130), &BSAutoReadAndWriteLock::Initialize);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07180), &BSAutoReadAndWriteLock::Deinitialize);
 
 	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xBE9010), &BSSpinLock::AcquireWrite);	// EnterUpgradeableReaderLock -- check parent function
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06F90), &BSReadWriteLock::UpgradeRead);		// UpgdateToWriteLock -- this is a no-op

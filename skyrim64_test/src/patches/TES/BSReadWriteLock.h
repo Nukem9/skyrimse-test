@@ -38,18 +38,18 @@ public:
 };
 static_assert(sizeof(BSReadWriteLock) <= 0x8, "Lock must fit inside the original game structure");
 
-class BSScopedRWLock
+class BSAutoReadAndWriteLock
 {
 private:
-    BSReadWriteLock *m_ChildLock;
+    BSReadWriteLock *m_Lock;
 
 public:
-    BSScopedRWLock() = delete;
+	BSAutoReadAndWriteLock() = delete;
 
     // Constructor hook
-    BSScopedRWLock *Initialize(BSReadWriteLock *Child);
+	BSAutoReadAndWriteLock *Initialize(BSReadWriteLock *Child);
 
     // Destructor hook
     void Deinitialize();
 };
-static_assert(sizeof(BSScopedRWLock) <= 0x8, "Lock must fit inside the original game structure");
+static_assert(sizeof(BSAutoReadAndWriteLock) <= 0x8, "Lock must fit inside the original game structure");
