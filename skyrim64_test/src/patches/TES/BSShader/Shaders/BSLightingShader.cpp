@@ -54,6 +54,29 @@ AutoPtr(uintptr_t, qword_14304EF00, 0x304EF00);
 AutoPtr(BYTE, byte_141E32E89, 0x1E32E89);
 AutoPtr(BYTE, byte_141E352F0, 0x1E352F0);
 
+AutoPtr(float, flt_141E34C70, 0x1E34C70);
+AutoPtr(float, flt_141E34C88, 0x1E34C88);
+AutoPtr(float, flt_143257C40, 0x3257C40);
+AutoPtr(uint32_t, dword_141E35280, 0x1E35280);
+AutoPtr(NiColorA, dword_1431F5540, 0x31F5540);
+AutoPtr(NiColorA, dword_1431F5550, 0x31F5550);
+AutoPtr(uintptr_t, qword_141E32F90, 0x1E32F90);
+AutoPtr(uintptr_t, qword_141E32F98, 0x1E32F98);
+AutoPtr(uintptr_t, qword_143052890, 0x3052890);
+AutoPtr(uintptr_t, qword_143052898, 0x3052898);
+AutoPtr(uintptr_t, qword_1430528A8, 0x30528A8);
+AutoPtr(BYTE, byte_141E35308, 0x1E35308);
+AutoPtr(BYTE, byte_141E35320, 0x1E35320);
+AutoPtr(uint32_t, dword_141E3527C, 0x1E3527C);
+AutoPtr(float, xmmword_141880020, 0x1880020);
+AutoPtr(float, flt_141E32F40, 0x1E32F40);
+AutoPtr(float, flt_141E32FD8, 0x1E32FD8);
+AutoPtr(float, flt_141E32FB8, 0x1E32FB8);
+AutoPtr(BYTE, byte_1431F547C, 0x31F547C);
+AutoPtr(XMFLOAT4, xmmword_141E32FC8, 0x1E32FC8);
+
+BSShaderAccumulator *GetCurrentAccumulator();
+
 char hookbuffer[50];
 
 void TestHook5()
@@ -80,8 +103,6 @@ BSLightingShader::BSLightingShader() : BSShader("Lighting")
 	*(uintptr_t *)((uintptr_t)this + 0x0) = v1;
 	*(uintptr_t *)((uintptr_t)this + 0x10) = v2;
 	*(uintptr_t *)((uintptr_t)this + 0x18) = v3;
-
-	g_ShaderToggles[6][2] = true;
 }
 
 BSLightingShader::~BSLightingShader()
@@ -752,11 +773,31 @@ void BSLightingShader::RestoreMaterial(BSShaderMaterial const *Material)
 	BSSHADER_FORWARD_CALL(MATERIAL, &BSLightingShader::RestoreMaterial, Material);
 }
 
+void RetardedStoreFloat3x4(float *Dest, const XMMATRIX& Src)
+{
+	Dest[0] = Src.r[0].m128_f32[0];
+	Dest[1] = Src.r[1].m128_f32[0];
+	Dest[2] = Src.r[2].m128_f32[0];
+	Dest[3] = Src.r[3].m128_f32[0];
+
+	Dest[4] = Src.r[0].m128_f32[1];
+	Dest[5] = Src.r[1].m128_f32[1];
+	Dest[6] = Src.r[2].m128_f32[1];
+	Dest[7] = Src.r[3].m128_f32[1];
+
+	Dest[8] = Src.r[0].m128_f32[2];
+	Dest[9] = Src.r[1].m128_f32[2];
+	Dest[10] = Src.r[2].m128_f32[2];
+	Dest[11] = Src.r[3].m128_f32[2];
+
+	// Implied Dest[12...15] = { 0, 0, 0, 1 };
+}
+
 void UpdateViewProjectionConstants(BSGraphics::ConstantGroup& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust)
 {
 	//
 	// Instead of using the typical 4x4 matrix like everywhere else, someone decided that the
-	// lighting shader is going to use a 4x3 matrix. The missing 4th column is assumed to be
+	// lighting shader is going to use 3x4 matrices. The missing 4th row is assumed to be
 	// { 0, 0, 0, 1 } in row-major form.
 	//
 	XMMATRIX projMatrix;
@@ -767,20 +808,20 @@ void UpdateViewProjectionConstants(BSGraphics::ConstantGroup& VertexCG, const Ni
 		projMatrix = BSShaderUtil::GetXMFromNi(Transform);
 
 	//
-	// VS: p0 float4x3 WorldViewProj
+	// VS: p0 float3x4 WorldViewProj
 	// -- or --
-	// VS: p1 float4x3 PrevWorldViewProj
+	// VS: p1 float3x4 PrevWorldViewProj
 	//
 	if (!IsPreviousWorld)
-		XMStoreFloat4x3(&VertexCG.Param<XMFLOAT4X3, 0>(GetThreadedGlobals()->m_CurrentVertexShader), projMatrix);
+		RetardedStoreFloat3x4(&VertexCG.Param<float, 0>(GetThreadedGlobals()->m_CurrentVertexShader), projMatrix);
 	else
-		XMStoreFloat4x3(&VertexCG.Param<XMFLOAT4X3, 1>(GetThreadedGlobals()->m_CurrentVertexShader), projMatrix);
+		RetardedStoreFloat3x4(&VertexCG.Param<float, 1>(GetThreadedGlobals()->m_CurrentVertexShader), projMatrix);
 }
 
-void UpdateMTLandExtraConstants(__int64 a1, float *a2, float a3, float a4)
+void UpdateMTLandExtraConstants(const BSGraphics::ConstantGroup& VertexCG, const NiPoint3& Translate, float a3, float a4)
 {
 	float v4 = 0.0f;
-	float v6 = (float)(*(float *)&dword_141E32F40 - *(float *)&dword_141E32FD8) / (float)(*(float *)&dword_141E32FB8 * 5.0);
+	float v6 = (flt_141E32F40 - flt_141E32FD8) / (flt_141E32FB8 * 5.0f);
 
 	if (v6 >= 0.0f)
 	{
@@ -790,13 +831,21 @@ void UpdateMTLandExtraConstants(__int64 a1, float *a2, float a3, float a4)
 			v4 = v6;
 	}
 
+	/*
+	FO4 code:
+
+	v7 = NiPoint2::operator-(&unk_10194FD8, &v10, &unk_10194FD0, &v11, LODWORD(v6));
+	v8 = NiPoint2::operator*(v7);
+	NiPoint2::operator+(&unk_10194FD0, &v12, v8);
+	*/
+
 	// v11 might be wildly incorrect (swap?): v11 = _mm_unpacklo_ps(LODWORD(xmmword_141E32FC8[0]), LODWORD(xmmword_141E32FC8[1]));
 	XMFLOAT2 v11;
-	v11.x = xmmword_141E32FC8[0];
-	v11.y = xmmword_141E32FC8[1];
+	v11.x = xmmword_141E32FC8.x;
+	v11.y = xmmword_141E32FC8.y;
 
-	float v9 = xmmword_141E32FC8[2] - xmmword_141E32FC8[0];
-	float v10 = xmmword_141E32FC8[3] - xmmword_141E32FC8[1];
+	float v9 = xmmword_141E32FC8.z - xmmword_141E32FC8.x;
+	float v10 = xmmword_141E32FC8.w - xmmword_141E32FC8.y;
 
 	*(XMFLOAT2 *)&xmmword_141E32FC8 = v11;
 
@@ -807,12 +856,12 @@ void UpdateMTLandExtraConstants(__int64 a1, float *a2, float a3, float a4)
 		byte_1431F547C = 0;
 
 	// VS: p3 float4 fVars0
-	XMVECTORF32& fVars0 = vertexCG.Param<XMVECTORF32, 3>(vs);
+	XMVECTORF32& fVars0 = VertexCG.Param<XMVECTORF32, 3>(GetThreadedGlobals()->m_CurrentVertexShader);
 
 	fVars0.f[0] = a3;
 	fVars0.f[1] = a4;
-	fVars0.f[2] = v11.x - a2[0];
-	fVars0.f[3] = v11.y - a2[1];
+	fVars0.f[2] = v11.x - Translate.x;
+	fVars0.f[3] = v11.y - Translate.y;
 }
 
 // BSUtilities::GetInverseWorldMatrix(const NiTransform& Transform, bool UseInputTransform, D3DMATRIX& Matrix)
@@ -839,25 +888,25 @@ void GetInverseWorldMatrix(const NiTransform& Transform, bool UseWorldPosition, 
 	}
 }
 
-void UpdateDirectionalLightConstants(__int64 a1, __int64 a2, XMMATRIX& a3, int a4)
+void UpdateDirectionalLightConstants(const BSGraphics::ConstantGroup& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
 {
 	uintptr_t v7 = 0;
 
-	if (*(_BYTE *)(a2 + 31))
-		v7 = *(_QWORD *)(a2 + 56);
+	if (*(BYTE *)((uintptr_t)Pass + 31))
+		v7 = *(uintptr_t *)((uintptr_t)Pass + 56);
 
 	float *v10 = *(float **)(*(uintptr_t *)v7 + 72i64);
 	float v12 = *(float *)(qword_1431F5810 + 224) * v10[77];
 
 	// PS: p4 float3 DirLightColor
-	XMFLOAT3& dirLightColor = pixelCG.Param<XMFLOAT3, 4>(ps);
+	XMFLOAT3& dirLightColor = PixelCG.Param<XMFLOAT3, 4>(GetThreadedGlobals()->m_CurrentPixelShader);
 
 	dirLightColor.x = v12 * v10[71];
 	dirLightColor.y = v12 * v10[72];
 	dirLightColor.z = v12 * v10[73];
 
 	// PS: p3 float3 DirLightDirection
-	XMFLOAT3& dirLightDirection = pixelCG.Param<XMFLOAT3, 3>(ps);
+	XMFLOAT3& dirLightDirection = PixelCG.Param<XMFLOAT3, 3>(GetThreadedGlobals()->m_CurrentPixelShader);
 	XMVECTOR tempDir			= XMVectorSet(-v10[80], -v10[81], -v10[82], 0.0f);
 
 	if (a4 == 1)
@@ -866,22 +915,109 @@ void UpdateDirectionalLightConstants(__int64 a1, __int64 a2, XMMATRIX& a3, int a
 	XMStoreFloat3(&dirLightDirection, XMVector3Normalize(tempDir));
 }
 
+void sub_14130C8A0(const NiTransform& Transform, XMMATRIX& OutMatrix, bool DontMultiply)
+{
+	auto *renderer = GetThreadedGlobals();
+
+	NiTransform temp;
+	memset(&temp, 0, sizeof(temp));
+
+	*(XMVECTOR *)&temp.m_Rotate.m_pEntry[0][0] = *(XMVECTOR *)&xmmword_141880020;
+	temp.m_Rotate.m_pEntry[2][2] = 1.0f;
+
+	temp.m_Translate.x = *(float *)&renderer->__zz2[28];
+	temp.m_Translate.y = *(float *)&renderer->__zz2[32];
+	temp.m_Translate.z = *(float *)&renderer->__zz2[36];
+
+	temp.m_fScale = 1.0f;
+
+	if (DontMultiply)
+	{
+		OutMatrix = BSShaderUtil::GetXMFromNi(temp);
+	}
+	else
+	{
+		XMMATRIX m1 = BSShaderUtil::GetXMFromNi(temp);
+		XMMATRIX m2 = BSShaderUtil::GetXMFromNi(Transform);
+
+		// m2 = Translate(m2, (NiPoint3 *)&renderer.__zz2[28]);
+		m2.r[3] = XMVectorAdd(m2.r[3], XMVectorSet(
+			*(float *)&renderer->__zz2[28],
+			*(float *)&renderer->__zz2[32],
+			*(float *)&renderer->__zz2[36],
+			0.0f));
+
+		OutMatrix = XMMatrixMultiply(m1, m2);
+	}
+}
+
+void sub_14130BC60(const BSGraphics::ConstantGroup& VertexCG, BSShaderProperty *Property)
+{
+	// __int64 __fastcall sub_14130BC60(__int64 a1, __int64 a2)
+
+	struct tempbufdata
+	{
+		char _pad[8];
+		void *ptr;
+	} temp;
+
+	temp.ptr = VertexCG.m_Map.pData;
+
+	auto sub_14130BC60 = (void(__fastcall *)(tempbufdata *, BSShaderProperty *))(g_ModuleBase + 0x130BC60);
+	sub_14130BC60(&temp, Property);
+}
+
+void sub_14130B2A0(const BSGraphics::ConstantGroup& PixelCG, const NiTransform& Transform, int a3)
+{
+	// __int64 __fastcall sub_14130B2A0(__int64 a1, __int64 a2, int a3)
+
+	struct tempbufdata
+	{
+		char _pad[8];
+		void *ptr;
+	} temp;
+
+	temp.ptr = PixelCG.m_Map.pData;
+
+	auto sub_14130B2A0 = (void(__fastcall *)(tempbufdata *, const NiTransform&, int))(g_ModuleBase + 0x130B2A0);
+	sub_14130B2A0(&temp, Transform, a3);
+}
+
+void sub_14130B390(const BSGraphics::ConstantGroup& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
+{
+	// __int64 __fastcall sub_14130B390(__int64 a1, __int64 a2, __int64 a3, int a4, int a5, float a6, int a7)
+
+	struct tempbufdata
+	{
+		char _pad[8];
+		void *ptr;
+	} temp;
+
+	temp.ptr = PixelCG.m_Map.pData;
+
+	auto sub_14130B390 = (void(__fastcall *)(tempbufdata *, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7))(g_ModuleBase + 0x130B390);
+	sub_14130B390(&temp, Pass, Transform, LightCount, ShadowLightCount, Scale, a7);
+}
+
+void sub_14130BE70(const BSGraphics::ConstantGroup& PixelCG, BSGeometry *Geometry, BSShaderProperty *Property, bool a4)
+{
+	// __int64 __fastcall sub_14130BE70(__int64 a1, __int64 a2, _DWORD *a3, char a4)
+
+	struct tempbufdata
+	{
+		char _pad[8];
+		void *ptr;
+	} temp;
+
+	temp.ptr = PixelCG.m_Map.pData;
+
+	auto sub_14130BE70 = (void(__fastcall *)(tempbufdata *, BSGeometry *Geometry, BSShaderProperty *Property, bool a4))(g_ModuleBase + 0x130BE70);
+	sub_14130BE70(&temp, Geometry, Property, a4);
+}
+
 void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, Flags);
-
-	v2 = a1;
-	v3 = *(_QWORD *)(a2 + 8);
-	v4 = *(_QWORD *)&renderer.__zz2[16];
-	v5 = *(_QWORD *)(a2 + 16);
-	v109 = (_DWORD *)v5;
-	v104 = v5 + 124;
-	v6 = v5 + 176;
-	v105 = *(unsigned __int8 **)&renderer.__zz2[16];
-	v102 = ~(unsigned __int8)(*(_DWORD *)(a1 + 148) >> 1) & 1;
-	v7 = *(_QWORD *)(*(_QWORD *)&renderer.__zz2[8] + 56i64);
-	v8 = (_QWORD *)(*(_QWORD *)&renderer.__zz2[8] + 56i64);
-	v110 = *(_QWORD *)&renderer.__zz2[8];
 
 	auto *renderer = GetThreadedGlobals();
 
@@ -897,39 +1033,46 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	bool doPrecipitationOcclusion = false;
 	bool isLOD = false;
 
-	v12 = *(_BYTE *)(v120 + 28);
-	v103 = (unsigned __int8)(v12 - 2) <= 1u;
+	uintptr_t v3 = (uintptr_t)Pass->m_Property;
 
-	if (v12 == 3 && *(_QWORD *)(v3 + 56) & 0x100000000i64)
+	uint8_t v102 = ~(unsigned __int8)(rawTechnique >> 1) & 1;
+	int v16 = 0;
+	uint8_t v12 = Pass->Byte1C;
+	uint8_t v103 = (unsigned __int8)(v12 - 2) <= 1u;
+
+	if (v12 == 3 && *(uintptr_t *)(v3 + 56) & 0x100000000i64)
 	{
-		dword_141E3527C = *(_DWORD *)&renderer.__zz0[72];
+		dword_141E3527C = *(uint32_t *)&renderer->__zz0[72];
 		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(1);
 	}
-
-	v14 = *(_DWORD *)(v2 + 148);
-	v15 = (*(_DWORD *)(v2 + 148) >> 24) & 0x3F;
 
 	switch (baseTechniqueID)
 	{
 	case RAW_TECHNIQUE_ENVMAP:
 	case RAW_TECHNIQUE_MULTILAYERPARALLAX:
 	case RAW_TECHNIQUE_EYE:
+	{
 		if ((rawTechnique & RAW_FLAG_SKINNED) == 0)
 			UpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
 
 		v16 = 0;
 		v102 = 0;
 		doPrecipitationOcclusion = true;
-		*(_DWORD *)(v10[1] + 4i64 * v105[71]) = *(_DWORD *)(v3 + 260);
-		goto LABEL_20;
+
+		// PS: p7 float4 MaterialData (NOTE: This is written AGAIN)
+		auto& var = pixelCG.Param<XMVECTORF32, 7>(ps);
+		var.f[0] = *(float *)(v3 + 256);
+	}
+	break;
 
 	case RAW_TECHNIQUE_MTLAND:
 	case RAW_TECHNIQUE_MTLANDLODBLEND:
 		UpdateMTLandExtraConstants(
-			(__int64)v8,
-			(float *)(v5 + 160),
+			vertexCG,
+			Pass->m_Geometry->GetWorldTranslate(),
 			*(float *)(*(uintptr_t *)(v3 + 120) + 264i64),
 			*(float *)(*(uintptr_t *)(v3 + 120) + 268i64));
+		v16 = v102;
 		break;
 
 	case RAW_TECHNIQUE_LODLAND:
@@ -938,68 +1081,62 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		UpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
 		UpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, (NiPoint3 *)&renderer->__zz2[40]);
 		isLOD = true;
+		v16 = v102;
 		break;
 
 	case RAW_TECHNIQUE_TREE:
-		sub_14130BC60(v8, v3);
+		sub_14130BC60(vertexCG, Pass->m_Property);
+		v16 = v102;
+		break;
+
+	default:
+		v16 = v102;
 		break;
 	}
 
-	v16 = v102;
-LABEL_20:
-	v24 = v104;
-
-	if ((rawTechnique & RAW_FLAG_SKINNED) == 0)
+	// This block is an inlined function (in FO4 maybe, but that doesn't make sense here)
+	if ((rawTechnique & RAW_FLAG_SKINNED) == 0 && !isLOD)
 	{
-		if (!isLOD)
-		{
-			UpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
+		// Unknown renderer flag: Determines if previous world projection is used
+		const NiTransform& world = Pass->m_Geometry->GetWorldTransform();
+		const NiTransform& temp = (Flags & 0x10) ? world : Pass->m_Geometry->GetPreviousWorldTransform();
 
-			if (vars0 & 0x10)
-				v6 = v104;
-
-			UpdateViewProjectionConstants(vertexCG, v6, true, (NiPoint3 *)&renderer->__zz2[40]);
-		}
+		UpdateViewProjectionConstants(vertexCG, world, false, nullptr);
+		UpdateViewProjectionConstants(vertexCG, temp, true, (NiPoint3 *)&renderer->__zz2[40]);// BSGraphics::Renderer::QViewData(BSGraphics::gRenderer)->kViewProjMat?
 	}
 
 	XMMATRIX inverseWorldMatrix;
-	GetInverseWorldMatrix(v24, false, inverseWorldMatrix);
+	GetInverseWorldMatrix(Pass->m_Geometry->GetWorldTransform(), false, inverseWorldMatrix);
 
-	UpdateDirectionalLightConstants((__int64)v10, v120, inverseWorldMatrix, v16);
-	sub_14130B2A0((__int64)v10, v24, v16);
+	UpdateDirectionalLightConstants(pixelCG, Pass, inverseWorldMatrix, v16);
+	sub_14130B2A0(pixelCG, Pass->m_Geometry->GetWorldTransform(), v16);
 
 	// PS: p7 float4 MaterialData
 	{
 		XMVECTORF32& materialData = pixelCG.Param<XMVECTORF32, 7>(ps);
 
 		float v30 = *(float *)(v3 + 48);
+		bool wtf = (signed char)Pass->Byte1E >= 0;
 
-		if (*(_BYTE *)(v120 + 30) < 0)
-			materialData.f[2] = v30 * *(float *)(*(_QWORD *)(v3 + 96) + 332i64);
+		wtf = !wtf;
+
+		if (!(wtf == false))
+			materialData.f[2] = v30 * *(float *)(*(uintptr_t *)(v3 + 96) + 332i64);
 		else
 			materialData.f[2] = v30;
 	}
 
+	// This block is an inlined function
 	// PS: p8 float4 EmitColor
 	{
 		XMVECTORF32& emitColor = pixelCG.Param<XMVECTORF32, 8>(ps);
 
-		v33 = *(_QWORD *)(v3 + 240);
-		v34 = *(float *)(v3 + 248);
-		v35 = v10[1];
-		v36 = v119;
-		v37 = *(_QWORD *)v33;
-		LODWORD(v33) = *(_DWORD *)(v33 + 8);
-		v106 = v37;
-		v38 = (__m128)(unsigned int)v37;
-		v39 = (__m128)HIDWORD(v37);
-		v107 = *(float *)&v33;
-		v40 = *(unsigned __int8 *)(*(_QWORD *)&renderer.__zz2[16] + 72i64);
-		v38.m128_f32[0] = *(float *)&v37 * v34;
-		v107 = *(float *)&v33 * v34;
-		v39.m128_f32[0] = *((float *)&v37 + 1) * v34;
-		*(_QWORD *)(v35 + 4 * v40) = (unsigned __int128)_mm_unpacklo_ps(v38, v39);
-		*(float *)(v35 + 4 * v40 + 8) = *(float *)&v33 * v34;
+		uintptr_t v33 = *(uintptr_t *)(v3 + 240);
+		float v31 = *(float *)(v3 + 248);
+
+		emitColor.f[0] = *(float *)(v33 + 0) * v31;
+		emitColor.f[1] = *(float *)(v33 + 4) * v31;
+		emitColor.f[2] = *(float *)(v33 + 8) * v31;
 	}
 
 	uint32_t lightCount = (rawTechnique >> 3) & 7;
@@ -1028,32 +1165,29 @@ LABEL_20:
 		// memset(&pointLightColor, 0, sizeof(XMVECTOR) * 7);
 	}
 
-	v49 = v102;
-
 	if (lightCount > 0)
 	{
-		float v47 = *(float *)(v104 + 48);
+		float scale = Pass->m_Geometry->GetWorldTransform().m_fScale;
 
 		if (baseTechniqueID == RAW_TECHNIQUE_ENVMAP || baseTechniqueID == RAW_TECHNIQUE_EYE)
-			v47 = 1.0f;
+			scale = 1.0f;
 
-		sub_14130B390((__int64)v10, v28, inverseWorldMatrix, v41, v42, v47, v102);
+		sub_14130B390(pixelCG, Pass, inverseWorldMatrix, lightCount, shadowLightCount, scale, v102);
 	}
-
-	v50 = v119;
 
 	if (rawTechnique & RAW_FLAG_SPECULAR)
 	{
 		// PS: p7 float4 MaterialData (NOTE: This is written TWICE)
-		pixelCG.Param<XMVECTORF32, 7>(ps)[1] = *(_DWORD *)(v3 + 256);
+		auto& var = pixelCG.Param<XMVECTORF32, 7>(ps);
+		var.f[1] = *(float *)(v3 + 256);
 
 		doPrecipitationOcclusion = true;
 	}
 
 	if (rawTechnique & (RAW_FLAG_SOFT_LIGHTING | RAW_FLAG_RIM_LIGHTING | RAW_FLAG_BACK_LIGHTING | RAW_FLAG_AMBIENT_SPECULAR))
 		doPrecipitationOcclusion = true;
-	
-	v53 = byte_141E35308 && (!(vars0 & 8) || !byte_141E35320);
+
+	bool enableProjectedUvNormals = byte_141E35308 && (!(Flags & 0x8) || !byte_141E35320);
 
 	if ((rawTechnique & RAW_FLAG_PROJECTED_UV) && (baseTechniqueID != RAW_TECHNIQUE_HAIR))
 	{
@@ -1062,7 +1196,7 @@ LABEL_20:
 		BSGraphics::Renderer::SetShaderResource(11, v54 ? v54->QRendererTexture() : nullptr);
 		BSGraphics::Renderer::SetTextureMode(11, 3, 1);
 
-		if (v53 && qword_143052898)
+		if (enableProjectedUvNormals && qword_143052898)
 		{
 			NiTexture *v57 = *(NiTexture **)(qword_143052898 + 72);
 
@@ -1080,56 +1214,43 @@ LABEL_20:
 			BSGraphics::Renderer::SetTextureMode(10, 3, 1);
 		}
 
-		v60 = v109;
-		if ((*(__int64(__fastcall **)(_DWORD *, __int64))(*(_QWORD *)v109 + 424i64))(v109, v55))
+		// IDA says there are 2 args to this virtual function, it's probably wrong
+		if ((*(__int64(__fastcall **)(BSGeometry *))(*(uintptr_t *)Pass->m_Geometry + 424i64))(Pass->m_Geometry))
 		{
-			v61 = (__int64)v60;
-			v62 = v8[1];
-			v63 = *(unsigned __int8 *)(*(_QWORD *)&renderer.__zz2[8] + 86i64);
-			*(_DWORD *)(v62 + 4 * v63) = v60[91];
-			*(_DWORD *)(v62 + 4 * v63 + 4) = v60[95];
-			*(_DWORD *)(v62 + 4 * v63 + 8) = v60[99];
-			*(_DWORD *)(v62 + 4 * v63 + 12) = v60[103];
-			*(_DWORD *)(v62 + 4 * v63 + 16) = v60[92];
-			*(_DWORD *)(v62 + 4 * v63 + 20) = v60[96];
-			*(_DWORD *)(v62 + 4 * v63 + 24) = v60[100];
-			*(_DWORD *)(v62 + 4 * v63 + 28) = v60[104];
-			*(_DWORD *)(v62 + 4 * v63 + 32) = v60[93];
-			*(_DWORD *)(v62 + 4 * v63 + 36) = v60[97];
-			*(_DWORD *)(v62 + 4 * v63 + 40) = v60[101];
-			*(_DWORD *)(v62 + 4 * v63 + 44) = v60[105];
+			float *v60 = (float *)Pass->m_Geometry;
+
+			// VS: p6 float3x4 fVars3
+			float *fVars3 = &vertexCG.Param<float, 6>(vs);
+
+			fVars3[0] = v60[91];
+			fVars3[1] = v60[95];
+			fVars3[2] = v60[99];
+			fVars3[3] = v60[103];
+
+			fVars3[4] = v60[92];
+			fVars3[5] = v60[96];
+			fVars3[6] = v60[100];
+			fVars3[7] = v60[104];
+
+			fVars3[8] = v60[93];
+			fVars3[9] = v60[97];
+			fVars3[10] = v60[101];
+			fVars3[11] = v60[105];
+
+			sub_14130BE70(pixelCG, Pass->m_Geometry, Pass->m_Property, enableProjectedUvNormals);
 		}
 		else
 		{
-			sub_14130C8A0((__int64)(v60 + 31), &v107, (*(_BYTE *)(v50 + 151) & 0x3F) == 1);
-			v61 = 0i64;
-			v64 = v110;
-			v65 = *(unsigned __int8 *)(*(_QWORD *)&renderer.__zz2[8] + 86i64);
-			v66 = v8[1];
-			*(float *)(v66 + 4 * v65) = v107;
-			v67 = v112;
-			*(_DWORD *)(v66 + 4 * v65 + 4) = v64;
-			v68 = v115;
-			*(_DWORD *)(v66 + 4 * v65 + 8) = v67;
-			v69 = v108;
-			*(_DWORD *)(v66 + 4 * v65 + 12) = v68;
-			v70 = HIDWORD(v110);
-			*(_DWORD *)(v66 + 4 * v65 + 16) = v69;
-			v71 = v113;
-			*(_DWORD *)(v66 + 4 * v65 + 20) = v70;
-			v72 = v116;
-			*(_DWORD *)(v66 + 4 * v65 + 24) = v71;
-			v73 = (signed int)v109;
-			*(_DWORD *)(v66 + 4 * v65 + 28) = v72;
-			v74 = v111;
-			*(_DWORD *)(v66 + 4 * v65 + 32) = v73;
-			v75 = v114;
-			*(_DWORD *)(v66 + 4 * v65 + 36) = v74;
-			v76 = v117;
-			*(_DWORD *)(v66 + 4 * v65 + 40) = v75;
-			*(_DWORD *)(v66 + 4 * v65 + 44) = v76;
+			XMMATRIX outputTemp;
+			sub_14130C8A0(Pass->m_Geometry->GetWorldTransform(), outputTemp, baseTechniqueID == RAW_TECHNIQUE_ENVMAP);
+
+			// VS: p6 float3x4 fVars3
+			float *fVars3 = &vertexCG.Param<float, 6>(vs);
+
+			RetardedStoreFloat3x4(fVars3, outputTemp);
+
+			sub_14130BE70(pixelCG, nullptr, Pass->m_Property, enableProjectedUvNormals);
 		}
-		sub_14130BE70((__int64)v10, v61, (_DWORD *)v3, v53);
 	}
 
 	if (rawTechnique & RAW_FLAG_WORLD_MAP)
@@ -1144,28 +1265,29 @@ LABEL_20:
 		BSGraphics::Renderer::SetShaderResource(13, v80 ? v80->QRendererTexture() : nullptr);
 		BSGraphics::Renderer::SetTextureAddressMode(13, 3);
 
-		v81 = (_DWORD *)(v10[1] + 4i64 * v105[81]);
+		// VS: p8 float4 Color1
+		BSGraphics::Utility::CopyNiColorAToFloat(&vertexCG.Param<XMVECTOR, 8>(vs), dword_1431F5540);
 
-		BSGraphics::Utility::CopyNiColorAToFloat(
-			(_DWORD *)(v8[1] + 4i64 * *(unsigned __int8 *)(v110 + 88)),
-			&dword_1431F5540);
-
-		BSGraphics::Utility::CopyNiColorAToFloat(v81, &dword_1431F5550);
+		// PS: p17 float4 WorldMapOverlayParametersPS
+		BSGraphics::Utility::CopyNiColorAToFloat(&pixelCG.Param<XMVECTOR, 17>(ps), dword_1431F5550);
 	}
 
+	// This block is an inlined function
 	if (doPrecipitationOcclusion)
 	{
 		// VS: p2 float3 PrecipitationOcclusionWorldViewProj
 		XMFLOAT3& precipitationOcclusionWorldViewProj = vertexCG.Param<XMFLOAT3, 2>(vs);
 
-		if (v49 == 1)
+		if (v102 == 1)
 		{
-			v83 = sub_1412AD330();
-			XMStoreFloat3(&precipitationOcclusionWorldViewProj, XMVector3TransformCoord(v83 + 364, inverseWorldMatrix));
+			float *v83 = (float *)GetCurrentAccumulator();
+			XMVECTOR coord = XMVectorSet(v83[91], v83[92], v83[93], 0.0f);
+
+			XMStoreFloat3(&precipitationOcclusionWorldViewProj, XMVector3TransformCoord(coord, inverseWorldMatrix));
 		}
 		else
 		{
-			v86 = (float *)sub_1412AD330();
+			float *v86 = (float *)GetCurrentAccumulator();
 
 			precipitationOcclusionWorldViewProj.x = v86[91] - *(float *)&renderer->__zz2[28];
 			precipitationOcclusionWorldViewProj.y = v86[92] - *(float *)&renderer->__zz2[32];
@@ -1173,12 +1295,12 @@ LABEL_20:
 		}
 	}
 
-	if (*(_BYTE *)(v120 + 28) == 10)
+	if (Pass->Byte1C == 10)
 	{
 		uintptr_t v89 = *(uintptr_t *)(v3 + 96);
 		float v90;
 
-		if (*(_BYTE *)(v120 + 30) >= 0)
+		if ((signed char)Pass->Byte1E >= 0)
 			v90 = *(float *)(v89 + 304) * 31.0f;
 		else
 			v90 = *(float *)(v89 + 332) * 31.0f;
@@ -1209,9 +1331,9 @@ LABEL_20:
 	{
 		XMVECTORF32& ssrParams = pixelCG.Param<XMVECTORF32, 16>(ps);
 
-		ssrParams.f[0] = dword_141E34C70;
-		ssrParams.f[1] = *(float *)&dword_141E34C88 + *(float *)&dword_141E34C70;
-		ssrParams.f[2] = dword_143257C40;
+		ssrParams.f[0] = flt_141E34C70;
+		ssrParams.f[1] = flt_141E34C88 + flt_141E34C70;
+		ssrParams.f[2] = flt_143257C40;
 
 		float v98 = 0.0f;
 		float v99 = 0.0f;
@@ -1219,7 +1341,7 @@ LABEL_20:
 		if (rawTechnique & RAW_FLAG_SPECULAR)
 			v99 = *(float *)(v3 + 256);
 
-		if (!(vars0 & 2))
+		if ((Flags & 2) == 0)
 			v98 = 1.0f;
 
 		ssrParams.f[3] = v98 * v99;
@@ -1233,6 +1355,21 @@ LABEL_20:
 void BSLightingShader::RestoreGeometry(BSRenderPass *Pass)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::RestoreGeometry, Pass);
+
+	if (Pass->Byte1C == 10)
+		BSGraphics::Renderer::DepthStencilStateSetStencilMode(0, 255);
+
+	if (dword_141E35280 != 6)
+	{
+		BSGraphics::Renderer::DepthStencilStateSetDepthMode(dword_141E35280);
+		dword_141E35280 = 6;
+	}
+
+	if (dword_141E3527C != 13)
+	{
+		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(dword_141E3527C);
+		dword_141E3527C = 13;
+	}
 }
 
 uint32_t BSLightingShader::GetRawTechnique(uint32_t Technique)

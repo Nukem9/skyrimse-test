@@ -22,6 +22,11 @@ public:
 	{
 		return m_kPreviousWorld;
 	}
+
+	inline const NiPoint3& GetWorldTranslate() const
+	{
+		return m_kWorld.m_Translate;
+	}
 };
 static_assert(sizeof(NiAVObject) == 0x110);
 static_assert(offsetof(NiAVObject, m_kWorld) == 0x7C);
