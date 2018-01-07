@@ -920,9 +920,17 @@ void sub_14130C8A0(const NiTransform& Transform, XMMATRIX& OutMatrix, bool DontM
 	auto *renderer = GetThreadedGlobals();
 
 	NiTransform temp;
-	memset(&temp, 0, sizeof(temp));
 
-	*(XMVECTOR *)&temp.m_Rotate.m_pEntry[0][0] = *(XMVECTOR *)&xmmword_141880020;
+	temp.m_Rotate.m_pEntry[0][0] = 0.0f;
+	temp.m_Rotate.m_pEntry[0][1] = 1.0f;
+	temp.m_Rotate.m_pEntry[0][2] = 0.0f;
+
+	temp.m_Rotate.m_pEntry[1][0] = -1.0f;
+	temp.m_Rotate.m_pEntry[1][1] = 0.0f;
+	temp.m_Rotate.m_pEntry[1][2] = 0.0f;
+
+	temp.m_Rotate.m_pEntry[2][0] = 0.0f;
+	temp.m_Rotate.m_pEntry[2][1] = 0.0f;
 	temp.m_Rotate.m_pEntry[2][2] = 1.0f;
 
 	temp.m_Translate.x = *(float *)&renderer->__zz2[28];
@@ -940,14 +948,14 @@ void sub_14130C8A0(const NiTransform& Transform, XMMATRIX& OutMatrix, bool DontM
 		XMMATRIX m1 = BSShaderUtil::GetXMFromNi(temp);
 		XMMATRIX m2 = BSShaderUtil::GetXMFromNi(Transform);
 
-		// m2 = Translate(m2, (NiPoint3 *)&renderer.__zz2[28]);
+		// out = Translate(m2, (NiPoint3 *)&renderer.__zz2[28]) * m1; -- operator order DOES matter
 		m2.r[3] = XMVectorAdd(m2.r[3], XMVectorSet(
 			*(float *)&renderer->__zz2[28],
 			*(float *)&renderer->__zz2[32],
 			*(float *)&renderer->__zz2[36],
 			0.0f));
 
-		OutMatrix = XMMatrixMultiply(m1, m2);
+		OutMatrix = XMMatrixMultiply(m2, m1);
 	}
 }
 
@@ -1061,7 +1069,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 		// PS: p7 float4 MaterialData (NOTE: This is written AGAIN)
 		auto& var = pixelCG.Param<XMVECTORF32, 7>(ps);
-		var.f[0] = *(float *)(v3 + 256);
+		var.f[0] = *(float *)(v3 + 260);
 	}
 	break;
 
@@ -1245,9 +1253,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 			sub_14130C8A0(Pass->m_Geometry->GetWorldTransform(), outputTemp, baseTechniqueID == RAW_TECHNIQUE_ENVMAP);
 
 			// VS: p6 float3x4 fVars3
-			float *fVars3 = &vertexCG.Param<float, 6>(vs);
-
-			RetardedStoreFloat3x4(fVars3, outputTemp);
+			RetardedStoreFloat3x4(&vertexCG.Param<float, 6>(vs), outputTemp);
 
 			sub_14130BE70(pixelCG, nullptr, Pass->m_Property, enableProjectedUvNormals);
 		}
@@ -1289,6 +1295,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		{
 			float *v86 = (float *)GetCurrentAccumulator();
 
+			// Equivalent to XMMatrixTranslation(x, y, z) -- missing rows/cols are multiplied in shader code
 			precipitationOcclusionWorldViewProj.x = v86[91] - *(float *)&renderer->__zz2[28];
 			precipitationOcclusionWorldViewProj.y = v86[92] - *(float *)&renderer->__zz2[32];
 			precipitationOcclusionWorldViewProj.z = v86[93] - *(float *)&renderer->__zz2[36];
@@ -1310,21 +1317,20 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	if (!v103)
 	{
-		uint32_t depthMode = *(uint32_t *)&renderer->__zz0[32];
+		uint32_t oldDepthMode = *(uint32_t *)&renderer->__zz0[32];
 
 		if (!(*(uint64_t *)(v3 + 56) & 0x100000000i64))
 		{
-			dword_141E35280 = depthMode;
-			depthMode = 1;
+			dword_141E35280 = oldDepthMode;
+			BSGraphics::Renderer::DepthStencilStateSetDepthMode(1);
 		}
 
 		if (!(*(uint64_t *)(v3 + 56) & 0x80000000))
 		{
-			dword_141E35280 = depthMode;
-			depthMode = 0;
+			dword_141E35280 = oldDepthMode;
+			BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
 		}
 
-		BSGraphics::Renderer::DepthStencilStateSetDepthMode(depthMode);
 	}
 
 	// PS: p16 float4 SSRParams
