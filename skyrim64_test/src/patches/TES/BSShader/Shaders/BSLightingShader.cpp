@@ -16,7 +16,7 @@
 //
 // Shader notes:
 //
-// - None
+// - Global variables eliminated in each Setup/Restore function
 //
 using namespace DirectX;
 
@@ -74,10 +74,16 @@ AutoPtr(float, flt_141E32FD8, 0x1E32FD8);
 AutoPtr(float, flt_141E32FB8, 0x1E32FB8);
 AutoPtr(BYTE, byte_1431F547C, 0x31F547C);
 AutoPtr(XMFLOAT4, xmmword_141E32FC8, 0x1E32FC8);
+AutoPtr(float, flt_141E35350, 0x1E35350);
+AutoPtr(float, flt_141E35368, 0x1E35368);
 
 BSShaderAccumulator *GetCurrentAccumulator();
 
 char hookbuffer[50];
+
+thread_local uint32_t TLS_m_CurrentRawTechnique;
+thread_local uint32_t TLS_dword_141E35280;
+thread_local uint32_t TLS_dword_141E3527C;
 
 void TestHook5()
 {
@@ -186,7 +192,8 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
 		return false;
 
-	m_CurrentRawTechnique = rawTechnique;
+	//m_CurrentRawTechnique = rawTechnique;
+	TLS_m_CurrentRawTechnique = rawTechnique;
 
 	auto *renderer = GetThreadedGlobals();
 
@@ -300,7 +307,7 @@ void BSLightingShader::RestoreTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSLightingShader::RestoreTechnique, Technique);
 
-	if (m_CurrentRawTechnique & RAW_FLAG_DEFSHADOW)
+	if (TLS_m_CurrentRawTechnique & RAW_FLAG_DEFSHADOW)
 		BSGraphics::Renderer::SetShaderResource(14, nullptr);
 
 	uintptr_t v2 = *(uintptr_t *)(qword_1431F5810 + 448);
@@ -398,7 +405,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 
-	const uint32_t rawTechnique = m_CurrentRawTechnique;
+	const uint32_t rawTechnique = TLS_m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
 	bool setDiffuseNormalSamplers = true;
 
@@ -818,6 +825,8 @@ void UpdateViewProjectionConstants(BSGraphics::ConstantGroup& VertexCG, const Ni
 		RetardedStoreFloat3x4(&VertexCG.Param<float, 1>(GetThreadedGlobals()->m_CurrentVertexShader), projMatrix);
 }
 
+SRWLOCK asdf = SRWLOCK_INIT;
+
 void UpdateMTLandExtraConstants(const BSGraphics::ConstantGroup& VertexCG, const NiPoint3& Translate, float a3, float a4)
 {
 	float v4 = 0.0f;
@@ -840,6 +849,7 @@ void UpdateMTLandExtraConstants(const BSGraphics::ConstantGroup& VertexCG, const
 	*/
 
 	// v11 might be wildly incorrect (swap?): v11 = _mm_unpacklo_ps(LODWORD(xmmword_141E32FC8[0]), LODWORD(xmmword_141E32FC8[1]));
+	AcquireSRWLockExclusive(&asdf);
 	XMFLOAT2 v11;
 	v11.x = xmmword_141E32FC8.x;
 	v11.y = xmmword_141E32FC8.y;
@@ -848,6 +858,7 @@ void UpdateMTLandExtraConstants(const BSGraphics::ConstantGroup& VertexCG, const
 	float v10 = xmmword_141E32FC8.w - xmmword_141E32FC8.y;
 
 	*(XMFLOAT2 *)&xmmword_141E32FC8 = v11;
+	ReleaseSRWLockExclusive(&asdf);
 
 	v11.x += (v9 * v4);
 	v11.y += (v10 * v4);
@@ -1007,20 +1018,55 @@ void sub_14130B390(const BSGraphics::ConstantGroup& PixelCG, BSRenderPass *Pass,
 	sub_14130B390(&temp, Pass, Transform, LightCount, ShadowLightCount, Scale, a7);
 }
 
-void sub_14130BE70(const BSGraphics::ConstantGroup& PixelCG, BSGeometry *Geometry, BSShaderProperty *Property, bool a4)
+void sub_14130BE70(const BSGraphics::ConstantGroup& PixelCG, BSGeometry *Geometry, BSShaderProperty *Property, bool EnableProjectedNormals)
 {
-	// __int64 __fastcall sub_14130BE70(__int64 a1, __int64 a2, _DWORD *a3, char a4)
+	auto *renderer = GetThreadedGlobals();
+	BSPixelShader *ps = renderer->m_CurrentPixelShader;
 
-	struct tempbufdata
+	// PS: p12 float4 ProjectedUVParams
 	{
-		char _pad[8];
-		void *ptr;
-	} temp;
+		XMVECTORF32& projectedUVParams = PixelCG.Param<XMVECTORF32, 12>(ps);
 
-	temp.ptr = PixelCG.m_Map.pData;
+		float *v6 = (float *)((uintptr_t)Geometry + 444);
 
-	auto sub_14130BE70 = (void(__fastcall *)(tempbufdata *, BSGeometry *Geometry, BSShaderProperty *Property, bool a4))(g_ModuleBase + 0x130BE70);
-	sub_14130BE70(&temp, Geometry, Property, a4);
+		if (!Geometry)
+			v6 = (float *)((uintptr_t)Property + 67);
+
+		float v8 = 1.0f - v6[3];
+
+		projectedUVParams.f[0] = v8 * v6[0];
+		//projectedUVParams.f[1] = ;
+		projectedUVParams.f[2] = v6[2];
+		projectedUVParams.f[3] = (v8 * v6[1]) + v6[3];
+	}
+
+	// PS: p13 float4 ProjectedUVParams2
+	{
+		XMVECTORF32& projectedUVParams2 = PixelCG.Param<XMVECTORF32, 13>(ps);
+
+		if (Geometry)
+		{
+			projectedUVParams2.f[0] = *(float *)((uintptr_t)Geometry + 464);// Reversed on purpose?
+			projectedUVParams2.f[1] = *(float *)((uintptr_t)Geometry + 460);// Reversed on purpose?
+		}
+		else
+		{
+			projectedUVParams2.f[0] = *(float *)((uintptr_t)Property + 284);
+			projectedUVParams2.f[1] = *(float *)((uintptr_t)Property + 288);
+			projectedUVParams2.f[2] = *(float *)((uintptr_t)Property + 292);
+			projectedUVParams2.f[3] = *(float *)((uintptr_t)Property + 296);
+		}
+	}
+
+	// PS: p14 float4 ProjectedUVParams3
+	{
+		XMVECTORF32& projectedUVParams3 = PixelCG.Param<XMVECTORF32, 14>(ps);
+
+		projectedUVParams3.f[0] = flt_141E35350;// fProjectedUVDiffuseNormalTilingScale
+		projectedUVParams3.f[1] = flt_141E35368;// fProjectedUVNormalDetailTilingScale
+		projectedUVParams3.f[2] = 0.0f;
+		projectedUVParams3.f[3] = (EnableProjectedNormals) ? 1.0f : 0.0f;
+	}
 }
 
 void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
@@ -1035,7 +1081,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
-	const uint32_t rawTechnique = m_CurrentRawTechnique;
+	const uint32_t rawTechnique = TLS_m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
 
 	bool doPrecipitationOcclusion = false;
@@ -1050,7 +1096,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	if (v12 == 3 && *(uintptr_t *)(v3 + 56) & 0x100000000i64)
 	{
-		dword_141E3527C = *(uint32_t *)&renderer->__zz0[72];
+		TLS_dword_141E35280 = *(uint32_t *)&renderer->__zz0[72];
 		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(1);
 	}
 
@@ -1321,13 +1367,13 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 		if (!(*(uint64_t *)(v3 + 56) & 0x100000000i64))
 		{
-			dword_141E35280 = oldDepthMode;
+			TLS_dword_141E35280 = oldDepthMode;
 			BSGraphics::Renderer::DepthStencilStateSetDepthMode(1);
 		}
 
 		if (!(*(uint64_t *)(v3 + 56) & 0x80000000))
 		{
-			dword_141E35280 = oldDepthMode;
+			TLS_dword_141E35280 = oldDepthMode;
 			BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
 		}
 
@@ -1365,16 +1411,16 @@ void BSLightingShader::RestoreGeometry(BSRenderPass *Pass)
 	if (Pass->Byte1C == 10)
 		BSGraphics::Renderer::DepthStencilStateSetStencilMode(0, 255);
 
-	if (dword_141E35280 != 6)
+	if (TLS_dword_141E35280 != 6)
 	{
-		BSGraphics::Renderer::DepthStencilStateSetDepthMode(dword_141E35280);
-		dword_141E35280 = 6;
+		BSGraphics::Renderer::DepthStencilStateSetDepthMode(TLS_dword_141E35280);
+		TLS_dword_141E35280 = 6;
 	}
 
-	if (dword_141E3527C != 13)
+	if (TLS_dword_141E3527C != 13)
 	{
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(dword_141E3527C);
-		dword_141E3527C = 13;
+		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(TLS_dword_141E3527C);
+		TLS_dword_141E3527C = 13;
 	}
 }
 
