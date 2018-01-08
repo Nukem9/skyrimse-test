@@ -21,30 +21,50 @@ namespace BSGraphics
 		//CONSTANT_GROUP_LEVEL_FACE_CUSTOMIZATION = 0xC,	Unconfirmed (FO4)
 	};
 
+	template<typename T>
 	class ConstantGroup
 	{
+		/*
+		friend ConstantGroup<BSVertexShader> BSGraphics::Renderer::GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level);
+		friend ConstantGroup<BSPixelShader> BSGraphics::Renderer::GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level);
+		friend void BSGraphics::Renderer::FlushConstantGroup(ConstantGroup<BSVertexShader> *Group);
+		friend void BSGraphics::Renderer::FlushConstantGroup(ConstantGroup<BSPixelShader> *Group);
+		friend void BSGraphics::Renderer::ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level);
+		*/
 	public:
-		ConstantGroup()
-		{
-			memset(&m_Map, 0, sizeof(m_Map));
-		}
-
-		ConstantGroup(ID3D11Buffer *Buffer) : m_Buffer(Buffer)
-		{
-			memset(&m_Map, 0, sizeof(m_Map));
-		}
-
-		template<typename T, uint32_t ParamIndex, typename ShaderType>
-		T& Param(ShaderType *Shader) const
-		{
-			uintptr_t data		= (uintptr_t)m_Map.pData;
-			uintptr_t offset	= Shader->m_ConstantOffsets[ParamIndex] * sizeof(float);
-
-			return *(T *)(data + offset);
-		}
-
-		D3D11_MAPPED_SUBRESOURCE m_Map;
+		T *m_Shader;
 		ID3D11Buffer *m_Buffer;
+		D3D11_MAPPED_SUBRESOURCE m_Map;
+
+	public:
+		template<typename U, uint32_t ParamIndex>
+		U& ParamVS() const
+		{
+			static_assert(std::is_same<T, BSVertexShader>::value, "ParamPS() requires ConstantGroup<BSVertexShader>");
+			static_assert(ParamIndex < ARRAYSIZE(T::m_ConstantOffsets));
+
+			uintptr_t data		= (uintptr_t)m_Map.pData;
+			uintptr_t offset	= m_Shader->m_ConstantOffsets[ParamIndex] * sizeof(float);
+
+			return *(U *)(data + offset);
+		}
+
+		template<typename U, uint32_t ParamIndex>
+		U& ParamPS() const
+		{
+			static_assert(std::is_same<T, BSPixelShader>::value, "ParamPS() requires ConstantGroup<BSPixelShader>");
+			static_assert(ParamIndex < ARRAYSIZE(T::m_ConstantOffsets));
+
+			uintptr_t data = (uintptr_t)m_Map.pData;
+			uintptr_t offset = m_Shader->m_ConstantOffsets[ParamIndex] * sizeof(float);
+
+			return *(U *)(data + offset);
+		}
+
+		void *RawData() const
+		{
+			return m_Map.pData;
+		}
 	};
 }
 
@@ -74,10 +94,10 @@ namespace BSGraphics::Renderer
 
 	void SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource);
 
-	ConstantGroup GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level);
-	ConstantGroup GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level);
-	void FlushConstantGroup(ConstantGroup *Group);
-	void ApplyConstantGroupVSPS(const ConstantGroup *VertexGroup, const ConstantGroup *PixelGroup, ConstantGroupLevel Level);
+	ConstantGroup<BSVertexShader> GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level);
+	ConstantGroup<BSPixelShader> GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level);
+	void FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup);
+	void ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level);
 
 	void SetVertexShader(BSVertexShader *Shader);
 	void SetPixelShader(BSPixelShader *Shader);

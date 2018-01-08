@@ -116,12 +116,12 @@ BSLightingShader::~BSLightingShader()
 	__debugbreak();
 }
 
-void UpdateAccelerationConstants(BSVertexShader *Shader, BSGraphics::ConstantGroup& VertexCG)
+void UpdateAccelerationConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG)
 {
 	auto *renderer = GetThreadedGlobals();
 
 	// VS: p12 float4 Acceleration
-	BSGraphics::Utility::CopyNiColorAToFloat(&VertexCG.Param<XMVECTOR, 12>(Shader),
+	BSGraphics::Utility::CopyNiColorAToFloat(&VertexCG.ParamVS<XMVECTOR, 12>(),
 		NiColorA(
 			flt_141E32F54 - *(float *)&renderer->__zz2[28],
 			flt_141E32F58 - *(float *)&renderer->__zz2[32],
@@ -129,7 +129,7 @@ void UpdateAccelerationConstants(BSVertexShader *Shader, BSGraphics::ConstantGro
 			flt_141E32F60 - 15.0f));
 }
 
-void UpdateFogWindConstants(BSVertexShader *VertexShader, BSGraphics::ConstantGroup& VertexCG, BSPixelShader *PixelShader, BSGraphics::ConstantGroup& PixelCG)
+void UpdateFogWindConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSGraphics::ConstantGroup<BSPixelShader>& PixelCG)
 {
 	auto sub_1412AC860 = (uintptr_t(__fastcall *)(BYTE))(g_ModuleBase + 0x12AC860);
 	uintptr_t fogParams = sub_1412AC860(byte_141E32FE0);
@@ -146,21 +146,21 @@ void UpdateFogWindConstants(BSVertexShader *VertexShader, BSGraphics::ConstantGr
 		wind.f[3] = flt_141E32FBC;
 
 		// VS: p14 float4 Wind
-		VertexCG.Param<XMVECTORF32, 14>(VertexShader) = wind;
+		VertexCG.ParamVS<XMVECTORF32, 14>() = wind;
 
 		// PS: p19 float4 FogColor
-		PixelCG.Param<XMVECTORF32, 19>(PixelShader) = wind;
+		PixelCG.ParamPS<XMVECTORF32, 19>() = wind;
 	}
 
 	// VS: p15 float4 UNKNOWN_NAME
-	XMVECTORF32& UNKNOWN_PARAM = VertexCG.Param<XMVECTORF32, 15>(VertexShader);
+	XMVECTORF32& UNKNOWN_PARAM = VertexCG.ParamVS<XMVECTORF32, 15>();
 	UNKNOWN_PARAM.f[0] = *(float *)(fogParams + 68);
 	UNKNOWN_PARAM.f[1] = *(float *)(fogParams + 72);
 	UNKNOWN_PARAM.f[2] = *(float *)(fogParams + 76);
 	UNKNOWN_PARAM.f[3] = 0.0f;
 
 	// VS: p13 float4 ScaleAdjust
-	XMVECTORF32& scaleAdjust = VertexCG.Param<XMVECTORF32, 13>(VertexShader);
+	XMVECTORF32& scaleAdjust = VertexCG.ParamVS<XMVECTORF32, 13>();
 
 	float v5 = *(float *)(fogParams + 84);
 	float v6 = *(float *)(fogParams + 80);
@@ -196,12 +196,8 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	TLS_m_CurrentRawTechnique = rawTechnique;
 
 	auto *renderer = GetThreadedGlobals();
-
-	BSVertexShader *vs = renderer->m_CurrentVertexShader;
-	BSPixelShader *ps = renderer->m_CurrentPixelShader;
-
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	BSGraphics::Renderer::SetTextureFilterMode(0, 3);
 	BSGraphics::Renderer::SetTextureFilterMode(1, 3);
@@ -249,7 +245,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	case RAW_TECHNIQUE_LODLANDNOISE:
 		BSGraphics::Renderer::SetTextureMode(0, 3, 1);
 		BSGraphics::Renderer::SetTextureMode(1, 3, 1);
-		UpdateAccelerationConstants(vs, vertexCG);
+		UpdateAccelerationConstants(vertexCG);
 		break;
 
 	case RAW_TECHNIQUE_MULTILAYERPARALLAX:
@@ -266,11 +262,11 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		break;
 	}
 
-	UpdateFogWindConstants(vs, vertexCG, ps, pixelCG);
+	UpdateFogWindConstants(vertexCG, pixelCG);
 
 	// PS: p20 float4 ColourOutputClamp
 	{
-		XMVECTORF32& colourOutputClamp = pixelCG.Param<XMVECTORF32, 20>(ps);
+		XMVECTORF32& colourOutputClamp = pixelCG.ParamPS<XMVECTORF32, 20>();
 
 		colourOutputClamp.f[0] = flt_143257C50;// fLightingOutputColourClampPostLit?
 		colourOutputClamp.f[1] = flt_143257C54;// fLightingOutputColourClampPostEnv?
@@ -278,8 +274,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		colourOutputClamp.f[3] = 0.0f;
 	}
 
-	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
-	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
+	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	bool shadowed = (rawTechnique & RAW_FLAG_SHADOW_DIR) || (rawTechnique & (RAW_FLAG_UNKNOWN6 | RAW_FLAG_UNKNOWN5 | RAW_FLAG_UNKNOWN4));
@@ -292,7 +287,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		BSGraphics::Renderer::SetTextureMode(14, 0, (dword_141E338A0 != 4) ? 1 : 0);
 
 		// PS: p11 float4 VPOSOffset
-		XMVECTORF32& vposOffset = pixelCG.Param<XMVECTORF32, 11>(ps);
+		XMVECTORF32& vposOffset = pixelCG.ParamPS<XMVECTORF32, 11>();
 
 		vposOffset.f[0] = 1.0f / (float)dword_143051B3C;
 		vposOffset.f[1] = 1.0f / (float)dword_143051B40;
@@ -398,12 +393,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	BSSHADER_FORWARD_CALL(MATERIAL, &BSLightingShader::SetupMaterial, Material);
 
 	auto *renderer = GetThreadedGlobals();
-
-	BSVertexShader *vs = renderer->m_CurrentVertexShader;
-	BSPixelShader *ps = renderer->m_CurrentPixelShader;
-
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
+	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
+	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 
 	const uint32_t rawTechnique = TLS_m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
@@ -420,7 +411,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		sub_14130C4D0(*(uintptr_t *)(v3 + 168), v3);
 
 		// PS: p21 float4 EnvmapData
-		XMVECTORF32& envmapData = pixelCG.Param<XMVECTORF32, 21>(ps);
+		XMVECTORF32& envmapData = pixelCG.ParamPS<XMVECTORF32, 21>();
 
 		envmapData.f[0] = *(float *)(v3 + 176);
 		envmapData.f[1] = (*(uintptr_t *)(v3 + 168)) ? 1.0f : 0.0f;
@@ -445,7 +436,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	case RAW_TECHNIQUE_HAIR:
 	{
 		// PS: p23 float4 TintColor
-		XMVECTORF32& tintColor = pixelCG.Param<XMVECTORF32, 23>(ps);
+		XMVECTORF32& tintColor = pixelCG.ParamPS<XMVECTORF32, 23>();
 
 		tintColor.f[0] = *(float *)(v3 + 160);
 		tintColor.f[1] = *(float *)(v3 + 164);
@@ -456,7 +447,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	case RAW_TECHNIQUE_PARALLAXOCC:
 	{
 		// PS: p22 float4 ParallaxOccData
-		XMVECTORF32& parallaxOccData = pixelCG.Param<XMVECTORF32, 22>(ps);
+		XMVECTORF32& parallaxOccData = pixelCG.ParamPS<XMVECTORF32, 22>();
 
 		sub_14130C220(3, *(uintptr_t *)(v3 + 160), v3);
 
@@ -470,7 +461,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	{
 		// PS: p24 float4 LODTexParams
 		{
-			XMVECTORF32& lodTexParams = pixelCG.Param<XMVECTORF32, 24>(ps);
+			XMVECTORF32& lodTexParams = pixelCG.ParamPS<XMVECTORF32, 24>();
 
 			lodTexParams.f[0] = *(float *)(v3 + 328);
 			lodTexParams.f[1] = *(float *)(v3 + 332);
@@ -487,7 +478,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 		// PS: p32 float4 LandscapeTexture1to4IsSpecPower
 		{
-			XMVECTORF32& landscapeTexture1to4IsSpecPower = pixelCG.Param<XMVECTORF32, 32>(ps);
+			XMVECTORF32& landscapeTexture1to4IsSpecPower = pixelCG.ParamPS<XMVECTORF32, 32>();
 
 			landscapeTexture1to4IsSpecPower.f[0] = *(float *)(v3 + 304);
 			landscapeTexture1to4IsSpecPower.f[1] = *(float *)(v3 + 308);
@@ -497,7 +488,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 		// PS: p33 float4 LandscapeTexture5to6IsSpecPower
 		{
-			XMVECTORF32& landscapeTexture5to6IsSpecPower = pixelCG.Param<XMVECTORF32, 33>(ps);
+			XMVECTORF32& landscapeTexture5to6IsSpecPower = pixelCG.ParamPS<XMVECTORF32, 33>();
 
 			landscapeTexture5to6IsSpecPower.f[0] = *(float *)(v3 + 320);
 			landscapeTexture5to6IsSpecPower.f[1] = *(float *)(v3 + 324);
@@ -508,7 +499,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		if (rawTechnique & RAW_FLAG_SNOW)
 		{
 			// PS: p30 float4 LandscapeTexture1to4IsSnow
-			XMVECTORF32& landscapeTexture1to4IsSnow = pixelCG.Param<XMVECTORF32, 30>(ps);
+			XMVECTORF32& landscapeTexture1to4IsSnow = pixelCG.ParamPS<XMVECTORF32, 30>();
 
 			landscapeTexture1to4IsSnow.f[0] = *(float *)(v3 + 280);
 			landscapeTexture1to4IsSnow.f[1] = *(float *)(v3 + 284);
@@ -516,7 +507,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 			landscapeTexture1to4IsSnow.f[3] = *(float *)(v3 + 292);
 
 			// PS: p31 float4 LandscapeTexture5to6IsSnow
-			XMVECTORF32& LandscapeTexture5to6IsSnow = pixelCG.Param<XMVECTORF32, 31>(ps);
+			XMVECTORF32& LandscapeTexture5to6IsSnow = pixelCG.ParamPS<XMVECTORF32, 31>();
 
 			LandscapeTexture5to6IsSnow.f[0] = *(float *)(v3 + 296);
 			LandscapeTexture5to6IsSnow.f[1] = *(float *)(v3 + 300);
@@ -531,7 +522,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	{
 		// PS: p24 float4 LODTexParams
 		{
-			XMVECTORF32& lodTexParams = pixelCG.Param<XMVECTORF32, 24>(ps);
+			XMVECTORF32& lodTexParams = pixelCG.ParamPS<XMVECTORF32, 24>();
 
 			lodTexParams.f[0] = *(float *)(v3 + 184);
 			lodTexParams.f[1] = *(float *)(v3 + 188);
@@ -555,7 +546,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 		// PS: p27 float4 MultiLayerParallaxData
 		{
-			XMVECTORF32& multiLayerParallaxData = pixelCG.Param<XMVECTORF32, 27>(ps);
+			XMVECTORF32& multiLayerParallaxData = pixelCG.ParamPS<XMVECTORF32, 27>();
 
 			multiLayerParallaxData.f[0] = *(float *)(v3 + 184);
 			multiLayerParallaxData.f[1] = *(float *)(v3 + 188);
@@ -568,7 +559,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 		// PS: p21 float4 EnvmapData
 		{
-			XMVECTORF32& envmapData = pixelCG.Param<XMVECTORF32, 21>(ps);
+			XMVECTORF32& envmapData = pixelCG.ParamPS<XMVECTORF32, 21>();
 
 			envmapData.f[0] = *(float *)(v3 + 200);
 			envmapData.f[1] = (*(uintptr_t *)(v3 + 176)) ? 1.0f : 0.0f;
@@ -579,7 +570,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	case RAW_TECHNIQUE_MULTIINDEXTRISHAPESNOW:
 	{
 		// PS: p26 float4 SparkleParams
-		XMVECTORF32& sparkleParams = pixelCG.Param<XMVECTORF32, 26>(ps);
+		XMVECTORF32& sparkleParams = pixelCG.ParamPS<XMVECTORF32, 26>();
 
 		sparkleParams.f[0] = *(float *)(v3 + 160);
 		sparkleParams.f[1] = *(float *)(v3 + 164);
@@ -595,7 +586,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 		// VS: p9 float4 Color2
 		{
-			XMVECTORF32& color2 = vertexCG.Param<XMVECTORF32, 9>(vs);
+			XMVECTORF32& color2 = vertexCG.ParamVS<XMVECTORF32, 9>();
 
 			color2.f[0] = *(float *)(v3 + 180);
 			color2.f[1] = *(float *)(v3 + 184);
@@ -604,7 +595,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 		// VS: p10 float4 Color3
 		{
-			XMVECTORF32& color3 = vertexCG.Param<XMVECTORF32, 10>(vs);
+			XMVECTORF32& color3 = vertexCG.ParamVS<XMVECTORF32, 10>();
 
 			color3.f[0] = *(float *)(v3 + 192);
 			color3.f[1] = *(float *)(v3 + 196);
@@ -613,7 +604,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 		// PS: p21 float4 EnvmapData
 		{
-			XMVECTORF32& envmapData = pixelCG.Param<XMVECTORF32, 21>(ps);
+			XMVECTORF32& envmapData = pixelCG.ParamPS<XMVECTORF32, 21>();
 
 			envmapData.f[0] = *(float *)(v3 + 176);
 			envmapData.f[1] = (*(uintptr_t *)(v3 + 168)) ? 1.0f : 0.0f;
@@ -624,7 +615,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 	// VS: p11 float4 Velocity
 	{
-		XMVECTORF32& velocity = vertexCG.Param<XMVECTORF32, 11>(vs);
+		XMVECTORF32& velocity = vertexCG.ParamVS<XMVECTORF32, 11>();
 
 		velocity.f[0] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 12);
 		velocity.f[1] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 16);
@@ -635,7 +626,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	if (rawTechnique & RAW_FLAG_SPECULAR)
 	{
 		// PS: p25 float4 SpecularColor
-		XMVECTORF32& specularColor = pixelCG.Param<XMVECTORF32, 25>(ps);
+		XMVECTORF32& specularColor = pixelCG.ParamPS<XMVECTORF32, 25>();
 
 		specularColor.f[0] = *(float *)(v3 + 56) * *(float *)(v3 + 0x8C);
 		specularColor.f[1] = *(float *)(v3 + 60) * *(float *)(v3 + 0x8C);
@@ -657,7 +648,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	if (rawTechnique & RAW_FLAG_AMBIENT_SPECULAR)
 	{
 		// PS: p6 float4 AmbientSpecularTintAndFresnelPower
-		pixelCG.Param<XMVECTORF32, 6>(ps) = xmmword_141E3301C;
+		pixelCG.ParamPS<XMVECTORF32, 6>() = xmmword_141E3301C;
 	}
 
 	if (rawTechnique & RAW_FLAG_SOFT_LIGHTING)
@@ -669,7 +660,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		BSGraphics::Renderer::SetTextureAddressMode(12, v71);
 
 		// PS: p28 float4 LightingEffectParams
-		XMVECTORF32& lightingEffectParams = pixelCG.Param<XMVECTORF32, 28>(ps);
+		XMVECTORF32& lightingEffectParams = pixelCG.ParamPS<XMVECTORF32, 28>();
 
 		lightingEffectParams.f[0] = *(float *)(v3 + 144);
 		lightingEffectParams.f[1] = *(float *)(v3 + 148);
@@ -685,7 +676,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		BSGraphics::Renderer::SetTextureAddressMode(12, v76);
 
 		// PS: p28 float4 LightingEffectParams
-		XMVECTORF32& lightingEffectParams = pixelCG.Param<XMVECTORF32, 28>(ps);
+		XMVECTORF32& lightingEffectParams = pixelCG.ParamPS<XMVECTORF32, 28>();
 
 		lightingEffectParams.f[0] = *(float *)(v3 + 144);
 		lightingEffectParams.f[1] = *(float *)(v3 + 148);
@@ -703,7 +694,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	if (rawTechnique & RAW_FLAG_SNOW)
 	{
 		// PS: p34 float4 SnowRimLightParameters
-		XMVECTORF32& snowRimLightParameters = pixelCG.Param<XMVECTORF32, 34>(ps);
+		XMVECTORF32& snowRimLightParameters = pixelCG.ParamPS<XMVECTORF32, 34>();
 
 		snowRimLightParameters.f[0] = flt_141E35380;// fSnowRimLightIntensity
 		snowRimLightParameters.f[1] = flt_141E35398;// fSnowGeometrySpecPower
@@ -737,7 +728,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 	// PS: p29 float4 IBLParams
 	{
-		XMVECTORF32& iblParams = pixelCG.Param<XMVECTORF32, 29>(ps);
+		XMVECTORF32& iblParams = pixelCG.ParamPS<XMVECTORF32, 29>();
 
 		XMVECTORF32 thing;
 
@@ -763,15 +754,14 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		}
 
 		// PS: p35 float4 CharacterLightParams
-		XMVECTORF32& characterLightParams = pixelCG.Param<XMVECTORF32, 35>(ps);
+		XMVECTORF32& characterLightParams = pixelCG.ParamPS<XMVECTORF32, 35>();
 
 		// if (bEnableCharacterRimLighting)
 		if (byte_141E32F66)
 			characterLightParams.v = _mm_loadu_ps(&xmmword_141E3302C);
 	}
 
-	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
-	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
+	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 }
 
@@ -800,7 +790,7 @@ void RetardedStoreFloat3x4(float *Dest, const XMMATRIX& Src)
 	// Implied Dest[12...15] = { 0, 0, 0, 1 };
 }
 
-void UpdateViewProjectionConstants(BSGraphics::ConstantGroup& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust)
+void UpdateViewProjectionConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust)
 {
 	//
 	// Instead of using the typical 4x4 matrix like everywhere else, someone decided that the
@@ -820,14 +810,14 @@ void UpdateViewProjectionConstants(BSGraphics::ConstantGroup& VertexCG, const Ni
 	// VS: p1 float3x4 PrevWorldViewProj
 	//
 	if (!IsPreviousWorld)
-		RetardedStoreFloat3x4(&VertexCG.Param<float, 0>(GetThreadedGlobals()->m_CurrentVertexShader), projMatrix);
+		RetardedStoreFloat3x4(&VertexCG.ParamVS<float, 0>(), projMatrix);
 	else
-		RetardedStoreFloat3x4(&VertexCG.Param<float, 1>(GetThreadedGlobals()->m_CurrentVertexShader), projMatrix);
+		RetardedStoreFloat3x4(&VertexCG.ParamVS<float, 1>(), projMatrix);
 }
 
 SRWLOCK asdf = SRWLOCK_INIT;
 
-void UpdateMTLandExtraConstants(const BSGraphics::ConstantGroup& VertexCG, const NiPoint3& Translate, float a3, float a4)
+void UpdateMTLandExtraConstants(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4)
 {
 	float v4 = 0.0f;
 	float v6 = (flt_141E32F40 - flt_141E32FD8) / (flt_141E32FB8 * 5.0f);
@@ -867,7 +857,7 @@ void UpdateMTLandExtraConstants(const BSGraphics::ConstantGroup& VertexCG, const
 		byte_1431F547C = 0;
 
 	// VS: p3 float4 fVars0
-	XMVECTORF32& fVars0 = VertexCG.Param<XMVECTORF32, 3>(GetThreadedGlobals()->m_CurrentVertexShader);
+	XMVECTORF32& fVars0 = VertexCG.ParamVS<XMVECTORF32, 3>();
 
 	fVars0.f[0] = a3;
 	fVars0.f[1] = a4;
@@ -899,7 +889,7 @@ void GetInverseWorldMatrix(const NiTransform& Transform, bool UseWorldPosition, 
 	}
 }
 
-void UpdateDirectionalLightConstants(const BSGraphics::ConstantGroup& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
+void UpdateDirectionalLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
 {
 	uintptr_t v7 = 0;
 
@@ -910,14 +900,14 @@ void UpdateDirectionalLightConstants(const BSGraphics::ConstantGroup& PixelCG, c
 	float v12 = *(float *)(qword_1431F5810 + 224) * v10[77];
 
 	// PS: p4 float3 DirLightColor
-	XMFLOAT3& dirLightColor = PixelCG.Param<XMFLOAT3, 4>(GetThreadedGlobals()->m_CurrentPixelShader);
+	XMFLOAT3& dirLightColor = PixelCG.ParamPS<XMFLOAT3, 4>();
 
 	dirLightColor.x = v12 * v10[71];
 	dirLightColor.y = v12 * v10[72];
 	dirLightColor.z = v12 * v10[73];
 
 	// PS: p3 float3 DirLightDirection
-	XMFLOAT3& dirLightDirection = PixelCG.Param<XMFLOAT3, 3>(GetThreadedGlobals()->m_CurrentPixelShader);
+	XMFLOAT3& dirLightDirection = PixelCG.ParamPS<XMFLOAT3, 3>();
 	XMVECTOR tempDir			= XMVectorSet(-v10[80], -v10[81], -v10[82], 0.0f);
 
 	if (a4 == 1)
@@ -970,7 +960,7 @@ void sub_14130C8A0(const NiTransform& Transform, XMMATRIX& OutMatrix, bool DontM
 	}
 }
 
-void sub_14130BC60(const BSGraphics::ConstantGroup& VertexCG, BSShaderProperty *Property)
+void sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSShaderProperty *Property)
 {
 	// __int64 __fastcall sub_14130BC60(__int64 a1, __int64 a2)
 
@@ -986,7 +976,7 @@ void sub_14130BC60(const BSGraphics::ConstantGroup& VertexCG, BSShaderProperty *
 	sub_14130BC60(&temp, Property);
 }
 
-void sub_14130B2A0(const BSGraphics::ConstantGroup& PixelCG, const NiTransform& Transform, int a3)
+void sub_14130B2A0(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const NiTransform& Transform, int a3)
 {
 	// __int64 __fastcall sub_14130B2A0(__int64 a1, __int64 a2, int a3)
 
@@ -1002,7 +992,7 @@ void sub_14130B2A0(const BSGraphics::ConstantGroup& PixelCG, const NiTransform& 
 	sub_14130B2A0(&temp, Transform, a3);
 }
 
-void sub_14130B390(const BSGraphics::ConstantGroup& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
+void sub_14130B390(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
 {
 	// __int64 __fastcall sub_14130B390(__int64 a1, __int64 a2, __int64 a3, int a4, int a5, float a6, int a7)
 
@@ -1018,14 +1008,11 @@ void sub_14130B390(const BSGraphics::ConstantGroup& PixelCG, BSRenderPass *Pass,
 	sub_14130B390(&temp, Pass, Transform, LightCount, ShadowLightCount, Scale, a7);
 }
 
-void sub_14130BE70(const BSGraphics::ConstantGroup& PixelCG, BSGeometry *Geometry, BSShaderProperty *Property, bool EnableProjectedNormals)
+void sub_14130BE70(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSShaderProperty *Property, bool EnableProjectedNormals)
 {
-	auto *renderer = GetThreadedGlobals();
-	BSPixelShader *ps = renderer->m_CurrentPixelShader;
-
 	// PS: p12 float4 ProjectedUVParams
 	{
-		XMVECTORF32& projectedUVParams = PixelCG.Param<XMVECTORF32, 12>(ps);
+		XMVECTORF32& projectedUVParams = PixelCG.ParamPS<XMVECTORF32, 12>();
 
 		float *v6 = (float *)((uintptr_t)Geometry + 444);
 
@@ -1042,7 +1029,7 @@ void sub_14130BE70(const BSGraphics::ConstantGroup& PixelCG, BSGeometry *Geometr
 
 	// PS: p13 float4 ProjectedUVParams2
 	{
-		XMVECTORF32& projectedUVParams2 = PixelCG.Param<XMVECTORF32, 13>(ps);
+		XMVECTORF32& projectedUVParams2 = PixelCG.ParamPS<XMVECTORF32, 13>();
 
 		if (Geometry)
 		{
@@ -1060,7 +1047,7 @@ void sub_14130BE70(const BSGraphics::ConstantGroup& PixelCG, BSGeometry *Geometr
 
 	// PS: p14 float4 ProjectedUVParams3
 	{
-		XMVECTORF32& projectedUVParams3 = PixelCG.Param<XMVECTORF32, 14>(ps);
+		XMVECTORF32& projectedUVParams3 = PixelCG.ParamPS<XMVECTORF32, 14>();
 
 		projectedUVParams3.f[0] = flt_141E35350;// fProjectedUVDiffuseNormalTilingScale
 		projectedUVParams3.f[1] = flt_141E35368;// fProjectedUVNormalDetailTilingScale
@@ -1074,12 +1061,8 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
-
-	BSVertexShader *vs = renderer->m_CurrentVertexShader;
-	BSPixelShader *ps = renderer->m_CurrentPixelShader;
-
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	const uint32_t rawTechnique = TLS_m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
@@ -1114,7 +1097,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		doPrecipitationOcclusion = true;
 
 		// PS: p7 float4 MaterialData (NOTE: This is written AGAIN)
-		auto& var = pixelCG.Param<XMVECTORF32, 7>(ps);
+		auto& var = pixelCG.ParamPS<XMVECTORF32, 7>();
 		var.f[0] = *(float *)(v3 + 260);
 	}
 	break;
@@ -1167,7 +1150,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	// PS: p7 float4 MaterialData
 	{
-		XMVECTORF32& materialData = pixelCG.Param<XMVECTORF32, 7>(ps);
+		XMVECTORF32& materialData = pixelCG.ParamPS<XMVECTORF32, 7>();
 
 		float v30 = *(float *)(v3 + 48);
 		bool wtf = (signed char)Pass->Byte1E >= 0;
@@ -1183,7 +1166,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	// This block is an inlined function
 	// PS: p8 float4 EmitColor
 	{
-		XMVECTORF32& emitColor = pixelCG.Param<XMVECTORF32, 8>(ps);
+		XMVECTORF32& emitColor = pixelCG.ParamPS<XMVECTORF32, 8>();
 
 		uintptr_t v33 = *(uintptr_t *)(v3 + 240);
 		float v31 = *(float *)(v3 + 248);
@@ -1198,7 +1181,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	// PS: p0 float2 NumLightNumShadowLight
 	{
-		XMFLOAT2& numLightNumShadowLight = pixelCG.Param<XMFLOAT2, 0>(ps);
+		XMFLOAT2& numLightNumShadowLight = pixelCG.ParamPS<XMFLOAT2, 0>();
 
 		numLightNumShadowLight.x = (float)lightCount;
 		numLightNumShadowLight.y = (float)shadowLightCount;
@@ -1232,7 +1215,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	if (rawTechnique & RAW_FLAG_SPECULAR)
 	{
 		// PS: p7 float4 MaterialData (NOTE: This is written TWICE)
-		auto& var = pixelCG.Param<XMVECTORF32, 7>(ps);
+		auto& var = pixelCG.ParamPS<XMVECTORF32, 7>();
 		var.f[1] = *(float *)(v3 + 256);
 
 		doPrecipitationOcclusion = true;
@@ -1274,7 +1257,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 			float *v60 = (float *)Pass->m_Geometry;
 
 			// VS: p6 float3x4 fVars3
-			float *fVars3 = &vertexCG.Param<float, 6>(vs);
+			float *fVars3 = &vertexCG.ParamVS<float, 6>();
 
 			fVars3[0] = v60[91];
 			fVars3[1] = v60[95];
@@ -1299,7 +1282,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 			sub_14130C8A0(Pass->m_Geometry->GetWorldTransform(), outputTemp, baseTechniqueID == RAW_TECHNIQUE_ENVMAP);
 
 			// VS: p6 float3x4 fVars3
-			RetardedStoreFloat3x4(&vertexCG.Param<float, 6>(vs), outputTemp);
+			RetardedStoreFloat3x4(&vertexCG.ParamVS<float, 6>(), outputTemp);
 
 			sub_14130BE70(pixelCG, nullptr, Pass->m_Property, enableProjectedUvNormals);
 		}
@@ -1318,17 +1301,17 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		BSGraphics::Renderer::SetTextureAddressMode(13, 3);
 
 		// VS: p8 float4 Color1
-		BSGraphics::Utility::CopyNiColorAToFloat(&vertexCG.Param<XMVECTOR, 8>(vs), dword_1431F5540);
+		BSGraphics::Utility::CopyNiColorAToFloat(&vertexCG.ParamVS<XMVECTOR, 8>(), dword_1431F5540);
 
 		// PS: p17 float4 WorldMapOverlayParametersPS
-		BSGraphics::Utility::CopyNiColorAToFloat(&pixelCG.Param<XMVECTOR, 17>(ps), dword_1431F5550);
+		BSGraphics::Utility::CopyNiColorAToFloat(&pixelCG.ParamPS<XMVECTOR, 17>(), dword_1431F5550);
 	}
 
 	// This block is an inlined function
 	if (doPrecipitationOcclusion)
 	{
 		// VS: p2 float3 PrecipitationOcclusionWorldViewProj
-		XMFLOAT3& precipitationOcclusionWorldViewProj = vertexCG.Param<XMFLOAT3, 2>(vs);
+		XMFLOAT3& precipitationOcclusionWorldViewProj = vertexCG.ParamVS<XMFLOAT3, 2>();
 
 		if (v102 == 1)
 		{
@@ -1381,7 +1364,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	// PS: p16 float4 SSRParams
 	{
-		XMVECTORF32& ssrParams = pixelCG.Param<XMVECTORF32, 16>(ps);
+		XMVECTORF32& ssrParams = pixelCG.ParamPS<XMVECTORF32, 16>();
 
 		ssrParams.f[0] = flt_141E34C70;
 		ssrParams.f[1] = flt_141E34C88 + flt_141E34C70;
@@ -1399,8 +1382,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		ssrParams.f[3] = v98 * v99;
 	}
 
-	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
-	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
+	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 }
 

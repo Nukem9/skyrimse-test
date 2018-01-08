@@ -128,11 +128,8 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
-	BSVertexShader *vs = renderer->m_CurrentVertexShader;
-	BSPixelShader *ps = renderer->m_CurrentPixelShader;
-
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	uintptr_t shaderProperty = (uintptr_t)Pass->m_Property;
 	uint32_t propertyType = *(uint32_t *)(shaderProperty + 192);
@@ -164,8 +161,8 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	// VS: p1 float4x4 World
 	//
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(geoTransform);
-	vertexCG.Param<XMMATRIX, 0>(vs) = XMMatrixMultiplyTranspose(xmmGeoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
-	vertexCG.Param<XMMATRIX, 1>(vs) = XMMatrixTranspose(xmmGeoTransform);
+	vertexCG.ParamVS<XMMATRIX, 0>() = XMMatrixMultiplyTranspose(xmmGeoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
+	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixTranspose(xmmGeoTransform);
 
 	//
 	// VS: p2 float4x4 PreviousWorld
@@ -173,13 +170,13 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	// NOTE: Unlike BSDistantTreeShader and BSGrassShader, this uses GetPreviousWorldTransform() instead
 	// of GetWorldTransform()...?
 	//
-	vertexCG.Param<XMMATRIX, 2>(vs) = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetPreviousWorldTransform(), *(NiPoint3 *)&renderer->__zz2[40]));
+	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetPreviousWorldTransform(), *(NiPoint3 *)&renderer->__zz2[40]));
 
 	//
 	// VS: p4 float3 EyePosition (adjusted to relative coordinates, not world)
 	//
 	{
-		XMFLOAT3& eyePos = vertexCG.Param<XMFLOAT3, 4>(vs);
+		XMFLOAT3& eyePos = vertexCG.ParamVS<XMFLOAT3, 4>();
 
 		float *v27 = (float *)GetCurrentAccumulator();
 		eyePos.x = v27[91] - *(float *)&renderer->__zz2[28];
@@ -191,7 +188,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	// PS: p0 float2 PParams
 	//
 	{
-		XMFLOAT2& pparams = pixelCG.Param<XMFLOAT2, 0>(ps);
+		XMFLOAT2& pparams = pixelCG.ParamPS<XMFLOAT2, 0>();
 
 		if (propertyType == 3)
 		{
@@ -203,7 +200,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 			pparams.y = dword_141E32FBC * *(float *)(qword_1431F5810 + 228);
 
 			// VS: p5 float2 TexCoordOff
-			vertexCG.Param<XMFLOAT2, 5>(vs) = *((XMFLOAT2 *)&qword_143257D80 + *(unsigned __int16 *)(shaderProperty + 0xBC));
+			vertexCG.ParamVS<XMFLOAT2, 5>() = *((XMFLOAT2 *)&qword_143257D80 + *(unsigned __int16 *)(shaderProperty + 0xBC));
 		}
 		else if (propertyType != 6 && propertyType != 1)
 		{
@@ -218,12 +215,12 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	//
 	// VS: p6 float VParams
 	//
-	vertexCG.Param<float, 6>(vs) = dword_141E32FBC;
+	vertexCG.ParamVS<float, 6>() = dword_141E32FBC;
 
 	//
 	// VS: p3 float4 BlendColor[3]
 	//
-	auto& blendColor = vertexCG.Param<XMVECTOR[3], 3>(vs);
+	auto& blendColor = vertexCG.ParamVS<XMVECTOR[3], 3>();
 
 	switch (propertyType)
 	{
@@ -251,8 +248,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		break;
 	}
 
-	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
-	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
+	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	switch (tlsRawTechnique)

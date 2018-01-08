@@ -79,7 +79,7 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 		BSGraphics::Renderer::SetTextureMode(3, 0, 1);
 		BSGraphics::Renderer::AlphaBlendStateSetMode(5);
 		BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
-	}
+	} 
 	else if (rawTechnique == RAW_TECHNIQUE_SPLATTER)
 	{
 		BSGraphics::Renderer::AlphaBlendStateSetMode(4);
@@ -104,12 +104,8 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
-
-	BSVertexShader *vs = renderer->m_CurrentVertexShader;
-	BSPixelShader *ps = renderer->m_CurrentPixelShader;
-
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
 	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
@@ -125,19 +121,18 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	//
 	// PS: p0 float Alpha
 	//
-	pixelCG.Param<float, 0>(ps) = alpha;
+	pixelCG.ParamPS<float, 0>() = alpha;
 
 	//
 	// VS: p0 float4x4 WorldViewProj
 	// VS: p1 float4 LightLoc
 	// VS: p2 float Ctrl
 	//
-	vertexCG.Param<XMMATRIX, 0>(vs)	= worldViewProj;
-	vertexCG.Param<XMVECTOR, 1>(vs)	= LightLoc.XmmVector();
-	vertexCG.Param<float, 2>(vs)	= fFlareOffsetScale;
+	vertexCG.ParamVS<XMMATRIX, 0>()	= worldViewProj;
+	vertexCG.ParamVS<XMVECTOR, 1>()	= LightLoc.XmmVector();
+	vertexCG.ParamVS<float, 2>()	= fFlareOffsetScale;
 
-	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
-	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
+	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)

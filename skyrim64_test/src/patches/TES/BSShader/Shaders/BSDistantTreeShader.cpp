@@ -70,12 +70,8 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 		return false;
 
 	auto *renderer = GetThreadedGlobals();
-
-	BSVertexShader *vs = renderer->m_CurrentVertexShader;
-	BSPixelShader *ps = renderer->m_CurrentPixelShader;
-
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-	BSGraphics::ConstantGroup pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(ps, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	// fogParams is of type NiFogProperty *
 	auto sub_1412AC860 = (uintptr_t(__fastcall *)(BYTE))(g_ModuleBase + 0x12AC860);
@@ -83,9 +79,9 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 
 	if (fogParams)
 	{
-		XMVECTOR& vs_fogParam = vertexCG.Param<XMVECTOR, 4>(vs);	// VS: p4 float4 FogParam
-		XMVECTOR& vs_fogNearColor = vertexCG.Param<XMVECTOR, 5>(vs);// VS: p5 float4 FogNearColor
-		XMVECTOR& vs_fogFarColor = vertexCG.Param<XMVECTOR, 6>(vs);	// VS: p6 float4 FogFarColor
+		XMVECTOR& vs_fogParam = vertexCG.ParamVS<XMVECTOR, 4>();	// VS: p4 float4 FogParam
+		XMVECTOR& vs_fogNearColor = vertexCG.ParamVS<XMVECTOR, 5>();// VS: p5 float4 FogNearColor
+		XMVECTOR& vs_fogFarColor = vertexCG.ParamVS<XMVECTOR, 6>();	// VS: p6 float4 FogFarColor
 
 		float v19 = *(float *)(fogParams + 84);
 		float v20 = *(float *)(fogParams + 80);
@@ -118,9 +114,9 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 
 	if (lightSource)
 	{
-		XMVECTOR& ps_DiffuseColor = pixelCG.Param<XMVECTOR, 0>(ps);	// PS: p0 float4 DiffuseColor
-		XMVECTOR& ps_AmbientColor = pixelCG.Param<XMVECTOR, 1>(ps);	// PS: p1 float4 AmbientColor
-		XMVECTOR& ps_Unknown = pixelCG.Param<XMVECTOR, 7>(ps);		// TODO: WHAT IS THIS PARAM??? It should be for vertex instead of pixel?
+		XMVECTOR& ps_DiffuseColor = pixelCG.ParamPS<XMVECTOR, 0>();	// PS: p0 float4 DiffuseColor
+		XMVECTOR& ps_AmbientColor = pixelCG.ParamPS<XMVECTOR, 1>();	// PS: p1 float4 AmbientColor
+		XMVECTOR& ps_Unknown = pixelCG.ParamPS<XMVECTOR, 7>();		// TODO: WHAT IS THIS PARAM??? It should be for vertex instead of pixel?
 
 		// NiPoint3 normalizedDir = NiDirectionalLight::GetWorldDirection().Unitize();
 		NiPoint3 normalizedDir(*(const NiPoint3 *)(lightSource + 320));
@@ -147,8 +143,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	BSGraphics::Renderer::SetShaderResource(0, treeLodAtlas ? treeLodAtlas->QRendererTexture() : nullptr);
 	BSGraphics::Renderer::SetTextureAddressMode(0, 0);
 
-	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
-	BSGraphics::Renderer::FlushConstantGroup(&pixelCG);
+	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 	return true;
 }
@@ -163,10 +158,7 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
-
-	BSVertexShader *vs = renderer->m_CurrentVertexShader;
-
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	// Standard world transformation matrix
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
@@ -187,11 +179,11 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	// VS: p2 float4x4 World
 	// VS: p3 float4x4 PreviousWorld
 	//
-	vertexCG.Param<XMMATRIX, 1>(vs) = XMMatrixMultiplyTranspose(geoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
-	vertexCG.Param<XMMATRIX, 2>(vs) = XMMatrixTranspose(geoTransform);
-	vertexCG.Param<XMMATRIX, 3>(vs) = XMMatrixTranspose(prevGeoTransform);
+	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixMultiplyTranspose(geoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
+	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(geoTransform);
+	vertexCG.ParamVS<XMMATRIX, 3>() = XMMatrixTranspose(prevGeoTransform);
 
-	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
+	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, nullptr);
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 }
 

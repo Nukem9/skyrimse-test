@@ -117,8 +117,6 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
-	BSVertexShader *vs = renderer->m_CurrentVertexShader;
-
 	uintptr_t geometry = (uintptr_t)Pass->m_Geometry;
 	uintptr_t property = (uintptr_t)Pass->m_Property;
 
@@ -267,11 +265,11 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	// the pData member of D3D11_MAPPED_SUBRESOURCE points because doing so can cause
 	// a significant performance penalty."
 	//
-	BSGraphics::ConstantGroup vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(vs, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
-	memcpy(vertexCG.m_Map.pData, &data, sizeof(VertexConstantData));
+	memcpy(vertexCG.RawData(), &data, sizeof(VertexConstantData));
 
-	BSGraphics::Renderer::FlushConstantGroup(&vertexCG);
+	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, nullptr);
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	// Update constant buffer #8 containing InstanceData

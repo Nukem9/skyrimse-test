@@ -210,9 +210,12 @@ namespace BSGraphics::Renderer
 		}
 	}
 
-	ConstantGroup GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level)
+	ConstantGroup<BSVertexShader> GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level)
 	{
-		ConstantGroup temp(Shader->m_ConstantGroups[Level].m_Buffer);
+		ConstantGroup<BSVertexShader> temp;
+		temp.m_Shader = Shader;
+		temp.m_Buffer = Shader->m_ConstantGroups[Level].m_Buffer;
+		memset(&temp.m_Map, 0, sizeof(temp.m_Map));
 
 		if (temp.m_Buffer)
 		{
@@ -227,14 +230,17 @@ namespace BSGraphics::Renderer
 			temp.m_Map.pData = Shader->m_ConstantGroups[Level].m_Data;
 		}
 
-		// BUGFIX: DirectX expects Skyrim to overwrite the entire buffer. **SKYRIM DOES NOT**, so I'm zeroing it now.
+		// BUGFIX: DirectX expects you to overwrite the entire buffer. **SKYRIM DOES NOT**, so I'm zeroing it now.
 		memset(temp.m_Map.pData, 0, temp.m_Map.RowPitch);
 		return temp;
 	}
 
-	ConstantGroup GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level)
+	ConstantGroup<BSPixelShader> GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level)
 	{
-		ConstantGroup temp(Shader->m_ConstantGroups[Level].m_Buffer);
+		ConstantGroup<BSPixelShader> temp;
+		temp.m_Shader = Shader;
+		temp.m_Buffer = Shader->m_ConstantGroups[Level].m_Buffer;
+		memset(&temp.m_Map, 0, sizeof(temp.m_Map));
 
 		if (temp.m_Buffer)
 		{
@@ -249,20 +255,21 @@ namespace BSGraphics::Renderer
 			temp.m_Map.pData = Shader->m_ConstantGroups[Level].m_Data;
 		}
 
-		// BUGFIX: DirectX expects Skyrim to overwrite the entire buffer. BETHESDA DOESN'T, so I'm zeroing it now.
+		// BUGFIX: DirectX expects you to overwrite the entire buffer. **SKYRIM DOES NOT**, so I'm zeroing it now.
 		memset(temp.m_Map.pData, 0, temp.m_Map.RowPitch);
 		return temp;
 	}
 
-	void FlushConstantGroup(ConstantGroup *Group)
+	void FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup)
 	{
-		auto *renderer = GetThreadedGlobals();
+		if (VertexGroup && VertexGroup->m_Buffer)
+			GetThreadedGlobals()->m_DeviceContext->Unmap(VertexGroup->m_Buffer, 0);
 
-		if (Group->m_Buffer)
-			renderer->m_DeviceContext->Unmap(Group->m_Buffer, 0);
+		if (PixelGroup && PixelGroup->m_Buffer)
+			GetThreadedGlobals()->m_DeviceContext->Unmap(PixelGroup->m_Buffer, 0);
 	}
 
-	void ApplyConstantGroupVSPS(const ConstantGroup *VertexGroup, const ConstantGroup *PixelGroup, ConstantGroupLevel Level)
+	void ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level)
 	{
 		auto *renderer = GetThreadedGlobals();
 		uint32_t index = 0;
