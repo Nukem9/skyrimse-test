@@ -70,7 +70,7 @@ void Trim(char *Buffer, char C);
 #define templated(...) __VA_ARGS__
 #define AutoPtr(Type, Name, Offset) static Type& Name = (*(Type *)((uintptr_t)GetModuleHandle(nullptr) + Offset))
 
-#define static_assert_offset(Structure, Member, Offset) { CheckOffset<offsetof(Structure, Member), Offset> templated(__z)__COUNTER__; }
+#define static_assert_offset(Structure, Member, Offset) struct : CheckOffset<offsetof(Structure, Member), Offset> { }
 #define assert_vtable_index(Function, Index) assert(vtable_index_util::getIndexOf(Function) == Index)
 
 template <size_t Offset, size_t RequiredOffset>
