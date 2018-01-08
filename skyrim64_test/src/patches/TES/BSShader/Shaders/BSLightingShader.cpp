@@ -770,31 +770,11 @@ void BSLightingShader::RestoreMaterial(BSShaderMaterial const *Material)
 	BSSHADER_FORWARD_CALL(MATERIAL, &BSLightingShader::RestoreMaterial, Material);
 }
 
-void RetardedStoreFloat3x4(float *Dest, const XMMATRIX& Src)
-{
-	Dest[0] = Src.r[0].m128_f32[0];
-	Dest[1] = Src.r[1].m128_f32[0];
-	Dest[2] = Src.r[2].m128_f32[0];
-	Dest[3] = Src.r[3].m128_f32[0];
-
-	Dest[4] = Src.r[0].m128_f32[1];
-	Dest[5] = Src.r[1].m128_f32[1];
-	Dest[6] = Src.r[2].m128_f32[1];
-	Dest[7] = Src.r[3].m128_f32[1];
-
-	Dest[8] = Src.r[0].m128_f32[2];
-	Dest[9] = Src.r[1].m128_f32[2];
-	Dest[10] = Src.r[2].m128_f32[2];
-	Dest[11] = Src.r[3].m128_f32[2];
-
-	// Implied Dest[12...15] = { 0, 0, 0, 1 };
-}
-
 void UpdateViewProjectionConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust)
 {
 	//
 	// Instead of using the typical 4x4 matrix like everywhere else, someone decided that the
-	// lighting shader is going to use 3x4 matrices. The missing 4th row is assumed to be
+	// lighting shader is going to use 3x4 matrices. The missing 4th column is assumed to be
 	// { 0, 0, 0, 1 } in row-major form.
 	//
 	XMMATRIX projMatrix;
@@ -810,9 +790,9 @@ void UpdateViewProjectionConstants(BSGraphics::ConstantGroup<BSVertexShader>& Ve
 	// VS: p1 float3x4 PrevWorldViewProj
 	//
 	if (!IsPreviousWorld)
-		RetardedStoreFloat3x4(&VertexCG.ParamVS<float, 0>(), projMatrix);
+		BSShaderUtil::TransposeStoreMatrix3x4(&VertexCG.ParamVS<float, 0>(), projMatrix);
 	else
-		RetardedStoreFloat3x4(&VertexCG.ParamVS<float, 1>(), projMatrix);
+		BSShaderUtil::TransposeStoreMatrix3x4(&VertexCG.ParamVS<float, 1>(), projMatrix);
 }
 
 SRWLOCK asdf = SRWLOCK_INIT;
@@ -1282,7 +1262,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 			sub_14130C8A0(Pass->m_Geometry->GetWorldTransform(), outputTemp, baseTechniqueID == RAW_TECHNIQUE_ENVMAP);
 
 			// VS: p6 float3x4 fVars3
-			RetardedStoreFloat3x4(&vertexCG.ParamVS<float, 6>(), outputTemp);
+			BSShaderUtil::TransposeStoreMatrix3x4(&vertexCG.ParamVS<float, 6>(), outputTemp);
 
 			sub_14130BE70(pixelCG, nullptr, Pass->m_Property, enableProjectedUvNormals);
 		}
