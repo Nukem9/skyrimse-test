@@ -40,7 +40,7 @@ namespace BSGraphics
 		template<typename U, uint32_t ParamIndex>
 		U& ParamVS() const
 		{
-			static_assert(std::is_same<T, BSVertexShader>::value, "ParamPS() requires ConstantGroup<BSVertexShader>");
+			static_assert(std::is_same<T, BSVertexShader>::value, "ParamVS() requires ConstantGroup<BSVertexShader>");
 			static_assert(ParamIndex < ARRAYSIZE(T::m_ConstantOffsets));
 
 			uintptr_t data		= (uintptr_t)m_Map.pData;

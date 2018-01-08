@@ -1351,7 +1351,7 @@ void BSLightingShader::GeoUpdateProjectedUvConstants(const BSGraphics::ConstantG
 		float *v6 = (float *)((uintptr_t)Geometry + 444);
 
 		if (!Geometry)
-			v6 = (float *)((uintptr_t)Property + 67);
+			v6 = (float *)((uintptr_t)Property + 0x10C);
 
 		float v8 = 1.0f - v6[3];
 
