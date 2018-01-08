@@ -12,6 +12,7 @@
 #include "../../NiMain/NiTexture.h"
 #include "../BSShaderAccumulator.h"
 #include "BSLightingShader.h"
+#include "BSLightingShaderProperty.h"
 
 //
 // Shader notes:
@@ -663,6 +664,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, Flags);
 
 	auto *renderer = GetThreadedGlobals();
+	auto property = static_cast<BSLightingShaderProperty *>(Pass->m_Property);
 	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
@@ -672,14 +674,12 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	bool doPrecipitationOcclusion = false;
 	bool isLOD = false;
 
-	uintptr_t v3 = (uintptr_t)Pass->m_Property;
-
 	uint8_t v102 = ~(unsigned __int8)(rawTechnique >> 1) & 1;
 	int v16 = 0;
 	uint8_t v12 = Pass->Byte1C;
 	uint8_t v103 = (unsigned __int8)(v12 - 2) <= 1u;
 
-	if (v12 == 3 && *(uintptr_t *)(v3 + 56) & 0x100000000i64)
+	if (v12 == 3 && property->QFlags() & 0x100000000i64)
 	{
 		TLS_dword_141E35280 = *(uint32_t *)&renderer->__zz0[72];
 		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(1);
@@ -701,7 +701,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 		// PS: p7 float4 MaterialData (NOTE: This is written AGAIN)
 		auto& var = pixelCG.ParamPS<XMVECTORF32, 7>();
-		var.f[0] = *(float *)(v3 + 260);
+		var.f[0] = property->fEnvmapLODFade;
 	}
 	break;
 
@@ -710,8 +710,8 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		GeoUpdateMTLandExtraConstants(
 			vertexCG,
 			Pass->m_Geometry->GetWorldTranslate(),
-			*(float *)(*(uintptr_t *)(v3 + 120) + 264i64),
-			*(float *)(*(uintptr_t *)(v3 + 120) + 268i64));
+			*(float *)((uintptr_t)property->pMaterial + 264i64),
+			*(float *)((uintptr_t)property->pMaterial + 268i64));
 		v16 = v102;
 		break;
 
@@ -725,7 +725,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		break;
 
 	case RAW_TECHNIQUE_TREE:
-		sub_14130BC60(vertexCG, Pass->m_Property);
+		sub_14130BC60(vertexCG, property);
 		v16 = v102;
 		break;
 
@@ -754,18 +754,17 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	{
 		XMVECTORF32& materialData = pixelCG.ParamPS<XMVECTORF32, 7>();
 
-		float v30 = *(float *)(v3 + 48);
 		bool wtf = (signed char)Pass->Byte1E >= 0;
 
 		wtf = !wtf;
 
 		if (!(wtf == false))
-			materialData.f[2] = v30 * *(float *)(*(uintptr_t *)(v3 + 96) + 332i64);
+			materialData.f[2] = property->GetAlpha() * *(float *)((uintptr_t)property->pFadeNode + 332i64);
 		else
-			materialData.f[2] = v30;
+			materialData.f[2] = property->GetAlpha();
 	}
 
-	GeoUpdateEmitColorConstants(pixelCG, Pass->m_Property);
+	GeoUpdateEmitColorConstants(pixelCG, property);
 
 	uint32_t lightCount = (rawTechnique >> 3) & 7;
 	uint32_t shadowLightCount = (rawTechnique >> 6) & 7;
@@ -807,7 +806,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	{
 		// PS: p7 float4 MaterialData (NOTE: This is written TWICE)
 		auto& var = pixelCG.ParamPS<XMVECTORF32, 7>();
-		var.f[1] = *(float *)(v3 + 256);
+		var.f[1] = property->fSpecularLODFade;
 
 		doPrecipitationOcclusion = true;
 	}
@@ -865,7 +864,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 			fVars3[10] = v60[101];
 			fVars3[11] = v60[105];
 
-			GeoUpdateProjectedUvConstants(pixelCG, Pass->m_Geometry, Pass->m_Property, enableProjectedUvNormals);
+			GeoUpdateProjectedUvConstants(pixelCG, Pass->m_Geometry, property, enableProjectedUvNormals);
 		}
 		else
 		{
@@ -875,7 +874,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 			// VS: p6 float3x4 fVars3
 			BSShaderUtil::TransposeStoreMatrix3x4(&vertexCG.ParamVS<float, 6>(), outputTemp);
 
-			GeoUpdateProjectedUvConstants(pixelCG, nullptr, Pass->m_Property, enableProjectedUvNormals);
+			GeoUpdateProjectedUvConstants(pixelCG, nullptr, property, enableProjectedUvNormals);
 		}
 	}
 
@@ -924,7 +923,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	if (Pass->Byte1C == 10)
 	{
-		uintptr_t v89 = *(uintptr_t *)(v3 + 96);
+		uintptr_t v89 = (uintptr_t)property->pFadeNode;
 		float v90;
 
 		if ((signed char)Pass->Byte1E >= 0)
@@ -939,13 +938,13 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	{
 		uint32_t oldDepthMode = *(uint32_t *)&renderer->__zz0[32];
 
-		if (!(*(uint64_t *)(v3 + 56) & 0x100000000i64))
+		if (!(property->QFlags() & 0x100000000i64))
 		{
 			TLS_dword_141E35280 = oldDepthMode;
 			BSGraphics::Renderer::DepthStencilStateSetDepthMode(1);
 		}
 
-		if (!(*(uint64_t *)(v3 + 56) & 0x80000000))
+		if (!(property->QFlags() & 0x80000000))
 		{
 			TLS_dword_141E35280 = oldDepthMode;
 			BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
@@ -965,7 +964,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		float v99 = 0.0f;
 
 		if (rawTechnique & RAW_FLAG_SPECULAR)
-			v99 = *(float *)(v3 + 256);
+			v99 = property->fSpecularLODFade;
 
 		if ((Flags & 2) == 0)
 			v98 = 1.0f;
@@ -1254,7 +1253,7 @@ void BSLightingShader::GeoUpdateMTLandExtraConstants(const BSGraphics::ConstantG
 	fVars0.f[3] = v11.y - Translate.y;
 }
 
-void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSShaderProperty *Property)
+void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSLightingShaderProperty *Property)
 {
 	// __int64 __fastcall sub_14130BC60(__int64 a1, __int64 a2)
 
@@ -1266,7 +1265,7 @@ void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexSha
 
 	temp.ptr = VertexCG.m_Map.pData;
 
-	auto sub_14130BC60 = (void(__fastcall *)(tempbufdata *, BSShaderProperty *))(g_ModuleBase + 0x130BC60);
+	auto sub_14130BC60 = (void(__fastcall *)(tempbufdata *, BSLightingShaderProperty *))(g_ModuleBase + 0x130BC60);
 	sub_14130BC60(&temp, Property);
 }
 
@@ -1313,17 +1312,14 @@ void BSLightingShader::GeoUpdateAmbientLightConstants(const BSGraphics::Constant
 	GeoUpdateAmbientLightConstants(&temp, Transform, a3);
 }
 
-void BSLightingShader::GeoUpdateEmitColorConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSShaderProperty *Property)
+void BSLightingShader::GeoUpdateEmitColorConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSLightingShaderProperty *Property)
 {
 	// PS: p8 float4 EmitColor
 	XMVECTORF32& emitColor = PixelCG.ParamPS<XMVECTORF32, 8>();
 
-	float *v33 = (float *)((uintptr_t)Property + 240);
-	float v31 = *(float *)((uintptr_t)Property + 248);
-
-	emitColor.f[0] = v33[0] * v31;
-	emitColor.f[1] = v33[1] * v31;
-	emitColor.f[2] = v33[2] * v31;
+	emitColor.f[0] = Property->pEmitColor->r * Property->fEmitColorScale;
+	emitColor.f[1] = Property->pEmitColor->g * Property->fEmitColorScale;
+	emitColor.f[2] = Property->pEmitColor->b * Property->fEmitColorScale;
 }
 
 void BSLightingShader::GeoUpdatePointLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
@@ -1342,7 +1338,7 @@ void BSLightingShader::GeoUpdatePointLightConstants(const BSGraphics::ConstantGr
 	GeoUpdatePointLightConstants(&temp, Pass, Transform, LightCount, ShadowLightCount, Scale, a7);
 }
 
-void BSLightingShader::GeoUpdateProjectedUvConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSShaderProperty *Property, bool EnableProjectedNormals)
+void BSLightingShader::GeoUpdateProjectedUvConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals)
 {
 	// PS: p12 float4 ProjectedUVParams
 	{
@@ -1372,10 +1368,7 @@ void BSLightingShader::GeoUpdateProjectedUvConstants(const BSGraphics::ConstantG
 		}
 		else
 		{
-			projectedUVParams2.f[0] = *(float *)((uintptr_t)Property + 284);
-			projectedUVParams2.f[1] = *(float *)((uintptr_t)Property + 288);
-			projectedUVParams2.f[2] = *(float *)((uintptr_t)Property + 292);
-			projectedUVParams2.f[3] = *(float *)((uintptr_t)Property + 296);
+			BSGraphics::Utility::CopyNiColorAToFloat((XMVECTOR *)&projectedUVParams2, Property->kProjectedUVColor);
 		}
 	}
 

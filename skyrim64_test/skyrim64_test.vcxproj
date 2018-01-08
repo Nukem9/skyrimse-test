@@ -91,6 +91,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h" />
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderProperty.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShader.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h" />
     <ClInclude Include="src\patches\patches.h" />

@@ -4,6 +4,9 @@
 
 #include "../BSShader.h"
 
+class BSLightingShaderMaterial;
+class BSLightingShaderProperty;
+
 class BSLightingShader : public BSShader
 {
 private:
@@ -96,12 +99,12 @@ private:
 
 	static void GeoUpdateViewProjectionConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust);
 	static void GeoUpdateMTLandExtraConstants(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4);
-	static void sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSShaderProperty *Property);
+	static void sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSLightingShaderProperty *Property);
 	static void GeoUpdateDirectionalLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const BSRenderPass *Pass, DirectX::XMMATRIX& a3, int a4);
 	static void GeoUpdateAmbientLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const NiTransform& Transform, int a3);
-	static void GeoUpdateEmitColorConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSShaderProperty *Property);
+	static void GeoUpdateEmitColorConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSLightingShaderProperty *Property);
 	static void GeoUpdatePointLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSRenderPass *Pass, DirectX::XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7);
-	static void GeoUpdateProjectedUvConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSShaderProperty *Property, bool EnableProjectedNormals);
+	static void GeoUpdateProjectedUvConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals);
 	static void sub_14130C8A0(const NiTransform& Transform, DirectX::XMMATRIX& OutMatrix, bool DontMultiply);
 };
 static_assert(sizeof(BSLightingShader) == 0xF8, "");

@@ -2,6 +2,14 @@
 
 #include <DirectXMath.h>
 
+class NiColor
+{
+public:
+	float r;
+	float g;
+	float b;
+};
+
 class NiColorA
 {
 public:

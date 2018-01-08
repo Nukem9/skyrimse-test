@@ -4,7 +4,7 @@
 #include "../NiMain/NiRefObject.h"
 #include "../BSTScatterTable.h"
 
-struct BSShaderMaterial;
+class BSShaderMaterial;
 struct BSRenderPass;
 struct BSVertexShader;
 struct BSPixelShader;
