@@ -16,6 +16,7 @@
 //
 // Shader notes:
 //
+// - Destructor is not implemented
 // - UpdateFogParameters() was modified to remove the use of global variables (TLS_FogNearColor)
 // - SetupGeometry() same as above
 //

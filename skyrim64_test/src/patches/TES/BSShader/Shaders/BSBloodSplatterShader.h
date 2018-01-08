@@ -36,8 +36,9 @@ public:
 	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t Flags) override;// Implemented
 	virtual void RestoreGeometry(BSRenderPass *Pass) override;				// Implemented
 
-	uint32_t GetVertexTechnique(uint32_t RawTechnique);
-	uint32_t GetPixelTechnique(uint32_t RawTechnique);
+	static uint32_t GetRawTechnique(uint32_t Technique);
+	static uint32_t GetVertexTechnique(uint32_t RawTechnique);
+	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 
 	// float QGlobalAlpha(); fGlobalAlpha
 };

@@ -80,9 +80,29 @@ public:
 	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t Flags) override;// Implemented
 	virtual void RestoreGeometry(BSRenderPass *Pass) override;				// Implemented
 
-	uint32_t GetRawTechnique(uint32_t Technique);
-	uint32_t GetVertexTechnique(uint32_t RawTechnique);
-	uint32_t GetPixelTechnique(uint32_t RawTechnique);
+	static uint32_t GetRawTechnique(uint32_t Technique);
+	static uint32_t GetVertexTechnique(uint32_t RawTechnique);
+	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
+
+private:
+	static void TechUpdateAccelerationConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG);
+	static void TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSGraphics::ConstantGroup<BSPixelShader>& PixelCG);
+
+	static void sub_14130C470(__int64 a1, __int64 a2);
+	static void sub_14130C4D0(__int64 a1, __int64 a2);
+	static void sub_14130C220(int a1, __int64 a2, __int64 a3);
+	static void MatSetMultiTextureLandOverrides(__int64 a1);
+	static __int64 sub_141314170(__int64 a1);
+
+	static void GeoUpdateViewProjectionConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust);
+	static void GeoUpdateMTLandExtraConstants(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4);
+	static void sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSShaderProperty *Property);
+	static void GeoUpdateDirectionalLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const BSRenderPass *Pass, DirectX::XMMATRIX& a3, int a4);
+	static void GeoUpdateAmbientLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const NiTransform& Transform, int a3);
+	static void GeoUpdateEmitColorConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSShaderProperty *Property);
+	static void GeoUpdatePointLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSRenderPass *Pass, DirectX::XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7);
+	static void GeoUpdateProjectedUvConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSShaderProperty *Property, bool EnableProjectedNormals);
+	static void sub_14130C8A0(const NiTransform& Transform, DirectX::XMMATRIX& OutMatrix, bool DontMultiply);
 };
 static_assert(sizeof(BSLightingShader) == 0xF8, "");
 static_assert(offsetof(BSLightingShader, m_CurrentRawTechnique) == 0x94, "");

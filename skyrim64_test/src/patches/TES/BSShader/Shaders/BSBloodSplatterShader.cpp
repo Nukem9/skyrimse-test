@@ -10,8 +10,8 @@
 //
 // Shader notes:
 //
+// - Destructor is not implemented
 // - m_CurrentRawTechnique is an implicit global variable (TODO)
-// - ~BSBloodSplatterShader() not yet implemented
 //
 using namespace DirectX;
 
@@ -45,15 +45,8 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSBloodSplatterShader::SetupTechnique, Technique);
 
-	// Converts technique with runtime flags to actual technique flags during shader load
-	uint32_t rawTechnique;
-
-	if (Technique == BSSM_BLOOD_SPLATTER_FLARE)
-		rawTechnique = RAW_TECHNIQUE_FLARE;
-	else
-		rawTechnique = RAW_TECHNIQUE_SPLATTER;
-
 	// Check if shaders exist
+	uint32_t rawTechnique = GetRawTechnique(Technique);
 	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
 	uint32_t pixelShaderTecnique = GetPixelTechnique(rawTechnique);
 
@@ -62,7 +55,7 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 
 	if (rawTechnique == RAW_TECHNIQUE_FLARE)
 	{
-		// Use the sun or nearest light source to draw a water-like "shine reflection" from blood
+		// Use the sun or nearest light source to draw a water-like reflection from blood
 		if (iAdaptedLightRenderTarget <= 0)
 		{
 			NiTexture *flareHDRTexture = *(NiTexture **)(qword_143052900 + 72);
@@ -159,6 +152,18 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 void BSBloodSplatterShader::RestoreGeometry(BSRenderPass *Pass)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::RestoreGeometry, Pass);
+}
+
+uint32_t BSBloodSplatterShader::GetRawTechnique(uint32_t Technique)
+{
+	switch (Technique)
+	{
+	case BSSM_BLOOD_SPLATTER_FLARE:return RAW_TECHNIQUE_FLARE;
+	case BSSM_BLOOD_SPLATTER:return RAW_TECHNIQUE_SPLATTER;
+	}
+
+	// bAssert("BSBloodSplatterShader: bad technique ID");
+	return 0;
 }
 
 uint32_t BSBloodSplatterShader::GetVertexTechnique(uint32_t RawTechnique)

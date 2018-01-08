@@ -16,6 +16,7 @@
 //
 // Shader notes:
 //
+// - Destructor is not implemented
 // - A global variable update was manually removed in SetupGeometry()
 //
 using namespace DirectX;
@@ -340,15 +341,15 @@ uint32_t BSSkyShader::GetRawTechnique(uint32_t Technique)
 {
 	switch (Technique)
 	{
-	case BSSM_SKYBASEPRE: return RAW_TECHNIQUE_SUNOCCLUDE;
-	case BSSM_SKY: return RAW_TECHNIQUE_SKY;
-	case BSSM_SKY_MOON_STARS_MASK: return RAW_TECHNIQUE_MOONANDSTARSMASK;
-	case BSSM_SKY_STARS: return RAW_TECHNIQUE_STARS;
-	case BSSM_SKY_TEXTURE: return RAW_TECHNIQUE_TEXTURE;
-	case BSSM_SKY_CLOUDS: return RAW_TECHNIQUE_CLOUDS;
-	case BSSM_SKY_CLOUDSLERP: return RAW_TECHNIQUE_CLOUDSLERP;
-	case BSSM_SKY_CLOUDSFADE: return RAW_TECHNIQUE_CLOUDSFADE;
-	case BSSM_SKY_SUNGLARE: return RAW_TECHNIQUE_SUNGLARE;
+	case BSSM_SKYBASEPRE:return RAW_TECHNIQUE_SUNOCCLUDE;
+	case BSSM_SKY:return RAW_TECHNIQUE_SKY;
+	case BSSM_SKY_MOON_STARS_MASK:return RAW_TECHNIQUE_MOONANDSTARSMASK;
+	case BSSM_SKY_STARS:return RAW_TECHNIQUE_STARS;
+	case BSSM_SKY_TEXTURE:return RAW_TECHNIQUE_TEXTURE;
+	case BSSM_SKY_CLOUDS:return RAW_TECHNIQUE_CLOUDS;
+	case BSSM_SKY_CLOUDSLERP:return RAW_TECHNIQUE_CLOUDSLERP;
+	case BSSM_SKY_CLOUDSFADE:return RAW_TECHNIQUE_CLOUDSFADE;
+	case BSSM_SKY_SUNGLARE:return RAW_TECHNIQUE_SUNGLARE;
 	}
 
 	// bAssert("BSSkyShader: bad technique ID");

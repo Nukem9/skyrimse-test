@@ -65,8 +65,8 @@ public:
 	void UpdateGeometryProjections(VertexConstantData *Data, const NiTransform& GeoTransform);
 	void UpdateGeometryInstanceData(const BSGeometry *Geometry, BSShaderProperty *Property);
 
-	uint32_t GetRawTechnique(uint32_t Technique);
-	uint32_t GetVertexTechnique(uint32_t RawTechnique);
-	uint32_t GetPixelTechnique(uint32_t RawTechnique);
+	static uint32_t GetRawTechnique(uint32_t Technique);
+	static uint32_t GetVertexTechnique(uint32_t RawTechnique);
+	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 };
 static_assert(sizeof(BSGrassShader) == 0x90, "");

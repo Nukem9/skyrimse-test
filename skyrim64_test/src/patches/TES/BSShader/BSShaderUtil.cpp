@@ -42,3 +42,13 @@ XMMATRIX BSShaderUtil::GetXMFromNiPosAdjust(const NiTransform& Transform, const 
 
 	return temp;
 }
+
+void BSShaderUtil::TransposeStoreMatrix3x4(float *Dest, const XMMATRIX& Source)
+{
+	XMMATRIX transposed = XMMatrixTranspose(Source);
+
+	_mm_store_ps(&Dest[0], transposed.r[0]);
+	_mm_store_ps(&Dest[4], transposed.r[1]);
+	_mm_store_ps(&Dest[8], transposed.r[2]);
+	// Implied Dest[12...15] = { 0, 0, 0, 1 };
+}

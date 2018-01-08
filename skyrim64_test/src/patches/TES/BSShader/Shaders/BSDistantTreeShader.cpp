@@ -15,6 +15,7 @@
 //
 // Shader notes:
 //
+// - Destructor is not implemented
 // - VS Parameter 0 is never set (InstanceData)
 // - VS Parameter 7 is never set (DiffuseDir)
 // - VS Parameter 8 is never set (IndexScale)
@@ -49,20 +50,8 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSDistantTreeShader::SetupTechnique, Technique);
 
-	// Converts technique with runtime flags to actual technique flags during shader load
-	uint32_t rawTechnique = 0;
-
-	if (Technique == BSSM_DISTANTTREE)
-		rawTechnique = RAW_TECHNIQUE_BLOCK;
-	else if (Technique == BSSM_DISTANTTREE_DEPTH)
-		rawTechnique = RAW_TECHNIQUE_DEPTH;
-	//else
-		// bAssert("BSDistantTreeShader: bad technique ID");
-
-	if (bUseEarlyZ)
-		rawTechnique |= RAW_FLAG_DO_ALPHA;
-
 	// Check if shaders exist
+	uint32_t rawTechnique = GetRawTechnique(Technique);
 	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
 	uint32_t pixelShaderTechnique = GetPixelTechnique(rawTechnique);
 
@@ -190,6 +179,23 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::RestoreGeometry, Pass);
+}
+
+uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)
+{
+	uint32_t outputTech = 0;
+
+	if (Technique == BSSM_DISTANTTREE)
+		outputTech = RAW_TECHNIQUE_BLOCK;
+	else if (Technique == BSSM_DISTANTTREE_DEPTH)
+		outputTech = RAW_TECHNIQUE_DEPTH;
+	//else
+	// bAssert("BSDistantTreeShader: bad technique ID");
+
+	if (bUseEarlyZ)
+		outputTech |= RAW_FLAG_DO_ALPHA;
+	
+	return outputTech;
 }
 
 uint32_t BSDistantTreeShader::GetVertexTechnique(uint32_t RawTechnique)
