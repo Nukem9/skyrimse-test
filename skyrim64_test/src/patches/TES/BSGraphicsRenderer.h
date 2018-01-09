@@ -16,16 +16,16 @@ namespace BSGraphics
 
 	enum ConstantGroupLevel
 	{
-		CONSTANT_GROUP_LEVEL_TECHNIQUE = 0x0,
-		CONSTANT_GROUP_LEVEL_MATERIAL = 0x1,
-		CONSTANT_GROUP_LEVEL_GEOMETRY = 0x2,
+		CONSTANT_GROUP_LEVEL_TECHNIQUE = 0x0,		// Varies between PS/VS shaders
+		CONSTANT_GROUP_LEVEL_MATERIAL = 0x1,		// Varies between PS/VS shaders
+		CONSTANT_GROUP_LEVEL_GEOMETRY = 0x2,		// Varies between PS/VS shaders
 		CONSTANT_GROUP_LEVEL_COUNT = 0x3,
 
 		CONSTANT_GROUP_LEVEL_INSTANCE = 0x8,
 		CONSTANT_GROUP_LEVEL_PREVIOUS_BONES = 0x9,
 		CONSTANT_GROUP_LEVEL_BONES = 0xA,
-		//CONSTANT_GROUP_LEVEL_SUB_INDEX = 0xB,				Unconfirmed (FO4)
-		//CONSTANT_GROUP_LEVEL_FACE_CUSTOMIZATION = 0xC,	Unconfirmed (FO4)
+		CONSTANT_GROUP_LEVEL_SCRAP_VALUE = 0xB,		// PS/VS. Used for a single float value as scrap/temp data (16 bytes allocated)
+		CONSTANT_GROUP_LEVEL_SCREENSPACEINFO = 0xC,	// PS/VS. Maybe screen space/resolution info. Contains a lot of matrices and vectors.
 	};
 
 	template<typename T>

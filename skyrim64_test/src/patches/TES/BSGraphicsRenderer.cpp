@@ -32,7 +32,7 @@ namespace BSGraphics::Renderer
 		if (*(DWORD *)&renderer->__zz0[52] != CullMode)
 		{
 			*(DWORD *)&renderer->__zz0[52] = CullMode;
-			renderer->dword_14304DEB0 |= 0x20;
+			renderer->m_StateUpdateFlags |= 0x20;
 		}
 	}
 
@@ -43,7 +43,7 @@ namespace BSGraphics::Renderer
 		if (*(DWORD *)&renderer->__zz0[56] != Value)
 		{
 			*(DWORD *)&renderer->__zz0[56] = Value;
-			renderer->dword_14304DEB0 |= 0x40;
+			renderer->m_StateUpdateFlags |= 0x40;
 		}
 	}
 
@@ -57,7 +57,7 @@ namespace BSGraphics::Renderer
 		if (*(DWORD *)&renderer->__zz0[64] != Mode)
 		{
 			*(DWORD *)&renderer->__zz0[64] = Mode;
-			renderer->dword_14304DEB0 |= 0x80;
+			renderer->m_StateUpdateFlags |= 0x80;
 		}
 	}
 
@@ -71,7 +71,7 @@ namespace BSGraphics::Renderer
 		if (*(DWORD *)&renderer->__zz0[68] != Value)
 		{
 			*(DWORD *)&renderer->__zz0[68] = Value;
-			renderer->dword_14304DEB0 |= 0x80;
+			renderer->m_StateUpdateFlags |= 0x80;
 		}
 	}
 
@@ -85,7 +85,7 @@ namespace BSGraphics::Renderer
 		if (*(DWORD *)&renderer->__zz0[72] != Value)
 		{
 			*(DWORD *)&renderer->__zz0[72] = Value;
-			renderer->dword_14304DEB0 |= 0x80;
+			renderer->m_StateUpdateFlags |= 0x80;
 		}
 	}
 
@@ -100,7 +100,7 @@ namespace BSGraphics::Renderer
 		{
 			*(DWORD *)&renderer->__zz0[40] = Mode;
 			*(DWORD *)&renderer->__zz0[44] = StencilRef;
-			renderer->dword_14304DEB0 |= 0x8;
+			renderer->m_StateUpdateFlags |= 0x8;
 		}
 	}
 
@@ -117,9 +117,9 @@ namespace BSGraphics::Renderer
 
 			// Temp var to prevent duplicate state setting? Don't know where this gets set.
 			if (*(DWORD *)&renderer->__zz0[36] != Mode)
-				renderer->dword_14304DEB0 |= 0x4;
+				renderer->m_StateUpdateFlags |= 0x4;
 			else
-				renderer->dword_14304DEB0 &= ~0x4;
+				renderer->m_StateUpdateFlags &= ~0x4;
 		}
 	}
 
@@ -127,9 +127,9 @@ namespace BSGraphics::Renderer
 	{
 		auto *renderer = GetThreadedGlobals();
 
-		if (renderer->m_PSSamplerSetting1[Index] != Mode)
+		if (renderer->m_PSSamplerAddressMode[Index] != Mode)
 		{
-			renderer->m_PSSamplerSetting1[Index] = Mode;
+			renderer->m_PSSamplerAddressMode[Index] = Mode;
 			renderer->m_PSSamplerModifiedBits |= 1 << Index;
 		}
 	}
@@ -138,9 +138,9 @@ namespace BSGraphics::Renderer
 	{
 		auto *renderer = GetThreadedGlobals();
 
-		if (renderer->m_PSSamplerSetting2[Index] != Mode)
+		if (renderer->m_PSSamplerFilterMode[Index] != Mode)
 		{
-			renderer->m_PSSamplerSetting2[Index] = Mode;
+			renderer->m_PSSamplerFilterMode[Index] = Mode;
 			renderer->m_PSSamplerModifiedBits |= 1 << Index;
 		}
 	}
@@ -150,15 +150,15 @@ namespace BSGraphics::Renderer
 	{
 		auto *renderer = GetThreadedGlobals();
 
-		if (renderer->m_PSSamplerSetting1[Index] != AddressMode)
+		if (renderer->m_PSSamplerAddressMode[Index] != AddressMode)
 		{
-			renderer->m_PSSamplerSetting1[Index] = AddressMode;
+			renderer->m_PSSamplerAddressMode[Index] = AddressMode;
 			renderer->m_PSSamplerModifiedBits |= 1 << Index;
 		}
 
-		if (renderer->m_PSSamplerSetting2[Index] != FilterMode)
+		if (renderer->m_PSSamplerFilterMode[Index] != FilterMode)
 		{
-			renderer->m_PSSamplerSetting2[Index] = FilterMode;
+			renderer->m_PSSamplerFilterMode[Index] = FilterMode;
 			renderer->m_PSSamplerModifiedBits |= 1 << Index;
 		}
 	}
@@ -170,11 +170,11 @@ namespace BSGraphics::Renderer
 
 		auto *renderer = GetThreadedGlobals();
 
-		// When UseStoredValue is false, the constant buffer data is zeroed, but float_14304DF68 is saved
+		// When UseStoredValue is false, the constant buffer data is zeroed, but m_ScrapConstantValue is saved
 		if (renderer->__zz0[76] != UseStoredValue)
 		{
 			renderer->__zz0[76] = UseStoredValue;
-			renderer->dword_14304DEB0 |= 0x100u;
+			renderer->m_StateUpdateFlags |= 0x100u;
 		}
 	}
 
@@ -188,13 +188,13 @@ namespace BSGraphics::Renderer
 		if (renderer->__zz0[76] != UseStoredValue)
 		{
 			renderer->__zz0[76] = UseStoredValue;
-			renderer->dword_14304DEB0 |= 0x100u;
+			renderer->m_StateUpdateFlags |= 0x100u;
 		}
 
-		if (renderer->float_14304DF68 != Value)
+		if (renderer->m_ScrapConstantValue != Value)
 		{
-			renderer->float_14304DF68 = Value;
-			renderer->dword_14304DEB0 |= 0x200u;
+			renderer->m_ScrapConstantValue = Value;
+			renderer->m_StateUpdateFlags |= 0x200u;
 		}
 	}
 
@@ -307,7 +307,7 @@ namespace BSGraphics::Renderer
 
 		// The input layout (IASetInputLayout) needs to be created and updated
 		renderer->m_CurrentVertexShader = Shader;
-		renderer->dword_14304DEB0 |= 0x400;
+		renderer->m_StateUpdateFlags |= 0x400;
 
 		renderer->m_DeviceContext->VSSetShader(Shader->m_Shader, nullptr, 0);
 	}

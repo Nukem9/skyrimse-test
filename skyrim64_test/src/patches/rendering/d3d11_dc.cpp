@@ -60,7 +60,7 @@ DWORD WINAPI DC_Thread(LPVOID Arg)
 		if (newData == oldData)
 			__debugbreak();
 
-		newData->dword_14304DEB0 = 0xFFFFFFFF & ~0x400;
+		newData->m_StateUpdateFlags = 0xFFFFFFFF & ~0x400;
 
 		newData->m_DeviceContext = jobData->DeferredContext;
 

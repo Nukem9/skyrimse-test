@@ -278,7 +278,7 @@ void CommitShaderChanges(bool Unknown)
 
 	if (lastTechId == 0x5C00002E)
 	{
-		renderer->dword_14304DEB0 |= 0x80;
+		renderer->m_StateUpdateFlags |= 0x80;
 
 		//*(signed int *)&renderer->__zz2[656] = 0;
 		*(signed int *)&renderer->__zz0[64] = 0;
@@ -290,10 +290,10 @@ void CommitShaderChanges(bool Unknown)
 	//_swprintf(buffer, L"SETTINGS [%d][%d][%d][%d]", *(unsigned int *)&renderer->__zz2[656], *(signed int *)&renderer->__zz0[64], *(signed int *)&renderer->__zz0[68], *(signed int *)&renderer->__zz0[72]);
 	//annotation->SetMarker(buffer);
 
-	v1 = renderer->dword_14304DEB0;
-	if (renderer->dword_14304DEB0)
+	v1 = renderer->m_StateUpdateFlags;
+	if (renderer->m_StateUpdateFlags)
 	{
-		if (renderer->dword_14304DEB0 & 1)
+		if (renderer->m_StateUpdateFlags & 1)
 		{
 			v3 = (uint64_t *)renderer->qword_14304BF00;
 			if (renderer->iRenderTargetIndexes[0][0] == -1)
@@ -357,7 +357,7 @@ void CommitShaderChanges(bool Unknown)
 					v34,
 					(ID3D11DepthStencilView *)v11);
 
-				v1 = renderer->dword_14304DEB0;
+				v1 = renderer->m_StateUpdateFlags;
 				goto LABEL_29;
 			}
 			v12 = renderer->rshadowState_iDepthStencilSlice
@@ -408,14 +408,14 @@ void CommitShaderChanges(bool Unknown)
 				renderer->m_DepthStates[*(signed int *)&renderer->__zz0[32]][*(signed int *)&renderer->__zz0[40]],
 				*(UINT *)&renderer->__zz0[44]);
 
-			v1 = renderer->dword_14304DEB0;
+			v1 = renderer->m_StateUpdateFlags;
 		}
 
 		// RSSetState
 		if (v1 & (0x1000 | 0x40 | 0x20 | 0x10))
 		{
 			// Cull mode, depth bias, fill mode, scissor mode, scissor rect (order unknown)
-			void *wtf = renderer->qword_14304C930[0][0][0][*(signed int *)&renderer->__zz0[60]
+			void *wtf = renderer->m_RasterStates[0][0][0][*(signed int *)&renderer->__zz0[60]
 				+ 2
 				* (*(signed int *)&renderer->__zz0[56]
 					+ 12
@@ -424,8 +424,8 @@ void CommitShaderChanges(bool Unknown)
 
 			renderer->m_DeviceContext->RSSetState((ID3D11RasterizerState *)wtf);
 
-			v1 = renderer->dword_14304DEB0;
-			if (renderer->dword_14304DEB0 & 0x40)
+			v1 = renderer->m_StateUpdateFlags;
+			if (renderer->m_StateUpdateFlags & 0x40)
 			{
 				if (*(float *)&renderer->__zz0[24] != *(float *)&renderer->__zz2[640]
 					|| (v14 = *(float *)&renderer->__zz0[28],
@@ -433,15 +433,15 @@ void CommitShaderChanges(bool Unknown)
 				{
 					v14 = *(float *)&renderer->__zz2[644];
 					*(DWORD *)&renderer->__zz0[24] = *(DWORD *)&renderer->__zz2[640];
-					v1 = renderer->dword_14304DEB0 | 2;
+					v1 = renderer->m_StateUpdateFlags | 2;
 					*(DWORD *)&renderer->__zz0[28] = *(DWORD *)&renderer->__zz2[644];
-					renderer->dword_14304DEB0 |= 2u;
+					renderer->m_StateUpdateFlags |= 2u;
 				}
 				if (*(DWORD *)&renderer->__zz0[56])
 				{
 					v15 = v14 - renderer->m_UnknownFloats1[0][*(signed int *)&renderer->__zz0[56]];
 					v1 |= 2u;
-					renderer->dword_14304DEB0 = v1;
+					renderer->m_StateUpdateFlags = v1;
 					*(float *)&renderer->__zz0[28] = v15;
 				}
 			}
@@ -452,7 +452,7 @@ void CommitShaderChanges(bool Unknown)
 		{
 			renderer->m_DeviceContext->RSSetViewports(1, (D3D11_VIEWPORT *)&renderer->__zz0[8]);
 
-			v1 = renderer->dword_14304DEB0;
+			v1 = renderer->m_StateUpdateFlags;
 		}
 
 		// OMSetBlendState
@@ -461,7 +461,7 @@ void CommitShaderChanges(bool Unknown)
 			float *blendFactor = (float *)(g_ModuleBase + 0x1E2C168);
 
 			// Mode, write mode, alpha to coverage, blend state (order unknown)
-			void *wtf = renderer->qword_14304CDB0[0][0][0][*(unsigned int *)&renderer->__zz2[656]
+			void *wtf = renderer->m_BlendStates[0][0][0][*(unsigned int *)&renderer->__zz2[656]
 				+ 2
 				* (*(signed int *)&renderer->__zz0[72]
 					+ 13
@@ -470,7 +470,7 @@ void CommitShaderChanges(bool Unknown)
 
 			renderer->m_DeviceContext->OMSetBlendState((ID3D11BlendState *)wtf, blendFactor, 0xFFFFFFFF);
 
-			v1 = renderer->dword_14304DEB0;
+			v1 = renderer->m_StateUpdateFlags;
 		}
 
 		if (v1 & (0x200 | 0x100))
@@ -479,13 +479,13 @@ void CommitShaderChanges(bool Unknown)
 			renderer->m_DeviceContext->Map(renderer->m_TempConstantBuffer1, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
 
 			if (renderer->__zz0[76])
-				*(float *)resource.pData = renderer->float_14304DF68;
+				*(float *)resource.pData = renderer->m_ScrapConstantValue;
 			else
 				*(float *)resource.pData = 0.0f;
 
 			renderer->m_DeviceContext->Unmap(renderer->m_TempConstantBuffer1, 0);
 
-			v1 = renderer->dword_14304DEB0;
+			v1 = renderer->m_StateUpdateFlags;
 		}
 
 		// Shader input layout creation + updates
@@ -533,7 +533,7 @@ void CommitShaderChanges(bool Unknown)
 			}
 
 			renderer->m_DeviceContext->IASetInputLayout((ID3D11InputLayout *)v19);
-			v1 = renderer->dword_14304DEB0;
+			v1 = renderer->m_StateUpdateFlags;
 
 			ReleaseSRWLockExclusive(&InputLayoutLock);
 		}
@@ -542,7 +542,7 @@ void CommitShaderChanges(bool Unknown)
 		if (_bittest((const LONG *)&v1, 11))
 		{
 			renderer->m_DeviceContext->IASetPrimitiveTopology((D3D11_PRIMITIVE_TOPOLOGY)*(unsigned int *)&renderer->__zz2[24]);
-			v1 = renderer->dword_14304DEB0;
+			v1 = renderer->m_StateUpdateFlags;
 		}
 
 		v21 = v1 & 0x400;
@@ -551,7 +551,7 @@ void CommitShaderChanges(bool Unknown)
 		if (Unknown)
 			v22 = v21;
 
-		renderer->dword_14304DEB0 = v22;
+		renderer->m_StateUpdateFlags = v22;
 	}
 
 	//
@@ -576,15 +576,15 @@ void CommitShaderChanges(bool Unknown)
 	{
 		for_each_bit(i, bits)
 		{
-			char *ptr = (char *)renderer->qword_14304D910 + 8 * ((signed int)renderer->m_PSSamplerSetting2[i] + 5i64 * (signed int)renderer->m_PSSamplerSetting1[i]);
+			char *ptr = (char *)renderer->m_SamplerStates + 8 * ((signed int)renderer->m_PSSamplerFilterMode[i] + 5i64 * (signed int)renderer->m_PSSamplerAddressMode[i]);
 
-			if (ptr != (char *)&renderer->qword_14304D910[renderer->m_PSSamplerSetting1[i]][renderer->m_PSSamplerSetting2[i]])
+			if (ptr != (char *)&renderer->m_SamplerStates[renderer->m_PSSamplerAddressMode[i]][renderer->m_PSSamplerFilterMode[i]])
 				__debugbreak();
 
 			if (i >= 16)
 				__debugbreak();
 
-			renderer->m_DeviceContext->PSSetSamplers(i, 1, &renderer->qword_14304D910[renderer->m_PSSamplerSetting1[i]][renderer->m_PSSamplerSetting2[i]]);
+			renderer->m_DeviceContext->PSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_PSSamplerAddressMode[i]][renderer->m_PSSamplerFilterMode[i]]);
 		}
 
 		renderer->m_PSSamplerModifiedBits = 0;
@@ -604,15 +604,15 @@ void CommitShaderChanges(bool Unknown)
 	{
 		for_each_bit(i, bits)
 		{
-			char *ptr = (char *)&renderer->qword_14304D910 + 8 * ((signed int)renderer->m_CSSamplerSetting2[i] + 5i64 * (signed int)renderer->m_CSSamplerSetting1[i]);
+			char *ptr = (char *)&renderer->m_SamplerStates + 8 * ((signed int)renderer->m_CSSamplerSetting2[i] + 5i64 * (signed int)renderer->m_CSSamplerSetting1[i]);
 
-			if (ptr != (char *)&renderer->qword_14304D910[renderer->m_CSSamplerSetting1[i]][renderer->m_CSSamplerSetting2[i]])
+			if (ptr != (char *)&renderer->m_SamplerStates[renderer->m_CSSamplerSetting1[i]][renderer->m_CSSamplerSetting2[i]])
 				__debugbreak();
 
 			if (i >= 16)
 				__debugbreak();
 
-			renderer->m_DeviceContext->CSSetSamplers(i, 1, &renderer->qword_14304D910[renderer->m_CSSamplerSetting1[i]][renderer->m_CSSamplerSetting2[i]]);
+			renderer->m_DeviceContext->CSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_CSSamplerSetting1[i]][renderer->m_CSSamplerSetting2[i]]);
 		}
 
 		renderer->m_CSSamplerModifiedBits = 0;
