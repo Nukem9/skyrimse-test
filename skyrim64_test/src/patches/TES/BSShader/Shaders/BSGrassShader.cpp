@@ -119,35 +119,36 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	uintptr_t geometry = (uintptr_t)Pass->m_Geometry;
 	uintptr_t property = (uintptr_t)Pass->m_Property;
 
+	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto data = (VertexConstantData *)vertexCG.RawData();
+
 #if BSSHADER_FORWARD_DEBUG
 	// Copy original game data to local buffer
-	VertexConstantData data;
-	memcpy(&data, (void *)(g_ModuleBase + 0x31F6400), sizeof(VertexConstantData));
+	memcpy(data, (void *)(g_ModuleBase + 0x31F6400), sizeof(VertexConstantData));
 #else
 	// Sanity check: the original global struct should have zero data
 	const static char zeroData[sizeof(VertexConstantData)] = { 0 };
-	VertexConstantData data;
 
 	if (memcmp(&zeroData, (void *)(g_ModuleBase + 0x31F6400), sizeof(zeroData)) != 0)
 		throw "BUG: This structure MUST be zero";
 #endif
 
-	UpdateGeometryProjections(&data, Pass->m_Geometry->GetWorldTransform());
-	data.FogNearColor = TLS_FogNearColor;
+	UpdateGeometryProjections(data, Pass->m_Geometry->GetWorldTransform());
+	data->FogNearColor = TLS_FogNearColor;
 
 	if (byte_141E32F65)
 	{
-		data.AmbientColor[0] = 1.0f;
-		data.AmbientColor[1] = 1.0f;
-		data.AmbientColor[2] = 1.0f;
+		data->AmbientColor[0] = 1.0f;
+		data->AmbientColor[1] = 1.0f;
+		data->AmbientColor[2] = 1.0f;
 
-		data.DirLightColor[0] = 0.0f;
-		data.DirLightColor[1] = 0.0f;
-		data.DirLightColor[2] = 0.0f;
+		data->DirLightColor[0] = 0.0f;
+		data->DirLightColor[1] = 0.0f;
+		data->DirLightColor[2] = 0.0f;
 
-		data.DirLightDirection[0] = 1.0f;
-		data.DirLightDirection[1] = 0.0f;
-		data.DirLightDirection[2] = 0.0f;
+		data->DirLightDirection[0] = 1.0f;
+		data->DirLightDirection[1] = 0.0f;
+		data->DirLightDirection[2] = 0.0f;
 	}
 	else
 	{
@@ -160,32 +161,32 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 		if (!v9)
 		{
-			data.AmbientColor[0] = 0.0f;
-			data.AmbientColor[1] = 0.0f;
-			data.AmbientColor[2] = 0.0f;
+			data->AmbientColor[0] = 0.0f;
+			data->AmbientColor[1] = 0.0f;
+			data->AmbientColor[2] = 0.0f;
 
-			data.DirLightColor[0] = 0.0f;
-			data.DirLightColor[1] = 0.0f;
-			data.DirLightColor[2] = 0.0f;
+			data->DirLightColor[0] = 0.0f;
+			data->DirLightColor[1] = 0.0f;
+			data->DirLightColor[2] = 0.0f;
 
-			throw "invalid_parameter_noinfo";
+			throw std::invalid_argument("v9 must be non-null");
 		}
 
-		data.AmbientColor[0] = *(float *)(v9 + 272);
-		data.AmbientColor[1] = *(float *)(v9 + 276);
-		data.AmbientColor[2] = *(float *)(v9 + 280);
+		data->AmbientColor[0] = *(float *)(v9 + 272);
+		data->AmbientColor[1] = *(float *)(v9 + 276);
+		data->AmbientColor[2] = *(float *)(v9 + 280);
 
-		data.DirLightColor[0] = *(float *)(v13 + 0);
-		data.DirLightColor[1] = *(float *)(v13 + 4);
-		data.DirLightColor[2] = *(float *)(v13 + 8);
+		data->DirLightColor[0] = *(float *)(v13 + 0);
+		data->DirLightColor[1] = *(float *)(v13 + 4);
+		data->DirLightColor[2] = *(float *)(v13 + 8);
 
-		data.DirLightDirection[0] = -v10;
-		data.DirLightDirection[1] = -v11;
-		data.DirLightDirection[2] = -v12;
+		data->DirLightDirection[0] = -v10;
+		data->DirLightDirection[1] = -v11;
+		data->DirLightDirection[2] = -v12;
 	}
 
-	data.AlphaParam1 = flt_1431F6198;
-	data.AlphaParam2 = flt_1431F619C;
+	data->AlphaParam1 = flt_1431F6198;
+	data->AlphaParam2 = flt_1431F619C;
 
 	float windTimer = ((flt_141E32F50 / 600.0f) * DirectX::XM_2PI) * *(float *)(property + 388);
 	float windDirZ = min(60.0f, flt_1431F63E8);
@@ -215,16 +216,16 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	windVecNormals.f[2] = 0.0f;
 	windVecNormals.v = XMVector3Normalize(XMVector3TransformNormal(windVecNormals, XMMatrixInverse(nullptr, *(XMMATRIX *)&v25)));
 
-	data.WindVector[0] = windVecNormals.f[0];
-	data.WindVector[1] = windVecNormals.f[1];
-	data.WindVector[2] = windDirZ * flt_141E33358;
-	data.WindTimer = windTimer;
+	data->WindVector[0] = windVecNormals.f[0];
+	data->WindVector[1] = windVecNormals.f[1];
+	data->WindVector[2] = windDirZ * flt_141E33358;
+	data->WindTimer = windTimer;
 
 	if (!byte_14304E4C5)
 	{
 		if (Flags & 0x10)
 		{
-			data.PreviousWindTimer = windTimer;
+			data->PreviousWindTimer = windTimer;
 		}
 		else
 		{
@@ -235,38 +236,26 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 			// *(float *)(property + 392) = windTimer;
 			// data.PreviousWindTimer = temp;
 			//
-			uint32_t oldData		= InterlockedExchange((volatile LONG *)(property + 392), *(LONG *)&windTimer);
-			data.PreviousWindTimer	= *(float *)&oldData;
+			uint32_t oldTimer		= InterlockedExchange((volatile LONG *)(property + 392), *(LONG *)&windTimer);
+			data->PreviousWindTimer	= *(float *)&oldTimer;
 		}
 	}
 
 	if ((*(uintptr_t *)(property + 56) & 0x80000000000i64) == 0)
 	{
-		data.ScaleMask[0] = 0.0f;
-		data.ScaleMask[1] = 0.0f;
-		data.ScaleMask[2] = 1.0f;
+		data->ScaleMask[0] = 0.0f;
+		data->ScaleMask[1] = 0.0f;
+		data->ScaleMask[2] = 1.0f;
 	}
 	else
 	{
-		data.ScaleMask[0] = 1.0f;
-		data.ScaleMask[1] = 1.0f;
-		data.ScaleMask[2] = 1.0f;
+		data->ScaleMask[0] = 1.0f;
+		data->ScaleMask[1] = 1.0f;
+		data->ScaleMask[2] = 1.0f;
 	}
 
 	// Wtf? flt_141E33370 is 0.3 and not zero...?
-	data.padding = flt_141E33370;
-
-	//
-	// Everything is generated, just do a quick copy. Writing to the subresource map
-	// directly is better but I can't guarantee no readbacks.
-	//
-	// "...you must ensure that your app does not read the subresource data to which
-	// the pData member of D3D11_MAPPED_SUBRESOURCE points because doing so can cause
-	// a significant performance penalty."
-	//
-	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-
-	memcpy(vertexCG.RawData(), &data, sizeof(VertexConstantData));
+	data->padding = flt_141E33370;
 
 	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, nullptr);
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
