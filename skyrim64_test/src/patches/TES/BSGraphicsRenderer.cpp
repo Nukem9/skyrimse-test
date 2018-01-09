@@ -22,6 +22,22 @@ namespace BSGraphics::Utility
 
 namespace BSGraphics::Renderer
 {
+	thread_local BSVertexShader *TLS_CurrentVertexShader;
+	thread_local BSPixelShader *TLS_CurrentPixelShader;
+
+	void FlushThreadedVars()
+	{
+		//
+		// Shaders should've been unique because each technique is different,
+		// but for some reason that isn't the case.
+		//
+		// Other code in Skyrim might be setting the parameters before I do,
+		// so it's not guaranteed to be cleared. (Pretend something is set)
+		//
+		TLS_CurrentVertexShader = (BSVertexShader *)0xFEFEFEFEFEFEFEFE;
+		TLS_CurrentPixelShader = (BSPixelShader *)0xFEFEFEFEFEFEFEFE;
+	}
+
 	void RasterStateSetCullMode(uint32_t CullMode)
 	{
 		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::RasterStateCullMode, CullMode))
@@ -303,20 +319,27 @@ namespace BSGraphics::Renderer
 
 	void SetVertexShader(BSVertexShader *Shader)
 	{
+		if (Shader == TLS_CurrentVertexShader)
+			return;
+
+		TLS_CurrentVertexShader = Shader;
 		auto *renderer = GetThreadedGlobals();
 
-		// The input layout (IASetInputLayout) needs to be created and updated
+		// The input layout (IASetInputLayout) may need to be created and updated
 		renderer->m_CurrentVertexShader = Shader;
 		renderer->m_StateUpdateFlags |= 0x400;
-
-		renderer->m_DeviceContext->VSSetShader(Shader->m_Shader, nullptr, 0);
+		renderer->m_DeviceContext->VSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
 	}
 
 	void SetPixelShader(BSPixelShader *Shader)
 	{
+		if (Shader == TLS_CurrentPixelShader)
+			return;
+
+		TLS_CurrentPixelShader = Shader;
 		auto *renderer = GetThreadedGlobals();
 
 		renderer->m_CurrentPixelShader = Shader;
-		renderer->m_DeviceContext->PSSetShader(Shader->m_Shader, nullptr, 0);
+		renderer->m_DeviceContext->PSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
 	}
 }

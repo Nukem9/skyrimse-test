@@ -82,6 +82,8 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 
     HRESULT hr = (This->*ptrPresent)(SyncInterval, Flags);
 
+	BSGraphics::Renderer::FlushThreadedVars();
+
 	using namespace BSShaderRenderTargets;
 
 	if (!g_DeviceContext)

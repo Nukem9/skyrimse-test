@@ -83,6 +83,8 @@ namespace BSGraphics::Utility
 
 namespace BSGraphics::Renderer
 {
+	void FlushThreadedVars();
+
 	void RasterStateSetCullMode(uint32_t CullMode);
 	void RasterStateSetUnknown1(uint32_t Value);
 
