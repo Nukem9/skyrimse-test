@@ -9,7 +9,7 @@
 #include "../BSShaderUtil.h"
 #include "../BSShaderManager.h"
 #include "../../NiMain/BSGeometry.h"
-#include "../../NiMain/NiTexture.h"
+#include "../../NiMain/NiSourceTexture.h"
 #include "../BSShaderAccumulator.h"
 #include "BSGrassShader.h"
 
@@ -30,7 +30,7 @@ AutoPtr(BYTE, byte_141E32E9D, 0x1E32E9D);
 AutoPtr(BYTE, byte_141E32F65, 0x1E32F65);
 AutoPtr(uint32_t, dword_141E338A0, 0x1E338A0);
 AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
-AutoPtr(uintptr_t, qword_1430528F0, 0x30528F0);
+AutoPtr(NiSourceTexture *, qword_1430528F0, 0x30528F0);
 AutoPtr(uintptr_t, qword_141E32F20, 0x1E32F20);
 AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 
@@ -84,9 +84,7 @@ bool BSGrassShader::SetupTechnique(uint32_t Technique)
 	}
 	else
 	{
-		NiTexture *shadowSamplerTex = *(NiTexture **)(qword_1430528F0 + 72);
-
-		BSGraphics::Renderer::SetShaderResource(1, shadowSamplerTex ? shadowSamplerTex->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(1, qword_1430528F0->QRendererTexture());// ShadowMaskSampler
 		BSGraphics::Renderer::SetTextureMode(1, 0, 0);
 	}
 
@@ -102,9 +100,9 @@ void BSGrassShader::SetupMaterial(BSShaderMaterial const *Material)
 {
 	BSSHADER_FORWARD_CALL(MATERIAL, &BSGrassShader::SetupMaterial, Material);
 
-	NiTexture *baseTexture = *(NiTexture **)(*(uintptr_t *)((uintptr_t)Material + 72) + 72i64);
+	NiSourceTexture *baseTexture = *(NiSourceTexture **)((uintptr_t)Material + 72);
 
-	BSGraphics::Renderer::SetShaderResource(0, baseTexture ? baseTexture->QRendererTexture() : nullptr);
+	BSGraphics::Renderer::SetTexture(0, baseTexture->QRendererTexture());// BaseSampler
 	BSGraphics::Renderer::SetTextureAddressMode(0, 0);
 }
 

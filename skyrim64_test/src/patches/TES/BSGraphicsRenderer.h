@@ -7,6 +7,13 @@
 
 namespace BSGraphics
 {
+	struct Texture
+	{
+		char _pad0[0x10];
+		ID3D11ShaderResourceView *m_D3DTexture;
+	};
+	static_assert_offset(Texture, m_D3DTexture, 0x10);
+
 	enum ConstantGroupLevel
 	{
 		CONSTANT_GROUP_LEVEL_TECHNIQUE = 0x0,
@@ -92,6 +99,7 @@ namespace BSGraphics::Renderer
 	void SetUseScrapConstantValue(bool UseStoredValue);
 	void SetUseScrapConstantValue(bool UseStoredValue, float Value);
 
+	void SetTexture(uint32_t Index, Texture *Resource);
 	void SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource);
 
 	ConstantGroup<BSVertexShader> GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level);

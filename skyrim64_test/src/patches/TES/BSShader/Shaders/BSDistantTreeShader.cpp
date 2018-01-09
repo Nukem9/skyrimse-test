@@ -10,7 +10,7 @@
 #include "../BSShaderUtil.h"
 #include "../BSShaderManager.h"
 #include "../../NiMain/BSGeometry.h"
-#include "../../NiMain/NiTexture.h"
+#include "../../NiMain/NiSourceTexture.h"
 
 //
 // Shader notes:
@@ -28,7 +28,7 @@ AutoPtr(bool, bUseEarlyZ, 0x30528E5);
 AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(__int64, qword_141E32F20, 0x1E32F20);
-AutoPtr(__int64, qword_1432A7F58, 0x32A7F58);
+AutoPtr(NiSourceTexture *, qword_1432A7F58, 0x32A7F58);
 
 void TestHook2()
 {
@@ -127,9 +127,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	// if (!qword_1432A7F58)
 	// bAssert("LOD tree texture atlas for current worldspace not found.");
 
-	NiTexture *treeLodAtlas = *(NiTexture **)(qword_1432A7F58 + 72);
-
-	BSGraphics::Renderer::SetShaderResource(0, treeLodAtlas ? treeLodAtlas->QRendererTexture() : nullptr);
+	BSGraphics::Renderer::SetTexture(0, qword_1432A7F58->QRendererTexture());// Diffuse
 	BSGraphics::Renderer::SetTextureAddressMode(0, 0);
 
 	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);

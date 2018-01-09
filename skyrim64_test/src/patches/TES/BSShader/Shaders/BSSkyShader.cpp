@@ -10,7 +10,7 @@
 #include "../BSShaderUtil.h"
 #include "../BSShaderManager.h"
 #include "../../NiMain/BSGeometry.h"
-#include "../../NiMain/NiTexture.h"
+#include "../../NiMain/NiSourceTexture.h"
 #include "../BSShaderAccumulator.h"
 
 //
@@ -23,9 +23,9 @@ using namespace DirectX;
 
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(__int64, qword_1431F5810, 0x31F5810);
-AutoPtr(__int64, qword_143052900, 0x3052900);
-AutoPtr(__int64, qword_143052920, 0x3052920);
-AutoPtr(__int64, qword_143052928, 0x3052928);
+AutoPtr(NiSourceTexture *, qword_143052900, 0x3052900);
+AutoPtr(NiSourceTexture *, qword_143052920, 0x3052920);
+AutoPtr(NiSourceTexture *, qword_143052928, 0x3052928);
 AutoPtr(__int64, qword_1431F55F8, 0x31F55F8);
 AutoPtr(float, qword_143257D80, 0x3257D80);
 
@@ -105,9 +105,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 		break;
 	}
 
-	NiTexture *noiseTexture = *(NiTexture **)(qword_143052928 + 72);
-
-	BSGraphics::Renderer::SetShaderResource(2, noiseTexture ? noiseTexture->QRendererTexture() : nullptr);
+	BSGraphics::Renderer::SetTexture(2, qword_143052928->QRendererTexture());// NoiseGradSampler
 	BSGraphics::Renderer::SetTextureMode(2, 3, 0);
 	return true;
 }
@@ -257,14 +255,12 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	case RAW_TECHNIQUE_SUNOCCLUDE:
 	case RAW_TECHNIQUE_STARS:
 	{
-		uintptr_t v32 = *(uintptr_t *)(shaderProperty + 152);
+		NiSourceTexture *baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
 
-		if (!v32)
-			v32 = qword_143052900;
+		if (!baseSamplerTex)
+			baseSamplerTex = qword_143052900;
 
-		NiTexture *baseSamplerTex = *(NiTexture **)(v32 + 72);
-
-		BSGraphics::Renderer::SetShaderResource(0, baseSamplerTex ? baseSamplerTex->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		BSGraphics::Renderer::SetTextureMode(0, 3, 1);
 	}
 	break;
@@ -275,31 +271,27 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	case RAW_TECHNIQUE_CLOUDSLERP:
 	case RAW_TECHNIQUE_TEXTURE:
 	{
-		uintptr_t v35 = *(uintptr_t *)(shaderProperty + 152);
+		NiSourceTexture *baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
 
-		if (!v35)
-			v35 = qword_143052920;
+		if (!baseSamplerTex)
+			baseSamplerTex = qword_143052920;
 
-		NiTexture *baseSamplerTex = *(NiTexture **)(v35 + 72);
-
-		BSGraphics::Renderer::SetShaderResource(0, baseSamplerTex ? baseSamplerTex->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		BSGraphics::Renderer::SetTextureMode(0, 3, 1);
 
 		if (tlsRawTechnique == RAW_TECHNIQUE_CLOUDSLERP)
 		{
-			uintptr_t v38 = *(uintptr_t *)(shaderProperty + 160);
+			NiSourceTexture *blendSamplerTex = *(NiSourceTexture **)(shaderProperty + 160);
 
-			if (!v38)
+			if (!blendSamplerTex)
 			{
-				v38 = *(uintptr_t *)(shaderProperty + 152);
+				blendSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
 
-				if (!v38)
+				if (!blendSamplerTex)
 					break;
 			}
 
-			NiTexture *blendSamplerTex = *(NiTexture **)(v38 + 72);
-
-			BSGraphics::Renderer::SetShaderResource(1, blendSamplerTex ? blendSamplerTex->QRendererTexture() : nullptr);
+			BSGraphics::Renderer::SetTexture(1, blendSamplerTex->QRendererTexture());// BlendSampler
 			BSGraphics::Renderer::SetTextureMode(1, 3, 1);
 		}
 	}
@@ -307,17 +299,15 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	case RAW_TECHNIQUE_CLOUDSFADE:
 	{
-		uintptr_t v34 = *(uintptr_t *)(shaderProperty + 152);
+		NiSourceTexture *baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
 
 		if (*(bool *)(shaderProperty + 190))
-			v34 = *(uintptr_t *)(shaderProperty + 160);
+			baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 160);
 
-		if (!v34)
-			v34 = qword_143052920;
+		if (!baseSamplerTex)
+			baseSamplerTex = qword_143052920;
 
-		NiTexture *baseSamplerTex = *(NiTexture **)(v34 + 72);
-
-		BSGraphics::Renderer::SetShaderResource(0, baseSamplerTex ? baseSamplerTex->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		BSGraphics::Renderer::SetTextureMode(0, 3, 1);
 	}
 	break;

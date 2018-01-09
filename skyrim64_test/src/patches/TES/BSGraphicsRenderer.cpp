@@ -198,6 +198,18 @@ namespace BSGraphics::Renderer
 		}
 	}
 
+	void SetTexture(uint32_t Index, Texture *Resource)
+	{
+		auto *renderer = GetThreadedGlobals();
+		ID3D11ShaderResourceView *ptr = Resource ? Resource->m_D3DTexture : nullptr;
+
+		if (renderer->m_PSResources[Index] != ptr)
+		{
+			renderer->m_PSResources[Index] = ptr;
+			renderer->m_PSResourceModifiedBits |= 1 << Index;
+		}
+	}
+
 	// Not a real function name
 	void SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource)
 	{

@@ -2,14 +2,12 @@
 
 #include "NiObjectNET.h"
 
-class NiTexture : public NiObjectNET
+class NiTexture : public NiObject
 {
 public:
 	NiTexture();
 	virtual ~NiTexture();
 
-	ID3D11ShaderResourceView *QRendererTexture()
-	{
-		return *(ID3D11ShaderResourceView **)((uintptr_t)this + 16);
-	}
+	char _pad[0x30];
 };
+static_assert(sizeof(NiTexture) == 0x40);

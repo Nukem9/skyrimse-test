@@ -9,7 +9,7 @@
 #include "../BSShaderUtil.h"
 #include "../BSShaderManager.h"
 #include "../../NiMain/BSGeometry.h"
-#include "../../NiMain/NiTexture.h"
+#include "../../NiMain/NiSourceTexture.h"
 #include "../BSShaderAccumulator.h"
 #include "BSLightingShader.h"
 #include "BSLightingShaderProperty.h"
@@ -24,8 +24,8 @@
 //
 using namespace DirectX;
 
-AutoPtr(uintptr_t, qword_143052900, 0x3052900);
-AutoPtr(uintptr_t, qword_1430528A0, 0x30528A0);
+AutoPtr(NiSourceTexture *, qword_143052900, 0x3052900);
+AutoPtr(NiSourceTexture *, qword_1430528A0, 0x30528A0);
 AutoPtr(int, dword_143051B3C, 0x3051B3C);
 AutoPtr(int, dword_143051B40, 0x3051B40);
 AutoPtr(int, dword_141E338A0, 0x1E338A0);
@@ -48,7 +48,7 @@ AutoPtr(BYTE, byte_141E353C8, 0x1E353C8);
 AutoPtr(XMVECTORF32, xmmword_141E3301C, 0x1E3301C);
 AutoPtr(int, dword_141E33040, 0x1E33040);
 AutoPtr(uintptr_t, qword_1431F5810, 0x31F5810);
-AutoPtr(uintptr_t, qword_143052920, 0x3052920);
+AutoPtr(NiSourceTexture *, qword_143052920, 0x3052920);
 AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 AutoPtr(XMVECTORF32, xmmword_14187D940, 0x187D940);
 AutoPtr(BYTE, byte_141E32E88, 0x1E32E88);
@@ -64,11 +64,11 @@ AutoPtr(float, flt_143257C40, 0x3257C40);
 AutoPtr(uint32_t, dword_141E35280, 0x1E35280);
 AutoPtr(NiColorA, dword_1431F5540, 0x31F5540);
 AutoPtr(NiColorA, dword_1431F5550, 0x31F5550);
-AutoPtr(uintptr_t, qword_141E32F90, 0x1E32F90);
-AutoPtr(uintptr_t, qword_141E32F98, 0x1E32F98);
-AutoPtr(uintptr_t, qword_143052890, 0x3052890);
-AutoPtr(uintptr_t, qword_143052898, 0x3052898);
-AutoPtr(uintptr_t, qword_1430528A8, 0x30528A8);
+AutoPtr(NiSourceTexture *, qword_141E32F90, 0x1E32F90);
+AutoPtr(NiSourceTexture *, qword_141E32F98, 0x1E32F98);
+AutoPtr(NiSourceTexture *, qword_143052890, 0x3052890);
+AutoPtr(NiSourceTexture *, qword_143052898, 0x3052898);
+AutoPtr(NiSourceTexture *, qword_1430528A8, 0x30528A8);
 AutoPtr(BYTE, byte_141E35308, 0x1E35308);
 AutoPtr(BYTE, byte_141E35320, 0x1E35320);
 AutoPtr(uint32_t, dword_141E3527C, 0x1E3527C);
@@ -171,9 +171,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		// Override all 16 samplers
 		for (int i = 0; i < 16; i++)
 		{
-			NiTexture *v21 = *(NiTexture **)(qword_143052900 + 72);
-
-			BSGraphics::Renderer::SetShaderResource(i, v21 ? v21->QRendererTexture() : nullptr);
+			BSGraphics::Renderer::SetTexture(i, qword_143052900->QRendererTexture());
 			BSGraphics::Renderer::SetTextureMode(i, 3, 3);
 		}
 
@@ -195,9 +193,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		break;
 
 	case RAW_TECHNIQUE_MULTIINDEXTRISHAPESNOW:
-		NiTexture *v15 = *(NiTexture **)(qword_1430528A0 + 72);
-
-		BSGraphics::Renderer::SetShaderResource(10, v15 ? v15->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(10, qword_1430528A0->QRendererTexture());
 		BSGraphics::Renderer::SetTextureMode(10, 3, 0);
 		break;
 	}
@@ -503,9 +499,9 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 			sub_14130C220(2, *(uintptr_t *)(v3 + 104), v3);
 
 			uint32_t v68 = *(uint32_t *)(v3 + 112);
-			NiTexture *v69 = *(NiTexture **)(*(uintptr_t *)(v3 + 104) + 72i64);
+			NiSourceTexture *v69 = *(NiSourceTexture **)(v3 + 104);
 
-			BSGraphics::Renderer::SetShaderResource(2, v69 ? v69->QRendererTexture() : nullptr);
+			BSGraphics::Renderer::SetTexture(2, v69->QRendererTexture());
 			BSGraphics::Renderer::SetTextureMode(2, v68, 3);
 		}
 	}
@@ -519,9 +515,9 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	if (rawTechnique & RAW_FLAG_SOFT_LIGHTING)
 	{
 		uint32_t v71 = *(uint32_t *)(v3 + 112);
-		NiTexture *v72 = *(NiTexture **)(*(uintptr_t *)(v3 + 96) + 72i64);
+		NiSourceTexture *v72 = *(NiSourceTexture **)(v3 + 96);
 
-		BSGraphics::Renderer::SetShaderResource(12, v72 ? v72->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(12, v72->QRendererTexture());
 		BSGraphics::Renderer::SetTextureAddressMode(12, v71);
 
 		// PS: p28 float4 LightingEffectParams
@@ -535,9 +531,9 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	{
 		// I guess this is identical to RAW_FLAG_SOFT_LIGHTING above
 		uint32_t v76 = *(uint32_t *)(v3 + 112);
-		NiTexture *v77 = *(NiTexture **)(*(uintptr_t *)(v3 + 96) + 72i64);
+		NiSourceTexture *v77 = *(NiSourceTexture **)(v3 + 96);
 
-		BSGraphics::Renderer::SetShaderResource(12, v77 ? v77->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(12, v77->QRendererTexture());
 		BSGraphics::Renderer::SetTextureAddressMode(12, v76);
 
 		// PS: p28 float4 LightingEffectParams
@@ -550,9 +546,9 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	if (rawTechnique & RAW_FLAG_BACK_LIGHTING)
 	{
 		uint32_t v81 = *(uint32_t *)(v3 + 112);
-		NiTexture *v82 = *(NiTexture **)(*(uintptr_t *)(v3 + 104) + 72i64);
+		NiSourceTexture *v82 = *(NiSourceTexture **)(v3 + 104);
 
-		BSGraphics::Renderer::SetShaderResource(9, v82 ? v82->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(9, v82->QRendererTexture());
 		BSGraphics::Renderer::SetTextureAddressMode(9, v81);
 	}
 
@@ -585,9 +581,9 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		}
 
 		uint32_t v91 = *(uint32_t *)(v3 + 112);
-		NiTexture *v92 = *(NiTexture **)(*(uintptr_t *)(v3 + 88) + 72i64);
+		NiSourceTexture *v92 = *(NiSourceTexture **)(v3 + 88);
 
-		BSGraphics::Renderer::SetShaderResource(1, v92 ? v92->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(1, v92->QRendererTexture());
 		BSGraphics::Renderer::SetTextureAddressMode(1, v91);
 	}
 
@@ -818,26 +814,18 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	if ((rawTechnique & RAW_FLAG_PROJECTED_UV) && (baseTechniqueID != RAW_TECHNIQUE_HAIR))
 	{
-		NiTexture *v54 = *(NiTexture **)(qword_143052890 + 72);
-
-		BSGraphics::Renderer::SetShaderResource(11, v54 ? v54->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(11, qword_143052890->QRendererTexture());
 		BSGraphics::Renderer::SetTextureMode(11, 3, 1);
 
 		if (enableProjectedUvNormals && qword_143052898)
 		{
-			NiTexture *v57 = *(NiTexture **)(qword_143052898 + 72);
-
-			BSGraphics::Renderer::SetShaderResource(3, v57 ? v57->QRendererTexture() : nullptr);
+			BSGraphics::Renderer::SetTexture(3, qword_143052898->QRendererTexture());
 			BSGraphics::Renderer::SetTextureMode(3, 3, 1);
 
-			NiTexture *v58 = *(NiTexture **)(qword_1430528A0 + 72);
-
-			BSGraphics::Renderer::SetShaderResource(8, v58 ? v58->QRendererTexture() : nullptr);
+			BSGraphics::Renderer::SetTexture(8, qword_1430528A0->QRendererTexture());
 			BSGraphics::Renderer::SetTextureMode(8, 3, 1);
 
-			NiTexture *v59 = *(NiTexture **)(qword_1430528A8 + 72);
-
-			BSGraphics::Renderer::SetShaderResource(10, v59 ? v59->QRendererTexture() : nullptr);
+			BSGraphics::Renderer::SetTexture(10, qword_1430528A8->QRendererTexture());
 			BSGraphics::Renderer::SetTextureMode(10, 3, 1);
 		}
 
@@ -880,14 +868,10 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	if (rawTechnique & RAW_FLAG_WORLD_MAP)
 	{
-		NiTexture *v77 = *(NiTexture **)(qword_141E32F90 + 72);
-
-		BSGraphics::Renderer::SetShaderResource(12, v77 ? v77->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(12, qword_141E32F90->QRendererTexture());
 		BSGraphics::Renderer::SetTextureAddressMode(12, 3);
 
-		NiTexture *v80 = *(NiTexture **)(qword_141E32F98 + 72);
-
-		BSGraphics::Renderer::SetShaderResource(13, v80 ? v80->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(13, qword_141E32F98->QRendererTexture());
 		BSGraphics::Renderer::SetTextureAddressMode(13, 3);
 
 		// VS: p8 float4 Color1
@@ -1110,59 +1094,59 @@ void BSLightingShader::TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSVe
 
 void BSLightingShader::sub_14130C470(__int64 a1, __int64 a2)
 {
-	NiTexture *v2 = *(NiTexture **)(a1 + 72);
+	NiSourceTexture *v2 = (NiSourceTexture *)a1;
 	uint32_t v3 = *(uint32_t *)(a2 + 112);
 
-	BSGraphics::Renderer::SetShaderResource(4, v2 ? v2->QRendererTexture() : nullptr);
+	BSGraphics::Renderer::SetTexture(4, v2->QRendererTexture());
 	BSGraphics::Renderer::SetTextureAddressMode(4, v3);
 }
 
 void BSLightingShader::sub_14130C4D0(__int64 a1, __int64 a2)
 {
-	NiTexture *v2 = nullptr;
+	NiSourceTexture *v2 = nullptr;
 	uint32_t v3 = *(uint32_t *)(a2 + 112);
 
 	if (a1)
-		v2 = *(NiTexture **)(a1 + 72);
+		v2 = (NiSourceTexture *)a1;
 	else
-		v2 = *(NiTexture **)(qword_143052920 + 72);
+		v2 = qword_143052920;
 
-	BSGraphics::Renderer::SetShaderResource(5, v2 ? v2->QRendererTexture() : nullptr);
+	BSGraphics::Renderer::SetTexture(5, v2->QRendererTexture());
 	BSGraphics::Renderer::SetTextureAddressMode(5, v3);
 }
 
 void BSLightingShader::sub_14130C220(int a1, __int64 a2, __int64 a3)
 {
-	NiTexture *v3 = *(NiTexture **)(a2 + 72);
+	NiSourceTexture *v3 = (NiSourceTexture *)a2;
 	uint32_t v4 = *(uint32_t *)(a3 + 112);
 
-	BSGraphics::Renderer::SetShaderResource(a1, v3 ? v3->QRendererTexture() : nullptr);
+	BSGraphics::Renderer::SetTexture(a1, v3->QRendererTexture());
 	BSGraphics::Renderer::SetTextureAddressMode(a1, v4);
 }
 
 void BSLightingShader::MatSetMultiTextureLandOverrides(__int64 a1)
 {
 	// This overrides all 16 samplers/input resources for land parameters if set in the property
-	NiTexture *v2 = *(NiTexture **)(*(uintptr_t *)(a1 + 72) + 72i64);
-	NiTexture *v3 = *(NiTexture **)(*(uintptr_t *)(a1 + 88) + 72i64);
+	NiSourceTexture *v2 = *(NiSourceTexture **)(a1 + 72);
+	NiSourceTexture *v3 = *(NiSourceTexture **)(a1 + 88);
 
-	BSGraphics::Renderer::SetShaderResource(0, v2 ? v2->QRendererTexture() : nullptr);
-	BSGraphics::Renderer::SetShaderResource(7, v3 ? v3->QRendererTexture() : nullptr);
+	BSGraphics::Renderer::SetTexture(0, v2->QRendererTexture());
+	BSGraphics::Renderer::SetTexture(7, v3->QRendererTexture());
 
 	if (*(uint32_t *)(a1 + 160))
 	{
 		int v4 = 8;
 		do
 		{
-			NiTexture *v5 = *(NiTexture **)(*(uintptr_t *)(a1 + 8i64 * (unsigned int)(v4 - 8) + 0xA8) + 72i64);
+			NiSourceTexture *v5 = (NiSourceTexture *)(*(uintptr_t *)(a1 + 8i64 * (unsigned int)(v4 - 8) + 0xA8));
 			uint32_t v6 = (unsigned int)(v4 - 7);
 
-			BSGraphics::Renderer::SetShaderResource(v6, v5 ? v5->QRendererTexture() : nullptr);
+			BSGraphics::Renderer::SetTexture(v6, v5->QRendererTexture());
 			BSGraphics::Renderer::SetTextureAddressMode(v6, 3);
 
-			NiTexture *v8 = *(NiTexture **)(*(uintptr_t *)(a1 + 8i64 * (unsigned int)(v4 - 8) + 208) + 72i64);
+			NiSourceTexture *v8 = (NiSourceTexture *)(*(uintptr_t *)(a1 + 8i64 * (unsigned int)(v4 - 8) + 208));
 
-			BSGraphics::Renderer::SetShaderResource(v4, v8 ? v8->QRendererTexture() : nullptr);
+			BSGraphics::Renderer::SetTexture(v4, v8->QRendererTexture());
 			BSGraphics::Renderer::SetTextureAddressMode(v4, 3);
 
 			++v4;
@@ -1171,9 +1155,9 @@ void BSLightingShader::MatSetMultiTextureLandOverrides(__int64 a1)
 
 	if (*(uintptr_t *)(a1 + 248))
 	{
-		NiTexture *result = *(NiTexture **)(*(uintptr_t *)(a1 + 248) + 72);
+		NiSourceTexture *result = *(NiSourceTexture **)(a1 + 248);
 
-		BSGraphics::Renderer::SetShaderResource(13, result ? result->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(13, result->QRendererTexture());
 		BSGraphics::Renderer::SetTextureAddressMode(13, 0);
 	}
 }

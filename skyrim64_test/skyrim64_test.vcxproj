@@ -124,6 +124,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiRefObject.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiSourceTexture.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiTexture.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiTransform.h" />
     <ClInclude Include="src\profiler_internal.h" />

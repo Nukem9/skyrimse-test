@@ -5,7 +5,7 @@
 #include "../BSShaderManager.h"
 #include "BSBloodSplatterShader.h"
 #include "../BSShaderUtil.h"
-#include "../../NiMain/NiTexture.h"
+#include "../../NiMain/NiSourceTexture.h"
 
 //
 // Shader notes:
@@ -15,7 +15,7 @@
 //
 using namespace DirectX;
 
-AutoPtr(uintptr_t, qword_143052900, 0x52900);
+AutoPtr(NiSourceTexture *, qword_143052900, 0x52900);
 AutoPtr(__int64, qword_14304EF00, 0x4EF00);
 
 void TestHook1()
@@ -58,15 +58,13 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 		// Use the sun or nearest light source to draw a water-like reflection from blood
 		if (iAdaptedLightRenderTarget <= 0)
 		{
-			NiTexture *flareHDRTexture = *(NiTexture **)(qword_143052900 + 72);
-
-			BSGraphics::Renderer::SetShaderResource(3, flareHDRTexture ? flareHDRTexture->QRendererTexture() : nullptr);
+			BSGraphics::Renderer::SetTexture(3, qword_143052900->QRendererTexture());// FlareHDR
 		}
 		else
 		{
 			uintptr_t v9 = *(&qword_14304EF00 + 6 * iAdaptedLightRenderTarget);// BSGraphics::RenderTargetManager::SetTextureRenderTarget
 
-			BSGraphics::Renderer::SetShaderResource(3, (ID3D11ShaderResourceView *)v9);
+			BSGraphics::Renderer::SetShaderResource(3, (ID3D11ShaderResourceView *)v9);// FlareHDR
 		}
 
 		BSGraphics::Renderer::SetTextureMode(3, 0, 1);
@@ -130,21 +128,21 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)
 	{
-		NiTexture *flareColorTexture = *(NiTexture **)(*(uintptr_t *)(v12 + 152) + 72i64);
+		NiSourceTexture *flareColorTexture = *(NiSourceTexture **)(v12 + 152);
 
-		BSGraphics::Renderer::SetShaderResource(2, flareColorTexture ? flareColorTexture->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(2, flareColorTexture->QRendererTexture());// FlareColor
 		BSGraphics::Renderer::SetTextureMode(2, 0, 1);
 	}
 	else
 	{
-		NiTexture *bloodColorTexture = *(NiTexture **)(*(uintptr_t *)(v12 + 136) + 72i64);
+		NiSourceTexture *bloodColorTexture = *(NiSourceTexture **)(v12 + 136);
 
-		BSGraphics::Renderer::SetShaderResource(0, bloodColorTexture ? bloodColorTexture->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(0, bloodColorTexture->QRendererTexture());// BloodColor
 		BSGraphics::Renderer::SetTextureMode(0, 0, 1);
 
-		NiTexture *bloodAlphaTexture = *(NiTexture **)(*(uintptr_t *)(v12 + 144) + 72i64);
+		NiSourceTexture *bloodAlphaTexture = *(NiSourceTexture **)(v12 + 144);
 
-		BSGraphics::Renderer::SetShaderResource(1, bloodAlphaTexture ? bloodAlphaTexture->QRendererTexture() : nullptr);
+		BSGraphics::Renderer::SetTexture(1, bloodAlphaTexture->QRendererTexture());// BloodAlpha
 		BSGraphics::Renderer::SetTextureMode(1, 0, 1);
 	}
 }
