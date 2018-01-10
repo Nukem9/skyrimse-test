@@ -19,7 +19,6 @@ private:
 		RAW_TECHNIQUE_SKY = 8,
 	};
 
-	inline AutoPtr(BSSkyShader *, pInstance, 0x3257D30);
 	inline AutoPtr(NiColorA, xmmword_143257D48, 0x3257D48);
 	inline AutoPtr(NiColorA, xmmword_143257D58, 0x3257D58);
 	inline AutoPtr(NiColorA, xmmword_143257D68, 0x3257D68);
@@ -27,6 +26,8 @@ private:
 	const static uintptr_t OriginalVTableBase = 0x1880A60;
 
 public:
+	inline AutoPtr(BSSkyShader *, pInstance, 0x3257D30);
+
 	DECLARE_CONSTRUCTOR_HOOK(BSSkyShader);
 
 	BSSkyShader();
