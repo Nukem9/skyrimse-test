@@ -299,8 +299,30 @@ void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const Ni
 
 void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSShaderProperty *Property)
 {
-	auto sub_1412E5820 = (void(__fastcall *)(BSGrassShader *, const BSGeometry *, BSShaderProperty *))(g_ModuleBase + 0x12E5820);
-	sub_1412E5820(this, Geometry, Property);
+	auto *renderer = GetThreadedGlobals();
+
+	BSTArray<float> *propertyInstanceData = (BSTArray<float> *)((uintptr_t)Property + 0x160);
+	uint32_t instanceDataCount = propertyInstanceData->QSize();
+
+	if (instanceDataCount > (3840 / 4))
+		instanceDataCount = (3840 / 4);
+	// bAssert("Grass instance group count is to large. It does not fit in register size.");
+
+	// TODO/WARNING: There is another data race hazard in this function. Properties are supposed to be unique though?
+	auto sub_1412E0810 = (void(__fastcall *)(BSShaderProperty *, uint32_t))(g_ModuleBase + 0x12E0810);
+	sub_1412E0810(Property, propertyInstanceData->QSize());
+
+	D3D11_MAPPED_SUBRESOURCE map;
+	renderer->m_DeviceContext->Map(renderer->m_ConstantBuffers1[0], 0, D3D11_MAP_WRITE_DISCARD, 0, &map);
+
+	// Zero initialize, then copy
+	memset(map.pData, 0, 3840);
+
+	if (instanceDataCount > 0)
+		memcpy(map.pData, propertyInstanceData->QBuffer(), instanceDataCount * sizeof(float));
+
+	renderer->m_DeviceContext->Unmap(renderer->m_ConstantBuffers1[0], 0);
+	renderer->m_DeviceContext->VSSetConstantBuffers(8, 1, &renderer->m_ConstantBuffers1[0]);
 }
 
 uint32_t BSGrassShader::GetRawTechnique(uint32_t Technique)
