@@ -4,6 +4,11 @@
 #include "../NiMain/NiRefObject.h"
 #include "../BSTScatterTable.h"
 
+class NiAlphaProperty;
+class BSShaderProperty;
+class NiSkinInstance;
+class NiTransform;
+
 class BSShaderMaterial;
 struct BSRenderPass;
 struct BSVertexShader;
@@ -26,13 +31,35 @@ if (g_ShaderToggles[m_Type][BSGraphics::CONSTANT_GROUP_LEVEL_##OptionIndex]) { B
 class NiBoneMatrixSetterI
 {
 public:
+#pragma pack(push, 1)
+	struct Data
+	{
+		char _pad0[0x3C];
+		uint16_t m_Flags;
+		char _pad1[0x12];
+
+		Data()
+		{
+			__debugbreak();
+		}
+
+		~Data()
+		{
+			__debugbreak();
+		}
+	};
+#pragma pack(pop)
+
 	virtual ~NiBoneMatrixSetterI()
 	{
 		__debugbreak();
 	}
 
-	virtual void SetBoneMatrix() = 0;
+	virtual void SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform) = 0;
 };
+static_assert(sizeof(NiBoneMatrixSetterI) == 0x8);
+static_assert(sizeof(NiBoneMatrixSetterI::Data) == 0x50);
+static_assert_offset(NiBoneMatrixSetterI::Data, m_Flags, 0x3C);
 
 class BSReloadShaderI
 {
@@ -58,10 +85,13 @@ public:
 	virtual void ReloadShaders(bool Unknown);
 
 	virtual void ReloadShaders(BSIStream *Stream) override;
-	virtual void SetBoneMatrix() override;
+	virtual void SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform) override;
 
 	bool BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader);
 	void EndTechnique();
+
+	void SetupGeometryAlphaBlending(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty, bool a4);
+	void SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty);
 
 	uint32_t m_Type;
 	BSTScatterTable<uint32_t, BSVertexShader *> m_VertexShaderTable;

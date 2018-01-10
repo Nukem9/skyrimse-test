@@ -194,18 +194,12 @@ namespace BSGraphics::Renderer
 		}
 	}
 
-	void SetUseScrapConstantValue(bool UseStoredValue, float Value)
+	void SetScrapConstantValue(float Value)
 	{
-		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::UseScrapConstantValue_2, UseStoredValue, *(uint32_t *)&Value))
+		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::UseScrapConstantValue_2, *(uint32_t *)&Value))
 			return;
 
 		auto *renderer = GetThreadedGlobals();
-
-		if (renderer->__zz0[76] != UseStoredValue)
-		{
-			renderer->__zz0[76] = UseStoredValue;
-			renderer->m_StateUpdateFlags |= 0x100u;
-		}
 
 		if (renderer->m_ScrapConstantValue != Value)
 		{

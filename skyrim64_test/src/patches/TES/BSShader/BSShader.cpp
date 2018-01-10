@@ -41,10 +41,10 @@ void BSShader::ReloadShaders(BSIStream *Stream)
 	sub_141336490(Stream);
 }
 
-void BSShader::SetBoneMatrix()
+void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform)
 {
-	auto sub_1413362C0 = (void(__fastcall *)())(g_ModuleBase + 0x13362C0);
-	sub_1413362C0();
+	auto sub_1413362C0 = (void(__fastcall *)(BSShader*, NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform))(g_ModuleBase + 0x13362C0);
+	sub_1413362C0(this, SkinInstance, Parameters, Transform);
 }
 
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
@@ -75,4 +75,21 @@ bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, b
 
 void BSShader::EndTechnique()
 {
+}
+
+void BSShader::SetupGeometryAlphaBlending(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty, bool a4)
+{
+	auto sub_1413360D0 = (void(__fastcall *)(BSShader *, const NiAlphaProperty *, BSShaderProperty *, bool))(g_ModuleBase + 0x13360D0);
+	sub_1413360D0(this, AlphaProperty, ShaderProperty, a4);
+}
+
+void BSShader::SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty)
+{
+	uintptr_t a2 = (uintptr_t)AlphaProperty;
+	uintptr_t a3 = (uintptr_t)ShaderProperty;
+
+	// NiAlphaProperty::GetTestRef() * BSShaderProperty::GetAlpha()
+	int rounded = (int)(((float)*(unsigned __int8 *)(a2 + 50)) * *(float *)(a3 + 48));
+
+	BSGraphics::Renderer::SetScrapConstantValue((float)rounded * 0.0039215689f);
 }

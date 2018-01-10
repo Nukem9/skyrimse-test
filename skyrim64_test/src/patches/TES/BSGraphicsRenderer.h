@@ -99,7 +99,7 @@ namespace BSGraphics::Renderer
 	void SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode);
 
 	void SetUseScrapConstantValue(bool UseStoredValue);
-	void SetUseScrapConstantValue(bool UseStoredValue, float Value);
+	void SetScrapConstantValue(float Value);
 
 	void SetTexture(uint32_t Index, Texture *Resource);
 	void SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource);

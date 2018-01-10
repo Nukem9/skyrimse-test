@@ -364,7 +364,8 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	// RenderSky
 	annotation->BeginEvent(L"RenderSky");
 	{
-		BSGraphics::Renderer::SetUseScrapConstantValue(true, 0.50196081f);
+		BSGraphics::Renderer::SetUseScrapConstantValue(true);
+		BSGraphics::Renderer::SetScrapConstantValue(0.50196081f);
 		accumulator->RenderTechniques(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, a2, -1);
 	}
 	annotation->EndEvent();

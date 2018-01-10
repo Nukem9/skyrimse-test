@@ -198,7 +198,7 @@ struct SetStateRenderCommand : RenderCommand
 			break;
 
 		case UseScrapConstantValue_2:
-			BSGraphics::Renderer::SetUseScrapConstantValue((bool)Data.part1, *(float *)&Data.part2);
+			BSGraphics::Renderer::SetUseScrapConstantValue(*(float *)&Data.part1);
 			break;
 
 		default:

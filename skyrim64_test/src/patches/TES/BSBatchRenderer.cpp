@@ -8,6 +8,7 @@
 #include "BSSpinLock.h"
 #include "BSBatchRenderer.h"
 #include "BSReadWriteLock.h"
+#include "BSShader/BSShaderProperty.h"
 
 AutoPtr(BYTE, byte_1431F54CD, 0x31F54CD);
 AutoPtr(DWORD, dword_141E32FDC, 0x1E32FDC);
@@ -187,16 +188,138 @@ uint32_t lastTechId;
 
 SRWLOCK testingLock = SRWLOCK_INIT;
 
-void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, unsigned int a4)
+bool __fastcall sub_1412E3AB0(int a1)
 {
-	if (InsertRenderCommand<DrawGeometryRenderCommand>(a1, Technique, a3, a4))
-		return;
+	return (unsigned int)(a1 - 0x5C000058) <= 3;
+}
 
-	AcquireSRWLockExclusive(&testingLock);
+void sub_14131DDF0(BSRenderPass *Pass)
+{
+	auto ptrsub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+	ptrsub_14131DDF0(Pass);
+}
+
+void DrawGeometryCustom(BSRenderPass *Pass, bool a2, uint32_t RenderFlags)
+{
+	Pass->m_Shader->SetupGeometry(Pass, RenderFlags);
+	Pass->m_Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, true);
+
+	if (Pass->QAlphaProperty())
+		Pass->m_Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
+
+	sub_14131DDF0(Pass);
+	Pass->m_Shader->RestoreGeometry(Pass);
+}
+
+void sub_141D71120(BSRenderPass *Pass, BSShader *Shader, bool a3, uint32_t RenderFlags)
+{
+	//if (Shader != BSSkyShader::pInstance)
+	{
+		if ((RenderFlags & 4) && !sub_1412E3AB0(Pass->m_TechniqueID))
+			Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, a3);
+
+		if (a3 && Pass->QAlphaProperty())
+			Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
+	}
+
+	Shader->SetupGeometry(Pass, RenderFlags);
+}
+
+AutoPtr(bool, zbUseEarlyZ, 0x30528E5);
+
+void DrawGeometryDefault(BSRenderPass *Pass, bool a2, uint32_t RenderFlags)
+{
+	MemoryContextTracker tracker(26, "BSBatchRenderer.cpp");
+
+	// bAssert(Pass, "Render Error: Render pass is nullptr");
+	// bAssert(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
+	// bAssert(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
+
+	sub_141D71120(Pass, Pass->m_Shader, (a2 || zbUseEarlyZ) ? true : false, RenderFlags);
+	sub_14131DDF0(Pass);
+	Pass->m_Shader->RestoreGeometry(Pass);// TODO: Looks like this virtual func takes a 3rd param too (RenderFlags)
+}
+
+void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset);
+
+void UnmapDynamicData()
+{
+	auto *renderer = GetThreadedGlobals();
+
+	renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
+}
+
+void DrawGeometrySkinned(BSRenderPass *Pass, bool a2, uint32_t RenderFlags)
+{
+	// bAssert(Pass, "Render Error: Render pass is nullptr");
+	// bAssert(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
+	// bAssert(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
+
+	// "Render Error : Skin instance is nullptr"
+	// "Render Error : Skin partition is nullptr"
+	// "Render Error : Skin partition array is nullptr"
+	// bAssert(Pass->m_Property, "Don't have a shader property when we expected one.");
+
+	auto sub_140C71A50 = (const void *(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71A50);
+	auto sub_140C71AB0 = (void(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71AB0);
+	auto sub_141336450 = (void(__fastcall *)())(g_ModuleBase + 0x1336450);
+
+	uintptr_t v7 = (uintptr_t)Pass->m_Geometry;
+
+	sub_141336450();
+
+	if ((*(__int64(__fastcall **)(__int64))(*(uintptr_t *)v7 + 432i64))(v7))
+	{
+		NiBoneMatrixSetterI::Data params;
+		params.m_Flags = 1;
+
+		sub_141D71120(Pass, Pass->m_Shader, a2, RenderFlags);
+		Pass->m_Shader->SetBoneMatrix(Pass->m_Geometry->QSkinInstance(), &params, &Pass->m_Geometry->GetWorldTransform());
+		sub_14131DDF0(Pass);
+	}
+	else
+	{
+		sub_141D71120(Pass, Pass->m_Shader, a2, RenderFlags);
+
+		uint32_t v10 = (Pass->Byte1E >> 7) & 1;
+		uint32_t v11 = (Pass->Byte1E & 0x7F);
+
+		NiSkinInstance::UnknownData params;
+		params.m_BoneSetter = static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader);
+		params.m_Geometry = Pass->m_Geometry;
+		params.m_UnkPtr = nullptr;
+		params.m_UnkDword1 = v10;
+		params.m_UnkDword2 = v11;
+		params.m_UnkDword3 = 0;
+		params.m_UnkDword4 = -1;
+
+		// Skinned verts are uploaded to a GPU vertex buffer directly (non-static objects like characters)
+		uintptr_t v12 = (uintptr_t)Pass->m_Geometry->IsDynamicTriShape();
+
+		if (v12)
+		{
+			void *v15 = sub_140D6BF00(0, *(uint32_t *)(v12 + 368), &params.m_UnkDword4);
+			uint32_t v16 = *(uint32_t *)(v12 + 0x170);
+
+			const void *v17 = sub_140C71A50(v12);
+			memcpy_s(v15, v16, v17, v16);
+			sub_140C71AB0(v12);
+			UnmapDynamicData();
+		}
+
+		Pass->m_Geometry->QSkinInstance()->VFunc37(&params);
+	}
+
+	Pass->m_Shader->RestoreGeometry(Pass/*, RenderFlags*/);
+}
+
+void sub_14131ED70(BSRenderPass *Pass, uint32_t Technique, unsigned __int8 a3, unsigned int a4)
+{
+	if (InsertRenderCommand<DrawGeometryRenderCommand>(Pass, Technique, a3, a4))
+		return;
 
 	__int64 v6; // r14
 	__int64 result; // rax
-	__int64 v11; // rdi
 
 	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
@@ -206,13 +329,10 @@ void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, uns
 	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
 
 	auto sub_14131EFF0 = (__int64(__fastcall *)(unsigned int a1, __int64 a2))(g_ModuleBase + 0x131F350);
-	auto sub_14131F450 = (__int64(__fastcall *)(BSRenderPass *a1, __int64 a2, unsigned int a3))(g_ModuleBase + 0x131F7B0);
-	auto sub_14131F1F0 = (__int64(__fastcall *)(BSRenderPass *a1, char a2, unsigned int a3))(g_ModuleBase + 0x131F550);
-	auto sub_14131F2A0 = (__int64(__fastcall *)(BSRenderPass *a1, unsigned __int8 a2, unsigned int a3))(g_ModuleBase + 0x131F600);
 
 	auto sub_1412ABF00 = (const char *(__fastcall *)(unsigned int a1))(g_ModuleBase + 0x12ABF00);
 
-	v6 = (uint64_t)a1->m_Shader;
+	v6 = (uint64_t)Pass->m_Shader;
 
 	//lastTechId = Technique;
 
@@ -223,43 +343,31 @@ void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, uns
 	if (dword_1432A8214 == Technique && Technique != 0x5C006076 && v6 == qword_1432A8218
 		|| (dword_141E32FDC = Technique, result = sub_14131EFF0(Technique, v6), (BYTE)result))
 	{
-		BSShaderProperty *property = a1->m_Property;
+		BSShaderProperty *property = Pass->m_Property;
+		BSShaderMaterial *material = nullptr;
 
 		if (property)
-			v11 = *(uint64_t *)((uint64_t)property + 120);// unknownFlag2 = BSShaderProperty ---- (unknownFlag2 + 120) = BSShaderMaterial *
+			material = property->pMaterial;
+
+		if ((uintptr_t)material != qword_1434B5220)
+		{
+			if (material)
+				Pass->m_Shader->SetupMaterial(material);
+
+			qword_1434B5220 = (uintptr_t)material;
+		}
+
+		//AcquireSRWLockExclusive(&testingLock);
+		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;
+
+		if (Pass->m_Geometry->QSkinInstance())
+			DrawGeometrySkinned(Pass, a3, a4);
+		else if (*(BYTE *)((uintptr_t)Pass->m_Geometry + 265) & 8)// BSGeometry::NeedsCustomRender()?
+			DrawGeometryCustom(Pass, a3, a4);
 		else
-			v11 = 0;
-
-		AssertIsRTTIType((uint64_t)a1->m_Property, RTTI_BSShaderProperty);
-		AssertIsRTTIType(v11, RTTI_BSShaderMaterial);
-		//AssertIsRTTIType(v6, RTTI_BSShader);
-
-		if (v11 != qword_1434B5220)
-		{
-			if (v11)
-				a1->m_Shader->SetupMaterial((BSShaderMaterial *)v11);
-
-			qword_1434B5220 = v11;
-		}
-
-		*(BYTE *)((uintptr_t)a1->m_Geometry + 264) = a1->Byte1E;
-
-		if (*(uint64_t *)((uintptr_t)a1->m_Geometry + 304))// v8 + 304 == BSGeometry::QSkinPartitions(). NiSkinPartition?
-		{
-			sub_14131F2A0(a1, a3, a4);// Something to do with skinning, "Render Error : Skin instance is nullptr"
-		}
-		else if (*(BYTE *)((uintptr_t)a1->m_Geometry + 265) & 8)// BSGeometry::NeedsCustomRender()?
-		{
-			sub_14131F450(a1, a3, a4);
-		}
-		else
-		{
-			sub_14131F1F0(a1, a3, a4); // v9 = Render pass, *(v9 + 16) = Render pass geometry, *(v9) = BSShader
-		}
-
+			DrawGeometryDefault(Pass, a3, a4);
+		//ReleaseSRWLockExclusive(&testingLock);
 	}
-
-	ReleaseSRWLockExclusive(&testingLock);
 }
 
 void sub_14131F9F0(__int64 *a1, unsigned int a2)
@@ -279,9 +387,12 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 
 		if (tempIndex != -1)
 		{
-			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
-				testLocks[tempIndex].AcquireWrite();
+			if (tempIndex != 6 && tempIndex != 1 && tempIndex != 9)
+			{
+				if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
+					testLocks[tempIndex].AcquireWrite();
 				//AcquireSRWLockExclusive(&testLocks[tempIndex]);
+			}
 		}
 
 		int firstType = -1;
@@ -306,7 +417,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 
 			__int64 v9 = *(uint64_t *)((uintptr_t)i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
 			bool v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
-			sub_14131ED70(i, i->Dword18, v10, a2);
+			sub_14131ED70(i, i->m_TechniqueID, v10, a2);
 		}
 
 		if ((a2 & 0x108) == 0)
@@ -319,9 +430,12 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 
 		if (tempIndex != -1)
 		{
-			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
-				testLocks[tempIndex].ReleaseWrite();
+			if (tempIndex != 6 && tempIndex != 1 && tempIndex != 9)
+			{
+				if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
+					testLocks[tempIndex].ReleaseWrite();
 				//ReleaseSRWLockExclusive(&testLocks[tempIndex]);
+			}
 		}
 	}
 }
@@ -621,9 +735,12 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 
 	if (tempIndex != -1)
 	{
-		if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
-			testLocks[tempIndex].AcquireWrite();
+		if (tempIndex != 6 && tempIndex != 1 && tempIndex != 9)
+		{
+			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
+				testLocks[tempIndex].AcquireWrite();
 			//AcquireSRWLockExclusive(&testLocks[tempIndex]);
+		}
 	}
 
 	int firstType = -1;
@@ -653,9 +770,12 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 
 	if (tempIndex != -1)
 	{
-		if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
-			testLocks[tempIndex].ReleaseWrite();
+		if (tempIndex != 6 && tempIndex != 1 && tempIndex != 9)
+		{
+			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
+				testLocks[tempIndex].ReleaseWrite();
 			//ReleaseSRWLockExclusive(&testLocks[tempIndex]);
+		}
 	}
 
 	SubPassIndex++;

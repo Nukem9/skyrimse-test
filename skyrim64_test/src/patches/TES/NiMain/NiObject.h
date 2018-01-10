@@ -24,7 +24,7 @@ public:
 	virtual void *IsTriShape();			// BSTriShape *
 	virtual void *IsSegmentedTriShape();// BSSegmentedTriShape *
 	virtual void *IsSubIndexTriShape();	// BSSubIndexTriShape *
-	virtual void *unknown1();
+	virtual void *IsDynamicTriShape();	// BSDynamicTriShape *
 	virtual void *IsNiGeometry();		// NiGeometry *
 	virtual void *IsNiTriBasedGeom();	// NiTriBasedGeom *
 	virtual void *IsNiTriShape();		// NiTriShape *
