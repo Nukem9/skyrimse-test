@@ -632,7 +632,7 @@ void BSBatchRenderer::DrawGeometryDefault(BSRenderPass *Pass, bool AlphaTest, ui
 
 	SetupGeometryBlending(Pass, Pass->m_Shader, (AlphaTest || zbUseEarlyZ) ? true : false, RenderFlags);
 	DrawTriStrips(Pass);
-	Pass->m_Shader->RestoreGeometry(Pass);// TODO: Looks like this virtual func takes a 3rd param too (RenderFlags)
+	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
 void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
@@ -697,7 +697,7 @@ void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, ui
 		Pass->m_Geometry->QSkinInstance()->VFunc37(&params);
 	}
 
-	Pass->m_Shader->RestoreGeometry(Pass/*, RenderFlags*/);
+	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
 void BSBatchRenderer::DrawGeometryCustom(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
@@ -709,7 +709,7 @@ void BSBatchRenderer::DrawGeometryCustom(BSRenderPass *Pass, bool AlphaTest, uin
 		Pass->m_Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
 
 	DrawTriStrips(Pass);
-	Pass->m_Shader->RestoreGeometry(Pass);
+	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
 void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader, bool AlphaTest, uint32_t RenderFlags)

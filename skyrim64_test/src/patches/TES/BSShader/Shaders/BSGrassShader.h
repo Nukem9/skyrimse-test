@@ -54,12 +54,12 @@ public:
 	BSGrassShader();
 	virtual ~BSGrassShader();
 
-	virtual bool SetupTechnique(uint32_t Technique) override;				// Implemented
-	virtual void RestoreTechnique(uint32_t Technique) override;				// Nullsub
-	virtual void SetupMaterial(BSShaderMaterial const *Material) override;	// Implemented
-	virtual void RestoreMaterial(BSShaderMaterial const *Material) override;// Nullsub
-	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t Flags) override;// Implemented
-	virtual void RestoreGeometry(BSRenderPass *Pass) override;				// Nullsub
+	virtual bool SetupTechnique(uint32_t Technique) override;						// Implemented
+	virtual void RestoreTechnique(uint32_t Technique) override;						// Nullsub
+	virtual void SetupMaterial(BSShaderMaterial const *Material) override;			// Implemented
+	virtual void RestoreMaterial(BSShaderMaterial const *Material) override;		// Nullsub
+	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;	// Implemented
+	virtual void RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;// Nullsub
 
 	void UpdateFogParameters();
 	void UpdateGeometryProjections(VertexConstantData *Data, const NiTransform& GeoTransform);

@@ -122,9 +122,9 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 	EndTechnique();
 }
 
-void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
+void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::SetupGeometry, Pass, RenderFlags);
 
 	auto *renderer = GetThreadedGlobals();
 	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
@@ -317,9 +317,9 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		BSGraphics::Renderer::AlphaBlendStateSetMode(2);
 }
 
-void BSSkyShader::RestoreGeometry(BSRenderPass *Pass)
+void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::RestoreGeometry, Pass, RenderFlags);
 
 	uint32_t propertyType = *(uint32_t *)((uintptr_t)Pass->m_Property + 0xC0);
 

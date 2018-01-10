@@ -76,12 +76,12 @@ public:
 	uint32_t m_CurrentRawTechnique;
 	char _pad1[0x60];
 
-	virtual bool SetupTechnique(uint32_t Technique) override;				// Implemented
-	virtual void RestoreTechnique(uint32_t Technique) override;				// Implemented
-	virtual void SetupMaterial(BSShaderMaterial const *Material) override;	// Implemented
-	virtual void RestoreMaterial(BSShaderMaterial const *Material) override;// Nullsub
-	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t Flags) override;// Implemented
-	virtual void RestoreGeometry(BSRenderPass *Pass) override;				// Implemented
+	virtual bool SetupTechnique(uint32_t Technique) override;						// Implemented
+	virtual void RestoreTechnique(uint32_t Technique) override;						// Implemented
+	virtual void SetupMaterial(BSShaderMaterial const *Material) override;			// Implemented
+	virtual void RestoreMaterial(BSShaderMaterial const *Material) override;		// Nullsub
+	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;	// Implemented
+	virtual void RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;// Implemented
 
 	static uint32_t GetRawTechnique(uint32_t Technique);
 	static uint32_t GetVertexTechnique(uint32_t RawTechnique);

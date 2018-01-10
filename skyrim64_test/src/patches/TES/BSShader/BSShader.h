@@ -80,7 +80,7 @@ public:
 	virtual void SetupMaterial(BSShaderMaterial const *Material);
 	virtual void RestoreMaterial(BSShaderMaterial const *Material);
 	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t Flags) = 0;
-	virtual void RestoreGeometry(BSRenderPass *Pass) = 0;
+	virtual void RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags) = 0;
 	virtual void GetTechniqueName(uint32_t Technique, char *Buffer, uint32_t BufferSize);
 	virtual void ReloadShaders(bool Unknown);
 

@@ -90,9 +90,9 @@ void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 	EndTechnique();
 }
 
-void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
+void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::SetupGeometry, Pass, RenderFlags);
 
 	auto *renderer = GetThreadedGlobals();
 	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
@@ -147,9 +147,9 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	}
 }
 
-void BSBloodSplatterShader::RestoreGeometry(BSRenderPass *Pass)
+void BSBloodSplatterShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::RestoreGeometry, Pass, RenderFlags);
 }
 
 uint32_t BSBloodSplatterShader::GetRawTechnique(uint32_t Technique)

@@ -31,10 +31,10 @@ public:
 	BSBloodSplatterShader();
 	virtual ~BSBloodSplatterShader();
 
-	virtual bool SetupTechnique(uint32_t Technique) override;				// Implemented
-	virtual void RestoreTechnique(uint32_t Technique) override;				// Implemented
-	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t Flags) override;// Implemented
-	virtual void RestoreGeometry(BSRenderPass *Pass) override;				// Implemented
+	virtual bool SetupTechnique(uint32_t Technique) override;						// Implemented
+	virtual void RestoreTechnique(uint32_t Technique) override;						// Implemented
+	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;	// Implemented
+	virtual void RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;// Implemented
 
 	static uint32_t GetRawTechnique(uint32_t Technique);
 	static uint32_t GetVertexTechnique(uint32_t RawTechnique);

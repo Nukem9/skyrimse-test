@@ -140,9 +140,9 @@ void BSDistantTreeShader::RestoreTechnique(uint32_t Technique)
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSDistantTreeShader::RestoreTechnique, Technique);
 }
 
-void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
+void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::SetupGeometry, Pass, RenderFlags);
 
 	auto *renderer = GetThreadedGlobals();
 	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
@@ -174,9 +174,9 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 }
 
-void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass)
+void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::RestoreGeometry, Pass, RenderFlags);
 }
 
 uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)

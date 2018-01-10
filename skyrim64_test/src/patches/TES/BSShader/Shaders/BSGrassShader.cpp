@@ -111,9 +111,9 @@ void BSGrassShader::RestoreMaterial(BSShaderMaterial const *Material)
 	BSSHADER_FORWARD_CALL(MATERIAL, &BSGrassShader::RestoreMaterial, Material);
 }
 
-void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
+void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::SetupGeometry, Pass, RenderFlags);
 
 	auto *renderer = GetThreadedGlobals();
 	uintptr_t geometry = (uintptr_t)Pass->m_Geometry;
@@ -223,7 +223,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 
 	if (!byte_14304E4C5)
 	{
-		if (Flags & 0x10)
+		if (RenderFlags & 0x10)
 		{
 			data->PreviousWindTimer = windTimer;
 		}
@@ -264,9 +264,9 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	UpdateGeometryInstanceData(Pass->m_Geometry, Pass->m_Property);
 }
 
-void BSGrassShader::RestoreGeometry(BSRenderPass *Pass)
+void BSGrassShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::RestoreGeometry, Pass, RenderFlags);
 }
 
 void BSGrassShader::UpdateFogParameters()

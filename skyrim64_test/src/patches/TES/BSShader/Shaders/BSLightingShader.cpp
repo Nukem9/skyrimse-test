@@ -655,9 +655,9 @@ void GetInverseWorldMatrix(const NiTransform& Transform, bool UseWorldPosition, 
 	}
 }
 
-void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
+void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, Flags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, RenderFlags);
 
 	auto *renderer = GetThreadedGlobals();
 	auto property = static_cast<BSLightingShaderProperty *>(Pass->m_Property);
@@ -734,7 +734,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	{
 		// Unknown renderer flag: Determines if previous world projection is used
 		const NiTransform& world = Pass->m_Geometry->GetWorldTransform();
-		const NiTransform& temp = (Flags & 0x10) ? world : Pass->m_Geometry->GetPreviousWorldTransform();
+		const NiTransform& temp = (RenderFlags & 0x10) ? world : Pass->m_Geometry->GetPreviousWorldTransform();
 
 		GeoUpdateViewProjectionConstants(vertexCG, world, false, nullptr);
 		GeoUpdateViewProjectionConstants(vertexCG, temp, true, (NiPoint3 *)&renderer->__zz2[40]);// BSGraphics::Renderer::QViewData(BSGraphics::gRenderer)->kViewProjMat?
@@ -810,7 +810,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	if (rawTechnique & (RAW_FLAG_SOFT_LIGHTING | RAW_FLAG_RIM_LIGHTING | RAW_FLAG_BACK_LIGHTING | RAW_FLAG_AMBIENT_SPECULAR))
 		doPrecipitationOcclusion = true;
 
-	bool enableProjectedUvNormals = byte_141E35308 && (!(Flags & 0x8) || !byte_141E35320);
+	bool enableProjectedUvNormals = byte_141E35308 && (!(RenderFlags & 0x8) || !byte_141E35320);
 
 	if ((rawTechnique & RAW_FLAG_PROJECTED_UV) && (baseTechniqueID != RAW_TECHNIQUE_HAIR))
 	{
@@ -950,7 +950,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 		if (rawTechnique & RAW_FLAG_SPECULAR)
 			v99 = property->fSpecularLODFade;
 
-		if ((Flags & 2) == 0)
+		if ((RenderFlags & 2) == 0)
 			v98 = 1.0f;
 
 		ssrParams.f[3] = v98 * v99;
@@ -960,9 +960,9 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t Flags)
 	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 }
 
-void BSLightingShader::RestoreGeometry(BSRenderPass *Pass)
+void BSLightingShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::RestoreGeometry, Pass);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::RestoreGeometry, Pass, RenderFlags);
 
 	if (Pass->Byte1C == 10)
 		BSGraphics::Renderer::DepthStencilStateSetStencilMode(0, 255);
