@@ -13,84 +13,7 @@
 AutoPtr(BYTE, byte_1431F54CD, 0x31F54CD);
 AutoPtr(DWORD, dword_141E32FDC, 0x1E32FDC);
 
-unsigned __int64 *sub_141320370(__int64 a1, unsigned __int64 *a2);
-signed __int64 *sub_1413203D0(__int64 a1, signed __int64 *a2);
-
 extern BSReadWriteLock testLocks[32];
-
-struct RTTIBaseClassArray
-{
-	DWORD arrayOfBaseClassDescriptors[]; // RTTIBaseClassDescriptor *
-};
-
-struct RTTICompleteObjectLocator
-{
-	DWORD signature;		// 32-bit zero, 64-bit one, until loaded
-	DWORD offset;			// Offset of this vtable in the complete class
-	DWORD cdOffset;			// Constructor displacement offset
-	DWORD typeDescriptor;	// TypeDescriptor of the complete class
-	DWORD classDescriptor;	// Describes inheritance hierarchy
-};
-
-struct RTTIClassHierarchyDescriptor
-{
-	DWORD signature;		// Always zero or one
-	DWORD attributes;		// Flags
-	DWORD numBaseClasses;	// Number of classes in baseClassArray
-	DWORD baseClassArray;	// RTTIBaseClassArray
-};
-
-struct PMD
-{
-	int mdisp;	// Member displacement (vftable offset in the class itself)
-	int pdisp;	// Vbtable displacement (vbtable offset, -1: vftable is at displacement PMD.mdisp inside the class)
-	int vdisp;	// Displacement inside vbtable
-};
-
-struct RTTIBaseClassDescriptor
-{
-	DWORD typeDescriptor;		// Type descriptor of the class
-	DWORD numContainedBases;	// Number of nested classes following in the Base Class Array
-	PMD disp;					// Pointer-to-member displacement info
-	DWORD attributes;			// Flags
-};
-
-#define RTTI_BSShaderProperty 0x19A0F78
-#define RTTI_BSBatchRenderer 0x19AC298
-#define RTTI_BSShaderAccumulator 0x19A9FF0
-#define RTTI_BSShader 0x19AD110
-#define RTTI_BSShaderMaterial 0x19AD098
-
-void AssertIsRTTIType(uintptr_t Object, uintptr_t RTTIInfo)
-{
-	__try
-	{
-		RTTIInfo += g_ModuleBase;
-		RTTICompleteObjectLocator *rttiCOL = *(RTTICompleteObjectLocator **)(*(uintptr_t *)Object - sizeof(void *));
-		RTTICompleteObjectLocator *otherrtti = (RTTICompleteObjectLocator *)RTTIInfo;
-
-		if (rttiCOL->typeDescriptor == otherrtti->typeDescriptor)
-			return;
-
-		// Loop through the base classes and check for a match
-		auto object = rttiCOL;
-		auto hierarchy = (RTTIClassHierarchyDescriptor *)(g_ModuleBase + object->classDescriptor);
-		auto baseClassArray = (RTTIBaseClassArray *)(g_ModuleBase + hierarchy->baseClassArray);
-
-		for (DWORD i = 0; i < hierarchy->numBaseClasses; i++)
-		{
-			auto baseClassInfo = (RTTIBaseClassDescriptor *)(g_ModuleBase + baseClassArray->arrayOfBaseClassDescriptors[i]);
-
-			if (baseClassInfo->typeDescriptor == otherrtti->typeDescriptor)
-				return;
-		}
-	}
-	__except (EXCEPTION_EXECUTE_HANDLER)
-	{
-	}
-
-	__debugbreak();
-}
 
 void operator_delete(__int64 a1, __int64 a2)
 {
@@ -166,210 +89,6 @@ void sub_14131F910(__int64 a1, __int64 a2)
 	}
 }
 
-extern ID3DUserDefinedAnnotation *annotation;
-
-std::wstring wide(const std::string &s)
-{
-	size_t srcLen = s.length();
-
-	if (srcLen <= 0)
-		return L"";
-
-	std::wstring ret;
-	ret.resize(srcLen);
-
-	if (!MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)srcLen, ret.data(), (int)ret.size()))
-		throw "Error converting UTF8 to UTF16";
-
-	return ret;
-}
-
-uint32_t lastTechId;
-
-SRWLOCK testingLock = SRWLOCK_INIT;
-
-bool __fastcall sub_1412E3AB0(int a1)
-{
-	return (unsigned int)(a1 - 0x5C000058) <= 3;
-}
-
-void sub_14131DDF0(BSRenderPass *Pass)
-{
-	auto ptrsub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
-	ptrsub_14131DDF0(Pass);
-}
-
-void DrawGeometryCustom(BSRenderPass *Pass, bool a2, uint32_t RenderFlags)
-{
-	Pass->m_Shader->SetupGeometry(Pass, RenderFlags);
-	Pass->m_Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, true);
-
-	if (Pass->QAlphaProperty())
-		Pass->m_Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
-
-	sub_14131DDF0(Pass);
-	Pass->m_Shader->RestoreGeometry(Pass);
-}
-
-void sub_141D71120(BSRenderPass *Pass, BSShader *Shader, bool a3, uint32_t RenderFlags)
-{
-	//if (Shader != BSSkyShader::pInstance)
-	{
-		if ((RenderFlags & 4) && !sub_1412E3AB0(Pass->m_TechniqueID))
-			Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, a3);
-
-		if (a3 && Pass->QAlphaProperty())
-			Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
-	}
-
-	Shader->SetupGeometry(Pass, RenderFlags);
-}
-
-AutoPtr(bool, zbUseEarlyZ, 0x30528E5);
-
-void DrawGeometryDefault(BSRenderPass *Pass, bool a2, uint32_t RenderFlags)
-{
-	MemoryContextTracker tracker(26, "BSBatchRenderer.cpp");
-
-	// bAssert(Pass, "Render Error: Render pass is nullptr");
-	// bAssert(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
-	// bAssert(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
-
-	sub_141D71120(Pass, Pass->m_Shader, (a2 || zbUseEarlyZ) ? true : false, RenderFlags);
-	sub_14131DDF0(Pass);
-	Pass->m_Shader->RestoreGeometry(Pass);// TODO: Looks like this virtual func takes a 3rd param too (RenderFlags)
-}
-
-void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset);
-
-void UnmapDynamicData()
-{
-	auto *renderer = GetThreadedGlobals();
-
-	renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
-}
-
-void DrawGeometrySkinned(BSRenderPass *Pass, bool a2, uint32_t RenderFlags)
-{
-	// bAssert(Pass, "Render Error: Render pass is nullptr");
-	// bAssert(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
-	// bAssert(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
-
-	// "Render Error : Skin instance is nullptr"
-	// "Render Error : Skin partition is nullptr"
-	// "Render Error : Skin partition array is nullptr"
-	// bAssert(Pass->m_Property, "Don't have a shader property when we expected one.");
-
-	auto sub_140C71A50 = (const void *(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71A50);
-	auto sub_140C71AB0 = (void(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71AB0);
-	auto sub_141336450 = (void(__fastcall *)())(g_ModuleBase + 0x1336450);
-
-	uintptr_t v7 = (uintptr_t)Pass->m_Geometry;
-
-	sub_141336450();
-
-	if ((*(__int64(__fastcall **)(__int64))(*(uintptr_t *)v7 + 432i64))(v7))
-	{
-		NiBoneMatrixSetterI::Data params;
-		params.m_Flags = 1;
-
-		sub_141D71120(Pass, Pass->m_Shader, a2, RenderFlags);
-		Pass->m_Shader->SetBoneMatrix(Pass->m_Geometry->QSkinInstance(), &params, &Pass->m_Geometry->GetWorldTransform());
-		sub_14131DDF0(Pass);
-	}
-	else
-	{
-		sub_141D71120(Pass, Pass->m_Shader, a2, RenderFlags);
-
-		uint32_t v10 = (Pass->Byte1E >> 7) & 1;
-		uint32_t v11 = (Pass->Byte1E & 0x7F);
-
-		NiSkinInstance::UnknownData params;
-		params.m_BoneSetter = static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader);
-		params.m_Geometry = Pass->m_Geometry;
-		params.m_UnkPtr = nullptr;
-		params.m_UnkDword1 = v10;
-		params.m_UnkDword2 = v11;
-		params.m_UnkDword3 = 0;
-		params.m_UnkDword4 = -1;
-
-		// Skinned verts are uploaded to a GPU vertex buffer directly (non-static objects like characters)
-		uintptr_t v12 = (uintptr_t)Pass->m_Geometry->IsDynamicTriShape();
-
-		if (v12)
-		{
-			void *v15 = sub_140D6BF00(0, *(uint32_t *)(v12 + 368), &params.m_UnkDword4);
-			uint32_t v16 = *(uint32_t *)(v12 + 0x170);
-
-			const void *v17 = sub_140C71A50(v12);
-			memcpy_s(v15, v16, v17, v16);
-			sub_140C71AB0(v12);
-			UnmapDynamicData();
-		}
-
-		Pass->m_Geometry->QSkinInstance()->VFunc37(&params);
-	}
-
-	Pass->m_Shader->RestoreGeometry(Pass/*, RenderFlags*/);
-}
-
-void sub_14131ED70(BSRenderPass *Pass, uint32_t Technique, unsigned __int8 a3, unsigned int a4)
-{
-	if (InsertRenderCommand<DrawGeometryRenderCommand>(Pass, Technique, a3, a4))
-		return;
-
-	__int64 v6; // r14
-	__int64 result; // rax
-
-	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
-
-	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
-	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
-	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
-	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
-
-	auto sub_14131EFF0 = (__int64(__fastcall *)(unsigned int a1, __int64 a2))(g_ModuleBase + 0x131F350);
-
-	auto sub_1412ABF00 = (const char *(__fastcall *)(unsigned int a1))(g_ModuleBase + 0x12ABF00);
-
-	v6 = (uint64_t)Pass->m_Shader;
-
-	//lastTechId = Technique;
-
-	//char buffer[128];
-	//sprintf_s(buffer, "Technique %s -- %X", sub_1412ABF00(Technique), Technique);
-	//annotation->SetMarker(wide(buffer).c_str());
-
-	if (dword_1432A8214 == Technique && Technique != 0x5C006076 && v6 == qword_1432A8218
-		|| (dword_141E32FDC = Technique, result = sub_14131EFF0(Technique, v6), (BYTE)result))
-	{
-		BSShaderProperty *property = Pass->m_Property;
-		BSShaderMaterial *material = nullptr;
-
-		if (property)
-			material = property->pMaterial;
-
-		if ((uintptr_t)material != qword_1434B5220)
-		{
-			if (material)
-				Pass->m_Shader->SetupMaterial(material);
-
-			qword_1434B5220 = (uintptr_t)material;
-		}
-
-		//AcquireSRWLockExclusive(&testingLock);
-		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;
-
-		if (Pass->m_Geometry->QSkinInstance())
-			DrawGeometrySkinned(Pass, a3, a4);
-		else if (*(BYTE *)((uintptr_t)Pass->m_Geometry + 265) & 8)// BSGeometry::NeedsCustomRender()?
-			DrawGeometryCustom(Pass, a3, a4);
-		else
-			DrawGeometryDefault(Pass, a3, a4);
-		//ReleaseSRWLockExclusive(&testingLock);
-	}
-}
-
 void sub_14131F9F0(__int64 *a1, unsigned int a2)
 {
 	__int64 *v5; // rdi
@@ -409,7 +128,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 
 			if ((a2 & 0x108) == 0)
 			{
-				if (*(uint64_t *)((uint64_t)i->m_Property + 56i64) & 0x1000000000i64)// BSShaderProperty::VertexDesc?
+				if (i->m_Property->QFlags() & 0x1000000000i64)
 					BSGraphics::Renderer::RasterStateSetCullMode(0);
 				else
 					BSGraphics::Renderer::RasterStateSetCullMode(1);
@@ -417,7 +136,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 
 			__int64 v9 = *(uint64_t *)((uintptr_t)i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
 			bool v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
-			sub_14131ED70(i, i->m_TechniqueID, v10, a2);
+			BSBatchRenderer::DrawPassGeometry(i, i->m_TechniqueID, v10, a2);
 		}
 
 		if ((a2 & 0x108) == 0)
@@ -523,6 +242,27 @@ void BSBatchRenderer::PassInfo::Unregister()
 	this->UnkWord1 = 0;
 }
 
+void BSBatchRenderer::RenderPassArray::Clear(bool Validate)
+{
+	for (int i = 0; i < ARRAYSIZE(this->m_Pass); i++)
+	{
+		if (Validate && this->m_Pass[i])
+		{
+			//sub_14002288B((__int64)&a1, 255i64, (__int64)"Pass still has passes");
+			//if (qword_14468B560)
+			//	qword_14468B560(&a1, 0i64);
+		}
+
+		// This is removed in public builds? Sets the bool to indicate pass is no longer registered
+		// for (result = *(_QWORD *)(v4 + 8 * v3); result; result = *(_QWORD *)(result + 48))
+		//	*(_BYTE *)(result + 33) = 0;
+
+		this->m_Pass[i] = nullptr;
+	}
+
+	this->m_PassIndexBits = 0;
+}
+
 bool BSBatchRenderer::HasTechniquePasses(uint32_t StartTech, uint32_t EndTech)
 {
 	auto sub_14131F100 = (char(__fastcall *)(__int64 a1, unsigned int a2, unsigned int a3))(g_ModuleBase + 0x131F460);
@@ -531,24 +271,17 @@ bool BSBatchRenderer::HasTechniquePasses(uint32_t StartTech, uint32_t EndTech)
 
 bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, uint32_t& SubPassIndex)
 {
-	__int64 a1 = (__int64)this;
-
-	AssertIsRTTIType(a1, RTTI_BSBatchRenderer);
-
-	signed int v4; // eax
-	bool v5; // zf
-	signed __int64 v6; // r8
-
 	if (SubPassIndex > 4)
 		SubPassIndex = 0;
-	v4 = SubPassIndex;
-	v5 = SubPassIndex == 5;
+
+	uint32_t v4 = SubPassIndex;
+	bool v5 = SubPassIndex == 5;
+
 	if (SubPassIndex < 5)
 	{
-		v6 = SubPassIndex;
+		uint32_t v6 = SubPassIndex;
 		do
 		{
-			// BSTArray
 			if (this->m_RenderArrays[a2].m_Pass[v6])
 			{
 				SubPassIndex = v4;
@@ -580,10 +313,9 @@ bool BSBatchRenderer::sub_14131E700(uint32_t& Technique, uint32_t& SubPassIndex,
 
 bool BSBatchRenderer::sub_14131ECE0(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4)
 {
-	__int64 a1 = (__int64)this;
 	uint32_t passArray = m_TechToArrayMap.get(Technique);
 
-	if (*(BYTE *)(a1 + 108))
+	if (*(BYTE *)((uintptr_t)this + 108))
 		m_RenderArrays[passArray].Clear(true);
 
 	return sub_14131E700(Technique, SubPassIndex, a4);
@@ -650,9 +382,6 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex,
 
 bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, unsigned int a5)
 {
-	__int64 a1 = (__int64)this;
-	AssertIsRTTIType(a1, RTTI_BSBatchRenderer);
-
 	auto& GraphicsGlobals = *(BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
 	bool unknownFlag2 = false;
@@ -752,11 +481,11 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 		if (pass->m_Shader->m_Type != firstType)
 			__debugbreak();
 
-		sub_14131ED70(pass, Technique, unknownFlag2, a5);
+		DrawPassGeometry(pass, Technique, unknownFlag2, a5);
 	}
 
 	// a1+108 is probably a "remove list" flag after it's rendered, but the memory is not freed yet
-	if (*(BYTE *)(a1 + 108))
+	if (*(BYTE *)((uintptr_t)this + 108))
 	{
 		if (SubPassIndex < 0 || SubPassIndex >= ARRAYSIZE(passArray->m_Pass))
 			__debugbreak();
@@ -785,7 +514,6 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 void BSBatchRenderer::sub_14131D6E0()
 {
 	__int64 v1 = (__int64)this;
-	AssertIsRTTIType(v1, RTTI_BSBatchRenderer);
 
 	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
 
@@ -827,23 +555,179 @@ void BSBatchRenderer::sub_14131D6E0()
 	*(DWORD *)(v1 + 88) = 0;
 }
 
-void BSBatchRenderer::RenderPassArray::Clear(bool Validate)
+bool __fastcall sub_1412E3AB0(int a1)
 {
-	for (int i = 0; i < ARRAYSIZE(this->m_Pass); i++)
+	return (unsigned int)(a1 - 0x5C000058) <= 3;
+}
+
+void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset);
+
+void UnmapDynamicData()
+{
+	auto *renderer = GetThreadedGlobals();
+
+	renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
+}
+
+AutoPtr(bool, zbUseEarlyZ, 0x30528E5);
+SRWLOCK testingLock = SRWLOCK_INIT;
+
+void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, unsigned __int8 a3, unsigned int a4)
+{
+	if (InsertRenderCommand<DrawGeometryRenderCommand>(Pass, Technique, a3, a4))
+		return;
+
+	__int64 v6; // r14
+	__int64 result; // rax
+
+	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+
+	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
+	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
+	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
+	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
+
+	auto sub_14131EFF0 = (__int64(__fastcall *)(unsigned int a1, __int64 a2))(g_ModuleBase + 0x131F350);
+	auto sub_1412ABF00 = (const char *(__fastcall *)(unsigned int a1))(g_ModuleBase + 0x12ABF00);
+
+	v6 = (uint64_t)Pass->m_Shader;
+
+	if (dword_1432A8214 == Technique && Technique != 0x5C006076 && v6 == qword_1432A8218
+		|| (dword_141E32FDC = Technique, result = sub_14131EFF0(Technique, v6), (BYTE)result))
 	{
-		if (Validate && this->m_Pass[i])
+		BSShaderProperty *property = Pass->m_Property;
+		BSShaderMaterial *material = nullptr;
+
+		if (property)
+			material = property->pMaterial;
+
+		if ((uintptr_t)material != qword_1434B5220)
 		{
-			//sub_14002288B((__int64)&a1, 255i64, (__int64)"Pass still has passes");
-			//if (qword_14468B560)
-			//	qword_14468B560(&a1, 0i64);
+			if (material)
+				Pass->m_Shader->SetupMaterial(material);
+
+			qword_1434B5220 = (uintptr_t)material;
 		}
 
-		// This is removed in public builds? Sets the bool to indicate pass is no longer registered
-		// for (result = *(_QWORD *)(v4 + 8 * v3); result; result = *(_QWORD *)(result + 48))
-		//	*(_BYTE *)(result + 33) = 0;
+		//AcquireSRWLockExclusive(&testingLock);
+		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;
 
-		this->m_Pass[i] = nullptr;
+		if (Pass->m_Geometry->QSkinInstance())
+			DrawGeometrySkinned(Pass, a3, a4);
+		else if (*(BYTE *)((uintptr_t)Pass->m_Geometry + 265) & 8)// BSGeometry::NeedsCustomRender()?
+			DrawGeometryCustom(Pass, a3, a4);
+		else
+			DrawGeometryDefault(Pass, a3, a4);
+		//ReleaseSRWLockExclusive(&testingLock);
+	}
+}
+
+void BSBatchRenderer::DrawGeometryDefault(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
+{
+	MemoryContextTracker tracker(26, "BSBatchRenderer.cpp");
+
+	// bAssert(Pass, "Render Error: Render pass is nullptr");
+	// bAssert(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
+	// bAssert(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
+
+	SetupGeometryBlending(Pass, Pass->m_Shader, (AlphaTest || zbUseEarlyZ) ? true : false, RenderFlags);
+	DrawTriStrips(Pass);
+	Pass->m_Shader->RestoreGeometry(Pass);// TODO: Looks like this virtual func takes a 3rd param too (RenderFlags)
+}
+
+void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
+{
+	// bAssert(Pass, "Render Error: Render pass is nullptr");
+	// bAssert(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
+	// bAssert(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
+
+	// "Render Error : Skin instance is nullptr"
+	// "Render Error : Skin partition is nullptr"
+	// "Render Error : Skin partition array is nullptr"
+	// bAssert(Pass->m_Property, "Don't have a shader property when we expected one.");
+
+	auto sub_140C71A50 = (const void *(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71A50);
+	auto sub_140C71AB0 = (void(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71AB0);
+	auto sub_141336450 = (void(__fastcall *)())(g_ModuleBase + 0x1336450);
+
+	uintptr_t v7 = (uintptr_t)Pass->m_Geometry;
+
+	sub_141336450();
+
+	if ((*(__int64(__fastcall **)(__int64))(*(uintptr_t *)v7 + 432i64))(v7))
+	{
+		SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
+
+		NiBoneMatrixSetterI::Data params;
+		params.m_Flags = 1;
+
+		Pass->m_Shader->SetBoneMatrix(Pass->m_Geometry->QSkinInstance(), &params, &Pass->m_Geometry->GetWorldTransform());
+		DrawTriStrips(Pass);
+	}
+	else
+	{
+		SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
+
+		uint32_t v10 = (Pass->Byte1E >> 7) & 1;
+		uint32_t v11 = (Pass->Byte1E & 0x7F);
+
+		NiSkinInstance::UnknownData params;
+		params.m_BoneSetter = static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader);
+		params.m_Geometry = Pass->m_Geometry;
+		params.m_UnkPtr = nullptr;
+		params.m_UnkDword1 = v10;
+		params.m_UnkDword2 = v11;
+		params.m_UnkDword3 = 0;
+		params.m_UnkDword4 = -1;
+
+		// Skinned verts are uploaded to a GPU vertex buffer directly (non-static objects like characters)
+		uintptr_t v12 = (uintptr_t)Pass->m_Geometry->IsDynamicTriShape();
+
+		if (v12)
+		{
+			uint32_t v16 = *(uint32_t *)(v12 + 0x170);
+			void *v15 = sub_140D6BF00(0, v16, &params.m_UnkDword4);
+
+			const void *v17 = sub_140C71A50(v12);
+			memcpy_s(v15, v16, v17, v16);
+			sub_140C71AB0(v12);
+			UnmapDynamicData();
+		}
+
+		Pass->m_Geometry->QSkinInstance()->VFunc37(&params);
 	}
 
-	this->m_PassIndexBits = 0;
+	Pass->m_Shader->RestoreGeometry(Pass/*, RenderFlags*/);
+}
+
+void BSBatchRenderer::DrawGeometryCustom(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
+{
+	Pass->m_Shader->SetupGeometry(Pass, RenderFlags);
+	Pass->m_Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, true);
+
+	if (Pass->QAlphaProperty())
+		Pass->m_Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
+
+	DrawTriStrips(Pass);
+	Pass->m_Shader->RestoreGeometry(Pass);
+}
+
+void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader, bool AlphaTest, uint32_t RenderFlags)
+{
+	//if (Shader != BSSkyShader::pInstance)
+	{
+		if ((RenderFlags & 4) && !sub_1412E3AB0(Pass->m_TechniqueID))
+			Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, AlphaTest);
+
+		if (AlphaTest && Pass->QAlphaProperty())
+			Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
+	}
+
+	Shader->SetupGeometry(Pass, RenderFlags);
+}
+
+void BSBatchRenderer::DrawTriStrips(BSRenderPass *Pass)
+{
+	auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+	sub_14131DDF0(Pass);
 }

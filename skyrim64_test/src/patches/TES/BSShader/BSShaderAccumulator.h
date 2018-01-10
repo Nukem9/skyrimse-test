@@ -208,11 +208,11 @@ struct SetStateRenderCommand : RenderCommand
 };
 
 #include "BSShaderManager.h"
+#include "../BSBatchRenderer.h"
 
-void sub_14131ED70(BSRenderPass *a1, uint32_t Technique, unsigned __int8 a3, unsigned int a4);
 struct DrawGeometryRenderCommand : RenderCommand
 {
-	// Equivalent to calling sub_14131ED70();
+	// Equivalent to calling DrawPassGeometry();
 	BSRenderPass Pass;
 	uint32_t Technique;
 	unsigned __int8 a3;
@@ -254,7 +254,7 @@ struct DrawGeometryRenderCommand : RenderCommand
 			return;
 			*/
 
-		sub_14131ED70(&Pass, Technique, a3, a4);
+		BSBatchRenderer::DrawPassGeometry(&Pass, Technique, a3, a4);
 	}
 };
 
