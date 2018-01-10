@@ -54,13 +54,12 @@ BSShaderAccumulator *GetCurrentAccumulator()
 	return *(BSShaderAccumulator **)((uintptr_t)GraphicsGlobals + 0x3600);
 }
 
-void sub_14131F090(bool RequireZero)
+void ClearShaderAndTechnique()
 {
 	if (InsertRenderCommand<ClearStateRenderCommand>())
 		return;
 
 	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
-
 	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
 	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
@@ -68,9 +67,6 @@ void sub_14131F090(bool RequireZero)
 
 	if (qword_1432A8218)
 	{
-		if (RequireZero)
-			__debugbreak();
-
 		(*(void(__fastcall **)(__int64, uint64_t))(*(uint64_t *)qword_1432A8218 + 24i64))(
 			qword_1432A8218,
 			(unsigned int)dword_1432A8214);
@@ -79,6 +75,28 @@ void sub_14131F090(bool RequireZero)
 	qword_1432A8218 = 0i64;
 	dword_1432A8214 = 0;
 	qword_1434B5220 = 0i64;
+}
+
+bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
+{
+	ClearShaderAndTechnique();
+
+	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
+	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
+	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
+	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
+
+	if (Shader->SetupTechnique(Technique))
+	{
+		qword_1432A8218 = (uint64_t)Shader;
+		dword_1432A8214 = Technique;
+		return true;
+	}
+
+	qword_1432A8218 = 0;
+	dword_1432A8214 = 0;
+	return false;
 }
 
 void DoRenderCommands(int Index)
@@ -533,5 +551,5 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 	if (subPass)
 		subPass->Unregister();
 
-	sub_14131F090(true);
+	ClearShaderAndTechnique();
 }

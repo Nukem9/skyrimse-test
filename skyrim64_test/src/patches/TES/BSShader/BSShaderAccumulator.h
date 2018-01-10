@@ -76,7 +76,8 @@ static_assert(offsetof(BSShaderAccumulator, m_MainBatch) == 0x130, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentTech) == 0x138, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentSubPass) == 0x13C, "");
 
-void sub_14131F090(bool RequireZero = false);
+void ClearShaderAndTechnique();
+bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique);
 
 struct RenderCommand
 {
@@ -101,7 +102,7 @@ struct EndListRenderCommand : RenderCommand
 
 struct ClearStateRenderCommand : RenderCommand
 {
-	// Equivalent to calling sub_14131F090();
+	// Equivalent to calling ClearShaderAndTechnique();
 	ClearStateRenderCommand()
 		: RenderCommand(1, sizeof(ClearStateRenderCommand))
 	{
@@ -109,7 +110,7 @@ struct ClearStateRenderCommand : RenderCommand
 
 	void Run()
 	{
-		sub_14131F090();
+		ClearShaderAndTechnique();
 	}
 };
 

@@ -9,6 +9,8 @@
 #include "BSBatchRenderer.h"
 #include "BSReadWriteLock.h"
 #include "BSShader/BSShaderProperty.h"
+#include "BSShader/Shaders/BSSkyShader.h"
+#include "BSShader/Shaders/BSLightingShader.h"
 
 AutoPtr(BYTE, byte_1431F54CD, 0x31F54CD);
 AutoPtr(DWORD, dword_141E32FDC, 0x1E32FDC);
@@ -96,7 +98,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 	v5 = a1;
 	if (*a1)
 	{
-		sub_14131F090(true);
+		ClearShaderAndTechnique();
 
 		BSRenderPass *i = (BSRenderPass *)*v5;
 
@@ -145,7 +147,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		v5[0] = 0i64;
 		v5[1] = 0i64;
 
-		sub_14131F090();
+		ClearShaderAndTechnique();
 
 		if (tempIndex != -1)
 		{
@@ -494,7 +496,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 		passArray->m_Pass[SubPassIndex] = nullptr;
 	}
 
-	sub_14131F090();
+	ClearShaderAndTechnique();
 	BSGraphics::Renderer::AlphaBlendStateSetUnknown1(0);
 
 	if (tempIndex != -1)
@@ -577,12 +579,8 @@ void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, u
 	if (InsertRenderCommand<DrawGeometryRenderCommand>(Pass, Technique, a3, a4))
 		return;
 
-	__int64 v6; // r14
-	__int64 result; // rax
-
 	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
 
-	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
 	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
 	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
@@ -590,10 +588,9 @@ void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, u
 	auto sub_14131EFF0 = (__int64(__fastcall *)(unsigned int a1, __int64 a2))(g_ModuleBase + 0x131F350);
 	auto sub_1412ABF00 = (const char *(__fastcall *)(unsigned int a1))(g_ModuleBase + 0x12ABF00);
 
-	v6 = (uint64_t)Pass->m_Shader;
-
-	if (dword_1432A8214 == Technique && Technique != 0x5C006076 && v6 == qword_1432A8218
-		|| (dword_141E32FDC = Technique, result = sub_14131EFF0(Technique, v6), (BYTE)result))
+	__int64 result;
+	if (dword_1432A8214 == Technique && Technique != 0x5C006076 && (uint64_t)Pass->m_Shader == qword_1432A8218
+		|| (dword_141E32FDC = Technique, result = SetupShaderAndTechnique(Pass->m_Shader, Technique), (BYTE)result))
 	{
 		BSShaderProperty *property = Pass->m_Property;
 		BSShaderMaterial *material = nullptr;
@@ -609,7 +606,6 @@ void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, u
 			qword_1434B5220 = (uintptr_t)material;
 		}
 
-		//AcquireSRWLockExclusive(&testingLock);
 		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;
 
 		if (Pass->m_Geometry->QSkinInstance())
@@ -618,7 +614,6 @@ void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, u
 			DrawGeometryCustom(Pass, a3, a4);
 		else
 			DrawGeometryDefault(Pass, a3, a4);
-		//ReleaseSRWLockExclusive(&testingLock);
 	}
 }
 
@@ -714,7 +709,7 @@ void BSBatchRenderer::DrawGeometryCustom(BSRenderPass *Pass, bool AlphaTest, uin
 
 void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader, bool AlphaTest, uint32_t RenderFlags)
 {
-	//if (Shader != BSSkyShader::pInstance)
+	if (Shader != BSSkyShader::pInstance)
 	{
 		if ((RenderFlags & 4) && !sub_1412E3AB0(Pass->m_TechniqueID))
 			Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, AlphaTest);
