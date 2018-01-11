@@ -81,7 +81,7 @@ namespace Profiler
 
 		__forceinline void GetTime(LARGE_INTEGER *Counter)
 		{
-#if 0
+#if 1
 			uint32_t temp;
 			Counter->QuadPart = __rdtscp(&temp);
 #else
