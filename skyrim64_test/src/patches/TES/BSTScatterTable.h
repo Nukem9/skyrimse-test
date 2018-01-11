@@ -6,8 +6,16 @@
 template<typename Key, typename T>
 struct BSTScatterTableDefaultKVStorage
 {
+private:
 	Key m_Key;
+
+public:
 	T m_Value;
+
+	const Key& GetKey()
+	{
+		return m_Key;
+	}
 };
 
 template<typename Key, typename T, class Storage = BSTScatterTableDefaultKVStorage<Key, T>>
@@ -251,7 +259,7 @@ public:
 			{
 				while (entry != m_Terminator)
 				{
-					if (entry->m_Key == Key)
+					if (entry->GetKey() == Key)
 						return const_iterator(entry, &m_Table[m_Size]);
 
 					entry = entry->m_Next;
@@ -273,7 +281,7 @@ public:
 			{
 				while (entry != m_Terminator)
 				{
-					if (entry->m_Key == Key)
+					if (entry->GetKey() == Key)
 					{
 						Out = entry->m_Value;
 						return true;

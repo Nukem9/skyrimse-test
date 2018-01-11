@@ -69,6 +69,29 @@ public:
 
 class BSShader : public NiRefObject, public NiBoneMatrixSetterI, public BSReloadShaderI
 {
+private:
+	template<typename T>
+	class TechniqueIDStorage
+	{
+	public:
+		T m_Value;
+
+		uint32_t GetKey()
+		{
+			return m_Value->m_TechniqueID;
+		}
+	};
+
+	template<typename T, typename Storage = TechniqueIDStorage<T>>
+	class TechniqueIDMap : public BSTScatterTable<
+		uint32_t,
+		T,
+		Storage,
+		BSTScatterTableDefaultHashPolicy<uint32_t>,
+		BSTScatterTableHeapAllocator<BSTScatterTableEntry<uint32_t, T, Storage>>>
+	{
+	};
+
 public:
 	static bool g_ShaderToggles[16][3];
 
@@ -94,8 +117,8 @@ public:
 	void SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty);
 
 	uint32_t m_Type;
-	BSTScatterTable<uint32_t, BSVertexShader *> m_VertexShaderTable;
-	BSTScatterTable<uint32_t, BSPixelShader *> m_PixelShaderTable;
+	TechniqueIDMap<BSVertexShader *> m_VertexShaderTable;
+	TechniqueIDMap<BSPixelShader *> m_PixelShaderTable;
 	const char *m_LoaderType;
 };
 static_assert(sizeof(BSShader) == 0x90, "");

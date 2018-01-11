@@ -92,10 +92,6 @@ void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, con
 
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
 {
-	auto sub_141336860 = (bool(__fastcall *)(BSShader *, uint32_t, uint32_t, bool))(g_ModuleBase + 0x1336860);
-
-	return sub_141336860(this, VertexShaderID, PixelShaderID, IgnorePixelShader);
-
 	bool hasVertexShader = false;
 	BSVertexShader *vertexShader = nullptr;
 
@@ -111,6 +107,7 @@ bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, b
 	if (!hasVertexShader || !hasPixelShader)
 		return false;
 
+	// Vertex shader required, pixel shader optional (nullptr)
 	BSGraphics::Renderer::SetVertexShader(vertexShader);
 	BSGraphics::Renderer::SetPixelShader(pixelShader);
 	return true;
