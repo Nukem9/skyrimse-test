@@ -39,8 +39,10 @@
 .vs/
 */x64/Release/
 */x64/Debug/
+*/x64/EditAndContinue/
 x64/Release/
 x64/Debug/
+x64/EditAndContinue/
 
 # VTune
 */*My Amplifier Results*/
