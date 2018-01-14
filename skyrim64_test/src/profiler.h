@@ -13,16 +13,9 @@
 #define ProfileGetDeltaValue(Name)		(0)
 #define ProfileGetTime(Name)			(0.0)
 #define ProfileGetDeltaTime(Name)		(0.0)
-#endif
-
-#if SKYRIM64_USE_PROFILER
-#define WTFTEST(x) x
-
-#ifdef _DEBUG
-#define LINEID WTFTEST(__z)__COUNTER__
 #else
-#define LINEID WTFTEST(__z)__LINE__
-#endif
+#define EXPAND_MACRO(x) x
+#define LINEID EXPAND_MACRO(__z)__COUNTER__
 
 #define ProfileCounterInc(Name)			Profiler::ScopedCounter<Profiler::Internal::CRC32Index(Name)> LINEID(__FILE__, __FUNCTION__, Name);
 #define ProfileCounterAdd(Name, Add)	Profiler::ScopedCounter<Profiler::Internal::CRC32Index(Name)> LINEID(__FILE__, __FUNCTION__, Name, Add);
@@ -32,6 +25,7 @@
 #define ProfileGetDeltaValue(Name)		Profiler::GetDeltaValue<Profiler::Internal::CRC32(Name)>()
 #define ProfileGetTime(Name)			Profiler::GetTime<Profiler::Internal::CRC32(Name)>()
 #define ProfileGetDeltaTime(Name)		Profiler::GetDeltaTime<Profiler::Internal::CRC32(Name)>()
+#endif
 
 namespace Profiler
 {
@@ -139,5 +133,8 @@ namespace Profiler
 	{
 		return GetDeltaTime(CRC);
 	}
+
+	float GetProcessorUsagePercent();
+	float GetThreadUsagePercent();
+	float GetGpuUsagePercent(int GpuIndex = 0);
 }
-#endif // SKYRIM64_USE_PROFILER

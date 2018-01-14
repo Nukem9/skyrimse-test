@@ -2,6 +2,7 @@
 #include "../patches/dinput8.h"
 #include "imgui_ext.h"
 #include "imgui_impl_dx11.h"
+#include "../patches/TES/BSShader/BSShader.h"
 
 namespace ui::opt
 {
@@ -15,7 +16,8 @@ namespace ui
     bool showTESFormWindow;
     bool showLockWindow;
     bool showMemoryWindow;
-    bool showLogWindow;
+	bool showShaderTweakWindow;
+	bool showLogWindow;
 
     char *format_commas(int64_t n, char *out)
     {
@@ -77,7 +79,7 @@ namespace ui
         style.Colors[ImGuiCol_ScrollbarGrab]        = ImVec4(0.80f, 0.80f, 0.80f, 0.30f);
         style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.80f, 0.80f, 0.80f, 0.40f);
         style.Colors[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.86f, 0.86f, 0.86f, 0.52f);
-        style.Colors[ImGuiCol_ComboBg]              = ImVec4(0.21f, 0.21f, 0.21f, 0.99f);
+        //style.Colors[ImGuiCol_ComboBg]              = ImVec4(0.21f, 0.21f, 0.21f, 0.99f);
         style.Colors[ImGuiCol_CheckMark]            = ImVec4(0.47f, 0.47f, 0.47f, 1.00f);
         style.Colors[ImGuiCol_SliderGrab]           = ImVec4(0.60f, 0.60f, 0.60f, 0.34f);
         style.Colors[ImGuiCol_SliderGrabActive]     = ImVec4(0.84f, 0.84f, 0.84f, 0.34f);
@@ -118,6 +120,7 @@ namespace ui
             RenderSynchronization();
             RenderTESFormCache();
             RenderMemory();
+			RenderShaderTweaks();
 
             if (showLogWindow)
                 log::Draw();
@@ -180,26 +183,115 @@ namespace ui
             if (ImGui::MenuItem("Block Input", nullptr, &g_BlockInput))
                 ProxyIDirectInputDevice8A::ToggleGlobalInput(!g_BlockInput);
 
+			ImGui::MenuItem("Shader Tweaks", nullptr, &showShaderTweakWindow);
             ImGui::EndMenu();
         }
 
         ImGui::EndMainMenuBar();
     }
 
+	int64_t LastFrame;
+	int64_t TickSum;
+	int64_t TickDeltas[32];
+	int TickDeltaIndex;
+
+	float DeltasGraph[240];
+	float DeltasGraph2[240];
+	float DeltasGraph3[240];
+	float DeltasGraph4[240];
+	float DeltasGraph5[240];
+
     void RenderFramerate()
     {
         if (!showFPSWindow)
             return;
 
+		// FPS calculation code
+		LARGE_INTEGER ticksPerSecond;
+		QueryPerformanceFrequency(&ticksPerSecond);
+
+		LARGE_INTEGER frameEnd;
+		QueryPerformanceCounter(&frameEnd);
+
+		if (LastFrame == 0)
+			LastFrame = frameEnd.QuadPart;
+
+		int64_t delta = frameEnd.QuadPart - LastFrame;
+		LastFrame = frameEnd.QuadPart;
+
+		TickSum -= TickDeltas[TickDeltaIndex];
+		TickSum += delta;
+		TickDeltas[TickDeltaIndex++] = delta;
+
+		if (TickDeltaIndex >= ARRAYSIZE(TickDeltas))
+			TickDeltaIndex = 0;
+
+		double frameTimeMs = 1000.0 * (delta / (double)ticksPerSecond.QuadPart);
+		double averageFrametime = (TickSum / 32.0) / (double)ticksPerSecond.QuadPart;
+		g_AverageFps = 1.0 / averageFrametime;
+
+		// Shift everything else back first...
+		memmove(&DeltasGraph[0], &DeltasGraph[1], sizeof(DeltasGraph) - sizeof(float));
+		memmove(&DeltasGraph2[0], &DeltasGraph2[1], sizeof(DeltasGraph2) - sizeof(float));
+		memmove(&DeltasGraph3[0], &DeltasGraph3[1], sizeof(DeltasGraph3) - sizeof(float));
+		memmove(&DeltasGraph4[0], &DeltasGraph4[1], sizeof(DeltasGraph4) - sizeof(float));
+		memmove(&DeltasGraph5[0], &DeltasGraph5[1], sizeof(DeltasGraph5) - sizeof(float));
+
+		DeltasGraph[239] = frameTimeMs;
+
         float test = 0.0f; // *(float *)(g_ModuleBase + 0x1DADCA0);
 
         if (ImGui::Begin("Framerate", &showFPSWindow))
         {
+			// Draw frametime graph
+			ImGui::PlotLines("Frame Time (ms)", DeltasGraph, 240, 0, nullptr, 0.0f, 20.0f, ImVec2(400, 100));
+
+			// Draw processor usage (CPU, GPU) graph
+			{
+				DeltasGraph2[239] = Profiler::GetProcessorUsagePercent();
+				DeltasGraph3[239] = Profiler::GetThreadUsagePercent();
+				DeltasGraph4[239] = Profiler::GetGpuUsagePercent(0);
+				DeltasGraph5[239] = Profiler::GetGpuUsagePercent(1);
+
+				const char *names[4] = { "CPU Total", "Main Thread", "GPU 0", "GPU 1" };
+				ImColor colors[4] = { ImColor(0.839f, 0.152f, 0.156f), ImColor(0.172f, 0.627f, 0.172f), ImColor(1.0f, 0.498f, 0.054f), ImColor(0.121f, 0.466f, 0.705f) };
+				void *datas[4] = { (void *)DeltasGraph2, (void *)DeltasGraph3, (void *)DeltasGraph4, (void *)DeltasGraph5 };
+
+				ImGui::PlotMultiLines("Processor Usage (%)", 4, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 100.0f, ImVec2(400, 100));
+			}
+
             ImGui::Text("FPS: %.2f", g_AverageFps);
             ImGui::Spacing();
             ImGui::Text("Havok fMaxTime: %.2f FPS", 1.0f / test);
             ImGui::Text("Havok fMaxTimeComplex: %.2f FPS", 1.0f / test);
-        }
+			ImGui::Text("Map Bytes: %lld", ProfileGetDeltaValue("Map Bytes"));
+
+			ImGui::Text("Generating game command lists: %.5f ms", ProfileGetDeltaTime("GameCommandList") * 1000);
+			ImGui::Text("Generating D3D11 command lists: %.5f ms", ProfileGetDeltaTime("GameCommandListToD3D") * 1000);
+			ImGui::Text("Waiting for command list completion: %.5f ms", ProfileGetDeltaTime("Waiting for command list completion") * 1000);
+
+			ImGui::Text("RenderBatches: %.5f ms", ProfileGetDeltaTime("RenderBatches") * 1000);
+			ImGui::Text("LowAniso: %.5f ms", ProfileGetDeltaTime("LowAniso") * 1000);
+			ImGui::Text("RenderGrass: %.5f ms", ProfileGetDeltaTime("RenderGrass") * 1000);
+			ImGui::Text("DC_WaitDeferred: %.5f ms", ProfileGetDeltaTime("DC_WaitDeferred") * 1000);
+			ImGui::Text("LOD: %.5f ms", ProfileGetDeltaTime("LOD") * 1000);
+			ImGui::Text("BSShaderAccumulator: %.5f ms", ProfileGetDeltaTime("BSShaderAccumulator") * 1000);
+			ImGui::Text("Spins: %lld", ProfileGetDeltaValue("Spins"));
+			ImGui::Text("Command Count: %lld", ProfileGetDeltaValue("Command Count"));
+
+			ProfileGetTime("GameCommandList");
+			ProfileGetTime("GameCommandListToD3D");
+
+			ProfileGetValue("Command Count");
+			ProfileGetValue("Spins");
+			ProfileGetTime("Waiting for command list completion");
+			ProfileGetTime("RenderBatches");
+			ProfileGetTime("LowAniso");
+			ProfileGetTime("RenderGrass");
+			ProfileGetTime("DC_WaitDeferred");
+			ProfileGetTime("LOD");
+			ProfileGetTime("BSShaderAccumulator");
+		}
         ImGui::End();
     }
 
@@ -314,6 +406,37 @@ namespace ui
 
         ImGui::End();
     }
+
+	void RenderShaderTweaks()
+	{
+		if (!showShaderTweakWindow)
+			return;
+
+		if (ImGui::Begin("Shader Tweaks", &showShaderTweakWindow))
+		{
+			ImGui::Checkbox("Use original BSLightingShader::Technique", &BSShader::g_ShaderToggles[6][0]);
+			ImGui::Checkbox("Use original BSLightingShader::Material", &BSShader::g_ShaderToggles[6][1]);
+			ImGui::Checkbox("Use original BSLightingShader::Geometry", &BSShader::g_ShaderToggles[6][2]);
+			ImGui::Spacing();
+			ImGui::Checkbox("Use original BSGrassShader::Technique", &BSShader::g_ShaderToggles[1][0]);
+			ImGui::Checkbox("Use original BSGrassShader::Material", &BSShader::g_ShaderToggles[1][1]);
+			ImGui::Checkbox("Use original BSGrassShader::Geometry", &BSShader::g_ShaderToggles[1][2]);
+			ImGui::Spacing();
+			ImGui::Checkbox("Use original BSBloodSplatterShader::Technique", &BSShader::g_ShaderToggles[4][0]);
+			ImGui::Checkbox("Use original BSBloodSplatterShader::Material", &BSShader::g_ShaderToggles[4][1]);
+			ImGui::Checkbox("Use original BSBloodSplatterShader::Geometry", &BSShader::g_ShaderToggles[4][2]);
+			ImGui::Spacing();
+			ImGui::Checkbox("Use original BSDistantTreeShader::Technique", &BSShader::g_ShaderToggles[9][0]);
+			ImGui::Checkbox("Use original BSDistantTreeShader::Material", &BSShader::g_ShaderToggles[9][1]);
+			ImGui::Checkbox("Use original BSDistantTreeShader::Geometry", &BSShader::g_ShaderToggles[9][2]);
+			ImGui::Spacing();
+			ImGui::Checkbox("Use original BSSkyShader::Technique", &BSShader::g_ShaderToggles[2][0]);
+			ImGui::Checkbox("Use original BSSkyShader::Material", &BSShader::g_ShaderToggles[2][1]);
+			ImGui::Checkbox("Use original BSSkyShader::Geometry", &BSShader::g_ShaderToggles[2][2]);
+		}
+
+		ImGui::End();
+	}
 }
 
 namespace ui::log
@@ -367,7 +490,7 @@ namespace ui::log
         int old_size = Buf.size();
         va_list args;
         va_start(args, Format);
-        Buf.appendv(Format, args);
+        Buf.appendfv(Format, args);
         va_end(args);
         for (int new_size = Buf.size(); old_size < new_size; old_size++)
             if (Buf[old_size] == '\n')

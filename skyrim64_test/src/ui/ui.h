@@ -17,6 +17,7 @@ namespace ui
 	void RenderSynchronization();
 	void RenderMemory();
 	void RenderTESFormCache();
+	void RenderShaderTweaks();
 
 	namespace log
 	{
