@@ -135,7 +135,7 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::SetTextureAddressMode(uint32_t Index, uint32_t Mode)
+	void Renderer::SetTextureAddressMode(uint32_t Index, uint8_t Mode)
 	{
 		if (m_PSSamplerAddressMode[Index] != Mode)
 		{
@@ -144,7 +144,7 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::SetTextureFilterMode(uint32_t Index, uint32_t Mode)
+	void Renderer::SetTextureFilterMode(uint32_t Index, uint8_t Mode)
 	{
 		if (m_PSSamplerFilterMode[Index] != Mode)
 		{
@@ -154,19 +154,10 @@ namespace BSGraphics
 	}
 
 	// void BSGraphics::Renderer::SetTextureMode(unsigned int, enum  BSGraphics::TextureAddressMode, enum  BSGraphics::TextureFilterMode)
-	void Renderer::SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode)
+	void Renderer::SetTextureMode(uint32_t Index, uint8_t AddressMode, uint8_t FilterMode)
 	{
-		if (m_PSSamplerAddressMode[Index] != AddressMode)
-		{
-			m_PSSamplerAddressMode[Index] = AddressMode;
-			m_PSSamplerModifiedBits |= 1 << Index;
-		}
-
-		if (m_PSSamplerFilterMode[Index] != FilterMode)
-		{
-			m_PSSamplerFilterMode[Index] = FilterMode;
-			m_PSSamplerModifiedBits |= 1 << Index;
-		}
+		SetTextureAddressMode(Index, AddressMode);
+		SetTextureFilterMode(Index, FilterMode);
 	}
 
 	void Renderer::SetUseScrapConstantValue(bool UseStoredValue)
@@ -196,13 +187,7 @@ namespace BSGraphics
 
 	void Renderer::SetTexture(uint32_t Index, Texture *Resource)
 	{
-		ID3D11ShaderResourceView *ptr = Resource ? Resource->m_D3DTexture : nullptr;
-
-		if (m_PSResources[Index] != ptr)
-		{
-			m_PSResources[Index] = ptr;
-			m_PSResourceModifiedBits |= 1 << Index;
-		}
+		SetShaderResource(Index, Resource ? Resource->m_D3DTexture : nullptr);
 	}
 
 	// Not a real function name

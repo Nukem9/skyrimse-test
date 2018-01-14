@@ -557,7 +557,16 @@ void CommitShaderChanges(bool Unknown)
 	if (uint32_t bits = renderer->m_PSResourceModifiedBits; bits != 0)
 	{
 		for_each_bit(i, bits)
-			renderer->m_DeviceContext->PSSetShaderResources(i, 1, &renderer->m_PSResources[i]);
+		{
+			// Combine PSSSR(0, 1, [rsc1]) + PSSSR(1, 1, [rsc2]) into PSSSR(0, 2, [rsc1, rsc2])
+			if (bits & (1 << (i + 1)))
+			{
+				renderer->m_DeviceContext->PSSetShaderResources(i, 2, &renderer->m_PSResources[i]);
+				bits &= ~(1 << (i + 1));
+			}
+			else
+				renderer->m_DeviceContext->PSSetShaderResources(i, 1, &renderer->m_PSResources[i]);
+		}
 
 		renderer->m_PSResourceModifiedBits = 0;
 	}
