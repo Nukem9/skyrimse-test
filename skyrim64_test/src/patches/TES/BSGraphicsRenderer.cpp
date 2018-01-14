@@ -20,12 +20,22 @@ namespace BSGraphics::Utility
 	}
 }
 
-namespace BSGraphics::Renderer
+namespace BSGraphics
 {
 	thread_local BSVertexShader *TLS_CurrentVertexShader;
 	thread_local BSPixelShader *TLS_CurrentPixelShader;
 
-	void FlushThreadedVars()
+	Renderer *Renderer::GetGlobals()
+	{
+		return (Renderer *)HACK_GetThreadedGlobals();
+	}
+
+	Renderer *Renderer::GetGlobalsNonThreaded()
+	{
+		return (Renderer *)HACK_GetMainGlobals();
+	}
+
+	void Renderer::FlushThreadedVars()
 	{
 		//
 		// Shaders should've been unique because each technique is different,
@@ -38,201 +48,174 @@ namespace BSGraphics::Renderer
 		TLS_CurrentPixelShader = (BSPixelShader *)0xFEFEFEFEFEFEFEFE;
 	}
 
-	void RasterStateSetCullMode(uint32_t CullMode)
+	void Renderer::RasterStateSetCullMode(uint32_t CullMode)
 	{
 		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::RasterStateCullMode, CullMode))
 			return;
 
-		auto *renderer = GetThreadedGlobals();
-
-		if (*(DWORD *)&renderer->__zz0[52] != CullMode)
+		if (*(DWORD *)&__zz0[52] != CullMode)
 		{
-			*(DWORD *)&renderer->__zz0[52] = CullMode;
-			renderer->m_StateUpdateFlags |= 0x20;
+			*(DWORD *)&__zz0[52] = CullMode;
+			m_StateUpdateFlags |= 0x20;
 		}
 	}
 
-	void RasterStateSetUnknown1(uint32_t Value)
+	void Renderer::RasterStateSetUnknown1(uint32_t Value)
 	{
-		auto *renderer = GetThreadedGlobals();
-
-		if (*(DWORD *)&renderer->__zz0[56] != Value)
+		if (*(DWORD *)&__zz0[56] != Value)
 		{
-			*(DWORD *)&renderer->__zz0[56] = Value;
-			renderer->m_StateUpdateFlags |= 0x40;
+			*(DWORD *)&__zz0[56] = Value;
+			m_StateUpdateFlags |= 0x40;
 		}
 	}
 
-	void AlphaBlendStateSetMode(uint32_t Mode)
+	void Renderer::AlphaBlendStateSetMode(uint32_t Mode)
 	{
 		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateMode, Mode))
 			return;
 
-		auto *renderer = GetThreadedGlobals();
-
-		if (*(DWORD *)&renderer->__zz0[64] != Mode)
+		if (*(DWORD *)&__zz0[64] != Mode)
 		{
-			*(DWORD *)&renderer->__zz0[64] = Mode;
-			renderer->m_StateUpdateFlags |= 0x80;
+			*(DWORD *)&__zz0[64] = Mode;
+			m_StateUpdateFlags |= 0x80;
 		}
 	}
 
-	void AlphaBlendStateSetUnknown1(uint32_t Value)
+	void Renderer::AlphaBlendStateSetUnknown1(uint32_t Value)
 	{
 		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateUnknown1, Value))
 			return;
 
-		auto *renderer = GetThreadedGlobals();
-
-		if (*(DWORD *)&renderer->__zz0[68] != Value)
+		if (*(DWORD *)&__zz0[68] != Value)
 		{
-			*(DWORD *)&renderer->__zz0[68] = Value;
-			renderer->m_StateUpdateFlags |= 0x80;
+			*(DWORD *)&__zz0[68] = Value;
+			m_StateUpdateFlags |= 0x80;
 		}
 	}
 
-	void AlphaBlendStateSetUnknown2(uint32_t Value)
+	void Renderer::AlphaBlendStateSetUnknown2(uint32_t Value)
 	{
 		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateUnknown2, Value))
 			return;
 
-		auto *renderer = GetThreadedGlobals();
-
-		if (*(DWORD *)&renderer->__zz0[72] != Value)
+		if (*(DWORD *)&__zz0[72] != Value)
 		{
-			*(DWORD *)&renderer->__zz0[72] = Value;
-			renderer->m_StateUpdateFlags |= 0x80;
+			*(DWORD *)&__zz0[72] = Value;
+			m_StateUpdateFlags |= 0x80;
 		}
 	}
 
-	void DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)
+	void Renderer::DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)
 	{
 		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::DepthStencilStateStencilMode, Mode, StencilRef))
 			return;
 
-		auto *renderer = GetThreadedGlobals();
-
-		if (*(DWORD *)&renderer->__zz0[40] != Mode || *(DWORD *)&renderer->__zz0[44] != StencilRef)
+		if (*(DWORD *)&__zz0[40] != Mode || *(DWORD *)&__zz0[44] != StencilRef)
 		{
-			*(DWORD *)&renderer->__zz0[40] = Mode;
-			*(DWORD *)&renderer->__zz0[44] = StencilRef;
-			renderer->m_StateUpdateFlags |= 0x8;
+			*(DWORD *)&__zz0[40] = Mode;
+			*(DWORD *)&__zz0[44] = StencilRef;
+			m_StateUpdateFlags |= 0x8;
 		}
 	}
 
-	void DepthStencilStateSetDepthMode(uint32_t Mode)
+	void Renderer::DepthStencilStateSetDepthMode(uint32_t Mode)
 	{
 		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::DepthStencilStateDepthMode, Mode))
 			return;
 
-		auto *renderer = GetThreadedGlobals();
-
-		if (*(DWORD *)&renderer->__zz0[32] != Mode)
+		if (*(DWORD *)&__zz0[32] != Mode)
 		{
-			*(DWORD *)&renderer->__zz0[32] = Mode;
+			*(DWORD *)&__zz0[32] = Mode;
 
 			// Temp var to prevent duplicate state setting? Don't know where this gets set.
-			if (*(DWORD *)&renderer->__zz0[36] != Mode)
-				renderer->m_StateUpdateFlags |= 0x4;
+			if (*(DWORD *)&__zz0[36] != Mode)
+				m_StateUpdateFlags |= 0x4;
 			else
-				renderer->m_StateUpdateFlags &= ~0x4;
+				m_StateUpdateFlags &= ~0x4;
 		}
 	}
 
-	void SetTextureAddressMode(uint32_t Index, uint32_t Mode)
+	void Renderer::SetTextureAddressMode(uint32_t Index, uint32_t Mode)
 	{
-		auto *renderer = GetThreadedGlobals();
-
-		if (renderer->m_PSSamplerAddressMode[Index] != Mode)
+		if (m_PSSamplerAddressMode[Index] != Mode)
 		{
-			renderer->m_PSSamplerAddressMode[Index] = Mode;
-			renderer->m_PSSamplerModifiedBits |= 1 << Index;
+			m_PSSamplerAddressMode[Index] = Mode;
+			m_PSSamplerModifiedBits |= 1 << Index;
 		}
 	}
 
-	void SetTextureFilterMode(uint32_t Index, uint32_t Mode)
+	void Renderer::SetTextureFilterMode(uint32_t Index, uint32_t Mode)
 	{
-		auto *renderer = GetThreadedGlobals();
-
-		if (renderer->m_PSSamplerFilterMode[Index] != Mode)
+		if (m_PSSamplerFilterMode[Index] != Mode)
 		{
-			renderer->m_PSSamplerFilterMode[Index] = Mode;
-			renderer->m_PSSamplerModifiedBits |= 1 << Index;
+			m_PSSamplerFilterMode[Index] = Mode;
+			m_PSSamplerModifiedBits |= 1 << Index;
 		}
 	}
 
 	// void BSGraphics::Renderer::SetTextureMode(unsigned int, enum  BSGraphics::TextureAddressMode, enum  BSGraphics::TextureFilterMode)
-	void SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode)
+	void Renderer::SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode)
 	{
-		auto *renderer = GetThreadedGlobals();
-
-		if (renderer->m_PSSamplerAddressMode[Index] != AddressMode)
+		if (m_PSSamplerAddressMode[Index] != AddressMode)
 		{
-			renderer->m_PSSamplerAddressMode[Index] = AddressMode;
-			renderer->m_PSSamplerModifiedBits |= 1 << Index;
+			m_PSSamplerAddressMode[Index] = AddressMode;
+			m_PSSamplerModifiedBits |= 1 << Index;
 		}
 
-		if (renderer->m_PSSamplerFilterMode[Index] != FilterMode)
+		if (m_PSSamplerFilterMode[Index] != FilterMode)
 		{
-			renderer->m_PSSamplerFilterMode[Index] = FilterMode;
-			renderer->m_PSSamplerModifiedBits |= 1 << Index;
+			m_PSSamplerFilterMode[Index] = FilterMode;
+			m_PSSamplerModifiedBits |= 1 << Index;
 		}
 	}
 
-	void SetUseScrapConstantValue(bool UseStoredValue)
+	void Renderer::SetUseScrapConstantValue(bool UseStoredValue)
 	{
 		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::UseScrapConstantValue_1, UseStoredValue))
 			return;
 
-		auto *renderer = GetThreadedGlobals();
-
 		// When UseStoredValue is false, the constant buffer data is zeroed, but m_ScrapConstantValue is saved
-		if (renderer->__zz0[76] != UseStoredValue)
+		if (__zz0[76] != UseStoredValue)
 		{
-			renderer->__zz0[76] = UseStoredValue;
-			renderer->m_StateUpdateFlags |= 0x100u;
+			__zz0[76] = UseStoredValue;
+			m_StateUpdateFlags |= 0x100u;
 		}
 	}
 
-	void SetScrapConstantValue(float Value)
+	void Renderer::SetScrapConstantValue(float Value)
 	{
 		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::UseScrapConstantValue_2, *(uint32_t *)&Value))
 			return;
 
-		auto *renderer = GetThreadedGlobals();
-
-		if (renderer->m_ScrapConstantValue != Value)
+		if (m_ScrapConstantValue != Value)
 		{
-			renderer->m_ScrapConstantValue = Value;
-			renderer->m_StateUpdateFlags |= 0x200u;
+			m_ScrapConstantValue = Value;
+			m_StateUpdateFlags |= 0x200u;
 		}
 	}
 
-	void SetTexture(uint32_t Index, Texture *Resource)
+	void Renderer::SetTexture(uint32_t Index, Texture *Resource)
 	{
-		auto *renderer = GetThreadedGlobals();
 		ID3D11ShaderResourceView *ptr = Resource ? Resource->m_D3DTexture : nullptr;
 
-		if (renderer->m_PSResources[Index] != ptr)
+		if (m_PSResources[Index] != ptr)
 		{
-			renderer->m_PSResources[Index] = ptr;
-			renderer->m_PSResourceModifiedBits |= 1 << Index;
+			m_PSResources[Index] = ptr;
+			m_PSResourceModifiedBits |= 1 << Index;
 		}
 	}
 
 	// Not a real function name
-	void SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource)
+	void Renderer::SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource)
 	{
-		auto *renderer = GetThreadedGlobals();
-
-		if (renderer->m_PSResources[Index] != Resource)
+		if (m_PSResources[Index] != Resource)
 		{
-			renderer->m_PSResources[Index] = Resource;
-			renderer->m_PSResourceModifiedBits |= 1 << Index;
+			m_PSResources[Index] = Resource;
+			m_PSResourceModifiedBits |= 1 << Index;
 		}
 	}
 
-	ConstantGroup<BSVertexShader> GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level)
+	ConstantGroup<BSVertexShader> Renderer::GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level)
 	{
 		ConstantGroup<BSVertexShader> temp;
 		temp.m_Shader = Shader;
@@ -241,8 +224,7 @@ namespace BSGraphics::Renderer
 
 		if (temp.m_Buffer)
 		{
-			auto *renderer = GetThreadedGlobals();
-			HRESULT hr = renderer->m_DeviceContext->Map(temp.m_Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &temp.m_Map);
+			HRESULT hr = m_DeviceContext->Map(temp.m_Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &temp.m_Map);
 
 			if (FAILED(hr))
 				__debugbreak();
@@ -257,7 +239,7 @@ namespace BSGraphics::Renderer
 		return temp;
 	}
 
-	ConstantGroup<BSPixelShader> GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level)
+	ConstantGroup<BSPixelShader> Renderer::GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level)
 	{
 		ConstantGroup<BSPixelShader> temp;
 		temp.m_Shader = Shader;
@@ -266,8 +248,7 @@ namespace BSGraphics::Renderer
 
 		if (temp.m_Buffer)
 		{
-			auto *renderer = GetThreadedGlobals();
-			HRESULT hr = renderer->m_DeviceContext->Map(temp.m_Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &temp.m_Map);
+			HRESULT hr = m_DeviceContext->Map(temp.m_Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &temp.m_Map);
 
 			if (FAILED(hr))
 				__debugbreak();
@@ -282,18 +263,17 @@ namespace BSGraphics::Renderer
 		return temp;
 	}
 
-	void FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup)
+	void Renderer::FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup)
 	{
 		if (VertexGroup && VertexGroup->m_Buffer)
-			GetThreadedGlobals()->m_DeviceContext->Unmap(VertexGroup->m_Buffer, 0);
+			m_DeviceContext->Unmap(VertexGroup->m_Buffer, 0);
 
 		if (PixelGroup && PixelGroup->m_Buffer)
-			GetThreadedGlobals()->m_DeviceContext->Unmap(PixelGroup->m_Buffer, 0);
+			m_DeviceContext->Unmap(PixelGroup->m_Buffer, 0);
 	}
 
-	void ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level)
+	void Renderer::ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level)
 	{
-		auto *renderer = GetThreadedGlobals();
 		uint32_t index = 0;
 
 		switch (Level)
@@ -305,35 +285,31 @@ namespace BSGraphics::Renderer
 		}
 
 		if (VertexGroup)
-			renderer->m_DeviceContext->VSSetConstantBuffers(index, 1, &VertexGroup->m_Buffer);
+			m_DeviceContext->VSSetConstantBuffers(index, 1, &VertexGroup->m_Buffer);
 
 		if (PixelGroup)
-			renderer->m_DeviceContext->PSSetConstantBuffers(index, 1, &PixelGroup->m_Buffer);
+			m_DeviceContext->PSSetConstantBuffers(index, 1, &PixelGroup->m_Buffer);
 	}
 
-	void SetVertexShader(BSVertexShader *Shader)
+	void Renderer::SetVertexShader(BSVertexShader *Shader)
 	{
 		if (Shader == TLS_CurrentVertexShader)
 			return;
 
-		TLS_CurrentVertexShader = Shader;
-		auto *renderer = GetThreadedGlobals();
-
 		// The input layout (IASetInputLayout) may need to be created and updated
-		renderer->m_CurrentVertexShader = Shader;
-		renderer->m_StateUpdateFlags |= 0x400;
-		renderer->m_DeviceContext->VSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
+		TLS_CurrentVertexShader = Shader;
+		m_CurrentVertexShader = Shader;
+		m_StateUpdateFlags |= 0x400;
+		m_DeviceContext->VSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
 	}
 
-	void SetPixelShader(BSPixelShader *Shader)
+	void Renderer::SetPixelShader(BSPixelShader *Shader)
 	{
 		if (Shader == TLS_CurrentPixelShader)
 			return;
 
 		TLS_CurrentPixelShader = Shader;
-		auto *renderer = GetThreadedGlobals();
-
-		renderer->m_CurrentPixelShader = Shader;
-		renderer->m_DeviceContext->PSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
+		m_CurrentPixelShader = Shader;
+		m_DeviceContext->PSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
 	}
 }

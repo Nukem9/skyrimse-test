@@ -12,8 +12,8 @@
 
 extern unsigned int g_TlsIndex;
 
-struct BSGraphicsRendererGlobals *GetThreadedGlobals();
-struct BSGraphicsRendererGlobals *GetMainGlobals();
+void *HACK_GetThreadedGlobals();
+void *HACK_GetMainGlobals();
 
 void InitializeTLSMain();
 void InitializeTLSDll();

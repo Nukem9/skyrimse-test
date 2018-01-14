@@ -1,12 +1,13 @@
 #include "../../rendering/common.h"
 #include "../../../common.h"
+#include "../BSGraphicsRenderer.h"
 #include "BSShaderUtil.h"
 
 using namespace DirectX;
 
 XMMATRIX BSShaderUtil::GetXMFromNi(const NiTransform& Transform)
 {
-	return GetXMFromNiPosAdjust(Transform, *(const NiPoint3 *)&GetThreadedGlobals()->__zz2[28]);
+	return GetXMFromNiPosAdjust(Transform, *(const NiPoint3 *)&BSGraphics::Renderer::GetGlobals()->__zz2[28]);
 }
 
 XMMATRIX BSShaderUtil::GetXMFromNiPosAdjust(const NiTransform& Transform, const NiPoint3& PosAdjust)

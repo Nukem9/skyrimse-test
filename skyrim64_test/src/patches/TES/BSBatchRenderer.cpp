@@ -93,9 +93,10 @@ void sub_14131F910(__int64 a1, __int64 a2)
 
 void sub_14131F9F0(__int64 *a1, unsigned int a2)
 {
-	__int64 *v5; // rdi
+	__int64 *v5 = a1; // rdi
 
-	v5 = a1;
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+
 	if (*a1)
 	{
 		ClearShaderAndTechnique();
@@ -131,9 +132,9 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 			if ((a2 & 0x108) == 0)
 			{
 				if (i->m_Property->QFlags() & 0x1000000000i64)
-					BSGraphics::Renderer::RasterStateSetCullMode(0);
+					renderer->RasterStateSetCullMode(0);
 				else
-					BSGraphics::Renderer::RasterStateSetCullMode(1);
+					renderer->RasterStateSetCullMode(1);
 			}
 
 			__int64 v9 = *(uint64_t *)((uintptr_t)i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
@@ -142,7 +143,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		}
 
 		if ((a2 & 0x108) == 0)
-			BSGraphics::Renderer::RasterStateSetCullMode(1);
+			renderer->RasterStateSetCullMode(1);
 
 		v5[0] = 0i64;
 		v5[1] = 0i64;
@@ -384,7 +385,7 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex,
 
 bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, unsigned int a5)
 {
-	auto& GraphicsGlobals = *(BSGraphicsRendererGlobals *)GetThreadedGlobals();
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
 	bool unknownFlag2 = false;
 	bool unknownFlag = false;
@@ -449,12 +450,12 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 		}
 
 		if (cullMode != -1)
-			BSGraphics::Renderer::RasterStateSetCullMode(cullMode);
+			renderer->RasterStateSetCullMode(cullMode);
 
 		if (alphaBlendUnknown != -1)
-			BSGraphics::Renderer::AlphaBlendStateSetUnknown1(alphaBlendUnknown);
+			renderer->AlphaBlendStateSetUnknown1(alphaBlendUnknown);
 
-		BSGraphics::Renderer::SetUseScrapConstantValue(useScrapConstant);
+		renderer->SetUseScrapConstantValue(useScrapConstant);
 	}
 
 	// Render this group with a specific render pass list
@@ -497,7 +498,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	}
 
 	ClearShaderAndTechnique();
-	BSGraphics::Renderer::AlphaBlendStateSetUnknown1(0);
+	renderer->AlphaBlendStateSetUnknown1(0);
 
 	if (tempIndex != -1)
 	{
@@ -566,7 +567,7 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset);
 
 void UnmapDynamicData()
 {
-	auto *renderer = GetThreadedGlobals();
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
 	renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
 }
@@ -579,7 +580,7 @@ void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, u
 	if (InsertRenderCommand<DrawGeometryRenderCommand>(Pass, Technique, a3, a4))
 		return;
 
-	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+	auto *GraphicsGlobals = BSGraphics::Renderer::GetGlobals();
 
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
 	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
@@ -689,6 +690,7 @@ void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, ui
 			UnmapDynamicData();
 		}
 
+		// Renders multiple skinned instances (SetupTechnique, SetBoneMatrix)
 		Pass->m_Geometry->QSkinInstance()->VFunc37(&params);
 	}
 

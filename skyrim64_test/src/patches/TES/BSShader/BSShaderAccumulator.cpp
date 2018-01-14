@@ -38,7 +38,7 @@ void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator
 	// is used anywhere else important.
 	InsertRenderCommand<SetAccumulatorRenderCommand>(Accumulator);
 
-	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+	auto GraphicsGlobals = HACK_GetThreadedGlobals();
 
 	// BSShaderManager::pCurrentShaderAccumulator
 	uint64_t& qword_1431F5490 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3600);
@@ -48,7 +48,7 @@ void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator
 
 BSShaderAccumulator *GetCurrentAccumulator()
 {
-	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+	auto GraphicsGlobals = HACK_GetThreadedGlobals();
 
 	// BSShaderManager::pCurrentShaderAccumulator
 	return *(BSShaderAccumulator **)((uintptr_t)GraphicsGlobals + 0x3600);
@@ -59,7 +59,7 @@ void ClearShaderAndTechnique()
 	if (InsertRenderCommand<ClearStateRenderCommand>())
 		return;
 
-	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+	auto GraphicsGlobals = HACK_GetThreadedGlobals();
 	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
 	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
@@ -81,7 +81,7 @@ bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
 {
 	ClearShaderAndTechnique();
 
-	auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+	auto GraphicsGlobals = HACK_GetThreadedGlobals();
 	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
 	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
@@ -99,70 +99,17 @@ bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
 	return false;
 }
 
-void DoRenderCommands(int Index)
-{
-	DC_RenderDeferred(0, Index, [](long long, unsigned int arg2)
-	{
-		ProfileTimer("Generate Lists");
-
-		// Run everything in the command list...
-		bool endOfList = false;
-
-		for (uintptr_t ptr = commandDataStart[arg2]; !endOfList;)
-		{
-			RenderCommand *cmd = (RenderCommand *)ptr;
-			ptr += cmd->m_Size;
-
-			switch (cmd->m_Type)
-			{
-			case 0:
-				endOfList = true;
-				break;
-
-			case 1:
-				static_cast<ClearStateRenderCommand *>(cmd)->Run();
-				break;
-
-			case 2:
-				static_cast<SetStateRenderCommand *>(cmd)->Run();
-				break;
-
-			case 3:
-				static_cast<DrawGeometryRenderCommand *>(cmd)->Run();
-				break;
-
-			case 4:
-			{
-				auto b = static_cast<LockShaderTypeRenderCommand *>(cmd);
-
-				if (b->m_Lock)
-					testLocks[b->m_LockIndex].AcquireWrite();
-					//AcquireSRWLockExclusive(&testLocks[b->m_LockIndex]);
-				else
-					testLocks[b->m_LockIndex].ReleaseWrite();
-					//ReleaseSRWLockExclusive(&testLocks[b->m_LockIndex]);
-			}
-			break;
-
-			case 5:
-				static_cast<SetAccumulatorRenderCommand *>(cmd)->Run();
-				break;
-
-			default:
-				__debugbreak();
-				break;
-			}
-		}
-	}, Index);
-}
-
 void DoRenderCommandsNOW(int Index)
 {
+	ProfileTimer("GameCommandListToD3D");
+
 	// Run everything in the command list...
 	bool endOfList = false;
+	int cmdCount = 0;
 
 	for (uintptr_t ptr = commandDataStart[Index]; !endOfList;)
 	{
+		cmdCount++;
 		RenderCommand *cmd = (RenderCommand *)ptr;
 		ptr += cmd->m_Size;
 
@@ -188,12 +135,15 @@ void DoRenderCommandsNOW(int Index)
 		{
 			auto b = static_cast<LockShaderTypeRenderCommand *>(cmd);
 
-			if (b->m_Lock)
-				testLocks[b->m_LockIndex].AcquireWrite();
-			//AcquireSRWLockExclusive(&testLocks[b->m_LockIndex]);
-			else
-				testLocks[b->m_LockIndex].ReleaseWrite();
-			//ReleaseSRWLockExclusive(&testLocks[b->m_LockIndex]);
+			if (b->m_LockIndex != 6 && b->m_LockIndex != 1 && b->m_LockIndex != 9)
+			{
+				if (b->m_Lock)
+					testLocks[b->m_LockIndex].AcquireWrite();
+				//AcquireSRWLockExclusive(&testLocks[b->m_LockIndex]);
+				else
+					testLocks[b->m_LockIndex].ReleaseWrite();
+				//ReleaseSRWLockExclusive(&testLocks[b->m_LockIndex]);
+			}
 		}
 		break;
 
@@ -205,7 +155,20 @@ void DoRenderCommandsNOW(int Index)
 			__debugbreak();
 			break;
 		}
+
+		ProfileCounterAdd("Command Count", cmdCount);
 	}
+}
+
+void DoRenderCommands(int Index)
+{
+	DC_RenderDeferred(0, Index, [](long long, unsigned int arg2)
+	{
+		BSGraphics::Renderer::FlushThreadedVars();
+
+		// Run everything in the command list (on a new thread; this is async)
+		DoRenderCommandsNOW(arg2);
+	}, Index);
 }
 
 #include <functional>
@@ -218,6 +181,8 @@ protected:
 public:
 	GameCommandList(int Index, std::function<void()> ListBuildFunction) : m_Index(Index)
 	{
+		ProfileTimer("GameCommandList");
+
 		ThreadUsingCommandList = m_Index + 1;
 		commandData[m_Index] = commandDataStart[m_Index];
 
@@ -250,14 +215,17 @@ public:
 
 void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 {
+	annotation->BeginEvent(L"BSShaderAccumulator: Draw1");
+	ProfileTimer("BSShaderAccumulator");
+
 	auto accumulator = (BSShaderAccumulator *)a1;
-	auto graphicsGlobals = GetThreadedGlobals();
+	auto renderer = BSGraphics::Renderer::GetGlobals();
 
 	if (!accumulator->m_pkCamera)
 		return;
 
 	if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
-		BSGraphics::Renderer::DepthStencilStateSetDepthMode(4);
+		renderer->DepthStencilStateSetDepthMode(4);
 
 	// v7 = RenderDepthOnly()? RenderAlphaOnly()?
 	bool v7 = (a2 & 0xA) != 0;
@@ -281,109 +249,176 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	// RenderWaterStencil
 	//
 
-	// RenderBatches
-	GameCommandList renderBatches(0, [accumulator, a2]
+	if (!v7)
 	{
-		accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
-	});
-
-	// LowAniso
-	DeferredCommandList lowAniso(1, [accumulator, a2]
-	{
-		ProfileTimer("LowAniso");
-
-		auto pass = accumulator->m_MainBatch->m_Passes[9];
-
-		if (pass)
+		// RenderBatches
+		GameCommandList renderBatches(0, [accumulator, a2]
 		{
-			if (pass->UnkByte1 & 1)
-				pass->Render(a2);
-			else
-				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 9);
+			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
+		});
+
+		// LowAniso
+		DeferredCommandList lowAniso(1, [accumulator, a2]
+		{
+			auto pass = accumulator->m_MainBatch->m_Passes[9];
+
+			if (pass)
+			{
+				if (pass->UnkByte1 & 1)
+					pass->Render(a2);
+				else
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 9);
+			}
+		});
+
+		// RenderGrass
+		DeferredCommandList renderGrass(2, [accumulator, a2]
+		{
+			accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, a2, -1);
+		});
+
+		// RenderNoShadowGroup
+		DeferredCommandList renderNoShadowGroup(3, [accumulator, a2]
+		{
+			auto pass = accumulator->m_MainBatch->m_Passes[8];
+
+			if (pass)
+			{
+				if (pass->UnkByte1 & 1)
+					pass->Render(a2);
+				else
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 8);
+			}
+		});
+
+		// RenderLODObjects
+		DeferredCommandList renderLODObjects(4, [renderer, accumulator, a1, a2]
+		{
+			auto pass = accumulator->m_MainBatch->m_Passes[1];
+
+			if (pass)
+			{
+				if (pass->UnkByte1 & 1)
+					pass->Render(a2);
+				else
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 1);
+			}
+
+			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
+				renderer->DepthStencilStateSetDepthMode(3);
+		});
+
+		// RenderLODLand
+		DeferredCommandList renderLODLand(5, [accumulator, a1, a2]
+		{
+			auto pass = accumulator->m_MainBatch->m_Passes[0];
+
+			if (pass)
+			{
+				if (pass->UnkByte1 & 1)
+					pass->Render(a2);
+				else
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 0);
+			}
+		});
+
+		{
+			ProfileTimer("RenderBatches");
+			renderBatches.Wait();
 		}
-	});
 
-	// RenderGrass
-	DeferredCommandList renderGrass(2, [accumulator, a2]
-	{
-		ProfileTimer("RenderGrass");
-
-		accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, a2, -1);
-	});
-
-	// RenderNoShadowGroup
-	DeferredCommandList renderNoShadowGroup(3, [accumulator, a2]
-	{
-		ProfileTimer("RenderNoShadowGroup");
-
-		auto pass = accumulator->m_MainBatch->m_Passes[8];
-
-		if (pass)
 		{
-			if (pass->UnkByte1 & 1)
-				pass->Render(a2);
-			else
-				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 8);
-		}
-	});
+			ProfileTimer("LowAniso");
 
-	// RenderLODObjects
-	DeferredCommandList renderLODObjects(4, [accumulator, a1, a2]
-	{
-		ProfileTimer("LOD");
-
-		auto pass = accumulator->m_MainBatch->m_Passes[1];
-
-		if (pass)
-		{
-			if (pass->UnkByte1 & 1)
-				pass->Render(a2);
-			else
-				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 1);
-		}
-
-		if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
-			BSGraphics::Renderer::DepthStencilStateSetDepthMode(3);
-	});
-
-	{
-		ProfileTimer("RenderBatches");
-		renderBatches.Wait();
-	}
-
-	{
-		ProfileTimer("DC_WaitDeferred");
-		lowAniso.Wait();
-		renderGrass.Wait();
-		renderNoShadowGroup.Wait();
-		renderLODObjects.Wait();
-	}
-
-	// RenderLODLand
-	annotation->BeginEvent(L"RenderLODLand");
-	{
-		ProfileTimer("LOD");
-
-		auto pass = accumulator->m_MainBatch->m_Passes[0];
-
-		if (pass)
-		{
-			if (pass->UnkByte1 & 1)
-				pass->Render(a2);
-			else
-				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 0);
+			lowAniso.Wait();
+			renderGrass.Wait();
+			renderNoShadowGroup.Wait();
+			renderLODObjects.Wait();
+			renderLODLand.Wait();
 		}
 
 		if (!v7)
 			((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
 	}
-	annotation->EndEvent();
+else
+	{
+		ProfileTimer("RenderBatches");
+
+		// RenderBatches
+		accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
+
+		// LowAniso
+		{
+
+			auto pass = accumulator->m_MainBatch->m_Passes[9];
+
+			if (pass)
+			{
+				if (pass->UnkByte1 & 1)
+					pass->Render(a2);
+				else
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 9);
+			}
+		}
+
+		// RenderGrass
+		accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, a2, -1);
+
+		// RenderNoShadowGroup
+		{
+			auto pass = accumulator->m_MainBatch->m_Passes[8];
+
+			if (pass)
+			{
+				if (pass->UnkByte1 & 1)
+					pass->Render(a2);
+				else
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 8);
+			}
+		}
+
+		// RenderLODObjects
+		{
+			auto pass = accumulator->m_MainBatch->m_Passes[1];
+
+			if (pass)
+			{
+				if (pass->UnkByte1 & 1)
+					pass->Render(a2);
+				else
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 1);
+			}
+
+			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
+				renderer->DepthStencilStateSetDepthMode(3);
+		}
+
+		// RenderLODLand
+		annotation->BeginEvent(L"RenderLODLand");
+		{
+			ProfileTimer("LOD");
+
+			auto pass = accumulator->m_MainBatch->m_Passes[0];
+
+			if (pass)
+			{
+				if (pass->UnkByte1 & 1)
+					pass->Render(a2);
+				else
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 0);
+			}
+
+			if (!v7)
+				((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
+		}
+		annotation->EndEvent();
+	}
 
 	// RenderSky
 	annotation->BeginEvent(L"RenderSky");
 	{
-		BSGraphics::Renderer::SetUseScrapConstantValue(true);
-		BSGraphics::Renderer::SetScrapConstantValue(0.50196081f);
+		renderer->SetUseScrapConstantValue(true);
+		renderer->SetScrapConstantValue(0.50196081f);
 		accumulator->RenderTechniques(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, a2, -1);
 	}
 	annotation->EndEvent();
@@ -391,7 +426,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	// RenderSkyClouds
 	annotation->BeginEvent(L"RenderSkyClouds");
 	{
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(11);
+		renderer->AlphaBlendStateSetUnknown2(11);
 
 		auto pass = accumulator->m_MainBatch->m_Passes[13];
 
@@ -403,7 +438,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 13);
 		}
 
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(1);
+		renderer->AlphaBlendStateSetUnknown2(1);
 	}
 	annotation->EndEvent();
 
@@ -412,20 +447,20 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 
 	// NormalDecals?...CK doesn't have a specific name for this
 	{
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(10);
+		renderer->AlphaBlendStateSetUnknown2(10);
 		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E27B0))(a1, a2);
 	}
 
 	// BlendedDecals
 	annotation->BeginEvent(L"BlendedDecals");
 	{
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(11);
+		renderer->AlphaBlendStateSetUnknown2(11);
 		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E2950))(a1, a2);
 	}
 	annotation->EndEvent();
 
-	BSGraphics::Renderer::AlphaBlendStateSetMode(0);
-	BSGraphics::Renderer::AlphaBlendStateSetUnknown2(1);
+	renderer->AlphaBlendStateSetMode(0);
+	renderer->AlphaBlendStateSetUnknown2(1);
 
 	auto sub_140D744B0 = (int(__fastcall *)())(g_ModuleBase + 0xD744E0);
 	auto sub_140D69E70 = (__int64(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0xD69EA0);
@@ -449,7 +484,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		//		aiSource != DEPTH_STENCIL_TARGET_NONE &&
 		//		aiTarget != DEPTH_STENCIL_TARGET_NONE);
 
-		graphicsGlobals->m_DeviceContext->CopyResource(*(ID3D11Resource **)(g_ModuleBase + 0x3050870), *((ID3D11Resource **)flt_14304E490 + 19 * aiSource + 1015));
+		renderer->m_DeviceContext->CopyResource(*(ID3D11Resource **)(g_ModuleBase + 0x3050870), *((ID3D11Resource **)flt_14304E490 + 19 * aiSource + 1015));
 	}
 
 	// RenderWaterStencil
@@ -485,11 +520,13 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		int v21 = sub_140D744B0();
 		sub_140D74370((__int64)(g_ModuleBase + 0x3051B20), v21, 3, 0);
 
-		BSGraphics::Renderer::DepthStencilStateSetDepthMode(1);
+		renderer->DepthStencilStateSetDepthMode(1);
 	}
 
 	if (!v7)
 		((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
+
+	annotation->EndEvent();
 }
 
 void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, int a4, int PassType)

@@ -65,48 +65,49 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
 		return false;
 
-	*(uint32_t *)(*(uintptr_t *)(__readgsqword(0x58u) + 8i64 * gameTlsIndex) + 2544i64) = rawTechnique;
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	renderer->DepthStencilStateSetDepthMode(1);
 
-	BSGraphics::Renderer::DepthStencilStateSetDepthMode(1);
+	*(uint32_t *)(*(uintptr_t *)(__readgsqword(0x58u) + 8i64 * gameTlsIndex) + 2544i64) = rawTechnique;
 
 	switch (rawTechnique)
 	{
 	case RAW_TECHNIQUE_SUNOCCLUDE:
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(0);
+		renderer->AlphaBlendStateSetUnknown2(0);
 		break;
 
 	case RAW_TECHNIQUE_SUNGLARE:
-		BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
-		BSGraphics::Renderer::AlphaBlendStateSetMode(2);
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(11);
+		renderer->DepthStencilStateSetDepthMode(0);
+		renderer->AlphaBlendStateSetMode(2);
+		renderer->AlphaBlendStateSetUnknown2(11);
 		break;
 
 	case RAW_TECHNIQUE_MOONANDSTARSMASK:
-		BSGraphics::Renderer::SetUseScrapConstantValue(true);
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(0);
-		BSGraphics::Renderer::DepthStencilStateSetDepthMode(3);
-		BSGraphics::Renderer::RasterStateSetUnknown1(3);
+		renderer->SetUseScrapConstantValue(true);
+		renderer->AlphaBlendStateSetUnknown2(0);
+		renderer->DepthStencilStateSetDepthMode(3);
+		renderer->RasterStateSetUnknown1(3);
 		break;
 
 	case RAW_TECHNIQUE_STARS:
-		BSGraphics::Renderer::AlphaBlendStateSetMode(2);
+		renderer->AlphaBlendStateSetMode(2);
 		break;
 
 	case RAW_TECHNIQUE_CLOUDS:
 	case RAW_TECHNIQUE_CLOUDSLERP:
 	case RAW_TECHNIQUE_CLOUDSFADE:
 	case RAW_TECHNIQUE_TEXTURE:
-		BSGraphics::Renderer::AlphaBlendStateSetMode(1);
-		BSGraphics::Renderer::RasterStateSetUnknown1(2);
+		renderer->AlphaBlendStateSetMode(1);
+		renderer->RasterStateSetUnknown1(2);
 		break;
 
 	case RAW_TECHNIQUE_SKY:
-		BSGraphics::Renderer::AlphaBlendStateSetMode(1);
+		renderer->AlphaBlendStateSetMode(1);
 		break;
 	}
 
-	BSGraphics::Renderer::SetTexture(2, qword_143052928->QRendererTexture());// NoiseGradSampler
-	BSGraphics::Renderer::SetTextureMode(2, 3, 0);
+	renderer->SetTexture(2, qword_143052928->QRendererTexture());// NoiseGradSampler
+	renderer->SetTextureMode(2, 3, 0);
 	return true;
 }
 
@@ -114,11 +115,12 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSSkyShader::RestoreTechnique, Technique);
 
-	BSGraphics::Renderer::AlphaBlendStateSetMode(0);
-	BSGraphics::Renderer::AlphaBlendStateSetUnknown2(1);
-	BSGraphics::Renderer::DepthStencilStateSetDepthMode(3);
-	BSGraphics::Renderer::SetUseScrapConstantValue(false);
-	BSGraphics::Renderer::RasterStateSetUnknown1(0);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	renderer->AlphaBlendStateSetMode(0);
+	renderer->AlphaBlendStateSetUnknown2(1);
+	renderer->DepthStencilStateSetDepthMode(3);
+	renderer->SetUseScrapConstantValue(false);
+	renderer->RasterStateSetUnknown1(0);
 	EndTechnique();
 }
 
@@ -126,9 +128,9 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::SetupGeometry, Pass, RenderFlags);
 
-	auto *renderer = GetThreadedGlobals();
-	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	uintptr_t shaderProperty = (uintptr_t)Pass->m_Property;
 	uint32_t propertyType = *(uint32_t *)(shaderProperty + 192);
@@ -247,8 +249,8 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		break;
 	}
 
-	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
+	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	switch (tlsRawTechnique)
 	{
@@ -260,8 +262,8 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		if (!baseSamplerTex)
 			baseSamplerTex = qword_143052900;
 
-		BSGraphics::Renderer::SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
-		BSGraphics::Renderer::SetTextureMode(0, 3, 1);
+		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
+		renderer->SetTextureMode(0, 3, 1);
 	}
 	break;
 
@@ -276,8 +278,8 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		if (!baseSamplerTex)
 			baseSamplerTex = qword_143052920;
 
-		BSGraphics::Renderer::SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
-		BSGraphics::Renderer::SetTextureMode(0, 3, 1);
+		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
+		renderer->SetTextureMode(0, 3, 1);
 
 		if (tlsRawTechnique == RAW_TECHNIQUE_CLOUDSLERP)
 		{
@@ -291,8 +293,8 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 					break;
 			}
 
-			BSGraphics::Renderer::SetTexture(1, blendSamplerTex->QRendererTexture());// BlendSampler
-			BSGraphics::Renderer::SetTextureMode(1, 3, 1);
+			renderer->SetTexture(1, blendSamplerTex->QRendererTexture());// BlendSampler
+			renderer->SetTextureMode(1, 3, 1);
 		}
 	}
 	break;
@@ -307,14 +309,14 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		if (!baseSamplerTex)
 			baseSamplerTex = qword_143052920;
 
-		BSGraphics::Renderer::SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
-		BSGraphics::Renderer::SetTextureMode(0, 3, 1);
+		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
+		renderer->SetTextureMode(0, 3, 1);
 	}
 	break;
 	}
 
 	if (propertyType == 0 || propertyType == 6)
-		BSGraphics::Renderer::AlphaBlendStateSetMode(2);
+		renderer->AlphaBlendStateSetMode(2);
 }
 
 void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
@@ -324,7 +326,7 @@ void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	uint32_t propertyType = *(uint32_t *)((uintptr_t)Pass->m_Property + 0xC0);
 
 	if (propertyType == 0 || propertyType == 6)
-		BSGraphics::Renderer::AlphaBlendStateSetMode(1);
+		BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetMode(1);
 }
 
 uint32_t BSSkyShader::GetRawTechnique(uint32_t Technique)

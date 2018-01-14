@@ -175,14 +175,14 @@ VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
 	ReleaseSRWLockExclusive(&g_TLSDataLock);
 }
 
-BSGraphicsRendererGlobals *GetThreadedGlobals()
+void *HACK_GetThreadedGlobals()
 {
-	return (BSGraphicsRendererGlobals *)*(uintptr_t *)GET_TLS_BLOCK(g_TlsIndex);
+	return (void *)*(uintptr_t *)GET_TLS_BLOCK(g_TlsIndex);
 }
 
-BSGraphicsRendererGlobals *GetMainGlobals()
+void *HACK_GetMainGlobals()
 {
-	return (BSGraphicsRendererGlobals *)g_MainTLSBlock;
+	return (void *)g_MainTLSBlock;
 }
 
 uintptr_t GetMyTls()

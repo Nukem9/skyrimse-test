@@ -1,9 +1,8 @@
-#include "../../rendering/common.h"
 #include "../../../common.h"
+#include "../BSGraphicsRenderer.h"
 #include "BSVertexShader.h"
 #include "BSPixelShader.h"
 #include "BSShader.h"
-#include "../BSGraphicsRenderer.h"
 
 bool BSShader::g_ShaderToggles[16][3];
 
@@ -54,7 +53,7 @@ void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, con
 	if (!Parameters || Parameters->m_Flags == 0)
 		return;
 
-	auto *renderer = GetThreadedGlobals();
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
 	uintptr_t v4 = (uintptr_t)SkinInstance;
 	uintptr_t v5 = *(uintptr_t *)(__readgsqword(0x58u) + 8i64 * gTlsIndex);
@@ -108,8 +107,8 @@ bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, b
 		return false;
 
 	// Vertex shader required, pixel shader optional (nullptr)
-	BSGraphics::Renderer::SetVertexShader(vertexShader);
-	BSGraphics::Renderer::SetPixelShader(pixelShader);
+	BSGraphics::Renderer::GetGlobals()->SetVertexShader(vertexShader);
+	BSGraphics::Renderer::GetGlobals()->SetPixelShader(pixelShader);
 	return true;
 }
 
@@ -131,5 +130,5 @@ void BSShader::SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderP
 	// NiAlphaProperty::GetTestRef() * BSShaderProperty::GetAlpha()
 	int rounded = (int)(((float)*(unsigned __int8 *)(a2 + 50)) * *(float *)(a3 + 48));
 
-	BSGraphics::Renderer::SetScrapConstantValue((float)rounded * 0.0039215689f);
+	BSGraphics::Renderer::GetGlobals()->SetScrapConstantValue((float)rounded * 0.0039215689f);
 }

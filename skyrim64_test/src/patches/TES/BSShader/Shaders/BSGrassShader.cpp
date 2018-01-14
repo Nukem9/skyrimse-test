@@ -1,4 +1,3 @@
-#include "../../../rendering/common.h"
 #include "../../../../common.h"
 #include "../BSVertexShader.h"
 #include "../BSPixelShader.h"
@@ -10,8 +9,8 @@
 #include "../BSShaderManager.h"
 #include "../../NiMain/BSGeometry.h"
 #include "../../NiMain/NiSourceTexture.h"
-#include "../BSShaderAccumulator.h"
 #include "BSGrassShader.h"
+#include "../../BSTArray.h"
 
 //
 // Shader notes:
@@ -70,22 +69,24 @@ bool BSGrassShader::SetupTechnique(uint32_t Technique)
 	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
 		return false;
 
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+
 	// Fog params get stored in TLS, read in SetupGeometry()
 	UpdateFogParameters();
 
-	BSGraphics::Renderer::SetTextureFilterMode(0, 2);
+	renderer->SetTextureFilterMode(0, 2);
 
 	if (rawTechnique != RAW_TECHNIQUE_RENDERDEPTH && byte_141E32E9D)
 	{
-		BSGraphics::Renderer::SetShaderResource(1, (ID3D11ShaderResourceView *)qword_14304F260);
+		renderer->SetShaderResource(1, (ID3D11ShaderResourceView *)qword_14304F260);
 
-		BSGraphics::Renderer::SetTextureAddressMode(1, 0);
-		BSGraphics::Renderer::SetTextureFilterMode(1, (dword_141E338A0 != 4) ? 1 : 0);
+		renderer->SetTextureAddressMode(1, 0);
+		renderer->SetTextureFilterMode(1, (dword_141E338A0 != 4) ? 1 : 0);
 	}
 	else
 	{
-		BSGraphics::Renderer::SetTexture(1, qword_1430528F0->QRendererTexture());// ShadowMaskSampler
-		BSGraphics::Renderer::SetTextureMode(1, 0, 0);
+		renderer->SetTexture(1, qword_1430528F0->QRendererTexture());// ShadowMaskSampler
+		renderer->SetTextureMode(1, 0, 0);
 	}
 
 	return true;
@@ -100,10 +101,11 @@ void BSGrassShader::SetupMaterial(BSShaderMaterial const *Material)
 {
 	BSSHADER_FORWARD_CALL(MATERIAL, &BSGrassShader::SetupMaterial, Material);
 
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	NiSourceTexture *baseTexture = *(NiSourceTexture **)((uintptr_t)Material + 72);
 
-	BSGraphics::Renderer::SetTexture(0, baseTexture->QRendererTexture());// BaseSampler
-	BSGraphics::Renderer::SetTextureAddressMode(0, 0);
+	renderer->SetTexture(0, baseTexture->QRendererTexture());// BaseSampler
+	renderer->SetTextureAddressMode(0, 0);
 }
 
 void BSGrassShader::RestoreMaterial(BSShaderMaterial const *Material)
@@ -115,11 +117,11 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::SetupGeometry, Pass, RenderFlags);
 
-	auto *renderer = GetThreadedGlobals();
 	uintptr_t geometry = (uintptr_t)Pass->m_Geometry;
 	uintptr_t property = (uintptr_t)Pass->m_Property;
 
-	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto data = (VertexConstantData *)vertexCG.RawData();
 
 #if BSSHADER_FORWARD_DEBUG
@@ -257,8 +259,8 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	// Wtf? flt_141E33370 is 0.3 and not zero...?
 	data->padding = flt_141E33370;
 
-	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, nullptr);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	renderer->FlushConstantGroupVSPS(&vertexCG, nullptr);
+	renderer->ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	// Update constant buffer #8 containing InstanceData
 	UpdateGeometryInstanceData(Pass->m_Geometry, Pass->m_Property);
@@ -288,7 +290,7 @@ void BSGrassShader::UpdateFogParameters()
 
 void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const NiTransform& GeoTransform)
 {
-	auto *renderer = GetThreadedGlobals();
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(GeoTransform);
 
 	Data->WorldViewProj = XMMatrixMultiplyTranspose(xmmGeoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
@@ -299,7 +301,7 @@ void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const Ni
 
 void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSShaderProperty *Property)
 {
-	auto *renderer = GetThreadedGlobals();
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
 	BSTArray<float> *propertyInstanceData = (BSTArray<float> *)((uintptr_t)Property + 0x160);
 	uint32_t instanceDataCount = propertyInstanceData->QSize();

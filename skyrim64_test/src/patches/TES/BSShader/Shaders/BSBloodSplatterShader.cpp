@@ -1,4 +1,3 @@
-#include "../../../rendering/common.h"
 #include "../../../../common.h"
 #include "../../NiMain/BSGeometry.h"
 #include "../../BSGraphicsRenderer.h"
@@ -53,28 +52,30 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTecnique, false))
 		return false;
 
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+
 	if (rawTechnique == RAW_TECHNIQUE_FLARE)
 	{
 		// Use the sun or nearest light source to draw a water-like reflection from blood
 		if (iAdaptedLightRenderTarget <= 0)
 		{
-			BSGraphics::Renderer::SetTexture(3, qword_143052900->QRendererTexture());// FlareHDR
+			renderer->SetTexture(3, qword_143052900->QRendererTexture());// FlareHDR
 		}
 		else
 		{
 			uintptr_t v9 = *(&qword_14304EF00 + 6 * iAdaptedLightRenderTarget);// BSGraphics::RenderTargetManager::SetTextureRenderTarget
 
-			BSGraphics::Renderer::SetShaderResource(3, (ID3D11ShaderResourceView *)v9);// FlareHDR
+			renderer->SetShaderResource(3, (ID3D11ShaderResourceView *)v9);// FlareHDR
 		}
 
-		BSGraphics::Renderer::SetTextureMode(3, 0, 1);
-		BSGraphics::Renderer::AlphaBlendStateSetMode(5);
-		BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
+		renderer->SetTextureMode(3, 0, 1);
+		renderer->AlphaBlendStateSetMode(5);
+		renderer->DepthStencilStateSetDepthMode(0);
 	} 
 	else if (rawTechnique == RAW_TECHNIQUE_SPLATTER)
 	{
-		BSGraphics::Renderer::AlphaBlendStateSetMode(4);
-		BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
+		renderer->AlphaBlendStateSetMode(4);
+		renderer->DepthStencilStateSetDepthMode(0);
 	}
 
 	m_CurrentRawTechnique = rawTechnique;
@@ -85,8 +86,9 @@ void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSBloodSplatterShader::RestoreTechnique, Technique);
 
-	BSGraphics::Renderer::AlphaBlendStateSetMode(0);
-	BSGraphics::Renderer::DepthStencilStateSetDepthMode(3);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	renderer->AlphaBlendStateSetMode(0);
+	renderer->DepthStencilStateSetDepthMode(3);
 	EndTechnique();
 }
 
@@ -94,9 +96,9 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFla
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::SetupGeometry, Pass, RenderFlags);
 
-	auto *renderer = GetThreadedGlobals();
-	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
 	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
@@ -123,27 +125,27 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFla
 	vertexCG.ParamVS<XMVECTOR, 1>()	= LightLoc.XmmVector();
 	vertexCG.ParamVS<float, 2>()	= fFlareOffsetScale;
 
-	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
+	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)
 	{
 		NiSourceTexture *flareColorTexture = *(NiSourceTexture **)(v12 + 152);
 
-		BSGraphics::Renderer::SetTexture(2, flareColorTexture->QRendererTexture());// FlareColor
-		BSGraphics::Renderer::SetTextureMode(2, 0, 1);
+		renderer->SetTexture(2, flareColorTexture->QRendererTexture());// FlareColor
+		renderer->SetTextureMode(2, 0, 1);
 	}
 	else
 	{
 		NiSourceTexture *bloodColorTexture = *(NiSourceTexture **)(v12 + 136);
 
-		BSGraphics::Renderer::SetTexture(0, bloodColorTexture->QRendererTexture());// BloodColor
-		BSGraphics::Renderer::SetTextureMode(0, 0, 1);
+		renderer->SetTexture(0, bloodColorTexture->QRendererTexture());// BloodColor
+		renderer->SetTextureMode(0, 0, 1);
 
 		NiSourceTexture *bloodAlphaTexture = *(NiSourceTexture **)(v12 + 144);
 
-		BSGraphics::Renderer::SetTexture(1, bloodAlphaTexture->QRendererTexture());// BloodAlpha
-		BSGraphics::Renderer::SetTextureMode(1, 0, 1);
+		renderer->SetTexture(1, bloodAlphaTexture->QRendererTexture());// BloodAlpha
+		renderer->SetTextureMode(1, 0, 1);
 	}
 }
 

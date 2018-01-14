@@ -1,4 +1,6 @@
 #include "common.h"
+#include <atomic>
+#include "../TES/BSGraphicsRenderer.h"
 
 void TLS_RevertThread();
 void TLS_RestoreThread();
@@ -16,9 +18,9 @@ struct ThreadData
 	HANDLE CompletedEvent;
 
 	ID3D11DeviceContext2 *DeferredContext;
-	volatile ID3D11CommandList *CommandList;
+	std::atomic<ID3D11CommandList *> CommandList;
 
-	BSGraphicsRendererGlobals *ThreadGlobals;
+	BSGraphics::Renderer *ThreadGlobals;
 };
 
 ThreadData g_ThreadData[6];
@@ -36,10 +38,10 @@ DWORD WINAPI DC_Thread(LPVOID Arg)
 
 	SetThreadName(GetCurrentThreadId(), "DC_Thread");
 
-	ThreadData *jobData = (ThreadData *)Arg;
-	BSGraphicsRendererGlobals *oldData = GetMainGlobals();		// Main thread
-	BSGraphicsRendererGlobals *newData = GetThreadedGlobals();	// This thread
+	auto *oldData = BSGraphics::Renderer::GetGlobalsNonThreaded();	// Main thread (AKA global to entire program)
+	auto *newData = BSGraphics::Renderer::GetGlobals();				// This thread
 
+	ThreadData *jobData = (ThreadData *)Arg;
 	jobData->CommandList = nullptr;
 	jobData->ThreadGlobals = newData;
 	SetEvent(jobData->InitEvent);
@@ -50,27 +52,30 @@ DWORD WINAPI DC_Thread(LPVOID Arg)
 			__debugbreak();
 
 		// Sanity check: We should be using the original TLS slot now
-		if (newData != GetThreadedGlobals() || newData == GetMainGlobals())
+		if (newData != BSGraphics::Renderer::GetGlobals() || newData == BSGraphics::Renderer::GetGlobalsNonThreaded())
 			__debugbreak();
 		
-		if (oldData == GetThreadedGlobals() || oldData != GetMainGlobals())
+		if (oldData == BSGraphics::Renderer::GetGlobals() || oldData != BSGraphics::Renderer::GetGlobalsNonThreaded())
 			__debugbreak();
 
 		// TLS this thread <==> TLS main thread
 		if (newData == oldData)
 			__debugbreak();
 
-		newData->m_StateUpdateFlags = 0xFFFFFFFF & ~0x400;
+		if (jobData->CommandList.load() != nullptr)
+			__debugbreak();
 
+		newData->m_StateUpdateFlags = 0xFFFFFFFF & ~0x400;
 		newData->m_DeviceContext = jobData->DeferredContext;
 
 		jobData->Callback(jobData->a1, jobData->a2);
 
-		ID3D11CommandList *commandList;
-		jobData->DeferredContext->FinishCommandList(FALSE, &commandList);
+		ID3D11CommandList *commandList = nullptr;
+		if (FAILED(jobData->DeferredContext->FinishCommandList(FALSE, &commandList)))
+			__debugbreak();
 
 		// Signal DC_WaitDeferred that this list is done
-		InterlockedExchangePointer((PVOID *)&jobData->CommandList, commandList);
+		jobData->CommandList.store(commandList);
 	}
 
 	return 0;
@@ -132,7 +137,7 @@ void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigne
 	dc1->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srvs);
 	dc1->VSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, vsrvs);
 
-	memcpy(jobData->ThreadGlobals, GetMainGlobals(), 0x4000);
+	memcpy(jobData->ThreadGlobals, BSGraphics::Renderer::GetGlobalsNonThreaded(), 0x4000);
 
 	// Run the other thread ASAP to prevent delaying whoever called this
 	SetEvent(jobData->RunEvent);
@@ -151,12 +156,15 @@ void DC_WaitDeferred(int Index)
 
 	// While (thread's command list pointer is null) - atomic version that zeros the thread's pointer
 	{
+		ProfileCounterInc("Spins");
 		ProfileTimer("Waiting for command list completion");
 
 		do
 		{
-			list = (ID3D11CommandList *)InterlockedExchangePointer((PVOID *)&g_ThreadData[Index].CommandList, nullptr);
+			list = g_ThreadData[Index].CommandList.load();
 		} while (list == nullptr);
+
+		g_ThreadData[Index].CommandList.store(nullptr);
 	}
 
 	devContext->ExecuteCommandList(list, TRUE);

@@ -168,38 +168,40 @@ struct SetStateRenderCommand : RenderCommand
 
 	void Run()
 	{
+		auto *r = BSGraphics::Renderer::GetGlobals();
+
 		switch (m_StateType)
 		{
 		case RasterStateCullMode:
-			BSGraphics::Renderer::RasterStateSetCullMode(Data.part1);
+			r->RasterStateSetCullMode(Data.part1);
 			break;
 
 		case AlphaBlendStateMode:
-			BSGraphics::Renderer::AlphaBlendStateSetMode(Data.part1);
+			r->AlphaBlendStateSetMode(Data.part1);
 			break;
 
 		case AlphaBlendStateUnknown1:
-			BSGraphics::Renderer::AlphaBlendStateSetUnknown1(Data.part1);
+			r->AlphaBlendStateSetUnknown1(Data.part1);
 			break;
 
 		case AlphaBlendStateUnknown2:
-			BSGraphics::Renderer::AlphaBlendStateSetUnknown2(Data.part1);
+			r->AlphaBlendStateSetUnknown2(Data.part1);
 			break;
 
 		case DepthStencilStateStencilMode:
-			BSGraphics::Renderer::DepthStencilStateSetStencilMode(Data.part1, Data.part2);
+			r->DepthStencilStateSetStencilMode(Data.part1, Data.part2);
 			break;
 
 		case DepthStencilStateDepthMode:
-			BSGraphics::Renderer::DepthStencilStateSetDepthMode(Data.part1);
+			r->DepthStencilStateSetDepthMode(Data.part1);
 			break;
 
 		case UseScrapConstantValue_1:
-			BSGraphics::Renderer::SetUseScrapConstantValue((bool)Data.part1);
+			r->SetUseScrapConstantValue((bool)Data.part1);
 			break;
 
 		case UseScrapConstantValue_2:
-			BSGraphics::Renderer::SetUseScrapConstantValue(*(float *)&Data.part1);
+			r->SetUseScrapConstantValue(*(float *)&Data.part1);
 			break;
 
 		default:
@@ -292,7 +294,7 @@ struct SetAccumulatorRenderCommand : RenderCommand
 
 	void Run()
 	{
-		auto GraphicsGlobals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+		auto GraphicsGlobals = HACK_GetThreadedGlobals();
 
 		// BSShaderManager::pCurrentShaderAccumulator
 		uint64_t& qword_1431F5490 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3600);

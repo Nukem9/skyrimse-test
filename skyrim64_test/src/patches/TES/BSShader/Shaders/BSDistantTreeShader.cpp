@@ -1,4 +1,3 @@
-#include "../../../rendering/common.h"
 #include "../../../../common.h"
 #include "../BSVertexShader.h"
 #include "../BSPixelShader.h"
@@ -58,9 +57,9 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
 		return false;
 
-	auto *renderer = GetThreadedGlobals();
-	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	// fogParams is of type NiFogProperty *
 	auto sub_1412AC860 = (uintptr_t(__fastcall *)(BYTE))(g_ModuleBase + 0x12AC860);
@@ -127,11 +126,11 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	// if (!qword_1432A7F58)
 	// bAssert("LOD tree texture atlas for current worldspace not found.");
 
-	BSGraphics::Renderer::SetTexture(0, qword_1432A7F58->QRendererTexture());// Diffuse
-	BSGraphics::Renderer::SetTextureAddressMode(0, 0);
+	renderer->SetTexture(0, qword_1432A7F58->QRendererTexture());// Diffuse
+	renderer->SetTextureAddressMode(0, 0);
 
-	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
+	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 	return true;
 }
 
@@ -144,8 +143,8 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::SetupGeometry, Pass, RenderFlags);
 
-	auto *renderer = GetThreadedGlobals();
-	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	// Standard world transformation matrix
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
@@ -170,8 +169,8 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags
 	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(geoTransform);
 	vertexCG.ParamVS<XMMATRIX, 3>() = XMMatrixTranspose(prevGeoTransform);
 
-	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, nullptr);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	renderer->FlushConstantGroupVSPS(&vertexCG, nullptr);
+	renderer->ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 }
 
 void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)

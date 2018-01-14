@@ -135,34 +135,34 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	//m_CurrentRawTechnique = rawTechnique;
 	TLS_m_CurrentRawTechnique = rawTechnique;
 
-	auto *renderer = GetThreadedGlobals();
-	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
-	BSGraphics::Renderer::SetTextureFilterMode(0, 3);
-	BSGraphics::Renderer::SetTextureFilterMode(1, 3);
+	renderer->SetTextureFilterMode(0, 3);
+	renderer->SetTextureFilterMode(1, 3);
 
 	switch ((rawTechnique >> 24) & 0x3F)
 	{
 	case RAW_TECHNIQUE_ENVMAP:
 	case RAW_TECHNIQUE_EYE:
-		BSGraphics::Renderer::SetTextureFilterMode(4, 3);
-		BSGraphics::Renderer::SetTextureFilterMode(5, 3);
+		renderer->SetTextureFilterMode(4, 3);
+		renderer->SetTextureFilterMode(5, 3);
 		break;
 
 	case RAW_TECHNIQUE_GLOWMAP:
-		BSGraphics::Renderer::SetTextureFilterMode(6, 3);
+		renderer->SetTextureFilterMode(6, 3);
 		break;
 
 	case RAW_TECHNIQUE_PARALLAX:
 	case RAW_TECHNIQUE_PARALLAXOCC:
-		BSGraphics::Renderer::SetTextureFilterMode(3, 3);
+		renderer->SetTextureFilterMode(3, 3);
 		break;
 
 	case RAW_TECHNIQUE_FACEGEN:
-		BSGraphics::Renderer::SetTextureFilterMode(3, 3);
-		BSGraphics::Renderer::SetTextureFilterMode(4, 3);
-		BSGraphics::Renderer::SetTextureFilterMode(12, 3);
+		renderer->SetTextureFilterMode(3, 3);
+		renderer->SetTextureFilterMode(4, 3);
+		renderer->SetTextureFilterMode(12, 3);
 		break;
 
 	case RAW_TECHNIQUE_MTLAND:
@@ -171,30 +171,30 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		// Override all 16 samplers
 		for (int i = 0; i < 16; i++)
 		{
-			BSGraphics::Renderer::SetTexture(i, qword_143052900->QRendererTexture());
-			BSGraphics::Renderer::SetTextureMode(i, 3, 3);
+			renderer->SetTexture(i, qword_143052900->QRendererTexture());
+			renderer->SetTextureMode(i, 3, 3);
 		}
 
-		BSGraphics::Renderer::SetTextureMode(15, 3, 1);
+		renderer->SetTextureMode(15, 3, 1);
 	}
 	break;
 
 	case RAW_TECHNIQUE_LODLAND:
 	case RAW_TECHNIQUE_LODLANDNOISE:
-		BSGraphics::Renderer::SetTextureMode(0, 3, 1);
-		BSGraphics::Renderer::SetTextureMode(1, 3, 1);
+		renderer->SetTextureMode(0, 3, 1);
+		renderer->SetTextureMode(1, 3, 1);
 		TechUpdateAccelerationConstants(vertexCG);
 		break;
 
 	case RAW_TECHNIQUE_MULTILAYERPARALLAX:
-		BSGraphics::Renderer::SetTextureFilterMode(4, 3);
-		BSGraphics::Renderer::SetTextureFilterMode(5, 3);
-		BSGraphics::Renderer::SetTextureFilterMode(8, 3);
+		renderer->SetTextureFilterMode(4, 3);
+		renderer->SetTextureFilterMode(5, 3);
+		renderer->SetTextureFilterMode(8, 3);
 		break;
 
 	case RAW_TECHNIQUE_MULTIINDEXTRISHAPESNOW:
-		BSGraphics::Renderer::SetTexture(10, qword_1430528A0->QRendererTexture());
-		BSGraphics::Renderer::SetTextureMode(10, 3, 0);
+		renderer->SetTexture(10, qword_1430528A0->QRendererTexture());
+		renderer->SetTextureMode(10, 3, 0);
 		break;
 	}
 
@@ -210,8 +210,8 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		colourOutputClamp.f[3] = 0.0f;
 	}
 
-	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
+	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	bool shadowed = (rawTechnique & RAW_FLAG_SHADOW_DIR) || (rawTechnique & (RAW_FLAG_UNKNOWN6 | RAW_FLAG_UNKNOWN5 | RAW_FLAG_UNKNOWN4));
 	bool defShadow = (rawTechnique & RAW_FLAG_DEFSHADOW);
@@ -219,8 +219,8 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	// WARNING: Amazing use-after-free code right hereeeeee.............
 	if (shadowed && defShadow)
 	{
-		BSGraphics::Renderer::SetShaderResource(14, (ID3D11ShaderResourceView *)qword_14304F260);
-		BSGraphics::Renderer::SetTextureMode(14, 0, (dword_141E338A0 != 4) ? 1 : 0);
+		renderer->SetShaderResource(14, (ID3D11ShaderResourceView *)qword_14304F260);
+		renderer->SetTextureMode(14, 0, (dword_141E338A0 != 4) ? 1 : 0);
 
 		// PS: p11 float4 VPOSOffset
 		XMVECTORF32& vposOffset = pixelCG.ParamPS<XMVECTORF32, 11>();
@@ -238,13 +238,15 @@ void BSLightingShader::RestoreTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSLightingShader::RestoreTechnique, Technique);
 
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+
 	if (TLS_m_CurrentRawTechnique & RAW_FLAG_DEFSHADOW)
-		BSGraphics::Renderer::SetShaderResource(14, nullptr);
+		renderer->SetShaderResource(14, nullptr);
 
 	uintptr_t v2 = *(uintptr_t *)(qword_1431F5810 + 448);
 
 	if (v2 && *(bool *)(v2 + 16) && *(bool *)(v2 + 17))
-		BSGraphics::Renderer::SetShaderResource(15, nullptr);
+		renderer->SetShaderResource(15, nullptr);
 
 	EndTechnique();
 }
@@ -253,9 +255,9 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 {
 	BSSHADER_FORWARD_CALL(MATERIAL, &BSLightingShader::SetupMaterial, Material);
 
-	auto *renderer = GetThreadedGlobals();
-	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
-	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
+	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 
 	const uint32_t rawTechnique = TLS_m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
@@ -396,7 +398,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 			if (*(uintptr_t *)(v3 + 176))
 				sub_14130C220(15, *(uintptr_t *)(v3 + 176), v3);
 
-			BSGraphics::Renderer::SetTextureMode(15, 3, 1);
+			renderer->SetTextureMode(15, 3, 1);
 		}
 	}
 	break;
@@ -501,8 +503,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 			uint32_t v68 = *(uint32_t *)(v3 + 112);
 			NiSourceTexture *v69 = *(NiSourceTexture **)(v3 + 104);
 
-			BSGraphics::Renderer::SetTexture(2, v69->QRendererTexture());
-			BSGraphics::Renderer::SetTextureMode(2, v68, 3);
+			renderer->SetTexture(2, v69->QRendererTexture());
+			renderer->SetTextureMode(2, v68, 3);
 		}
 	}
 
@@ -517,8 +519,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		uint32_t v71 = *(uint32_t *)(v3 + 112);
 		NiSourceTexture *v72 = *(NiSourceTexture **)(v3 + 96);
 
-		BSGraphics::Renderer::SetTexture(12, v72->QRendererTexture());
-		BSGraphics::Renderer::SetTextureAddressMode(12, v71);
+		renderer->SetTexture(12, v72->QRendererTexture());
+		renderer->SetTextureAddressMode(12, v71);
 
 		// PS: p28 float4 LightingEffectParams
 		XMVECTORF32& lightingEffectParams = pixelCG.ParamPS<XMVECTORF32, 28>();
@@ -533,8 +535,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		uint32_t v76 = *(uint32_t *)(v3 + 112);
 		NiSourceTexture *v77 = *(NiSourceTexture **)(v3 + 96);
 
-		BSGraphics::Renderer::SetTexture(12, v77->QRendererTexture());
-		BSGraphics::Renderer::SetTextureAddressMode(12, v76);
+		renderer->SetTexture(12, v77->QRendererTexture());
+		renderer->SetTextureAddressMode(12, v76);
 
 		// PS: p28 float4 LightingEffectParams
 		XMVECTORF32& lightingEffectParams = pixelCG.ParamPS<XMVECTORF32, 28>();
@@ -548,8 +550,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		uint32_t v81 = *(uint32_t *)(v3 + 112);
 		NiSourceTexture *v82 = *(NiSourceTexture **)(v3 + 104);
 
-		BSGraphics::Renderer::SetTexture(9, v82->QRendererTexture());
-		BSGraphics::Renderer::SetTextureAddressMode(9, v81);
+		renderer->SetTexture(9, v82->QRendererTexture());
+		renderer->SetTextureAddressMode(9, v81);
 	}
 
 	if (rawTechnique & RAW_FLAG_SNOW)
@@ -576,15 +578,15 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 			uint32_t v89 = *(uint32_t *)(v3 + 112);
 			auto v90 = (ID3D11ShaderResourceView *)*(&qword_14304EF00 + 6 * v88);
 
-			BSGraphics::Renderer::SetShaderResource(0, v90);
-			BSGraphics::Renderer::SetTextureAddressMode(0, v89);
+			renderer->SetShaderResource(0, v90);
+			renderer->SetTextureAddressMode(0, v89);
 		}
 
 		uint32_t v91 = *(uint32_t *)(v3 + 112);
 		NiSourceTexture *v92 = *(NiSourceTexture **)(v3 + 88);
 
-		BSGraphics::Renderer::SetTexture(1, v92->QRendererTexture());
-		BSGraphics::Renderer::SetTextureAddressMode(1, v91);
+		renderer->SetTexture(1, v92->QRendererTexture());
+		renderer->SetTextureAddressMode(1, v91);
 	}
 
 	// PS: p29 float4 IBLParams
@@ -610,8 +612,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		{
 			auto v99 = (ID3D11ShaderResourceView *)*(&qword_14304EF00 + 6 * (signed int)sub_141314170(g_ModuleBase + 0x1E33B98));
 
-			BSGraphics::Renderer::SetShaderResource(11, v99);
-			BSGraphics::Renderer::SetTextureAddressMode(11, 0);
+			renderer->SetShaderResource(11, v99);
+			renderer->SetTextureAddressMode(11, 0);
 		}
 
 		// PS: p35 float4 CharacterLightParams
@@ -622,8 +624,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 			characterLightParams.v = _mm_loadu_ps(&xmmword_141E3302C);
 	}
 
-	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
+	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
+	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 }
 
 void BSLightingShader::RestoreMaterial(BSShaderMaterial const *Material)
@@ -634,7 +636,7 @@ void BSLightingShader::RestoreMaterial(BSShaderMaterial const *Material)
 // BSUtilities::GetInverseWorldMatrix(const NiTransform& Transform, bool UseInputTransform, D3DMATRIX& Matrix)
 void GetInverseWorldMatrix(const NiTransform& Transform, bool UseWorldPosition, XMMATRIX& OutMatrix)
 {
-	auto *renderer = GetThreadedGlobals();
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
 	if (UseWorldPosition)
 	{
@@ -659,10 +661,10 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, RenderFlags);
 
-	auto *renderer = GetThreadedGlobals();
 	auto property = static_cast<BSLightingShaderProperty *>(Pass->m_Property);
-	auto vertexCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-	auto pixelCG = BSGraphics::Renderer::GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	const uint32_t rawTechnique = TLS_m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
@@ -678,7 +680,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	if (v12 == 3 && property->QFlags() & 0x100000000i64)
 	{
 		TLS_dword_141E35280 = *(uint32_t *)&renderer->__zz0[72];
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(1);
+		renderer->AlphaBlendStateSetUnknown2(1);
 	}
 
 	switch (baseTechniqueID)
@@ -737,7 +739,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		const NiTransform& temp = (RenderFlags & 0x10) ? world : Pass->m_Geometry->GetPreviousWorldTransform();
 
 		GeoUpdateViewProjectionConstants(vertexCG, world, false, nullptr);
-		GeoUpdateViewProjectionConstants(vertexCG, temp, true, (NiPoint3 *)&renderer->__zz2[40]);// BSGraphics::Renderer::QViewData(BSGraphics::gRenderer)->kViewProjMat?
+		GeoUpdateViewProjectionConstants(vertexCG, temp, true, (NiPoint3 *)&renderer->__zz2[40]);// renderer->QViewData(BSGraphics::gRenderer)->kViewProjMat?
 	}
 
 	XMMATRIX inverseWorldMatrix;
@@ -814,19 +816,19 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if ((rawTechnique & RAW_FLAG_PROJECTED_UV) && (baseTechniqueID != RAW_TECHNIQUE_HAIR))
 	{
-		BSGraphics::Renderer::SetTexture(11, qword_143052890->QRendererTexture());
-		BSGraphics::Renderer::SetTextureMode(11, 3, 1);
+		renderer->SetTexture(11, qword_143052890->QRendererTexture());
+		renderer->SetTextureMode(11, 3, 1);
 
 		if (enableProjectedUvNormals && qword_143052898)
 		{
-			BSGraphics::Renderer::SetTexture(3, qword_143052898->QRendererTexture());
-			BSGraphics::Renderer::SetTextureMode(3, 3, 1);
+			renderer->SetTexture(3, qword_143052898->QRendererTexture());
+			renderer->SetTextureMode(3, 3, 1);
 
-			BSGraphics::Renderer::SetTexture(8, qword_1430528A0->QRendererTexture());
-			BSGraphics::Renderer::SetTextureMode(8, 3, 1);
+			renderer->SetTexture(8, qword_1430528A0->QRendererTexture());
+			renderer->SetTextureMode(8, 3, 1);
 
-			BSGraphics::Renderer::SetTexture(10, qword_1430528A8->QRendererTexture());
-			BSGraphics::Renderer::SetTextureMode(10, 3, 1);
+			renderer->SetTexture(10, qword_1430528A8->QRendererTexture());
+			renderer->SetTextureMode(10, 3, 1);
 		}
 
 		// IDA says there are 2 args to this virtual function, it's probably wrong
@@ -868,11 +870,11 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (rawTechnique & RAW_FLAG_WORLD_MAP)
 	{
-		BSGraphics::Renderer::SetTexture(12, qword_141E32F90->QRendererTexture());
-		BSGraphics::Renderer::SetTextureAddressMode(12, 3);
+		renderer->SetTexture(12, qword_141E32F90->QRendererTexture());
+		renderer->SetTextureAddressMode(12, 3);
 
-		BSGraphics::Renderer::SetTexture(13, qword_141E32F98->QRendererTexture());
-		BSGraphics::Renderer::SetTextureAddressMode(13, 3);
+		renderer->SetTexture(13, qword_141E32F98->QRendererTexture());
+		renderer->SetTextureAddressMode(13, 3);
 
 		// VS: p8 float4 Color1
 		BSGraphics::Utility::CopyNiColorAToFloat(&vertexCG.ParamVS<XMVECTOR, 8>(), dword_1431F5540);
@@ -915,7 +917,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		else
 			v90 = *(float *)(v89 + 332) * 31.0f;
 
-		BSGraphics::Renderer::DepthStencilStateSetStencilMode(11, ((uint32_t)v90) & 0xFF);
+		renderer->DepthStencilStateSetStencilMode(11, ((uint32_t)v90) & 0xFF);
 	}
 
 	if (!v103)
@@ -925,13 +927,13 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		if (!(property->QFlags() & 0x100000000i64))
 		{
 			TLS_dword_141E35280 = oldDepthMode;
-			BSGraphics::Renderer::DepthStencilStateSetDepthMode(1);
+			renderer->DepthStencilStateSetDepthMode(1);
 		}
 
 		if (!(property->QFlags() & 0x80000000))
 		{
 			TLS_dword_141E35280 = oldDepthMode;
-			BSGraphics::Renderer::DepthStencilStateSetDepthMode(0);
+			renderer->DepthStencilStateSetDepthMode(0);
 		}
 
 	}
@@ -956,26 +958,28 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		ssrParams.f[3] = v98 * v99;
 	}
 
-	BSGraphics::Renderer::FlushConstantGroupVSPS(&vertexCG, &pixelCG);
-	BSGraphics::Renderer::ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
+	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 }
 
 void BSLightingShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::RestoreGeometry, Pass, RenderFlags);
 
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+
 	if (Pass->Byte1C == 10)
-		BSGraphics::Renderer::DepthStencilStateSetStencilMode(0, 255);
+		renderer->DepthStencilStateSetStencilMode(0, 255);
 
 	if (TLS_dword_141E35280 != 6)
 	{
-		BSGraphics::Renderer::DepthStencilStateSetDepthMode(TLS_dword_141E35280);
+		renderer->DepthStencilStateSetDepthMode(TLS_dword_141E35280);
 		TLS_dword_141E35280 = 6;
 	}
 
 	if (TLS_dword_141E3527C != 13)
 	{
-		BSGraphics::Renderer::AlphaBlendStateSetUnknown2(TLS_dword_141E3527C);
+		renderer->AlphaBlendStateSetUnknown2(TLS_dword_141E3527C);
 		TLS_dword_141E3527C = 13;
 	}
 }
@@ -1030,7 +1034,7 @@ uint32_t BSLightingShader::GetPixelTechnique(uint32_t RawTechnique)
 
 void BSLightingShader::TechUpdateAccelerationConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG)
 {
-	auto *renderer = GetThreadedGlobals();
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
 	// VS: p12 float4 Acceleration
 	BSGraphics::Utility::CopyNiColorAToFloat(&VertexCG.ParamVS<XMVECTOR, 12>(),
@@ -1094,15 +1098,17 @@ void BSLightingShader::TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSVe
 
 void BSLightingShader::sub_14130C470(__int64 a1, __int64 a2)
 {
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	NiSourceTexture *v2 = (NiSourceTexture *)a1;
 	uint32_t v3 = *(uint32_t *)(a2 + 112);
 
-	BSGraphics::Renderer::SetTexture(4, v2->QRendererTexture());
-	BSGraphics::Renderer::SetTextureAddressMode(4, v3);
+	renderer->SetTexture(4, v2->QRendererTexture());
+	renderer->SetTextureAddressMode(4, v3);
 }
 
 void BSLightingShader::sub_14130C4D0(__int64 a1, __int64 a2)
 {
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	NiSourceTexture *v2 = nullptr;
 	uint32_t v3 = *(uint32_t *)(a2 + 112);
 
@@ -1111,27 +1117,30 @@ void BSLightingShader::sub_14130C4D0(__int64 a1, __int64 a2)
 	else
 		v2 = qword_143052920;
 
-	BSGraphics::Renderer::SetTexture(5, v2->QRendererTexture());
-	BSGraphics::Renderer::SetTextureAddressMode(5, v3);
+	renderer->SetTexture(5, v2->QRendererTexture());
+	renderer->SetTextureAddressMode(5, v3);
 }
 
 void BSLightingShader::sub_14130C220(int a1, __int64 a2, __int64 a3)
 {
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	NiSourceTexture *v3 = (NiSourceTexture *)a2;
 	uint32_t v4 = *(uint32_t *)(a3 + 112);
 
-	BSGraphics::Renderer::SetTexture(a1, v3->QRendererTexture());
-	BSGraphics::Renderer::SetTextureAddressMode(a1, v4);
+	renderer->SetTexture(a1, v3->QRendererTexture());
+	renderer->SetTextureAddressMode(a1, v4);
 }
 
 void BSLightingShader::MatSetMultiTextureLandOverrides(__int64 a1)
 {
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+
 	// This overrides all 16 samplers/input resources for land parameters if set in the property
 	NiSourceTexture *v2 = *(NiSourceTexture **)(a1 + 72);
 	NiSourceTexture *v3 = *(NiSourceTexture **)(a1 + 88);
 
-	BSGraphics::Renderer::SetTexture(0, v2->QRendererTexture());
-	BSGraphics::Renderer::SetTexture(7, v3->QRendererTexture());
+	renderer->SetTexture(0, v2->QRendererTexture());
+	renderer->SetTexture(7, v3->QRendererTexture());
 
 	if (*(uint32_t *)(a1 + 160))
 	{
@@ -1141,13 +1150,13 @@ void BSLightingShader::MatSetMultiTextureLandOverrides(__int64 a1)
 			NiSourceTexture *v5 = (NiSourceTexture *)(*(uintptr_t *)(a1 + 8i64 * (unsigned int)(v4 - 8) + 0xA8));
 			uint32_t v6 = (unsigned int)(v4 - 7);
 
-			BSGraphics::Renderer::SetTexture(v6, v5->QRendererTexture());
-			BSGraphics::Renderer::SetTextureAddressMode(v6, 3);
+			renderer->SetTexture(v6, v5->QRendererTexture());
+			renderer->SetTextureAddressMode(v6, 3);
 
 			NiSourceTexture *v8 = (NiSourceTexture *)(*(uintptr_t *)(a1 + 8i64 * (unsigned int)(v4 - 8) + 208));
 
-			BSGraphics::Renderer::SetTexture(v4, v8->QRendererTexture());
-			BSGraphics::Renderer::SetTextureAddressMode(v4, 3);
+			renderer->SetTexture(v4, v8->QRendererTexture());
+			renderer->SetTextureAddressMode(v4, 3);
 
 			++v4;
 		} while ((unsigned int)(v4 - 8) < *(uint32_t *)(a1 + 160));
@@ -1157,8 +1166,8 @@ void BSLightingShader::MatSetMultiTextureLandOverrides(__int64 a1)
 	{
 		NiSourceTexture *result = *(NiSourceTexture **)(a1 + 248);
 
-		BSGraphics::Renderer::SetTexture(13, result->QRendererTexture());
-		BSGraphics::Renderer::SetTextureAddressMode(13, 0);
+		renderer->SetTexture(13, result->QRendererTexture());
+		renderer->SetTextureAddressMode(13, 0);
 	}
 }
 
@@ -1369,7 +1378,7 @@ void BSLightingShader::GeoUpdateProjectedUvConstants(const BSGraphics::ConstantG
 
 void BSLightingShader::sub_14130C8A0(const NiTransform& Transform, XMMATRIX& OutMatrix, bool DontMultiply)
 {
-	auto *renderer = GetThreadedGlobals();
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
 	NiTransform temp;
 
