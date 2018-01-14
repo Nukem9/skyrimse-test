@@ -28,15 +28,16 @@ void CreateXbyakPatches()
 	for (uintptr_t xref : XrefList)
 		GenerateInstruction(xref - 0x140000000 + g_ModuleBase);
 
+	printf("-- SECONDARY LIST --\n");
+
+	for (uintptr_t xref : XrefList2)
+		GenerateInstruction(xref - 0x140000000 + g_ModuleBase);
+
 	// Do the actual code modifications
 	std::unordered_map<uint32_t, void *> codeCache;
 
 	for (auto& patch : XrefGeneratedPatches)
 	{
-		// Sanity check
-		if (patch.Offset >= (0x2594))
-			continue;
-
 		PatchCodeGen gen(&patch, g_CodeRegion, TLS_INSTRUCTION_BLOCK_SIZE);
 		uint8_t *rawCode = (uint8_t *)gen.getCode();
 		uint32_t codeCRC = crc32c(rawCode, gen.getSize());
@@ -53,6 +54,8 @@ void CreateXbyakPatches()
 
 	DWORD old;
 	VirtualProtect((LPVOID)g_CodeRegion, TLS_INSTRUCTION_MEMORY_REGION_SIZE, PAGE_EXECUTE_READ, &old);
+
+	fflush(stdout);
 }
 
 void CreateXbyakCodeBlock()

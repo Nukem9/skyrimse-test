@@ -44,38 +44,9 @@ void UpdateHavokTimer(int FPS)
     }
 }
 
-int64_t LastFrame;
-int64_t TickSum;
-int64_t TickDeltas[32];
-int TickDeltaIndex;
-
 HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval, UINT Flags)
 {
-    //ui::Render();
-
-    // FPS calculation code
-    LARGE_INTEGER ticksPerSecond;
-    QueryPerformanceFrequency(&ticksPerSecond);
-
-    LARGE_INTEGER frameEnd;
-    QueryPerformanceCounter(&frameEnd);
-
-    if (LastFrame == 0)
-        LastFrame = frameEnd.QuadPart;
-
-    int64_t delta = frameEnd.QuadPart - LastFrame;
-    LastFrame     = frameEnd.QuadPart;
-
-    TickSum -= TickDeltas[TickDeltaIndex];
-    TickSum += delta;
-    TickDeltas[TickDeltaIndex++] = delta;
-
-    if (TickDeltaIndex >= ARRAYSIZE(TickDeltas))
-        TickDeltaIndex = 0;
-
-    double frameTimeMs      = 1000.0 * (delta / (double)ticksPerSecond.QuadPart);
-    double averageFrametime = (TickSum / 32.0) / (double)ticksPerSecond.QuadPart;
-    g_AverageFps            = 1.0 / averageFrametime;
+	ui::Render();
 
     //if (ui::opt::LogHitches && frameTimeMs >= 100.0)
     //    ui::log::Add("FRAME HITCH WARNING (%g ms)\n", frameTimeMs);
@@ -147,7 +118,7 @@ ID3D11Buffer *testbuffer;
 
 void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 {
-	auto globals = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+	auto globals = BSGraphics::Renderer::GetGlobals();
 
 	if (true)
 	{
@@ -190,6 +161,9 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 	}
 
 #if 0
+	//if (AllocationSize <= 0)
+	//	bAssert((__int64)"Win32\\BSGraphicsRenderer.cpp", 3163i64, (__int64)"Size must be > 0");
+
 	uint32_t frameDataOffset = globals->m_FrameDataUsedSize;
 	uint32_t frameBufferIndex = globals->m_CurrentDynamicBufferIndex;
 	uint32_t newFrameDataSzie = globals->m_FrameDataUsedSize + AllocationSize;
@@ -200,6 +174,9 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 	//
 	if (newFrameDataSzie > 0x400000)
 	{
+		//if (AllocationSize > 0x400000)
+		//	bAssert((__int64)"Win32\\BSGraphicsRenderer.cpp", 3174i64, (__int64)"Dynamic geometry buffer overflow.");
+
 		newFrameDataSzie = AllocationSize;
 		frameDataOffset = 0;
 
@@ -240,8 +217,6 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 #endif
 }
 
-extern uint32_t lastTechId;
-
 uint32_t opt1;
 uint32_t opt2;
 uint32_t opt3;
@@ -250,7 +225,7 @@ SRWLOCK InputLayoutLock = SRWLOCK_INIT;
 
 void CommitShaderChanges(bool Unknown)
 {
-	auto renderer = (BSGraphicsRendererGlobals *)GetThreadedGlobals();
+	auto renderer = BSGraphics::Renderer::GetGlobals();
 
 	uint32_t v1; // edx
 	uint64_t *v3; // r8
@@ -277,20 +252,6 @@ void CommitShaderChanges(bool Unknown)
 	int v37; // [rsp+B8h] [rbp+10h]
 	int v38; // [rsp+C0h] [rbp+18h]
 	__int64 v39; // [rsp+C8h] [rbp+20h]
-
-	if (lastTechId == 0x5C00002E)
-	{
-		renderer->m_StateUpdateFlags |= 0x80;
-
-		//*(signed int *)&renderer->__zz2[656] = 0;
-		*(signed int *)&renderer->__zz0[64] = 0;
-		*(signed int *)&renderer->__zz0[68] = 0;
-		*(signed int *)&renderer->__zz0[72] = 1;
-	}
-
-	//wchar_t buffer[256];
-	//_swprintf(buffer, L"SETTINGS [%d][%d][%d][%d]", *(unsigned int *)&renderer->__zz2[656], *(signed int *)&renderer->__zz0[64], *(signed int *)&renderer->__zz0[68], *(signed int *)&renderer->__zz0[72]);
-	//annotation->SetMarker(buffer);
 
 	v1 = renderer->m_StateUpdateFlags;
 	if (renderer->m_StateUpdateFlags)
@@ -858,7 +819,7 @@ void hook()
 
 	hooked = true;
 
-	uintptr_t ptr = *(uintptr_t *)(&GetMainGlobals()->qword_14304BF00);
+	uintptr_t ptr = *(uintptr_t *)(&BSGraphics::Renderer::GetGlobalsNonThreaded()->qword_14304BF00);
 	//uintptr_t ptr = *(uintptr_t *)(g_ModuleBase + 0x304BF00);
 	ID3D11Device *dev = *(ID3D11Device **)(ptr + 56);
 	IDXGISwapChain *swap = *(IDXGISwapChain **)(ptr + 96);
@@ -1032,6 +993,9 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 
 	OutputDebugStringA("Created everything\n");
 
+	newDev->SetExceptionMode(D3D11_RAISE_FLAG_DRIVER_INTERNAL_ERROR);
+	BSGraphics::Renderer::FlushThreadedVars();
+
     // Create ImGui globals
     ui::Initialize(pSwapChainDesc->OutputWindow, newDev, newContext);
     ui::log::Add("Created D3D11 device with feature level %X...\n", level);
@@ -1049,6 +1013,27 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 
 void CreateXbyakCodeBlock();
 void CreateXbyakPatches();
+
+__int64 __fastcall sub_141318C10(__int64 a1, int a2, char a3, char a4, char a5)
+{
+	annotation->BeginEvent(L"BSCubemapCamera: Draw");
+
+	__int64 result = ((__int64(__fastcall *)(__int64 a1, int a2, char a3, char a4, char a5))(g_ModuleBase + 0x1319000))(a1, a2, a3, a4, a5);
+
+	annotation->EndEvent();
+
+	return result;
+}
+
+void asdf1(__int64 a1, BSVertexShader *Shader)
+{
+//	BSGraphics::Renderer::SetVertexShader(Shader);
+}
+
+void asdf2(__int64 a1, BSPixelShader *Shader)
+{
+//	BSGraphics::Renderer::SetPixelShader(Shader);
+}
 
 void PatchD3D11()
 {
@@ -1068,6 +1053,12 @@ void PatchD3D11()
 
 	CreateXbyakCodeBlock();
 	CreateXbyakPatches();
+
+	//Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x0D6F040), (PBYTE)&asdf1);
+	//Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x0D6F3F0), (PBYTE)&asdf2);
+	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1318C10), (PBYTE)&sub_141318C10);
+
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1336860), &BSShader::BeginTechnique);
 
 	*(PBYTE *)&BuildShaderBundle = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x13364A0), (PBYTE)&hk_BuildShaderBundle);
 

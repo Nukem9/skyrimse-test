@@ -93,10 +93,86 @@ const uintptr_t XrefList[] =
 #include "d3d11_tls_xreflist.inl"
 };
 
+const uintptr_t XrefList2[] =
+{
+	0x14131f1d0,
+	0x14131f1f0,
+	0x14131ff73,
+	0x1413200b5,
+	0x1413200d0,
+	0x1413200f2,
+	0x1413200fc,
+	0x1413201a6,
+	0x141320221,
+	0x141320230,
+	0x141320249,
+	0x14132025d,
+	0x141320274,
+	0x14132027b,
+	0x14131e919,
+	0x14131e92b,
+	0x14131ea33,
+	0x14131ea45,
+	0x14131efbd,
+	0x14131efdb,
+	0x14131f0e3,
+	0x14131f1b9,
+	0x14131f373,
+	0x14131f38a,
+	0x14131f3a8,
+	0x14131f3ca,
+	0x14131f403,
+	0x14131f415,
+	0x14131f439,
+	0x14131f539,
+	0x14131fd84,
+	0x14131fd9d,
+	0x14131fe90,
+	0x14131fea0,
+	0x14131e90a,
+	0x14131e924,
+	0x14131ea24,
+	0x14131ea3e,
+	0x14131efae,
+	0x14131efd4,
+	0x14131f105,
+	0x14131f1b2,
+	0x14131f364,
+	0x14131f380,
+	0x14131f3a1,
+	0x14131f3c3,
+	0x14131f3f4,
+	0x14131f40e,
+	0x14131f432,
+	0x14131f532,
+	0x14131fd66,
+	0x14131fd96,
+	0x14131fe81,
+	0x14131fe99,
+
+	0x14131e931,
+	0x14131ea4b,
+	0x14131efe1,
+	0x14131f134,
+	0x14131f14e,
+	0x14131f1bf,
+	0x14131f390,
+	0x14131f41b,
+	0x14131f43f,
+	0x14131f53f,
+	0x14131fda4,
+	0x14131fea7,
+
+	// qword_1431F5490
+	0x1412AABFD,
+	0x1412AD330,
+	0x1412AD340,
+};
+
 const PatchEntry XrefGeneratedPatches[] =
 {
 #define DO_THREADING_PATCH_REG(TYPE, EXE_OFFSET, REG, OFFSET, MEM_SIZE, B, I, S) { PatchType::##TYPE, EXE_OFFSET, ZYDIS_REGISTER_##REG, OFFSET, MEM_SIZE, ZYDIS_REGISTER_##B, ZYDIS_REGISTER_##I, S },
-#define DO_THREADING_PATCH_IMM(TYPE, EXE_OFFSET, IMM, OFFSET, MEM_SIZE, B, I, S) { PatchType::##TYPE, EXE_OFFSET, IMM, OFFSET, MEM_SIZE, ZYDIS_REGISTER_##B, ZYDIS_REGISTER_##I, S },
+#define DO_THREADING_PATCH_IMM(TYPE, EXE_OFFSET, IMM, OFFSET, MEM_SIZE, B, I, S) { PatchType::##TYPE, EXE_OFFSET, (uint64_t)IMM, OFFSET, MEM_SIZE, ZYDIS_REGISTER_##B, ZYDIS_REGISTER_##I, S },
 #define DO_SHUFPS_FIXUP(EXE_OFFSET, IMM)
 
 #include "d3d11_tls_patchlist.inl"
@@ -106,7 +182,7 @@ const PatchEntry XrefGeneratedPatches[] =
 #undef DO_THREADING_PATCH_IMM
 };
 
-static_assert(std::extent<decltype(XrefGeneratedPatches)>::value == std::extent<decltype(XrefList)>::value, "WARNING: Array sizes differ");
+//static_assert(arraysize(XrefGeneratedPatches) == arraysize(XrefList), "WARNING: Array sizes differ");
 
 const std::unordered_map<uintptr_t, int> XrefGeneratedShufps
 ({
