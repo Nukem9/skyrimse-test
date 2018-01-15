@@ -11,6 +11,7 @@
 #include "BSShader/BSShaderProperty.h"
 #include "BSShader/Shaders/BSSkyShader.h"
 #include "BSShader/Shaders/BSLightingShader.h"
+#include "MTRenderer.h"
 
 AutoPtr(BYTE, byte_1431F54CD, 0x31F54CD);
 AutoPtr(DWORD, dword_141E32FDC, 0x1E32FDC);
@@ -95,71 +96,52 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 {
 	__int64 *v5 = a1; // rdi
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	if (!*a1)
+		return;
 
-	if (*a1)
+	MTRenderer::ClearShaderAndTechnique();
+
+	BSRenderPass *i = (BSRenderPass *)*v5;
+
+	int tempIndex = -1;
+	if (i)
+		tempIndex = i->m_Shader->m_Type;
+
+	BSShader::LockShader(tempIndex);
+
+	for (; i; i = i->m_Next)
 	{
-		ClearShaderAndTechnique();
+		if (!i->m_Geometry)
+			continue;
 
-		BSRenderPass *i = (BSRenderPass *)*v5;
-
-		int tempIndex = -1;
-		if (i)
-			tempIndex = i->m_Shader->m_Type;
-
-		if (tempIndex != -1)
-		{
-			if (tempIndex != 6 && tempIndex != 1 && tempIndex != 9)
-			{
-				if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
-					testLocks[tempIndex].AcquireWrite();
-				//AcquireSRWLockExclusive(&testLocks[tempIndex]);
-			}
-		}
-
-		int firstType = -1;
-		for (; i; i = i->m_Next)
-		{
-			if (!i->m_Geometry)
-				continue;
-
-			if (firstType == -1)
-				firstType = i->m_Shader->m_Type;
-
-			if (firstType != i->m_Shader->m_Type)
-				__debugbreak();
-
-			if ((a2 & 0x108) == 0)
-			{
-				if (i->m_Property->QFlags() & 0x1000000000i64)
-					renderer->RasterStateSetCullMode(0);
-				else
-					renderer->RasterStateSetCullMode(1);
-			}
-
-			__int64 v9 = *(uint64_t *)((uintptr_t)i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
-			bool v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
-			BSBatchRenderer::DrawPassGeometry(i, i->m_TechniqueID, v10, a2);
-		}
+		if (tempIndex != i->m_Shader->m_Type)
+			__debugbreak();
 
 		if ((a2 & 0x108) == 0)
-			renderer->RasterStateSetCullMode(1);
-
-		v5[0] = 0i64;
-		v5[1] = 0i64;
-
-		ClearShaderAndTechnique();
-
-		if (tempIndex != -1)
 		{
-			if (tempIndex != 6 && tempIndex != 1 && tempIndex != 9)
-			{
-				if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
-					testLocks[tempIndex].ReleaseWrite();
-				//ReleaseSRWLockExclusive(&testLocks[tempIndex]);
-			}
+			if (i->m_Property->QFlags() & 0x1000000000i64)
+				MTRenderer::RasterStateSetCullMode(0);
+			else
+				MTRenderer::RasterStateSetCullMode(1);
 		}
+
+		__int64 v9 = *(uint64_t *)((uintptr_t)i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
+		bool v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
+
+		if (MTRenderer::IsInMultithreadedContext())
+			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_TechniqueID, v10, a2);
+		else
+			BSBatchRenderer::DrawPassGeometry(i, i->m_TechniqueID, v10, a2);
 	}
+
+	if ((a2 & 0x108) == 0)
+		MTRenderer::RasterStateSetCullMode(1);
+
+	v5[0] = 0i64;
+	v5[1] = 0i64;
+
+	MTRenderer::ClearShaderAndTechnique();
+	BSShader::UnlockShader(tempIndex);
 }
 
 void BSBatchRenderer::PassInfo::Render(unsigned int a2)
@@ -386,13 +368,12 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex,
 bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, unsigned int a5)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
-
-	bool unknownFlag2 = false;
-	bool unknownFlag = false;
+	bool unknownFlag2;
+	bool unknownFlag;
 
 	// Set pass render state
 	{
-		unknownFlag2 = 0;
+		unknownFlag2 = false;
 		unknownFlag = (a5 & 0x108) != 0;
 
 		int cullMode = -1;
@@ -450,41 +431,54 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 		}
 
 		if (cullMode != -1)
-			renderer->RasterStateSetCullMode(cullMode);
+			MTRenderer::RasterStateSetCullMode(cullMode);
 
 		if (alphaBlendUnknown != -1)
-			renderer->AlphaBlendStateSetUnknown1(alphaBlendUnknown);
+			MTRenderer::AlphaBlendStateSetUnknown1(0);
 
 		renderer->SetUseScrapConstantValue(useScrapConstant);
 	}
 
 	// Render this group with a specific render pass list
+	int shaderType = -1;
 	RenderPassArray *passArray = &m_RenderArrays[m_TechToArrayMap.get(Technique)];
+	BSRenderPass *currentPass = passArray->m_Pass[SubPassIndex];
 
-	int tempIndex = -1;
-	if (passArray->m_Pass[SubPassIndex])
-		tempIndex = passArray->m_Pass[SubPassIndex]->m_Shader->m_Type;
+	if (currentPass)
+		shaderType = currentPass->m_Shader->m_Type;
 
-	if (tempIndex != -1)
+	BSShader::LockShader(shaderType);
+
+	// If we can, submit it to the command list queue instead of running it directly
+	if (MTRenderer::IsInMultithreadedContext())
 	{
-		if (tempIndex != 6 && tempIndex != 1 && tempIndex != 9)
+		// Combine 3 draw command packets into 1 when possible
+		BSRenderPass *temp[3];
+
+		for (int count = 0;; count = 0)
 		{
-			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, true))
-				testLocks[tempIndex].AcquireWrite();
-			//AcquireSRWLockExclusive(&testLocks[tempIndex]);
+			for (; currentPass && count < ARRAYSIZE(temp); currentPass = currentPass->m_Next)
+				temp[count++] = currentPass;
+
+			if (count == 0)
+				break;
+
+			if (count == ARRAYSIZE(temp))
+			{
+				// 3 x BSRenderPass, 1 packet
+				MTRenderer::InsertCommand<MTRenderer::DrawGeometryMultiRenderCommand>(temp, Technique, unknownFlag2, a5);
+			}
+			else
+			{
+				for (int i = 0; i < count; i++)
+					MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(temp[i], Technique, unknownFlag2, a5);
+			}
 		}
 	}
-
-	int firstType = -1;
-	for (BSRenderPass *pass = passArray->m_Pass[SubPassIndex]; pass; pass = pass->m_Next)
+	else
 	{
-		if (firstType == -1)
-			firstType = pass->m_Shader->m_Type;
-
-		if (pass->m_Shader->m_Type != firstType)
-			__debugbreak();
-
-		DrawPassGeometry(pass, Technique, unknownFlag2, a5);
+		for (; currentPass; currentPass = currentPass->m_Next)
+			DrawPassGeometry(currentPass, Technique, unknownFlag2, a5);
 	}
 
 	// a1+108 is probably a "remove list" flag after it's rendered, but the memory is not freed yet
@@ -497,18 +491,9 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 		passArray->m_Pass[SubPassIndex] = nullptr;
 	}
 
-	ClearShaderAndTechnique();
-	renderer->AlphaBlendStateSetUnknown1(0);
-
-	if (tempIndex != -1)
-	{
-		if (tempIndex != 6 && tempIndex != 1 && tempIndex != 9)
-		{
-			if (!InsertRenderCommand<LockShaderTypeRenderCommand>(tempIndex, false))
-				testLocks[tempIndex].ReleaseWrite();
-			//ReleaseSRWLockExclusive(&testLocks[tempIndex]);
-		}
-	}
+	MTRenderer::ClearShaderAndTechnique();
+	MTRenderer::AlphaBlendStateSetUnknown1(0);
+	BSShader::UnlockShader(shaderType);
 
 	SubPassIndex++;
 	return sub_14131E700(Technique, SubPassIndex, a4);
@@ -577,9 +562,6 @@ SRWLOCK testingLock = SRWLOCK_INIT;
 
 void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, unsigned __int8 a3, unsigned int a4)
 {
-	if (InsertRenderCommand<DrawGeometryRenderCommand>(Pass, Technique, a3, a4))
-		return;
-
 	auto *GraphicsGlobals = BSGraphics::Renderer::GetGlobals();
 
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);

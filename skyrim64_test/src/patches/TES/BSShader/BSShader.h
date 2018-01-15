@@ -116,6 +116,9 @@ public:
 	void SetupGeometryAlphaBlending(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty, bool a4);
 	void SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty);
 
+	static void LockShader(int ShaderType);
+	static void UnlockShader(int ShaderType);
+
 	uint32_t m_Type;
 	TechniqueIDMap<BSVertexShader *> m_VertexShaderTable;
 	TechniqueIDMap<BSPixelShader *> m_PixelShaderTable;

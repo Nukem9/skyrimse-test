@@ -3,7 +3,9 @@
 #include "BSVertexShader.h"
 #include "BSPixelShader.h"
 #include "BSShader.h"
+#include "../BSReadWriteLock.h"
 
+BSReadWriteLock testLocks[32];
 bool BSShader::g_ShaderToggles[16][3];
 
 BSShader::BSShader(const char *LoaderType)
@@ -131,4 +133,42 @@ void BSShader::SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderP
 	int rounded = (int)(((float)*(unsigned __int8 *)(a2 + 50)) * *(float *)(a3 + 48));
 
 	BSGraphics::Renderer::GetGlobals()->SetScrapConstantValue((float)rounded * 0.0039215689f);
+}
+
+void BSShader::LockShader(int ShaderType)
+{
+	switch (ShaderType)
+	{
+	case -1:
+		__debugbreak();
+		break;
+
+	case 1:
+	case 6:
+	case 9:
+		break;
+
+	default:
+		testLocks[ShaderType].AcquireWrite();
+		break;
+	}
+}
+
+void BSShader::UnlockShader(int ShaderType)
+{
+	switch (ShaderType)
+	{
+	case -1:
+		__debugbreak();
+		break;
+
+	case 1:
+	case 6:
+	case 9:
+		break;
+
+	default:
+		testLocks[ShaderType].ReleaseWrite();
+		break;
+	}
 }

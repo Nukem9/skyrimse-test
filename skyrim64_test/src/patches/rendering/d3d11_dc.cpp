@@ -156,7 +156,6 @@ void DC_WaitDeferred(int Index)
 
 	// While (thread's command list pointer is null) - atomic version that zeros the thread's pointer
 	{
-		ProfileCounterInc("Spins");
 		ProfileTimer("Waiting for command list completion");
 
 		do

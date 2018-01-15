@@ -3,6 +3,7 @@
 #include "BSShader/BSShaderAccumulator.h"
 #include "BSShader/BSVertexShader.h"
 #include "BSShader/BSPixelShader.h"
+#include "MTRenderer.h"
 
 namespace BSGraphics::Utility
 {
@@ -50,9 +51,6 @@ namespace BSGraphics
 
 	void Renderer::RasterStateSetCullMode(uint32_t CullMode)
 	{
-		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::RasterStateCullMode, CullMode))
-			return;
-
 		if (*(DWORD *)&__zz0[52] != CullMode)
 		{
 			*(DWORD *)&__zz0[52] = CullMode;
@@ -71,9 +69,6 @@ namespace BSGraphics
 
 	void Renderer::AlphaBlendStateSetMode(uint32_t Mode)
 	{
-		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateMode, Mode))
-			return;
-
 		if (*(DWORD *)&__zz0[64] != Mode)
 		{
 			*(DWORD *)&__zz0[64] = Mode;
@@ -83,9 +78,6 @@ namespace BSGraphics
 
 	void Renderer::AlphaBlendStateSetUnknown1(uint32_t Value)
 	{
-		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateUnknown1, Value))
-			return;
-
 		if (*(DWORD *)&__zz0[68] != Value)
 		{
 			*(DWORD *)&__zz0[68] = Value;
@@ -95,7 +87,7 @@ namespace BSGraphics
 
 	void Renderer::AlphaBlendStateSetUnknown2(uint32_t Value)
 	{
-		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateUnknown2, Value))
+		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::AlphaBlendStateUnknown2, Value))
 			return;
 
 		if (*(DWORD *)&__zz0[72] != Value)
@@ -107,9 +99,6 @@ namespace BSGraphics
 
 	void Renderer::DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)
 	{
-		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::DepthStencilStateStencilMode, Mode, StencilRef))
-			return;
-
 		if (*(DWORD *)&__zz0[40] != Mode || *(DWORD *)&__zz0[44] != StencilRef)
 		{
 			*(DWORD *)&__zz0[40] = Mode;
@@ -120,7 +109,7 @@ namespace BSGraphics
 
 	void Renderer::DepthStencilStateSetDepthMode(uint32_t Mode)
 	{
-		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::DepthStencilStateDepthMode, Mode))
+		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::DepthStencilStateDepthMode, Mode))
 			return;
 
 		if (*(DWORD *)&__zz0[32] != Mode)
@@ -135,7 +124,7 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::SetTextureAddressMode(uint32_t Index, uint8_t Mode)
+	void Renderer::SetTextureAddressMode(uint32_t Index, uint32_t Mode)
 	{
 		if (m_PSSamplerAddressMode[Index] != Mode)
 		{
@@ -144,7 +133,7 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::SetTextureFilterMode(uint32_t Index, uint8_t Mode)
+	void Renderer::SetTextureFilterMode(uint32_t Index, uint32_t Mode)
 	{
 		if (m_PSSamplerFilterMode[Index] != Mode)
 		{
@@ -154,7 +143,7 @@ namespace BSGraphics
 	}
 
 	// void BSGraphics::Renderer::SetTextureMode(unsigned int, enum  BSGraphics::TextureAddressMode, enum  BSGraphics::TextureFilterMode)
-	void Renderer::SetTextureMode(uint32_t Index, uint8_t AddressMode, uint8_t FilterMode)
+	void Renderer::SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode)
 	{
 		SetTextureAddressMode(Index, AddressMode);
 		SetTextureFilterMode(Index, FilterMode);
@@ -162,7 +151,7 @@ namespace BSGraphics
 
 	void Renderer::SetUseScrapConstantValue(bool UseStoredValue)
 	{
-		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::UseScrapConstantValue_1, UseStoredValue))
+		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_1, UseStoredValue))
 			return;
 
 		// When UseStoredValue is false, the constant buffer data is zeroed, but m_ScrapConstantValue is saved
@@ -175,7 +164,7 @@ namespace BSGraphics
 
 	void Renderer::SetScrapConstantValue(float Value)
 	{
-		if (InsertRenderCommand<SetStateRenderCommand>(SetStateRenderCommand::UseScrapConstantValue_2, *(uint32_t *)&Value))
+		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_2, *(uint32_t *)&Value))
 			return;
 
 		if (m_ScrapConstantValue != Value)

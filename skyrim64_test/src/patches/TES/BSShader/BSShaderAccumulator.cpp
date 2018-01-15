@@ -5,39 +5,15 @@
 #include "BSShaderManager.h"
 #include "BSShaderAccumulator.h"
 #include "../BSReadWriteLock.h"
+#include "../MTRenderer.h"
 
 extern ID3DUserDefinedAnnotation *annotation;
-
-uintptr_t commandDataStart[6];
-uintptr_t commandData[6];
-thread_local int ThreadUsingCommandList;
 
 void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int), int Index);
 void DC_WaitDeferred(int Index);
 
-BSReadWriteLock testLocks[32];
-
-STATIC_CONSTRUCTOR(__Testing,
-[]{
-	//for (int i = 0; i < 32; i++)
-	//	InitializeSRWLock(&testLocks[i]);
-
-	for (int i = 0; i < ARRAYSIZE(commandData); i++)
-	{
-		commandData[i] = (uintptr_t)VirtualAlloc(nullptr, 1 * 1024 * 1024, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-		commandDataStart[i] = commandData[i];
-
-		if (!commandData[i])
-			__debugbreak();
-	}
-})
-
 void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator)
 {
-	// We always run the full function because I'm not sure if the structure
-	// is used anywhere else important.
-	InsertRenderCommand<SetAccumulatorRenderCommand>(Accumulator);
-
 	auto GraphicsGlobals = HACK_GetThreadedGlobals();
 
 	// BSShaderManager::pCurrentShaderAccumulator
@@ -56,9 +32,6 @@ BSShaderAccumulator *GetCurrentAccumulator()
 
 void ClearShaderAndTechnique()
 {
-	if (InsertRenderCommand<ClearStateRenderCommand>())
-		return;
-
 	auto GraphicsGlobals = HACK_GetThreadedGlobals();
 	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
@@ -99,67 +72,6 @@ bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
 	return false;
 }
 
-void DoRenderCommandsNOW(int Index)
-{
-	ProfileTimer("GameCommandListToD3D");
-
-	// Run everything in the command list...
-	bool endOfList = false;
-	int cmdCount = 0;
-
-	for (uintptr_t ptr = commandDataStart[Index]; !endOfList;)
-	{
-		cmdCount++;
-		RenderCommand *cmd = (RenderCommand *)ptr;
-		ptr += cmd->m_Size;
-
-		switch (cmd->m_Type)
-		{
-		case 0:
-			endOfList = true;
-			break;
-
-		case 1:
-			static_cast<ClearStateRenderCommand *>(cmd)->Run();
-			break;
-
-		case 2:
-			static_cast<SetStateRenderCommand *>(cmd)->Run();
-			break;
-
-		case 3:
-			static_cast<DrawGeometryRenderCommand *>(cmd)->Run();
-			break;
-
-		case 4:
-		{
-			auto b = static_cast<LockShaderTypeRenderCommand *>(cmd);
-
-			if (b->m_LockIndex != 6 && b->m_LockIndex != 1 && b->m_LockIndex != 9)
-			{
-				if (b->m_Lock)
-					testLocks[b->m_LockIndex].AcquireWrite();
-				//AcquireSRWLockExclusive(&testLocks[b->m_LockIndex]);
-				else
-					testLocks[b->m_LockIndex].ReleaseWrite();
-				//ReleaseSRWLockExclusive(&testLocks[b->m_LockIndex]);
-			}
-		}
-		break;
-
-		case 5:
-			static_cast<SetAccumulatorRenderCommand *>(cmd)->Run();
-			break;
-
-		default:
-			__debugbreak();
-			break;
-		}
-
-		ProfileCounterAdd("Command Count", cmdCount);
-	}
-}
-
 void DoRenderCommands(int Index)
 {
 	DC_RenderDeferred(0, Index, [](long long, unsigned int arg2)
@@ -167,7 +79,7 @@ void DoRenderCommands(int Index)
 		BSGraphics::Renderer::FlushThreadedVars();
 
 		// Run everything in the command list (on a new thread; this is async)
-		DoRenderCommandsNOW(arg2);
+		MTRenderer::ExecuteCommandList(arg2);
 	}, Index);
 }
 
@@ -189,13 +101,13 @@ public:
 		if (ListBuildFunction)
 			ListBuildFunction();
 
-		InsertRenderCommand<EndListRenderCommand>();
+		MTRenderer::InsertCommand<MTRenderer::EndListRenderCommand>();
 		ThreadUsingCommandList = 0;
 	}
 
 	void Wait()
 	{
-		DoRenderCommandsNOW(m_Index);
+		MTRenderer::ExecuteCommandList(m_Index);
 	}
 };
 
@@ -537,6 +449,9 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 	BSBatchRenderer::PassInfo *subPass = nullptr;
 	BSBatchRenderer *batch = nullptr;
 
+	// We always run the full function because I'm not sure if the structure
+	// is used somewhere important.
+	MTRenderer::InsertCommand<MTRenderer::SetAccumulatorRenderCommand>(this);
 	SetCurrentAccumulator(this);
 
 	if (PassType <= -1)
@@ -588,5 +503,5 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 	if (subPass)
 		subPass->Unregister();
 
-	ClearShaderAndTechnique();
+	MTRenderer::ClearShaderAndTechnique();
 }
