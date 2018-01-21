@@ -94,28 +94,28 @@ void sub_14131F910(__int64 a1, __int64 a2)
 
 void sub_14131F9F0(__int64 *a1, unsigned int a2)
 {
-	__int64 *v5 = a1; // rdi
-
 	if (!*a1)
 		return;
 
 	MTRenderer::ClearShaderAndTechnique();
 
-	BSRenderPass *i = (BSRenderPass *)*v5;
+	bool mtrContext = MTRenderer::IsGeneratingGameCommandList();
+	int lockType = ((BSRenderPass *)*a1)->m_Shader->m_Type;
 
-	int tempIndex = -1;
-	if (i)
-		tempIndex = i->m_Shader->m_Type;
+	MTRenderer::LockShader(lockType);
 
-	BSShader::LockShader(tempIndex);
-
-	for (; i; i = i->m_Next)
+	for (BSRenderPass *i = (BSRenderPass *)*a1; i; i = i->m_Next)
 	{
 		if (!i->m_Geometry)
 			continue;
 
-		if (tempIndex != i->m_Shader->m_Type)
-			__debugbreak();
+		// This render pass function doesn't always use one shader type
+		if (lockType != i->m_Shader->m_Type)
+		{
+			MTRenderer::UnlockShader(lockType);
+			lockType = i->m_Shader->m_Type;
+			MTRenderer::LockShader(lockType);
+		}
 
 		if ((a2 & 0x108) == 0)
 		{
@@ -128,7 +128,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		__int64 v9 = *(uint64_t *)((uintptr_t)i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
 		bool v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
 
-		if (MTRenderer::IsGeneratingGameCommandList())
+		if (mtrContext)
 			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_TechniqueID, v10, a2);
 		else
 			BSBatchRenderer::DrawPassGeometry(i, i->m_TechniqueID, v10, a2);
@@ -137,11 +137,11 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 	if ((a2 & 0x108) == 0)
 		MTRenderer::RasterStateSetCullMode(1);
 
-	v5[0] = 0i64;
-	v5[1] = 0i64;
+	a1[0] = 0i64;
+	a1[1] = 0i64;
 
 	MTRenderer::ClearShaderAndTechnique();
-	BSShader::UnlockShader(tempIndex);
+	MTRenderer::UnlockShader(lockType);
 }
 
 void BSBatchRenderer::PassInfo::Render(unsigned int a2)
@@ -447,7 +447,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	if (currentPass)
 		shaderType = currentPass->m_Shader->m_Type;
 
-	BSShader::LockShader(shaderType);
+	MTRenderer::LockShader(shaderType);
 
 	// If we can, submit it to the command list queue instead of running it directly
 	if (MTRenderer::IsGeneratingGameCommandList())
@@ -493,7 +493,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 
 	MTRenderer::ClearShaderAndTechnique();
 	MTRenderer::AlphaBlendStateSetUnknown1(0);
-	BSShader::UnlockShader(shaderType);
+	MTRenderer::UnlockShader(shaderType);
 
 	SubPassIndex++;
 	return sub_14131E700(Technique, SubPassIndex, a4);

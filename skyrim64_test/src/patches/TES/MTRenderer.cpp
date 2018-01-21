@@ -13,6 +13,7 @@
 #include "BSShader/Shaders/BSLightingShader.h"
 #include "MTRenderer.h"
 
+BSReadWriteLock testLocks[32];
 uintptr_t commandDataStart[6];
 uintptr_t commandData[6];
 thread_local int ThreadUsingCommandList;
@@ -85,9 +86,9 @@ namespace MTRenderer
 				auto b = static_cast<LockShaderTypeRenderCommand *>(cmd);
 
 				if (b->m_Lock)
-					BSShader::LockShader(b->m_LockIndex);
+					LockShader(b->m_LockIndex);
 				else
-					BSShader::UnlockShader(b->m_LockIndex);
+					UnlockShader(b->m_LockIndex);
 			}
 			break;
 
@@ -117,7 +118,7 @@ namespace MTRenderer
 	void ClearShaderAndTechnique()
 	{
 		if (IsGeneratingGameCommandList())
-			MTRenderer::InsertCommand<MTRenderer::ClearStateRenderCommand>();
+			InsertCommand<ClearStateRenderCommand>();
 		else
 			::ClearShaderAndTechnique();
 	}
@@ -125,7 +126,7 @@ namespace MTRenderer
 	void RasterStateSetCullMode(uint32_t CullMode)
 	{
 		if (IsGeneratingGameCommandList())
-			MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::RasterStateCullMode, CullMode);
+			InsertCommand<SetStateRenderCommand>(SetStateRenderCommand::RasterStateCullMode, CullMode);
 		else
 			BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(CullMode);
 	}
@@ -133,8 +134,53 @@ namespace MTRenderer
 	void AlphaBlendStateSetUnknown1(uint32_t Value)
 	{
 		if (IsGeneratingGameCommandList())
-			MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::AlphaBlendStateUnknown1, Value);
+			InsertCommand<SetStateRenderCommand>(SetStateRenderCommand::AlphaBlendStateUnknown1, Value);
 		else
 			BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetUnknown1(Value);
 	}
+
+	void LockShader(int ShaderType)
+	{
+		switch (ShaderType)
+		{
+		case -1:
+			__debugbreak();
+			break;
+
+		case 1:
+		case 6:
+		case 9:
+			break;
+
+		default:
+			if (IsGeneratingGameCommandList())
+				InsertCommand<LockShaderTypeRenderCommand>(ShaderType, true);
+			else
+				testLocks[ShaderType].AcquireWrite();
+			break;
+		}
+	}
+
+	void UnlockShader(int ShaderType)
+	{
+		switch (ShaderType)
+		{
+		case -1:
+			__debugbreak();
+			break;
+
+		case 1:
+		case 6:
+		case 9:
+			break;
+
+		default:
+			if (IsGeneratingGameCommandList())
+				InsertCommand<LockShaderTypeRenderCommand>(ShaderType, false);
+			else
+				testLocks[ShaderType].ReleaseWrite();
+			break;
+		}
+	}
+
 }

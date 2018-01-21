@@ -20,6 +20,9 @@ namespace MTRenderer
 	void RasterStateSetCullMode(uint32_t CullMode);
 	void AlphaBlendStateSetUnknown1(uint32_t Value);
 
+	void LockShader(int ShaderType);
+	void UnlockShader(int ShaderType);
+
 	struct RenderCommand
 	{
 		int m_Type;
