@@ -42,6 +42,8 @@ namespace BSGraphics
 		T *m_Shader;
 		ID3D11Buffer *m_Buffer;
 		D3D11_MAPPED_SUBRESOURCE m_Map;
+		bool m_Unified;
+		uint32_t m_UnifiedByteOffset;
 
 	public:
 		template<typename U, uint32_t ParamIndex>
@@ -88,6 +90,16 @@ namespace BSGraphics
 	public:
 		static Renderer *GetGlobals();
 		static Renderer *GetGlobalsNonThreaded();
+
+		ID3D11Buffer *MapDynamicConstantBuffer(void **DataPointer, uint32_t *AllocationSize, uint32_t *AllocationOffset);
+		ID3D11Buffer *MapConstantBuffer(void **DataPointer, uint32_t *AllocationSize, uint32_t *AllocationOffset, uint32_t Level);
+		void UnmapDynamicConstantBuffer();
+
+		void *MapDynamicBuffer(uint32_t AllocationSize, uint32_t *AllocationOffset);
+
+		static void Initialize();
+		static void OnNewFrame();
+
 		static void FlushThreadedVars();
 
 		void RasterStateSetCullMode(uint32_t CullMode);
@@ -111,6 +123,7 @@ namespace BSGraphics
 
 		ConstantGroup<BSVertexShader> GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level);
 		ConstantGroup<BSPixelShader> GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level);
+		void GetShaderDualConstantGroup(BSVertexShader *VertexShader, ConstantGroup<BSVertexShader> *VertexGroup, BSPixelShader *PixelShader, ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level);
 		void FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup);
 		void ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level);
 

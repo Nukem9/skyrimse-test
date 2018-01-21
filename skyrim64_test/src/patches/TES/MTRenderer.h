@@ -11,8 +11,10 @@ extern thread_local int ThreadUsingCommandList;
 
 namespace MTRenderer
 {
-	bool IsInMultithreadedContext();
-	void ExecuteCommandList(int Index);
+	bool IsGeneratingGameCommandList();	// Returns true when main thread is queuing commands for worker threads
+	bool IsRenderingMultithreaded();	// Retruns true when generating D3D command list on a worker thread
+
+	void ExecuteCommandList(int Index, bool MTWorker);
 
 	void ClearShaderAndTechnique();
 	void RasterStateSetCullMode(uint32_t CullMode);

@@ -53,7 +53,7 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 
     HRESULT hr = (This->*ptrPresent)(SyncInterval, Flags);
 
-	BSGraphics::Renderer::FlushThreadedVars();
+	BSGraphics::Renderer::OnNewFrame();
 
 	using namespace BSShaderRenderTargets;
 
@@ -113,52 +113,9 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 	return hr;
 }
 
-bool test = false;
-ID3D11Buffer *testbuffer;
-
 void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 {
-	auto globals = BSGraphics::Renderer::GetGlobals();
-
-	if (true)
-	{
-		if (!test)
-		{
-			test = true;
-
-			D3D11_BUFFER_DESC desc;
-			desc.ByteWidth = 100 * 1024;
-			desc.Usage = D3D11_USAGE_DYNAMIC;
-			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER;
-			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-			desc.MiscFlags = 0;
-			desc.StructureByteStride = 0;
-
-			if (FAILED(globals->m_Device->CreateBuffer(&desc, nullptr, &testbuffer)))
-				__debugbreak();
-		}
-
-		if (AllocationSize > 100 * 1024)
-			__debugbreak();
-
-		D3D11_MAPPED_SUBRESOURCE mapping;
-		if (FAILED(globals->m_DeviceContext->Map(testbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping)))
-			__debugbreak();
-
-		globals->m_DynamicBuffers[0] = testbuffer;
-		globals->m_CurrentDynamicBufferIndex = 0;
-		*AllocationOffset = 0;
-		globals->m_FrameDataUsedSize = AllocationSize;
-
-		// Invalidate the others for sanity checking
-		globals->m_DynamicBuffers[1] = (ID3D11Buffer *)0x101010101;
-		globals->m_DynamicBuffers[2] = (ID3D11Buffer *)0x101010101;
-		globals->m_CommandListEndEvents[0] = (ID3D11Query *)0x101010101;
-		globals->m_CommandListEndEvents[1] = (ID3D11Query *)0x101010101;
-		globals->m_CommandListEndEvents[2] = (ID3D11Query *)0x101010101;
-
-		return mapping.pData;
-	}
+	return BSGraphics::Renderer::GetGlobals()->MapDynamicBuffer(AllocationSize, AllocationOffset);
 
 #if 0
 	//if (AllocationSize <= 0)
@@ -217,10 +174,6 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 #endif
 }
 
-uint32_t opt1;
-uint32_t opt2;
-uint32_t opt3;
-
 SRWLOCK InputLayoutLock = SRWLOCK_INIT;
 
 void CommitShaderChanges(bool Unknown)
@@ -252,6 +205,8 @@ void CommitShaderChanges(bool Unknown)
 	int v37; // [rsp+B8h] [rbp+10h]
 	int v38; // [rsp+C0h] [rbp+18h]
 	__int64 v39; // [rsp+C8h] [rbp+20h]
+
+	renderer->UnmapDynamicConstantBuffer();
 
 	v1 = renderer->m_StateUpdateFlags;
 	if (renderer->m_StateUpdateFlags)
@@ -828,6 +783,8 @@ void hook()
 
 	hooked = true;
 
+	BSGraphics::Renderer::Initialize();
+
 	uintptr_t ptr = *(uintptr_t *)(&BSGraphics::Renderer::GetGlobalsNonThreaded()->qword_14304BF00);
 	//uintptr_t ptr = *(uintptr_t *)(g_ModuleBase + 0x304BF00);
 	ID3D11Device *dev = *(ID3D11Device **)(ptr + 56);
@@ -1011,6 +968,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 
     // Now hook the render function
 	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
+	//CreatePixelShader = Detours::X64::DetourClassVTable(*(PBYTE *)newDev, &hk_CreatePixelShader, 15);
 	//*(PBYTE *)&Map = Detours::X64::DetourClassVTable(*(PBYTE *)newContext, &hk_ID3D11DeviceContext_Map, 14);
 
 	//Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&CommitShaderChanges);

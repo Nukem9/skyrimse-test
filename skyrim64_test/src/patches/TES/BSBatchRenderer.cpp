@@ -128,7 +128,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		__int64 v9 = *(uint64_t *)((uintptr_t)i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
 		bool v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
 
-		if (MTRenderer::IsInMultithreadedContext())
+		if (MTRenderer::IsGeneratingGameCommandList())
 			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_TechniqueID, v10, a2);
 		else
 			BSBatchRenderer::DrawPassGeometry(i, i->m_TechniqueID, v10, a2);
@@ -450,7 +450,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	BSShader::LockShader(shaderType);
 
 	// If we can, submit it to the command list queue instead of running it directly
-	if (MTRenderer::IsInMultithreadedContext())
+	if (MTRenderer::IsGeneratingGameCommandList())
 	{
 		// Combine 3 draw command packets into 1 when possible
 		BSRenderPass *temp[3];

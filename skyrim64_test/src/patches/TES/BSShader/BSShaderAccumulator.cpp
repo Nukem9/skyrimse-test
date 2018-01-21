@@ -79,7 +79,7 @@ void DoRenderCommands(int Index)
 		BSGraphics::Renderer::FlushThreadedVars();
 
 		// Run everything in the command list (on a new thread; this is async)
-		MTRenderer::ExecuteCommandList(arg2);
+		MTRenderer::ExecuteCommandList(arg2, true);
 	}, Index);
 }
 
@@ -107,7 +107,7 @@ public:
 
 	void Wait()
 	{
-		MTRenderer::ExecuteCommandList(m_Index);
+		MTRenderer::ExecuteCommandList(m_Index, false);
 	}
 };
 

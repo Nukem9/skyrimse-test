@@ -31,7 +31,9 @@ STATIC_CONSTRUCTOR(__Testing, []
 
 namespace MTRenderer
 {
-	bool IsInMultithreadedContext()
+	thread_local bool testmtr;
+
+	bool IsGeneratingGameCommandList()
 	{
 		if (!ThreadUsingCommandList)
 			return false;
@@ -39,9 +41,16 @@ namespace MTRenderer
 		return true;
 	}
 
-	void ExecuteCommandList(int Index)
+	bool IsRenderingMultithreaded()
+	{
+		return testmtr;
+	}
+
+	void ExecuteCommandList(int Index, bool MTWorker)
 	{
 		ProfileTimer("GameCommandListToD3D");
+
+		testmtr = MTWorker;
 
 		// Run everything in the command list...
 		bool endOfList = false;
@@ -101,11 +110,13 @@ namespace MTRenderer
 
 			ProfileCounterAdd("Command Count", cmdCount);
 		}
+
+		testmtr = false;
 	}
 
 	void ClearShaderAndTechnique()
 	{
-		if (IsInMultithreadedContext())
+		if (IsGeneratingGameCommandList())
 			MTRenderer::InsertCommand<MTRenderer::ClearStateRenderCommand>();
 		else
 			::ClearShaderAndTechnique();
@@ -113,7 +124,7 @@ namespace MTRenderer
 
 	void RasterStateSetCullMode(uint32_t CullMode)
 	{
-		if (IsInMultithreadedContext())
+		if (IsGeneratingGameCommandList())
 			MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::RasterStateCullMode, CullMode);
 		else
 			BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(CullMode);
@@ -121,7 +132,7 @@ namespace MTRenderer
 
 	void AlphaBlendStateSetUnknown1(uint32_t Value)
 	{
-		if (IsInMultithreadedContext())
+		if (IsGeneratingGameCommandList())
 			MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::AlphaBlendStateUnknown1, Value);
 		else
 			BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetUnknown1(Value);

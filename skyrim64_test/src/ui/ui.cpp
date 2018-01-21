@@ -264,8 +264,11 @@ namespace ui
             ImGui::Spacing();
             ImGui::Text("Havok fMaxTime: %.2f FPS", 1.0f / test);
             ImGui::Text("Havok fMaxTimeComplex: %.2f FPS", 1.0f / test);
-			ImGui::Text("Map Bytes: %lld", ProfileGetDeltaValue("Map Bytes"));
-
+			ImGui::Spacing();
+			ImGui::Text("CB Bytes Requested: %lld", ProfileGetDeltaValue("CB Bytes Requested"));
+			ImGui::Text("VIB Bytes Requested: %lld", ProfileGetDeltaValue("VIB Bytes Requested"));
+			ImGui::Text("CB Bytes Wasted: %lld", ProfileGetDeltaValue("CB Bytes Wasted"));
+			ImGui::Spacing();
 			ImGui::Text("Generating game command lists: %.5f ms", ProfileGetDeltaTime("GameCommandList") * 1000);
 			ImGui::Text("Generating D3D11 command lists: %.5f ms", ProfileGetDeltaTime("GameCommandListToD3D") * 1000);
 			ImGui::Text("Waiting for command list completion: %.5f ms", ProfileGetDeltaTime("Waiting for command list completion") * 1000);
@@ -278,6 +281,10 @@ namespace ui
 			ImGui::Text("BSShaderAccumulator: %.5f ms", ProfileGetDeltaTime("BSShaderAccumulator") * 1000);
 			ImGui::Text("Spins: %lld", ProfileGetDeltaValue("Spins"));
 			ImGui::Text("Command Count: %lld", ProfileGetDeltaValue("Command Count"));
+
+			ProfileGetValue("CB Bytes Requested");
+			ProfileGetValue("VIB Bytes Requested");
+			ProfileGetValue("CB Bytes Wasted");
 
 			ProfileGetTime("GameCommandList");
 			ProfileGetTime("GameCommandListToD3D");
