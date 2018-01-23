@@ -54,7 +54,7 @@ public:
 	bool sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, unsigned int a5);
 	void sub_14131D6E0();
 
-	static void DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, unsigned __int8 a3, unsigned int a4);
+	static void DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags);
 	static void DrawGeometryDefault(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags);
 	static void DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags);
 	static void DrawGeometryCustom(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags);

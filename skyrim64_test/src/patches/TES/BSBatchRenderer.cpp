@@ -560,20 +560,26 @@ void UnmapDynamicData()
 AutoPtr(bool, zbUseEarlyZ, 0x30528E5);
 SRWLOCK testingLock = SRWLOCK_INIT;
 
-void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, unsigned __int8 a3, unsigned int a4)
+void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags)
 {
 	auto *GraphicsGlobals = BSGraphics::Renderer::GetGlobals();
-
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
 	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
 	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
 
-	auto sub_14131EFF0 = (__int64(__fastcall *)(unsigned int a1, __int64 a2))(g_ModuleBase + 0x131F350);
-	auto sub_1412ABF00 = (const char *(__fastcall *)(unsigned int a1))(g_ModuleBase + 0x12ABF00);
+	bool techniqueIsSetup = false;
 
-	__int64 result;
-	if (dword_1432A8214 == Technique && Technique != 0x5C006076 && (uint64_t)Pass->m_Shader == qword_1432A8218
-		|| (dword_141E32FDC = Technique, result = SetupShaderAndTechnique(Pass->m_Shader, Technique), (BYTE)result))
+	// SetupShaderAndTechnique doesn't need to be called again if we used this shader previously
+	if (dword_1432A8214 == Technique && Technique != 0x5C006076 && (uint64_t)Pass->m_Shader == qword_1432A8218)
+		techniqueIsSetup = true;
+
+	if (!techniqueIsSetup)
+	{
+		dword_141E32FDC = Technique;// This is written but never read anywhere?
+		techniqueIsSetup = SetupShaderAndTechnique(Pass->m_Shader, Technique);
+	}
+
+	if (techniqueIsSetup)
 	{
 		BSShaderProperty *property = Pass->m_Property;
 		BSShaderMaterial *material = nullptr;
@@ -592,11 +598,11 @@ void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, u
 		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;
 
 		if (Pass->m_Geometry->QSkinInstance())
-			DrawGeometrySkinned(Pass, a3, a4);
+			DrawGeometrySkinned(Pass, AlphaTest, RenderFlags);
 		else if (*(BYTE *)((uintptr_t)Pass->m_Geometry + 265) & 8)// BSGeometry::NeedsCustomRender()?
-			DrawGeometryCustom(Pass, a3, a4);
+			DrawGeometryCustom(Pass, AlphaTest, RenderFlags);
 		else
-			DrawGeometryDefault(Pass, a3, a4);
+			DrawGeometryDefault(Pass, AlphaTest, RenderFlags);
 	}
 }
 
@@ -628,11 +634,9 @@ void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, ui
 	auto sub_140C71AB0 = (void(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71AB0);
 	auto sub_141336450 = (void(__fastcall *)())(g_ModuleBase + 0x1336450);
 
-	uintptr_t v7 = (uintptr_t)Pass->m_Geometry;
-
 	sub_141336450();
 
-	if ((*(__int64(__fastcall **)(__int64))(*(uintptr_t *)v7 + 432i64))(v7))
+	if ((*(__int64(__fastcall **)(BSGeometry *))(*(uintptr_t *)Pass->m_Geometry + 432i64))(Pass->m_Geometry))
 	{
 		SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
 
@@ -659,16 +663,16 @@ void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, ui
 		params.m_UnkDword4 = -1;
 
 		// Skinned verts are uploaded to a GPU vertex buffer directly (non-static objects like characters)
-		uintptr_t v12 = (uintptr_t)Pass->m_Geometry->IsDynamicTriShape();
+		uintptr_t dynamicTriGeometry = (uintptr_t)Pass->m_Geometry->IsDynamicTriShape();
 
-		if (v12)
+		if (dynamicTriGeometry)
 		{
-			uint32_t v16 = *(uint32_t *)(v12 + 0x170);
+			uint32_t v16 = *(uint32_t *)(dynamicTriGeometry + 0x170);
 			void *v15 = sub_140D6BF00(0, v16, &params.m_UnkDword4);
 
-			const void *v17 = sub_140C71A50(v12);
+			const void *v17 = sub_140C71A50(dynamicTriGeometry);
 			memcpy_s(v15, v16, v17, v16);
-			sub_140C71AB0(v12);
+			sub_140C71AB0(dynamicTriGeometry);
 			UnmapDynamicData();
 		}
 
