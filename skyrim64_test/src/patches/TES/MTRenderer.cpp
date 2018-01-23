@@ -108,10 +108,9 @@ namespace MTRenderer
 				__debugbreak();
 				break;
 			}
-
-			ProfileCounterAdd("Command Count", cmdCount);
 		}
 
+		ProfileCounterAdd("Command Count", cmdCount);
 		testmtr = false;
 	}
 
