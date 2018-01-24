@@ -9,9 +9,6 @@
 
 extern ID3DUserDefinedAnnotation *annotation;
 
-void DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int), int Index);
-void DC_WaitDeferred(int Index);
-
 void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator)
 {
 	auto GraphicsGlobals = HACK_GetThreadedGlobals();
@@ -72,17 +69,6 @@ bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
 	return false;
 }
 
-void DoRenderCommands(int Index)
-{
-	DC_RenderDeferred(0, Index, [](long long, unsigned int arg2)
-	{
-		BSGraphics::Renderer::FlushThreadedVars();
-
-		// Run everything in the command list (on a new thread; this is async)
-		MTRenderer::ExecuteCommandList(arg2, true);
-	}, Index);
-}
-
 #include <functional>
 
 class GameCommandList
@@ -111,17 +97,28 @@ public:
 	}
 };
 
+int DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int));
+void DC_WaitDeferred(int JobHandle);
+
 class DeferredCommandList : public GameCommandList
 {
 public:
+	int m_InternalId;
+
 	DeferredCommandList(int Index, std::function<void()> ListBuildFunction) : GameCommandList(Index, ListBuildFunction)
 	{
-		DoRenderCommands(m_Index);
+		m_InternalId = DC_RenderDeferred(0, Index, [](long long, unsigned int arg2)
+		{
+			BSGraphics::Renderer::FlushThreadedVars();
+
+			// Run everything in the command list (on a new thread; this is async)
+			MTRenderer::ExecuteCommandList(arg2, true);
+		});
 	}
 
 	void Wait()
 	{
-		DC_WaitDeferred(m_Index);
+		DC_WaitDeferred(m_InternalId);
 	}
 };
 

@@ -20,9 +20,6 @@ decltype(&IDXGISwapChain::Present) ptrPresent;
 decltype(&CreateDXGIFactory) ptrCreateDXGIFactory;
 decltype(&D3D11CreateDeviceAndSwapChain) ptrD3D11CreateDeviceAndSwapChain;
 
-ID3D11DeviceContext2 *dc1; // deferred context
-ID3D11DeviceContext2 *dc2;
-
 void UpdateHavokTimer(int FPS)
 {
     static int oldFps;
@@ -774,7 +771,7 @@ HRESULT WINAPI hk_CreateComputeShader(ID3D11Device *This, const void *pShaderByt
 	return (This->*CreateComputeShader)(pShaderBytecode, BytecodeLength, pClassLinkage, ppComputeShader);
 }
 
-void DC_Init(ID3D11DeviceContext2 *ImmediateContext, ID3D11DeviceContext2 **DeferredContexts, int DeferredContextCount);
+void DC_Init(ID3D11Device1 *Device, int DeferredContextCount);
 void hook()
 {
 	//return;
@@ -802,28 +799,6 @@ void hook()
 	if (FAILED(g_DeviceContext->QueryInterface<ID3DUserDefinedAnnotation>(&annotation)))
 		__debugbreak();
 
-	if (FAILED(newDev->CreateDeferredContext2(0, &dc1)))
-		__debugbreak();
-
-	if (FAILED(newDev->CreateDeferredContext2(0, &dc2)))
-		__debugbreak();
-
-	ID3D11DeviceContext2 *dc3;
-	if (FAILED(newDev->CreateDeferredContext2(0, &dc3)))
-		__debugbreak();
-
-	ID3D11DeviceContext2 *dc4;
-	if (FAILED(newDev->CreateDeferredContext2(0, &dc4)))
-		__debugbreak();
-
-	ID3D11DeviceContext2 *dc5;
-	if (FAILED(newDev->CreateDeferredContext2(0, &dc5)))
-		__debugbreak();
-
-	ID3D11DeviceContext2 *dc6;
-	if (FAILED(newDev->CreateDeferredContext2(0, &dc6)))
-		__debugbreak();
-
 	if (!ptrPresent)
 		*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)swap, &hk_IDXGISwapChain_Present, 8);
 
@@ -831,15 +806,7 @@ void hook()
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF30, (PBYTE)&sub_140D6BF00);
 	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1960, (PBYTE)&BSShaderAccumulator::sub_1412E1600);
 
-	ID3D11DeviceContext2 *contexts[6];
-	contexts[0] = dc1;
-	contexts[1] = dc2;
-	contexts[2] = dc3;
-	contexts[3] = dc4;
-	contexts[4] = dc5;
-	contexts[5] = dc6;
-
-	DC_Init(g_DeviceContext, contexts, ARRAYSIZE(contexts));
+	DC_Init(newDev, 0);
 
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1F70, (PBYTE)&hk_sub_1412E1C10);
 }
