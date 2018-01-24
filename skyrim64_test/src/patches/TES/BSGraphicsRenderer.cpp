@@ -40,6 +40,7 @@ namespace BSGraphics
 
 	thread_local uint64_t TestBufferUsedBits[4];
 	ID3D11Buffer *TestBuffers[4][64];
+	ID3D11Buffer *TestLargeBuffer;
 
 	ID3D11Buffer *TempDynamicBuffers[11];
 
@@ -122,6 +123,17 @@ namespace BSGraphics
 			}
 		}
 
+		D3D11_BUFFER_DESC desc;
+		desc.ByteWidth = 4096;
+		desc.Usage = D3D11_USAGE_DYNAMIC;
+		desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		desc.MiscFlags = 0;
+		desc.StructureByteStride = 0;
+
+		if (FAILED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TestLargeBuffer)))
+			__debugbreak();
+
 		ShaderConstantBuffer.Initialize(renderer->m_Device, D3D11_BIND_CONSTANT_BUFFER, ShaderConstantRingBufferSize, maxFrames);
 
 		// Make sure first-time pointers are set up too
@@ -201,7 +213,7 @@ namespace BSGraphics
 		}
 
 		// Allocate from small constant buffer pool (TestBufferUsedBits is a TLS variable)
-		if (*AllocationSize <= 0  || *AllocationSize > (63 * 16))
+		if (*AllocationSize <= 0  || *AllocationSize > 4096)
 			__debugbreak();
 
 		if (Level >= ARRAYSIZE(TestBufferUsedBits))
@@ -211,18 +223,27 @@ namespace BSGraphics
 		uint32_t roundedAllocSize = (*AllocationSize + 16 - 1) & ~(16 - 1);
 		ID3D11Buffer *buffer = nullptr;
 
-		for (uint32_t bitIndex = roundedAllocSize / 16; bitIndex < 64;)
+		if (roundedAllocSize <= (63 * 16))
 		{
-			if ((TestBufferUsedBits[Level] & (1ull << bitIndex)) == 0)
+			for (uint32_t bitIndex = roundedAllocSize / 16; bitIndex < 64;)
 			{
-				TestBufferUsedBits[Level] |= (1ull << bitIndex);
-				buffer = TestBuffers[Level][bitIndex];
-				break;
-			}
+				if ((TestBufferUsedBits[Level] & (1ull << bitIndex)) == 0)
+				{
+					TestBufferUsedBits[Level] |= (1ull << bitIndex);
+					buffer = TestBuffers[Level][bitIndex];
+					break;
+				}
 
-			// Move to the next largest buffer size
-			bitIndex += 1;
-			roundedAllocSize += 16;
+				// Move to the next largest buffer size
+				bitIndex += 1;
+				roundedAllocSize += 16;
+			}
+		}
+		else
+		{
+			// Last-ditch effort to find a large valid buffer
+			roundedAllocSize = 4096;
+			buffer = TestLargeBuffer;
 		}
 
 		ProfileCounterAdd("CB Bytes Wasted", (roundedAllocSize - *AllocationSize));
