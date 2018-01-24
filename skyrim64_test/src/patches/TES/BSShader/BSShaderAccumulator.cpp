@@ -69,58 +69,10 @@ bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
 	return false;
 }
 
-#include <functional>
-
-class GameCommandList
+void CommandFeeder()
 {
-protected:
-	int m_Index;
 
-public:
-	GameCommandList(int Index, std::function<void()> ListBuildFunction) : m_Index(Index)
-	{
-		ProfileTimer("GameCommandList");
-
-		ThreadUsingCommandList = m_Index + 1;
-		commandData[m_Index] = commandDataStart[m_Index];
-
-		if (ListBuildFunction)
-			ListBuildFunction();
-
-		MTRenderer::InsertCommand<MTRenderer::EndListRenderCommand>();
-		ThreadUsingCommandList = 0;
-	}
-
-	void Wait()
-	{
-		MTRenderer::ExecuteCommandList(m_Index, false);
-	}
-};
-
-int DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int));
-void DC_WaitDeferred(int JobHandle);
-
-class DeferredCommandList : public GameCommandList
-{
-public:
-	int m_InternalId;
-
-	DeferredCommandList(int Index, std::function<void()> ListBuildFunction) : GameCommandList(Index, ListBuildFunction)
-	{
-		m_InternalId = DC_RenderDeferred(0, Index, [](long long, unsigned int arg2)
-		{
-			BSGraphics::Renderer::FlushThreadedVars();
-
-			// Run everything in the command list (on a new thread; this is async)
-			MTRenderer::ExecuteCommandList(arg2, true);
-		});
-	}
-
-	void Wait()
-	{
-		DC_WaitDeferred(m_InternalId);
-	}
-};
+}
 
 void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 {
@@ -164,7 +116,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		GameCommandList renderBatches(0, [accumulator, a2]
 		{
 			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
-		});
+		}, true);
 
 		// LowAniso
 		DeferredCommandList lowAniso(1, [accumulator, a2]

@@ -16,7 +16,7 @@
 BSReadWriteLock testLocks[32];
 uintptr_t commandDataStart[6];
 uintptr_t commandData[6];
-thread_local int ThreadUsingCommandList;
+thread_local class GameCommandList *ActiveManager;
 
 STATIC_CONSTRUCTOR(__Testing, []
 {
@@ -36,7 +36,7 @@ namespace MTRenderer
 
 	bool IsGeneratingGameCommandList()
 	{
-		if (!ThreadUsingCommandList)
+		if (!ActiveManager)
 			return false;
 
 		return true;
@@ -47,7 +47,7 @@ namespace MTRenderer
 		return testmtr;
 	}
 
-	void ExecuteCommandList(int Index, bool MTWorker)
+	void ExecuteCommandList(uintptr_t Data, bool MTWorker)
 	{
 		ProfileTimer("GameCommandListToD3D");
 
@@ -57,7 +57,7 @@ namespace MTRenderer
 		bool endOfList = false;
 		int cmdCount = 0;
 
-		for (uintptr_t ptr = commandDataStart[Index]; !endOfList;)
+		for (uintptr_t ptr = Data; !endOfList;)
 		{
 			cmdCount++;
 			RenderCommand *cmd = (RenderCommand *)ptr;

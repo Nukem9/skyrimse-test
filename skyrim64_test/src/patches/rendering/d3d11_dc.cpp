@@ -14,8 +14,8 @@
 // - Semaphores are used for notification (and a counter to number of pending jobs).
 // - All arrays are pre-allocated and queues only store the pointers.
 //
-#define MAXIMUM_WORKER_THREADS 1
-#define MAXIMUM_JOBS 8
+#define MAXIMUM_WORKER_THREADS 8
+#define MAXIMUM_JOBS 64
 
 HANDLE ThreadInitSemaphore;// Counter between 0 and MAXIMUM_WORKER_THREADS
 HANDLE JobPendingSemaphore;// Counter between 0 and MAXIMUM_JOBS

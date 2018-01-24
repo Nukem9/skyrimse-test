@@ -365,20 +365,25 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex,
 	return sub_14131E8F0(m_TechToArrayMap.get(Technique), SubPassIndex);
 }
 
+BSShaderAccumulator *GetCurrentAccumulator();
+
+extern int commandThreshold;
+extern int commandThreshold2;
+
 bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, unsigned int a5)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	bool unknownFlag2;
 	bool unknownFlag;
 
+	int cullMode = -1;
+	int alphaBlendUnknown = -1;
+	bool useScrapConstant = false;
+
 	// Set pass render state
 	{
 		unknownFlag2 = false;
 		unknownFlag = (a5 & 0x108) != 0;
-
-		int cullMode = -1;
-		int alphaBlendUnknown = -1;
-		bool useScrapConstant = false;
 
 		switch (SubPassIndex)
 		{
@@ -454,6 +459,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	{
 		// Combine 3 draw command packets into 1 when possible
 		BSRenderPass *temp[3];
+		bool first = false;
 
 		for (int count = 0;; count = 0)
 		{
@@ -462,6 +468,24 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 
 			if (count == 0)
 				break;
+
+			// If we exceed 300 commands in this list.....we break it in half and start a
+			// new one. ALL STATE NEEDS TO BE RESET FROM BSShaderAccumulator::RenderTechniques!!!
+			if (ActiveManager->m_EnableSubdivide && ActiveManager->IncDrawCount(count) > commandThreshold && ActiveManager->m_TotalDraws > commandThreshold2)
+			{
+				MTRenderer::ClearShaderAndTechnique();
+				MTRenderer::AlphaBlendStateSetUnknown1(0);
+				MTRenderer::UnlockShader(shaderType);
+
+				if (!ActiveManager->Subdivide())
+					__debugbreak();
+
+				MTRenderer::InsertCommand<MTRenderer::SetAccumulatorRenderCommand>(GetCurrentAccumulator());
+				if (cullMode != -1) MTRenderer::RasterStateSetCullMode(cullMode);
+				if (alphaBlendUnknown != -1) MTRenderer::AlphaBlendStateSetUnknown1(0);
+				renderer->SetUseScrapConstantValue(useScrapConstant);
+				MTRenderer::LockShader(shaderType);
+			}
 
 			if (count == ARRAYSIZE(temp))
 			{

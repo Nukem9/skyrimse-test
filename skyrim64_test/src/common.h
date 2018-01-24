@@ -2,7 +2,7 @@
 
 #define SKYRIM64_USE_VTUNE		0
 #define SKYRIM64_USE_VFS		0
-#define SKYRIM64_USE_PROFILER	0
+#define SKYRIM64_USE_PROFILER	1
 
 #include <windows.h>
 #include <stdio.h>

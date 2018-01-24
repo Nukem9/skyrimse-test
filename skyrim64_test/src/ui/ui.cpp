@@ -10,6 +10,9 @@ namespace ui::opt
 	bool LogHitches = true;
 }
 
+int commandThreshold = 500;
+int commandThreshold2 = 500;
+
 namespace ui
 {
     bool showFPSWindow;
@@ -262,6 +265,8 @@ namespace ui
 
             ImGui::Text("FPS: %.2f", g_AverageFps);
             ImGui::Spacing();
+			ImGui::InputInt("Command Threshold", &commandThreshold, 10, 100);
+			ImGui::InputInt("Command Threshold Min", &commandThreshold2, 10, 100);
             ImGui::Text("Havok fMaxTime: %.2f FPS", 1.0f / test);
             ImGui::Text("Havok fMaxTimeComplex: %.2f FPS", 1.0f / test);
 			ImGui::Spacing();
@@ -273,6 +278,7 @@ namespace ui
 			ImGui::Text("Generating D3D11 command lists: %.5f ms", ProfileGetDeltaTime("GameCommandListToD3D") * 1000);
 			ImGui::Text("Waiting for command list completion: %.5f ms", ProfileGetDeltaTime("Waiting for command list completion") * 1000);
 
+			ImGui::Text("T1: %.5f ms", ProfileGetDeltaTime("T1") * 1000);
 			ImGui::Text("RenderBatches: %.5f ms", ProfileGetDeltaTime("RenderBatches") * 1000);
 			ImGui::Text("LowAniso: %.5f ms", ProfileGetDeltaTime("LowAniso") * 1000);
 			ImGui::Text("RenderGrass: %.5f ms", ProfileGetDeltaTime("RenderGrass") * 1000);
@@ -281,6 +287,9 @@ namespace ui
 			ImGui::Text("BSShaderAccumulator: %.5f ms", ProfileGetDeltaTime("BSShaderAccumulator") * 1000);
 			ImGui::Text("Spins: %lld", ProfileGetDeltaValue("Spins"));
 			ImGui::Text("Command Count: %lld", ProfileGetDeltaValue("Command Count"));
+			ImGui::Text("MTCommandCount Count: %lld", ProfileGetDeltaValue("DrawPassGeometry"));
+
+			ProfileGetValue("DrawPassGeometry");
 
 			ProfileGetValue("CB Bytes Requested");
 			ProfileGetValue("VIB Bytes Requested");
@@ -292,6 +301,7 @@ namespace ui
 			ProfileGetValue("Command Count");
 			ProfileGetValue("Spins");
 			ProfileGetTime("Waiting for command list completion");
+			ProfileGetTime("T1");
 			ProfileGetTime("RenderBatches");
 			ProfileGetTime("LowAniso");
 			ProfileGetTime("RenderGrass");
