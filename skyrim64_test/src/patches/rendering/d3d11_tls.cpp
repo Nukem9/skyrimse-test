@@ -69,15 +69,18 @@ void InitializeTLSMain()
 		InterlockedExchange(&g_MainThreadId, threadId);
 		InterlockedExchangePointer((volatile PVOID *)&g_MainTLSBlock, block);
 
-		g_ThreadTLSMaps.insert_or_assign(g_MainThreadId, *currentTlsBlock);
+		g_ThreadTLSMaps[g_MainThreadId] = *currentTlsBlock;
 		*currentTlsBlock = g_MainTLSBlock;
 
 		// Delayed-patch thread indexes
 		for (uint32_t i = 0; i < delayedThreadPatchIndex; i++)
 		{
+			if (delayedTlsBlocks[i] == 0)
+				continue;
+
 			uintptr_t *tlsBlock = (uintptr_t *)(delayedTlsBlocks[i] + g_TlsIndex * sizeof(void *));
 
-			g_ThreadTLSMaps.insert_or_assign(delayedTlsThreadIds[i], *tlsBlock);
+			g_ThreadTLSMaps[delayedTlsThreadIds[i]] = *tlsBlock;
 			*tlsBlock = g_MainTLSBlock;
 		}
 	}
@@ -90,29 +93,25 @@ void InitializeTLSDll()
 	size_t(*GetStaticTlsDataSize)();
 	uint32_t(*GetStaticTlsSlot)();
 
-	AcquireSRWLockExclusive(&g_TLSDataLock);
-	{
-		if (g_TlsIndex)
-			__debugbreak();
+	if (g_TlsIndex)
+		__debugbreak();
 
-		HMODULE lib = LoadLibraryA("skyrim64_tls_mt.dll");
-		*(FARPROC *)&GetStaticTlsData = GetProcAddress(lib, "GetStaticTlsData");
-		*(FARPROC *)&GetStaticTlsDataSize = GetProcAddress(lib, "GetStaticTlsDataSize");
-		*(FARPROC *)&GetStaticTlsSlot = GetProcAddress(lib, "GetStaticTlsSlot");
+	HMODULE lib = LoadLibraryA("skyrim64_tls_mt.dll");
+	*(FARPROC *)&GetStaticTlsData = GetProcAddress(lib, "GetStaticTlsData");
+	*(FARPROC *)&GetStaticTlsDataSize = GetProcAddress(lib, "GetStaticTlsDataSize");
+	*(FARPROC *)&GetStaticTlsSlot = GetProcAddress(lib, "GetStaticTlsSlot");
 
-		if (!GetStaticTlsData || !GetStaticTlsDataSize || !GetStaticTlsSlot)
-			__debugbreak();
+	if (!GetStaticTlsData || !GetStaticTlsDataSize || !GetStaticTlsSlot)
+		__debugbreak();
 
-		if (GetStaticTlsDataSize() <= 0)
-			__debugbreak();
+	if (GetStaticTlsDataSize() <= 0)
+		__debugbreak();
 
-		if (GetStaticTlsSlot() == 0 || GetStaticTlsSlot() == _tls_index)
-			__debugbreak();
+	if (GetStaticTlsSlot() == 0 || GetStaticTlsSlot() == _tls_index)
+		__debugbreak();
 
-		// g_TlsIndex is the IMPLICIT index for skyrim64_tls_mt.dll. More info: http://www.nynaeve.net/?p=185
-		g_TlsIndex = GetStaticTlsSlot();
-	}
-	ReleaseSRWLockExclusive(&g_TLSDataLock);
+	// g_TlsIndex is the IMPLICIT index for skyrim64_tls_mt.dll. More info: http://www.nynaeve.net/?p=185
+	InterlockedExchange((volatile LONG *)&g_TlsIndex, GetStaticTlsSlot());
 }
 
 VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
@@ -129,38 +128,52 @@ VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
 	// Every operation here involves a write
 	AcquireSRWLockExclusive(&g_TLSDataLock);
 
+	//
 	// WARNING: TLS callbacks can be executed before the CRT itself is! This means
 	// anything under std::* can't be used until then. Plain old data must be used.
-	if (!g_MainTLSBlock)
+	//
+	if (Reason == DLL_THREAD_ATTACH)
 	{
-		// Still need to track new threads before WinMain()
-		delayedTlsThreadIds[delayedThreadPatchIndex] = GetCurrentThreadId();
-		delayedTlsBlocks[delayedThreadPatchIndex] = __readgsqword(0x58);
-		delayedThreadPatchIndex++;
+		OutputDebugStringA("TLS Callback: Thread attach\n");
 
-		if (delayedThreadPatchIndex >= ARRAYSIZE(delayedTlsBlocks))
-			__debugbreak();
-	}
-	else
-	{
-		// &Teb->ThreadLocalStoragePointer[_tls_index];
-		uintptr_t *currentTlsBlock = (uintptr_t *)GET_TLS_BLOCK(g_TlsIndex);
-		auto tlsMapping = g_ThreadTLSMaps.find(GetCurrentThreadId());
-
-		if (Reason == DLL_THREAD_ATTACH)
+		if (!g_MainTLSBlock)
 		{
-			OutputDebugStringA("TLS Callback: Thread attach\n");
+			// Still need to track new threads before WinMain()
+			delayedTlsThreadIds[delayedThreadPatchIndex] = GetCurrentThreadId();
+			delayedTlsBlocks[delayedThreadPatchIndex] = __readgsqword(0x58);
+			delayedThreadPatchIndex++;
+
+			if (delayedThreadPatchIndex >= ARRAYSIZE(delayedTlsBlocks))
+				__debugbreak();
+		}
+		else
+		{
+			uintptr_t *currentTlsBlock = (uintptr_t *)GET_TLS_BLOCK(g_TlsIndex);
+			auto tlsMapping = g_ThreadTLSMaps.find(GetCurrentThreadId());
 
 			if (tlsMapping != g_ThreadTLSMaps.end())
 				__debugbreak();
 
 			// New thread, redirect TLS[_tls_index] to main thread's TLS[_tls_index]
-			g_ThreadTLSMaps.insert_or_assign(GetCurrentThreadId(), *currentTlsBlock);
+			g_ThreadTLSMaps[GetCurrentThreadId()] = *currentTlsBlock;
 			*currentTlsBlock = g_MainTLSBlock;
 		}
-		else if (Reason == DLL_THREAD_DETACH)
+	}
+	else if (Reason == DLL_THREAD_DETACH)
+	{
+		OutputDebugStringA("TLS Callback: Thread detach\n");
+
+		// Sometimes threads are destroyed during process init
+		for (uint32_t i = 0; i < delayedThreadPatchIndex; i++)
 		{
-			OutputDebugStringA("TLS Callback: Thread detach\n");
+			if (delayedTlsThreadIds[i] == GetCurrentThreadId())
+				delayedTlsBlocks[i] = 0;
+		}
+
+		if (g_MainTLSBlock)
+		{
+			uintptr_t *currentTlsBlock = (uintptr_t *)GET_TLS_BLOCK(g_TlsIndex);
+			auto tlsMapping = g_ThreadTLSMaps.find(GetCurrentThreadId());
 
 			if (tlsMapping == g_ThreadTLSMaps.end())
 				__debugbreak();
