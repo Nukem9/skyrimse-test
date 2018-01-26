@@ -314,29 +314,15 @@ void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSSha
 	auto sub_1412E0810 = (void(__fastcall *)(BSShaderProperty *, uint32_t))(g_ModuleBase + 0x12E0810);
 	sub_1412E0810(Property, propertyInstanceData->QSize());
 
-	void *data;
-	uint32_t allocationSize = instanceDataCount * sizeof(float);
-	uint32_t offset;
-	ID3D11Buffer *buffer = renderer->MapConstantBuffer(&data, &allocationSize, &offset, BSGraphics::CONSTANT_GROUP_LEVEL_INSTANCE);
+	uint32_t neededSize = instanceDataCount * sizeof(float);
+	auto constantGroup = renderer->GetShaderConstantGroup(neededSize, BSGraphics::CONSTANT_GROUP_LEVEL_INSTANCE);
 
-	// Zero initialize, then copy
-	memset(data, 0, allocationSize);
-
+	// Already zero initialized, just copy
 	if (instanceDataCount > 0)
-		memcpy(data, propertyInstanceData->QBuffer(), instanceDataCount * sizeof(float));
+		memcpy(constantGroup.RawData(), propertyInstanceData->QBuffer(), neededSize);
 
-	if (allocationSize >= 256)
-	{
-		offset /= 16;
-		allocationSize /= 16;
-
-		((ID3D11DeviceContext1 *)renderer->m_DeviceContext)->VSSetConstantBuffers1(8, 1, &buffer, &offset, &allocationSize);
-	}
-	else
-	{
-		renderer->m_DeviceContext->Unmap(buffer, 0);
-		((ID3D11DeviceContext1 *)renderer->m_DeviceContext)->VSSetConstantBuffers1(8, 1, &buffer, nullptr, nullptr);
-	}
+	renderer->FlushConstantGroup(&constantGroup);
+	renderer->ApplyConstantGroupVS(&constantGroup, BSGraphics::CONSTANT_GROUP_LEVEL_INSTANCE);
 }
 
 uint32_t BSGrassShader::GetRawTechnique(uint32_t Technique)

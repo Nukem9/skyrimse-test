@@ -46,9 +46,6 @@ AutoPtr(unsigned int, gTlsIndex, 0x34BBA78);
 
 void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform)
 {
-	//auto sub_1413362C0 = (void(__fastcall *)(BSShader*, NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform))(g_ModuleBase + 0x13362C0);
-	//sub_1413362C0(this, SkinInstance, Parameters, Transform);
-
 	//MemoryContextTracker tracker(26, "BSShader.cpp");
 
 	if (!Parameters || Parameters->m_Flags == 0)
@@ -71,35 +68,27 @@ void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, con
 	const void *v10 = *(const void **)(v4 + 80);
 	uint32_t v11 = (unsigned int)(3 * *(uint32_t *)(*(uintptr_t *)(v4 + 16) + 88i64));
 
-	{
-		D3D11_MAPPED_SUBRESOURCE map;
-		renderer->m_DeviceContext->Map(renderer->m_ConstantBuffers1[0], 0, D3D11_MAP_WRITE_DISCARD, 0, &map);
-		memcpy_s(map.pData, 16 * v11, v9, 16 * v11);
+	auto boneDataConstants = renderer->GetShaderConstantGroup(16 * v11, BSGraphics::CONSTANT_GROUP_LEVEL_BONES);
+	auto prevBoneDataConstants = renderer->GetShaderConstantGroup(16 * v11, BSGraphics::CONSTANT_GROUP_LEVEL_PREVIOUS_BONES);
 
-		renderer->m_DeviceContext->Unmap(renderer->m_ConstantBuffers1[0], 0);
-		renderer->m_DeviceContext->VSSetConstantBuffers(10, 1, &renderer->m_ConstantBuffers1[0]);
-	}
+	memcpy_s(boneDataConstants.RawData(), 16 * v11, v9, 16 * v11);
+	memcpy_s(prevBoneDataConstants.RawData(), 16 * v11, v10, 16 * v11);
 
-	{
-		D3D11_MAPPED_SUBRESOURCE map;
-		renderer->m_DeviceContext->Map(renderer->m_ConstantBuffers1[1], 0, D3D11_MAP_WRITE_DISCARD, 0, &map);
-		memcpy_s(map.pData, 16 * v11, v10, 16 * v11);
-
-		renderer->m_DeviceContext->Unmap(renderer->m_ConstantBuffers1[1], 0);
-		renderer->m_DeviceContext->VSSetConstantBuffers(9, 1, &renderer->m_ConstantBuffers1[1]);
-	}
+	renderer->FlushConstantGroup(&boneDataConstants);
+	renderer->FlushConstantGroup(&prevBoneDataConstants);
+	renderer->ApplyConstantGroupVS(&boneDataConstants, BSGraphics::CONSTANT_GROUP_LEVEL_BONES);
+	renderer->ApplyConstantGroupVS(&prevBoneDataConstants, BSGraphics::CONSTANT_GROUP_LEVEL_PREVIOUS_BONES);
 }
 
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
 {
 	bool hasVertexShader = false;
+	bool hasPixelShader = false;
 	BSVertexShader *vertexShader = nullptr;
+	BSPixelShader *pixelShader = nullptr;
 
 	if (m_VertexShaderTable.get(VertexShaderID, vertexShader))
 		hasVertexShader = true;
-	
-	bool hasPixelShader = false;
-	BSPixelShader *pixelShader = nullptr;
 
 	if (IgnorePixelShader || m_PixelShaderTable.get(PixelShaderID, pixelShader))
 		hasPixelShader = true;
