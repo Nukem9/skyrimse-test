@@ -483,13 +483,25 @@ namespace BSGraphics
 		}
 	}
 
+	CustomConstantGroup Renderer::GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level)
+	{
+		CustomConstantGroup temp;
+
+		temp.m_Buffer = MapConstantBuffer(&temp.m_Map.pData, &Size, &temp.m_UnifiedByteOffset, Level);
+		temp.m_Map.DepthPitch = Size;
+		temp.m_Map.RowPitch = Size;
+		temp.m_Unified = (temp.m_Buffer == ShaderConstantBuffer.D3DBuffer);
+
+		// DirectX expects you to overwrite the entire buffer. **SKYRIM DOES NOT**, so I'm zeroing it now.
+		memset(temp.m_Map.pData, 0, Size);
+		return temp;
+	}
+
 	ConstantGroup<BSVertexShader> Renderer::GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level)
 	{
 		ConstantGroup<BSVertexShader> temp;
-		temp.m_Unified = false;
 		temp.m_Shader = Shader;
 		temp.m_Buffer = Shader->m_ConstantGroups[Level].m_Buffer;
-		memset(&temp.m_Map, 0, sizeof(temp.m_Map));
 
 		if (temp.m_Buffer)
 		{
@@ -505,28 +517,22 @@ namespace BSGraphics
 				desc.ByteWidth = (uint32_t)temp.m_Buffer;
 			}
 
-			temp.m_Buffer = MapConstantBuffer(&temp.m_Map.pData, &desc.ByteWidth, &temp.m_UnifiedByteOffset, Level);
-			temp.m_Map.DepthPitch = desc.ByteWidth;
-			temp.m_Map.RowPitch = desc.ByteWidth;
-			temp.m_Unified = (temp.m_Buffer == ShaderConstantBuffer.D3DBuffer) ? true : false;
+			*static_cast<CustomConstantGroup *>(&temp) = GetShaderConstantGroup(desc.ByteWidth, Level);
 		}
 		else
 		{
 			temp.m_Map.pData = Shader->m_ConstantGroups[Level].m_Data;
+			// Size to memset() is unknown here
 		}
 
-		// BUGFIX: DirectX expects you to overwrite the entire buffer. **SKYRIM DOES NOT**, so I'm zeroing it now.
-		memset(temp.m_Map.pData, 0, temp.m_Map.RowPitch);
 		return temp;
 	}
 
 	ConstantGroup<BSPixelShader> Renderer::GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level)
 	{
 		ConstantGroup<BSPixelShader> temp;
-		temp.m_Unified = false;
 		temp.m_Shader = Shader;
 		temp.m_Buffer = Shader->m_ConstantGroups[Level].m_Buffer;
-		memset(&temp.m_Map, 0, sizeof(temp.m_Map));
 
 		if (temp.m_Buffer)
 		{
@@ -542,69 +548,67 @@ namespace BSGraphics
 				desc.ByteWidth = (uint32_t)temp.m_Buffer;
 			}
 
-			temp.m_Buffer = MapConstantBuffer(&temp.m_Map.pData, &desc.ByteWidth, &temp.m_UnifiedByteOffset, Level);
-			temp.m_Map.DepthPitch = desc.ByteWidth;
-			temp.m_Map.RowPitch = desc.ByteWidth;
-			temp.m_Unified = (temp.m_Buffer == ShaderConstantBuffer.D3DBuffer) ? true : false;
+			*static_cast<CustomConstantGroup *>(&temp) = GetShaderConstantGroup(desc.ByteWidth, Level);
 		}
 		else
 		{
 			temp.m_Map.pData = Shader->m_ConstantGroups[Level].m_Data;
+			// Size to memset() is unknown here
 		}
 
-		// BUGFIX: DirectX expects you to overwrite the entire buffer. **SKYRIM DOES NOT**, so I'm zeroing it now.
-		memset(temp.m_Map.pData, 0, temp.m_Map.RowPitch);
 		return temp;
+	}
+
+	void Renderer::FlushConstantGroup(const CustomConstantGroup *Group)
+	{
+		if (Group && Group->m_Buffer && !Group->m_Unified)
+			m_DeviceContext->Unmap(Group->m_Buffer, 0);
 	}
 
 	void Renderer::FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup)
 	{
-		if (VertexGroup && VertexGroup->m_Buffer && !VertexGroup->m_Unified)
-			m_DeviceContext->Unmap(VertexGroup->m_Buffer, 0);
+		FlushConstantGroup(VertexGroup);
+		FlushConstantGroup(PixelGroup);
+	}
 
-		if (PixelGroup && PixelGroup->m_Buffer && !PixelGroup->m_Unified)
-			m_DeviceContext->Unmap(PixelGroup->m_Buffer, 0);
+	void Renderer::ApplyConstantGroupVS(const CustomConstantGroup *Group, ConstantGroupLevel Level)
+	{
+		if (Group)
+		{
+			if (Group->m_Unified)
+			{
+				UINT offset = Group->m_UnifiedByteOffset / 16;
+				UINT size = Group->m_Map.RowPitch / 16;
+				((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
+			}
+			else
+			{
+				((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers1(Level, 1, &Group->m_Buffer, nullptr, nullptr);
+			}
+		}
+	}
+
+	void Renderer::ApplyConstantGroupPS(const CustomConstantGroup *Group, ConstantGroupLevel Level)
+	{
+		if (Group)
+		{
+			if (Group->m_Unified)
+			{
+				UINT offset = Group->m_UnifiedByteOffset / 16;
+				UINT size = Group->m_Map.RowPitch / 16;
+				((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
+			}
+			else
+			{
+				((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers1(Level, 1, &Group->m_Buffer, nullptr, nullptr);
+			}
+		}
 	}
 
 	void Renderer::ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level)
 	{
-		uint32_t index = 0;
-
-		switch (Level)
-		{
-		case CONSTANT_GROUP_LEVEL_TECHNIQUE:index = 0; break;
-		case CONSTANT_GROUP_LEVEL_MATERIAL:index = 1; break;
-		case CONSTANT_GROUP_LEVEL_GEOMETRY:index = 2; break;
-		default:__debugbreak(); break;
-		}
-
-		if (VertexGroup)
-		{
-			if (VertexGroup->m_Unified)
-			{
-				UINT offset = VertexGroup->m_UnifiedByteOffset / 16;
-				UINT size = VertexGroup->m_Map.RowPitch / 16;
-				((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers1(index, 1, &VertexGroup->m_Buffer, &offset, &size);
-			}
-			else
-			{
-				((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers1(index, 1, &VertexGroup->m_Buffer, nullptr, nullptr);
-			}
-		}
-
-		if (PixelGroup)
-		{
-			if (PixelGroup->m_Unified)
-			{
-				UINT offset = PixelGroup->m_UnifiedByteOffset / 16;
-				UINT size = PixelGroup->m_Map.RowPitch / 16;
-				((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers1(index, 1, &PixelGroup->m_Buffer, &offset, &size);
-			}
-			else
-			{
-				((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers1(index, 1, &PixelGroup->m_Buffer, nullptr, nullptr);
-			}
-		}
+		ApplyConstantGroupVS(VertexGroup, Level);
+		ApplyConstantGroupPS(PixelGroup, Level);
 	}
 
 	void Renderer::SetVertexShader(BSVertexShader *Shader)
