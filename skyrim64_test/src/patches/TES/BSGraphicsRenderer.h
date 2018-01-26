@@ -123,7 +123,6 @@ namespace BSGraphics
 
 		ConstantGroup<BSVertexShader> GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level);
 		ConstantGroup<BSPixelShader> GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level);
-		void GetShaderDualConstantGroup(BSVertexShader *VertexShader, ConstantGroup<BSVertexShader> *VertexGroup, BSPixelShader *PixelShader, ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level);
 		void FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup);
 		void ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level);
 

@@ -493,13 +493,6 @@ namespace BSGraphics
 
 		if (temp.m_Buffer)
 		{
-			/*
-			HRESULT hr = m_DeviceContext->Map(temp.m_Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &temp.m_Map);
-
-			if (FAILED(hr))
-				__debugbreak();
-				*/
-
 			D3D11_BUFFER_DESC desc;
 
 			if ((uintptr_t)temp.m_Buffer > 0x10000)
@@ -537,13 +530,6 @@ namespace BSGraphics
 
 		if (temp.m_Buffer)
 		{
-			/*
-			HRESULT hr = m_DeviceContext->Map(temp.m_Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &temp.m_Map);
-
-			if (FAILED(hr))
-				__debugbreak();
-				*/
-
 			D3D11_BUFFER_DESC desc;
 
 			if ((uintptr_t)temp.m_Buffer > 0x10000)
@@ -569,92 +555,6 @@ namespace BSGraphics
 		// BUGFIX: DirectX expects you to overwrite the entire buffer. **SKYRIM DOES NOT**, so I'm zeroing it now.
 		memset(temp.m_Map.pData, 0, temp.m_Map.RowPitch);
 		return temp;
-	}
-
-	void Renderer::GetShaderDualConstantGroup(BSVertexShader *VertexShader, ConstantGroup<BSVertexShader> *VertexGroup, BSPixelShader *PixelShader, ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level)
-	{
-		uint32_t vsRequiredSize = 0;
-		uint32_t psRequiredSize = 0;
-
-		// Vertex shader
-		if (VertexShader->m_ConstantGroups[Level].m_Buffer)
-		{
-			D3D11_BUFFER_DESC desc;
-			VertexShader->m_ConstantGroups[Level].m_Buffer->GetDesc(&desc);
-
-			// Size was updated or set previously
-			vsRequiredSize += desc.ByteWidth;
-		}
-		else
-		{
-			VertexGroup->m_Map.pData = VertexShader->m_ConstantGroups[Level].m_Data;
-		}
-
-		// Pixel shader
-		if (PixelShader->m_ConstantGroups[Level].m_Buffer)
-		{
-			D3D11_BUFFER_DESC desc;
-			PixelShader->m_ConstantGroups[Level].m_Buffer->GetDesc(&desc);
-
-			psRequiredSize += desc.ByteWidth;
-		}
-		else
-		{
-			PixelGroup->m_Map.pData = PixelShader->m_ConstantGroups[Level].m_Data;
-		}
-
-		VertexGroup->m_Shader = VertexShader;
-		VertexGroup->m_Buffer = nullptr;
-		VertexGroup->m_Unified = false;
-
-		PixelGroup->m_Shader = PixelShader;
-		PixelGroup->m_Buffer = nullptr;
-		PixelGroup->m_Unified = false;
-
-		if (vsRequiredSize > 0 || psRequiredSize > 0)
-		{
-			uint32_t roundedVS = (vsRequiredSize + 256 - 1) & ~(256 - 1);
-			uint32_t roundedPS = (psRequiredSize + 256 - 1) & ~(256 - 1);
-			uint32_t totalSize = roundedVS + roundedPS;
-
-			uint32_t offset;
-			void *data;
-			ID3D11Buffer *temp = MapDynamicConstantBuffer(&data, &totalSize, &offset);
-
-			memset(data, 0, totalSize);
-
-			ProfileCounterAdd("Bytes Wasted", (roundedVS - vsRequiredSize) + (roundedPS - psRequiredSize));
-
-			if (vsRequiredSize > 0)
-			{
-				VertexGroup->m_Map.pData = data;
-				VertexGroup->m_Map.RowPitch = roundedVS;
-				VertexGroup->m_Map.DepthPitch = roundedVS;
-
-				VertexGroup->m_UnifiedByteOffset = offset;
-				VertexGroup->m_Shader = VertexShader;
-				VertexGroup->m_Buffer = temp;
-				VertexGroup->m_Unified = (temp == ShaderConstantBuffer.D3DBuffer) ? true : false;
-			}
-
-			if (psRequiredSize > 0)
-			{
-				// Round up to nearest 256 bytes as required by D3D11
-				uint32_t rounded = roundedVS;
-
-				if (vsRequiredSize <= 0)
-					rounded = 0;
-
-				PixelGroup->m_Map.pData = (void *)((uintptr_t)data + rounded);
-				PixelGroup->m_Map.RowPitch = roundedPS;
-				PixelGroup->m_Map.DepthPitch = roundedPS;
-
-				PixelGroup->m_UnifiedByteOffset = offset + rounded;
-				PixelGroup->m_Shader = PixelShader;
-				PixelGroup->m_Buffer = temp;
-				PixelGroup->m_Unified = (temp == ShaderConstantBuffer.D3DBuffer) ? true : false;
-			}
-		}
 	}
 
 	void Renderer::FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup)
