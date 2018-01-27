@@ -171,7 +171,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	// NOTE: Unlike BSDistantTreeShader and BSGrassShader, this uses GetPreviousWorldTransform() instead
 	// of GetWorldTransform()...?
 	//
-	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetPreviousWorldTransform(), *(NiPoint3 *)&renderer->__zz2[40]));
+	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetPreviousWorldTransform(), renderer->m_PreviousPosAdjust));
 
 	//
 	// VS: p4 float3 EyePosition (adjusted to relative coordinates, not world)
@@ -180,9 +180,9 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		XMFLOAT3& eyePos = vertexCG.ParamVS<XMFLOAT3, 4>();
 
 		float *v27 = (float *)GetCurrentAccumulator();
-		eyePos.x = v27[91] - *(float *)&renderer->__zz2[28];
-		eyePos.y = v27[92] - *(float *)&renderer->__zz2[32];
-		eyePos.z = v27[93] - *(float *)&renderer->__zz2[36];
+		eyePos.x = v27[91] - renderer->m_CurrentPosAdjust.x;
+		eyePos.y = v27[92] - renderer->m_CurrentPosAdjust.y;
+		eyePos.z = v27[93] - renderer->m_CurrentPosAdjust.z;
 	}
 
 	//

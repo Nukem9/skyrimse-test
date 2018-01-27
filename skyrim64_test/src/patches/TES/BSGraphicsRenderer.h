@@ -175,7 +175,7 @@ namespace BSGraphics
 			ID3D11DepthStencilState *m_DepthStates[6][40];		// OMSetDepthStencilState
 			ID3D11RasterizerState *m_RasterStates[2][3][12][2];	// RSSetState
 			ID3D11BlendState *m_BlendStates[7][2][13][2];		// OMSetBlendState
-			ID3D11SamplerState *m_SamplerStates[6][5];			// Samplers[Option1][Option2] (Used for PS and CS)
+			ID3D11SamplerState *m_SamplerStates[6][5];			// Samplers[AddressMode][FilterMode] (Used for PS and CS)
 
 																//
 																// Vertex/Pixel shader constant buffers. Set during load-time (CreateShaderBundle).
@@ -232,10 +232,13 @@ namespace BSGraphics
 			{
 				struct
 				{
-					char _a_zz3[0x8];
+					uint64_t m_VertexDescSetting;
 					struct BSVertexShader *m_CurrentVertexShader;
 					struct BSPixelShader *m_CurrentPixelShader;
-					char _a_zz2[0x288];
+					D3D11_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
+					NiPoint3 m_CurrentPosAdjust;
+					NiPoint3 m_PreviousPosAdjust;
+					char _a_zz2[0x26C];
 				};
 
 				char __zz2[0x2A0];
@@ -301,6 +304,10 @@ namespace BSGraphics
 	CHECK_OFFSET(m_CSSamplerSetting2, 0x14304E0B0);
 	CHECK_OFFSET(m_CSResources, 0x14304E0F0);
 	CHECK_OFFSET(m_CSUAVResources, 0x14304E1B0);
+	CHECK_OFFSET(m_VertexDescSetting, 0x14304E1F0);
 	CHECK_OFFSET(m_CurrentVertexShader, 0x14304E1F8);
 	CHECK_OFFSET(m_CurrentPixelShader, 0x14304E200);
+	CHECK_OFFSET(m_PrimitiveTopology, 0x14304E208);
+	CHECK_OFFSET(m_CurrentPosAdjust, 0x14304E20C);
+	CHECK_OFFSET(m_PreviousPosAdjust, 0x14304E218);
 }

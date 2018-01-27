@@ -158,7 +158,7 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags
 	//		flt_14304E210 = flt_14304E21C;
 	//		flt_14304E214 = flt_14304E220;
 	//
-	XMMATRIX prevGeoTransform = BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetWorldTransform(), *(NiPoint3 *)&renderer->__zz2[40]);
+	XMMATRIX prevGeoTransform = BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetWorldTransform(), renderer->m_PreviousPosAdjust);
 
 	//
 	// VS: p1 float4x4 WorldViewProj

@@ -642,9 +642,9 @@ void GetInverseWorldMatrix(const NiTransform& Transform, bool UseWorldPosition, 
 	{
 		// XMMatrixIdentity(), row[3] = { world.x, world.y, world.z, 1.0f }
 		XMMATRIX worldTranslation = XMMatrixTranslation(
-			*(float *)&renderer->__zz2[28],
-			*(float *)&renderer->__zz2[32],
-			*(float *)&renderer->__zz2[36]);
+			renderer->m_CurrentPosAdjust.x,
+			renderer->m_CurrentPosAdjust.y,
+			renderer->m_CurrentPosAdjust.z);
 
 		OutMatrix = XMMatrixInverse(nullptr, worldTranslation);
 	}
@@ -717,7 +717,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	case RAW_TECHNIQUE_LODOBJ:
 	case RAW_TECHNIQUE_LODOBJHD:
 		GeoUpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
-		GeoUpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, (NiPoint3 *)&renderer->__zz2[40]);
+		GeoUpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, &renderer->m_PreviousPosAdjust);
 		isLOD = true;
 		v16 = v102;
 		break;
@@ -739,7 +739,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		const NiTransform& temp = (RenderFlags & 0x10) ? world : Pass->m_Geometry->GetPreviousWorldTransform();
 
 		GeoUpdateViewProjectionConstants(vertexCG, world, false, nullptr);
-		GeoUpdateViewProjectionConstants(vertexCG, temp, true, (NiPoint3 *)&renderer->__zz2[40]);// renderer->QViewData(BSGraphics::gRenderer)->kViewProjMat?
+		GeoUpdateViewProjectionConstants(vertexCG, temp, true, &renderer->m_PreviousPosAdjust);
 	}
 
 	XMMATRIX inverseWorldMatrix;
@@ -901,9 +901,9 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			float *v86 = (float *)GetCurrentAccumulator();
 
 			// Equivalent to XMMatrixTranslation(x, y, z) -- missing rows/cols are multiplied in shader code
-			precipitationOcclusionWorldViewProj.x = v86[91] - *(float *)&renderer->__zz2[28];
-			precipitationOcclusionWorldViewProj.y = v86[92] - *(float *)&renderer->__zz2[32];
-			precipitationOcclusionWorldViewProj.z = v86[93] - *(float *)&renderer->__zz2[36];
+			precipitationOcclusionWorldViewProj.x = v86[91] - renderer->m_CurrentPosAdjust.x;
+			precipitationOcclusionWorldViewProj.y = v86[92] - renderer->m_CurrentPosAdjust.y;
+			precipitationOcclusionWorldViewProj.z = v86[93] - renderer->m_CurrentPosAdjust.z;
 		}
 	}
 
@@ -1039,8 +1039,8 @@ void BSLightingShader::TechUpdateAccelerationConstants(BSGraphics::ConstantGroup
 	// VS: p12 float4 Acceleration
 	BSGraphics::Utility::CopyNiColorAToFloat(&VertexCG.ParamVS<XMVECTOR, 12>(),
 		NiColorA(
-			flt_141E32F54 - *(float *)&renderer->__zz2[28],
-			flt_141E32F58 - *(float *)&renderer->__zz2[32],
+			flt_141E32F54 - renderer->m_CurrentPosAdjust.x,
+			flt_141E32F58 - renderer->m_CurrentPosAdjust.y,
 			flt_141E32F5C - 15.0f,
 			flt_141E32F60 - 15.0f));
 }
@@ -1394,10 +1394,7 @@ void BSLightingShader::sub_14130C8A0(const NiTransform& Transform, XMMATRIX& Out
 	temp.m_Rotate.m_pEntry[2][1] = 0.0f;
 	temp.m_Rotate.m_pEntry[2][2] = 1.0f;
 
-	temp.m_Translate.x = *(float *)&renderer->__zz2[28];
-	temp.m_Translate.y = *(float *)&renderer->__zz2[32];
-	temp.m_Translate.z = *(float *)&renderer->__zz2[36];
-
+	temp.m_Translate = renderer->m_CurrentPosAdjust;
 	temp.m_fScale = 1.0f;
 
 	if (DontMultiply)
@@ -1409,11 +1406,11 @@ void BSLightingShader::sub_14130C8A0(const NiTransform& Transform, XMMATRIX& Out
 		XMMATRIX m1 = BSShaderUtil::GetXMFromNi(temp);
 		XMMATRIX m2 = BSShaderUtil::GetXMFromNi(Transform);
 
-		// out = Translate(m2, (NiPoint3 *)&renderer.__zz2[28]) * m1; -- operator order DOES matter
+		// out = Translate(m2, renderer->m_CurrentPosAdjust) * m1; -- operator order DOES matter
 		m2.r[3] = XMVectorAdd(m2.r[3], XMVectorSet(
-			*(float *)&renderer->__zz2[28],
-			*(float *)&renderer->__zz2[32],
-			*(float *)&renderer->__zz2[36],
+			temp.m_Translate.x,
+			temp.m_Translate.y,
+			temp.m_Translate.z,
 			0.0f));
 
 		OutMatrix = XMMatrixMultiply(m2, m1);

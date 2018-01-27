@@ -418,8 +418,8 @@ void CommitShaderChanges(bool Unknown)
 			auto sub_140D72740 = (char(__fastcall *)(__int64 a1, __int64 a2, int a3, __int64 *a4, int64_t *a5))(g_ModuleBase + 0xD72770);
 			auto sub_140D735D0 = (void(__fastcall *)(__int64 a1))(g_ModuleBase + 0xD73600);
 
-			v17 = *(uint64_t *)renderer->__zz2 & *(uint64_t *)(*(uint64_t *)&renderer->__zz2[8] + 72i64);
-			v35 = (float *)(*(uint64_t *)renderer->__zz2 & *(uint64_t *)(*(uint64_t *)&renderer->__zz2[8] + 72i64));
+			v17 = renderer->m_VertexDescSetting & renderer->m_CurrentVertexShader->m_VertexDescription;
+			v35 = (float *)(renderer->m_VertexDescSetting & renderer->m_CurrentVertexShader->m_VertexDescription);
 			sub_140C06080((DWORD *)&v37, (unsigned __int64)v35);
 			if (qword_141E2C160
 				&& (v18 = qword_141E2C160 + 24i64 * (v37 & (unsigned int)(dword_141E2C144 - 1)),
@@ -456,7 +456,7 @@ void CommitShaderChanges(bool Unknown)
 		// IASetPrimitiveTopology
 		if (_bittest((const LONG *)&v1, 11))
 		{
-			renderer->m_DeviceContext->IASetPrimitiveTopology((D3D11_PRIMITIVE_TOPOLOGY)*(unsigned int *)&renderer->__zz2[24]);
+			renderer->m_DeviceContext->IASetPrimitiveTopology(renderer->m_PrimitiveTopology);
 			v1 = renderer->m_StateUpdateFlags;
 		}
 
