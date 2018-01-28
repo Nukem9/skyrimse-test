@@ -752,11 +752,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		XMVECTORF32& materialData = pixelCG.ParamPS<XMVECTORF32, 7>();
 
-		bool wtf = (signed char)Pass->Byte1E >= 0;
-
-		wtf = !wtf;
-
-		if (!(wtf == false))
+		if (Pass->Byte1E & 0x80)
 			materialData.f[2] = property->GetAlpha() * *(float *)((uintptr_t)property->pFadeNode + 332i64);
 		else
 			materialData.f[2] = property->GetAlpha();
@@ -911,31 +907,30 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		uintptr_t v89 = (uintptr_t)property->pFadeNode;
 		float v90;
-
-		if ((signed char)Pass->Byte1E >= 0)
-			v90 = *(float *)(v89 + 304) * 31.0f;
-		else
+		
+		if (Pass->Byte1E & 0x80)
 			v90 = *(float *)(v89 + 332) * 31.0f;
+		else
+			v90 = *(float *)(v89 + 304) * 31.0f;
 
-		renderer->DepthStencilStateSetStencilMode(11, ((uint32_t)v90) & 0xFF);
+		renderer->DepthStencilStateSetStencilMode(11, (uint32_t)v90 & 0xFF);
 	}
 
 	if (!v103)
 	{
 		uint32_t oldDepthMode = *(uint32_t *)&renderer->__zz0[32];
 
-		if (!(property->QFlags() & 0x100000000i64))
+		if ((property->QFlags() & 0x100000000i64) == 0)
 		{
 			TLS_dword_141E35280 = oldDepthMode;
 			renderer->DepthStencilStateSetDepthMode(1);
 		}
 
-		if (!(property->QFlags() & 0x80000000))
+		if ((property->QFlags() & 0x80000000) == 0)
 		{
 			TLS_dword_141E35280 = oldDepthMode;
 			renderer->DepthStencilStateSetDepthMode(0);
 		}
-
 	}
 
 	// PS: p16 float4 SSRParams
