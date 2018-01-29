@@ -152,8 +152,8 @@ namespace BSGraphics
 		DynamicBuffer.SwapFrame(CurrentFrameIndex);
 		ShaderConstantBuffer.SwapFrame(CurrentFrameIndex);
 
-		// "Pop" the query from 4 frames ago. This acts as a ring buffer.
-		int prevQueryIndex = CurrentFrameIndex - 4;
+		// "Pop" the query from 6 frames ago. This acts as a ring buffer.
+		int prevQueryIndex = CurrentFrameIndex - 6;
 
 		if (prevQueryIndex < 0)
 			prevQueryIndex += 16;
