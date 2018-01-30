@@ -178,15 +178,8 @@ void CommitShaderChanges(bool Unknown)
 	auto renderer = BSGraphics::Renderer::GetGlobals();
 
 	uint32_t v1; // edx
-	uint64_t *v3; // r8
-	unsigned int v4; // edi
 	__int64 v5; // rdx
-	uint32_t *v6; // rbx
-	ID3D11RenderTargetView **v7; // rsi
-	__int64 v8; // rax
-	ID3D11RenderTargetView *v9; // rdx
 	int v10; // edx
-	__int64 v11; // rbx
 	signed __int64 v12; // rcx
 	float v14; // xmm0_4
 	float v15; // xmm0_4
@@ -194,136 +187,126 @@ void CommitShaderChanges(bool Unknown)
 	uint64_t v18; // rcx
 	__int64 v19; // rdi
 	int v20; // ebx
-	int v21; // edx
-	uint32_t v22; // eax
 	int *i; // [rsp+28h] [rbp-80h]
 	float *v35; // [rsp+30h] [rbp-78h]
-	ID3D11RenderTargetView *v34[8];
 	int v37; // [rsp+B8h] [rbp+10h]
 	int v38; // [rsp+C0h] [rbp+18h]
 	__int64 v39; // [rsp+C8h] [rbp+20h]
 
 	renderer->UnmapDynamicConstantBuffer();
 
+	uint64_t *v3 = (uint64_t *)renderer->qword_14304BF00;
 	v1 = renderer->m_StateUpdateFlags;
-	if (renderer->m_StateUpdateFlags)
-	{
-		if (renderer->m_StateUpdateFlags & 1)
-		{
-			v3 = (uint64_t *)renderer->qword_14304BF00;
-			if (renderer->iRenderTargetIndexes[0][0] == -1)
-			{
-				v6 = renderer->iRenderTargetIndexes[1];
-				v7 = v34;
-				v4 = 0;
-				do
-				{
-					v8 = (signed int)*(v6 - 12);
-					if ((DWORD)v8 == -1)
-						break;
-					v9 = (ID3D11RenderTargetView *)*((uint64_t *)v3 + 6 * v8 + 0x14B);
-					*v7 = v9;
-					if (!*v6)
-					{
-						renderer->m_DeviceContext->ClearRenderTargetView(
-							v9,
-							(const FLOAT *)v3 + 2522);          // ClearRenderTargetView
 
-						v3 = (uint64_t *)renderer->qword_14304BF00;
-						*v6 = 4;
+	if (v1)
+	{
+		if (v1 & 1)
+		{
+			//
+			// Build active render target view array
+			//
+			ID3D11RenderTargetView *renderTargetViews[8];
+			uint32_t viewCount = 0;
+
+			if (renderer->unknown1 == -1)
+			{
+				// This loops through all 8 entries ONLY IF they are not RENDER_TARGET_NONE. Otherwise break early.
+				for (int i = 0; i < 8; i++)
+				{
+					uint32_t& rtState = renderer->m_RenderTargetStates[i];
+					uint32_t rtIndex = renderer->m_RenderTargetIndexes[i];
+
+					if (rtIndex == BSShaderRenderTargets::RENDER_TARGET_NONE)
+						break;
+
+					renderTargetViews[i] = (ID3D11RenderTargetView *)*((uint64_t *)v3 + 6 * rtIndex + 0x14B);
+					viewCount++;
+
+					if (rtState == 0)// if state == SRTM_CLEAR
+					{
+						renderer->m_DeviceContext->ClearRenderTargetView(renderTargetViews[i], (const FLOAT *)v3 + 2522);
+						rtState = 4;// SRTM_INIT?
 					}
-					++v4;
-					++v7;
-					++v6;
-				} while (v4 < 8);
+				}
 			}
 			else
 			{
-				v4 = 1;
+				// Use a single RT instead. The purpose of this is unknown...
 				v5 = *((uint64_t *)renderer->qword_14304BF00
-					+ (signed int)renderer->iRenderTargetIndexes[0][1]
-					+ 8i64 * (signed int)renderer->iRenderTargetIndexes[0][0]
+					+ (signed int)renderer->unknown2
+					+ 8i64 * (signed int)renderer->unknown1
 					+ 1242);
-				v34[0] = *((ID3D11RenderTargetView **)renderer->qword_14304BF00
-					+ (signed int)renderer->iRenderTargetIndexes[0][1]
-					+ 8i64 * (signed int)renderer->iRenderTargetIndexes[0][0]
-					+ 1242);
+				renderTargetViews[0] = (ID3D11RenderTargetView *)v5;
+				viewCount = 1;
+
 				if (!*(DWORD *)&renderer->__zz0[4])
 				{
 					renderer->m_DeviceContext->ClearRenderTargetView((ID3D11RenderTargetView *)v5, (float *)(char *)renderer->qword_14304BF00 + 10088);
-
-					v3 = (uint64_t *)renderer->qword_14304BF00;
 					*(DWORD *)&renderer->__zz0[4] = 4;
 				}
 			}
+
 			v10 = *(DWORD *)renderer->__zz0;
-			if (*(DWORD *)renderer->__zz0 <= 2u || *(DWORD *)renderer->__zz0 == 6)
+			if (v10 <= 2u || v10 == 6)
 			{
 				*((BYTE *)v3 + 34) = 0;
-				v10 = *(DWORD *)renderer->__zz0;
-				v3 = (uint64_t *)renderer->qword_14304BF00;
 			}
-			if (renderer->rshadowState_iDepthStencil == -1)
-			{
-				v11 = 0i64;
-			LABEL_28:
-				renderer->m_DeviceContext->OMSetRenderTargets(// OMSetRenderTargets
-					v4,
-					v34,
-					(ID3D11DepthStencilView *)v11);
 
-				v1 = renderer->m_StateUpdateFlags;
-				goto LABEL_29;
-			}
-			v12 = renderer->rshadowState_iDepthStencilSlice
-				+ 19i64 * (signed int)renderer->rshadowState_iDepthStencil;
-			if (*((BYTE *)v3 + 34))
-				v11 = v3[v12 + 1022];
-			else
-				v11 = v3[v12 + 1014];
-			if (!v11)
-				goto LABEL_28;
+			//
+			// Determine which depth stencil to render to. When there's no active depth stencil
+			// we simply send a nullptr to dx11.
+			//
+			ID3D11DepthStencilView *depthStencil = nullptr;
 
-			uint32_t clearFlags;
-			if (v10 && v10 != 6)
+			if (renderer->rshadowState_iDepthStencil != -1)
 			{
-				if (v10 == 2)
-				{
-					clearFlags = 2i64;
-				}
+				v12 = renderer->rshadowState_iDepthStencilSlice
+					+ 19i64 * (signed int)renderer->rshadowState_iDepthStencil;
+
+				if (*((BYTE *)v3 + 34))
+					depthStencil = (ID3D11DepthStencilView *)v3[v12 + 1022];
 				else
+					depthStencil = (ID3D11DepthStencilView *)v3[v12 + 1014];
+
+				// Only clear the stencil if specific flags are set
+				if (depthStencil && v10 != 3 && v10 != 4)
 				{
-					if (v10 != 1)
-						goto LABEL_28;
-					clearFlags = 1i64;
+					uint32_t clearFlags;
+
+					switch (v10)
+					{
+					case 0:
+					case 6:
+						clearFlags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL;
+						break;
+
+					case 2:
+						clearFlags = D3D11_CLEAR_STENCIL;
+						break;
+
+					case 1:
+						clearFlags = D3D11_CLEAR_DEPTH;
+						break;
+
+					default:
+						__debugbreak();
+					}
+
+					renderer->m_DeviceContext->ClearDepthStencilView(depthStencil, clearFlags, 1.0f, 0);
+					*(DWORD *)renderer->__zz0 = 4;
 				}
 			}
-			else
-			{
-				clearFlags = 3i64;
-			}
 
-			renderer->m_DeviceContext->ClearDepthStencilView((ID3D11DepthStencilView *)v11, clearFlags, 1.0f, 0);
-
-			*(DWORD *)renderer->__zz0 = 4;
-			goto LABEL_28;
+			renderer->m_DeviceContext->OMSetRenderTargets(viewCount, renderTargetViews, depthStencil);
 		}
 
-	LABEL_29:
 		// OMSetDepthStencilState
 		if (v1 & (0x4 | 0x8))
 		{
-			auto test = (ID3D11DepthStencilState *)renderer->m_DepthStates[0][*(signed int *)&renderer->__zz0[40] + 40i64 * *(signed int *)&renderer->__zz0[32]];
-
-			if (test != renderer->m_DepthStates[*(signed int *)&renderer->__zz0[32]][*(signed int *)&renderer->__zz0[40]])
-				__debugbreak();
-
 			// OMSetDepthStencilState(m_DepthStates[m_DepthMode][m_StencilMode], m_StencilRef);
 			renderer->m_DeviceContext->OMSetDepthStencilState(
 				renderer->m_DepthStates[*(signed int *)&renderer->__zz0[32]][*(signed int *)&renderer->__zz0[40]],
 				*(UINT *)&renderer->__zz0[44]);
-
-			v1 = renderer->m_StateUpdateFlags;
 		}
 
 		// RSSetState
@@ -366,8 +349,6 @@ void CommitShaderChanges(bool Unknown)
 		if (v1 & 0x2)
 		{
 			renderer->m_DeviceContext->RSSetViewports(1, (D3D11_VIEWPORT *)&renderer->__zz0[8]);
-
-			v1 = renderer->m_StateUpdateFlags;
 		}
 
 		// OMSetBlendState
@@ -384,8 +365,6 @@ void CommitShaderChanges(bool Unknown)
 						+ 2i64 * *(signed int *)&renderer->__zz0[64]))];// AlphaBlendMode
 
 			renderer->m_DeviceContext->OMSetBlendState((ID3D11BlendState *)wtf, blendFactor, 0xFFFFFFFF);
-
-			v1 = renderer->m_StateUpdateFlags;
 		}
 
 		if (v1 & (0x200 | 0x100))
@@ -399,12 +378,10 @@ void CommitShaderChanges(bool Unknown)
 				*(float *)resource.pData = 0.0f;
 
 			renderer->m_DeviceContext->Unmap(renderer->m_TempConstantBuffer1, 0);
-
-			v1 = renderer->m_StateUpdateFlags;
 		}
 
 		// Shader input layout creation + updates
-		if (!Unknown && _bittest((const LONG *)&v1, 0xAu))
+		if (!Unknown && (v1 & 0x400))
 		{
 			AcquireSRWLockExclusive(&InputLayoutLock);
 
@@ -448,25 +425,19 @@ void CommitShaderChanges(bool Unknown)
 			}
 
 			renderer->m_DeviceContext->IASetInputLayout((ID3D11InputLayout *)v19);
-			v1 = renderer->m_StateUpdateFlags;
-
 			ReleaseSRWLockExclusive(&InputLayoutLock);
 		}
 
 		// IASetPrimitiveTopology
-		if (_bittest((const LONG *)&v1, 11))
+		if (v1 & 0x800)
 		{
 			renderer->m_DeviceContext->IASetPrimitiveTopology(renderer->m_PrimitiveTopology);
-			v1 = renderer->m_StateUpdateFlags;
 		}
 
-		v21 = v1 & 0x400;
-		v22 = 0;
-
 		if (Unknown)
-			v22 = v21;
-
-		renderer->m_StateUpdateFlags = v22;
+			renderer->m_StateUpdateFlags = v1 & 0x400;
+		else
+			renderer->m_StateUpdateFlags = 0;
 	}
 
 	//
@@ -491,11 +462,6 @@ void CommitShaderChanges(bool Unknown)
 	{
 		for_each_bit(i, bits)
 		{
-			char *ptr = (char *)renderer->m_SamplerStates + 8 * ((signed int)renderer->m_PSSamplerFilterMode[i] + 5i64 * (signed int)renderer->m_PSSamplerAddressMode[i]);
-
-			if (ptr != (char *)&renderer->m_SamplerStates[renderer->m_PSSamplerAddressMode[i]][renderer->m_PSSamplerFilterMode[i]])
-				__debugbreak();
-
 			if (i >= 16)
 				__debugbreak();
 
