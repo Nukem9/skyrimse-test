@@ -69,11 +69,6 @@ bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
 	return false;
 }
 
-void CommandFeeder()
-{
-
-}
-
 void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 {
 	annotation->BeginEvent(L"BSShaderAccumulator: Draw1");
@@ -116,7 +111,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		GameCommandList renderBatches(0, [accumulator, a2]
 		{
 			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
-		}, true);
+		});
 
 		// LowAniso
 		DeferredCommandList lowAniso(1, [accumulator, a2]
@@ -185,17 +180,29 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 
 		{
 			ProfileTimer("RenderBatches");
+			annotation->BeginEvent(L"RenderBatches");
 			renderBatches.Wait();
+			annotation->EndEvent();
 		}
 
 		{
 			ProfileTimer("LowAniso");
 
+			annotation->BeginEvent(L"lowAniso");
 			lowAniso.Wait();
+			annotation->EndEvent();
+			annotation->BeginEvent(L"renderGrass");
 			renderGrass.Wait();
+			annotation->EndEvent();
+			annotation->BeginEvent(L"renderNoShadowGroup");
 			renderNoShadowGroup.Wait();
+			annotation->EndEvent();
+			annotation->BeginEvent(L"renderLODObjects");
 			renderLODObjects.Wait();
+			annotation->EndEvent();
+			annotation->BeginEvent(L"renderLODLand");
 			renderLODLand.Wait();
+			annotation->EndEvent();
 		}
 
 		if (!v7)
@@ -206,11 +213,15 @@ else
 		ProfileTimer("RenderBatches");
 
 		// RenderBatches
-		accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
+		annotation->BeginEvent(L"RenderBatches");
+		{
+			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
+		}
+		annotation->EndEvent();
 
 		// LowAniso
+		annotation->BeginEvent(L"LowAniso");
 		{
-
 			auto pass = accumulator->m_MainBatch->m_Passes[9];
 
 			if (pass)
@@ -221,11 +232,17 @@ else
 					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 9);
 			}
 		}
+		annotation->EndEvent();
 
 		// RenderGrass
-		accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, a2, -1);
+		annotation->BeginEvent(L"RenderGrass");
+		{
+			accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, a2, -1);
+		}
+		annotation->EndEvent();
 
 		// RenderNoShadowGroup
+		annotation->BeginEvent(L"RenderNoShadowGroup");
 		{
 			auto pass = accumulator->m_MainBatch->m_Passes[8];
 
@@ -237,8 +254,10 @@ else
 					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 8);
 			}
 		}
+		annotation->EndEvent();
 
 		// RenderLODObjects
+		annotation->BeginEvent(L"RenderLODObjects");
 		{
 			auto pass = accumulator->m_MainBatch->m_Passes[1];
 
@@ -253,6 +272,7 @@ else
 			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
 				renderer->DepthStencilStateSetDepthMode(3);
 		}
+		annotation->EndEvent();
 
 		// RenderLODLand
 		annotation->BeginEvent(L"RenderLODLand");
@@ -353,14 +373,14 @@ else
 	{
 		if (accumulator->m_MainBatch->HasTechniquePasses(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc))
 		{
-			sub_140D69E70((__int64)flt_14304E490, 2u);
+			sub_140D69E70((__int64)flt_14304E490, 2u);// BSGraphics::Renderer::ClearDepthStencil(CLEAR_DEPTH_STENCIL_TARGET_STENCIL)
 			sub_140D69D30((float *)flt_14304E490, 0.0, 0.0, 0.0, 0);
 			__int64 v20 = sub_1412FD120();
-			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 0, v20, 3, 1);
-			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 1u, 7, 3, 1);
-			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);
-			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);
-			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 0, v20, 3, 1);// RENDER_TARGET_NORMAL_TAAMASK_SSRMASK (This can change) SRTM_NO_CLEAR
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 1u, 7, 3, 1);// RENDER_TARGET_MOTION_VECTOR SRTM_NO_CLEAR
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
+			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 			accumulator->RenderTechniques(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc, a2, -1);
 			sub_140D69DA0((DWORD *)flt_14304E490);
 			*(DWORD *)(*(uint64_t *)((*(uint64_t*)(g_ModuleBase + 0x31F5810)) + 496) + 44i64) = 1;
@@ -371,10 +391,10 @@ else
 	if (a2 & 0x40)
 	{
 		sub_140D74370((__int64)(g_ModuleBase + 0x3051B20), 0xFFFFFFFF, 3, 0);
-		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 1u, -1, 3, 1);
-		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);
-		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);
-		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);
+		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 1u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
+		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
+		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
+		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 		sub_140D69990((__int64)flt_14304E490, 1);
 		sub_1412FADA0();
 		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 0, 1, 3, 1);

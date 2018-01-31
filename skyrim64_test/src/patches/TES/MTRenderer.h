@@ -314,65 +314,100 @@ namespace MTRenderer
 class GameCommandList
 {
 public:
-	struct SubdivideData
-	{
-		uintptr_t DataStart;
-		int CommandCount;
-		int JobId;
-	};
-
 	int m_Index;
-	std::vector<SubdivideData> m_Subdivisions;
-	std::vector<int> m_SubdividedJobs;
+	uint32_t m_CommandCount;
 	uintptr_t m_CommandDataStart;
 	uintptr_t m_CommandData;
-	uint32_t m_DrawCount;
-	bool m_EnableSubdivide;
-	uint32_t m_TotalDraws;
 
 public:
-	GameCommandList(int Index, std::function<void()> ListBuildFunction, bool EnableSubdiv = false) : m_Index(Index)
+	GameCommandList(int Index, std::function<void()> ListBuildFunction) : m_Index(Index)
 	{
 		ProfileTimer("GameCommandList");
 
-		m_TotalDraws = 0;
-		m_DrawCount = 0;
-		m_EnableSubdivide = EnableSubdiv;
 		ActiveManager = this;
 
+		m_CommandCount = 0;
 		m_CommandDataStart = commandDataStart[m_Index];
 		m_CommandData = commandDataStart[m_Index];
-
-		m_Subdivisions.push_back({ m_CommandData, 0, 0 });
 
 		if (ListBuildFunction)
 			ListBuildFunction();
 
 		MTRenderer::InsertCommand<MTRenderer::EndListRenderCommand>();
 		ActiveManager = nullptr;
-
-		if (EnableSubdiv && m_Subdivisions.size() > 1)
-		{
-			Subdivide();
-			m_Subdivisions.pop_back();
-		}
 	}
 
 	void Wait()
 	{
-		if (m_Subdivisions.size() > 0)
-		{
-			MTRenderer::ExecuteCommandList(m_Subdivisions[0].DataStart, false);
+		ExecuteCommandList(false);
+	}
 
+	void ExecuteCommandList(bool MTWorker)
+	{
+		using namespace MTRenderer;
+		ProfileTimer("GameCommandListToD3D");
+
+		testmtr = MTWorker;
+
+		// Run everything in the command list...
+		bool endOfList = false;
+		int cmdCount = 0;
+
+		for (uintptr_t ptr = m_CommandDataStart; !endOfList;)
+		{
+			cmdCount++;
+			RenderCommand *cmd = (RenderCommand *)ptr;
+			ptr += cmd->m_Size;
+
+			switch (cmd->m_Type)
 			{
-				ProfileTimer("T1");
-				for (int i = 1; i < m_Subdivisions.size(); i++)
-				{
-					DC_WaitDeferred(m_Subdivisions[i].JobId);
-					//m_SubdividedJobs.erase(m_SubdividedJobs.begin());
-				}
+			case 0:
+				endOfList = true;
+				break;
+
+			case 1:
+				static_cast<ClearStateRenderCommand *>(cmd)->Run();
+				break;
+
+			case 2:
+				static_cast<SetStateRenderCommand *>(cmd)->Run();
+				break;
+
+			case 3:
+				static_cast<DrawGeometryRenderCommand *>(cmd)->Run();
+				break;
+
+			case 4:
+			{
+				auto b = static_cast<LockShaderTypeRenderCommand *>(cmd);
+
+				if (b->m_Lock)
+					LockShader(b->m_LockIndex);
+				else
+					UnlockShader(b->m_LockIndex);
+			}
+			break;
+
+			case 5:
+				static_cast<SetAccumulatorRenderCommand *>(cmd)->Run();
+				break;
+
+			case 6:
+				//static_cast<Setsub_14131E960 *>(cmd)->Run();
+				break;
+
+			case 7:
+				static_cast<DrawGeometryMultiRenderCommand *>(cmd)->Run();
+				break;
+
+			default:
+				__debugbreak();
+				break;
 			}
 		}
+
+		ProfileCounterAdd("Command Count", cmdCount);
+		testmtr = false;
 	}
 
 	template<typename T, class ... Types>
@@ -383,52 +418,9 @@ public:
 		// Utilize placement new, then increment to next command slot
 		new ((void *)m_CommandData) T(args...);
 		m_CommandData += sizeof(T);
+		m_CommandCount++;
 
 		return true;
-	}
-
-	bool Subdivide()
-	{
-		//
-		// Layout:
-		//
-		// Subdivision N: Rendered on main thread
-		// Subdivision N+1: Rendered on worker thread
-		// Subdivision N+2: Rendered on worker thread
-		// Subdivision N+N: Rendered on worker thread
-		//
-		if (!m_EnableSubdivide)
-			return false;
-
-		// End this list
-		MTRenderer::InsertCommand<MTRenderer::EndListRenderCommand>();
-		m_Subdivisions.back().CommandCount = m_DrawCount;
-
-		// Is that list a worker candidate? Assign it a job and render to a D3D list
-		if (m_Subdivisions.size() > 1)
-		{
-			int jobId = DC_RenderDeferred((uint64_t)m_Subdivisions.back().DataStart, 0, [](long long a1, unsigned int arg2)
-			{
-				BSGraphics::Renderer::FlushThreadedVars();
-				MTRenderer::ExecuteCommandList(a1, true);
-			});
-
-			m_Subdivisions.back().JobId = jobId;
-			m_SubdividedJobs.push_back(jobId);
-		}
-
-		// Start a new command list, but use the same allocated memory block
-		m_Subdivisions.push_back({ m_CommandData, 0, 0 });
-		m_DrawCount = 0;
-
-		return true;
-	}
-
-	int IncDrawCount(int Count)
-	{
-		m_TotalDraws += Count;
-		m_DrawCount += Count;
-		return m_DrawCount;
 	}
 };
 
@@ -436,25 +428,32 @@ class DeferredCommandList : public GameCommandList
 {
 public:
 	int m_InternalId;
-
-	DeferredCommandList(int Index, std::function<void()> ListBuildFunction) : GameCommandList(Index, ListBuildFunction, false)
+	DeferredCommandList(int Index, std::function<void()> ListBuildFunction) : GameCommandList(Index, ListBuildFunction)
 	{
-		m_InternalId = DC_RenderDeferred((uint64_t)m_CommandDataStart, Index, [](long long a1, unsigned int arg2)
+		// The Game->D3D command list conversion has an overhead both when creating it
+		// and sending it to the GPU. We set a minimum number of commands to prevent
+		// wasting that extra time.
+		if (m_CommandCount > 10)
 		{
-			BSGraphics::Renderer::FlushThreadedVars();
-
-			//std::vector<uintptr_t>& m_Subdivisions = ((DeferredCommandList *)a1)->m_Subdivisions;
-
-			// Run everything in the command list (on a new thread; this is async)
-			//for (size_t i = 0; i < m_Subdivisions.size(); i++)
-				MTRenderer::ExecuteCommandList(a1, true);
-
-			//MTRenderer::ExecuteCommandList(arg2, true);
-		});
+			m_InternalId = DC_RenderDeferred((uint64_t)this, 0, [](long long a1, unsigned int arg2)
+			{
+				BSGraphics::Renderer::FlushThreadedVars();
+				((DeferredCommandList *)a1)->ExecuteCommandList(true);
+			}, false);
+		}
 	}
 
 	void Wait()
 	{
-		DC_WaitDeferred(m_InternalId);
+		if (m_CommandCount > 10)
+		{
+			// Wait for job completion
+			DC_WaitDeferred(m_InternalId);
+		}
+		else
+		{
+			// Execute directly on caller (main) thread
+			ExecuteCommandList(false);
+		}
 	}
 };
