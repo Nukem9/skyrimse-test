@@ -208,11 +208,12 @@ namespace BSGraphics
 			uint32_t m_CSSamplerModifiedBits;					// Flags
 			uint32_t m_CSUAVModifiedBits;						// Flags
 
-			uint32_t dword_14304DEC8[8];
-
+			uint32_t m_RenderTargetIndexes[8];					// enum <unnamed>: RENDER_TARGET_NONE...RENDER_TARGET_CUBEMAP_REFLECTIONS
 			uint32_t rshadowState_iDepthStencil;				// Index
 			uint32_t rshadowState_iDepthStencilSlice;			// Index
-			uint32_t iRenderTargetIndexes[5][2];				// Index[0] = Base target, Index[1] = Slice target
+			uint32_t unknown1;
+			uint32_t unknown2;
+			uint32_t m_RenderTargetStates[8];					// enum SetRenderTargetMode: SRTM_CLEAR...SRTM_INIT
 
 			char __zz0[0x50];
 			float m_ScrapConstantValue;							// Can hold any float value. Used for the CONSTANT_GROUP_LEVEL_SCRAP_VALUE buffer.
@@ -291,10 +292,10 @@ namespace BSGraphics
 	CHECK_OFFSET(m_CSResourceModifiedBits, 0x14304DEBC);
 	CHECK_OFFSET(m_CSSamplerModifiedBits, 0x14304DEC0);
 	CHECK_OFFSET(m_CSUAVModifiedBits, 0x14304DEC4);
-	CHECK_OFFSET(dword_14304DEC8, 0x14304DEC8);
+	CHECK_OFFSET(m_RenderTargetIndexes, 0x14304DEC8);
 	CHECK_OFFSET(rshadowState_iDepthStencil, 0x14304DEE8);
 	CHECK_OFFSET(rshadowState_iDepthStencilSlice, 0x14304DEEC);
-	CHECK_OFFSET(iRenderTargetIndexes, 0x14304DEF0);
+	CHECK_OFFSET(m_RenderTargetStates, 0x14304DEF8);
 	CHECK_OFFSET(__zz0, 0x14304DF18);
 	CHECK_OFFSET(m_ScrapConstantValue, 0x14304DF68);
 	CHECK_OFFSET(m_PSSamplerAddressMode, 0x14304DF6C);
