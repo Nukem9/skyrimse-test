@@ -54,7 +54,7 @@ BSGrassShader::BSGrassShader() : BSShader("RunGrass")
 
 BSGrassShader::~BSGrassShader()
 {
-	__debugbreak();
+	Assert(false);
 }
 
 bool BSGrassShader::SetupTechnique(uint32_t Technique)
@@ -361,7 +361,7 @@ uint32_t BSGrassShader::GetRawTechnique(uint32_t Technique)
 		break;
 
 	default:
-		// bAssert("BSGrassShader: bad technique ID");
+		AssertMsg(false, "BSGrassShader: bad technique ID");
 		break;
 	}
 

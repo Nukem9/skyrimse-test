@@ -42,7 +42,7 @@ BSDistantTreeShader::BSDistantTreeShader() : BSShader("DistantTree")
 
 BSDistantTreeShader::~BSDistantTreeShader()
 {
-	__debugbreak();
+	Assert(false);
 }
 
 bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
@@ -123,8 +123,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 			NiColorA(-normalizedDir.x, -normalizedDir.y, -normalizedDir.z, 1.0f));
 	}
 
-	// if (!qword_1432A7F58)
-	// bAssert("LOD tree texture atlas for current worldspace not found.");
+	AssertMsg(qword_1432A7F58, "LOD tree texture atlas for current worldspace not found.");
 
 	renderer->SetTexture(0, qword_1432A7F58->QRendererTexture());// Diffuse
 	renderer->SetTextureAddressMode(0, 0);
@@ -182,12 +181,12 @@ uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)
 {
 	uint32_t outputTech = 0;
 
-	if (Technique == BSSM_DISTANTTREE)
-		outputTech = RAW_TECHNIQUE_BLOCK;
-	else if (Technique == BSSM_DISTANTTREE_DEPTH)
-		outputTech = RAW_TECHNIQUE_DEPTH;
-	//else
-	// bAssert("BSDistantTreeShader: bad technique ID");
+	switch (Technique)
+	{
+	case BSSM_DISTANTTREE:outputTech = RAW_TECHNIQUE_BLOCK; break;
+	case BSSM_DISTANTTREE_DEPTH:outputTech = RAW_TECHNIQUE_DEPTH; break;
+	default:AssertMsg(false, "BSDistantTreeShader: bad technique ID"); break;
+	}
 
 	if (bUseEarlyZ)
 		outputTech |= RAW_FLAG_DO_ALPHA;

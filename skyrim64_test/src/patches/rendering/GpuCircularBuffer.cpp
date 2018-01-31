@@ -12,9 +12,7 @@ void GpuCircularBuffer::Initialize(ID3D11Device *Device, uint32_t Type, uint32_t
 	Description.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	Description.MiscFlags = 0;
 	Description.StructureByteStride = 0;
-
-	if (FAILED(Device->CreateBuffer(&Description, nullptr, &D3DBuffer)))
-		__debugbreak();
+	Assert(SUCCEEDED(Device->CreateBuffer(&Description, nullptr, &D3DBuffer)));
 
 	FrameUtilizedAmounts = new uint32_t[MaxFrames];
 	CurrentAvailable = BufferSize;
@@ -23,8 +21,7 @@ void GpuCircularBuffer::Initialize(ID3D11Device *Device, uint32_t Type, uint32_t
 void *GpuCircularBuffer::MapData(ID3D11DeviceContext *Context, uint32_t AllocationSize, uint32_t *AllocationOffset, bool ForceRemap)
 {
 	// GPU allocations are required to be 16-byte aligned (explicitly set by me)
-	if (AllocationSize % 16 != 0)
-		__debugbreak();
+	Assert(AllocationSize % 16 == 0);
 
 	//
 	// Allocation boundaries are linear - they don't wrap around to the beginning:
@@ -40,17 +37,11 @@ void *GpuCircularBuffer::MapData(ID3D11DeviceContext *Context, uint32_t Allocati
 
 	uint32_t newSize = CurrentUtilized + AllocationSize;
 	uint32_t allocBase = CurrentOffset;
-
-	// Check that we don't exceed buffer size for this frame
-	if (newSize >= CurrentAvailable)
-		__debugbreak();
+	AssertMsg(newSize <= CurrentAvailable, "Allocation would exceed available free data for this frame");
 
 	// Allow the buffer to stay mapped across multiple function calls
 	if (ForceRemap || !Map.pData)
-	{
-		if (FAILED(Context->Map(D3DBuffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &Map)))
-			__debugbreak();
-	}
+		Assert(SUCCEEDED(Context->Map(D3DBuffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &Map)));
 
 	CurrentUtilized = newSize;
 	CurrentOffset += AllocationSize;

@@ -153,21 +153,21 @@ namespace BSShaderRenderTargets
 
 	const char *GetStencilName(int Index)
 	{
-		assert(Index < DEPTH_STENCIL_COUNT);
+		Assert(Index < DEPTH_STENCIL_COUNT);
 
 		return Debug_DepthStencilNames[Index];
 	}
 
 	const char *Get3DTextureName(int Index)
 	{
-		assert(Index < TEXTURE3D_COUNT);
+		Assert(Index < TEXTURE3D_COUNT);
 
 		return Debug_3DTextureNames[Index];
 	}
 
 	const char *GetTargetName(int Index)
 	{
-		assert(Index < RENDER_TARGET_COUNT);
+		Assert(Index < RENDER_TARGET_COUNT);
 
 		return Debug_RenderTargetNames[Index];
 	}

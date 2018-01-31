@@ -93,22 +93,16 @@ void InitializeTLSDll()
 	size_t(*GetStaticTlsDataSize)();
 	uint32_t(*GetStaticTlsSlot)();
 
-	if (g_TlsIndex)
-		__debugbreak();
+	AssertMsg(g_TlsIndex == 0, "TlsIndex is trying to be initialized twice");
 
 	HMODULE lib = LoadLibraryA("skyrim64_tls_mt.dll");
 	*(FARPROC *)&GetStaticTlsData = GetProcAddress(lib, "GetStaticTlsData");
 	*(FARPROC *)&GetStaticTlsDataSize = GetProcAddress(lib, "GetStaticTlsDataSize");
 	*(FARPROC *)&GetStaticTlsSlot = GetProcAddress(lib, "GetStaticTlsSlot");
 
-	if (!GetStaticTlsData || !GetStaticTlsDataSize || !GetStaticTlsSlot)
-		__debugbreak();
-
-	if (GetStaticTlsDataSize() <= 0)
-		__debugbreak();
-
-	if (GetStaticTlsSlot() == 0 || GetStaticTlsSlot() == _tls_index)
-		__debugbreak();
+	Assert(GetStaticTlsData && GetStaticTlsDataSize && GetStaticTlsSlot);
+	Assert(GetStaticTlsDataSize() > 0);
+	Assert(GetStaticTlsSlot() != 0 && GetStaticTlsSlot() != _tls_index);
 
 	// g_TlsIndex is the IMPLICIT index for skyrim64_tls_mt.dll. More info: http://www.nynaeve.net/?p=185
 	InterlockedExchange((volatile LONG *)&g_TlsIndex, GetStaticTlsSlot());
@@ -143,16 +137,14 @@ VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
 			delayedTlsBlocks[delayedThreadPatchIndex] = __readgsqword(0x58);
 			delayedThreadPatchIndex++;
 
-			if (delayedThreadPatchIndex >= ARRAYSIZE(delayedTlsBlocks))
-				__debugbreak();
+			Assert(delayedThreadPatchIndex < ARRAYSIZE(delayedTlsBlocks));
 		}
 		else
 		{
 			uintptr_t *currentTlsBlock = (uintptr_t *)GET_TLS_BLOCK(g_TlsIndex);
 			auto tlsMapping = g_ThreadTLSMaps.find(GetCurrentThreadId());
 
-			if (tlsMapping != g_ThreadTLSMaps.end())
-				__debugbreak();
+			AssertMsg(tlsMapping == g_ThreadTLSMaps.end(), "Thread TLS map exists already?!");
 
 			// New thread, redirect TLS[_tls_index] to main thread's TLS[_tls_index]
 			g_ThreadTLSMaps[GetCurrentThreadId()] = *currentTlsBlock;
@@ -175,8 +167,7 @@ VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
 			uintptr_t *currentTlsBlock = (uintptr_t *)GET_TLS_BLOCK(g_TlsIndex);
 			auto tlsMapping = g_ThreadTLSMaps.find(GetCurrentThreadId());
 
-			if (tlsMapping == g_ThreadTLSMaps.end())
-				__debugbreak();
+			AssertMsg(tlsMapping != g_ThreadTLSMaps.end(), "Trying to remove a TLS map that doesn't exist?...");
 
 			// Restore the original thread's TLS block. It's freed in NTDLL on thread exit,
 			// causing a heap corruption otherwise.

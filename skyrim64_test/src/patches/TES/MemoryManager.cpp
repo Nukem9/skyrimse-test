@@ -52,10 +52,9 @@ void *MemoryManager::Alloc(size_t Size, uint32_t Alignment, bool Aligned)
 	if (Aligned)
 	{
 		// Check for when the game passes in bad alignments...
-		if (Alignment == 0 || Alignment % 2 != 0)
-			MessageBoxA(nullptr, "Alignment is fucked", "", 0);
+		AssertMsg(Alignment != 0 && Alignment % 2 == 0, "Alignment is fucked");
 
-		// Alignment must be a power of 2, round it up if needed
+		// Must be a power of 2, round it up if needed
 		if ((Alignment & (Alignment - 1)) != 0)
 		{
 			Alignment--;

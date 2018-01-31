@@ -66,8 +66,7 @@ namespace BSGraphics
 			desc.Query = D3D11_QUERY_EVENT;
 			desc.MiscFlags = 0;
 
-			if (FAILED(renderer->m_Device->CreateQuery(&desc, &FrameCompletedQueries[i])))
-				__debugbreak();
+			Assert(SUCCEEDED(renderer->m_Device->CreateQuery(&desc, &FrameCompletedQueries[i])));
 		}
 
 		//
@@ -85,9 +84,7 @@ namespace BSGraphics
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 			desc.MiscFlags = 0;
 			desc.StructureByteStride = 0;
-
-			if (FAILED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TempDynamicBuffers[i])))
-				__debugbreak();
+			Assert(SUCCEEDED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TempDynamicBuffers[i])));
 		}
 
 		DynamicBuffer.Initialize(renderer->m_Device, D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER, VertexIndexRingBufferSize, maxFrames);
@@ -117,10 +114,7 @@ namespace BSGraphics
 			desc.StructureByteStride = 0;
 
 			for (int j = 0; j < 4; j++)
-			{
-				if (FAILED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TestBuffers[j][i])))
-					__debugbreak();
-			}
+				Assert(SUCCEEDED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TestBuffers[j][i])));
 		}
 
 		D3D11_BUFFER_DESC desc;
@@ -130,9 +124,7 @@ namespace BSGraphics
 		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		desc.MiscFlags = 0;
 		desc.StructureByteStride = 0;
-
-		if (FAILED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TestLargeBuffer)))
-			__debugbreak();
+		Assert(SUCCEEDED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TestLargeBuffer)));
 
 		ShaderConstantBuffer.Initialize(renderer->m_Device, D3D11_BIND_CONSTANT_BUFFER, ShaderConstantRingBufferSize, maxFrames);
 
@@ -142,8 +134,7 @@ namespace BSGraphics
 
 	void Renderer::OnNewFrame()
 	{
-		if (FrameCompletedQueryPending[CurrentFrameIndex])
-			__debugbreak();
+		Assert(!FrameCompletedQueryPending[CurrentFrameIndex]);
 
 		// Set a marker for when the GPU is done processing the previous frame
 		GetGlobalsNonThreaded()->m_DeviceContext->End(FrameCompletedQueries[CurrentFrameIndex]);
@@ -164,12 +155,10 @@ namespace BSGraphics
 			HRESULT hr = GetGlobalsNonThreaded()->m_DeviceContext->GetData(FrameCompletedQueries[prevQueryIndex], &data, sizeof(data), D3D11_ASYNC_GETDATA_DONOTFLUSH);
 
 			// Those commands are REQUIRED to be complete by now - no exceptions
-			if (FAILED(hr) || data != TRUE)
-				__debugbreak();
+			AssertMsg(SUCCEEDED(hr) && data == TRUE, "DeviceContext::GetData() MUST SUCCEED BY NOW");
 
 			DynamicBuffer.FreeOldFrame(prevQueryIndex);
 			ShaderConstantBuffer.FreeOldFrame(prevQueryIndex);
-
 			FrameCompletedQueryPending[prevQueryIndex] = false;
 		}
 
@@ -182,8 +171,7 @@ namespace BSGraphics
 
 	ID3D11Buffer *Renderer::MapDynamicConstantBuffer(void **DataPointer, uint32_t *AllocationSize, uint32_t *AllocationOffset)
 	{
-		if (*AllocationSize <= 0)
-			__debugbreak();
+		Assert(*AllocationSize > 0);
 
 		// Size must be rounded up to nearest 256 bytes (D3D11.1 specification)
 		uint32_t roundedAllocSize = (*AllocationSize + 256 - 1) & ~(256 - 1);
@@ -213,8 +201,7 @@ namespace BSGraphics
 		}
 
 		// Allocate from small constant buffer pool (TestBufferUsedBits is a TLS variable)
-		if (*AllocationSize <= 0  || *AllocationSize > 4096)
-			__debugbreak();
+		Assert(*AllocationSize > 0 && *AllocationSize <= 4096);
 
 		if (Level >= ARRAYSIZE(TestBufferUsedBits))
 			Level = ARRAYSIZE(TestBufferUsedBits) - 1;
@@ -222,6 +209,7 @@ namespace BSGraphics
 		// Round to nearest 16, determine bit index, then loop until there's a free slot
 		uint32_t roundedAllocSize = (*AllocationSize + 16 - 1) & ~(16 - 1);
 		ID3D11Buffer *buffer = nullptr;
+		D3D11_MAPPED_SUBRESOURCE map;
 
 		if (roundedAllocSize <= (63 * 16))
 		{
@@ -248,12 +236,8 @@ namespace BSGraphics
 
 		ProfileCounterAdd("CB Bytes Wasted", (roundedAllocSize - *AllocationSize));
 
-		if (!buffer)
-			__debugbreak();
-
-		D3D11_MAPPED_SUBRESOURCE map;
-		if (FAILED(m_DeviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
-			__debugbreak();
+		Assert(buffer);
+		Assert(SUCCEEDED(m_DeviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)));
 
 		*DataPointer = map.pData;
 		*AllocationSize = map.RowPitch;
@@ -301,15 +285,13 @@ namespace BSGraphics
 		if ((1u << logIndex) < AllocationSize)
 			logIndex += 1;
 
-		if (logIndex < 7 || logIndex >= (11 + 7))
-			__debugbreak();
+		Assert(logIndex >= 7 || logIndex < (11 + 7));
 
 		// Adjust base index - buffers start at 256 (2^7) bytes
 		ID3D11Buffer *buffer = TempDynamicBuffers[logIndex - 7];
 
 		D3D11_MAPPED_SUBRESOURCE map;
-		if (FAILED(m_DeviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)))
-			__debugbreak();
+		Assert(SUCCEEDED(m_DeviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)));
 
 		m_DynamicBuffers[0] = buffer;
 		m_CurrentDynamicBufferIndex = 0;

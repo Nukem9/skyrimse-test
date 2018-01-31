@@ -615,9 +615,9 @@ void BSBatchRenderer::DrawGeometryDefault(BSRenderPass *Pass, bool AlphaTest, ui
 {
 	MemoryContextTracker tracker(26, "BSBatchRenderer.cpp");
 
-	// bAssert(Pass, "Render Error: Render pass is nullptr");
-	// bAssert(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
-	// bAssert(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
+	AssertMsgDebug(Pass, "Render Error: Render pass is nullptr");
+	AssertMsgDebug(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
+	AssertMsgDebug(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
 
 	SetupGeometryBlending(Pass, Pass->m_Shader, (AlphaTest || zbUseEarlyZ) ? true : false, RenderFlags);
 	DrawTriStrips(Pass);
@@ -626,14 +626,14 @@ void BSBatchRenderer::DrawGeometryDefault(BSRenderPass *Pass, bool AlphaTest, ui
 
 void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
 {
-	// bAssert(Pass, "Render Error: Render pass is nullptr");
-	// bAssert(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
-	// bAssert(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
+	AssertMsgDebug(Pass, "Render Error: Render pass is nullptr");
+	AssertMsgDebug(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
+	AssertMsgDebug(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
 
 	// "Render Error : Skin instance is nullptr"
 	// "Render Error : Skin partition is nullptr"
 	// "Render Error : Skin partition array is nullptr"
-	// bAssert(Pass->m_Property, "Don't have a shader property when we expected one.");
+	AssertMsgDebug(Pass->m_Property, "Don't have a shader property when we expected one.");
 
 	auto sub_140C71A50 = (const void *(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71A50);
 	auto sub_140C71AB0 = (void(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71AB0);

@@ -14,7 +14,7 @@ BSShader::BSShader(const char *LoaderType)
 
 BSShader::~BSShader()
 {
-	__debugbreak();
+	Assert(false);
 }
 
 void BSShader::SetupMaterial(BSShaderMaterial const *Material)

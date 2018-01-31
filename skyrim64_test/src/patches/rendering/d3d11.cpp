@@ -289,7 +289,8 @@ void CommitShaderChanges(bool Unknown)
 						break;
 
 					default:
-						__debugbreak();
+						Assert(false);
+						break;
 					}
 
 					renderer->m_DeviceContext->ClearDepthStencilView(depthStencil, clearFlags, 1.0f, 0);
@@ -451,6 +452,8 @@ void CommitShaderChanges(bool Unknown)
 	// Compute shader unordered access views (UAVs)
 	if (uint32_t bits = renderer->m_CSUAVModifiedBits; bits != 0)
 	{
+		AssertMsg((bits & 0xFFFF0000) == 0, "CSUAVModifiedBits must not exceed 8th index");
+
 		for_each_bit(i, bits)
 			renderer->m_DeviceContext->CSSetUnorderedAccessViews(i, 1, &renderer->m_CSUAVResources[i], nullptr);
 
@@ -460,13 +463,10 @@ void CommitShaderChanges(bool Unknown)
 	// Pixel shader samplers
 	if (uint32_t bits = renderer->m_PSSamplerModifiedBits; bits != 0)
 	{
-		for_each_bit(i, bits)
-		{
-			if (i >= 16)
-				__debugbreak();
+		AssertMsg((bits & 0xFFFF0000) == 0, "PSSamplerModifiedBits must not exceed 15th index");
 
+		for_each_bit(i, bits)
 			renderer->m_DeviceContext->PSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_PSSamplerAddressMode[i]][renderer->m_PSSamplerFilterMode[i]]);
-		}
 
 		renderer->m_PSSamplerModifiedBits = 0;
 	}
@@ -474,6 +474,8 @@ void CommitShaderChanges(bool Unknown)
 	// Pixel shader resources
 	if (uint32_t bits = renderer->m_PSResourceModifiedBits; bits != 0)
 	{
+		AssertMsg((bits & 0xFFFF0000) == 0, "PSResourceModifiedBits must not exceed 15th index");
+
 		for_each_bit(i, bits)
 		{
 			// Combine PSSSR(0, 1, [rsc1]) + PSSSR(1, 1, [rsc2]) into PSSSR(0, 2, [rsc1, rsc2])
@@ -492,18 +494,10 @@ void CommitShaderChanges(bool Unknown)
 	// Compute shader samplers
 	if (uint32_t bits = renderer->m_CSSamplerModifiedBits; bits != 0)
 	{
+		AssertMsg((bits & 0xFFFF0000) == 0, "CSSamplerModifiedBits must not exceed 15th index");
+
 		for_each_bit(i, bits)
-		{
-			char *ptr = (char *)&renderer->m_SamplerStates + 8 * ((signed int)renderer->m_CSSamplerSetting2[i] + 5i64 * (signed int)renderer->m_CSSamplerSetting1[i]);
-
-			if (ptr != (char *)&renderer->m_SamplerStates[renderer->m_CSSamplerSetting1[i]][renderer->m_CSSamplerSetting2[i]])
-				__debugbreak();
-
-			if (i >= 16)
-				__debugbreak();
-
 			renderer->m_DeviceContext->CSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_CSSamplerSetting1[i]][renderer->m_CSSamplerSetting2[i]]);
-		}
 
 		renderer->m_CSSamplerModifiedBits = 0;
 	}
@@ -511,6 +505,8 @@ void CommitShaderChanges(bool Unknown)
 	// Compute shader resources
 	if (uint32_t bits = renderer->m_CSResourceModifiedBits; bits != 0)
 	{
+		AssertMsg((bits & 0xFFFF0000) == 0, "CSResourceModifiedBits must not exceed 15th index");
+
 		for_each_bit(i, bits)
 			renderer->m_DeviceContext->CSSetShaderResources(i, 1, &renderer->m_CSResources[i]);
 

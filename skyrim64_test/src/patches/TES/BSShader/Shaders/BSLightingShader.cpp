@@ -117,7 +117,7 @@ BSLightingShader::BSLightingShader() : BSShader("Lighting")
 
 BSLightingShader::~BSLightingShader()
 {
-	__debugbreak();
+	Assert(false);
 }
 
 bool BSLightingShader::SetupTechnique(uint32_t Technique)

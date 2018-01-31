@@ -40,19 +40,19 @@ public:
 
 		Data()
 		{
-			__debugbreak();
+			Assert(false);
 		}
 
 		~Data()
 		{
-			__debugbreak();
+			Assert(false);
 		}
 	};
 #pragma pack(pop)
 
 	virtual ~NiBoneMatrixSetterI()
 	{
-		__debugbreak();
+		Assert(false);
 	}
 
 	virtual void SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform) = 0;

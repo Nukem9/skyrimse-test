@@ -4,6 +4,12 @@
 #include <type_traits>
 #pragma warning(disable:4094) // untagged 'struct' declared no symbols
 
+#define Assert(cond)					if(!(cond)) XutilAssert(__FILE__, __LINE__, #cond);
+#define AssertDebug(cond)				if(!(cond)) XutilAssert(__FILE__, __LINE__, #cond);
+#define AssertMsg(cond, msg)			AssertMsgVa(cond, msg);
+#define AssertMsgDebug(cond, msg)		AssertMsgVa(cond, msg);
+#define AssertMsgVa(cond, msg, ...)		if(!(cond)) XutilAssert(__FILE__, __LINE__, "%s\n\n" msg, #cond, ##__VA_ARGS__);
+
 #define VTABLE_FUNCTION_INDEX(Function) vtable_index_util::getIndexOf(&Function)
 
 class vtable_index_util
@@ -66,6 +72,7 @@ uintptr_t FindPatternSimple(uintptr_t StartAddress, uintptr_t MaxSize, const BYT
 void PatchMemory(ULONG_PTR Address, PBYTE Data, SIZE_T Size);
 void SetThreadName(DWORD dwThreadID, const char *ThreadName);
 void Trim(char *Buffer, char C);
+void XutilAssert(const char *File, int Line, const char *Format, ...);
 
 #define templated(...) __VA_ARGS__
 #define AutoPtr(Type, Name, Offset) static Type& Name = (*(Type *)((uintptr_t)GetModuleHandle(nullptr) + Offset))

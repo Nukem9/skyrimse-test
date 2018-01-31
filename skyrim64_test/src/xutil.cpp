@@ -122,6 +122,26 @@ void Trim(char *Buffer, char C)
 		Buffer[len - 1] = '\0';
 }
 
+
+void XutilAssert(const char *File, int Line, const char *Format, ...)
+{
+	char buffer[4096];
+	char message[4096];
+
+	va_list ap;
+	va_start(ap, Format);
+
+	_vsnprintf_s(buffer, _TRUNCATE, Format, ap);
+	sprintf_s(message, "%s(%d):\n\n%s", File, Line, buffer);
+
+	MessageBoxA(nullptr, message, "ASSERTION", MB_ICONERROR);
+
+	if (IsDebuggerPresent())
+		__debugbreak();
+
+	ExitProcess(1);
+}
+
 vtable_index_util *vtable_index_util::GlobalInstance;
 
 vtable_index_util *vtable_index_util::Instance()

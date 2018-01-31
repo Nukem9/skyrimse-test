@@ -50,7 +50,7 @@ BSSkyShader::BSSkyShader() : BSShader("Sky")
 
 BSSkyShader::~BSSkyShader()
 {
-	__debugbreak();
+	Assert(false);
 }
 
 bool BSSkyShader::SetupTechnique(uint32_t Technique)
@@ -344,7 +344,7 @@ uint32_t BSSkyShader::GetRawTechnique(uint32_t Technique)
 	case BSSM_SKY_SUNGLARE:return RAW_TECHNIQUE_SUNGLARE;
 	}
 
-	// bAssert("BSSkyShader: bad technique ID");
+	//AssertMsg(false, "BSSkyShader: bad technique ID");
 	return 0;
 }
 

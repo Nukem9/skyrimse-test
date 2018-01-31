@@ -57,8 +57,8 @@ void BSSpinLock::Acquire(int InitialAttemps)
 
 void BSSpinLock::Release()
 {
-	// assert(IsLocked(), "Invalid lock count");
-	// assert(ThreadOwnsLock(), "Thread does not own spinlock");
+	AssertMsgDebug(IsLocked(), "Invalid lock count");
+	AssertMsgDebug(ThreadOwnsLock(), "Thread does not own spinlock");
 
 	// In the public build they ignore threading problems
 	if (!ThreadOwnsLock())
@@ -70,12 +70,12 @@ void BSSpinLock::Release()
 		_mm_mfence();
 
 		uint32_t oldCount = InterlockedCompareExchange(&m_LockCount, 0, 1);
-		// assert(oldCount == 1, "The spinlock wasn't correctly released");
+		AssertMsgDebug(oldCount == 1, "The spinlock wasn't correctly released");
 	}
 	else
 	{
 		uint32_t oldCount = InterlockedDecrement(&m_LockCount);
-		// assert(oldCount < 0xFFFFFFFF && oldCount, "Invalid lock count");
+		AssertMsgDebug(oldCount < 0xFFFFFFFF && oldCount, "Invalid lock count");
 	}
 }
 

@@ -140,12 +140,10 @@ namespace MTRenderer
 
 	void LockShader(int ShaderType)
 	{
+		Assert(ShaderType != -1, "Invalid shader type supplied - should've never reached this");
+
 		switch (ShaderType)
 		{
-		case -1:
-			__debugbreak();
-			break;
-
 		case 1:
 		case 6:
 		case 9:
@@ -162,12 +160,10 @@ namespace MTRenderer
 
 	void UnlockShader(int ShaderType)
 	{
+		Assert(ShaderType != -1, "Invalid shader type supplied - should've never reached this");
+
 		switch (ShaderType)
 		{
-		case -1:
-			__debugbreak();
-			break;
-
 		case 1:
 		case 6:
 		case 9:

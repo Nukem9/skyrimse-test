@@ -26,8 +26,7 @@ void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<Pa
 	sprintf_s(buf1, "C:\\myfolder\\%s\\%s_%s_%X.ps.txt", m_Type, m_Type, TechName, m_Shader->m_TechniqueID);
 
 	// Something went really wrong if the shader exists already
-	if (GetFileAttributesA(buf1) != INVALID_FILE_ATTRIBUTES)
-		__debugbreak();
+	AssertMsg(GetFileAttributesA(buf1) == INVALID_FILE_ATTRIBUTES, "Trying to overwrite a shader that already exists!");
 
 	FILE *file = fopen(buf1, "w");
 

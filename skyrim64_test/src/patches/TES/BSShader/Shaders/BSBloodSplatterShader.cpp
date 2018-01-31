@@ -37,7 +37,7 @@ BSBloodSplatterShader::BSBloodSplatterShader() : BSShader("BloodSplatter")
 
 BSBloodSplatterShader::~BSBloodSplatterShader()
 {
-	__debugbreak();
+	Assert(false);
 }
 
 bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
@@ -162,7 +162,7 @@ uint32_t BSBloodSplatterShader::GetRawTechnique(uint32_t Technique)
 	case BSSM_BLOOD_SPLATTER:return RAW_TECHNIQUE_SPLATTER;
 	}
 
-	// bAssert("BSBloodSplatterShader: bad technique ID");
+	AssertMsg(false, "BSBloodSplatterShader: bad technique ID");
 	return 0;
 }
 
