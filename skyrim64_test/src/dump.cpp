@@ -19,18 +19,13 @@ BOOL WINAPI hk_QueryPerformanceCounter(LARGE_INTEGER *lpPerformanceCount)
 void EnableCookieHack()
 {
 	// Validate DOS and NT headers
-	uintptr_t moduleBase		= (uintptr_t)GetModuleHandle(nullptr);
+	uintptr_t moduleBase = (uintptr_t)GetModuleHandle(nullptr);
 	PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)moduleBase;
 	PIMAGE_NT_HEADERS64 ntHeaders = (PIMAGE_NT_HEADERS64)(moduleBase + dosHeader->e_lfanew);
 
-	if (dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
-		__debugbreak();
-
-	if (ntHeaders->Signature != IMAGE_NT_SIGNATURE)
-		__debugbreak();
-
-	if (ntHeaders->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-		__debugbreak();
+	Assert(dosHeader->e_magic == IMAGE_DOS_SIGNATURE);
+	Assert(ntHeaders->Signature == IMAGE_NT_SIGNATURE);
+	Assert(ntHeaders->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC);
 
 	// Get the load configuration section which holds the security cookie address
 	auto dataDirectory	= ntHeaders->OptionalHeader.DataDirectory;
@@ -38,19 +33,8 @@ void EnableCookieHack()
 	auto sectionSize	= dataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size;
 	auto loadConfig		= (PIMAGE_LOAD_CONFIG_DIRECTORY)(moduleBase + sectionRVA);
 
-	if (sectionRVA == 0 || sectionSize == 0)
-		__debugbreak();
-
-	if (loadConfig->SecurityCookie)
-	{
-		// Set cookie to the magic value which triggers a QueryPerformanceCounter call later on
-		*(ULONGLONG *)loadConfig->SecurityCookie = 0x2B992DDFA232;
-	}
-	else
-	{
-		MessageBoxA(nullptr, "SecurityCookie was a null pointer", "???", 0);
-		__debugbreak();
-	}
+	Assert(sectionRVA > 0 && sectionSize > 0);
+	AssertMsg(loadConfig->SecurityCookie, "SecurityCookie is a null pointer!");
 
 	// Determine the module/code section address and size
 	g_ModuleBase = moduleBase;
@@ -58,6 +42,9 @@ void EnableCookieHack()
 
 	g_CodeBase = moduleBase + ntHeaders->OptionalHeader.BaseOfCode;
 	g_CodeSize = ntHeaders->OptionalHeader.SizeOfCode;
+
+	// Set the magic value which triggers an early QueryPerformanceCounter call
+	*(ULONGLONG *)loadConfig->SecurityCookie = 0x2B992DDFA232;
 }
 
 char buffer[48];

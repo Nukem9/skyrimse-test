@@ -51,9 +51,7 @@ struct JobCommandData
 	void Schedule()
 	{
 		PendingJobSlots.push(this);
-
-		if (!ReleaseSemaphore(JobPendingSemaphore, 1, nullptr))
-			__debugbreak();
+		ReleaseSemaphore(JobPendingSemaphore, 1, nullptr);
 	}
 
 	void End()
@@ -67,29 +65,22 @@ DWORD WINAPI DC_Thread(LPVOID Arg)
 	UNREFERENCED_PARAMETER(Arg);
 
 	SetThreadName(GetCurrentThreadId(), "DC_Thread");
-
-	if (!ReleaseSemaphore(ThreadInitSemaphore, 1, nullptr))
-		__debugbreak();
+	ReleaseSemaphore(ThreadInitSemaphore, 1, nullptr);
 
 	// Loop forever: whichever thread gets a job first executes it. Semaphores are NOT FIFO.
 	for (JobCommandData *jobData;;)
 	{
-		if (WaitForSingleObject(JobPendingSemaphore, INFINITE) == WAIT_FAILED)
-			__debugbreak();
-
-		if (!PendingJobSlots.try_pop(jobData))
-			__debugbreak();
+		Assert(WaitForSingleObject(JobPendingSemaphore, INFINITE) != WAIT_FAILED);
+		AssertMsg(PendingJobSlots.try_pop(jobData), "Expected a job to be in the queue but there are none");
 
 		// Swap our TLS renderer pointers to this job & validate it
 		*(uintptr_t *)(__readgsqword(0x58) + g_TlsIndex * sizeof(void *)) = (uintptr_t)&jobData->ThreadGlobals;
 
-		if (&jobData->ThreadGlobals != BSGraphics::Renderer::GetGlobals() ||
-			&jobData->ThreadGlobals == BSGraphics::Renderer::GetGlobalsNonThreaded())
-			__debugbreak();
+		AssertDebug(&jobData->ThreadGlobals == BSGraphics::Renderer::GetGlobals());
+		AssertDebug(&jobData->ThreadGlobals != BSGraphics::Renderer::GetGlobalsNonThreaded());
 
 		// Previous command list should've been released (aka sent to GPU)
-		if (jobData->CommandList != nullptr)
-			__debugbreak();
+		Assert(jobData->CommandList == nullptr);
 
 		if (jobData->DisableRenderer)
 		{
@@ -102,8 +93,7 @@ DWORD WINAPI DC_Thread(LPVOID Arg)
 			jobData->ThreadGlobals.m_DeviceContext = jobData->DeferredContext;
 			jobData->Callback(jobData->a1, jobData->a2);
 
-			if (FAILED(jobData->DeferredContext->FinishCommandList(FALSE, &jobData->CommandList)))
-				__debugbreak();
+			Assert(SUCCEEDED(jobData->DeferredContext->FinishCommandList(FALSE, &jobData->CommandList)));
 		}
 
 		CompletedJobs[jobData->Id].store(jobData);
@@ -127,8 +117,8 @@ void DC_Init(ID3D11Device1 *Device, int DeferredContextCount)
 	ThreadInitSemaphore = CreateSemaphore(nullptr, 0, MAXIMUM_WORKER_THREADS, nullptr);
 	JobPendingSemaphore = CreateSemaphore(nullptr, 0, MAXIMUM_JOBS, nullptr);
 
-	if (!ThreadInitSemaphore || !JobPendingSemaphore)
-		__debugbreak();
+	Assert(ThreadInitSemaphore);
+	Assert(JobPendingSemaphore);
 
 	for (int i = 0; i < MAXIMUM_WORKER_THREADS; i++)
 		CreateThread(nullptr, 0, DC_Thread, (LPVOID)i, 0, nullptr);
@@ -139,8 +129,7 @@ void DC_Init(ID3D11Device1 *Device, int DeferredContextCount)
 		memset(&jobCommands[i], 0, sizeof(JobCommandData));
 		jobCommands[i].Id = i;
 
-		if (FAILED(Device->CreateDeferredContext(0, &jobCommands[i].DeferredContext)))
-			__debugbreak();
+		Assert(SUCCEEDED(Device->CreateDeferredContext(0, &jobCommands[i].DeferredContext)));
 
 		FreeJobSlots.push(&jobCommands[i]);
 		CompletedJobs[i].store(nullptr);
@@ -148,10 +137,7 @@ void DC_Init(ID3D11Device1 *Device, int DeferredContextCount)
 
 	// Now we wait....
 	for (int i = 0; i < MAXIMUM_WORKER_THREADS; i++)
-	{
-		if (WaitForSingleObject(ThreadInitSemaphore, INFINITE) == WAIT_FAILED)
-			__debugbreak();
-	}
+		Assert(WaitForSingleObject(ThreadInitSemaphore, INFINITE) != WAIT_FAILED);
 }
 
 int DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int), bool DisableRenderer)
@@ -165,9 +151,7 @@ int DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned
 	// Find some random free job slot
 	JobCommandData *jobData;
 
-	if (!FreeJobSlots.try_pop(jobData))
-		__debugbreak();
-
+	AssertMsg(FreeJobSlots.try_pop(jobData), "No free job slots available in the queue");
 	auto dc1 = jobData->DeferredContext;
 
 	if (!DisableRenderer)

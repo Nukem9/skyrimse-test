@@ -489,8 +489,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	// a1+108 is probably a "remove list" flag after it's rendered, but the memory is not freed yet
 	if (*(BYTE *)((uintptr_t)this + 108))
 	{
-		if (SubPassIndex < 0 || SubPassIndex >= ARRAYSIZE(passArray->m_Pass))
-			__debugbreak();
+		Assert(SubPassIndex >= 0 && SubPassIndex < ARRAYSIZE(passArray->m_Pass));
 
 		passArray->m_PassIndexBits &= ~(1 << SubPassIndex);
 		passArray->m_Pass[SubPassIndex] = nullptr;
