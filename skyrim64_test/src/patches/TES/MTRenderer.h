@@ -10,15 +10,15 @@ extern uintptr_t commandDataStart[6];
 extern uintptr_t commandData[6];
 extern thread_local class GameCommandList *ActiveManager;
 
-int DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int));
+int DC_RenderDeferred(__int64 a1, unsigned int a2, void(*func)(__int64, unsigned int), bool DisableRenderer);
 void DC_WaitDeferred(int JobHandle);
 
 namespace MTRenderer
 {
+	extern thread_local bool testmtr;
+
 	bool IsGeneratingGameCommandList();	// Returns true when main thread is queuing commands for worker threads
 	bool IsRenderingMultithreaded();	// Retruns true when generating D3D command list on a worker thread
-
-	void ExecuteCommandList(uintptr_t Data, bool MTWorker);
 
 	void ClearShaderAndTechnique();
 	void RasterStateSetCullMode(uint32_t CullMode);
