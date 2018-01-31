@@ -1,6 +1,6 @@
 #include "GpuCircularBuffer.h"
 
-void GpuCircularBuffer::Initialize(ID3D11Device *Device, uint32_t Type, uint32_t BufferSize, uint32_t MaxFrames)
+GpuCircularBuffer::GpuCircularBuffer(ID3D11Device *Device, uint32_t Type, uint32_t BufferSize, uint32_t MaxFrames)
 {
 	memset(&Map, 0, sizeof(Map));
 	memset(&Description, 0, sizeof(Description));
@@ -16,6 +16,19 @@ void GpuCircularBuffer::Initialize(ID3D11Device *Device, uint32_t Type, uint32_t
 
 	FrameUtilizedAmounts = new uint32_t[MaxFrames];
 	CurrentAvailable = BufferSize;
+}
+
+GpuCircularBuffer::~GpuCircularBuffer()
+{
+	// Buffer is expected to be unmapped across all contexts by now
+	if (D3DBuffer)
+	{
+		D3DBuffer->Release();
+		D3DBuffer = nullptr;
+	}
+
+	delete[] FrameUtilizedAmounts;
+	FrameUtilizedAmounts = nullptr;
 }
 
 void *GpuCircularBuffer::MapData(ID3D11DeviceContext *Context, uint32_t AllocationSize, uint32_t *AllocationOffset, bool ForceRemap)

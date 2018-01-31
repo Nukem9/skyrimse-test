@@ -18,7 +18,9 @@ public:
 	uint32_t CurrentUtilized = 0;				// Number of bytes possibly in use by GPU (cannot be written)
 	uint32_t CurrentAvailable = 0;				// Number of unused bytes (as guaranteed by Initialize()/FreeOldFrame())
 
-	void Initialize(ID3D11Device *Device, uint32_t Type, uint32_t BufferSize, uint32_t MaxFrames);
+	GpuCircularBuffer(ID3D11Device *Device, uint32_t Type, uint32_t BufferSize, uint32_t MaxFrames);
+	~GpuCircularBuffer();
+
 	void *MapData(ID3D11DeviceContext *Context, uint32_t AllocationSize, uint32_t *AllocationOffset, bool ForceRemap);
 	void UnmapData(ID3D11DeviceContext *Context);
 	void SwapFrame(uint32_t FrameIndex);

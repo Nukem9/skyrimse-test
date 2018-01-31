@@ -28,12 +28,13 @@ namespace BSGraphics
 
 	const uint32_t VertexIndexRingBufferSize = 32 * 1024 * 1024;
 	const uint32_t ShaderConstantRingBufferSize = 32 * 1024 * 1024;
+	const uint32_t RingBufferMaxFrames = 16;
 
 	thread_local BSVertexShader *TLS_CurrentVertexShader;
 	thread_local BSPixelShader *TLS_CurrentPixelShader;
 
-	GpuCircularBuffer DynamicBuffer;		// Holds vertices and indices
-	GpuCircularBuffer ShaderConstantBuffer;	// Holds shader constant values
+	GpuCircularBuffer *DynamicBuffer;		// Holds vertices and indices
+	GpuCircularBuffer *ShaderConstantBuffer;// Holds shader constant values
 
 	ID3D11Query *FrameCompletedQueries[16];
 	bool FrameCompletedQueryPending[16];
@@ -58,9 +59,7 @@ namespace BSGraphics
 	{
 		auto *renderer = GetGlobalsNonThreaded();
 
-		uint32_t maxFrames = 16;
-
-		for (int i = 0; i < maxFrames; i++)
+		for (uint32_t i = 0; i < RingBufferMaxFrames; i++)
 		{
 			D3D11_QUERY_DESC desc;
 			desc.Query = D3D11_QUERY_EVENT;
@@ -87,7 +86,7 @@ namespace BSGraphics
 			Assert(SUCCEEDED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TempDynamicBuffers[i])));
 		}
 
-		DynamicBuffer.Initialize(renderer->m_Device, D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER, VertexIndexRingBufferSize, maxFrames);
+		DynamicBuffer = new GpuCircularBuffer(renderer->m_Device, D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER, VertexIndexRingBufferSize, RingBufferMaxFrames);
 
 		//
 		// Small temporary shader constant buffers and ring buffer
@@ -126,7 +125,7 @@ namespace BSGraphics
 		desc.StructureByteStride = 0;
 		Assert(SUCCEEDED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TestLargeBuffer)));
 
-		ShaderConstantBuffer.Initialize(renderer->m_Device, D3D11_BIND_CONSTANT_BUFFER, ShaderConstantRingBufferSize, maxFrames);
+		ShaderConstantBuffer = new GpuCircularBuffer(renderer->m_Device, D3D11_BIND_CONSTANT_BUFFER, ShaderConstantRingBufferSize, RingBufferMaxFrames);
 
 		// Make sure first-time pointers are set up too
 		OnNewFrame();
@@ -140,8 +139,8 @@ namespace BSGraphics
 		GetGlobalsNonThreaded()->m_DeviceContext->End(FrameCompletedQueries[CurrentFrameIndex]);
 		FrameCompletedQueryPending[CurrentFrameIndex] = true;
 
-		DynamicBuffer.SwapFrame(CurrentFrameIndex);
-		ShaderConstantBuffer.SwapFrame(CurrentFrameIndex);
+		DynamicBuffer->SwapFrame(CurrentFrameIndex);
+		ShaderConstantBuffer->SwapFrame(CurrentFrameIndex);
 
 		// "Pop" the query from 6 frames ago. This acts as a ring buffer.
 		int prevQueryIndex = CurrentFrameIndex - 6;
@@ -157,8 +156,8 @@ namespace BSGraphics
 			// Those commands are REQUIRED to be complete by now - no exceptions
 			AssertMsg(SUCCEEDED(hr) && data == TRUE, "DeviceContext::GetData() MUST SUCCEED BY NOW");
 
-			DynamicBuffer.FreeOldFrame(prevQueryIndex);
-			ShaderConstantBuffer.FreeOldFrame(prevQueryIndex);
+			DynamicBuffer->FreeOldFrame(prevQueryIndex);
+			ShaderConstantBuffer->FreeOldFrame(prevQueryIndex);
 			FrameCompletedQueryPending[prevQueryIndex] = false;
 		}
 
@@ -178,10 +177,10 @@ namespace BSGraphics
 
 		ProfileCounterAdd("CB Bytes Wasted", (roundedAllocSize - *AllocationSize));
 
-		*DataPointer = ShaderConstantBuffer.MapData(m_DeviceContext, roundedAllocSize, AllocationOffset, false);
+		*DataPointer = ShaderConstantBuffer->MapData(m_DeviceContext, roundedAllocSize, AllocationOffset, false);
 		*AllocationSize = roundedAllocSize;
 
-		return ShaderConstantBuffer.D3DBuffer;
+		return ShaderConstantBuffer->D3DBuffer;
 	}
 
 	const uint32_t ThresholdSize = 32;
@@ -251,7 +250,7 @@ namespace BSGraphics
 	void Renderer::UnmapDynamicConstantBuffer()
 	{
 		if (!MTRenderer::IsRenderingMultithreaded())
-			ShaderConstantBuffer.UnmapData(m_DeviceContext);
+			ShaderConstantBuffer->UnmapData(m_DeviceContext);
 
 		memset(&TestBufferUsedBits, 0, sizeof(TestBufferUsedBits));
 	}
@@ -266,11 +265,11 @@ namespace BSGraphics
 		//
 		if (!MTRenderer::IsRenderingMultithreaded())
 		{
-			m_DynamicBuffers[0] = DynamicBuffer.D3DBuffer;
+			m_DynamicBuffers[0] = DynamicBuffer->D3DBuffer;
 			m_CurrentDynamicBufferIndex = 0;
 			m_FrameDataUsedSize = AllocationSize;
 
-			return DynamicBuffer.MapData(m_DeviceContext, AllocationSize, AllocationOffset, true);
+			return DynamicBuffer->MapData(m_DeviceContext, AllocationSize, AllocationOffset, true);
 		}
 
 		//
@@ -472,7 +471,7 @@ namespace BSGraphics
 		temp.m_Buffer = MapConstantBuffer(&temp.m_Map.pData, &Size, &temp.m_UnifiedByteOffset, Level);
 		temp.m_Map.DepthPitch = Size;
 		temp.m_Map.RowPitch = Size;
-		temp.m_Unified = (temp.m_Buffer == ShaderConstantBuffer.D3DBuffer);
+		temp.m_Unified = (temp.m_Buffer == ShaderConstantBuffer->D3DBuffer);
 
 		// DirectX expects you to overwrite the entire buffer. **SKYRIM DOES NOT**, so I'm zeroing it now.
 		memset(temp.m_Map.pData, 0, Size);
