@@ -73,7 +73,7 @@ namespace MTRenderer
 
 	void LockShader(int ShaderType)
 	{
-		Assert(ShaderType != -1, "Invalid shader type supplied - should've never reached this");
+		AssertMsg(ShaderType != -1, "Invalid shader type supplied - should've never reached this");
 
 		switch (ShaderType)
 		{
@@ -93,7 +93,7 @@ namespace MTRenderer
 
 	void UnlockShader(int ShaderType)
 	{
-		Assert(ShaderType != -1, "Invalid shader type supplied - should've never reached this");
+		AssertMsg(ShaderType != -1, "Invalid shader type supplied - should've never reached this");
 
 		switch (ShaderType)
 		{
