@@ -269,7 +269,7 @@ void CommitShaderChanges(bool Unknown)
 					depthStencil = (ID3D11DepthStencilView *)v3[v12 + 1014];
 
 				// Only clear the stencil if specific flags are set
-				if (depthStencil && v10 != 3 && v10 != 4)
+				if (depthStencil && v10 != 3 && v10 != 4 && v10 != 5)
 				{
 					uint32_t clearFlags;
 
