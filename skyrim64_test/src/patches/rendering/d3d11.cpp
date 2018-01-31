@@ -517,28 +517,6 @@ void CommitShaderChanges(bool Unknown)
 }
 
 uint8_t *sub_1412E1600;
-uint8_t *sub_1412E1C10;
-
-__int64 __fastcall hk_sub_1412E1C10(__int64 a1, unsigned int a2, float a3)
-{
-	if (annotation)
-		annotation->BeginEvent(L"sub_1412E1C10");
-
-	//SetThisThreadContext(dc2);
-
-	__int64 res = ((decltype(&hk_sub_1412E1C10))sub_1412E1C10)(a1, a2, a3);
-
-	//SetThisThreadContext(g_DeviceContext);
-
-	//ID3D11CommandList *list;
-	//dc2->FinishCommandList(TRUE, &list);
-	//g_DeviceContext->ExecuteCommandList(list, TRUE);
-	//list->Release();
-
-	if (annotation)
-		annotation->EndEvent();
-	return res;
-}
 
 HRESULT WINAPI hk_CreateDXGIFactory(REFIID riid, void **ppFactory)
 {
@@ -699,14 +677,6 @@ void DumpShader(const char *Prefix, int Index, const void *Bytecode, size_t Byte
 	}
 }
 
-decltype(&ID3D11Device::CreateVertexShader) CreateVertexShader;
-HRESULT WINAPI hk_CreateVertexShader(ID3D11Device *This, const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11VertexShader **ppVertexShader)
-{
-	ProfileCounterInc("Vertex Shaders Created");
-
-	return (This->*CreateVertexShader)(pShaderBytecode, BytecodeLength, pClassLinkage, ppVertexShader);
-}
-
 uint8_t *CreatePixelShader;
 HRESULT WINAPI hk_CreatePixelShader(ID3D11Device *This, const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11PixelShader **ppPixelShader)
 {
@@ -769,32 +739,6 @@ void hook()
 	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1960, (PBYTE)&BSShaderAccumulator::sub_1412E1600);
 
 	DC_Init(newDev, 0);
-
-	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1F70, (PBYTE)&hk_sub_1412E1C10);
-}
-
-decltype(&ID3D11DeviceContext::Map) Map;
-HRESULT WINAPI hk_ID3D11DeviceContext_Map(ID3D11DeviceContext *This, ID3D11Resource *pResource, UINT Subresource, D3D11_MAP MapType, UINT MapFlags, D3D11_MAPPED_SUBRESOURCE *pMappedResource)
-{
-	//ProfileCounterInc("ID3D11DeviceContext::Map");
-	//ProfileTimer("ID3D11DeviceContext::Map Time");
-
-	if (pResource)
-	{
-		D3D11_RESOURCE_DIMENSION dimension;
-		pResource->GetType(&dimension);
-
-		if (dimension == D3D11_RESOURCE_DIMENSION_BUFFER)
-		{
-			D3D11_BUFFER_DESC desc;
-			((ID3D11Buffer *)pResource)->GetDesc(&desc);
-
-			if (desc.BindFlags == D3D11_BIND_CONSTANT_BUFFER)
-				ProfileCounterAdd("Map Bytes", desc.ByteWidth);
-		}
-	}
-
-	return (This->*Map)(pResource, Subresource, MapType, MapFlags, pMappedResource);
 }
 
 HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
@@ -811,6 +755,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
     D3D_FEATURE_LEVEL *pFeatureLevel,
     ID3D11DeviceContext **ppImmediateContext)
 {
+	//
     // From MSDN:
     //
     // If the Direct3D 11.1 runtime is present on the computer and pFeatureLevels is set to NULL,
@@ -819,6 +764,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
     // D3D_FEATURE_LEVEL_11_1. If you provide a D3D_FEATURE_LEVEL array that contains
     // D3D_FEATURE_LEVEL_11_1 on a computer that doesn't have the Direct3D 11.1 runtime installed,
     // this function immediately fails with E_INVALIDARG.
+	//
     const D3D_FEATURE_LEVEL testFeatureLevels[] = {
         D3D_FEATURE_LEVEL_11_1,
         D3D_FEATURE_LEVEL_11_0,
@@ -829,8 +775,10 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
         D3D_FEATURE_LEVEL_9_1
     };
 
+	//
     // Loop to get the highest available feature level; SkyrimSE originally uses D3D_FL_9_1.
 	// SkyrimSE also uses a single render thread (sadface).
+	//
     D3D_FEATURE_LEVEL level;
     HRESULT hr;
 
@@ -882,10 +830,6 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	g_DeviceContext = newContext;
 	g_SwapChain = *ppSwapChain;
 
-	// Create deferred contexts for later frame use
-	//newDev->CreateDeferredContext2(0, &dc1);
-	//newDev->CreateDeferredContext2(0, &dc2);
-
 	OutputDebugStringA("Created everything\n");
 
 	newDev->SetExceptionMode(D3D11_RAISE_FLAG_DRIVER_INTERNAL_ERROR);
@@ -898,7 +842,6 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
     // Now hook the render function
 	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
 	//CreatePixelShader = Detours::X64::DetourClassVTable(*(PBYTE *)newDev, &hk_CreatePixelShader, 15);
-	//*(PBYTE *)&Map = Detours::X64::DetourClassVTable(*(PBYTE *)newContext, &hk_ID3D11DeviceContext_Map, 14);
 
 	//Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&CommitShaderChanges);
 	//*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1960, (PBYTE)&BSShaderAccumulator::sub_1412E1600);
