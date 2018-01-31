@@ -342,9 +342,12 @@ uint32_t BSSkyShader::GetRawTechnique(uint32_t Technique)
 	case BSSM_SKY_CLOUDSLERP:return RAW_TECHNIQUE_CLOUDSLERP;
 	case BSSM_SKY_CLOUDSFADE:return RAW_TECHNIQUE_CLOUDSFADE;
 	case BSSM_SKY_SUNGLARE:return RAW_TECHNIQUE_SUNGLARE;
+
+	// The game calls BSSkyShader with AO for some reason. It defaults to 0.
+	case BSSM_AMBIENT_OCCLUSION:return 0;
 	}
 
-	//AssertMsg(false, "BSSkyShader: bad technique ID");
+	AssertMsg(false, "BSSkyShader: bad technique ID");
 	return 0;
 }
 
