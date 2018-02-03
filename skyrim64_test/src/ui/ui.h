@@ -18,6 +18,7 @@ namespace ui
 	void RenderMemory();
 	void RenderTESFormCache();
 	void RenderShaderTweaks();
+	void RenderINITweaks();
 
 	namespace log
 	{

@@ -3,6 +3,7 @@
 #include "imgui_ext.h"
 #include "imgui_impl_dx11.h"
 #include "../patches/TES/BSShader/BSShader.h"
+#include "../patches/TES/Setting.h"
 
 namespace ui::opt
 {
@@ -20,6 +21,7 @@ namespace ui
     bool showLockWindow;
     bool showMemoryWindow;
 	bool showShaderTweakWindow;
+	bool showIniListWindow;
 	bool showLogWindow;
 
     char *format_commas(int64_t n, char *out)
@@ -124,6 +126,7 @@ namespace ui
             RenderTESFormCache();
             RenderMemory();
 			RenderShaderTweaks();
+			RenderINITweaks();
 
             if (showLogWindow)
                 log::Draw();
@@ -187,11 +190,83 @@ namespace ui
                 ProxyIDirectInputDevice8A::ToggleGlobalInput(!g_BlockInput);
 
 			ImGui::MenuItem("Shader Tweaks", nullptr, &showShaderTweakWindow);
+			ImGui::MenuItem("INISetting Viewer", nullptr, &showIniListWindow);
             ImGui::EndMenu();
         }
 
         ImGui::EndMainMenuBar();
     }
+
+	void RenderINITweaks()
+	{
+		if (!showIniListWindow)
+			return;
+
+		if (ImGui::Begin("INISetting Viewer", &showIniListWindow))
+		{
+			static ImGuiTextFilter iniFilter;
+			static int selectedIndex;
+
+			iniFilter.Draw("Filter", -100.0f);
+
+			// Filter the listbox input before we send it to imgui - which doesn't support dynamic filtering
+			std::vector<Setting *> settingList;
+
+			for (auto *s = INISettingCollectionSingleton->SettingsA.QNext(); s; s = s->QNext())
+			{
+				if (iniFilter.IsActive())
+				{
+					if (iniFilter.PassFilter(s->QItem()->pKey))
+						settingList.push_back(s->QItem());
+				}
+				else
+				{
+					// No filter present
+					settingList.push_back(s->QItem());
+				}
+			}
+
+			ImGui::PushItemWidth(-1);
+
+			// Draw the list itself
+			ImGui::ListBox("##inibox", &selectedIndex, [](void *data, int index, const char **out)
+			{
+				*out = reinterpret_cast<std::vector<Setting *> *>(data)->at(index)->pKey;
+				return true;
+			}, (void *)&settingList, settingList.size(), 16);
+
+			// Now the editor inputs
+			if (ImGui::BeginGroupSplitter("Selection") && selectedIndex < settingList.size())
+			{
+				Setting *s = settingList.at(selectedIndex);
+
+				ImGui::PushItemWidth(60);
+				ImGui::LabelText("##lblIniVar", "Variable:");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+				ImGui::InputText("##txtIniVar", (char *)s->pKey, 0, ImGuiInputTextFlags_ReadOnly);
+
+				char tempBuffer[512];
+				s->GetAsString(tempBuffer, ARRAYSIZE(tempBuffer));
+
+				ImGui::PushItemWidth(60);
+				ImGui::LabelText("##lblIniValue", "Value:");
+				ImGui::PopItemWidth();
+				ImGui::SameLine();
+
+				// Update the setting on user request
+				if (ImGui::InputText("##txtIniValue", tempBuffer, ARRAYSIZE(tempBuffer), ImGuiInputTextFlags_EnterReturnsTrue))
+					s->SetFromString(tempBuffer);
+
+				ImGui::LabelText("##lblNotice", "Press enter to save inputs. String editing is disabled.");
+				ImGui::EndGroupSplitter();
+			}
+
+			ImGui::PopItemWidth();
+		}
+
+		ImGui::End();
+	}
 
 	int64_t LastFrame;
 	int64_t TickSum;
