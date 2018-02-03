@@ -15,6 +15,11 @@ public:
 	char _pad2[0x14];
 	NiColorA kProjectedUVColor;
 	char _pad3[0x34];
+
+	const NiColorA& QProjectedUVColor()
+	{
+		return kProjectedUVColor;
+	}
 };
 static_assert(sizeof(BSLightingShaderProperty) == 0x160);
 static_assert_offset(BSLightingShaderProperty, pEmitColor, 0xF0);

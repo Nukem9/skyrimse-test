@@ -785,6 +785,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	//	memset(&pointLightPosition, 0, sizeof(XMVECTOR) * 7);
 	//	memset(&pointLightColor, 0, sizeof(XMVECTOR) * 7);
 	//}
+	//
 
 	if (lightCount > 0)
 	{
@@ -1356,7 +1357,7 @@ void BSLightingShader::GeoUpdateProjectedUvConstants(const BSGraphics::ConstantG
 		}
 		else
 		{
-			BSGraphics::Utility::CopyNiColorAToFloat((XMVECTOR *)&projectedUVParams2, Property->kProjectedUVColor);
+			BSGraphics::Utility::CopyNiColorAToFloat((XMVECTOR *)&projectedUVParams2, Property->QProjectedUVColor());
 		}
 	}
 

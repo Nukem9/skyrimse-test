@@ -131,8 +131,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	// Sanity check: the original global struct should have zero data
 	const static char zeroData[sizeof(VertexConstantData)] = { 0 };
 
-	if (memcmp(&zeroData, (void *)(g_ModuleBase + 0x31F6400), sizeof(zeroData)) != 0)
-		throw "BUG: This structure MUST be zero";
+	AssertMsg(memcmp(&zeroData, (void *)(g_ModuleBase + 0x31F6400), sizeof(zeroData)) == 0, "BUG: This structure MUST be zero");
 #endif
 
 	UpdateGeometryProjections(data, Pass->m_Geometry->GetWorldTransform());
@@ -306,13 +305,11 @@ void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSSha
 	BSTArray<float> *propertyInstanceData = (BSTArray<float> *)((uintptr_t)Property + 0x160);
 	uint32_t instanceDataCount = propertyInstanceData->QSize();
 
-	if (instanceDataCount > (3840 / 4))
-		instanceDataCount = (3840 / 4);
-	// bAssert("Grass instance group count is to large. It does not fit in register size.");
+	AssertMsg(instanceDataCount <= (3840 / 4), "Grass instance group count is to large. It does not fit in register size.");
 
 	// TODO/WARNING: There is another data race hazard in this function. Properties are supposed to be unique though?
 	auto sub_1412E0810 = (void(__fastcall *)(BSShaderProperty *, uint32_t))(g_ModuleBase + 0x12E0810);
-	sub_1412E0810(Property, propertyInstanceData->QSize());
+	sub_1412E0810(Property, instanceDataCount);
 
 	uint32_t neededSize = instanceDataCount * sizeof(float);
 	auto constantGroup = renderer->GetShaderConstantGroup(neededSize, BSGraphics::CONSTANT_GROUP_LEVEL_INSTANCE);
