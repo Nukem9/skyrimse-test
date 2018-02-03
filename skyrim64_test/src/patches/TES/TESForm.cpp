@@ -174,12 +174,12 @@ TESForm *GetFormById(unsigned int FormId)
         return formPointer;
 
     // Try to use Bethesda's scatter table which is considerably slower
-	GlobalFormLock.AcquireRead();
+	GlobalFormLock.LockForRead();
 
 	if (!GlobalFormList || !GlobalFormList->get(FormId, formPointer))
 		formPointer = nullptr;
 
-	GlobalFormLock.ReleaseRead();
+	GlobalFormLock.UnlockRead();
 
     UpdateFormCache(FormId, formPointer, false);
     return formPointer;

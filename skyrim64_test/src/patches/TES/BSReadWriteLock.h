@@ -17,24 +17,22 @@ private:
     };
 
 public:
-    BSReadWriteLock()
-    {
-        Initialize();
-    }
+	DECLARE_CONSTRUCTOR_HOOK(BSReadWriteLock);
 
-    // Constructor hook
-    BSReadWriteLock *Initialize();
+	BSReadWriteLock();
+	~BSReadWriteLock();
 
-    void AcquireRead();
-    void ReleaseRead();
-    bool TryAcquireRead();
+    void LockForRead();
+    void UnlockRead();
+    bool TryLockForRead();
 
-    void AcquireWrite();
-    void ReleaseWrite();
-    bool TryAcquireWrite();
+    void LockForWrite();
+    void UnlockWrite();
+    bool TryLockForWrite();
 
-    bool IsWriteOwner();
-    void UpgradeRead();
+	void LockForReadAndWrite();
+
+    bool IsWritingThread();
 };
 static_assert(sizeof(BSReadWriteLock) <= 0x8, "Lock must fit inside the original game structure");
 

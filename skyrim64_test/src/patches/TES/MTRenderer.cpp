@@ -86,7 +86,7 @@ namespace MTRenderer
 			if (IsGeneratingGameCommandList())
 				InsertCommand<LockShaderTypeRenderCommand>(ShaderType, true);
 			else
-				testLocks[ShaderType].AcquireWrite();
+				testLocks[ShaderType].LockForWrite();
 			break;
 		}
 	}
@@ -106,7 +106,7 @@ namespace MTRenderer
 			if (IsGeneratingGameCommandList())
 				InsertCommand<LockShaderTypeRenderCommand>(ShaderType, false);
 			else
-				testLocks[ShaderType].ReleaseWrite();
+				testLocks[ShaderType].UnlockWrite();
 			break;
 		}
 	}
