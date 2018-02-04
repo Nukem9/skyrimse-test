@@ -226,6 +226,20 @@ namespace ui
 				}
 			}
 
+			for (auto *s = INIPrefSettingCollectionSingleton->SettingsA.QNext(); s; s = s->QNext())
+			{
+				if (iniFilter.IsActive())
+				{
+					if (iniFilter.PassFilter(s->QItem()->pKey))
+						settingList.push_back(s->QItem());
+				}
+				else
+				{
+					// No filter present
+					settingList.push_back(s->QItem());
+				}
+			}
+
 			ImGui::PushItemWidth(-1);
 
 			// Draw the list itself
