@@ -21,14 +21,13 @@
 //
 using namespace DirectX;
 
-AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
+AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
+AutoPtr(NiSourceTexture *, BSShader_DefNormalMap, 0x3052920);
+AutoPtr(NiSourceTexture *, BSShader_DitheringNoise, 0x3052928);
 AutoPtr(__int64, qword_1431F5810, 0x31F5810);
-AutoPtr(NiSourceTexture *, qword_143052900, 0x3052900);
-AutoPtr(NiSourceTexture *, qword_143052920, 0x3052920);
-AutoPtr(NiSourceTexture *, qword_143052928, 0x3052928);
+AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(__int64, qword_1431F55F8, 0x31F55F8);
 AutoPtr(float, qword_143257D80, 0x3257D80);
-
 AutoPtr(unsigned int, gameTlsIndex, 0x34BBA78);
 
 BSShaderAccumulator *GetCurrentAccumulator();
@@ -106,7 +105,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 		break;
 	}
 
-	renderer->SetTexture(2, qword_143052928->QRendererTexture());// NoiseGradSampler
+	renderer->SetTexture(2, BSShader_DitheringNoise->QRendererTexture());// NoiseGradSampler
 	renderer->SetTextureMode(2, 3, 0);
 	return true;
 }
@@ -260,7 +259,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		NiSourceTexture *baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
 
 		if (!baseSamplerTex)
-			baseSamplerTex = qword_143052900;
+			baseSamplerTex = BSShader_DefHeightMap;
 
 		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		renderer->SetTextureMode(0, 3, 1);
@@ -276,7 +275,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		NiSourceTexture *baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
 
 		if (!baseSamplerTex)
-			baseSamplerTex = qword_143052920;
+			baseSamplerTex = BSShader_DefNormalMap;
 
 		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		renderer->SetTextureMode(0, 3, 1);
@@ -307,7 +306,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 160);
 
 		if (!baseSamplerTex)
-			baseSamplerTex = qword_143052920;
+			baseSamplerTex = BSShader_DefNormalMap;
 
 		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		renderer->SetTextureMode(0, 3, 1);

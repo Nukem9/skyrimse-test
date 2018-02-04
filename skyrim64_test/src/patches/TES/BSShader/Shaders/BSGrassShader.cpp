@@ -22,24 +22,23 @@
 //
 using namespace DirectX;
 
+AutoPtr(NiSourceTexture *, DefaultWhiteMap, 0x30528F0);
 AutoPtr(bool, bUseEarlyZ, 0x30528E5);
 AutoPtr(BYTE, byte_14304E4C5, 0x304E4C5);
 AutoPtr(BYTE, byte_141E32E9D, 0x1E32E9D);
 AutoPtr(BYTE, byte_141E32F65, 0x1E32F65);
-AutoPtr(uint32_t, dword_141E338A0, 0x1E338A0);
 AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
-AutoPtr(NiSourceTexture *, qword_1430528F0, 0x30528F0);
 AutoPtr(uintptr_t, qword_141E32F20, 0x1E32F20);
 AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(float, flt_1431F6198, 0x31F6198);
 AutoPtr(float, flt_1431F619C, 0x31F619C);
 AutoPtr(float, flt_141E32F50, 0x1E32F50);
 AutoPtr(float, flt_1431F63E8, 0x31F63E8);
-AutoPtr(float, flt_141E33358, 0x1E33358);
-AutoPtr(float, flt_141E33370, 0x1E33370);
 AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 
+DefineIniSetting(iShadowMaskQuarter, Display);
 DefineIniSetting(fShadowClampValue, Display);
+DefineIniSetting(fWindGrassMultiplier, Display);
 
 thread_local XMVECTOR TLS_FogNearColor;
 
@@ -83,11 +82,11 @@ bool BSGrassShader::SetupTechnique(uint32_t Technique)
 		renderer->SetShaderResource(1, (ID3D11ShaderResourceView *)qword_14304F260);
 
 		renderer->SetTextureAddressMode(1, 0);
-		renderer->SetTextureFilterMode(1, (dword_141E338A0 != 4) ? 1 : 0);
+		renderer->SetTextureFilterMode(1, (iShadowMaskQuarter->uValue.i != 4) ? 1 : 0);
 	}
 	else
 	{
-		renderer->SetTexture(1, qword_1430528F0->QRendererTexture());// ShadowMaskSampler
+		renderer->SetTexture(1, DefaultWhiteMap->QRendererTexture());// ShadowMaskSampler
 		renderer->SetTextureMode(1, 0, 0);
 	}
 
@@ -221,7 +220,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	data->WindVector[0] = windVecNormals.f[0];
 	data->WindVector[1] = windVecNormals.f[1];
-	data->WindVector[2] = windDirZ * flt_141E33358;
+	data->WindVector[2] = windDirZ * fWindGrassMultiplier->uValue.f;
 	data->WindTimer = windTimer;
 
 	if (!byte_14304E4C5)

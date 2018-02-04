@@ -14,7 +14,7 @@
 //
 using namespace DirectX;
 
-AutoPtr(NiSourceTexture *, qword_143052900, 0x52900);
+AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x52900);
 AutoPtr(__int64, qword_14304EF00, 0x4EF00);
 
 void TestHook1()
@@ -59,7 +59,7 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 		// Use the sun or nearest light source to draw a water-like reflection from blood
 		if (iAdaptedLightRenderTarget <= 0)
 		{
-			renderer->SetTexture(3, qword_143052900->QRendererTexture());// FlareHDR
+			renderer->SetTexture(3, BSShader_DefHeightMap->QRendererTexture());// FlareHDR
 		}
 		else
 		{

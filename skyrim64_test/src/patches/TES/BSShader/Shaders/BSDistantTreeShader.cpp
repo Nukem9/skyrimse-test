@@ -23,11 +23,11 @@
 //
 using namespace DirectX;
 
+AutoPtr(NiSourceTexture *, WorldTreeLODAtlas, 0x32A7F58);
 AutoPtr(bool, bUseEarlyZ, 0x30528E5);
 AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(__int64, qword_141E32F20, 0x1E32F20);
-AutoPtr(NiSourceTexture *, qword_1432A7F58, 0x32A7F58);
 
 void TestHook2()
 {
@@ -118,14 +118,13 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 		BSGraphics::Utility::CopyNiColorAToFloat(&ps_DiffuseColor,
 			NiColorA(*(float *)(lightSource + 284), *(float *)(lightSource + 288), *(float *)(lightSource + 292), 1.0f));
 
-		// I think they are calling abs(float) on these, but compiler optimized it to an XOR? Verified correct assembly.
 		BSGraphics::Utility::CopyNiColorAToFloat(&ps_Unknown,
 			NiColorA(-normalizedDir.x, -normalizedDir.y, -normalizedDir.z, 1.0f));
 	}
 
-	AssertMsg(qword_1432A7F58, "LOD tree texture atlas for current worldspace not found.");
+	AssertMsg(WorldTreeLODAtlas, "LOD tree texture atlas for current worldspace not found.");
 
-	renderer->SetTexture(0, qword_1432A7F58->QRendererTexture());// Diffuse
+	renderer->SetTexture(0, WorldTreeLODAtlas->QRendererTexture());// Diffuse
 	renderer->SetTextureAddressMode(0, 0);
 
 	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);

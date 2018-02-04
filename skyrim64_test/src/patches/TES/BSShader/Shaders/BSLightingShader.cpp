@@ -25,8 +25,13 @@
 //
 using namespace DirectX;
 
-AutoPtr(NiSourceTexture *, qword_143052900, 0x3052900);
-AutoPtr(NiSourceTexture *, qword_1430528A0, 0x30528A0);
+AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
+AutoPtr(NiSourceTexture *, WorldMapOverlayNormalTexture, 0x1E32F90);
+AutoPtr(NiSourceTexture *, WorldMapOverlayNormalSnowTexture, 0x1E32F98);
+AutoPtr(NiSourceTexture *, ProjectedNormalTexture, 0x30528A0);
+AutoPtr(NiSourceTexture *, ProjectedNoiseTexture, 0x3052890);
+AutoPtr(NiSourceTexture *, ProjectedDiffuseTexture, 0x3052898);
+AutoPtr(NiSourceTexture *, ProjectedNormalDetailTexture, 0x30528A8);
 AutoPtr(int, dword_143051B3C, 0x3051B3C);
 AutoPtr(int, dword_143051B40, 0x3051B40);
 AutoPtr(int, dword_141E338A0, 0x1E338A0);
@@ -45,7 +50,7 @@ AutoPtr(float, xmmword_141E3302C, 0x1E3302C);// This is really XMVECTORF32
 AutoPtr(XMVECTORF32, xmmword_141E3301C, 0x1E3301C);
 AutoPtr(int, dword_141E33040, 0x1E33040);
 AutoPtr(uintptr_t, qword_1431F5810, 0x31F5810);
-AutoPtr(NiSourceTexture *, qword_143052920, 0x3052920);
+AutoPtr(NiSourceTexture *, BSShader_DefNormalMap, 0x3052920);
 AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 AutoPtr(XMVECTORF32, xmmword_14187D940, 0x187D940);
 AutoPtr(BYTE, byte_141E32E88, 0x1E32E88);
@@ -56,11 +61,6 @@ AutoPtr(float, flt_143257C40, 0x3257C40);
 AutoPtr(uint32_t, dword_141E35280, 0x1E35280);
 AutoPtr(NiColorA, dword_1431F5540, 0x31F5540);
 AutoPtr(NiColorA, dword_1431F5550, 0x31F5550);
-AutoPtr(NiSourceTexture *, qword_141E32F90, 0x1E32F90);
-AutoPtr(NiSourceTexture *, qword_141E32F98, 0x1E32F98);
-AutoPtr(NiSourceTexture *, qword_143052890, 0x3052890);
-AutoPtr(NiSourceTexture *, qword_143052898, 0x3052898);
-AutoPtr(NiSourceTexture *, qword_1430528A8, 0x30528A8);
 AutoPtr(BYTE, byte_141E35308, 0x1E35308);
 AutoPtr(BYTE, byte_141E35320, 0x1E35320);
 AutoPtr(uint32_t, dword_141E3527C, 0x1E3527C);
@@ -172,7 +172,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		// Override all 16 samplers
 		for (int i = 0; i < 16; i++)
 		{
-			renderer->SetTexture(i, qword_143052900->QRendererTexture());
+			renderer->SetTexture(i, BSShader_DefHeightMap->QRendererTexture());
 			renderer->SetTextureMode(i, 3, 3);
 		}
 
@@ -194,7 +194,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		break;
 
 	case RAW_TECHNIQUE_MULTIINDEXTRISHAPESNOW:
-		renderer->SetTexture(10, qword_1430528A0->QRendererTexture());
+		renderer->SetTexture(10, ProjectedNormalTexture->QRendererTexture());
 		renderer->SetTextureMode(10, 3, 0);
 		break;
 	}
@@ -814,18 +814,18 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if ((rawTechnique & RAW_FLAG_PROJECTED_UV) && (baseTechniqueID != RAW_TECHNIQUE_HAIR))
 	{
-		renderer->SetTexture(11, qword_143052890->QRendererTexture());
+		renderer->SetTexture(11, ProjectedNoiseTexture->QRendererTexture());
 		renderer->SetTextureMode(11, 3, 1);
 
-		if (enableProjectedUvNormals && qword_143052898)
+		if (enableProjectedUvNormals && ProjectedDiffuseTexture)
 		{
-			renderer->SetTexture(3, qword_143052898->QRendererTexture());
+			renderer->SetTexture(3, ProjectedDiffuseTexture->QRendererTexture());
 			renderer->SetTextureMode(3, 3, 1);
 
-			renderer->SetTexture(8, qword_1430528A0->QRendererTexture());
+			renderer->SetTexture(8, ProjectedNormalTexture->QRendererTexture());
 			renderer->SetTextureMode(8, 3, 1);
 
-			renderer->SetTexture(10, qword_1430528A8->QRendererTexture());
+			renderer->SetTexture(10, ProjectedNormalDetailTexture->QRendererTexture());
 			renderer->SetTextureMode(10, 3, 1);
 		}
 
@@ -868,10 +868,10 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (rawTechnique & RAW_FLAG_WORLD_MAP)
 	{
-		renderer->SetTexture(12, qword_141E32F90->QRendererTexture());
+		renderer->SetTexture(12, WorldMapOverlayNormalTexture->QRendererTexture());
 		renderer->SetTextureAddressMode(12, 3);
 
-		renderer->SetTexture(13, qword_141E32F98->QRendererTexture());
+		renderer->SetTexture(13, WorldMapOverlayNormalSnowTexture->QRendererTexture());
 		renderer->SetTextureAddressMode(13, 3);
 
 		// VS: p8 float4 Color1
@@ -1111,7 +1111,7 @@ void BSLightingShader::sub_14130C4D0(__int64 a1, __int64 a2)
 	if (a1)
 		v2 = (NiSourceTexture *)a1;
 	else
-		v2 = qword_143052920;
+		v2 = BSShader_DefNormalMap;
 
 	renderer->SetTexture(5, v2->QRendererTexture());
 	renderer->SetTextureAddressMode(5, v3);
