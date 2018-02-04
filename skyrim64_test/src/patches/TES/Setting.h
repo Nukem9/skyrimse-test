@@ -187,6 +187,9 @@ template<typename T>
 class SettingCollectionList : public SettingCollection<T>
 {
 public:
+	BSSimpleList<T *> SettingsA;
+
+public:
 	virtual ~SettingCollectionList();
 	virtual void AddSetting(Setting *S);
 	virtual void RemoveSetting(Setting *S);
@@ -197,13 +200,61 @@ public:
 	virtual bool ReadSettingsFromProfile();
 	virtual bool WriteSettings();
 	virtual bool ReadSettings();
-
-	BSSimpleList<T *> SettingsA;
 };
 static_assert_offset(SettingCollectionList<Setting>, SettingsA, 0x118);
 
 class INISettingCollection : public SettingCollectionList<Setting>
 {
+public:
+	Setting *FindSetting(const char *Key)
+	{
+		for (auto *s = SettingsA.QNext(); s; s = s->QNext())
+		{
+			if (!_stricmp(Key, s->QItem()->pKey))
+				return s->QItem();
+		}
+
+		return nullptr;
+	}
+};
+
+class INIPrefSettingCollection : public INISettingCollection
+{
+public:
 };
 
 AutoPtr(INISettingCollection *, INISettingCollectionSingleton, 0x3043758);
+AutoPtr(INIPrefSettingCollection *, INIPrefSettingCollectionSingleton, 0x2F91A08);
+#define DefineIniSetting(Name, Category) static SettingResolverHack Name(#Name ":" #Category)
+
+//
+// This doesn't exist in the game itself but I need a way to statically init things. DLLs
+// have their static constructors called before the game does.
+//
+class SettingResolverHack
+{
+private:
+	const char *m_Key;
+	Setting *m_Ptr;
+
+public:
+	SettingResolverHack(const char *Key) : m_Key(Key), m_Ptr(nullptr)
+	{
+	}
+
+	Setting *operator ->()
+	{
+		if (!m_Ptr)
+		{
+			// Sometimes it's stored in SkyrimPrefs.ini or sometimes Skyrim.ini
+			m_Ptr = INIPrefSettingCollectionSingleton->FindSetting(m_Key);
+
+			if (!m_Ptr)
+				m_Ptr = INISettingCollectionSingleton->FindSetting(m_Key);
+
+			AssertMsgVa(m_Ptr, "Setting '%s' wasn't found!", m_Key);
+		}
+
+		return m_Ptr;
+	}
+};

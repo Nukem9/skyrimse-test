@@ -11,6 +11,7 @@
 #include "../../NiMain/NiSourceTexture.h"
 #include "BSGrassShader.h"
 #include "../../BSTArray.h"
+#include "../../Setting.h"
 
 //
 // Shader notes:
@@ -21,8 +22,6 @@
 //
 using namespace DirectX;
 
-thread_local XMVECTOR TLS_FogNearColor;
-
 AutoPtr(bool, bUseEarlyZ, 0x30528E5);
 AutoPtr(BYTE, byte_14304E4C5, 0x304E4C5);
 AutoPtr(BYTE, byte_141E32E9D, 0x1E32E9D);
@@ -32,7 +31,6 @@ AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
 AutoPtr(NiSourceTexture *, qword_1430528F0, 0x30528F0);
 AutoPtr(uintptr_t, qword_141E32F20, 0x1E32F20);
 AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
-
 AutoPtr(float, flt_1431F6198, 0x31F6198);
 AutoPtr(float, flt_1431F619C, 0x31F619C);
 AutoPtr(float, flt_141E32F50, 0x1E32F50);
@@ -40,6 +38,10 @@ AutoPtr(float, flt_1431F63E8, 0x31F63E8);
 AutoPtr(float, flt_141E33358, 0x1E33358);
 AutoPtr(float, flt_141E33370, 0x1E33370);
 AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
+
+DefineIniSetting(fShadowClampValue, Display);
+
+thread_local XMVECTOR TLS_FogNearColor;
 
 void TestHook4()
 {
@@ -255,8 +257,8 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		data->ScaleMask[2] = 1.0f;
 	}
 
-	// Wtf? flt_141E33370 is 0.3 and not zero...?
-	data->padding = flt_141E33370;
+	// Wtf? padding is 0.3 and not zero...?
+	data->padding = fShadowClampValue->uValue.f;
 
 	renderer->FlushConstantGroupVSPS(&vertexCG, nullptr);
 	renderer->ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);

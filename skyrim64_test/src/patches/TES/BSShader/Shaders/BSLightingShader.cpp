@@ -13,6 +13,7 @@
 #include "../BSShaderAccumulator.h"
 #include "BSLightingShader.h"
 #include "BSLightingShaderProperty.h"
+#include "../../Setting.h"
 
 //
 // Shader notes:
@@ -41,10 +42,6 @@ AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(int, dword_141E33BA0, 0x1E33BA0);
 AutoPtr(BYTE, byte_141E32F66, 0x1E32F66);
 AutoPtr(float, xmmword_141E3302C, 0x1E3302C);// This is really XMVECTORF32
-AutoPtr(float, flt_141E35380, 0x1E35380);
-AutoPtr(float, flt_141E35398, 0x1E35398);
-AutoPtr(float, flt_141E353B0, 0x1E353B0);
-AutoPtr(BYTE, byte_141E353C8, 0x1E353C8);
 AutoPtr(XMVECTORF32, xmmword_141E3301C, 0x1E3301C);
 AutoPtr(int, dword_141E33040, 0x1E33040);
 AutoPtr(uintptr_t, qword_1431F5810, 0x31F5810);
@@ -52,14 +49,9 @@ AutoPtr(NiSourceTexture *, qword_143052920, 0x3052920);
 AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 AutoPtr(XMVECTORF32, xmmword_14187D940, 0x187D940);
 AutoPtr(BYTE, byte_141E32E88, 0x1E32E88);
-AutoPtr(BYTE, byte_141E35338, 0x1E35338);
-AutoPtr(int, dword_141E353E0, 0x1E353E0);
 AutoPtr(uintptr_t, qword_14304EF00, 0x304EF00);
 AutoPtr(BYTE, byte_141E32E89, 0x1E32E89);
 AutoPtr(BYTE, byte_141E352F0, 0x1E352F0);
-
-AutoPtr(float, flt_141E34C70, 0x1E34C70);
-AutoPtr(float, flt_141E34C88, 0x1E34C88);
 AutoPtr(float, flt_143257C40, 0x3257C40);
 AutoPtr(uint32_t, dword_141E35280, 0x1E35280);
 AutoPtr(NiColorA, dword_1431F5540, 0x31F5540);
@@ -78,16 +70,25 @@ AutoPtr(float, flt_141E32FD8, 0x1E32FD8);
 AutoPtr(float, flt_141E32FB8, 0x1E32FB8);
 AutoPtr(BYTE, byte_1431F547C, 0x31F547C);
 AutoPtr(XMFLOAT4, xmmword_141E32FC8, 0x1E32FC8);
-AutoPtr(float, flt_141E35350, 0x1E35350);
-AutoPtr(float, flt_141E35368, 0x1E35368);
 
-BSShaderAccumulator *GetCurrentAccumulator();
-
-char hookbuffer[50];
+DefineIniSetting(bEnableSnowMask, Display);
+DefineIniSetting(iLandscapeMultiNormalTilingFactor, Display);
+DefineIniSetting(fSnowRimLightIntensity, Display);
+DefineIniSetting(fSnowGeometrySpecPower, Display);
+DefineIniSetting(fSnowNormalSpecPower, Display);
+DefineIniSetting(bEnableSnowRimLighting, Display);
+DefineIniSetting(fSpecMaskBegin, Display);
+DefineIniSetting(fSpecMaskSpan, Display);
+DefineIniSetting(fProjectedUVDiffuseNormalTilingScale, Display);
+DefineIniSetting(fProjectedUVNormalDetailTilingScale, Display);
 
 thread_local uint32_t TLS_m_CurrentRawTechnique;
 thread_local uint32_t TLS_dword_141E35280;
 thread_local uint32_t TLS_dword_141E3527C;
+
+BSShaderAccumulator *GetCurrentAccumulator();
+
+char hookbuffer[50];
 
 void TestHook5()
 {
@@ -204,9 +205,9 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	{
 		XMVECTORF32& colourOutputClamp = pixelCG.ParamPS<XMVECTORF32, 20>();
 
-		colourOutputClamp.f[0] = flt_143257C50;// fLightingOutputColourClampPostLit?
-		colourOutputClamp.f[1] = flt_143257C54;// fLightingOutputColourClampPostEnv?
-		colourOutputClamp.f[2] = flt_143257C58;// fLightingOutputColourClampPostSpec?
+		colourOutputClamp.f[0] = flt_143257C50;// Initial value is fLightingOutputColourClampPostLit
+		colourOutputClamp.f[1] = flt_143257C54;// Initial value is fLightingOutputColourClampPostEnv
+		colourOutputClamp.f[2] = flt_143257C58;// Initial value is fLightingOutputColourClampPostSpec
 		colourOutputClamp.f[3] = 0.0f;
 	}
 
@@ -374,8 +375,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 			LandscapeTexture5to6IsSnow.f[0] = *(float *)(v3 + 296);
 			LandscapeTexture5to6IsSnow.f[1] = *(float *)(v3 + 300);
-			LandscapeTexture5to6IsSnow.f[2] = (byte_141E35338) ? 1.0f : 0.0f;
-			LandscapeTexture5to6IsSnow.f[3] = 1.0f / (float)dword_141E353E0;// iLandscapeMultiNormalTilingFactor
+			LandscapeTexture5to6IsSnow.f[2] = (bEnableSnowMask->uValue.b) ? 1.0f : 0.0f;
+			LandscapeTexture5to6IsSnow.f[3] = 1.0f / iLandscapeMultiNormalTilingFactor->uValue.i;
 		}
 	}
 	break;
@@ -559,10 +560,10 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		// PS: p34 float4 SnowRimLightParameters
 		XMVECTORF32& snowRimLightParameters = pixelCG.ParamPS<XMVECTORF32, 34>();
 
-		snowRimLightParameters.f[0] = flt_141E35380;// fSnowRimLightIntensity
-		snowRimLightParameters.f[1] = flt_141E35398;// fSnowGeometrySpecPower
-		snowRimLightParameters.f[2] = flt_141E353B0;// fSnowNormalSpecPower
-		snowRimLightParameters.f[3] = (byte_141E353C8) ? 1.0f : 0.0f;// bEnableSnowRimLighting
+		snowRimLightParameters.f[0] = fSnowRimLightIntensity->uValue.f;
+		snowRimLightParameters.f[1] = fSnowGeometrySpecPower->uValue.f;
+		snowRimLightParameters.f[2] = fSnowNormalSpecPower->uValue.f;
+		snowRimLightParameters.f[3] = (bEnableSnowRimLighting->uValue.b) ? 1.0f : 0.0f;
 	}
 
 	if (setDiffuseNormalSamplers)
@@ -880,10 +881,9 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		BSGraphics::Utility::CopyNiColorAToFloat(&pixelCG.ParamPS<XMVECTOR, 17>(), dword_1431F5550);
 	}
 
-	// This block is an inlined function
+	// VS: p2 float3 PrecipitationOcclusionWorldViewProj
 	if (doPrecipitationOcclusion)
 	{
-		// VS: p2 float3 PrecipitationOcclusionWorldViewProj
 		XMFLOAT3& precipitationOcclusionWorldViewProj = vertexCG.ParamVS<XMFLOAT3, 2>();
 
 		if (v102 == 1)
@@ -938,8 +938,8 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		XMVECTORF32& ssrParams = pixelCG.ParamPS<XMVECTORF32, 16>();
 
-		ssrParams.f[0] = flt_141E34C70;
-		ssrParams.f[1] = flt_141E34C88 + flt_141E34C70;
+		ssrParams.f[0] = fSpecMaskBegin->uValue.f;
+		ssrParams.f[1] = fSpecMaskSpan->uValue.f + fSpecMaskBegin->uValue.f;
 		ssrParams.f[2] = flt_143257C40;
 
 		float v98 = 0.0f;
@@ -1365,8 +1365,8 @@ void BSLightingShader::GeoUpdateProjectedUvConstants(const BSGraphics::ConstantG
 	{
 		XMVECTORF32& projectedUVParams3 = PixelCG.ParamPS<XMVECTORF32, 14>();
 
-		projectedUVParams3.f[0] = flt_141E35350;// fProjectedUVDiffuseNormalTilingScale
-		projectedUVParams3.f[1] = flt_141E35368;// fProjectedUVNormalDetailTilingScale
+		projectedUVParams3.f[0] = fProjectedUVDiffuseNormalTilingScale->uValue.f;
+		projectedUVParams3.f[1] = fProjectedUVNormalDetailTilingScale->uValue.f;
 		projectedUVParams3.f[2] = 0.0f;
 		projectedUVParams3.f[3] = (EnableProjectedNormals) ? 1.0f : 0.0f;
 	}
