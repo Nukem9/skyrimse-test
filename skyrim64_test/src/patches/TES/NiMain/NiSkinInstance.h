@@ -1,9 +1,9 @@
 #pragma once
 
 #include "NiObject.h"
-#include "BSGeometry.h"
 
 class NiBoneMatrixSetterI;
+class BSGeometry;
 
 class NiSkinInstance : public NiObject
 {
@@ -11,7 +11,7 @@ public:
 	struct UnknownData
 	{
 		NiBoneMatrixSetterI *m_BoneSetter;
-		class BSGeometry *m_Geometry;
+		BSGeometry *m_Geometry;
 		void *m_UnkPtr;
 		uint32_t m_UnkDword1;
 		uint32_t m_UnkDword2;

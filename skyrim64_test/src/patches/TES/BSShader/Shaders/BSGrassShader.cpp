@@ -1,18 +1,10 @@
 #include "../../../../common.h"
-#include "../BSVertexShader.h"
-#include "../BSPixelShader.h"
-#include "../BSShader.h"
-#include "../../BSGraphicsRenderer.h"
-#include "../../NiMain/NiColor.h"
-#include "../../NiMain/NiTransform.h"
-#include "../BSShaderUtil.h"
-#include "../BSShaderManager.h"
-#include "../../NiMain/BSGeometry.h"
 #include "../../NiMain/NiSourceTexture.h"
-#include "BSGrassShader.h"
 #include "../../BSTArray.h"
 #include "../../Setting.h"
-
+#include "../BSShaderManager.h"
+#include "../BSShaderUtil.h"
+#include "BSGrassShader.h"
 //
 // Shader notes:
 //

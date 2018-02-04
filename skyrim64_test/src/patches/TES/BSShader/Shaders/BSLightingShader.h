@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include "../BSShader.h"
 
 class BSLightingShaderMaterial;

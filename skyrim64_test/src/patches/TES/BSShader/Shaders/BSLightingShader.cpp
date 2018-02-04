@@ -1,19 +1,11 @@
 #include "../../../rendering/common.h"
 #include "../../../../common.h"
-#include "../BSVertexShader.h"
-#include "../BSPixelShader.h"
-#include "../BSShader.h"
-#include "../../BSGraphicsRenderer.h"
-#include "../../NiMain/NiColor.h"
-#include "../../NiMain/NiTransform.h"
-#include "../BSShaderUtil.h"
-#include "../BSShaderManager.h"
-#include "../../NiMain/BSGeometry.h"
 #include "../../NiMain/NiSourceTexture.h"
-#include "../BSShaderAccumulator.h"
+#include "../../Setting.h"
+#include "../BSShaderManager.h"
+#include "../BSShaderUtil.h"
 #include "BSLightingShader.h"
 #include "BSLightingShaderProperty.h"
-#include "../../Setting.h"
 
 //
 // Shader notes:
@@ -55,7 +47,6 @@ AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 AutoPtr(XMVECTORF32, xmmword_14187D940, 0x187D940);
 AutoPtr(BYTE, byte_141E32E88, 0x1E32E88);
 AutoPtr(uintptr_t, qword_14304EF00, 0x304EF00);
-AutoPtr(BYTE, byte_141E32E89, 0x1E32E89);
 AutoPtr(BYTE, byte_141E352F0, 0x1E352F0);
 AutoPtr(float, flt_143257C40, 0x3257C40);
 AutoPtr(uint32_t, dword_141E35280, 0x1E35280);
@@ -81,6 +72,7 @@ DefineIniSetting(fSpecMaskBegin, Display);
 DefineIniSetting(fSpecMaskSpan, Display);
 DefineIniSetting(fProjectedUVDiffuseNormalTilingScale, Display);
 DefineIniSetting(fProjectedUVNormalDetailTilingScale, Display);
+DefineIniSetting(bEnableParallaxOcclusion, Display);
 
 thread_local uint32_t TLS_m_CurrentRawTechnique;
 thread_local uint32_t TLS_dword_141E35280;
@@ -985,7 +977,7 @@ uint32_t BSLightingShader::GetRawTechnique(uint32_t Technique)
 	uint32_t outputTech = Technique - 0x4800002D;
 	uint32_t subIndex = (outputTech >> 24) & 0x3F;
 
-	if (subIndex == RAW_TECHNIQUE_LODLANDNOISE && !byte_141E32E89)
+	if (subIndex == RAW_TECHNIQUE_LODLANDNOISE && !bEnableParallaxOcclusion->uValue.b)
 	{
 		outputTech = outputTech & 0xC9FFFFFF | 0x9000000;
 	}

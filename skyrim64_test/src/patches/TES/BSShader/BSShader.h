@@ -1,15 +1,11 @@
 #pragma once
 
 #include <stdint.h>
-#include "../NiMain/NiRefObject.h"
+#include "../NiMain/common.h"
 #include "../BSTScatterTable.h"
+#include "BSShaderProperty.h"
+#include "BSShaderMaterial.h"
 
-class NiAlphaProperty;
-class BSShaderProperty;
-class NiSkinInstance;
-class NiTransform;
-
-class BSShaderMaterial;
 struct BSRenderPass;
 struct BSVertexShader;
 struct BSPixelShader;

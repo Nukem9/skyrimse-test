@@ -53,40 +53,6 @@ enum class BSSM_GROUP_TYPE
 	PER_TEC,	// PerTechnique
 };
 
-#pragma pack(push, 8)
-#include "BSShader.h"
-class BSShaderProperty;
-#include "../NiMain/BSGeometry.h"
-
-// This needs to be in its own file
-struct BSRenderPass
-{
-	BSShader *m_Shader;
-	BSShaderProperty *m_Property;
-	BSGeometry *m_Geometry;
-	uint32_t m_TechniqueID;
-	uint8_t Byte1C;
-	uint8_t Byte1D;
-	uint8_t Byte1E;
-	char _pad[17];
-	BSRenderPass *m_Next;
-	void *unkPtr1;
-
-	class NiAlphaProperty *QAlphaProperty()
-	{
-		return m_Geometry->QAlphaProperty();
-	}
-};
-// Size unknown
-static_assert(offsetof(BSRenderPass, m_Shader) == 0x0, "");
-static_assert(offsetof(BSRenderPass, m_Property) == 0x8, "");
-static_assert(offsetof(BSRenderPass, m_Geometry) == 0x10, "");
-static_assert(offsetof(BSRenderPass, m_TechniqueID) == 0x18, "");
-static_assert(offsetof(BSRenderPass, Byte1C) == 0x1C, "");
-static_assert(offsetof(BSRenderPass, Byte1D) == 0x1D, "");
-static_assert(offsetof(BSRenderPass, Byte1E) == 0x1E, "");
-static_assert(offsetof(BSRenderPass, m_Next) == 0x30, "");
-
 struct BSConstantGroup
 {
 	ID3D11Buffer *m_Buffer;	// Selected from pool in Load*ShaderFromFile()
@@ -95,7 +61,9 @@ struct BSConstantGroup
 	// Based on shader load flags, these **CAN BE NULL**. At least one of the
 	// pointers is guaranteed to be non-null.
 };
-#pragma pack(pop)
+
+#include "../BSRenderPass.h"
+#include "BSShaderAccumulator.h"
 
 namespace BSShaderMappings { struct Entry; }
 

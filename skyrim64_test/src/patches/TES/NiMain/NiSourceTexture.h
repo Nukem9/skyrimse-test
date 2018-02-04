@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NiTexture.h"
+#include "../BSGraphicsRenderer.h"
 
 class NiSourceTexture : public NiTexture
 {

@@ -1,7 +1,11 @@
 #pragma once
 
-#include "NiObject.h"
+#include "NiObjectNET.h"
 
-class NiAlphaProperty
+class NiProperty : public NiObjectNET
+{
+};
+
+class NiAlphaProperty : public NiProperty
 {
 };

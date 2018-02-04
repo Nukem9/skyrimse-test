@@ -130,6 +130,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\patches\rendering\GpuCircularBuffer.h" />
+    <ClInclude Include="src\patches\TES\BSRenderPass.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderProperty.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShader.h" />
@@ -161,6 +162,7 @@
     <ClInclude Include="src\patches\TES\BSThread_Win32.h" />
     <ClInclude Include="src\patches\TES\BSTScatterTable.h" />
     <ClInclude Include="src\patches\TES\MemoryContextTracker.h" />
+    <ClInclude Include="src\patches\TES\NiMain\common.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiColor.h" />

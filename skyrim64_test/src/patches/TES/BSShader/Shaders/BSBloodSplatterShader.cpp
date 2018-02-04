@@ -1,10 +1,8 @@
 #include "../../../../common.h"
-#include "../../NiMain/BSGeometry.h"
-#include "../../BSGraphicsRenderer.h"
-#include "../BSShaderManager.h"
-#include "BSBloodSplatterShader.h"
-#include "../BSShaderUtil.h"
 #include "../../NiMain/NiSourceTexture.h"
+#include "../BSShaderManager.h"
+#include "../BSShaderUtil.h"
+#include "BSBloodSplatterShader.h"
 
 //
 // Shader notes:

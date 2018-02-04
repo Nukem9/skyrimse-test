@@ -1,17 +1,9 @@
 #include "../../../rendering/common.h"
 #include "../../../../common.h"
-#include "../BSVertexShader.h"
-#include "../BSPixelShader.h"
-#include "../BSShader.h"
-#include "../../BSGraphicsRenderer.h"
-#include "BSSkyShader.h"
-#include "../../NiMain/NiColor.h"
-#include "../../NiMain/NiTransform.h"
-#include "../BSShaderUtil.h"
-#include "../BSShaderManager.h"
-#include "../../NiMain/BSGeometry.h"
 #include "../../NiMain/NiSourceTexture.h"
-#include "../BSShaderAccumulator.h"
+#include "../BSShaderManager.h"
+#include "../BSShaderUtil.h"
+#include "BSSkyShader.h"
 
 //
 // Shader notes:

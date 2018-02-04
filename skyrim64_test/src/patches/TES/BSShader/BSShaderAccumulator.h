@@ -1,11 +1,10 @@
 #pragma once
 
 #include "../NiMain/NiObject.h"
-#include "../BSGraphicsRenderer.h" // TODO remove this
 
 class NiCamera;
-class BSBatchRenderer;
 class NiRenderObject;
+class BSBatchRenderer;
 
 class NiAccumulator : public NiObject
 {

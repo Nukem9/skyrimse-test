@@ -4,12 +4,7 @@
 #include "../TES/BSShader/BSVertexShader.h"
 #include "../TES/BSShader/BSShaderManager.h"
 #include "../TES/BSShader/BSShaderRenderTargets.h"
-#include "../TES/BSSpinLock.h"
-#include "../TES/MemoryContextTracker.h"
-#include "../TES/BSShader/BSShaderAccumulator.h"
-#include "../TES/BSBatchRenderer.h"
-
-// BSGraphicsRenderer
+#include "../TES/BSGraphicsRenderer.h"
 
 IDXGISwapChain *g_SwapChain;
 ID3D11DeviceContext2 *g_DeviceContext;

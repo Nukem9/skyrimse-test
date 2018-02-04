@@ -2,6 +2,7 @@
 
 #include <DirectXMath.h>
 #include "NiMain/NiColor.h"
+#include "NiMain/NiTransform.h"
 #include "BSShader/BSVertexShader.h"
 #include "BSShader/BSPixelShader.h"
 

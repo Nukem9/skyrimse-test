@@ -1,16 +1,7 @@
 #include "../rendering/common.h"
 #include "../../common.h"
 #include "BSGraphicsRenderer.h"
-#include "BSShader/BSShaderManager.h"
-#include "BSShader/BSShader.h"
-#include "BSShader/BSShaderAccumulator.h"
-#include "MemoryContextTracker.h"
-#include "BSSpinLock.h"
-#include "BSBatchRenderer.h"
 #include "BSReadWriteLock.h"
-#include "BSShader/BSShaderProperty.h"
-#include "BSShader/Shaders/BSSkyShader.h"
-#include "BSShader/Shaders/BSLightingShader.h"
 #include "MTRenderer.h"
 
 BSReadWriteLock testLocks[32];

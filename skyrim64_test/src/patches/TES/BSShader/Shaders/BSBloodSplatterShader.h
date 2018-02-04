@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../NiMain/NiColor.h"
 #include "../BSShader.h"
 
 class BSBloodSplatterShader : public BSShader

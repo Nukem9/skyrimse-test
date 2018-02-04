@@ -4,7 +4,7 @@
 #include "BSShader/BSShaderManager.h"
 #include "BSShader/BSShaderAccumulator.h"
 #include "BSBatchRenderer.h"
-#include "BSReadWriteLock.h"
+#include "BSRenderPass.h"
 
 extern uintptr_t commandDataStart[6];
 extern uintptr_t commandData[6];
