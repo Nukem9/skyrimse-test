@@ -90,7 +90,7 @@ bool BSReadWriteLock::TryLockForWrite()
 
 void BSReadWriteLock::LockForReadAndWrite()
 {
-	AssertMsg(false, "Unimplemented");
+	// This is only called from BSAutoReadAndWriteLock (but it's always a write lock now)
 }
 
 bool BSReadWriteLock::IsWritingThread()

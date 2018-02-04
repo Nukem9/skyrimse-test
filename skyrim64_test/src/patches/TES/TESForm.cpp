@@ -79,10 +79,6 @@ namespace Bitmap
         if (MasterId >= EntryCount)
             return false;
 
-        // Memory bound (VTune): ~47.1% -> ~39.0%
-        _mm_prefetch((char *)&FormBitmap[MasterId], _MM_HINT_T0);
-        _mm_prefetch((char *)&FormBitmap[MasterId][WORD_OFFSET(BaseId)], _MM_HINT_T0);
-
         // If bit is set, return true
         return _bittest(&FormBitmap[MasterId][WORD_OFFSET(BaseId)], BIT_OFFSET(BaseId)) != 0;
     }
