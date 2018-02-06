@@ -13,4 +13,7 @@
 
 #include "NiAlphaProperty.h"
 #include "NiSkinInstance.h"
+
 #include "BSGeometry.h"
+#include "BSTriShape.h"
+#include "BSDynamicTriShape.h"

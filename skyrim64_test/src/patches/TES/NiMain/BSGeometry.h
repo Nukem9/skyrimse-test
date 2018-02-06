@@ -1,8 +1,5 @@
 #pragma once
 
-//
-// Yes, according to NiMain.dll, this file should be in NiMain
-//
 #include "NiAVObject.h"
 #include "NiAlphaProperty.h"
 #include "NiSkinInstance.h"
@@ -41,6 +38,21 @@ public:
 	NiSkinInstance *QSkinInstance() const
 	{
 		return *(NiSkinInstance **)((uintptr_t)this + 0x130);
+	}
+
+	void *QRendererData()
+	{
+		return *(void **)((uintptr_t)this + 0x138);
+	}
+
+	uint64_t GetVertexDesc()
+	{
+		return *(uint64_t *)((uintptr_t)this + 0x148);
+	}
+
+	uint32_t GetVertexSize1()
+	{
+		return (GetVertexDesc() >> 2) & 0x3C;
 	}
 
 	int QType() const

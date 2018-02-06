@@ -4,6 +4,7 @@
 #include "BSShader/BSShaderAccumulator.h"
 #include "BSShader/BSVertexShader.h"
 #include "BSShader/BSPixelShader.h"
+#include "BSShader/BSShaderRenderTargets.h"
 #include "MTRenderer.h"
 
 namespace BSGraphics::Utility
@@ -44,6 +45,8 @@ namespace BSGraphics
 	ID3D11Buffer *TestLargeBuffer;
 
 	ID3D11Buffer *TempDynamicBuffers[11];
+
+	const uint32_t ThresholdSize = 32;
 
 	Renderer *Renderer::GetGlobals()
 	{
@@ -168,82 +171,755 @@ namespace BSGraphics
 			CurrentFrameIndex = 0;
 	}
 
-	ID3D11Buffer *Renderer::MapDynamicConstantBuffer(void **DataPointer, uint32_t *AllocationSize, uint32_t *AllocationOffset)
+	void Renderer::FlushThreadedVars()
 	{
-		Assert(*AllocationSize > 0);
+		memset(&TestBufferUsedBits, 0, sizeof(TestBufferUsedBits));
 
-		// Size must be rounded up to nearest 256 bytes (D3D11.1 specification)
-		uint32_t roundedAllocSize = (*AllocationSize + 256 - 1) & ~(256 - 1);
-
-		ProfileCounterAdd("CB Bytes Wasted", (roundedAllocSize - *AllocationSize));
-
-		*DataPointer = ShaderConstantBuffer->MapData(m_DeviceContext, roundedAllocSize, AllocationOffset, false);
-		*AllocationSize = roundedAllocSize;
-
-		return ShaderConstantBuffer->D3DBuffer;
+		//
+		// Shaders should've been unique because each technique is different,
+		// but for some reason that isn't the case.
+		//
+		// Other code in Skyrim might be setting the parameters before I do,
+		// so it's not guaranteed to be cleared. (Pretend something is set)
+		//
+		TLS_CurrentVertexShader = (BSVertexShader *)0xFEFEFEFEFEFEFEFE;
+		TLS_CurrentPixelShader = (BSPixelShader *)0xFEFEFEFEFEFEFEFE;
 	}
 
-	const uint32_t ThresholdSize = 32;
+	void Renderer::DrawLineShape(LineShape *GraphicsLineShape, uint32_t StartIndex, uint32_t Count)
+	{
+		SetVertexDescription(GraphicsLineShape->m_VertexDesc);
+		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+		SyncD3DState(false);
+
+		UINT stride = (4 * GraphicsLineShape->m_VertexDesc) & 0x3C;
+		UINT offset = 0;
+
+		m_DeviceContext->IASetVertexBuffers(0, 1, &GraphicsLineShape->m_VertexBuffer, &stride, &offset);
+		m_DeviceContext->IASetIndexBuffer(GraphicsLineShape->m_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+		m_DeviceContext->DrawIndexed(2 * Count, StartIndex, 0);
+	}
+
+	void Renderer::DrawTriShape(TriShape *GraphicsTriShape, uint32_t StartIndex, uint32_t Count)
+	{
+		SetVertexDescription(GraphicsTriShape->m_VertexDesc);
+		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		SyncD3DState(false);
+
+		UINT stride = (4 * GraphicsTriShape->m_VertexDesc) & 0x3C;
+		UINT offset = 0;
+
+		m_DeviceContext->IASetVertexBuffers(0, 1, &GraphicsTriShape->m_VertexBuffer, &stride, &offset);
+		m_DeviceContext->IASetIndexBuffer(GraphicsTriShape->m_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+		m_DeviceContext->DrawIndexed(3 * Count, StartIndex, 0);
+	}
+
+	DynamicTriShape *Renderer::GetParticlesDynamicTriShape()
+	{
+		static DynamicTriShape particles =
+		{
+			m_UnknownVertexBuffer,
+			m_UnknownIndexBuffer,
+			0x840200004000051,
+			0xFFFFFFFF,
+			0,
+			1,
+			nullptr,
+			nullptr
+		};
+
+		return &particles;
+	}
+
+	void *Renderer::MapDynamicTriShapeDynamicData(class BSDynamicTriShape *TriShape, DynamicTriShape *GraphicsTriShape, uint32_t Size)
+	{
+		if (Size <= 0)
+			Size = GraphicsTriShape->m_VertexAllocationSize;
+
+		return MapDynamicBuffer(Size, &GraphicsTriShape->m_VertexAllocationOffset);
+	}
+
+	void Renderer::UnmapDynamicTriShapeDynamicData(DynamicTriShape *GraphicsTriShape)
+	{
+		m_DeviceContext->Unmap(m_DynamicBuffers[m_CurrentDynamicBufferIndex], 0);
+	}
+
+	void Renderer::DrawDynamicTriShape(DynamicTriShape *GraphicsTriShape, uint32_t StartIndex, uint32_t Count)
+	{
+		DynamicTriShapeDrawData drawData;
+		drawData.m_IndexBuffer = GraphicsTriShape->m_IndexBuffer;
+		drawData.m_VertexBuffer = GraphicsTriShape->m_VertexBuffer;
+		drawData.m_VertexDesc = GraphicsTriShape->m_VertexDesc;
+
+		DrawDynamicTriShape(&drawData, StartIndex, Count, GraphicsTriShape->m_VertexAllocationOffset);
+	}
+
+	void Renderer::DrawDynamicTriShape(DynamicTriShapeDrawData *DrawData, uint32_t StartIndex, uint32_t Count, uint32_t VertexOffset)
+	{
+		SetVertexDescription(DrawData->m_VertexDesc);
+		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		SyncD3DState(false);
+
+		ID3D11Buffer *buffers[2];
+		buffers[0] = DrawData->m_VertexBuffer;
+		buffers[1] = m_DynamicBuffers[m_CurrentDynamicBufferIndex];
+
+		UINT strides[2];
+		strides[0] = (4 * DrawData->m_VertexDesc) & 0x3C;
+		strides[1] = (DrawData->m_VertexDesc >> 2) & 0x3C;
+
+		UINT offsets[2];
+		offsets[0] = 0;
+		offsets[1] = VertexOffset;
+
+		m_DeviceContext->IASetVertexBuffers(0, 2, buffers, strides, offsets);
+		m_DeviceContext->IASetIndexBuffer(DrawData->m_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+		m_DeviceContext->DrawIndexed(3 * Count, StartIndex, 0);
+	}
+
+	void Renderer::DrawParticleShaderTriShape(const void *DynamicData, uint32_t Count)
+	{
+		// Send dynamic data to GPU buffer
+		uint32_t vertexStride = 48;
+		uint32_t vertexOffset = 0;
+		void *particleBuffer = MapDynamicBuffer(vertexStride * Count, &vertexOffset);
+
+		memcpy_s(particleBuffer, vertexStride * Count, DynamicData, vertexStride * Count);
+		UnmapDynamicTriShapeDynamicData(nullptr);
+
+		// Update flags but don't update the input layout - we use a custom one here
+		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		m_StateUpdateFlags &= ~0x400;
+
+		SyncD3DState(false);
+
+		if (!m_UnknownInputLayout)
+		{
+			constexpr static D3D11_INPUT_ELEMENT_DESC inputDesc[] =
+			{
+				{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "TEXCOORD", 1, DXGI_FORMAT_R8G8B8A8_SINT, 0, 44, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			};
+
+			Assert(SUCCEEDED(m_Device->CreateInputLayout(
+				inputDesc,
+				ARRAYSIZE(inputDesc),
+				m_CurrentVertexShader->m_RawBytecode,
+				m_CurrentVertexShader->m_ShaderLength,
+				&m_UnknownInputLayout)));
+		}
+
+		// TODO: Insert layout into global map
+
+		m_DeviceContext->IASetInputLayout(m_UnknownInputLayout);
+		m_StateUpdateFlags |= 0x400;
+
+		m_DeviceContext->IASetIndexBuffer(m_UnknownIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+		m_DeviceContext->IASetVertexBuffers(0, 1, &m_DynamicBuffers[m_CurrentDynamicBufferIndex], &vertexStride, &vertexOffset);
+		m_DeviceContext->DrawIndexed(6 * (Count / 4), 0, 0);
+	}
+
+	SRWLOCK InputLayoutLock = SRWLOCK_INIT;
+
+	void Renderer::SyncD3DState(bool Unknown)
+	{
+		auto renderer = BSGraphics::Renderer::GetGlobals();
+
+		__int64 v5; // rdx
+		int v10; // edx
+		signed __int64 v12; // rcx
+		float v14; // xmm0_4
+		float v15; // xmm0_4
+		unsigned __int64 v17; // rbx
+		uint64_t v18; // rcx
+		__int64 v19; // rdi
+		int v20; // ebx
+		int *i; // [rsp+28h] [rbp-80h]
+		float *v35; // [rsp+30h] [rbp-78h]
+		int v37; // [rsp+B8h] [rbp+10h]
+		int v38; // [rsp+C0h] [rbp+18h]
+		__int64 v39; // [rsp+C8h] [rbp+20h]
+
+		renderer->UnmapDynamicConstantBuffer();
+
+		uint64_t *v3 = (uint64_t *)renderer->qword_14304BF00;
+
+		if (uint32_t flags = renderer->m_StateUpdateFlags; flags != 0)
+		{
+			if (flags & 1)
+			{
+				//
+				// Build active render target view array
+				//
+				ID3D11RenderTargetView *renderTargetViews[8];
+				uint32_t viewCount = 0;
+
+				if (renderer->unknown1 == -1)
+				{
+					// This loops through all 8 entries ONLY IF they are not RENDER_TARGET_NONE. Otherwise break early.
+					for (int i = 0; i < 8; i++)
+					{
+						uint32_t& rtState = renderer->m_RenderTargetStates[i];
+						uint32_t rtIndex = renderer->m_RenderTargetIndexes[i];
+
+						if (rtIndex == BSShaderRenderTargets::RENDER_TARGET_NONE)
+							break;
+
+						renderTargetViews[i] = (ID3D11RenderTargetView *)*((uint64_t *)v3 + 6 * rtIndex + 0x14B);
+						viewCount++;
+
+						if (rtState == 0)// if state == SRTM_CLEAR
+						{
+							renderer->m_DeviceContext->ClearRenderTargetView(renderTargetViews[i], (const FLOAT *)v3 + 2522);
+							rtState = 4;// SRTM_INIT?
+						}
+					}
+				}
+				else
+				{
+					// Use a single RT instead. The purpose of this is unknown...
+					v5 = *((uint64_t *)renderer->qword_14304BF00
+						+ (signed int)renderer->unknown2
+						+ 8i64 * (signed int)renderer->unknown1
+						+ 1242);
+					renderTargetViews[0] = (ID3D11RenderTargetView *)v5;
+					viewCount = 1;
+
+					if (!*(DWORD *)&renderer->__zz0[4])
+					{
+						renderer->m_DeviceContext->ClearRenderTargetView((ID3D11RenderTargetView *)v5, (float *)(char *)renderer->qword_14304BF00 + 10088);
+						*(DWORD *)&renderer->__zz0[4] = 4;
+					}
+				}
+
+				v10 = *(DWORD *)renderer->__zz0;
+				if (v10 <= 2u || v10 == 6)
+				{
+					*((BYTE *)v3 + 34) = 0;
+				}
+
+				//
+				// Determine which depth stencil to render to. When there's no active depth stencil
+				// we simply send a nullptr to dx11.
+				//
+				ID3D11DepthStencilView *depthStencil = nullptr;
+
+				if (renderer->rshadowState_iDepthStencil != -1)
+				{
+					v12 = renderer->rshadowState_iDepthStencilSlice
+						+ 19i64 * (signed int)renderer->rshadowState_iDepthStencil;
+
+					if (*((BYTE *)v3 + 34))
+						depthStencil = (ID3D11DepthStencilView *)v3[v12 + 1022];
+					else
+						depthStencil = (ID3D11DepthStencilView *)v3[v12 + 1014];
+
+					// Only clear the stencil if specific flags are set
+					if (depthStencil && v10 != 3 && v10 != 4 && v10 != 5)
+					{
+						uint32_t clearFlags;
+
+						switch (v10)
+						{
+						case 0:
+						case 6:
+							clearFlags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL;
+							break;
+
+						case 2:
+							clearFlags = D3D11_CLEAR_STENCIL;
+							break;
+
+						case 1:
+							clearFlags = D3D11_CLEAR_DEPTH;
+							break;
+
+						default:
+							Assert(false);
+							break;
+						}
+
+						renderer->m_DeviceContext->ClearDepthStencilView(depthStencil, clearFlags, 1.0f, 0);
+						*(DWORD *)renderer->__zz0 = 4;
+					}
+				}
+
+				renderer->m_DeviceContext->OMSetRenderTargets(viewCount, renderTargetViews, depthStencil);
+			}
+
+			// OMSetDepthStencilState
+			if (flags & (0x4 | 0x8))
+			{
+				// OMSetDepthStencilState(m_DepthStates[m_DepthMode][m_StencilMode], m_StencilRef);
+				renderer->m_DeviceContext->OMSetDepthStencilState(
+					renderer->m_DepthStates[*(signed int *)&renderer->__zz0[32]][*(signed int *)&renderer->__zz0[40]],
+					*(UINT *)&renderer->__zz0[44]);
+			}
+
+			// RSSetState
+			if (flags & (0x1000 | 0x40 | 0x20 | 0x10))
+			{
+				// Cull mode, depth bias, fill mode, scissor mode, scissor rect (order unknown)
+				void *wtf = renderer->m_RasterStates[0][0][0][*(signed int *)&renderer->__zz0[60]
+					+ 2
+					* (*(signed int *)&renderer->__zz0[56]
+						+ 12
+						* (*(signed int *)&renderer->__zz0[52]// Cull mode
+							+ 3i64 * *(signed int *)&renderer->__zz0[48]))];
+
+				renderer->m_DeviceContext->RSSetState((ID3D11RasterizerState *)wtf);
+
+				flags = renderer->m_StateUpdateFlags;
+				if (renderer->m_StateUpdateFlags & 0x40)
+				{
+					if (*(float *)&renderer->__zz0[24] != *(float *)&renderer->__zz2[640]
+						|| (v14 = *(float *)&renderer->__zz0[28],
+							*(float *)&renderer->__zz0[28] != *(float *)&renderer->__zz2[644]))
+					{
+						v14 = *(float *)&renderer->__zz2[644];
+						*(DWORD *)&renderer->__zz0[24] = *(DWORD *)&renderer->__zz2[640];
+						flags = renderer->m_StateUpdateFlags | 2;
+						*(DWORD *)&renderer->__zz0[28] = *(DWORD *)&renderer->__zz2[644];
+						renderer->m_StateUpdateFlags |= 2u;
+					}
+					if (*(DWORD *)&renderer->__zz0[56])
+					{
+						v15 = v14 - renderer->m_UnknownFloats1[0][*(signed int *)&renderer->__zz0[56]];
+						flags |= 2u;
+						renderer->m_StateUpdateFlags = flags;
+						*(float *)&renderer->__zz0[28] = v15;
+					}
+				}
+			}
+
+			// RSSetViewports
+			if (flags & 0x2)
+			{
+				renderer->m_DeviceContext->RSSetViewports(1, (D3D11_VIEWPORT *)&renderer->__zz0[8]);
+			}
+
+			// OMSetBlendState
+			if (flags & 0x80)
+			{
+				float *blendFactor = (float *)(g_ModuleBase + 0x1E2C168);
+
+				// Mode, write mode, alpha to coverage, blend state (order unknown)
+				void *wtf = renderer->m_BlendStates[0][0][0][*(unsigned int *)&renderer->__zz2[656]
+					+ 2
+					* (*(signed int *)&renderer->__zz0[72]
+						+ 13
+						* (*(signed int *)&renderer->__zz0[68]
+							+ 2i64 * *(signed int *)&renderer->__zz0[64]))];// AlphaBlendMode
+
+				renderer->m_DeviceContext->OMSetBlendState((ID3D11BlendState *)wtf, blendFactor, 0xFFFFFFFF);
+			}
+
+			if (flags & (0x200 | 0x100))
+			{
+				D3D11_MAPPED_SUBRESOURCE resource;
+				renderer->m_DeviceContext->Map(renderer->m_TempConstantBuffer1, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+
+				if (renderer->__zz0[76])
+					*(float *)resource.pData = renderer->m_ScrapConstantValue;
+				else
+					*(float *)resource.pData = 0.0f;
+
+				renderer->m_DeviceContext->Unmap(renderer->m_TempConstantBuffer1, 0);
+			}
+
+			// Shader input layout creation + updates
+			if (!Unknown && (flags & 0x400))
+			{
+				AcquireSRWLockExclusive(&InputLayoutLock);
+
+				uint32_t& dword_141E2C144 = *(uint32_t *)(g_ModuleBase + 0x1E2C144);
+				uint64_t& qword_141E2C160 = *(uint64_t *)(g_ModuleBase + 0x1E2C160);
+
+				uint64_t *off_141E2C150 = *(uint64_t **)(g_ModuleBase + 0x1E2C150);
+
+				auto sub_140C06080 = (__int64(__fastcall *)(DWORD *a1, unsigned __int64 a2))(g_ModuleBase + 0xC060B0);
+				auto sub_140D705F0 = (__int64(__fastcall *)(unsigned __int64 a1))(g_ModuleBase + 0xD70620);
+				auto sub_140D72740 = (char(__fastcall *)(__int64 a1, __int64 a2, int a3, __int64 *a4, int64_t *a5))(g_ModuleBase + 0xD72770);
+				auto sub_140D735D0 = (void(__fastcall *)(__int64 a1))(g_ModuleBase + 0xD73600);
+
+				v17 = renderer->m_VertexDescSetting & renderer->m_CurrentVertexShader->m_VertexDescription;
+				v35 = (float *)(renderer->m_VertexDescSetting & renderer->m_CurrentVertexShader->m_VertexDescription);
+				sub_140C06080((DWORD *)&v37, (unsigned __int64)v35);
+				if (qword_141E2C160
+					&& (v18 = qword_141E2C160 + 24i64 * (v37 & (unsigned int)(dword_141E2C144 - 1)),
+						*(uint64_t *)(qword_141E2C160 + 24i64 * (v37 & (unsigned int)(dword_141E2C144 - 1)) + 16)))
+				{
+					while (*(uint64_t *)v18 != v17)
+					{
+						v18 = *(uint64_t *)(v18 + 16);
+						if ((void *)v18 == off_141E2C150)
+							goto LABEL_53;
+					}
+					v19 = *(uint64_t *)(v18 + 8);
+				}
+				else
+				{
+				LABEL_53:
+					v39 = sub_140D705F0(v17);                 // IACreateInputLayout
+					v19 = v39;
+					if (v39 || v17 != 0x300000000407i64)
+					{
+						sub_140C06080((DWORD *)&v38, v17);
+						v20 = v38;
+						for (i = &v37; !sub_140D72740((__int64)(g_ModuleBase + 0x1E2C140), qword_141E2C160, v20, (__int64 *)&v35, &v39); i = &v37)
+							sub_140D735D0((__int64)(g_ModuleBase + 0x1E2C140));
+					}
+				}
+
+				renderer->m_DeviceContext->IASetInputLayout((ID3D11InputLayout *)v19);
+				ReleaseSRWLockExclusive(&InputLayoutLock);
+			}
+
+			// IASetPrimitiveTopology
+			if (flags & 0x800)
+			{
+				renderer->m_DeviceContext->IASetPrimitiveTopology(renderer->m_PrimitiveTopology);
+			}
+
+			if (Unknown)
+				renderer->m_StateUpdateFlags = flags & 0x400;
+			else
+				renderer->m_StateUpdateFlags = 0;
+		}
+
+		SyncD3DResources();
+	}
+
+	void Renderer::SyncD3DResources()
+	{
+		auto *renderer = BSGraphics::Renderer::GetGlobals();
+
+		//
+		// Resource/state setting code. It's been modified to take 1 of 2 paths for each type:
+		//
+		// 1: modifiedBits == 0 { Do nothing }
+		// 2: modifiedBits > 0  { Build minimal state change [X entries] before submitting it to DX }
+		//
+#define for_each_bit(itr, bits) for (unsigned long itr; _BitScanForward(&itr, bits); bits &= ~(1 << itr))
+
+		// Compute shader unordered access views (UAVs)
+		if (uint32_t bits = renderer->m_CSUAVModifiedBits; bits != 0)
+		{
+			AssertMsg((bits & 0xFFFF0000) == 0, "CSUAVModifiedBits must not exceed 8th index");
+
+			for_each_bit(i, bits)
+				renderer->m_DeviceContext->CSSetUnorderedAccessViews(i, 1, &renderer->m_CSUAVResources[i], nullptr);
+
+			renderer->m_CSUAVModifiedBits = 0;
+		}
+
+		// Pixel shader samplers
+		if (uint32_t bits = renderer->m_PSSamplerModifiedBits; bits != 0)
+		{
+			AssertMsg((bits & 0xFFFF0000) == 0, "PSSamplerModifiedBits must not exceed 15th index");
+
+			for_each_bit(i, bits)
+				renderer->m_DeviceContext->PSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_PSSamplerAddressMode[i]][renderer->m_PSSamplerFilterMode[i]]);
+
+			renderer->m_PSSamplerModifiedBits = 0;
+		}
+
+		// Pixel shader resources
+		if (uint32_t bits = renderer->m_PSResourceModifiedBits; bits != 0)
+		{
+			AssertMsg((bits & 0xFFFF0000) == 0, "PSResourceModifiedBits must not exceed 15th index");
+
+			for_each_bit(i, bits)
+			{
+				// Combine PSSSR(0, 1, [rsc1]) + PSSSR(1, 1, [rsc2]) into PSSSR(0, 2, [rsc1, rsc2])
+				if (bits & (1 << (i + 1)))
+				{
+					renderer->m_DeviceContext->PSSetShaderResources(i, 2, &renderer->m_PSResources[i]);
+					bits &= ~(1 << (i + 1));
+				}
+				else
+					renderer->m_DeviceContext->PSSetShaderResources(i, 1, &renderer->m_PSResources[i]);
+			}
+
+			renderer->m_PSResourceModifiedBits = 0;
+		}
+
+		// Compute shader samplers
+		if (uint32_t bits = renderer->m_CSSamplerModifiedBits; bits != 0)
+		{
+			AssertMsg((bits & 0xFFFF0000) == 0, "CSSamplerModifiedBits must not exceed 15th index");
+
+			for_each_bit(i, bits)
+				renderer->m_DeviceContext->CSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_CSSamplerSetting1[i]][renderer->m_CSSamplerSetting2[i]]);
+
+			renderer->m_CSSamplerModifiedBits = 0;
+		}
+
+		// Compute shader resources
+		if (uint32_t bits = renderer->m_CSResourceModifiedBits; bits != 0)
+		{
+			AssertMsg((bits & 0xFFFF0000) == 0, "CSResourceModifiedBits must not exceed 15th index");
+
+			for_each_bit(i, bits)
+				renderer->m_DeviceContext->CSSetShaderResources(i, 1, &renderer->m_CSResources[i]);
+
+			renderer->m_CSResourceModifiedBits = 0;
+		}
+
+#undef for_each_bit
+	}
+
+	void Renderer::DepthStencilStateSetDepthMode(uint32_t Mode)
+	{
+		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::DepthStencilStateDepthMode, Mode))
+			return;
+
+		if (*(DWORD *)&__zz0[32] != Mode)
+		{
+			*(DWORD *)&__zz0[32] = Mode;
+
+			// Temp var to prevent duplicate state setting? Don't know where this gets set.
+			if (*(DWORD *)&__zz0[36] != Mode)
+				m_StateUpdateFlags |= 0x4;
+			else
+				m_StateUpdateFlags &= ~0x4;
+		}
+	}
+
+	void Renderer::DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)
+	{
+		if (*(DWORD *)&__zz0[40] != Mode || *(DWORD *)&__zz0[44] != StencilRef)
+		{
+			*(DWORD *)&__zz0[40] = Mode;
+			*(DWORD *)&__zz0[44] = StencilRef;
+			m_StateUpdateFlags |= 0x8;
+		}
+	}
+
+	void Renderer::RasterStateSetCullMode(uint32_t CullMode)
+	{
+		if (*(DWORD *)&__zz0[52] != CullMode)
+		{
+			*(DWORD *)&__zz0[52] = CullMode;
+			m_StateUpdateFlags |= 0x20;
+		}
+	}
+
+	void Renderer::RasterStateSetUnknown1(uint32_t Value)
+	{
+		if (*(DWORD *)&__zz0[56] != Value)
+		{
+			*(DWORD *)&__zz0[56] = Value;
+			m_StateUpdateFlags |= 0x40;
+		}
+	}
+
+	void Renderer::AlphaBlendStateSetMode(uint32_t Mode)
+	{
+		if (*(DWORD *)&__zz0[64] != Mode)
+		{
+			*(DWORD *)&__zz0[64] = Mode;
+			m_StateUpdateFlags |= 0x80;
+		}
+	}
+
+	void Renderer::AlphaBlendStateSetUnknown1(uint32_t Value)
+	{
+		if (*(DWORD *)&__zz0[68] != Value)
+		{
+			*(DWORD *)&__zz0[68] = Value;
+			m_StateUpdateFlags |= 0x80;
+		}
+	}
+
+	void Renderer::AlphaBlendStateSetUnknown2(uint32_t Value)
+	{
+		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::AlphaBlendStateUnknown2, Value))
+			return;
+
+		if (*(DWORD *)&__zz0[72] != Value)
+		{
+			*(DWORD *)&__zz0[72] = Value;
+			m_StateUpdateFlags |= 0x80;
+		}
+	}
+
+	void Renderer::SetUseScrapConstantValue(bool UseStoredValue)
+	{
+		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_1, UseStoredValue))
+			return;
+
+		// When UseStoredValue is false, the constant buffer data is zeroed, but m_ScrapConstantValue is saved
+		if (__zz0[76] != UseStoredValue)
+		{
+			__zz0[76] = UseStoredValue;
+			m_StateUpdateFlags |= 0x100u;
+		}
+	}
+
+	void Renderer::SetScrapConstantValue(float Value)
+	{
+		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_2, *(uint32_t *)&Value))
+			return;
+
+		if (m_ScrapConstantValue != Value)
+		{
+			m_ScrapConstantValue = Value;
+			m_StateUpdateFlags |= 0x200u;
+		}
+	}
+
+	void Renderer::SetVertexDescription(uint64_t VertexDesc)
+	{
+		if (m_VertexDescSetting != VertexDesc)
+		{
+			m_VertexDescSetting = VertexDesc;
+			m_StateUpdateFlags |= 0x400;
+		}
+	}
+
+	void Renderer::SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology)
+	{
+		if (m_PrimitiveTopology != Topology)
+		{
+			m_PrimitiveTopology = Topology;
+			m_StateUpdateFlags |= 0x800;
+		}
+	}
+
+	void Renderer::SetVertexShader(BSVertexShader *Shader)
+	{
+		if (Shader == TLS_CurrentVertexShader)
+			return;
+
+		// The input layout (IASetInputLayout) may need to be created and updated
+		TLS_CurrentVertexShader = Shader;
+		m_CurrentVertexShader = Shader;
+		m_StateUpdateFlags |= 0x400;
+		m_DeviceContext->VSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
+	}
+
+	void Renderer::SetPixelShader(BSPixelShader *Shader)
+	{
+		if (Shader == TLS_CurrentPixelShader)
+			return;
+
+		TLS_CurrentPixelShader = Shader;
+		m_CurrentPixelShader = Shader;
+		m_DeviceContext->PSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
+	}
+
+	void Renderer::SetTexture(uint32_t Index, Texture *Resource)
+	{
+		SetShaderResource(Index, Resource ? Resource->m_D3DTexture : nullptr);
+	}
+
+	void Renderer::SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode)
+	{
+		SetTextureAddressMode(Index, AddressMode);
+		SetTextureFilterMode(Index, FilterMode);
+	}
+
+	void Renderer::SetTextureAddressMode(uint32_t Index, uint32_t Mode)
+	{
+		if (m_PSSamplerAddressMode[Index] != Mode)
+		{
+			m_PSSamplerAddressMode[Index] = Mode;
+			m_PSSamplerModifiedBits |= 1 << Index;
+		}
+	}
+
+	void Renderer::SetTextureFilterMode(uint32_t Index, uint32_t Mode)
+	{
+		if (m_PSSamplerFilterMode[Index] != Mode)
+		{
+			m_PSSamplerFilterMode[Index] = Mode;
+			m_PSSamplerModifiedBits |= 1 << Index;
+		}
+	}
+
+	// Not a real function name. Needs to be removed.
+	void Renderer::SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource)
+	{
+		if (m_PSResources[Index] != Resource)
+		{
+			m_PSResources[Index] = Resource;
+			m_PSResourceModifiedBits |= 1 << Index;
+		}
+	}
 
 	ID3D11Buffer *Renderer::MapConstantBuffer(void **DataPointer, uint32_t *AllocationSize, uint32_t *AllocationOffset, uint32_t Level)
 	{
-		ProfileCounterAdd("CB Bytes Requested", *AllocationSize);
+		uint32_t initialAllocSize = *AllocationSize;
+		uint32_t roundedAllocSize = 0;
+		ID3D11Buffer *buffer = nullptr;
+
+		Assert(initialAllocSize > 0);
 
 		//
 		// If the user lets us, try to use the global ring buffer instead of small temporary
 		// allocations. It must be used on the immediate D3D context only. No MTR here.
 		//
-		if (*AllocationSize > ThresholdSize)
+		if (initialAllocSize > ThresholdSize && !MTRenderer::IsRenderingMultithreaded())
 		{
-			if (!MTRenderer::IsRenderingMultithreaded())
-				return MapDynamicConstantBuffer(DataPointer, AllocationSize, AllocationOffset);
-		}
+			// Size must be rounded up to nearest 256 bytes (D3D11.1 specification)
+			roundedAllocSize = (initialAllocSize + 256 - 1) & ~(256 - 1);
 
-		// Allocate from small constant buffer pool (TestBufferUsedBits is a TLS variable)
-		Assert(*AllocationSize > 0 && *AllocationSize <= 4096);
-
-		if (Level >= ARRAYSIZE(TestBufferUsedBits))
-			Level = ARRAYSIZE(TestBufferUsedBits) - 1;
-
-		// Round to nearest 16, determine bit index, then loop until there's a free slot
-		uint32_t roundedAllocSize = (*AllocationSize + 16 - 1) & ~(16 - 1);
-		ID3D11Buffer *buffer = nullptr;
-		D3D11_MAPPED_SUBRESOURCE map;
-
-		if (roundedAllocSize <= (63 * 16))
-		{
-			for (uint32_t bitIndex = roundedAllocSize / 16; bitIndex < 64;)
-			{
-				if ((TestBufferUsedBits[Level] & (1ull << bitIndex)) == 0)
-				{
-					TestBufferUsedBits[Level] |= (1ull << bitIndex);
-					buffer = TestBuffers[Level][bitIndex];
-					break;
-				}
-
-				// Move to the next largest buffer size
-				bitIndex += 1;
-				roundedAllocSize += 16;
-			}
+			*DataPointer = ShaderConstantBuffer->MapData(m_DeviceContext, roundedAllocSize, AllocationOffset, false);
+			*AllocationSize = roundedAllocSize;
+			buffer = ShaderConstantBuffer->D3DBuffer;
 		}
 		else
 		{
-			// Last-ditch effort to find a large valid buffer
-			roundedAllocSize = 4096;
-			buffer = TestLargeBuffer;
+			Assert(initialAllocSize <= 4096);
+
+			if (Level >= ARRAYSIZE(TestBufferUsedBits))
+				Level = ARRAYSIZE(TestBufferUsedBits) - 1;
+
+			// Small constant buffer pool: round to nearest 16, determine bit index, then loop until there's a free slot
+			roundedAllocSize = (initialAllocSize + 16 - 1) & ~(16 - 1);
+			D3D11_MAPPED_SUBRESOURCE map;
+
+			if (roundedAllocSize <= (63 * 16))
+			{
+				for (uint32_t bitIndex = roundedAllocSize / 16; bitIndex < 64;)
+				{
+					if ((TestBufferUsedBits[Level] & (1ull << bitIndex)) == 0)
+					{
+						TestBufferUsedBits[Level] |= (1ull << bitIndex);
+						buffer = TestBuffers[Level][bitIndex];
+						break;
+					}
+
+					// Try next largest buffer size
+					bitIndex += 1;
+					roundedAllocSize += 16;
+				}
+			}
+			else
+			{
+				// Last-ditch effort for a large valid buffer
+				roundedAllocSize = 4096;
+				buffer = TestLargeBuffer;
+			}
+
+			Assert(buffer);
+			Assert(SUCCEEDED(m_DeviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)));
+
+			*DataPointer = map.pData;
+			*AllocationSize = map.RowPitch;
+
+			if (AllocationOffset)
+				*AllocationOffset = 0;
 		}
 
-		ProfileCounterAdd("CB Bytes Wasted", (roundedAllocSize - *AllocationSize));
-
-		Assert(buffer);
-		Assert(SUCCEEDED(m_DeviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map)));
-
-		*DataPointer = map.pData;
-		*AllocationSize = map.RowPitch;
-
-		if (AllocationOffset)
-			*AllocationOffset = 0;
-
+		ProfileCounterAdd("CB Bytes Requested", initialAllocSize);
+		ProfileCounterAdd("CB Bytes Wasted", (roundedAllocSize - initialAllocSize));
 		return buffer;
 	}
 
@@ -307,161 +983,6 @@ namespace BSGraphics
 		m_CommandListEndEvents[1] = (ID3D11Query *)0x101010101;
 		m_CommandListEndEvents[2] = (ID3D11Query *)0x101010101;
 		*/
-	}
-
-	void Renderer::FlushThreadedVars()
-	{
-		memset(&TestBufferUsedBits, 0, sizeof(TestBufferUsedBits));
-
-		//
-		// Shaders should've been unique because each technique is different,
-		// but for some reason that isn't the case.
-		//
-		// Other code in Skyrim might be setting the parameters before I do,
-		// so it's not guaranteed to be cleared. (Pretend something is set)
-		//
-		TLS_CurrentVertexShader = (BSVertexShader *)0xFEFEFEFEFEFEFEFE;
-		TLS_CurrentPixelShader = (BSPixelShader *)0xFEFEFEFEFEFEFEFE;
-	}
-
-	void Renderer::RasterStateSetCullMode(uint32_t CullMode)
-	{
-		if (*(DWORD *)&__zz0[52] != CullMode)
-		{
-			*(DWORD *)&__zz0[52] = CullMode;
-			m_StateUpdateFlags |= 0x20;
-		}
-	}
-
-	void Renderer::RasterStateSetUnknown1(uint32_t Value)
-	{
-		if (*(DWORD *)&__zz0[56] != Value)
-		{
-			*(DWORD *)&__zz0[56] = Value;
-			m_StateUpdateFlags |= 0x40;
-		}
-	}
-
-	void Renderer::AlphaBlendStateSetMode(uint32_t Mode)
-	{
-		if (*(DWORD *)&__zz0[64] != Mode)
-		{
-			*(DWORD *)&__zz0[64] = Mode;
-			m_StateUpdateFlags |= 0x80;
-		}
-	}
-
-	void Renderer::AlphaBlendStateSetUnknown1(uint32_t Value)
-	{
-		if (*(DWORD *)&__zz0[68] != Value)
-		{
-			*(DWORD *)&__zz0[68] = Value;
-			m_StateUpdateFlags |= 0x80;
-		}
-	}
-
-	void Renderer::AlphaBlendStateSetUnknown2(uint32_t Value)
-	{
-		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::AlphaBlendStateUnknown2, Value))
-			return;
-
-		if (*(DWORD *)&__zz0[72] != Value)
-		{
-			*(DWORD *)&__zz0[72] = Value;
-			m_StateUpdateFlags |= 0x80;
-		}
-	}
-
-	void Renderer::DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)
-	{
-		if (*(DWORD *)&__zz0[40] != Mode || *(DWORD *)&__zz0[44] != StencilRef)
-		{
-			*(DWORD *)&__zz0[40] = Mode;
-			*(DWORD *)&__zz0[44] = StencilRef;
-			m_StateUpdateFlags |= 0x8;
-		}
-	}
-
-	void Renderer::DepthStencilStateSetDepthMode(uint32_t Mode)
-	{
-		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::DepthStencilStateDepthMode, Mode))
-			return;
-
-		if (*(DWORD *)&__zz0[32] != Mode)
-		{
-			*(DWORD *)&__zz0[32] = Mode;
-
-			// Temp var to prevent duplicate state setting? Don't know where this gets set.
-			if (*(DWORD *)&__zz0[36] != Mode)
-				m_StateUpdateFlags |= 0x4;
-			else
-				m_StateUpdateFlags &= ~0x4;
-		}
-	}
-
-	void Renderer::SetTextureAddressMode(uint32_t Index, uint32_t Mode)
-	{
-		if (m_PSSamplerAddressMode[Index] != Mode)
-		{
-			m_PSSamplerAddressMode[Index] = Mode;
-			m_PSSamplerModifiedBits |= 1 << Index;
-		}
-	}
-
-	void Renderer::SetTextureFilterMode(uint32_t Index, uint32_t Mode)
-	{
-		if (m_PSSamplerFilterMode[Index] != Mode)
-		{
-			m_PSSamplerFilterMode[Index] = Mode;
-			m_PSSamplerModifiedBits |= 1 << Index;
-		}
-	}
-
-	// void BSGraphics::Renderer::SetTextureMode(unsigned int, enum  BSGraphics::TextureAddressMode, enum  BSGraphics::TextureFilterMode)
-	void Renderer::SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode)
-	{
-		SetTextureAddressMode(Index, AddressMode);
-		SetTextureFilterMode(Index, FilterMode);
-	}
-
-	void Renderer::SetUseScrapConstantValue(bool UseStoredValue)
-	{
-		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_1, UseStoredValue))
-			return;
-
-		// When UseStoredValue is false, the constant buffer data is zeroed, but m_ScrapConstantValue is saved
-		if (__zz0[76] != UseStoredValue)
-		{
-			__zz0[76] = UseStoredValue;
-			m_StateUpdateFlags |= 0x100u;
-		}
-	}
-
-	void Renderer::SetScrapConstantValue(float Value)
-	{
-		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_2, *(uint32_t *)&Value))
-			return;
-
-		if (m_ScrapConstantValue != Value)
-		{
-			m_ScrapConstantValue = Value;
-			m_StateUpdateFlags |= 0x200u;
-		}
-	}
-
-	void Renderer::SetTexture(uint32_t Index, Texture *Resource)
-	{
-		SetShaderResource(Index, Resource ? Resource->m_D3DTexture : nullptr);
-	}
-
-	// Not a real function name
-	void Renderer::SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource)
-	{
-		if (m_PSResources[Index] != Resource)
-		{
-			m_PSResources[Index] = Resource;
-			m_PSResourceModifiedBits |= 1 << Index;
-		}
 	}
 
 	CustomConstantGroup Renderer::GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level)
@@ -590,27 +1111,5 @@ namespace BSGraphics
 	{
 		ApplyConstantGroupVS(VertexGroup, Level);
 		ApplyConstantGroupPS(PixelGroup, Level);
-	}
-
-	void Renderer::SetVertexShader(BSVertexShader *Shader)
-	{
-		if (Shader == TLS_CurrentVertexShader)
-			return;
-
-		// The input layout (IASetInputLayout) may need to be created and updated
-		TLS_CurrentVertexShader = Shader;
-		m_CurrentVertexShader = Shader;
-		m_StateUpdateFlags |= 0x400;
-		m_DeviceContext->VSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
-	}
-
-	void Renderer::SetPixelShader(BSPixelShader *Shader)
-	{
-		if (Shader == TLS_CurrentPixelShader)
-			return;
-
-		TLS_CurrentPixelShader = Shader;
-		m_CurrentPixelShader = Shader;
-		m_DeviceContext->PSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
 	}
 }

@@ -5,86 +5,7 @@
 #include "NiMain/NiTransform.h"
 #include "BSShader/BSVertexShader.h"
 #include "BSShader/BSPixelShader.h"
-
-namespace BSGraphics
-{
-	struct Texture
-	{
-		char _pad0[0x10];
-		ID3D11ShaderResourceView *m_D3DTexture;
-	};
-	static_assert_offset(Texture, m_D3DTexture, 0x10);
-
-	enum ConstantGroupLevel
-	{
-		CONSTANT_GROUP_LEVEL_TECHNIQUE = 0x0,		// Varies between PS/VS shaders
-		CONSTANT_GROUP_LEVEL_MATERIAL = 0x1,		// Varies between PS/VS shaders
-		CONSTANT_GROUP_LEVEL_GEOMETRY = 0x2,		// Varies between PS/VS shaders
-		CONSTANT_GROUP_LEVEL_COUNT = 0x3,
-
-		CONSTANT_GROUP_LEVEL_INSTANCE = 0x8,		// Instanced geometry such as grass and trees
-		CONSTANT_GROUP_LEVEL_PREVIOUS_BONES = 0x9,
-		CONSTANT_GROUP_LEVEL_BONES = 0xA,
-		CONSTANT_GROUP_LEVEL_SCRAP_VALUE = 0xB,		// PS/VS. Used for a single float value as scrap/temp data (16 bytes allocated)
-		CONSTANT_GROUP_LEVEL_SCREENSPACEINFO = 0xC,	// PS/VS. Maybe screen space/resolution info. Contains a lot of matrices and vectors.
-	};
-
-	class CustomConstantGroup
-	{
-	public:
-		D3D11_MAPPED_SUBRESOURCE m_Map;
-		ID3D11Buffer *m_Buffer;
-
-		uint32_t m_UnifiedByteOffset;	// Offset into ringbuffer
-		bool m_Unified;					// True if buffer is from global ringbuffer
-
-	public:
-		CustomConstantGroup()
-		{
-			memset(&m_Map, 0, sizeof(m_Map));
-			m_Buffer = nullptr;
-			m_UnifiedByteOffset = 0;
-			m_Unified = false;
-		}
-
-		void *RawData() const
-		{
-			return m_Map.pData;
-		}
-	};
-
-	template<typename T>
-	class ConstantGroup : public CustomConstantGroup
-	{
-	public:
-		T *m_Shader;
-
-	public:
-		template<typename U, uint32_t ParamIndex>
-		U& ParamVS() const
-		{
-			static_assert(std::is_same<T, BSVertexShader>::value, "ParamVS() requires ConstantGroup<BSVertexShader>");
-			static_assert(ParamIndex < ARRAYSIZE(T::m_ConstantOffsets));
-
-			uintptr_t data		= (uintptr_t)RawData();
-			uintptr_t offset	= m_Shader->m_ConstantOffsets[ParamIndex] * sizeof(float);
-
-			return *(U *)(data + offset);
-		}
-
-		template<typename U, uint32_t ParamIndex>
-		U& ParamPS() const
-		{
-			static_assert(std::is_same<T, BSPixelShader>::value, "ParamPS() requires ConstantGroup<BSPixelShader>");
-			static_assert(ParamIndex < ARRAYSIZE(T::m_ConstantOffsets));
-
-			uintptr_t data = (uintptr_t)RawData();
-			uintptr_t offset = m_Shader->m_ConstantOffsets[ParamIndex] * sizeof(float);
-
-			return *(U *)(data + offset);
-		}
-	};
-}
+#include "BSGraphicsTypes.h"
 
 namespace BSGraphics::Utility
 {
@@ -100,16 +21,34 @@ namespace BSGraphics
 		static Renderer *GetGlobals();
 		static Renderer *GetGlobalsNonThreaded();
 
-		ID3D11Buffer *MapDynamicConstantBuffer(void **DataPointer, uint32_t *AllocationSize, uint32_t *AllocationOffset);
-		ID3D11Buffer *MapConstantBuffer(void **DataPointer, uint32_t *AllocationSize, uint32_t *AllocationOffset, uint32_t Level);
-		void UnmapDynamicConstantBuffer();
-
-		void *MapDynamicBuffer(uint32_t AllocationSize, uint32_t *AllocationOffset);
-
 		static void Initialize();
 		static void OnNewFrame();
 
 		static void FlushThreadedVars();
+
+		//
+		// Drawing
+		//
+		void DrawLineShape(LineShape *GraphicsLineShape, uint32_t StartIndex, uint32_t Count);
+
+		void DrawTriShape(TriShape *GraphicsTriShape, uint32_t StartIndex, uint32_t Count);
+
+		DynamicTriShape *GetParticlesDynamicTriShape();
+		void *MapDynamicTriShapeDynamicData(class BSDynamicTriShape *TriShape, DynamicTriShape *GraphicsTriShape, uint32_t Size);
+		void UnmapDynamicTriShapeDynamicData(DynamicTriShape *GraphicsTriShape);
+		void DrawDynamicTriShape(DynamicTriShape *GraphicsTriShape, uint32_t StartIndex, uint32_t Count);
+		void DrawDynamicTriShape(DynamicTriShapeDrawData *DrawData, uint32_t StartIndex, uint32_t Count, uint32_t VertexOffset);
+
+		void DrawParticleShaderTriShape(const void *DynamicData, uint32_t Count);
+
+		//
+		// State management
+		//
+		static void SyncD3DState(bool Unknown);
+		static void SyncD3DResources();
+
+		void DepthStencilStateSetDepthMode(uint32_t Mode);
+		void DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef);
 
 		void RasterStateSetCullMode(uint32_t CullMode);
 		void RasterStateSetUnknown1(uint32_t Value);
@@ -117,19 +56,33 @@ namespace BSGraphics
 		void AlphaBlendStateSetMode(uint32_t Mode);
 		void AlphaBlendStateSetUnknown1(uint32_t Value);
 		void AlphaBlendStateSetUnknown2(uint32_t Value);
-		void DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef);
-		void DepthStencilStateSetDepthMode(uint32_t Mode);
-
-		void SetTextureAddressMode(uint32_t Index, uint32_t Mode);
-		void SetTextureFilterMode(uint32_t Index, uint32_t Mode);
-		void SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode);
 
 		void SetUseScrapConstantValue(bool UseStoredValue);
 		void SetScrapConstantValue(float Value);
 
+		void SetVertexDescription(uint64_t VertexDesc);
+		void SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology);
+
+		void SetVertexShader(BSVertexShader *Shader);
+		void SetPixelShader(BSPixelShader *Shader);
+
 		void SetTexture(uint32_t Index, Texture *Resource);
+		void SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode);
+		void SetTextureAddressMode(uint32_t Index, uint32_t Mode);
+		void SetTextureFilterMode(uint32_t Index, uint32_t Mode);
+
 		void SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource);
 
+		//
+		// Buffer management
+		//
+		ID3D11Buffer *MapConstantBuffer(void **DataPointer, uint32_t *AllocationSize, uint32_t *AllocationOffset, uint32_t Level);
+		void UnmapDynamicConstantBuffer();
+		void *MapDynamicBuffer(uint32_t AllocationSize, uint32_t *AllocationOffset);
+
+		//
+		// Shader constant buffers
+		//
 		CustomConstantGroup GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level);
 		ConstantGroup<BSVertexShader> GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level);
 		ConstantGroup<BSPixelShader> GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level);
@@ -138,9 +91,6 @@ namespace BSGraphics
 		void ApplyConstantGroupVS(const CustomConstantGroup *Group, ConstantGroupLevel Level);
 		void ApplyConstantGroupPS(const CustomConstantGroup *Group, ConstantGroupLevel Level);
 		void ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level);
-
-		void SetVertexShader(BSVertexShader *Shader);
-		void SetPixelShader(BSPixelShader *Shader);
 
 		struct
 		{
@@ -178,9 +128,9 @@ namespace BSGraphics
 			ID3D11BlendState *m_BlendStates[7][2][13][2];		// OMSetBlendState
 			ID3D11SamplerState *m_SamplerStates[6][5];			// Samplers[AddressMode][FilterMode] (Used for PS and CS)
 
-																//
-																// Vertex/Pixel shader constant buffers. Set during load-time (CreateShaderBundle).
-																//
+			//
+			// Vertex/Pixel shader constant buffers. Set during load-time (CreateShaderBundle).
+			//
 			uint32_t		m_NextConstantBufferIndex;
 			ID3D11Buffer	*m_ConstantBuffers1[4];				// Sizes: 3840 bytes
 			ID3D11Buffer	*m_TempConstantBuffer1;				// CONSTANT_GROUP_LEVEL_SCRAP_VALUE (Index 11) - 16 bytes
@@ -199,9 +149,9 @@ namespace BSGraphics
 
 			void *m_FrameDurationStringHandle;					// "Frame Duration" but stored in their global string pool
 
-																//
-																// This is probably a separate structure...possibly the BSGraphics::Renderer class itself
-																//
+			//
+			// This is probably a separate structure...possibly the BSGraphics::Renderer class itself
+			//
 			uint32_t m_StateUpdateFlags;						// Flags; global state updates
 			uint32_t m_PSResourceModifiedBits;					// Flags
 			uint32_t m_PSSamplerModifiedBits;					// Flags

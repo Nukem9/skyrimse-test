@@ -21,10 +21,10 @@ public:
 	virtual void *IsMultiBoundNode();	// BSMultiBoundNode *
 	virtual void *IsGeometry();			// BSGeometry *
 	virtual void *IsTriStrips();		// NiTriStrips *
-	virtual void *IsTriShape();			// BSTriShape *
+	virtual class BSTriShape *IsTriShape();			// BSTriShape *
 	virtual void *IsSegmentedTriShape();// BSSegmentedTriShape *
 	virtual void *IsSubIndexTriShape();	// BSSubIndexTriShape *
-	virtual void *IsDynamicTriShape();	// BSDynamicTriShape *
+	virtual class BSDynamicTriShape *IsDynamicTriShape();	// BSDynamicTriShape *
 	virtual void *IsNiGeometry();		// NiGeometry *
 	virtual void *IsNiTriBasedGeom();	// NiTriBasedGeom *
 	virtual void *IsNiTriShape();		// NiTriShape *

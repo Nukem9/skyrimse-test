@@ -124,7 +124,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		if (mtrContext)
 			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_TechniqueID, v10, a2);
 		else
-			BSBatchRenderer::DrawPassGeometry(i, i->m_TechniqueID, v10, a2);
+			BSBatchRenderer::SetupAndDrawPass(i, i->m_TechniqueID, v10, a2);
 	}
 
 	if ((a2 & 0x108) == 0)
@@ -476,7 +476,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	else
 	{
 		for (; currentPass; currentPass = currentPass->m_Next)
-			DrawPassGeometry(currentPass, Technique, unknownFlag2, a5);
+			SetupAndDrawPass(currentPass, Technique, unknownFlag2, a5);
 	}
 
 	// a1+108 is probably a "remove list" flag after it's rendered, but the memory is not freed yet
@@ -557,7 +557,7 @@ void UnmapDynamicData()
 AutoPtr(bool, zbUseEarlyZ, 0x30528E5);
 SRWLOCK testingLock = SRWLOCK_INIT;
 
-void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags)
 {
 	auto *GraphicsGlobals = BSGraphics::Renderer::GetGlobals();
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
@@ -595,15 +595,29 @@ void BSBatchRenderer::DrawPassGeometry(BSRenderPass *Pass, uint32_t Technique, b
 		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;
 
 		if (Pass->m_Geometry->QSkinInstance())
-			DrawGeometrySkinned(Pass, AlphaTest, RenderFlags);
+			DrawPassSkinned(Pass, AlphaTest, RenderFlags);
 		else if (*(BYTE *)((uintptr_t)Pass->m_Geometry + 265) & 8)// BSGeometry::NeedsCustomRender()?
-			DrawGeometryCustom(Pass, AlphaTest, RenderFlags);
+			DrawPassCustom(Pass, AlphaTest, RenderFlags);
 		else
-			DrawGeometryDefault(Pass, AlphaTest, RenderFlags);
+			DrawPass(Pass, AlphaTest, RenderFlags);
 	}
 }
 
-void BSBatchRenderer::DrawGeometryDefault(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader, bool AlphaTest, uint32_t RenderFlags)
+{
+	if (Shader != BSSkyShader::pInstance)
+	{
+		if ((RenderFlags & 4) && !sub_1412E3AB0(Pass->m_TechniqueID))
+			Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, AlphaTest);
+
+		if (AlphaTest && Pass->QAlphaProperty())
+			Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
+	}
+
+	Shader->SetupGeometry(Pass, RenderFlags);
+}
+
+void BSBatchRenderer::DrawPass(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
 {
 	MemoryContextTracker tracker(26, "BSBatchRenderer.cpp");
 
@@ -612,11 +626,11 @@ void BSBatchRenderer::DrawGeometryDefault(BSRenderPass *Pass, bool AlphaTest, ui
 	AssertMsgDebug(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
 
 	SetupGeometryBlending(Pass, Pass->m_Shader, (AlphaTest || zbUseEarlyZ) ? true : false, RenderFlags);
-	DrawTriStrips(Pass);
+	DrawGeometry(Pass);
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
-void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
 {
 	AssertMsgDebug(Pass, "Render Error: Render pass is nullptr");
 	AssertMsgDebug(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
@@ -641,7 +655,7 @@ void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, ui
 		params.m_Flags = 1;
 
 		Pass->m_Shader->SetBoneMatrix(Pass->m_Geometry->QSkinInstance(), &params, &Pass->m_Geometry->GetWorldTransform());
-		DrawTriStrips(Pass);
+		DrawGeometry(Pass);
 	}
 	else
 	{
@@ -680,7 +694,7 @@ void BSBatchRenderer::DrawGeometrySkinned(BSRenderPass *Pass, bool AlphaTest, ui
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
-void BSBatchRenderer::DrawGeometryCustom(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::DrawPassCustom(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
 {
 	Pass->m_Shader->SetupGeometry(Pass, RenderFlags);
 	Pass->m_Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, true);
@@ -688,26 +702,86 @@ void BSBatchRenderer::DrawGeometryCustom(BSRenderPass *Pass, bool AlphaTest, uin
 	if (Pass->QAlphaProperty())
 		Pass->m_Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
 
-	DrawTriStrips(Pass);
+	DrawGeometry(Pass);
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
-void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 {
-	if (Shader != BSSkyShader::pInstance)
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	BSGeometry *geometry = Pass->m_Geometry;
+
+	switch (geometry->QType())
 	{
-		if ((RenderFlags & 4) && !sub_1412E3AB0(Pass->m_TechniqueID))
-			Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, AlphaTest);
+	case GEOMETRY_TYPE_PARTICLES:
+	{
+		// NiParticles::GetActiveVertexCount
+		int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
 
-		if (AlphaTest && Pass->QAlphaProperty())
-			Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
+		AssertMsg(particleCount <= MAX_SHARED_PARTICLES_SIZE,
+			"This emitter emits more particle than allowed in our rendering buffers."
+			"Please investigate on emitter or increase MAX_SHARED_PARTICLES_SIZE");
+
+		if (particleCount > 0)
+		{
+			BSGraphics::DynamicTriShape *triInfo = renderer->GetParticlesDynamicTriShape();
+			void *map = renderer->MapDynamicTriShapeDynamicData(nullptr, triInfo, 4 * particleCount * geometry->GetVertexSize1());
+
+			if (map)
+			{
+				// unpack();
+				renderer->UnmapDynamicTriShapeDynamicData(triInfo);
+			}
+
+			renderer->DrawDynamicTriShape(triInfo, 0, 2 * particleCount);
+		}
 	}
+	break;
+	/*
+	case GEOMETRY_TYPE_STRIP_PARTICLES:
+	{
+	}
+	break;
+	*/
+	case GEOMETRY_TYPE_TRISHAPE:
+	{
+		AssertDebug(geometry->IsTriShape());
 
-	Shader->SetupGeometry(Pass, RenderFlags);
-}
+		auto triShape = static_cast<BSTriShape *>(geometry);
+		auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
 
-void BSBatchRenderer::DrawTriStrips(BSRenderPass *Pass)
-{
-	auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
-	sub_14131DDF0(Pass);
+		renderer->DrawTriShape(rendererData, 0, triShape->m_TriangleCount);
+	}
+	break;
+
+	case GEOMETRY_TYPE_PARTICLE_SHADER_DYNAMIC_TRISHAPE:
+	{
+		AssertDebug(geometry->IsDynamicTriShape());
+
+		auto dynTriShape = static_cast<BSDynamicTriShape *>(geometry);
+		auto rendererData = dynTriShape->LockDynamicDataForRead();
+
+		renderer->DrawParticleShaderTriShape(rendererData, dynTriShape->m_VertexCount);
+		dynTriShape->UnlockDynamicData();
+	}
+	break;
+
+	case GEOMETRY_TYPE_LINES:
+	{
+		AssertDebug(false);
+
+		auto lineShape = static_cast<BSTriShape *>(geometry);
+		auto rendererData = reinterpret_cast<BSGraphics::LineShape *>(lineShape->QRendererData());
+
+		renderer->DrawLineShape(rendererData, 0, lineShape->m_TriangleCount);
+	}
+	break;
+
+	default:
+	{
+		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		sub_14131DDF0(Pass);
+	}
+	break;
+	}
 }

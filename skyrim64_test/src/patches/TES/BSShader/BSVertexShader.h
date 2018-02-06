@@ -25,7 +25,8 @@ struct BSVertexShader
 
 	uint64_t m_VertexDescription;	// ID3D11Device::CreateInputLayout (for VSMain())
 	uint8_t m_ConstantOffsets[20];	// Actual offset is multiplied by 4
-									// Raw bytecode appended after this
+	uint8_t __padding[4];
+	uint8_t m_RawBytecode[0];		// Raw bytecode
 };
 static_assert(offsetof(BSVertexShader, m_TechniqueID) == 0x0, "");
 static_assert(offsetof(BSVertexShader, m_Shader) == 0x8, "");
@@ -35,6 +36,7 @@ static_assert(offsetof(BSVertexShader, m_PerMaterial) == 0x28, "");
 static_assert(offsetof(BSVertexShader, m_PerGeometry) == 0x38, "");
 static_assert(offsetof(BSVertexShader, m_VertexDescription) == 0x48, "");
 static_assert(offsetof(BSVertexShader, m_ConstantOffsets) == 0x50, "");
+static_assert_offset(BSVertexShader, m_RawBytecode, 0x68);
 static_assert(sizeof(BSVertexShader) == 0x68, "");
 
 class VertexShaderDecoder : public ShaderDecoder

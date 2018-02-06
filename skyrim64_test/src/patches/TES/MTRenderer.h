@@ -160,7 +160,7 @@ namespace MTRenderer
 
 	struct DrawGeometryRenderCommand : RenderCommand
 	{
-		// Equivalent to calling DrawPassGeometry();
+		// Equivalent to calling SetupAndDrawPass();
 		BSRenderPass Pass;
 		uint32_t Technique;
 		unsigned __int8 a3;
@@ -202,13 +202,13 @@ namespace MTRenderer
 			return;
 			*/
 
-			BSBatchRenderer::DrawPassGeometry(&Pass, Technique, a3, a4);
+			BSBatchRenderer::SetupAndDrawPass(&Pass, Technique, a3, a4);
 		}
 	};
 
 	struct DrawGeometryMultiRenderCommand : RenderCommand
 	{
-		// Equivalent to calling DrawPassGeometry();
+		// Equivalent to calling SetupAndDrawPass();
 		BSRenderPass Pass[3];
 		uint32_t Technique;
 		unsigned __int8 a3;
@@ -251,9 +251,9 @@ namespace MTRenderer
 			return;
 			*/
 
-			BSBatchRenderer::DrawPassGeometry(&Pass[0], Technique, a3, a4);
-			BSBatchRenderer::DrawPassGeometry(&Pass[1], Technique, a3, a4);
-			BSBatchRenderer::DrawPassGeometry(&Pass[2], Technique, a3, a4);
+			BSBatchRenderer::SetupAndDrawPass(&Pass[0], Technique, a3, a4);
+			BSBatchRenderer::SetupAndDrawPass(&Pass[1], Technique, a3, a4);
+			BSBatchRenderer::SetupAndDrawPass(&Pass[2], Technique, a3, a4);
 		}
 	};
 
