@@ -737,12 +737,13 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 		}
 	}
 	break;
-	/*
+	
 	case GEOMETRY_TYPE_STRIP_PARTICLES:
 	{
+		AssertDebug(false);
 	}
 	break;
-	*/
+	
 	case GEOMETRY_TYPE_TRISHAPE:
 	{
 		AssertDebug(geometry->IsTriShape());
@@ -751,6 +752,50 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 		auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
 
 		renderer->DrawTriShape(rendererData, 0, triShape->m_TriangleCount);
+	}
+	break;
+
+	case GEOMETRY_TYPE_DYNAMIC_TRISHAPE:
+	{
+		AssertDebug(false);
+	}
+	break;
+
+	case GEOMETRY_TYPE_MESHLOD_TRISHAPE:
+	{
+		AssertDebug(false);
+	}
+	break;
+
+	case GEOMETRY_TYPE_LOD_MULTIINDEX_TRISHAPE:
+	{
+		AssertDebug(false);
+	}
+	break;
+
+	case GEOMETRY_TYPE_MULTIINDEX_TRISHAPE:
+	{
+		AssertDebug(false);
+	}
+	break;
+
+	case GEOMETRY_TYPE_SUBINDEX_TRISHAPE:
+	{
+		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		sub_14131DDF0(Pass);
+	}
+	break;
+
+	case GEOMETRY_TYPE_SUBINDEX_LAND_TRISHAPE:
+	{
+		AssertDebug(false);
+	}
+	break;
+
+	case GEOMETRY_TYPE_MULTISTREAMINSTANCE_TRISHAPE:
+	{
+		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		sub_14131DDF0(Pass);
 	}
 	break;
 
@@ -777,11 +822,20 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 	}
 	break;
 
-	default:
+	case GEOMETRY_TYPE_DYNAMIC_LINES:
 	{
-		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
-		sub_14131DDF0(Pass);
+		AssertDebug(false);
 	}
 	break;
+
+	case GEOMETRY_TYPE_INSTANCE_GROUP:
+	{
+		AssertDebug(false);
+	}
+	break;
+
+	default:
+		AssertMsgVa(false, "Unimplemented geometry type %d", geometry->QType());
+		break;
 	}
 }
