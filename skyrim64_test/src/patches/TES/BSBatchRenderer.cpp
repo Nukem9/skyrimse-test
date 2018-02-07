@@ -715,11 +715,15 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 	{
 	case GEOMETRY_TYPE_PARTICLES:
 	{
+		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		sub_14131DDF0(Pass);
+		return;
+
 		// NiParticles::GetActiveVertexCount
 		int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
 
 		AssertMsg(particleCount <= MAX_SHARED_PARTICLES_SIZE,
-			"This emitter emits more particle than allowed in our rendering buffers."
+			"This emitter emits more particles than allowed in our rendering buffers."
 			"Please investigate on emitter or increase MAX_SHARED_PARTICLES_SIZE");
 
 		if (particleCount > 0)
@@ -729,7 +733,7 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 
 			if (map)
 			{
-				// unpack();
+				BSGraphics::Utility::PackDynamicParticleData(particleCount, (class BSGraphics::Utility::NiParticles *)geometry, map);
 				renderer->UnmapDynamicTriShapeDynamicData(triInfo);
 			}
 

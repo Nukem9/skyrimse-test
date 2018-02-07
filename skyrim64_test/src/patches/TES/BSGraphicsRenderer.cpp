@@ -21,6 +21,12 @@ namespace BSGraphics::Utility
 	{
 		*Floats = Color.XmmVector();
 	}
+
+	void PackDynamicParticleData(uint32_t ParticleCount, class NiParticles *Particles, void *Buffer)
+	{
+		auto sub_140D75710 = (decltype(&PackDynamicParticleData))(g_ModuleBase + 0xD75710);
+		sub_140D75710(ParticleCount, Particles, Buffer);
+	}
 }
 
 namespace BSGraphics
