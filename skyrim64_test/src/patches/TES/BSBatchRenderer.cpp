@@ -225,11 +225,7 @@ void BSBatchRenderer::RenderPassArray::Clear(bool Validate)
 	for (int i = 0; i < ARRAYSIZE(this->m_Pass); i++)
 	{
 		if (Validate && this->m_Pass[i])
-		{
-			//sub_14002288B((__int64)&a1, 255i64, (__int64)"Pass still has passes");
-			//if (qword_14468B560)
-			//	qword_14468B560(&a1, 0i64);
-		}
+			AssertMsg(false, "Pass still has passes");
 
 		// This is removed in public builds? Sets the bool to indicate pass is no longer registered
 		// for (result = *(_QWORD *)(v4 + 8 * v3); result; result = *(_QWORD *)(result + 48))
@@ -326,9 +322,10 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex,
 	if (v8 > *(DWORD *)(v6 + 84))
 		return false;
 
-	// "RenderPasses in active lists are out of order, passes will probably be leaked"
 	if (*(BYTE *)(v6 + 108))
 	{
+		AssertMsg(m_EndingTech >= m_StartingTech, "RenderPasses in active lists are out of order, passes will probably be leaked");
+
 		v10 = *(uint64_t *)(v6 + 96);
 		if (v10)
 		{
@@ -555,7 +552,6 @@ void UnmapDynamicData()
 }
 
 AutoPtr(bool, zbUseEarlyZ, 0x30528E5);
-SRWLOCK testingLock = SRWLOCK_INIT;
 
 void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags)
 {
@@ -641,10 +637,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	// "Render Error : Skin partition array is nullptr"
 	AssertMsgDebug(Pass->m_Property, "Don't have a shader property when we expected one.");
 
-	auto sub_140C71A50 = (const void *(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71A50);
-	auto sub_140C71AB0 = (void(__fastcall *)(uintptr_t))(g_ModuleBase + 0x0C71AB0);
 	auto sub_141336450 = (void(__fastcall *)())(g_ModuleBase + 0x1336450);
-
 	sub_141336450();
 
 	if ((*(__int64(__fastcall **)(BSGeometry *))(*(uintptr_t *)Pass->m_Geometry + 432i64))(Pass->m_Geometry))
@@ -673,17 +666,18 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 		params.m_UnkDword3 = 0;
 		params.m_UnkDword4 = -1;
 
-		// Skinned verts are uploaded to a GPU vertex buffer directly (non-static objects like characters)
-		uintptr_t dynamicTriGeometry = (uintptr_t)Pass->m_Geometry->IsDynamicTriShape();
+		// Runtime-updated vertices are sent to a GPU vertex buffer directly (non-static objects like trees/characters)
+		BSDynamicTriShape *dynamicTri = Pass->m_Geometry->IsDynamicTriShape();
 
-		if (dynamicTriGeometry)
+		if (dynamicTri)
 		{
-			uint32_t v16 = *(uint32_t *)(dynamicTriGeometry + 0x170);
-			void *v15 = sub_140D6BF00(0, v16, &params.m_UnkDword4);
+			uint32_t v16 = *(uint32_t *)((uintptr_t)dynamicTri + 0x170);
+			void *vertexBuffer = sub_140D6BF00(0, v16, &params.m_UnkDword4);
 
-			const void *v17 = sub_140C71A50(dynamicTriGeometry);
-			memcpy_s(v15, v16, v17, v16);
-			sub_140C71AB0(dynamicTriGeometry);
+			const void *data = dynamicTri->LockDynamicDataForRead();
+			memcpy_s(vertexBuffer, v16, data, v16);
+			dynamicTri->UnlockDynamicData();
+
 			UnmapDynamicData();
 		}
 
