@@ -5,6 +5,7 @@
 #include "../TES/BSShader/BSShaderManager.h"
 #include "../TES/BSShader/BSShaderRenderTargets.h"
 #include "../TES/BSGraphicsRenderer.h"
+#include "../TES/BSBatchRenderer.h"
 
 IDXGISwapChain *g_SwapChain;
 ID3D11DeviceContext2 *g_DeviceContext;
@@ -384,6 +385,7 @@ void hook()
 	if (!ptrPresent)
 		*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)swap, &hk_IDXGISwapChain_Present, 8);
 
+	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x131F0D0, (PBYTE)&BSBatchRenderer::SetupAndDrawPass);
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&BSGraphics::Renderer::SyncD3DState);
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF30, (PBYTE)&sub_140D6BF00);
 	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1960, (PBYTE)&BSShaderAccumulator::sub_1412E1600);
