@@ -5,6 +5,7 @@
 #include "BSShader/BSVertexShader.h"
 #include "BSShader/BSPixelShader.h"
 #include "BSShader/BSShaderRenderTargets.h"
+#include "BSReadWriteLock.h"
 #include "MTRenderer.h"
 
 namespace BSGraphics::Utility
@@ -53,6 +54,9 @@ namespace BSGraphics
 	ID3D11Buffer *TempDynamicBuffers[11];
 
 	const uint32_t ThresholdSize = 32;
+
+	std::unordered_map<uint64_t, ID3D11InputLayout *> m_InputLayoutMap;
+	BSReadWriteLock m_InputLayoutLock;
 
 	Renderer *Renderer::GetGlobals()
 	{
@@ -320,7 +324,12 @@ namespace BSGraphics
 				&m_UnknownInputLayout)));
 		}
 
-		// TODO: Insert layout into global map
+		m_InputLayoutLock.LockForWrite();
+		{
+			uint64_t desc = m_VertexDescSetting & m_CurrentVertexShader->m_VertexDescription;
+			m_InputLayoutMap.try_emplace(desc, m_UnknownInputLayout);
+		}
+		m_InputLayoutLock.UnlockWrite();
 
 		m_DeviceContext->IASetInputLayout(m_UnknownInputLayout);
 		m_StateUpdateFlags |= 0x400;
@@ -341,15 +350,6 @@ namespace BSGraphics
 		signed __int64 v12; // rcx
 		float v14; // xmm0_4
 		float v15; // xmm0_4
-		unsigned __int64 v17; // rbx
-		uint64_t v18; // rcx
-		__int64 v19; // rdi
-		int v20; // ebx
-		int *i; // [rsp+28h] [rbp-80h]
-		float *v35; // [rsp+30h] [rbp-78h]
-		int v37; // [rsp+B8h] [rbp+10h]
-		int v38; // [rsp+C0h] [rbp+18h]
-		__int64 v39; // [rsp+C8h] [rbp+20h]
 
 		renderer->UnmapDynamicConstantBuffer();
 
@@ -541,49 +541,29 @@ namespace BSGraphics
 			// Shader input layout creation + updates
 			if (!Unknown && (flags & 0x400))
 			{
-				AcquireSRWLockExclusive(&InputLayoutLock);
-
-				uint32_t& dword_141E2C144 = *(uint32_t *)(g_ModuleBase + 0x1E2C144);
-				uint64_t& qword_141E2C160 = *(uint64_t *)(g_ModuleBase + 0x1E2C160);
-
-				uint64_t *off_141E2C150 = *(uint64_t **)(g_ModuleBase + 0x1E2C150);
-
-				auto sub_140C06080 = (__int64(__fastcall *)(DWORD *a1, unsigned __int64 a2))(g_ModuleBase + 0xC060B0);
-				auto sub_140D705F0 = (__int64(__fastcall *)(unsigned __int64 a1))(g_ModuleBase + 0xD70620);
-				auto sub_140D72740 = (char(__fastcall *)(__int64 a1, __int64 a2, int a3, __int64 *a4, int64_t *a5))(g_ModuleBase + 0xD72770);
-				auto sub_140D735D0 = (void(__fastcall *)(__int64 a1))(g_ModuleBase + 0xD73600);
-
-				v17 = renderer->m_VertexDescSetting & renderer->m_CurrentVertexShader->m_VertexDescription;
-				v35 = (float *)(renderer->m_VertexDescSetting & renderer->m_CurrentVertexShader->m_VertexDescription);
-				sub_140C06080((DWORD *)&v37, (unsigned __int64)v35);
-				if (qword_141E2C160
-					&& (v18 = qword_141E2C160 + 24i64 * (v37 & (unsigned int)(dword_141E2C144 - 1)),
-						*(uint64_t *)(qword_141E2C160 + 24i64 * (v37 & (unsigned int)(dword_141E2C144 - 1)) + 16)))
+				m_InputLayoutLock.LockForWrite();
 				{
-					while (*(uint64_t *)v18 != v17)
+					uint64_t desc = renderer->m_VertexDescSetting & renderer->m_CurrentVertexShader->m_VertexDescription;
+
+					// Does the entry exist already?
+					if (auto e = m_InputLayoutMap.find(desc); e != m_InputLayoutMap.end())
 					{
-						v18 = *(uint64_t *)(v18 + 16);
-						if ((void *)v18 == off_141E2C150)
-							goto LABEL_53;
+						// It does. We're done now.
+						renderer->m_DeviceContext->IASetInputLayout(e->second);
 					}
-					v19 = *(uint64_t *)(v18 + 8);
-				}
-				else
-				{
-				LABEL_53:
-					v39 = sub_140D705F0(v17);                 // IACreateInputLayout
-					v19 = v39;
-					if (v39 || v17 != 0x300000000407i64)
+					else
 					{
-						sub_140C06080((DWORD *)&v38, v17);
-						v20 = v38;
-						for (i = &v37; !sub_140D72740((__int64)(g_ModuleBase + 0x1E2C140), qword_141E2C160, v20, (__int64 *)&v35, &v39); i = &v37)
-							sub_140D735D0((__int64)(g_ModuleBase + 0x1E2C140));
+						// Create and insert
+						auto sub_140D705F0 = (__int64(__fastcall *)(unsigned __int64 a1))(g_ModuleBase + 0xD70620);
+						ID3D11InputLayout *layout = (ID3D11InputLayout *)sub_140D705F0(desc);
+
+						if (layout || desc != 0x300000000407)
+							m_InputLayoutMap.emplace(desc, layout);
+
+						renderer->m_DeviceContext->IASetInputLayout(layout);
 					}
 				}
-
-				renderer->m_DeviceContext->IASetInputLayout((ID3D11InputLayout *)v19);
-				ReleaseSRWLockExclusive(&InputLayoutLock);
+				m_InputLayoutLock.UnlockWrite();
 			}
 
 			// IASetPrimitiveTopology

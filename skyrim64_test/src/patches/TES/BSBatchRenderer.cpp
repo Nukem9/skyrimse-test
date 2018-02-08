@@ -738,7 +738,8 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 	
 	case GEOMETRY_TYPE_STRIP_PARTICLES:
 	{
-		AssertDebug(false);
+		// WARNING: Do not enable this function without fixing the input layout lookups first
+		Assert(false);
 	}
 	break;
 	
