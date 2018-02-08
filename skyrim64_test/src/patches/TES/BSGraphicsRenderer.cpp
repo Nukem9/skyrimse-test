@@ -616,7 +616,7 @@ namespace BSGraphics
 		// Compute shader unordered access views (UAVs)
 		if (uint32_t bits = renderer->m_CSUAVModifiedBits; bits != 0)
 		{
-			AssertMsg((bits & 0xFFFF0000) == 0, "CSUAVModifiedBits must not exceed 8th index");
+			AssertMsg((bits & 0xFFFFFF00) == 0, "CSUAVModifiedBits must not exceed 7th index");
 
 			for_each_bit(i, bits)
 				renderer->m_DeviceContext->CSSetUnorderedAccessViews(i, 1, &renderer->m_CSUAVResources[i], nullptr);
