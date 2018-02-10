@@ -1251,7 +1251,7 @@ namespace BSGraphics
 			}
 			else
 			{
-				((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers1(Level, 1, &Group->m_Buffer, nullptr, nullptr);
+				((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers(Level, 1, &Group->m_Buffer);
 			}
 		}
 	}
@@ -1268,7 +1268,7 @@ namespace BSGraphics
 			}
 			else
 			{
-				((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers1(Level, 1, &Group->m_Buffer, nullptr, nullptr);
+				((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers(Level, 1, &Group->m_Buffer);
 			}
 		}
 	}
