@@ -975,7 +975,7 @@ namespace BSGraphics
 	void ReflectConstantBuffers(ID3D11ShaderReflection *Reflector, BSConstantGroup *Groups, uint32_t MaxGroups, std::function<const char *(int Index)> GetConstant, uint8_t *Offsets, uint32_t MaxOffsets)
 	{
 		D3D11_SHADER_DESC desc;
-		Reflector->GetDesc(&desc);
+		Assert(SUCCEEDED(Reflector->GetDesc(&desc)));
 
 		if (desc.ConstantBuffers <= 0)
 		{
@@ -987,18 +987,17 @@ namespace BSGraphics
 		{
 			Group->m_Buffer = nullptr;
 
-			if (!Buffer)
-				return;
-
+			// If this call fails, it's an invalid buffer
 			D3D11_SHADER_BUFFER_DESC bufferDesc;
-			Buffer->GetDesc(&bufferDesc);
+			if (FAILED(Buffer->GetDesc(&bufferDesc)))
+				return;
 
 			for (uint32_t i = 0; i < bufferDesc.Variables; i++)
 			{
 				ID3D11ShaderReflectionVariable *var = Buffer->GetVariableByIndex(i);
 
 				D3D11_SHADER_VARIABLE_DESC varDesc;
-				var->GetDesc(&varDesc);
+				Assert(SUCCEEDED(var->GetDesc(&varDesc)));
 
 				const char *ourConstName = GetConstant(i);
 				const char *dxConstName = varDesc.Name;
@@ -1062,6 +1061,9 @@ namespace BSGraphics
 			return nullptr;
 		}
 
+		if (shaderErrors)
+			shaderErrors->Release();
+
 		void *rawPtr = malloc(sizeof(BSVertexShader) + shaderBlob->GetBufferSize());
 		BSVertexShader *vs = new (rawPtr) BSVertexShader;
 
@@ -1082,7 +1084,6 @@ namespace BSGraphics
 
 		reflector->Release();
 		shaderBlob->Release();
-		shaderErrors->Release();
 
 		return vs;
 	}
