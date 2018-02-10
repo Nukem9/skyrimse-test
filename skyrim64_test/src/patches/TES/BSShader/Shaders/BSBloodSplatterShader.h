@@ -14,12 +14,12 @@ private:
 	// Is either 0 or 1 [enum], set in SetupTechnique(), used in SetupGeometry()
 	uint32_t m_CurrentRawTechnique;
 
-	inline AutoPtr(NiColorA, LightLoc, 0x32573B8);
+	inline AutoPtr(NiColorA, LightLoc, 0x32573D0);
 	inline AutoPtr(int, iAdaptedLightRenderTarget, 0x32573C8);
-	inline AutoPtr(float, fGlobalAlpha, 0x10);
-	inline AutoPtr(float, fFlareMult, 0x10);
-	inline AutoPtr(float, fAlpha, 0x10);
-	inline AutoPtr(float, fFlareOffsetScale, 0x10);
+	inline AutoPtr(float, fGlobalAlpha, 0x1E333C4);
+	inline AutoPtr(float, fFlareMult, 0x1E333C0);
+	inline AutoPtr(float, fAlpha, 0x32573C0);
+	inline AutoPtr(float, fFlareOffsetScale, 0x32573C4);
 
 	const static uintptr_t OriginalVTableBase = 0x1879C98;
 
