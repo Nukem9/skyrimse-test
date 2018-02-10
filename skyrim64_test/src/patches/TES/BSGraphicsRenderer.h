@@ -82,6 +82,12 @@ namespace BSGraphics
 		void *MapDynamicBuffer(uint32_t AllocationSize, uint32_t *AllocationOffset);
 
 		//
+		// Shader creation
+		//
+		BSVertexShader *CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant);
+		BSPixelShader *CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant);
+
+		//
 		// Shader constant buffers
 		//
 		CustomConstantGroup GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level);

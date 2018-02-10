@@ -219,6 +219,11 @@ public:
 			return m_Current != Rhs.m_Current;
 		}
 
+		void temphack(mapped_type a)
+		{
+			m_Current->m_Value = a;
+		}
+
 	protected:
 		const_iterator(table_entry *Final) : m_Current(Final), m_End(Final)
 		{

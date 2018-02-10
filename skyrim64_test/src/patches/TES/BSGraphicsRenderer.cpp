@@ -1,5 +1,6 @@
 #include "../rendering/common.h"
 #include "../rendering/GpuCircularBuffer.h"
+#include <d3dcompiler.h>
 #include "BSGraphicsRenderer.h"
 #include "BSShader/BSShaderAccumulator.h"
 #include "BSShader/BSVertexShader.h"
@@ -969,6 +970,182 @@ namespace BSGraphics
 		m_CommandListEndEvents[1] = (ID3D11Query *)0x101010101;
 		m_CommandListEndEvents[2] = (ID3D11Query *)0x101010101;
 		*/
+	}
+
+	void ReflectConstantBuffers(ID3D11ShaderReflection *Reflector, BSConstantGroup *Groups, uint32_t MaxGroups, std::function<const char *(int Index)> GetConstant, uint8_t *Offsets, uint32_t MaxOffsets)
+	{
+		D3D11_SHADER_DESC desc;
+		Reflector->GetDesc(&desc);
+
+		if (desc.ConstantBuffers <= 0)
+		{
+			memset(Offsets, 0, MaxOffsets * sizeof(uint8_t));
+			return;
+		}
+
+		auto mapBufferConsts = [&](ID3D11ShaderReflectionConstantBuffer *Buffer, BSConstantGroup *Group)
+		{
+			Group->m_Buffer = nullptr;
+
+			if (!Buffer)
+				return;
+
+			D3D11_SHADER_BUFFER_DESC bufferDesc;
+			Buffer->GetDesc(&bufferDesc);
+
+			for (uint32_t i = 0; i < bufferDesc.Variables; i++)
+			{
+				ID3D11ShaderReflectionVariable *var = Buffer->GetVariableByIndex(i);
+
+				D3D11_SHADER_VARIABLE_DESC varDesc;
+				var->GetDesc(&varDesc);
+
+				const char *ourConstName = GetConstant(i);
+				const char *dxConstName = varDesc.Name;
+
+				// Ensure that variable names match with hardcoded ones in this project
+				AssertMsgVa(varDesc.StartOffset % 4 == 0, "Variable '%s' is not aligned to 4", dxConstName);
+				AssertMsgVa(_stricmp(ourConstName, dxConstName) == 0, "Shader constant variable name doesn't match up (%s != %s)", ourConstName, dxConstName);
+
+				Offsets[i] = varDesc.StartOffset / 4;
+			}
+
+			// Nasty type cast here, but it's how the game does it (round up to nearest 16 bytes)
+			*(uintptr_t *)&Group->m_Buffer = (bufferDesc.Size + 15) / 16;
+			Group->m_Data = nullptr;
+		};
+
+		// Each buffer is optional (nullptr if nonexistent)
+		Assert(MaxGroups == 3);
+
+		mapBufferConsts(Reflector->GetConstantBufferByName("PerTechnique"), &Groups[0]);
+		mapBufferConsts(Reflector->GetConstantBufferByName("PerMaterial"), &Groups[1]);
+		mapBufferConsts(Reflector->GetConstantBufferByName("PerGeometry"), &Groups[2]);
+	}
+
+	BSVertexShader *Renderer::CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
+	{
+		// Build defines (aka convert vector->D3DCONSTANT array)
+		D3D_SHADER_MACRO macros[20 + 3 + 1];
+		memset(macros, 0, sizeof(macros));
+
+		AssertMsg(Defines.size() <= 20, "Not enough space reserved for #defines and null terminator");
+
+		for (size_t i = 0; i < Defines.size(); i++)
+		{
+			macros[i].Name = Defines[i].first;
+			macros[i].Definition = Defines[i].second;
+		}
+
+		macros[Defines.size() + 0].Name = "VSHADER";
+		macros[Defines.size() + 0].Definition = "";
+		macros[Defines.size() + 1].Name = "WINPC";
+		macros[Defines.size() + 1].Definition = "";
+		macros[Defines.size() + 2].Name = "DX11";
+		macros[Defines.size() + 2].Definition = "";
+
+		// Compiler setup
+		UINT flags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+		ID3DBlob *shaderBlob = nullptr;
+		ID3DBlob *shaderErrors = nullptr;
+
+		if (FAILED(D3DCompileFromFile(FilePath, macros, nullptr, nullptr, "vs_5_0", flags, 0, &shaderBlob, &shaderErrors)))
+		{
+			AssertMsgVa(false, "Vertex shader compilation failed:\n\n%s", shaderErrors ? (const char *)shaderErrors->GetBufferPointer() : "Unknown error");
+
+			if (shaderBlob)
+				shaderBlob->Release();
+
+			if (shaderErrors)
+				shaderErrors->Release();
+
+			return nullptr;
+		}
+
+		void *rawPtr = malloc(sizeof(BSVertexShader) + shaderBlob->GetBufferSize());
+		BSVertexShader *vs = new (rawPtr) BSVertexShader;
+
+		// Determine constant buffer offset map and/or shader layouts
+		ID3D11ShaderReflection *reflector;
+		D3D11_SHADER_DESC desc;
+
+		Assert(SUCCEEDED(D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), __uuidof(ID3D11ShaderReflection), (void **)&reflector)));
+		reflector->GetDesc(&desc);
+
+		ReflectConstantBuffers(reflector, vs->m_ConstantGroups, ARRAYSIZE(vs->m_ConstantGroups), GetConstant, vs->m_ConstantOffsets, ARRAYSIZE(vs->m_ConstantOffsets));
+
+		// Register shader with the DX runtime itself
+		Assert(SUCCEEDED(m_Device->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), nullptr, &vs->m_Shader)));
+
+		// Final step: append raw bytecode to the end of the struct
+		memcpy(vs->m_RawBytecode, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
+
+		reflector->Release();
+		shaderBlob->Release();
+		shaderErrors->Release();
+
+		return vs;
+	}
+
+	BSPixelShader *Renderer::CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant)
+	{
+		// Build defines (aka convert vector->D3DCONSTANT array)
+		D3D_SHADER_MACRO macros[20 + 3 + 1];
+		memset(macros, 0, sizeof(macros));
+
+		AssertMsg(Defines.size() <= 20, "Not enough space reserved for #defines and null terminator");
+
+		for (size_t i = 0; i < Defines.size(); i++)
+		{
+			macros[i].Name = Defines[i].first;
+			macros[i].Definition = Defines[i].second;
+		}
+
+		macros[Defines.size() + 0].Name = "PSHADER";
+		macros[Defines.size() + 0].Definition = "";
+		macros[Defines.size() + 1].Name = "WINPC";
+		macros[Defines.size() + 1].Definition = "";
+		macros[Defines.size() + 2].Name = "DX11";
+		macros[Defines.size() + 2].Definition = "";
+
+		// Compiler setup
+		UINT flags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+		ID3DBlob *shaderBlob = nullptr;
+		ID3DBlob *shaderErrors = nullptr;
+
+		if (FAILED(D3DCompileFromFile(FilePath, macros, nullptr, nullptr, "ps_5_0", flags, 0, &shaderBlob, &shaderErrors)))
+		{
+			AssertMsgVa(false, "Pixel shader compilation failed:\n\n%s", shaderErrors ? (const char *)shaderErrors->GetBufferPointer() : "Unknown error");
+
+			if (shaderBlob)
+				shaderBlob->Release();
+
+			if (shaderErrors)
+				shaderErrors->Release();
+
+			return nullptr;
+		}
+
+		void *rawPtr = malloc(sizeof(BSPixelShader));
+		BSPixelShader *ps = new (rawPtr) BSPixelShader;
+
+		// Determine constant buffer offset map and/or shader layouts
+		ID3D11ShaderReflection *reflector;
+		D3D11_SHADER_DESC desc;
+
+		Assert(SUCCEEDED(D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), __uuidof(ID3D11ShaderReflection), (void **)&reflector)));
+		reflector->GetDesc(&desc);
+
+		ReflectConstantBuffers(reflector, ps->m_ConstantGroups, ARRAYSIZE(ps->m_ConstantGroups), GetConstant, ps->m_ConstantOffsets, ARRAYSIZE(ps->m_ConstantOffsets));
+
+		// Register shader with the DX runtime itself
+		Assert(SUCCEEDED(m_Device->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), nullptr, &ps->m_Shader)));
+
+		reflector->Release();
+		shaderBlob->Release();
+		shaderErrors->Release();
+
+		return ps;
 	}
 
 	CustomConstantGroup Renderer::GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level)

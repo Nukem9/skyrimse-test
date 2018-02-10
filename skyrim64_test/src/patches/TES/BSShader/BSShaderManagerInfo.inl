@@ -78,9 +78,6 @@ namespace BSBloodSplatterShader
 			case 1:strcpy_s(Buffer, BufferSize, "Flare"); break;
 			default:__debugbreak(); break;
 			}
-
-			if (Technique)
-				strcat_s(Buffer, BufferSize, " AlphaTest");
 		}
 	}
 

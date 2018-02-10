@@ -80,6 +80,36 @@ void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, con
 	renderer->ApplyConstantGroupVS(&prevBoneDataConstants, BSGraphics::CONSTANT_GROUP_LEVEL_PREVIOUS_BONES);
 }
 
+void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
+{
+	// Build source disk path, hand off to D3D11
+	wchar_t fxpPath[MAX_PATH];
+	swprintf_s(fxpPath, L"C:\\myshaders\\%S.fxp", SourceFile);
+
+	BSVertexShader *vertexShader = BSGraphics::Renderer::GetGlobals()->CompileVertexShader(fxpPath, Defines, GetConstant);
+
+	auto e = m_VertexShaderTable.find(Technique);
+
+	Assert(e != m_VertexShaderTable.end());
+
+	e.temphack(vertexShader);
+}
+
+void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant)
+{
+	// Build source disk path, hand off to D3D11
+	wchar_t fxpPath[MAX_PATH];
+	swprintf_s(fxpPath, L"C:\\myshaders\\%S.fxp", SourceFile);
+
+	BSPixelShader *pixelShader = BSGraphics::Renderer::GetGlobals()->CompilePixelShader(fxpPath, Defines, GetSampler, GetConstant);
+
+	auto e = m_PixelShaderTable.find(Technique);
+
+	Assert(e != m_PixelShaderTable.end());
+
+	e.temphack(pixelShader);
+}
+
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
 {
 	bool hasVertexShader = false;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <functional>
 #include "../NiMain/common.h"
 #include "../BSTScatterTable.h"
 #include "BSShaderProperty.h"
@@ -105,6 +106,20 @@ public:
 
 	virtual void ReloadShaders(BSIStream *Stream) override;
 	virtual void SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform) override;
+
+	// Both of these functions are virtual, but removed from SkyrimSE.exe itself
+	void CreateVertexShader(
+		uint32_t Technique,
+		const char *SourceFile,
+		const std::vector<std::pair<const char *, const char *>>& Defines,
+		std::function<const char *(int Index)> GetConstant);
+
+	void CreatePixelShader(
+		uint32_t Technique,
+		const char *SourceFile,
+		const std::vector<std::pair<const char *, const char *>>& Defines,
+		std::function<const char *(int Index)> GetSampler,
+		std::function<const char *(int Index)> GetConstant);
 
 	bool BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader);
 	void EndTechnique();

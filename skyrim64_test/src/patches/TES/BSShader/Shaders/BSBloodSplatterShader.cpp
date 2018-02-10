@@ -152,6 +152,23 @@ void BSBloodSplatterShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderF
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::RestoreGeometry, Pass, RenderFlags);
 }
 
+void BSBloodSplatterShader::CreateVertexShader(uint32_t Technique)
+{
+	auto getDefines = BSShaderInfo::BSBloodSplatterShader::Defines::GetArray(Technique);
+	auto getConstant = BSShaderInfo::BSBloodSplatterShader::VSConstants::GetString;
+
+	BSShader::CreateVertexShader(Technique, "BloodSplatter", getDefines, getConstant);
+}
+
+void BSBloodSplatterShader::CreatePixelShader(uint32_t Technique)
+{
+	auto getDefines = BSShaderInfo::BSBloodSplatterShader::Defines::GetArray(Technique);
+	auto getSampler = BSShaderInfo::BSBloodSplatterShader::Samplers::GetString;
+	auto getConstant = BSShaderInfo::BSBloodSplatterShader::PSConstants::GetString;
+
+	BSShader::CreatePixelShader(Technique, "BloodSplatter", getDefines, getSampler, getConstant);
+}
+
 uint32_t BSBloodSplatterShader::GetRawTechnique(uint32_t Technique)
 {
 	switch (Technique)

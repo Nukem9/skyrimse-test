@@ -14,7 +14,6 @@ private:
 	// Is either 0 or 1 [enum], set in SetupTechnique(), used in SetupGeometry()
 	uint32_t m_CurrentRawTechnique;
 
-	inline AutoPtr(BSBloodSplatterShader *, pInstance, 0x32573B8);
 	inline AutoPtr(NiColorA, LightLoc, 0x32573B8);
 	inline AutoPtr(int, iAdaptedLightRenderTarget, 0x32573C8);
 	inline AutoPtr(float, fGlobalAlpha, 0x10);
@@ -25,6 +24,8 @@ private:
 	const static uintptr_t OriginalVTableBase = 0x1879C98;
 
 public:
+	inline AutoPtr(BSBloodSplatterShader *, pInstance, 0x32573B8);
+
 	DECLARE_CONSTRUCTOR_HOOK(BSBloodSplatterShader);
 
 	BSBloodSplatterShader();
@@ -34,6 +35,9 @@ public:
 	virtual void RestoreTechnique(uint32_t Technique) override;						// Implemented
 	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;	// Implemented
 	virtual void RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;// Implemented
+
+	void CreateVertexShader(uint32_t Technique);
+	void CreatePixelShader(uint32_t Technique);
 
 	static uint32_t GetRawTechnique(uint32_t Technique);
 	static uint32_t GetVertexTechnique(uint32_t RawTechnique);
