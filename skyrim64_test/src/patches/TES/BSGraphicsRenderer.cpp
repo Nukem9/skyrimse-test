@@ -1049,7 +1049,7 @@ namespace BSGraphics
 		ID3DBlob *shaderBlob = nullptr;
 		ID3DBlob *shaderErrors = nullptr;
 
-		if (FAILED(D3DCompileFromFile(FilePath, macros, nullptr, nullptr, "vs_5_0", flags, 0, &shaderBlob, &shaderErrors)))
+		if (FAILED(D3DCompileFromFile(FilePath, macros, nullptr, "vs_main", "vs_5_0", flags, 0, &shaderBlob, &shaderErrors)))
 		{
 			AssertMsgVa(false, "Vertex shader compilation failed:\n\n%s", shaderErrors ? (const char *)shaderErrors->GetBufferPointer() : "Unknown error");
 
@@ -1113,7 +1113,7 @@ namespace BSGraphics
 		ID3DBlob *shaderBlob = nullptr;
 		ID3DBlob *shaderErrors = nullptr;
 
-		if (FAILED(D3DCompileFromFile(FilePath, macros, nullptr, nullptr, "ps_5_0", flags, 0, &shaderBlob, &shaderErrors)))
+		if (FAILED(D3DCompileFromFile(FilePath, macros, nullptr, "ps_main", "ps_5_0", flags, 0, &shaderBlob, &shaderErrors)))
 		{
 			AssertMsgVa(false, "Pixel shader compilation failed:\n\n%s", shaderErrors ? (const char *)shaderErrors->GetBufferPointer() : "Unknown error");
 
@@ -1125,6 +1125,9 @@ namespace BSGraphics
 
 			return nullptr;
 		}
+
+		if (shaderErrors)
+			shaderErrors->Release();
 
 		void *rawPtr = malloc(sizeof(BSPixelShader));
 		BSPixelShader *ps = new (rawPtr) BSPixelShader;
@@ -1143,7 +1146,6 @@ namespace BSGraphics
 
 		reflector->Release();
 		shaderBlob->Release();
-		shaderErrors->Release();
 
 		return ps;
 	}
