@@ -29,16 +29,16 @@ struct VS_INPUT
 	float2 TexCoord : TEXCOORD0;
 };
 
-// AKA vertex shader output
-struct PS_INPUT
+struct VS_OUTPUT
 {
 	float4 v0 : SV_POSITION0;
 	float3 v1 : TEXCOORD0;
-    
 #if defined(SPLATTER)
 	float2 v2 : TEXCOORD1;
 #endif
 };
+
+typedef VS_OUTPUT PS_INPUT;
 
 struct PS_OUTPUT
 {
@@ -64,33 +64,23 @@ cbuffer PerGeometry : register(b2)
 	float Ctrl;
 };
 
-PS_INPUT vs_main(VS_INPUT input)
+VS_OUTPUT vs_main(VS_INPUT input)
 {
-	PS_INPUT vsout;
-	
-#if defined(SPLATTER)
+	VS_OUTPUT vsout;
+
     float4 position = float4(input.Position.xy, 0.0, 1.0);
     float4 projected = mul(WorldViewProj, float4(input.Position.xy, 0.0, 1.0));
 
     float2 r1 = (-LightLoc.xy + projected.xy) * LightLoc.ww;
 
+#if defined(SPLATTER)
+	vsout.v2 = -(r1.xy * float2(-0.5, 0.5)) + input.TexCoord;
+#elif defined(FLARE)
+    projected.xy += r1 * Ctrl.xx;
+#endif
+    
     vsout.v0 = projected;
     vsout.v1 = float3(input.TexCoord, input.Position.z);
-	vsout.v2 = -r1.xy * float2(-0.5, 0.5) + input.TexCoord;
-#elif defined(FLARE)
-	float4 r0,r1;
-	r0.xy = input.Position.xy;
-	r0.z = 1;
-	r1.x = dot(WorldViewProj[0].xyw, r0.xyz);
-	r1.y = dot(WorldViewProj[1].xyw, r0.xyz);
-	r1.zw = -LightLoc.xy + r1.xy;
-	r1.zw = LightLoc.ww * r1.zw;
-	vsout.v0.xy = r1.zw * Ctrl.xx + r1.xy;
-	vsout.v0.z = dot(WorldViewProj[2].xyw, r0.xyz);
-	vsout.v0.w = dot(WorldViewProj[3].xyw, r0.xyz);
-	vsout.v1.xy = input.TexCoord.xy;
-	vsout.v1.z = input.Position.z;
-#endif
 
 	return vsout;
 }
@@ -126,23 +116,24 @@ cbuffer PerGeometry : register(b2)
 PS_OUTPUT ps_main(PS_INPUT input)
 {
 	PS_OUTPUT psout;
-	float4 r0,r1;
 	
 #if defined(SPLATTER)
+    float4 r0,r1;
 	r0.xyz = BloodAlphaTex.Sample(BloodAlphaSamp, input.v2.xy).xyz;
 	r1.xyzw = BloodColorTex.Sample(BloodColorSamp, input.v1.xy).xyzw;
 	r1.xyz = float3(-1,-1,-1) + r1.xyz;
+    
 	r0.w = Alpha * input.v1.z;
 	r0.w = r1.w * r0.w;
 	r1.xyz = r0.www * r1.xyz + float3(1,1,1);
 	r0.xyz = -r1.xyz + r0.xyz;
-	psout.o0.xyz = r0.www * r0.xyz + r1.xyz;
-	psout.o0.w = 1;
+    
+	psout.o0 = float4(r0.www * r0.xyz + r1.xyz, 1.0);
 #elif defined(FLARE)
-	r0.x = FlareColorTex.Sample(FlareColorSamp, input.v1.xy).x;
-	r1.xyzw = FlareHDRTex.Sample(FlareHDRSamp, input.v1.xy).xyzw;
-	r0.xyzw = r1.xyzw * r0.xxxx;
-	psout.o0.xyzw = Alpha * r0.xyzw;
+	float colorMult = FlareColorTex.Sample(FlareColorSamp, input.v1.xy).x;
+	float4 colorHDR = FlareHDRTex.Sample(FlareHDRSamp, input.v1.xy).xyzw;
+
+	psout.o0 = (colorHDR * colorMult) * Alpha;
 #endif
   
 	return psout;
