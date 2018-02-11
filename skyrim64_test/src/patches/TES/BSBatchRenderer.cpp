@@ -640,6 +640,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	auto sub_141336450 = (void(__fastcall *)())(g_ModuleBase + 0x1336450);
 	sub_141336450();
 
+	// BSTriShape::IsBSSkinnedDecalTriShape?
 	if ((*(__int64(__fastcall **)(BSGeometry *))(*(uintptr_t *)Pass->m_Geometry + 432i64))(Pass->m_Geometry))
 	{
 		SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
@@ -756,7 +757,8 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 
 	case GEOMETRY_TYPE_DYNAMIC_TRISHAPE:
 	{
-		AssertDebug(false);
+		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		sub_14131DDF0(Pass);
 	}
 	break;
 

@@ -37,12 +37,14 @@ public:
 
 		Data()
 		{
-			Assert(false);
+			auto sub_140C7B160 = (void(__fastcall *)(Data *))(g_ModuleBase + 0xC7B160);
+			sub_140C7B160(this);
 		}
 
 		~Data()
 		{
-			Assert(false);
+			auto sub_140C7B1A0 = (void(__fastcall *)(Data *))(g_ModuleBase + 0xC7B1A0);
+			sub_140C7B1A0(this);
 		}
 	};
 #pragma pack(pop)
