@@ -204,7 +204,7 @@ public:
 			return m_Current->m_Value;
 		}
 		
-		const mapped_type *operator->() const
+		const mapped_type& operator->() const
 		{
 			return m_Current->m_Value;
 		}

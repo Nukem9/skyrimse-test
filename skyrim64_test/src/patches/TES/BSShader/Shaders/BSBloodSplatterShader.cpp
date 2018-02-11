@@ -12,8 +12,8 @@
 //
 using namespace DirectX;
 
-AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x52900);
-AutoPtr(__int64, qword_14304EF00, 0x4EF00);
+AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
+AutoPtr(__int64, qword_14304EF00, 0x304EF00);
 
 void TestHook1()
 {

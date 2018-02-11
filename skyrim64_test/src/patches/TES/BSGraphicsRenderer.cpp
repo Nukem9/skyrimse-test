@@ -986,6 +986,7 @@ namespace BSGraphics
 		auto mapBufferConsts = [&](ID3D11ShaderReflectionConstantBuffer *Buffer, BSConstantGroup *Group)
 		{
 			Group->m_Buffer = nullptr;
+			Group->m_Data = nullptr;
 
 			// If this call fails, it's an invalid buffer
 			D3D11_SHADER_BUFFER_DESC bufferDesc;
@@ -1010,8 +1011,7 @@ namespace BSGraphics
 			}
 
 			// Nasty type cast here, but it's how the game does it (round up to nearest 16 bytes)
-			*(uintptr_t *)&Group->m_Buffer = (bufferDesc.Size + 15) / 16;
-			Group->m_Data = nullptr;
+			*(uintptr_t *)&Group->m_Buffer = (bufferDesc.Size + 15) & ~15;
 		};
 
 		// Each buffer is optional (nullptr if nonexistent)
@@ -1044,7 +1044,7 @@ namespace BSGraphics
 		macros[Defines.size() + 2].Definition = "";
 
 		// Compiler setup
-		UINT flags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+		UINT flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_WARNINGS_ARE_ERRORS;
 		ID3DBlob *shaderBlob = nullptr;
 		ID3DBlob *shaderErrors = nullptr;
 
@@ -1081,6 +1081,7 @@ namespace BSGraphics
 
 		// Final step: append raw bytecode to the end of the struct
 		memcpy(vs->m_RawBytecode, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
+		vs->m_ShaderLength = shaderBlob->GetBufferSize();
 
 		reflector->Release();
 		shaderBlob->Release();
@@ -1110,7 +1111,7 @@ namespace BSGraphics
 		macros[Defines.size() + 2].Definition = "";
 
 		// Compiler setup
-		UINT flags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+		UINT flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_WARNINGS_ARE_ERRORS;
 		ID3DBlob *shaderBlob = nullptr;
 		ID3DBlob *shaderErrors = nullptr;
 

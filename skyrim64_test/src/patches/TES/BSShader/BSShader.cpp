@@ -92,6 +92,8 @@ void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, co
 
 	Assert(e != m_VertexShaderTable.end());
 
+	vertexShader->m_TechniqueID = e->m_TechniqueID;
+	vertexShader->m_VertexDescription = e->m_VertexDescription;
 	e.temphack(vertexShader);
 }
 
@@ -107,6 +109,7 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 
 	Assert(e != m_PixelShaderTable.end());
 
+	pixelShader->m_TechniqueID = e->m_TechniqueID;
 	e.temphack(pixelShader);
 }
 
