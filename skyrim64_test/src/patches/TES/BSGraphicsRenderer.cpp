@@ -972,21 +972,24 @@ namespace BSGraphics
 		*/
 	}
 
+	char tempBuffer[8192];
 	void ReflectConstantBuffers(ID3D11ShaderReflection *Reflector, BSConstantGroup *Groups, uint32_t MaxGroups, std::function<const char *(int Index)> GetConstant, uint8_t *Offsets, uint32_t MaxOffsets)
 	{
 		D3D11_SHADER_DESC desc;
 		Assert(SUCCEEDED(Reflector->GetDesc(&desc)));
 
+		// These should always be zeroed first. TODO: Default to 0xFF like Fallout 4 does?
+		memset(Offsets, 0, MaxOffsets * sizeof(uint8_t));
+
 		if (desc.ConstantBuffers <= 0)
-		{
-			memset(Offsets, 0, MaxOffsets * sizeof(uint8_t));
 			return;
-		}
+
+		int variableCount = 0;
 
 		auto mapBufferConsts = [&](ID3D11ShaderReflectionConstantBuffer *Buffer, BSConstantGroup *Group)
 		{
 			Group->m_Buffer = nullptr;
-			Group->m_Data = nullptr;
+			Group->m_Data = tempBuffer;
 
 			// If this call fails, it's an invalid buffer
 			D3D11_SHADER_BUFFER_DESC bufferDesc;
@@ -1000,14 +1003,15 @@ namespace BSGraphics
 				D3D11_SHADER_VARIABLE_DESC varDesc;
 				Assert(SUCCEEDED(var->GetDesc(&varDesc)));
 
-				const char *ourConstName = GetConstant(i);
+				const char *ourConstName = GetConstant(variableCount);
 				const char *dxConstName = varDesc.Name;
 
 				// Ensure that variable names match with hardcoded ones in this project
 				AssertMsgVa(varDesc.StartOffset % 4 == 0, "Variable '%s' is not aligned to 4", dxConstName);
 				AssertMsgVa(_stricmp(ourConstName, dxConstName) == 0, "Shader constant variable name doesn't match up (%s != %s)", ourConstName, dxConstName);
 
-				Offsets[i] = varDesc.StartOffset / 4;
+				Offsets[variableCount] = varDesc.StartOffset / 4;
+				variableCount++;
 			}
 
 			// Nasty type cast here, but it's how the game does it (round up to nearest 16 bytes)
@@ -1017,9 +1021,9 @@ namespace BSGraphics
 		// Each buffer is optional (nullptr if nonexistent)
 		Assert(MaxGroups == 3);
 
-		mapBufferConsts(Reflector->GetConstantBufferByName("PerTechnique"), &Groups[0]);
-		mapBufferConsts(Reflector->GetConstantBufferByName("PerMaterial"), &Groups[1]);
 		mapBufferConsts(Reflector->GetConstantBufferByName("PerGeometry"), &Groups[2]);
+		mapBufferConsts(Reflector->GetConstantBufferByName("PerMaterial"), &Groups[1]);
+		mapBufferConsts(Reflector->GetConstantBufferByName("PerTechnique"), &Groups[0]);
 	}
 
 	BSVertexShader *Renderer::CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
