@@ -59,6 +59,8 @@ namespace BSGraphics
 	std::unordered_map<uint64_t, ID3D11InputLayout *> m_InputLayoutMap;
 	BSReadWriteLock m_InputLayoutLock;
 
+	std::unordered_map<void *, std::pair<void *, size_t>> m_ShaderBytecodeMap;
+
 	Renderer *Renderer::GetGlobals()
 	{
 		return (Renderer *)HACK_GetThreadedGlobals();
@@ -1052,6 +1054,90 @@ namespace BSGraphics
 		}
 	}
 
+	void Renderer::ValidateShaderReplacement(ID3D11PixelShader *Original, ID3D11PixelShader *Replacement)
+	{
+		ValidateShaderReplacement(Original, Replacement, __uuidof(ID3D11PixelShader));
+	}
+
+	void Renderer::ValidateShaderReplacement(ID3D11VertexShader *Original, ID3D11VertexShader *Replacement)
+	{
+		ValidateShaderReplacement(Original, Replacement, __uuidof(ID3D11VertexShader));
+	}
+
+	void Renderer::ValidateShaderReplacement(ID3D11ComputeShader *Original, ID3D11ComputeShader *Replacement)
+	{
+		ValidateShaderReplacement(Original, Replacement, __uuidof(ID3D11ComputeShader));
+	}
+
+	void Renderer::ValidateShaderReplacement(void *Original, void *Replacement, const GUID& Guid)
+	{
+		// First get the shader<->bytecode entry
+		const auto& oldData = m_ShaderBytecodeMap.find(Original);
+		const auto& newData = m_ShaderBytecodeMap.find(Replacement);
+
+		Assert(oldData != m_ShaderBytecodeMap.end() && newData != m_ShaderBytecodeMap.end());
+
+		// Disassemble both shaders, then compare the string output (case insensitive)
+		UINT flags = D3D_DISASM_DISABLE_DEBUG_INFO | D3D_DISASM_ENABLE_INSTRUCTION_OFFSET;
+		ID3DBlob *oldDataBlob = nullptr;
+		ID3DBlob *newDataBlob = nullptr;
+
+		Assert(SUCCEEDED(D3DDisassemble(oldData->second.first, oldData->second.second, flags, nullptr, &oldDataBlob)));
+		Assert(SUCCEEDED(D3DDisassemble(newData->second.first, newData->second.second, flags, nullptr, &newDataBlob)));
+
+		const char *oldDataStr = (const char *)oldDataBlob->GetBufferPointer();
+		const char *newDataStr = (const char *)newDataBlob->GetBufferPointer();
+
+		// Split the strings into multiple lines for better feedback info. Also skip some debug information
+		// at the top of the file.
+		auto tokenize = [](const std::string& str, std::vector<std::string> *tokens)
+		{
+			std::string::size_type lastPos = str.find_first_not_of("\n", 0);
+			std::string::size_type pos = str.find_first_of("\n", lastPos);
+
+			while (pos != std::string::npos || lastPos != std::string::npos)
+			{
+				tokens->push_back(str.substr(lastPos, pos - lastPos));
+				lastPos = str.find_first_not_of("\n", pos);
+				pos = str.find_first_of("\n", lastPos);
+			}
+		};
+
+		std::vector<std::string> tokensOld;
+		tokenize(std::string(strstr(oldDataStr, "Input signature:"), oldDataStr + oldDataBlob->GetBufferSize()), &tokensOld);
+
+		std::vector<std::string> tokensNew;
+		tokenize(std::string(strstr(newDataStr, "Input signature:"), newDataStr + newDataBlob->GetBufferSize()), &tokensNew);
+
+		Assert(tokensOld.size() == tokensNew.size());
+
+		for (size_t i = 0; i < tokensOld.size(); i++)
+		{
+			// Does the line match 1:1?
+			if (_stricmp(tokensOld[i].c_str(), tokensNew[i].c_str()) == 0)
+				continue;
+
+			// Skip "Approximately X instruction slots used" which is not always accurate.
+			// Skip "dcl_constantbuffer" which is not always in order.
+			if (strstr(tokensOld[i].c_str(), "// Approximately") || strstr(tokensOld[i].c_str(), "dcl_constantbuffer"))
+				continue;
+
+			AssertMsgVa(false, "Shader disasm doesn't match.\n\n%s\n%s", tokensOld[i].c_str(), tokensNew[i].c_str());
+		}
+
+		oldDataBlob->Release();
+		newDataBlob->Release();
+	}
+
+	void Renderer::RegisterShaderBytecode(void *Shader, const void *Bytecode, size_t BytecodeLength)
+	{
+		// Grab a copy since the pointer isn't going to be valid forever
+		void *codeCopy = malloc(BytecodeLength);
+		memcpy(codeCopy, Bytecode, BytecodeLength);
+
+		m_ShaderBytecodeMap.emplace(Shader, std::make_pair(codeCopy, BytecodeLength));
+	}
+
 	BSVertexShader *Renderer::CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
 	{
 		// Build defines (aka convert vector->D3DCONSTANT array)
@@ -1097,12 +1183,9 @@ namespace BSGraphics
 		void *rawPtr = malloc(sizeof(BSVertexShader) + shaderBlob->GetBufferSize());
 		BSVertexShader *vs = new (rawPtr) BSVertexShader;
 
-		// Determine constant buffer offset map and/or shader layouts
+		// Shader reflection: gather constant buffer variable offsets
 		ID3D11ShaderReflection *reflector;
-		D3D11_SHADER_DESC desc;
-
 		Assert(SUCCEEDED(D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), __uuidof(ID3D11ShaderReflection), (void **)&reflector)));
-		reflector->GetDesc(&desc);
 
 		ReflectConstantBuffers(reflector, vs->m_ConstantGroups, ARRAYSIZE(vs->m_ConstantGroups), GetConstant, vs->m_ConstantOffsets, ARRAYSIZE(vs->m_ConstantOffsets));
 
@@ -1113,6 +1196,7 @@ namespace BSGraphics
 		memcpy(vs->m_RawBytecode, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
 		vs->m_ShaderLength = shaderBlob->GetBufferSize();
 
+		RegisterShaderBytecode(vs->m_Shader, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
 		reflector->Release();
 		shaderBlob->Release();
 
@@ -1164,12 +1248,9 @@ namespace BSGraphics
 		void *rawPtr = malloc(sizeof(BSPixelShader));
 		BSPixelShader *ps = new (rawPtr) BSPixelShader;
 
-		// Determine constant buffer offset map and/or shader layouts
+		// Shader reflection: gather constant buffer variable offsets and check for valid sampler mappings
 		ID3D11ShaderReflection *reflector;
-		D3D11_SHADER_DESC desc;
-
 		Assert(SUCCEEDED(D3DReflect(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), __uuidof(ID3D11ShaderReflection), (void **)&reflector)));
-		reflector->GetDesc(&desc);
 
 		ReflectConstantBuffers(reflector, ps->m_ConstantGroups, ARRAYSIZE(ps->m_ConstantGroups), GetConstant, ps->m_ConstantOffsets, ARRAYSIZE(ps->m_ConstantOffsets));
 		ReflectSamplers(reflector, GetSampler);
@@ -1177,6 +1258,7 @@ namespace BSGraphics
 		// Register shader with the DX runtime itself
 		Assert(SUCCEEDED(m_Device->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), nullptr, &ps->m_Shader)));
 
+		RegisterShaderBytecode(ps->m_Shader, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
 		reflector->Release();
 		shaderBlob->Release();
 
@@ -1186,7 +1268,6 @@ namespace BSGraphics
 	CustomConstantGroup Renderer::GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level)
 	{
 		CustomConstantGroup temp;
-
 		temp.m_Buffer = MapConstantBuffer(&temp.m_Map.pData, &Size, &temp.m_UnifiedByteOffset, Level);
 		temp.m_Map.DepthPitch = Size;
 		temp.m_Map.RowPitch = Size;
