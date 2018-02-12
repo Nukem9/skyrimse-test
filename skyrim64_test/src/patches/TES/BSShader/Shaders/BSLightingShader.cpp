@@ -203,13 +203,10 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		colourOutputClamp.f[3] = 0.0f;
 	}
 
-	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
-	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-
 	bool shadowed = (rawTechnique & RAW_FLAG_SHADOW_DIR) || (rawTechnique & (RAW_FLAG_UNKNOWN6 | RAW_FLAG_UNKNOWN5 | RAW_FLAG_UNKNOWN4));
 	bool defShadow = (rawTechnique & RAW_FLAG_DEFSHADOW);
 
-	// WARNING: Amazing use-after-free code right hereeeeee.............
+	// NOTE: A use-after-free has been eliminated. Constants are flushed AFTER this code block now.
 	if (shadowed && defShadow)
 	{
 		renderer->SetShaderResource(14, (ID3D11ShaderResourceView *)qword_14304F260);
@@ -223,6 +220,9 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		vposOffset.f[2] = 0.0f;
 		vposOffset.f[3] = 0.0f;
 	}
+
+	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
+	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	return true;
 }

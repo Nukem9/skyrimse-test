@@ -99,8 +99,8 @@ namespace BSGraphics
 		CustomConstantGroup GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level);
 		ConstantGroup<BSVertexShader> GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level);
 		ConstantGroup<BSPixelShader> GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level);
-		void FlushConstantGroup(const CustomConstantGroup *Group);
-		void FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup);
+		void FlushConstantGroup(CustomConstantGroup *Group);
+		void FlushConstantGroupVSPS(ConstantGroup<BSVertexShader> *VertexGroup, ConstantGroup<BSPixelShader> *PixelGroup);
 		void ApplyConstantGroupVS(const CustomConstantGroup *Group, ConstantGroupLevel Level);
 		void ApplyConstantGroupPS(const CustomConstantGroup *Group, ConstantGroupLevel Level);
 		void ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level);

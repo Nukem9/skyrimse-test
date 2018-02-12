@@ -1339,55 +1339,61 @@ namespace BSGraphics
 		return temp;
 	}
 
-	void Renderer::FlushConstantGroup(const CustomConstantGroup *Group)
+	void Renderer::FlushConstantGroup(CustomConstantGroup *Group)
 	{
-		if (Group && Group->m_Buffer && !Group->m_Unified)
-			m_DeviceContext->Unmap(Group->m_Buffer, 0);
+		if (Group->m_Buffer)
+		{
+			if (!Group->m_Unified)
+				m_DeviceContext->Unmap(Group->m_Buffer, 0);
+
+			// Invalidate the data pointer only - ApplyConstantGroup still needs RowPitch info
+			Group->m_Map.pData = (void *)0xFEFEFEFEFEFEFEFE;
+		}
 	}
 
-	void Renderer::FlushConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup)
+	void Renderer::FlushConstantGroupVSPS(ConstantGroup<BSVertexShader> *VertexGroup, ConstantGroup<BSPixelShader> *PixelGroup)
 	{
-		FlushConstantGroup(VertexGroup);
-		FlushConstantGroup(PixelGroup);
+		if (VertexGroup)
+			FlushConstantGroup(VertexGroup);
+
+		if (PixelGroup)
+			FlushConstantGroup(PixelGroup);
 	}
 
 	void Renderer::ApplyConstantGroupVS(const CustomConstantGroup *Group, ConstantGroupLevel Level)
 	{
-		if (Group)
+		if (Group->m_Unified)
 		{
-			if (Group->m_Unified)
-			{
-				UINT offset = Group->m_UnifiedByteOffset / 16;
-				UINT size = Group->m_Map.RowPitch / 16;
-				((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
-			}
-			else
-			{
-				((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers(Level, 1, &Group->m_Buffer);
-			}
+			UINT offset = Group->m_UnifiedByteOffset / 16;
+			UINT size = Group->m_Map.RowPitch / 16;
+			((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
+		}
+		else
+		{
+			((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers(Level, 1, &Group->m_Buffer);
 		}
 	}
 
 	void Renderer::ApplyConstantGroupPS(const CustomConstantGroup *Group, ConstantGroupLevel Level)
 	{
-		if (Group)
+		if (Group->m_Unified)
 		{
-			if (Group->m_Unified)
-			{
-				UINT offset = Group->m_UnifiedByteOffset / 16;
-				UINT size = Group->m_Map.RowPitch / 16;
-				((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
-			}
-			else
-			{
-				((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers(Level, 1, &Group->m_Buffer);
-			}
+			UINT offset = Group->m_UnifiedByteOffset / 16;
+			UINT size = Group->m_Map.RowPitch / 16;
+			((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
+		}
+		else
+		{
+			((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers(Level, 1, &Group->m_Buffer);
 		}
 	}
 
 	void Renderer::ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level)
 	{
-		ApplyConstantGroupVS(VertexGroup, Level);
-		ApplyConstantGroupPS(PixelGroup, Level);
+		if (VertexGroup)
+			ApplyConstantGroupVS(VertexGroup, Level);
+
+		if (PixelGroup)
+			ApplyConstantGroupPS(PixelGroup, Level);
 	}
 }
