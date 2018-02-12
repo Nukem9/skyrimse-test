@@ -1,4 +1,6 @@
+#include "codegen.h"
 #include "common.h"
+#include "d3d11_codegen_tables.inl"
 
 ZydisDecoder g_Decoder;
 uintptr_t g_CodeRegion;
@@ -391,8 +393,8 @@ const Xbyak::Reg& PatchCodeGen::ZydisToXbyak(ZydisRegister Register)
 	case ZYDIS_REGISTER_R15:return r15;
 	}
 
-	const static Xbyak::Reg unused;
-	return unused;
+	__debugbreak();
+	__assume(0);
 }
 
 const Xbyak::Reg64& PatchCodeGen::ZydisToXbyak64(ZydisRegister Register)
@@ -500,8 +502,8 @@ const Xbyak::Reg64& PatchCodeGen::ZydisToXbyak64(ZydisRegister Register)
 		return r15;
 	}
 
-	const static Xbyak::Reg64 unused(-1);
-	return unused;
+	__debugbreak();
+	__assume(0);
 }
 
 const Xbyak::Xmm& PatchCodeGen::ZydisToXbyakXmm(ZydisRegister Register)

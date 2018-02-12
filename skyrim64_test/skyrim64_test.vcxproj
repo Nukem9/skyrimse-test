@@ -302,6 +302,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
+    <None Include="src\patches\rendering\d3d11_codegen_tables.inl" />
     <None Include="src\patches\rendering\d3d11_tls_patchlist.inl" />
     <None Include="src\patches\rendering\d3d11_tls_xreflist.inl" />
     <None Include="src\patches\TES\BSShader\BSShaderConstants.inl" />

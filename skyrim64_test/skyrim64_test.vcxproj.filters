@@ -541,5 +541,8 @@
     <None Include="src\patches\TES\BSShader\BSShaderManagerInfo.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="src\patches\rendering\d3d11_codegen_tables.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
