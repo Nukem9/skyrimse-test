@@ -1026,6 +1026,32 @@ namespace BSGraphics
 		mapBufferConsts(Reflector->GetConstantBufferByName("PerTechnique"), &Groups[0]);
 	}
 
+	void ReflectSamplers(ID3D11ShaderReflection *Reflector, std::function<const char *(int Index)> GetSampler)
+	{
+		D3D11_SHADER_DESC desc;
+		Assert(SUCCEEDED(Reflector->GetDesc(&desc)));
+
+		if (desc.BoundResources <= 0)
+			return;
+
+		// Loop through all shader resources, then pick out sampler types specifically
+		for (uint32_t i = 0; i < desc.BoundResources; i++)
+		{
+			D3D11_SHADER_INPUT_BIND_DESC inputDesc;
+			if (FAILED(Reflector->GetResourceBindingDesc(i, &inputDesc)))
+				continue;
+
+			if (inputDesc.Type != D3D_SIT_SAMPLER)
+				continue;
+
+			// Do a partial string match
+			const char *ourSamplerName = GetSampler(inputDesc.BindPoint);
+			const char *dxSamplerName = inputDesc.Name;
+
+			AssertMsgVa(_strnicmp(ourSamplerName, dxSamplerName, strlen(ourSamplerName)) == 0, "Sampler names don't match (%s != %s)", ourSamplerName, dxSamplerName);
+		}
+	}
+
 	BSVertexShader *Renderer::CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
 	{
 		// Build defines (aka convert vector->D3DCONSTANT array)
@@ -1146,6 +1172,7 @@ namespace BSGraphics
 		reflector->GetDesc(&desc);
 
 		ReflectConstantBuffers(reflector, ps->m_ConstantGroups, ARRAYSIZE(ps->m_ConstantGroups), GetConstant, ps->m_ConstantOffsets, ARRAYSIZE(ps->m_ConstantOffsets));
+		ReflectSamplers(reflector, GetSampler);
 
 		// Register shader with the DX runtime itself
 		Assert(SUCCEEDED(m_Device->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), nullptr, &ps->m_Shader)));
