@@ -974,14 +974,13 @@ namespace BSGraphics
 		*/
 	}
 
-	char tempBuffer[8192];
 	void ReflectConstantBuffers(ID3D11ShaderReflection *Reflector, BSConstantGroup *Groups, uint32_t MaxGroups, std::function<const char *(int Index)> GetConstant, uint8_t *Offsets, uint32_t MaxOffsets)
 	{
 		D3D11_SHADER_DESC desc;
 		Assert(SUCCEEDED(Reflector->GetDesc(&desc)));
 
-		// These should always be zeroed first. TODO: Default to 0xFF like Fallout 4 does?
-		memset(Offsets, 0, MaxOffsets * sizeof(uint8_t));
+		// These should always be cleared first - invalid offsets don't get sent to the GPU
+		memset(Offsets, INVALID_CONSTANT_BUFFER_OFFSET, MaxOffsets * sizeof(uint8_t));
 
 		if (desc.ConstantBuffers <= 0)
 			return;
@@ -991,7 +990,7 @@ namespace BSGraphics
 		auto mapBufferConsts = [&](ID3D11ShaderReflectionConstantBuffer *Buffer, BSConstantGroup *Group)
 		{
 			Group->m_Buffer = nullptr;
-			Group->m_Data = tempBuffer;
+			Group->m_Data = nullptr;
 
 			// If this call fails, it's an invalid buffer
 			D3D11_SHADER_BUFFER_DESC bufferDesc;

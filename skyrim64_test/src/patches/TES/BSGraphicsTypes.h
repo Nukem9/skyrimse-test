@@ -22,6 +22,8 @@ namespace BSGraphics
 	//
 	// Constant group types used for shader parameters
 	//
+	const uint8_t INVALID_CONSTANT_BUFFER_OFFSET = 0xFF;
+
 	enum ConstantGroupLevel
 	{
 		CONSTANT_GROUP_LEVEL_TECHNIQUE = 0x0,		// Varies between PS/VS shaders
@@ -38,23 +40,31 @@ namespace BSGraphics
 
 	class CustomConstantGroup
 	{
+	protected:
+		//
+		// Invalid constant offsets still need a place to be written to. This is supposed to
+		// be in ConstantGroup<T>, but it causes a compiler crash.
+		//
+		// See: ConstantGroup<T>::ParamVS, INVALID_CONSTANT_BUFFER_OFFSET
+		//
+		inline static char EmptyWriteBuffer[1024];
+
 	public:
 		D3D11_MAPPED_SUBRESOURCE m_Map;
 		ID3D11Buffer *m_Buffer;
-
-		uint32_t m_UnifiedByteOffset;	// Offset into ringbuffer
 		bool m_Unified;					// True if buffer is from global ringbuffer
+		uint32_t m_UnifiedByteOffset;	// Offset into ringbuffer
 
 	public:
-		CustomConstantGroup()
+		inline CustomConstantGroup()
 		{
 			memset(&m_Map, 0, sizeof(m_Map));
 			m_Buffer = nullptr;
-			m_UnifiedByteOffset = 0;
 			m_Unified = false;
+			m_UnifiedByteOffset = 0;
 		}
 
-		void *RawData() const
+		inline void *RawData() const
 		{
 			return m_Map.pData;
 		}
@@ -64,7 +74,7 @@ namespace BSGraphics
 	class ConstantGroup : public CustomConstantGroup
 	{
 	public:
-		T * m_Shader;
+		T *m_Shader;
 
 	public:
 		template<typename U, uint32_t ParamIndex>
@@ -72,6 +82,10 @@ namespace BSGraphics
 		{
 			static_assert(std::is_same<T, BSVertexShader>::value, "ParamVS() requires ConstantGroup<BSVertexShader>");
 			static_assert(ParamIndex < ARRAYSIZE(T::m_ConstantOffsets));
+			static_assert(sizeof(U) <= sizeof(EmptyWriteBuffer));
+
+			if (m_Shader->m_ConstantOffsets[ParamIndex] == INVALID_CONSTANT_BUFFER_OFFSET)
+				return *(U *)EmptyWriteBuffer;
 
 			uintptr_t data = (uintptr_t)RawData();
 			uintptr_t offset = m_Shader->m_ConstantOffsets[ParamIndex] * sizeof(float);
@@ -84,6 +98,10 @@ namespace BSGraphics
 		{
 			static_assert(std::is_same<T, BSPixelShader>::value, "ParamPS() requires ConstantGroup<BSPixelShader>");
 			static_assert(ParamIndex < ARRAYSIZE(T::m_ConstantOffsets));
+			static_assert(sizeof(U) <= sizeof(EmptyWriteBuffer));
+
+			if (m_Shader->m_ConstantOffsets[ParamIndex] == INVALID_CONSTANT_BUFFER_OFFSET)
+				return *(U *)EmptyWriteBuffer;
 
 			uintptr_t data = (uintptr_t)RawData();
 			uintptr_t offset = m_Shader->m_ConstantOffsets[ParamIndex] * sizeof(float);
