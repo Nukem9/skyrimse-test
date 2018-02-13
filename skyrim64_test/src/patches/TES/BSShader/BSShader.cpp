@@ -92,6 +92,9 @@ void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, co
 
 	Assert(e != m_VertexShaderTable.end());
 
+	if (!strstr(SourceFile, "DistantTree"))
+		BSGraphics::Renderer::GetGlobals()->ValidateShaderReplacement(e->m_Shader, vertexShader->m_Shader);
+
 	vertexShader->m_TechniqueID = e->m_TechniqueID;
 	vertexShader->m_VertexDescription = e->m_VertexDescription;
 	e.temphack(vertexShader);
@@ -108,6 +111,9 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 	auto e = m_PixelShaderTable.find(Technique);
 
 	Assert(e != m_PixelShaderTable.end());
+
+	if (!strstr(SourceFile, "DistantTree"))
+		BSGraphics::Renderer::GetGlobals()->ValidateShaderReplacement(e->m_Shader, pixelShader->m_Shader);
 
 	pixelShader->m_TechniqueID = e->m_TechniqueID;
 	e.temphack(pixelShader);

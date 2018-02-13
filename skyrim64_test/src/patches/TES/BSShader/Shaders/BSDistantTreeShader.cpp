@@ -169,6 +169,23 @@ void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFla
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::RestoreGeometry, Pass, RenderFlags);
 }
 
+void BSDistantTreeShader::CreateVertexShader(uint32_t Technique)
+{
+	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
+	auto getConstant = BSShaderInfo::BSDistantTreeShader::VSConstants::GetString;
+
+	BSShader::CreateVertexShader(Technique, "DistantTree", getDefines, getConstant);
+}
+
+void BSDistantTreeShader::CreatePixelShader(uint32_t Technique)
+{
+	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
+	auto getSampler = BSShaderInfo::BSDistantTreeShader::Samplers::GetString;
+	auto getConstant = BSShaderInfo::BSDistantTreeShader::PSConstants::GetString;
+
+	BSShader::CreatePixelShader(Technique, "DistantTree", getDefines, getSampler, getConstant);
+}
+
 uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)
 {
 	uint32_t outputTech = 0;
