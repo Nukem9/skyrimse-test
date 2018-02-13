@@ -41,7 +41,6 @@ void BSSpinLock::Acquire(int InitialAttemps)
 			}
 			else
 			{
-				// Absolute slowest path here
 				Sleep(1);
 			}
 

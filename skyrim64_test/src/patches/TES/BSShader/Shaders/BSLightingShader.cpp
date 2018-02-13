@@ -17,6 +17,7 @@
 //
 using namespace DirectX;
 
+AutoPtr(NiSourceTexture *, BSShader_DefNormalMap, 0x3052920);
 AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
 AutoPtr(NiSourceTexture *, WorldMapOverlayNormalTexture, 0x1E32F90);
 AutoPtr(NiSourceTexture *, WorldMapOverlayNormalSnowTexture, 0x1E32F98);
@@ -42,7 +43,6 @@ AutoPtr(float, xmmword_141E3302C, 0x1E3302C);// This is really XMVECTORF32
 AutoPtr(XMVECTORF32, xmmword_141E3301C, 0x1E3301C);
 AutoPtr(int, dword_141E33040, 0x1E33040);
 AutoPtr(uintptr_t, qword_1431F5810, 0x31F5810);
-AutoPtr(NiSourceTexture *, BSShader_DefNormalMap, 0x3052920);
 AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 AutoPtr(XMVECTORF32, xmmword_14187D940, 0x187D940);
 AutoPtr(BYTE, byte_141E32E88, 0x1E32E88);

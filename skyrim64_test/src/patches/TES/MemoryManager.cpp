@@ -51,7 +51,6 @@ void *MemoryManager::Alloc(size_t Size, uint32_t Alignment, bool Aligned)
 	// Does this need to be on a certain boundary?
 	if (Aligned)
 	{
-		// Check for when the game passes in bad alignments...
 		AssertMsg(Alignment != 0 && Alignment % 2 == 0, "Alignment is fucked");
 
 		// Must be a power of 2, round it up if needed

@@ -299,7 +299,7 @@ void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSSha
 	BSTArray<float> *propertyInstanceData = (BSTArray<float> *)((uintptr_t)Property + 0x160);
 	uint32_t instanceDataCount = propertyInstanceData->QSize();
 
-	AssertMsg(instanceDataCount <= (3840 / 4), "Grass instance group count is to large. It does not fit in register size.");
+	AssertMsg(instanceDataCount <= (3840 / 4), "Grass instance group count is too large. It does not fit in register size.");
 
 	// TODO/WARNING: There is another data race hazard in this function. Properties are supposed to be unique though?
 	auto sub_1412E0810 = (void(__fastcall *)(BSShaderProperty *, uint32_t))(g_ModuleBase + 0x12E0810);

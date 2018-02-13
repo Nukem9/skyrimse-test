@@ -142,7 +142,6 @@ public:
 		case ST_STRING:
 			// I don't know how to handle these as far as the engine is concerned
 			return false;
-			break;
 
 		case ST_RGB:
 			if (sscanf_s(Input, "%hhu %hhu %hhu", &value.rgba.r, &value.rgba.g, &value.rgba.b) != 3)
