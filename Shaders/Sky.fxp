@@ -1,0 +1,294 @@
+//
+//
+// Sky
+//
+// Possible technique defines:
+// - OCCLUSION      Unique
+// - MOONMASK       Unique
+// - HORIZFADE       Unique
+// - TEX
+// - DITHER
+// - CLOUDS
+// - TEXLERP
+// - TEXFADE
+//
+//
+#ifndef WINPC
+#error Shader is only for Windows
+#endif
+
+#ifndef DX11
+#error Shader is only for DirectX 11
+#endif
+
+struct VS_INPUT
+{
+    float4 v0 : POSITION0;
+    
+    #ifndef OCCLUSION
+    
+    #if defined(TEX) && defined(DITHER)
+    float2 v1 : TEXCOORD0;
+    float4 v2 : COLOR0;
+    #else
+#ifdef DITHER
+    float4 v1 : COLOR0;
+#else
+    float2 v1 : TEXCOORD0;
+    float4 v2 : COLOR0;
+#endif
+    #endif
+    #else
+    float4 v2 : COLOR0;
+    #endif // OCCLUSION
+};
+
+struct VS_OUTPUT
+{
+    float4 o0 : SV_POSITION0;
+ 
+#ifndef OCCLUSION
+    #if defined(TEX) && defined(DITHER)
+    float4 o1 : TEXCOORD0;
+    #else
+#ifndef DITHER
+    float2 o1 : TEXCOORD0;
+#else
+    float2 o1 : TEXCOORD3;
+#endif
+    #endif
+    
+    
+#ifdef TEXLERP
+    float2 o1w : TEXCOORD1;
+#endif
+#ifdef HORIZFADE
+    float p1 : TEXCOORD2;
+#endif
+    float4 o2 : COLOR0;
+        float4 o3 : POSITION1;
+    float4 o4 : POSITION2;
+    #else
+    float4 o3 : POSITION1;
+    float4 o4 : POSITION2;
+    #endif
+};
+
+typedef VS_OUTPUT PS_INPUT;
+
+struct PS_OUTPUT
+{
+    float4 o0 : SV_Target0;
+    float2 o1 : SV_Target1;
+	float4 o2 : SV_Target2;
+};
+
+//
+// Vertex shader code
+//
+#ifdef VSHADER
+cbuffer PerTechnique : register(b0)
+{
+};
+
+cbuffer PerMaterial : register(b1)
+{
+};
+
+cbuffer PerGeometry : register(b2)
+{
+	row_major float4x4 WorldViewProj;
+	row_major float4x4 World;
+	row_major float4x4 PreviousWorld;
+	float3 EyePosition;
+	float VParams;
+	float4 BlendColor[3];
+	float2 TexCoordOff;
+};
+
+#define cmp -
+
+inline float dither()
+{
+    
+}
+
+VS_OUTPUT vs_main(VS_INPUT input)
+{
+    VS_OUTPUT vsout;
+
+	float4 r0 = float4(input.v0.xyz, 1.0);
+	float3 r1;
+
+#if defined(OCCLUSION)
+   // Intentionally left blank 
+#elif defined(DITHER)
+    #ifdef TEX
+    r1 = BlendColor[1].xyz * input.v2.yyy;
+	r1 = BlendColor[0].xyz * input.v2.xxx + r1;
+	r1 = BlendColor[2].xyz * input.v2.zzz + r1;
+    
+    vsout.o1.xyzw = input.v1.xyxy * float4(1.0, 1.0, 501.0, 501.0);
+    vsout.o2.xyz = VParams * r1;
+    vsout.o2.w = BlendColor[0].w * input.v2.w;
+    #else
+	r1 = normalize(input.v0.xyz);
+    r1.y = r1.y + r1.z;
+    
+	float arccos_x = acos(r1.x);
+	float arcsin_y = asin(r1.y);
+	r1.yz = atan2(r1.y, arccos_x);
+    
+    vsout.o1.x = 501 * arccos_x;
+	vsout.o1.y = 501 * arcsin_y;
+
+	r1 = BlendColor[1].xyz * input.v1.yyy;
+	r1 = BlendColor[0].xyz * input.v1.xxx + r1;
+	r1 = BlendColor[2].xyz * input.v1.zzz + r1;
+	vsout.o2.xyz = VParams * r1;
+	vsout.o2.w = BlendColor[0].w * input.v1.w;
+    #endif // TEX
+#elif defined(MOONMASK)
+    vsout.o1 = input.v1;
+    vsout.o2.xyz = VParams;
+    vsout.o2.w = 1.0;
+#elif defined(HORIZFADE)
+    r1.x = mul(World, r0).z;
+    r1.y = -EyePosition.z + r1.x;
+    
+    vsout.o1.xy = input.v1;
+    vsout.p1.x = saturate((1.0 / 17.0) * r1.y);
+    vsout.o2.xyz = BlendColor[0].xyz * VParams;
+    vsout.o2.w = BlendColor[0].w;
+#else
+    r1 = BlendColor[1].xyz * input.v2.yyy;
+    r1 = BlendColor[0].xyz * input.v2.xxx + r1;
+    r1 = BlendColor[2].xyz * input.v2.zzz + r1;
+    
+#ifdef CLOUDS
+    vsout.o1.xy = TexCoordOff + input.v1;
+#else
+    vsout.o1.xy = input.v1;
+#endif // CLOUDS
+    vsout.o2.xyz = VParams * r1;
+    vsout.o2.w = BlendColor[0].w * input.v2.w;
+#endif
+    
+#ifdef TEXLERP
+    vsout.o1w.xy = TexCoordOff + input.v1;
+#endif
+
+    vsout.o0.xyzw = mul(WorldViewProj, r0).xyww;
+    vsout.o3 = mul(World, r0);
+	vsout.o4 = mul(PreviousWorld, r0);
+
+    return vsout;
+}
+#endif
+
+//
+// Pixel shader code
+//
+#ifdef PSHADER
+SamplerState BaseSampler : register(s0);
+SamplerState BlendSampler : register(s1);
+SamplerState NoiseGradSampler : register(s2);
+
+Texture2D<float4> BaseTex : register(t0);
+Texture2D<float4> BlendTex : register(t1);
+Texture2D<float4> NoiseGradTex : register(t2);
+
+cbuffer PerTechnique : register(b0)
+{
+};
+
+cbuffer PerMaterial : register(b1)
+{
+};
+
+cbuffer PerGeometry : register(b2)
+{
+	float2 PParams;
+};
+
+cbuffer cb11 : register(b11)
+{
+    float4 cb11[1];
+}
+
+cbuffer cb12 : register(b12)
+{
+    float4 cb12[20];
+}
+
+PS_OUTPUT ps_main(PS_INPUT input)
+{
+	PS_OUTPUT psout;
+	
+    float4 r0,r1;
+
+    #ifndef OCCLUSION
+#ifndef TEXLERP
+	r0 = BaseTex.Sample(BaseSampler, input.o1.xy);
+#ifdef TEXFADE
+    r0.w = r0.w * PParams.x;
+#endif
+#else
+    r0 = BlendTex.Sample(BlendSampler, input.o1w.xy);
+    r1 = BaseTex.Sample(BaseSampler, input.o1.xy);
+    r0.xyzw = -r1.xyzw + r0.xyzw;
+    r0.xyzw = PParams.xxxx * r0.xyzw + r1.xyzw;
+#endif
+
+#if defined(DITHER)
+    r0.xy = float2(0.125,0.125) * input.o0.xy;
+    r0.x = NoiseGradTex.Sample(NoiseGradSampler, r0.xy).x;
+    r0.x = r0.x * 0.03125 + -0.0078125;
+	
+#ifdef TEX
+	float4 baseTex = BaseTex.Sample(BaseSampler, input.o1.xy);
+
+    r0.yzw = input.o2.xyz * baseTex.xyz + PParams.yyy;
+    psout.o0.xyz = r0.yzw + r0.xxx;
+    psout.o0.w = baseTex.w * input.o2.w;
+#else
+    r0.yzw = PParams.yyy + input.o2.xyz;
+    psout.o0.xyz = r0.yzw + r0.xxx;
+    psout.o0.w = input.o2.w;
+#endif // TEX
+#elif defined(MOONMASK)
+    r1.x = r0.w - cb11[0].x;
+    psout.o0.xyzw = r0;
+    
+    if (r1.x < 0)
+        discard;
+
+#elif defined(HORIZFADE)
+    r0.w = input.o2.w * r0.w;
+    r0.xyz = input.o2.xyz * r0.xyz + PParams.y;
+    psout.o0.xyz = float3(1.5, 1.5, 1.5) * r0.xyz;
+    psout.o0.w = input.p1.x * r0.w;
+#else
+    psout.o0.w = input.o2.w * r0.w;
+	psout.o0.xyz = input.o2.xyz * r0.xyz + PParams.yyy;
+#endif
+    
+    #else
+    psout.o0 = float4(0, 0, 0, 1.0);
+    #endif // OCCLUSION
+    
+	r0.x = dot(cb12[12].xyzw, input.o3.xyzw);
+	r0.y = dot(cb12[13].xyzw, input.o3.xyzw);
+	r0.z = dot(cb12[15].xyzw, input.o3.xyzw);
+	r0.xy = r0.xy / r0.zz;
+	r1.x = dot(cb12[16].xyzw, input.o4.xyzw);
+	r1.y = dot(cb12[17].xyzw, input.o4.xyzw);
+	r0.z = dot(cb12[19].xyzw, input.o4.xyzw);
+	r0.zw = r1.xy / r0.zz;
+	r0.xy = r0.xy + -r0.zw;
+	psout.o1.xy = float2(-0.5,0.5) * r0.xy;
+	psout.o2.xyzw = float4(0.5,0.5,0,0);
+  
+	return psout;
+}
+#endif
