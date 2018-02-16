@@ -5,12 +5,12 @@
 // Possible technique defines:
 // - OCCLUSION      Unique
 // - MOONMASK       Unique
-// - HORIZFADE       Unique
+// - HORIZFADE      Unique
+// - TEXLERP        Unique
+// - TEXFADE        Unique
 // - TEX
 // - DITHER
 // - CLOUDS
-// - TEXLERP
-// - TEXFADE
 //
 //
 #ifndef WINPC
@@ -23,64 +23,50 @@
 
 struct VS_INPUT
 {
-    float4 v0 : POSITION0;
-    
-    #ifndef OCCLUSION
-    
-    #if defined(TEX) && defined(DITHER)
-    float2 v1 : TEXCOORD0;
-    float4 v2 : COLOR0;
-    #else
-#ifdef DITHER
-    float4 v1 : COLOR0;
-#else
-    float2 v1 : TEXCOORD0;
-    float4 v2 : COLOR0;
-#endif
+    float4 Position : POSITION0;
+	
+    #if defined(TEX) || defined(HORIZFADE)
+    float2 TexCoord : TEXCOORD0;
     #endif
-    #else
-    float4 v2 : COLOR0;
-    #endif // OCCLUSION
+	
+    float4 Color : COLOR0;
 };
 
 struct VS_OUTPUT
 {
-    float4 o0 : SV_POSITION0;
- 
-#ifndef OCCLUSION
-    #if defined(TEX) && defined(DITHER)
-    float4 o1 : TEXCOORD0;
-    #else
-#ifndef DITHER
-    float2 o1 : TEXCOORD0;
-#else
-    float2 o1 : TEXCOORD3;
-#endif
+    float4 Position : SV_POSITION0;
+    
+    #if defined(DITHER) && defined(TEX)
+    float4 TexCoord0 : TEXCOORD0;
+    #elif defined(DITHER)
+    float2 TexCoord0 : TEXCOORD3;// !
+    #elif defined(TEX) || defined(HORIZFADE)
+    float2 TexCoord0 : TEXCOORD0;
     #endif
     
-    
-#ifdef TEXLERP
-    float2 o1w : TEXCOORD1;
-#endif
-#ifdef HORIZFADE
-    float p1 : TEXCOORD2;
-#endif
-    float4 o2 : COLOR0;
-        float4 o3 : POSITION1;
-    float4 o4 : POSITION2;
-    #else
-    float4 o3 : POSITION1;
-    float4 o4 : POSITION2;
+    #if defined(TEXLERP)
+    float2 TexCoord1 : TEXCOORD1;
     #endif
+    
+    #if defined(HORIZFADE)
+    float TexCoord2 : TEXCOORD2;
+    #endif
+    
+    #if defined(TEX) || defined(DITHER) || defined(HORIZFADE)
+    float4 Color : COLOR0;
+    #endif
+    
+    float4 WorldPos : POSITION1;
+    float4 PrevWorldPos : POSITION2;
 };
 
 typedef VS_OUTPUT PS_INPUT;
 
 struct PS_OUTPUT
 {
-    float4 o0 : SV_Target0;
-    float2 o1 : SV_Target1;
-	float4 o2 : SV_Target2;
+    float4 Color : SV_Target0;
+    float2 MotionVector : SV_Target1;
+	float4 Normals : SV_Target2;
 };
 
 //
@@ -106,81 +92,67 @@ cbuffer PerGeometry : register(b2)
 	float2 TexCoordOff;
 };
 
-#define cmp -
-
-inline float dither()
-{
-    
-}
-
 VS_OUTPUT vs_main(VS_INPUT input)
 {
-    VS_OUTPUT vsout;
+    VS_OUTPUT vsout = (VS_OUTPUT)0;
 
-	float4 r0 = float4(input.v0.xyz, 1.0);
+	float4 r0 = float4(input.Position.xyz, 1.0);
 	float3 r1;
 
 #if defined(OCCLUSION)
-   // Intentionally left blank 
-#elif defined(DITHER)
-    #ifdef TEX
-    r1 = BlendColor[1].xyz * input.v2.yyy;
-	r1 = BlendColor[0].xyz * input.v2.xxx + r1;
-	r1 = BlendColor[2].xyz * input.v2.zzz + r1;
     
-    vsout.o1.xyzw = input.v1.xyxy * float4(1.0, 1.0, 501.0, 501.0);
-    vsout.o2.xyz = VParams * r1;
-    vsout.o2.w = BlendColor[0].w * input.v2.w;
-    #else
-	r1 = normalize(input.v0.xyz);
-    r1.y = r1.y + r1.z;
+    // Intentionally left blank
     
-	float arccos_x = acos(r1.x);
-	float arcsin_y = asin(r1.y);
-	r1.yz = atan2(r1.y, arccos_x);
-    
-    vsout.o1.x = 501 * arccos_x;
-	vsout.o1.y = 501 * arcsin_y;
-
-	r1 = BlendColor[1].xyz * input.v1.yyy;
-	r1 = BlendColor[0].xyz * input.v1.xxx + r1;
-	r1 = BlendColor[2].xyz * input.v1.zzz + r1;
-	vsout.o2.xyz = VParams * r1;
-	vsout.o2.w = BlendColor[0].w * input.v1.w;
-    #endif // TEX
 #elif defined(MOONMASK)
-    vsout.o1 = input.v1;
-    vsout.o2.xyz = VParams;
-    vsout.o2.w = 1.0;
+    
+    vsout.TexCoord0 = input.TexCoord;
+    vsout.Color = float4(VParams.xxx, 1.0);
+
 #elif defined(HORIZFADE)
-    r1.x = mul(World, r0).z;
-    r1.y = -EyePosition.z + r1.x;
     
-    vsout.o1.xy = input.v1;
-    vsout.p1.x = saturate((1.0 / 17.0) * r1.y);
-    vsout.o2.xyz = BlendColor[0].xyz * VParams;
-    vsout.o2.w = BlendColor[0].w;
-#else
-    r1 = BlendColor[1].xyz * input.v2.yyy;
-    r1 = BlendColor[0].xyz * input.v2.xxx + r1;
-    r1 = BlendColor[2].xyz * input.v2.zzz + r1;
+    float worldHeight = mul(World, r0).z;
+    float eyeHeightDelta = -EyePosition.z + worldHeight;
     
-#ifdef CLOUDS
-    vsout.o1.xy = TexCoordOff + input.v1;
+    vsout.TexCoord0.xy = input.TexCoord;
+    vsout.TexCoord2.x = saturate((1.0 / 17.0) * eyeHeightDelta);
+    vsout.Color.xyz = BlendColor[0].xyz * VParams;
+    vsout.Color.w = BlendColor[0].w;
+    
+#else // MOONMASK HORIZFADE
+    
+#if defined(DITHER)
+    
+    #if defined(TEX)
+    vsout.TexCoord0.xyzw = input.TexCoord.xyxy * float4(1.0, 1.0, 501.0, 501.0);
+    #else
+	r1 = normalize(input.Position.xyz);
+    r1.y = r1.y + r1.z;
+
+    vsout.TexCoord0.x = 501 * acos(r1.x);
+	vsout.TexCoord0.y = 501 * asin(r1.y);
+    #endif // TEX
+    
+#elif defined(CLOUDS)
+    vsout.TexCoord0.xy = TexCoordOff + input.TexCoord;
 #else
-    vsout.o1.xy = input.v1;
-#endif // CLOUDS
-    vsout.o2.xyz = VParams * r1;
-    vsout.o2.w = BlendColor[0].w * input.v2.w;
-#endif
+    vsout.TexCoord0.xy = input.TexCoord;
+#endif // DITHER CLOUDS
     
 #ifdef TEXLERP
-    vsout.o1w.xy = TexCoordOff + input.v1;
-#endif
+    vsout.TexCoord1.xy = TexCoordOff + input.TexCoord;
+#endif // TEXLERP
 
-    vsout.o0.xyzw = mul(WorldViewProj, r0).xyww;
-    vsout.o3 = mul(World, r0);
-	vsout.o4 = mul(PreviousWorld, r0);
+    r1 = BlendColor[1].xyz * input.Color.yyy;
+	r1 = BlendColor[0].xyz * input.Color.xxx + r1;
+	r1 = BlendColor[2].xyz * input.Color.zzz + r1;
+
+    vsout.Color.xyz = VParams * r1;
+    vsout.Color.w = BlendColor[0].w * input.Color.w;
+#endif // OCCLUSION MOONMASK HORIZFADE
+
+    vsout.Position = mul(WorldViewProj, r0).xyww;
+    vsout.WorldPos = mul(World, r0);
+	vsout.PrevWorldPos = mul(PreviousWorld, r0);
 
     return vsout;
 }
@@ -229,65 +201,65 @@ PS_OUTPUT ps_main(PS_INPUT input)
 
     #ifndef OCCLUSION
 #ifndef TEXLERP
-	r0 = BaseTex.Sample(BaseSampler, input.o1.xy);
+	r0 = BaseTex.Sample(BaseSampler, input.TexCoord0.xy);
 #ifdef TEXFADE
     r0.w = r0.w * PParams.x;
 #endif
 #else
-    r0 = BlendTex.Sample(BlendSampler, input.o1w.xy);
-    r1 = BaseTex.Sample(BaseSampler, input.o1.xy);
+    r0 = BlendTex.Sample(BlendSampler, input.TexCoord1.xy);
+    r1 = BaseTex.Sample(BaseSampler, input.TexCoord0.xy);
     r0.xyzw = -r1.xyzw + r0.xyzw;
     r0.xyzw = PParams.xxxx * r0.xyzw + r1.xyzw;
 #endif
 
 #if defined(DITHER)
-    r0.xy = float2(0.125,0.125) * input.o0.xy;
+    r0.xy = float2(0.125,0.125) * input.Position.xy;
     r0.x = NoiseGradTex.Sample(NoiseGradSampler, r0.xy).x;
     r0.x = r0.x * 0.03125 + -0.0078125;
 	
 #ifdef TEX
-	float4 baseTex = BaseTex.Sample(BaseSampler, input.o1.xy);
+	float4 baseTex = BaseTex.Sample(BaseSampler, input.TexCoord0.xy);
 
-    r0.yzw = input.o2.xyz * baseTex.xyz + PParams.yyy;
-    psout.o0.xyz = r0.yzw + r0.xxx;
-    psout.o0.w = baseTex.w * input.o2.w;
+    r0.yzw = input.Color.xyz * baseTex.xyz + PParams.yyy;
+    psout.Color.xyz = r0.yzw + r0.xxx;
+    psout.Color.w = baseTex.w * input.Color.w;
 #else
-    r0.yzw = PParams.yyy + input.o2.xyz;
-    psout.o0.xyz = r0.yzw + r0.xxx;
-    psout.o0.w = input.o2.w;
+    r0.yzw = PParams.yyy + input.Color.xyz;
+    psout.Color.xyz = r0.yzw + r0.xxx;
+    psout.Color.w = input.Color.w;
 #endif // TEX
 #elif defined(MOONMASK)
     r1.x = r0.w - cb11[0].x;
-    psout.o0.xyzw = r0;
+    psout.Color.xyzw = r0;
     
     if (r1.x < 0)
         discard;
 
 #elif defined(HORIZFADE)
-    r0.w = input.o2.w * r0.w;
-    r0.xyz = input.o2.xyz * r0.xyz + PParams.y;
-    psout.o0.xyz = float3(1.5, 1.5, 1.5) * r0.xyz;
-    psout.o0.w = input.p1.x * r0.w;
+    r0.w = input.Color.w * r0.w;
+    r0.xyz = input.Color.xyz * r0.xyz + PParams.y;
+    psout.Color.xyz = float3(1.5, 1.5, 1.5) * r0.xyz;
+    psout.Color.w = input.TexCoord2.x * r0.w;
 #else
-    psout.o0.w = input.o2.w * r0.w;
-	psout.o0.xyz = input.o2.xyz * r0.xyz + PParams.yyy;
+    psout.Color.w = input.Color.w * r0.w;
+	psout.Color.xyz = input.Color.xyz * r0.xyz + PParams.yyy;
 #endif
     
     #else
-    psout.o0 = float4(0, 0, 0, 1.0);
+    psout.Color = float4(0, 0, 0, 1.0);
     #endif // OCCLUSION
     
-	r0.x = dot(cb12[12].xyzw, input.o3.xyzw);
-	r0.y = dot(cb12[13].xyzw, input.o3.xyzw);
-	r0.z = dot(cb12[15].xyzw, input.o3.xyzw);
+	r0.x = dot(cb12[12].xyzw, input.WorldPos);
+	r0.y = dot(cb12[13].xyzw, input.WorldPos);
+	r0.z = dot(cb12[15].xyzw, input.WorldPos);
 	r0.xy = r0.xy / r0.zz;
-	r1.x = dot(cb12[16].xyzw, input.o4.xyzw);
-	r1.y = dot(cb12[17].xyzw, input.o4.xyzw);
-	r0.z = dot(cb12[19].xyzw, input.o4.xyzw);
+	r1.x = dot(cb12[16].xyzw, input.PrevWorldPos);
+	r1.y = dot(cb12[17].xyzw, input.PrevWorldPos);
+	r0.z = dot(cb12[19].xyzw, input.PrevWorldPos);
 	r0.zw = r1.xy / r0.zz;
 	r0.xy = r0.xy + -r0.zw;
-	psout.o1.xy = float2(-0.5,0.5) * r0.xy;
-	psout.o2.xyzw = float4(0.5,0.5,0,0);
+	psout.MotionVector = float2(-0.5, 0.5) * r0.xy;
+	psout.Normals = float4(0.5, 0.5, 0, 0);
   
 	return psout;
 }
