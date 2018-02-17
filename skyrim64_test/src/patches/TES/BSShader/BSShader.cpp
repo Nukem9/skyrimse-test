@@ -93,7 +93,18 @@ void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, co
 	Assert(e != m_VertexShaderTable.end());
 
 	if (!strstr(SourceFile, "DistantTree"))
+	{
 		BSGraphics::Renderer::GetGlobals()->ValidateShaderReplacement(e->m_Shader, vertexShader->m_Shader);
+
+		for (int i = 0; i < 20; i++)
+		{
+			if (vertexShader->m_ConstantOffsets[i] == BSGraphics::INVALID_CONSTANT_BUFFER_OFFSET)
+				continue;
+
+			if (vertexShader->m_ConstantOffsets[i] != e->m_ConstantOffsets[i])
+				Assert(false);
+		}
+	}
 
 	vertexShader->m_TechniqueID = e->m_TechniqueID;
 	vertexShader->m_VertexDescription = e->m_VertexDescription;
@@ -113,7 +124,18 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 	Assert(e != m_PixelShaderTable.end());
 
 	if (!strstr(SourceFile, "DistantTree"))
+	{
 		BSGraphics::Renderer::GetGlobals()->ValidateShaderReplacement(e->m_Shader, pixelShader->m_Shader);
+
+		for (int i = 0; i < 64; i++)
+		{
+			if (pixelShader->m_ConstantOffsets[i] == BSGraphics::INVALID_CONSTANT_BUFFER_OFFSET)
+				continue;
+
+			if (pixelShader->m_ConstantOffsets[i] != e->m_ConstantOffsets[i])
+				Assert(false);
+		}
+	}
 
 	pixelShader->m_TechniqueID = e->m_TechniqueID;
 	e.temphack(pixelShader);
