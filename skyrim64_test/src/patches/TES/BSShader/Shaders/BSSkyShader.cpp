@@ -320,6 +320,23 @@ void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetMode(1);
 }
 
+void BSSkyShader::CreateVertexShader(uint32_t Technique)
+{
+	auto getDefines = BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
+	auto getConstant = BSShaderInfo::BSSkyShader::VSConstants::GetString;
+
+	BSShader::CreateVertexShader(Technique, "Sky", getDefines, getConstant);
+}
+
+void BSSkyShader::CreatePixelShader(uint32_t Technique)
+{
+	auto getDefines = BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
+	auto getSampler = BSShaderInfo::BSSkyShader::Samplers::GetString;
+	auto getConstant = BSShaderInfo::BSSkyShader::PSConstants::GetString;
+
+	BSShader::CreatePixelShader(Technique, "Sky", getDefines, getSampler, getConstant);
+}
+
 uint32_t BSSkyShader::GetRawTechnique(uint32_t Technique)
 {
 	switch (Technique)
