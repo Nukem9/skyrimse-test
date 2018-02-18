@@ -17,23 +17,24 @@
 
 struct VS_INPUT
 {
-  float3 v0 : POSITION0;
-  float2 v1 : TEXCOORD0;
-  float4 v2 : TEXCOORD4;
-  float4 v3 : TEXCOORD5;
-  float4 v4 : TEXCOORD6;
-  float4 v5 : TEXCOORD7;
+	float3 Position : POSITION0;
+	float2 TexCoord0 : TEXCOORD0;
+	float4 TexCoord4 : TEXCOORD4;
+	float4 TexCoord5 : TEXCOORD5;
+	float4 TexCoord6 : TEXCOORD6;
+	float4 TexCoord7 : TEXCOORD7;
 };
 
 struct VS_OUTPUT
 {
-  float4 o0 : SV_POSITION0;
-  float3 o1 : TEXCOORD0;
+	float4 Position : SV_POSITION0;
+	float3 TexCoord : TEXCOORD0;
+
 #if defined(RENDER_DEPTH)
-  float4 o2 : TEXCOORD3;
+	float4 TexCoordDepth : TEXCOORD3;
 #else
-  float4 o2 : POSITION1;
-  float4 o3 : POSITION2;
+	float4 WorldPos : POSITION1;
+	float4 PrevWorldPos : POSITION2;
 #endif
 };
 
@@ -41,10 +42,11 @@ typedef VS_OUTPUT PS_INPUT;
 
 struct PS_OUTPUT
 {
-	float4 o0 : SV_Target0;
+	float4 Color : SV_Target0;
+
 #if !defined(RENDER_DEPTH)
-    float2 o1 : SV_Target1;
-    float4 o2 : SV_Target2;
+	float2 MotionVector : SV_Target1;
+	float4 Normals : SV_Target2;
 #endif
 };
 
@@ -73,31 +75,29 @@ cbuffer PerGeometry : register(b2)
 
 VS_OUTPUT vs_main(VS_INPUT input)
 {
-    VS_OUTPUT vsout;
+	VS_OUTPUT vsout;
 
-    float4 r0, r1;
-    r0.xy = float2(1, -1) * input.v3.xy;
-    r1.xyz = input.v2.www * input.v0.xyz;
-    r0.x = dot(r0.xy, r1.xy);
-    r0.y = dot(input.v3.yx, r1.xy);
-    r0.z = r1.z;
-    r0 = float4(input.v2.xyz + r0.xyz, 1.0);
+	float4 r0, r1;
+	r0.xy = float2(1, -1) * input.TexCoord5.xy;
+	r1.xyz = input.TexCoord4.www * input.Position.xyz;
+	r0.x = dot(r0.xy, r1.xy);
+	r0.y = dot(input.TexCoord5.yx, r1.xy);
+	r0.z = r1.z;
+	r0 = float4(input.TexCoord4.xyz + r0.xyz, 1.0);
+	float4 worldProjection = mul(WorldViewProj, r0);
 
 #ifdef RENDER_DEPTH
-    float4 projection = mul(WorldViewProj, r0);
-
-    vsout.o0 = projection;
-    vsout.o2.xy = projection.zw;
-    vsout.o2.zw = input.v3.zw;
+	vsout.TexCoordDepth.xy = worldProjection.zw;
+	vsout.TexCoordDepth.zw = input.TexCoord5.zw;
 #else
-    vsout.o0 = mul(WorldViewProj, r0);
-    vsout.o2 = mul(World, r0);
-    vsout.o3 = mul(PreviousWorld, r0);
+	vsout.WorldPos = mul(World, r0);
+	vsout.PrevWorldPos = mul(PreviousWorld, r0);
 #endif
 
-    vsout.o1 = float3(input.v1.xy, FogParam.z);
+	vsout.Position = worldProjection;
+	vsout.TexCoord = float3(input.TexCoord0.xy, FogParam.z);
 
-    return vsout;
+	return vsout;
 }
 #endif
 
@@ -111,8 +111,8 @@ Texture2D<float4> DiffuseTex : register(t0);
 
 cbuffer PerTechnique : register(b0)
 {
-    float4 DiffuseColor;
-    float4 AmbientColor;
+	float4 DiffuseColor;
+	float4 AmbientColor;
 };
 
 cbuffer PerMaterial : register(b1)
@@ -125,91 +125,91 @@ cbuffer PerGeometry : register(b2)
 
 cbuffer ScrapValueBuffer : register(b11)
 {
-  // Real name is unknown, CONSTANT_GROUP_LEVEL_SCRAP_VALUE
-  float DiffuseModifier;
+	// Real name is unknown, CONSTANT_GROUP_LEVEL_SCRAP_VALUE
+	float DiffuseModifier;
 }
 
 cbuffer cb12 : register(b12)
 {
-  // Real name is unknown, CONSTANT_GROUP_LEVEL_SCREENSPACEINFO
-  float4 cb12[20];
+	// Real name is unknown, CONSTANT_GROUP_LEVEL_SCREENSPACEINFO
+	float4 cb12[20];
 }
 
-static const float constTable[16] =
+static const float DepthOffsets[16] =
 {
-    0.003921568,
-    0.533333361,
-    0.133333340,
-    0.666666687,
-    0.800000000,
-    0.266666681,
-    0.933333337,
-    0.400000000,
-    0.200000000,
-    0.733333349,
-    0.066666670,
-    0.600000000,
-    0.996078432,
-    0.466666669,
-    0.866666675,
-    0.333333343
+	0.003921568,
+	0.533333361,
+	0.133333340,
+	0.666666687,
+	0.800000000,
+	0.266666681,
+	0.933333337,
+	0.400000000,
+	0.200000000,
+	0.733333349,
+	0.066666670,
+	0.600000000,
+	0.996078432,
+	0.466666669,
+	0.866666675,
+	0.333333343
 };
 
 PS_OUTPUT ps_main(PS_INPUT input)
 {
-    PS_OUTPUT psout;
+	PS_OUTPUT psout;
 
 #ifdef RENDER_DEPTH
-    // Weird code to restrict the XY values between 0 and 15 (branchless)
-    uint2 temp = (uint2)input.o0.xy;
-    uint maskIndex = (temp.y & 3) | (((temp.x << 2) & 12) & ~3);
+	// Weird code to restrict the XY values between 0 and 15 (branchless)
+	uint2 temp = (uint2)input.Position.xy;
+	uint maskIndex = (temp.y & 3) | (((temp.x << 2) & 12) & ~3);
 
-    float r0 = -constTable[maskIndex];
-    r0 += 0.5;
-    r0 = input.o2.w * r0 + input.o2.z;
-    r0 -= 0.5;
+	float r0 = -DepthOffsets[maskIndex];
+	r0 += 0.5;
+	r0 = input.TexCoordDepth.w * r0 + input.TexCoordDepth.z;
+	r0 -= 0.5;
 
-    if (r0 < 0)
-        discard;
+	if (r0 < 0)
+		discard;
 
-    r0 = DiffuseTex.Sample(DiffuseSamp, input.o1.xy).w;
-    r0 -= DiffuseModifier;
+	r0 = DiffuseTex.Sample(DiffuseSamp, input.TexCoord.xy).w;
+	r0 -= DiffuseModifier;
 
-    if (r0 < 0)
-        discard;
+	if (r0 < 0)
+		discard;
 
-    psout.o0.xyz = input.o2.xxx / input.o2.yyy;
-    psout.o0.w = 0;
+	psout.Color.xyz = input.TexCoordDepth.xxx / input.TexCoordDepth.yyy;
+	psout.Color.w = 0;
 #else
-    float4 r0, r1;
+	float4 r0, r1;
 
-    r0 = DiffuseTex.Sample(DiffuseSamp, input.o1.xy);
-    r1.xyz = input.o1.zzz * DiffuseColor.xyz + AmbientColor.xyz;
-    
-//#ifdef DO_ALPHA_TEST
-    r0.w -= DiffuseModifier;
-    
-    if (r0.w < 0)
-        discard;
-//#endif
+	r0 = DiffuseTex.Sample(DiffuseSamp, input.TexCoord.xy);
+	r1.xyz = input.TexCoord.zzz * DiffuseColor.xyz + AmbientColor.xyz;
 
-    psout.o0.xyz = r1.xyz * r0.xyz;
-    psout.o0.w = 1;
-    
-    r0.x = dot(cb12[12].xyzw, input.o2.xyzw);
-    r0.y = dot(cb12[13].xyzw, input.o2.xyzw);
-    r0.z = dot(cb12[15].xyzw, input.o2.xyzw);
-    r0.xy = r0.xy / r0.zz;
-    r1.x = dot(cb12[16].xyzw, input.o3.xyzw);
-    r1.y = dot(cb12[17].xyzw, input.o3.xyzw);
-    r0.z = dot(cb12[19].xyzw, input.o3.xyzw);
-    r0.zw = r1.xy / r0.zz;
-    r0.xy = r0.xy + -r0.zw;
-    
-    psout.o1.xy = float2(-0.5, 0.5) * r0.xy;
-    psout.o2 = float4(0.5, 0.5, 0, 0);
+#ifdef DO_ALPHA_TEST
+	r0.w -= DiffuseModifier;
+
+	if (r0.w < 0)
+		discard;
 #endif
 
-    return psout;
+	psout.Color.xyz = r1.xyz * r0.xyz;
+	psout.Color.w = 1;
+
+	r0.x = dot(cb12[12].xyzw, input.WorldPos);
+	r0.y = dot(cb12[13].xyzw, input.WorldPos);
+	r0.z = dot(cb12[15].xyzw, input.WorldPos);
+	r0.xy = r0.xy / r0.zz;
+	r1.x = dot(cb12[16].xyzw, input.PrevWorldPos);
+	r1.y = dot(cb12[17].xyzw, input.PrevWorldPos);
+	r0.z = dot(cb12[19].xyzw, input.PrevWorldPos);
+	r0.zw = r1.xy / r0.zz;
+	r0.xy = r0.xy + -r0.zw;
+
+	psout.MotionVector = float2(-0.5, 0.5) * r0.xy;
+	psout.Normals = float4(0.5, 0.5, 0, 0);
+#endif
+
+	return psout;
 }
 #endif
