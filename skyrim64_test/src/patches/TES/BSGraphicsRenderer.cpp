@@ -963,15 +963,6 @@ namespace BSGraphics
 		*AllocationOffset = 0;
 
 		return map.pData;
-
-		/*
-		// Invalidate the others for sanity checking
-		m_DynamicBuffers[1] = (ID3D11Buffer *)0x101010101;
-		m_DynamicBuffers[2] = (ID3D11Buffer *)0x101010101;
-		m_CommandListEndEvents[0] = (ID3D11Query *)0x101010101;
-		m_CommandListEndEvents[1] = (ID3D11Query *)0x101010101;
-		m_CommandListEndEvents[2] = (ID3D11Query *)0x101010101;
-		*/
 	}
 
 	void ReflectConstantBuffers(ID3D11ShaderReflection *Reflector, BSConstantGroup *Groups, uint32_t MaxGroups, std::function<const char *(int Index)> GetConstant, uint8_t *Offsets, uint32_t MaxOffsets)
@@ -981,12 +972,12 @@ namespace BSGraphics
 
 		// These should always be cleared first - invalid offsets don't get sent to the GPU
 		memset(Offsets, INVALID_CONSTANT_BUFFER_OFFSET, MaxOffsets * sizeof(uint8_t));
+		memset(Groups, 0, MaxGroups * sizeof(BSConstantGroup));
 
 		if (desc.ConstantBuffers <= 0)
 			return;
 
 		int variableCount = 0;
-
 		auto mapBufferConsts = [&](ID3D11ShaderReflectionConstantBuffer *Buffer, BSConstantGroup *Group)
 		{
 			Group->m_Buffer = nullptr;
@@ -1077,12 +1068,19 @@ namespace BSGraphics
 		Assert(oldData != m_ShaderBytecodeMap.end() && newData != m_ShaderBytecodeMap.end());
 
 		// Disassemble both shaders, then compare the string output (case insensitive)
-		UINT flags = D3D_DISASM_DISABLE_DEBUG_INFO | D3D_DISASM_ENABLE_INSTRUCTION_OFFSET;
+		UINT stripFlags = D3DCOMPILER_STRIP_REFLECTION_DATA | D3DCOMPILER_STRIP_DEBUG_INFO | D3DCOMPILER_STRIP_TEST_BLOBS | D3DCOMPILER_STRIP_PRIVATE_DATA;
+		ID3DBlob *oldStrippedBlob = nullptr;
+		ID3DBlob *newStrippedBlob = nullptr;
+
+		Assert(SUCCEEDED(D3DStripShader(oldData->second.first, oldData->second.second, stripFlags, &oldStrippedBlob)));
+		Assert(SUCCEEDED(D3DStripShader(newData->second.first, newData->second.second, stripFlags, &newStrippedBlob)));
+
+		UINT disasmFlags = D3D_DISASM_ENABLE_INSTRUCTION_OFFSET;
 		ID3DBlob *oldDataBlob = nullptr;
 		ID3DBlob *newDataBlob = nullptr;
 
-		Assert(SUCCEEDED(D3DDisassemble(oldData->second.first, oldData->second.second, flags, nullptr, &oldDataBlob)));
-		Assert(SUCCEEDED(D3DDisassemble(newData->second.first, newData->second.second, flags, nullptr, &newDataBlob)));
+		Assert(SUCCEEDED(D3DDisassemble(oldStrippedBlob->GetBufferPointer(), oldStrippedBlob->GetBufferSize(), disasmFlags, nullptr, &oldDataBlob)));
+		Assert(SUCCEEDED(D3DDisassemble(newStrippedBlob->GetBufferPointer(), newStrippedBlob->GetBufferSize(), disasmFlags, nullptr, &newDataBlob)));
 
 		const char *oldDataStr = (const char *)oldDataBlob->GetBufferPointer();
 		const char *newDataStr = (const char *)newDataBlob->GetBufferPointer();
@@ -1103,10 +1101,10 @@ namespace BSGraphics
 		};
 
 		std::vector<std::string> tokensOld;
-		tokenize(std::string(strstr(oldDataStr, "Input signature:"), oldDataStr + oldDataBlob->GetBufferSize()), &tokensOld);
+		tokenize(std::string(oldDataStr, oldDataStr + oldDataBlob->GetBufferSize()), &tokensOld);
 
 		std::vector<std::string> tokensNew;
-		tokenize(std::string(strstr(newDataStr, "Input signature:"), newDataStr + newDataBlob->GetBufferSize()), &tokensNew);
+		tokenize(std::string(newDataStr, newDataStr + newDataBlob->GetBufferSize()), &tokensNew);
 
 		Assert(tokensOld.size() == tokensNew.size());
 
@@ -1124,6 +1122,8 @@ namespace BSGraphics
 			AssertMsgVa(false, "Shader disasm doesn't match.\n\n%s\n%s", tokensOld[i].c_str(), tokensNew[i].c_str());
 		}
 
+		oldStrippedBlob->Release();
+		newStrippedBlob->Release();
 		oldDataBlob->Release();
 		newDataBlob->Release();
 	}
