@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2020
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim64_test", "skyrim64_test\skyrim64_test.vcxproj", "{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -10,25 +10,48 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim64_test", "skyrim64_t
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim64_tls_mt", "skyrim64_tls_mt\skyrim64_tls_mt.vcxproj", "{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shader_analyzer", "shader_analyzer\shader_analyzer.csproj", "{FCCE373F-8505-4684-A139-9ECDB74F347A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
+		EditAndContinue|Any CPU = EditAndContinue|Any CPU
 		EditAndContinue|x64 = EditAndContinue|x64
+		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.Debug|x64.ActiveCfg = Debug|x64
 		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.Debug|x64.Build.0 = Debug|x64
+		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.EditAndContinue|Any CPU.ActiveCfg = EditAndContinue|x64
 		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.EditAndContinue|x64.ActiveCfg = EditAndContinue|x64
 		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.EditAndContinue|x64.Build.0 = EditAndContinue|x64
+		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.Release|Any CPU.ActiveCfg = Release|x64
 		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.Release|x64.ActiveCfg = Release|x64
 		{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}.Release|x64.Build.0 = Release|x64
+		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Debug|x64.ActiveCfg = Debug|x64
 		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Debug|x64.Build.0 = Debug|x64
+		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.EditAndContinue|Any CPU.ActiveCfg = EditAndContinue|x64
 		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.EditAndContinue|x64.ActiveCfg = EditAndContinue|x64
 		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.EditAndContinue|x64.Build.0 = EditAndContinue|x64
+		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Release|Any CPU.ActiveCfg = Release|x64
 		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Release|x64.ActiveCfg = Release|x64
 		{0C4CE682-CF6C-47B4-A206-FC85AEA8F8D6}.Release|x64.Build.0 = Release|x64
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.Debug|x64.Build.0 = Debug|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.EditAndContinue|Any CPU.ActiveCfg = Release|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.EditAndContinue|Any CPU.Build.0 = Release|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.EditAndContinue|x64.ActiveCfg = Release|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.EditAndContinue|x64.Build.0 = Release|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.Release|x64.ActiveCfg = Release|Any CPU
+		{FCCE373F-8505-4684-A139-9ECDB74F347A}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
