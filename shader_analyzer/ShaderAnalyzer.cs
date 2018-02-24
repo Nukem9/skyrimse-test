@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
 using SharpDX.D3DCompiler;
 
 namespace shader_analyzer
@@ -24,9 +26,9 @@ namespace shader_analyzer
             //ValidateAllShadersOfType("Lighting");
             //ValidateAllShadersOfType("Particle");
             //ValidateAllShadersOfType("RunGrass");
-            //ValidateAllShadersOfType("Sky");
+            ValidateAllShadersOfType("Sky");
             //ValidateAllShadersOfType("Utility");
-            //ValidateAllShadersOfType("Water");
+            ValidateAllShadersOfType("Water");
         }
 
         public static void ValidateAllShadersOfType(string Type)
@@ -37,7 +39,7 @@ namespace shader_analyzer
 
             if (!Directory.Exists(inputDir))
             {
-                Program.LogLine("Unable to find input directory \"{0}\", aborting...", inputDir);
+                Program.LogLine($"Unable to find input directory \"{inputDir}\", aborting...");
                 return;
             }
 
@@ -45,17 +47,44 @@ namespace shader_analyzer
             string[] psFiles = Directory.GetFiles(inputDir, "*.ps.hlsl");
             string[] csFiles = Directory.GetFiles(inputDir, "*.cs.hlsl");
 
-            foreach (var file in vsFiles)
-                ValidateShaderOfType(Type, "vs_5_0", file);
+            Program.LogLine(
+                $"ValidateAllShadersOfType({Type}): " +
+                $"{vsFiles.Length} vertex shaders, {psFiles.Length} pixel shaders, {csFiles.Length} compute shaders.");
 
-            foreach (var file in psFiles)
-                ValidateShaderOfType(Type, "ps_5_0", file);
+            new Thread(() =>
+            {
+                int succeses = 0;
+                int fails = 0;
 
-            foreach (var file in csFiles)
-                ValidateShaderOfType(Type, "cs_5_0", file);
+                System.Threading.Tasks.Parallel.For(0, vsFiles.Length, i =>
+                {
+                    if (ValidateShaderOfType(Type, "vs_5_0", vsFiles[i]))
+                        Interlocked.Increment(ref succeses);
+                    else
+                        Interlocked.Increment(ref fails);
+                });
+
+                System.Threading.Tasks.Parallel.For(0, psFiles.Length, i =>
+                {
+                    if (ValidateShaderOfType(Type, "ps_5_0", psFiles[i]))
+                        Interlocked.Increment(ref succeses);
+                    else
+                        Interlocked.Increment(ref fails);
+                });
+
+                System.Threading.Tasks.Parallel.For(0, csFiles.Length, i =>
+                {
+                    if (ValidateShaderOfType(Type, "cs_5_0", csFiles[i]))
+                        Interlocked.Increment(ref succeses);
+                    else
+                        Interlocked.Increment(ref fails);
+                });
+
+                Program.LogLine($"ValidateAllShadersOfType({Type}): {succeses} shaders matched, {fails} failed.");
+            }).Start();
         }
 
-        public static void ValidateShaderOfType(string Type, string HlslType, string OriginalFile)
+        public static bool ValidateShaderOfType(string Type, string HlslType, string OriginalFile)
         {
             var metadata = new ShaderMetadata(OriginalFile.Replace(".hlsl", ".txt"));
 
@@ -63,11 +92,22 @@ namespace shader_analyzer
             var techniqueId = metadata.GetTechnique();
             var macros = GetCompilationMacros(Type, HlslType, metadata.GetDefines().ToList());
 
-            Program.LogLine("Validating shader [Technique: {0:X8}]: {1}...", techniqueId, OriginalFile);
+            //Program.LogLine("Validating shader [Technique: {0:X8}]: {1}...", techniqueId, OriginalFile);
 
             // Read from disk, compile, then disassemble to text
-            ShaderBytecode originalBytecode = ShaderBytecode.FromFile(OriginalFile).Strip(m_StripFlags);
-            ShaderBytecode newBytecode = CompileShaderOfType(Type, HlslType, macros).Strip(m_StripFlags);
+            ShaderBytecode originalBytecode = null;
+            ShaderBytecode newBytecode = null;
+
+            try
+            {
+                originalBytecode = ShaderBytecode.FromFile(OriginalFile).Strip(m_StripFlags);
+                newBytecode = CompileShaderOfType(Type, HlslType, macros).Strip(m_StripFlags);
+            }
+            catch(Exception)
+            {
+                //Program.LogLine("Shader compilation failed.");
+                return false;
+            }
 
             string[] originalDisasm = originalBytecode.Disassemble(DisassemblyFlags.None).Split('\n');
             string[] newDisasm = newBytecode.Disassemble(DisassemblyFlags.None).Split('\n');
@@ -92,12 +132,33 @@ namespace shader_analyzer
             }
             catch(Exception)
             {
-                Program.LogLine("Validation failed.");
+                //Program.LogLine("Validation failed.");
 
-                // Dump the differences to be diffed later
-                File.WriteAllLines("C:\\testdiff1.txt", originalDisasm);
-                File.WriteAllLines("C:\\testdiff2.txt", newDisasm);
+                // Dump raw disassembly to file
+                File.WriteAllLines($"C:\\diffs\\{Type}-{techniqueId}-{HlslType}-old.txt", originalDisasm);
+                File.WriteAllLines($"C:\\diffs\\{Type}-{techniqueId}-{HlslType}-new.txt", newDisasm);
+
+                //
+                // Generate the "symbolic" diff by:
+                //
+                // - Replacing all temporary registers with rX.xxxx
+                // - Sorting all lines
+                // - Eliminating all empty lines
+                //
+                var tempRegisterExpr = new Regex(@"r\d\.[xXyYzZwW]{1,4}", RegexOptions.Compiled);
+
+                for (int i = 0; i < originalDisasm.Length; i++)
+                {
+                    originalDisasm[i] = tempRegisterExpr.Replace(originalDisasm[i], "rX.xxxx");
+                    newDisasm[i] = tempRegisterExpr.Replace(newDisasm[i], "rX.xxxx");
+                }
+
+                File.WriteAllLines($"C:\\diffs\\{Type}-{techniqueId}-{HlslType}-symbolic-old.txt", originalDisasm.Where(x => !string.IsNullOrWhiteSpace(x)).OrderBy(x => x));
+                File.WriteAllLines($"C:\\diffs\\{Type}-{techniqueId}-{HlslType}-symbolic-new.txt", newDisasm.Where(x => !string.IsNullOrWhiteSpace(x)).OrderBy(x => x));
+                return false;
             }
+
+            return true;
         }
 
         public static void ValidateShaderHeader(string[] OldData, string[] NewData)

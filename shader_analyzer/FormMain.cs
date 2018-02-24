@@ -29,7 +29,9 @@ namespace shader_analyzer
 
         private void buttonRun_Click(object sender, EventArgs e)
         {
-            ShaderAnalyzer.DoStuff();
+            FormDiff differ = new FormDiff("C:\\Diffs\\Sky-2-ps_5_0-new.txt", "C:\\diffs\\Water-26-ps_5_0-symbolic-old.txt", true);
+            differ.Show();
+            //ShaderAnalyzer.DoStuff();
         }
     }
 }

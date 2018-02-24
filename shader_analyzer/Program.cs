@@ -40,7 +40,11 @@ namespace shader_analyzer
 
         public static void Log(string Format, params object[] Parameters)
         {
-            lock (m_MainForm)
+            if (m_MainForm.InvokeRequired)
+            {
+                m_MainForm.Invoke(new Action(() => m_MainForm.Log(Format, Parameters)));
+            }
+            else
             {
                 m_MainForm.Log(Format, Parameters);
             }
@@ -48,7 +52,11 @@ namespace shader_analyzer
 
         public static void LogLine(string Format, params object[] Parameters)
         {
-            lock (m_MainForm)
+            if (m_MainForm.InvokeRequired)
+            {
+                m_MainForm.Invoke(new Action(() => m_MainForm.LogLine(Format, Parameters)));
+            }
+            else
             {
                 m_MainForm.LogLine(Format, Parameters);
             }
