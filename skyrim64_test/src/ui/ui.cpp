@@ -4,6 +4,7 @@
 #include "imgui_impl_dx11.h"
 #include "../patches/TES/BSShader/BSShader.h"
 #include "../patches/TES/Setting.h"
+#include "../patches/rendering/GpuTimer.h"
 
 namespace ui::opt
 {
@@ -13,6 +14,8 @@ namespace ui::opt
 
 int commandThreshold = 500;
 int commandThreshold2 = 500;
+
+extern LARGE_INTEGER g_FrameDelta;
 
 namespace ui
 {
@@ -292,13 +295,11 @@ namespace ui
 	float DeltasGraph3[240];
 	float DeltasGraph4[240];
 	float DeltasGraph5[240];
+	float DeltasGraphGPU[240];
 
-    void RenderFramerate()
-    {
-        if (!showFPSWindow)
-            return;
-
-		// FPS calculation code
+	double CalculateTrueAverageFPS()
+	{
+		// This includes the overhead from calling Present() (backbuffer flip)
 		LARGE_INTEGER ticksPerSecond;
 		QueryPerformanceFrequency(&ticksPerSecond);
 
@@ -318,9 +319,23 @@ namespace ui
 		if (TickDeltaIndex >= ARRAYSIZE(TickDeltas))
 			TickDeltaIndex = 0;
 
-		double frameTimeMs = 1000.0 * (delta / (double)ticksPerSecond.QuadPart);
 		double averageFrametime = (TickSum / 32.0) / (double)ticksPerSecond.QuadPart;
-		g_AverageFps = 1.0 / averageFrametime;
+		return 1.0 / averageFrametime;
+	}
+
+    void RenderFramerate()
+    {
+		// Always calculate the frame time even if the window isn't visible
+		LARGE_INTEGER ticksPerSecond;
+		QueryPerformanceFrequency(&ticksPerSecond);
+
+		double frameTimeMs = 1000.0 * (g_FrameDelta.QuadPart / (double)ticksPerSecond.QuadPart);
+
+		if (ui::opt::LogHitches && frameTimeMs >= 50.0)
+			ui::log::Add("FRAME HITCH WARNING (%g ms)\n", frameTimeMs);
+
+        if (!showFPSWindow)
+            return;
 
 		// Shift everything else back first...
 		memmove(&DeltasGraph[0], &DeltasGraph[1], sizeof(DeltasGraph) - sizeof(float));
@@ -328,15 +343,23 @@ namespace ui
 		memmove(&DeltasGraph3[0], &DeltasGraph3[1], sizeof(DeltasGraph3) - sizeof(float));
 		memmove(&DeltasGraph4[0], &DeltasGraph4[1], sizeof(DeltasGraph4) - sizeof(float));
 		memmove(&DeltasGraph5[0], &DeltasGraph5[1], sizeof(DeltasGraph5) - sizeof(float));
-
-		DeltasGraph[239] = frameTimeMs;
+		memmove(&DeltasGraphGPU[0], &DeltasGraphGPU[1], sizeof(DeltasGraphGPU) - sizeof(float));
 
         float test = 0.0f; // *(float *)(g_ModuleBase + 0x1DADCA0);
 
         if (ImGui::Begin("Framerate", &showFPSWindow))
         {
-			// Draw frametime graph
-			ImGui::PlotLines("Frame Time (ms)", DeltasGraph, 240, 0, nullptr, 0.0f, 20.0f, ImVec2(400, 100));
+			// Draw frame time graph
+			{
+				DeltasGraph[239] = frameTimeMs;
+				DeltasGraphGPU[239] = g_GPUTimers.GetGPUTimeInMS(0);
+
+				const char *names[2] = { "CPU", "GPU" };
+				ImColor colors[2] = { ImColor(0.839f, 0.152f, 0.156f), ImColor(0.172f, 0.627f, 0.172f) };
+				void *datas[2] = { (void *)DeltasGraph, (void *)DeltasGraphGPU };
+
+				ImGui::PlotMultiLines("Frame Time (ms)\n** Minus Present() flip", 2, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 32.0f, ImVec2(400, 100));
+			}
 
 			// Draw processor usage (CPU, GPU) graph
 			{
@@ -352,7 +375,7 @@ namespace ui
 				ImGui::PlotMultiLines("Processor Usage (%)", 4, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 100.0f, ImVec2(400, 100));
 			}
 
-            ImGui::Text("FPS: %.2f", g_AverageFps);
+            ImGui::Text("FPS: %.2f", CalculateTrueAverageFPS());
             ImGui::Spacing();
 			ImGui::InputInt("Command Threshold", &commandThreshold, 10, 100);
 			ImGui::InputInt("Command Threshold Min", &commandThreshold2, 10, 100);

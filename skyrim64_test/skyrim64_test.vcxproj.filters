@@ -248,6 +248,12 @@
     <ClInclude Include="src\patches\TES\NiMain\BSDynamicTriShape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShaderProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\rendering\GpuTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -524,6 +530,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\rendering\GpuCircularBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\rendering\GpuTimer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

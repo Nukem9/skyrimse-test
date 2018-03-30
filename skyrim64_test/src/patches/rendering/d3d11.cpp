@@ -1,9 +1,13 @@
 #include "common.h"
+#include "GpuTimer.h"
 #include "../../ui/ui.h"
 #include "../TES/BSShader/BSPixelShader.h"
 #include "../TES/BSShader/BSVertexShader.h"
 #include "../TES/BSShader/BSShaderManager.h"
 #include "../TES/BSShader/BSShaderRenderTargets.h"
+#include "../TES/BSShader/Shaders/BSBloodSplatterShader.h"
+#include "../TES/BSShader/Shaders/BSDistantTreeShader.h"
+#include "../TES/BSShader/Shaders/BSSkyShader.h"
 #include "../TES/BSGraphicsRenderer.h"
 #include "../TES/BSBatchRenderer.h"
 
@@ -37,18 +41,14 @@ void UpdateHavokTimer(int FPS)
     }
 }
 
+LARGE_INTEGER g_FrameStart;
+LARGE_INTEGER g_FrameEnd;
+LARGE_INTEGER g_FrameDelta;
+
+bool init = false;
 HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval, UINT Flags)
 {
 	ui::Render();
-
-    //if (ui::opt::LogHitches && frameTimeMs >= 100.0)
-    //    ui::log::Add("FRAME HITCH WARNING (%g ms)\n", frameTimeMs);
-
-    HRESULT hr = (This->*ptrPresent)(SyncInterval, Flags);
-
-	BSGraphics::Renderer::OnNewFrame();
-
-	using namespace BSShaderRenderTargets;
 
 	if (!g_DeviceContext)
 	{
@@ -60,6 +60,26 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 		ctx->QueryInterface<ID3D11DeviceContext2>(&g_DeviceContext);
 		ctx->QueryInterface<ID3DUserDefinedAnnotation>(&annotation);
 	}
+
+	if (init)
+	{
+		g_GPUTimers.StopTimer(g_DeviceContext, 0);
+		QueryPerformanceCounter(&g_FrameEnd);
+
+		g_FrameDelta.QuadPart = g_FrameEnd.QuadPart - g_FrameStart.QuadPart;
+	}
+
+	g_GPUTimers.EndFrame(g_DeviceContext);
+    HRESULT hr = (This->*ptrPresent)(SyncInterval, Flags);
+	g_GPUTimers.BeginFrame(g_DeviceContext);
+
+	g_GPUTimers.StartTimer(g_DeviceContext, 0);
+	QueryPerformanceCounter(&g_FrameStart);
+	init = true;
+
+	BSGraphics::Renderer::OnNewFrame();
+
+	using namespace BSShaderRenderTargets;
 
 	//
 	// Certain SLI bits emulate this behavior, but for all render targets. If the game uses ClearRenderTargetView(),
