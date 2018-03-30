@@ -101,8 +101,9 @@ namespace shader_analyzer
 
         private void BuildDiffView()
         {
-            richTextBoxSide1.Text = "";
-            richTextBoxSide2.Text = "";
+            // Show the file paths at the beginning
+            richTextBoxSide1.Text = $"   | {m_FileSide1}" + Environment.NewLine;
+            richTextBoxSide2.Text = $"   | {m_FileSide2}" + Environment.NewLine;
 
             var diffModel = m_DiffBuilder.BuildDiffModel(m_File1Content, m_File2Content);
 

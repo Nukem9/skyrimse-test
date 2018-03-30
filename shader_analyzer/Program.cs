@@ -34,6 +34,7 @@ namespace shader_analyzer
             LogLine("Shader source directory: {0}", ShaderSourceDirectory);
             LogLine("Shader dump directory: {0}", ShaderDumpDirectory);
             LogLine("Temporary file directory: {0}", GarbageDumpFolder);
+            LogLine("");
 
             Application.Run(m_MainForm);
         }
