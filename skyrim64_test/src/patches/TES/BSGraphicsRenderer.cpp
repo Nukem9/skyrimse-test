@@ -980,9 +980,6 @@ namespace BSGraphics
 		int variableCount = 0;
 		auto mapBufferConsts = [&](ID3D11ShaderReflectionConstantBuffer *Buffer, BSConstantGroup *Group)
 		{
-			Group->m_Buffer = nullptr;
-			Group->m_Data = nullptr;
-
 			// If this call fails, it's an invalid buffer
 			D3D11_SHADER_BUFFER_DESC bufferDesc;
 			if (FAILED(Buffer->GetDesc(&bufferDesc)))

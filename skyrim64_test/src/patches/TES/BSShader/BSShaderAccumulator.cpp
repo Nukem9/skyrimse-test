@@ -42,9 +42,9 @@ void ClearShaderAndTechnique()
 			(unsigned int)dword_1432A8214);
 	}
 
-	qword_1432A8218 = 0i64;
+	qword_1432A8218 = 0;
 	dword_1432A8214 = 0;
-	qword_1434B5220 = 0i64;
+	qword_1434B5220 = 0;
 }
 
 bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
@@ -69,7 +69,7 @@ bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
 	return false;
 }
 
-void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
+void BSShaderAccumulator::sub_1412E1600(__int64 a1, uint32_t RenderFlags, float a3)
 {
 	annotation->BeginEvent(L"BSShaderAccumulator: Draw1");
 	ProfileTimer("BSShaderAccumulator");
@@ -84,7 +84,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		renderer->DepthStencilStateSetDepthMode(4);
 
 	// v7 = RenderDepthOnly()? RenderAlphaOnly()?
-	bool v7 = (a2 & 0xA) != 0;
+	bool v7 = (RenderFlags & 0xA) != 0;
 
 	if (!v7)
 		((void(__fastcall *)())(g_ModuleBase + 0x12F8B10))();
@@ -108,56 +108,56 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 	if (!v7)
 	{
 		// RenderBatches
-		GameCommandList renderBatches(0, [accumulator, a2]
+		GameCommandList renderBatches(0, [accumulator, RenderFlags]
 		{
-			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
+			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
 		});
 
 		// LowAniso
-		DeferredCommandList lowAniso(1, [accumulator, a2]
+		DeferredCommandList lowAniso(1, [accumulator, RenderFlags]
 		{
 			auto pass = accumulator->m_MainBatch->m_Passes[9];
 
 			if (pass)
 			{
 				if (pass->UnkByte1 & 1)
-					pass->Render(a2);
+					pass->Render(RenderFlags);
 				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 9);
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
 			}
 		});
 
 		// RenderGrass
-		DeferredCommandList renderGrass(2, [accumulator, a2]
+		DeferredCommandList renderGrass(2, [accumulator, RenderFlags]
 		{
-			accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, a2, -1);
+			accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
 		});
 
 		// RenderNoShadowGroup
-		DeferredCommandList renderNoShadowGroup(3, [accumulator, a2]
+		DeferredCommandList renderNoShadowGroup(3, [accumulator, RenderFlags]
 		{
 			auto pass = accumulator->m_MainBatch->m_Passes[8];
 
 			if (pass)
 			{
 				if (pass->UnkByte1 & 1)
-					pass->Render(a2);
+					pass->Render(RenderFlags);
 				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 8);
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
 			}
 		});
 
 		// RenderLODObjects
-		DeferredCommandList renderLODObjects(4, [renderer, accumulator, a1, a2]
+		DeferredCommandList renderLODObjects(4, [renderer, accumulator, a1, RenderFlags]
 		{
 			auto pass = accumulator->m_MainBatch->m_Passes[1];
 
 			if (pass)
 			{
 				if (pass->UnkByte1 & 1)
-					pass->Render(a2);
+					pass->Render(RenderFlags);
 				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 1);
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 			}
 
 			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
@@ -165,16 +165,16 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, unsigned int a2, float a3)
 		});
 
 		// RenderLODLand
-		DeferredCommandList renderLODLand(5, [accumulator, a1, a2]
+		DeferredCommandList renderLODLand(5, [accumulator, a1, RenderFlags]
 		{
 			auto pass = accumulator->m_MainBatch->m_Passes[0];
 
 			if (pass)
 			{
 				if (pass->UnkByte1 & 1)
-					pass->Render(a2);
+					pass->Render(RenderFlags);
 				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 0);
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 			}
 		});
 
@@ -215,7 +215,7 @@ else
 		// RenderBatches
 		annotation->BeginEvent(L"RenderBatches");
 		{
-			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, a2, -1);
+			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
 		}
 		annotation->EndEvent();
 
@@ -227,9 +227,9 @@ else
 			if (pass)
 			{
 				if (pass->UnkByte1 & 1)
-					pass->Render(a2);
+					pass->Render(RenderFlags);
 				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 9);
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
 			}
 		}
 		annotation->EndEvent();
@@ -237,7 +237,7 @@ else
 		// RenderGrass
 		annotation->BeginEvent(L"RenderGrass");
 		{
-			accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, a2, -1);
+			accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
 		}
 		annotation->EndEvent();
 
@@ -249,9 +249,9 @@ else
 			if (pass)
 			{
 				if (pass->UnkByte1 & 1)
-					pass->Render(a2);
+					pass->Render(RenderFlags);
 				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 8);
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
 			}
 		}
 		annotation->EndEvent();
@@ -264,9 +264,9 @@ else
 			if (pass)
 			{
 				if (pass->UnkByte1 & 1)
-					pass->Render(a2);
+					pass->Render(RenderFlags);
 				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 1);
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 			}
 
 			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
@@ -284,9 +284,9 @@ else
 			if (pass)
 			{
 				if (pass->UnkByte1 & 1)
-					pass->Render(a2);
+					pass->Render(RenderFlags);
 				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 0);
+					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 			}
 
 			if (!v7)
@@ -300,7 +300,7 @@ else
 	{
 		renderer->SetUseScrapConstantValue(true);
 		renderer->SetScrapConstantValue(0.50196081f);
-		accumulator->RenderTechniques(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, a2, -1);
+		accumulator->RenderTechniques(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
 	}
 	annotation->EndEvent();
 
@@ -314,9 +314,9 @@ else
 		if (pass)
 		{
 			if (pass->UnkByte1 & 1)
-				pass->Render(a2);
+				pass->Render(RenderFlags);
 			else
-				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, a2, 13);
+				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 13);
 		}
 
 		renderer->AlphaBlendStateSetUnknown2(1);
@@ -329,14 +329,14 @@ else
 	// NormalDecals?...CK doesn't have a specific name for this
 	{
 		renderer->AlphaBlendStateSetUnknown2(10);
-		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E27B0))(a1, a2);
+		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E27B0))(a1, RenderFlags);
 	}
 
 	// BlendedDecals
 	annotation->BeginEvent(L"BlendedDecals");
 	{
 		renderer->AlphaBlendStateSetUnknown2(11);
-		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E2950))(a1, a2);
+		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E2950))(a1, RenderFlags);
 	}
 	annotation->EndEvent();
 
@@ -355,7 +355,7 @@ else
 
 	DWORD *flt_14304E490 = (DWORD *)(g_ModuleBase + 0x304E490);
 
-	if ((a2 & 0x80u) != 0 && accumulator->m_MainBatch->HasTechniquePasses(0x5C000071, 0x5C006071))
+	if ((RenderFlags & 0x80) != 0 && accumulator->m_MainBatch->HasTechniquePasses(0x5C000071, 0x5C006071))
 	{
 		int aiSource = sub_140D744B0();
 
@@ -381,14 +381,14 @@ else
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
-			accumulator->RenderTechniques(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc, a2, -1);
+			accumulator->RenderTechniques(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc, RenderFlags, -1);
 			sub_140D69DA0((DWORD *)flt_14304E490);
 			*(DWORD *)(*(uint64_t *)((*(uint64_t*)(g_ModuleBase + 0x31F5810)) + 496) + 44i64) = 1;
 		}
 	}
 	annotation->EndEvent();
 
-	if (a2 & 0x40)
+	if (RenderFlags & 0x40)
 	{
 		sub_140D74370((__int64)(g_ModuleBase + 0x3051B20), 0xFFFFFFFF, 3, 0);
 		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 1u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
@@ -410,7 +410,7 @@ else
 	annotation->EndEvent();
 }
 
-void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, int a4, int PassType)
+void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int PassType)
 {
 	//auto RenderTechniques = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3AD0);
 	__int64 a1 = (__int64)this;
@@ -463,7 +463,7 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 			if ((unsigned int)(m_CurrentTech - BSSM_GRASS_SHADOW_L) <= 3 && (*(BYTE *)(a1 + 296) || *(BYTE *)(a1 + 297)))// if (is grass shadow) ???
 				v12 = batch->sub_14131ECE0(m_CurrentTech, m_CurrentSubPass, (__int64)&v14);// Probably discards pass, returns true if there's remaining sub passes
 			else
-				v12 = batch->sub_14131E960(m_CurrentTech, m_CurrentSubPass, (__int64)&v14, a4);
+				v12 = batch->sub_14131E960(m_CurrentTech, m_CurrentSubPass, (__int64)&v14, RenderFlags);
 
 			*(BYTE *)(a1 + 320) = v12;
 		} while (v12);

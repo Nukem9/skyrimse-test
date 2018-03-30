@@ -63,16 +63,15 @@ bool BSGrassShader::SetupTechnique(uint32_t Technique)
 	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
 		return false;
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
-
 	// Fog params get stored in TLS, read in SetupGeometry()
 	UpdateFogParameters();
 
+	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	renderer->SetTextureFilterMode(0, 2);
 
 	if (rawTechnique != RAW_TECHNIQUE_RENDERDEPTH && byte_141E32E9D)
 	{
-		renderer->SetShaderResource(1, (ID3D11ShaderResourceView *)qword_14304F260);
+		renderer->SetShaderResource(1, (ID3D11ShaderResourceView *)qword_14304F260);// ShadowMaskSampler
 
 		renderer->SetTextureAddressMode(1, 0);
 		renderer->SetTextureFilterMode(1, (iShadowMaskQuarter->uValue.i != 4) ? 1 : 0);
@@ -122,10 +121,10 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	// Copy original game data to local buffer
 	memcpy(data, (void *)(g_ModuleBase + 0x31F6400), sizeof(VertexConstantData));
 #else
-	// Sanity check: the original global struct should have zero data
+	// Sanity check
 	const static char zeroData[sizeof(VertexConstantData)] = { 0 };
 
-	AssertMsg(memcmp(&zeroData, (void *)(g_ModuleBase + 0x31F6400), sizeof(zeroData)) == 0, "BUG: This structure MUST be zero");
+	AssertMsg(memcmp(&zeroData, (void *)(g_ModuleBase + 0x31F6400), sizeof(zeroData)) == 0, "BUG: This structure MUST be zeroed. Someone wrote data to it.");
 #endif
 
 	UpdateGeometryProjections(data, Pass->m_Geometry->GetWorldTransform());
@@ -150,22 +149,11 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		uintptr_t v9 = *(uintptr_t *)(*(uintptr_t *)(qword_141E32F20 + 512) + 72i64);
 		uintptr_t v13 = v9 + 0x11C;
 
+		AssertMsg(v9, "Game expects v9 to be non-null");
+
 		float v10 = *(float *)(v9 + 320);
 		float v11 = *(float *)(v9 + 324);
 		float v12 = *(float *)(v9 + 328);
-
-		if (!v9)
-		{
-			data->AmbientColor[0] = 0.0f;
-			data->AmbientColor[1] = 0.0f;
-			data->AmbientColor[2] = 0.0f;
-
-			data->DirLightColor[0] = 0.0f;
-			data->DirLightColor[1] = 0.0f;
-			data->DirLightColor[2] = 0.0f;
-
-			throw std::invalid_argument("v9 must be non-null");
-		}
 
 		data->AmbientColor[0] = *(float *)(v9 + 272);
 		data->AmbientColor[1] = *(float *)(v9 + 276);

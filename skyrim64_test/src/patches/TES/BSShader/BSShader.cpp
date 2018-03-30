@@ -1,9 +1,9 @@
 #include "../../../common.h"
+#include "../MemoryContextTracker.h"
 #include "../BSGraphicsRenderer.h"
 #include "BSVertexShader.h"
 #include "BSPixelShader.h"
 #include "BSShader.h"
-#include "../BSReadWriteLock.h"
 
 bool BSShader::g_ShaderToggles[16][3];
 
@@ -42,37 +42,31 @@ void BSShader::ReloadShaders(BSIStream *Stream)
 	sub_141336490(Stream);
 }
 
-AutoPtr(unsigned int, gTlsIndex, 0x34BBA78);
-
 void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform)
 {
-	//MemoryContextTracker tracker(26, "BSShader.cpp");
+	MemoryContextTracker tracker(26, "BSShader.cpp");
 
 	if (!Parameters || Parameters->m_Flags == 0)
 		return;
 
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
-	uintptr_t v4 = (uintptr_t)SkinInstance;
-	uintptr_t v5 = *(uintptr_t *)(__readgsqword(0x58u) + 8i64 * gTlsIndex);
-
-	if (*(NiSkinInstance **)(v5 + 0x2A00) == SkinInstance)
+	if (GAME_TLS(NiSkinInstance *, 0x2A00) == SkinInstance)
 		return;
 
-	*(NiSkinInstance **)(v5 + 0x2A00) = SkinInstance;
+	GAME_TLS(NiSkinInstance *, 0x2A00) = SkinInstance;
 
+	// WARNING: Contains a global variable edit
 	auto sub_140D74600 = (void(__fastcall *)(NiSkinInstance *, const NiTransform *))(g_ModuleBase + 0x0D74600);
 	sub_140D74600(SkinInstance, Transform);
 
-	const void *v9 = *(const void **)(v4 + 72);
-	const void *v10 = *(const void **)(v4 + 80);
-	uint32_t v11 = (unsigned int)(3 * *(uint32_t *)(*(uintptr_t *)(v4 + 16) + 88i64));
+	uint32_t v11 = (unsigned int)(3 * *(uint32_t *)(*(uintptr_t *)((uintptr_t)SkinInstance + 16) + 88i64)) * 16;
 
-	auto boneDataConstants = renderer->GetShaderConstantGroup(16 * v11, BSGraphics::CONSTANT_GROUP_LEVEL_BONES);
-	auto prevBoneDataConstants = renderer->GetShaderConstantGroup(16 * v11, BSGraphics::CONSTANT_GROUP_LEVEL_PREVIOUS_BONES);
+	auto boneDataConstants = renderer->GetShaderConstantGroup(v11, BSGraphics::CONSTANT_GROUP_LEVEL_BONES);
+	auto prevBoneDataConstants = renderer->GetShaderConstantGroup(v11, BSGraphics::CONSTANT_GROUP_LEVEL_PREVIOUS_BONES);
 
-	memcpy_s(boneDataConstants.RawData(), 16 * v11, v9, 16 * v11);
-	memcpy_s(prevBoneDataConstants.RawData(), 16 * v11, v10, 16 * v11);
+	memcpy_s(boneDataConstants.RawData(), v11, SkinInstance->m_pvBoneMatrices, v11);
+	memcpy_s(prevBoneDataConstants.RawData(), v11, SkinInstance->m_pvPrevBoneMatrices, v11);
 
 	renderer->FlushConstantGroup(&boneDataConstants);
 	renderer->FlushConstantGroup(&prevBoneDataConstants);
@@ -143,18 +137,13 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
 {
-	bool hasVertexShader = false;
-	bool hasPixelShader = false;
 	BSVertexShader *vertexShader = nullptr;
 	BSPixelShader *pixelShader = nullptr;
 
-	if (m_VertexShaderTable.get(VertexShaderID, vertexShader))
-		hasVertexShader = true;
+	if (!m_VertexShaderTable.get(VertexShaderID, vertexShader))
+		return false;
 
-	if (IgnorePixelShader || m_PixelShaderTable.get(PixelShaderID, pixelShader))
-		hasPixelShader = true;
-
-	if (!hasVertexShader || !hasPixelShader)
+	if (!IgnorePixelShader && !m_PixelShaderTable.get(PixelShaderID, pixelShader))
 		return false;
 
 	// Vertex shader required, pixel shader optional (nullptr)
@@ -176,10 +165,9 @@ void BSShader::SetupGeometryAlphaBlending(const NiAlphaProperty *AlphaProperty, 
 void BSShader::SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty)
 {
 	uintptr_t a2 = (uintptr_t)AlphaProperty;
-	uintptr_t a3 = (uintptr_t)ShaderProperty;
 
 	// NiAlphaProperty::GetTestRef() * BSShaderProperty::GetAlpha()
-	int rounded = (int)(((float)*(unsigned __int8 *)(a2 + 50)) * *(float *)(a3 + 48));
+	float alphaRef = trunc((float)*(unsigned __int8 *)(a2 + 50) * ShaderProperty->GetAlpha());
 
-	BSGraphics::Renderer::GetGlobals()->SetScrapConstantValue((float)rounded * 0.0039215689f);
+	BSGraphics::Renderer::GetGlobals()->SetScrapConstantValue(alphaRef * (1.0f / 255.0f));
 }

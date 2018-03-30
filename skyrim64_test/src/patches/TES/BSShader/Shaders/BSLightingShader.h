@@ -60,11 +60,11 @@ private:
 		RAW_FLAG_ADDITIONAL_ALPHA_MASK = 1 << 23,
 	};
 
-	inline AutoPtr(BSLightingShader *, pInstance, 0x3257C48);
-
 	const static uintptr_t OriginalVTableBase = 0x187FBD8;
 
 public:
+	inline AutoPtr(BSLightingShader *, pInstance, 0x3257C48);
+
 	DECLARE_CONSTRUCTOR_HOOK(BSLightingShader);
 
 	BSLightingShader();

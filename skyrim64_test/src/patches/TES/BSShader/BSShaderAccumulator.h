@@ -66,8 +66,8 @@ public:
 	uint32_t m_CurrentSubPass;
 	char _pad[0x40];
 
-	static void sub_1412E1600(__int64 a1, unsigned int a2, float a3);
-	void RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, int a4, int PassType);
+	static void sub_1412E1600(__int64 a1, uint32_t RenderFlags, float a3);
+	void RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int PassType);
 };
 static_assert(sizeof(BSShaderAccumulator) == 0x180, "");
 static_assert(offsetof(BSShaderAccumulator, _pad1) == 0x58, "");

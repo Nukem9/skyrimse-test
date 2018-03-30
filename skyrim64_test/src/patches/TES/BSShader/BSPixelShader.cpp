@@ -10,7 +10,7 @@ uint32_t PixelShaderDecoder::GetTechnique()
 	return m_Shader->m_TechniqueID;
 }
 
-const uint8_t * PixelShaderDecoder::GetConstantArray()
+const uint8_t *PixelShaderDecoder::GetConstantArray()
 {
 	return m_Shader->m_ConstantOffsets;
 }

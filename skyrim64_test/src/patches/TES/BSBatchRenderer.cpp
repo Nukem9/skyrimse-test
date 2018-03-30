@@ -360,10 +360,10 @@ BSShaderAccumulator *GetCurrentAccumulator();
 extern int commandThreshold;
 extern int commandThreshold2;
 
-bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, unsigned int a5)
+bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, uint32_t RenderFlags)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
-	bool unknownFlag2;
+	bool alphaTest;
 	bool unknownFlag;
 
 	// Set pass render state
@@ -372,8 +372,8 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 		int alphaBlendUnknown = -1;
 		bool useScrapConstant = false;
 
-		unknownFlag2 = false;
-		unknownFlag = (a5 & 0x108) != 0;
+		alphaTest = false;
+		unknownFlag = (RenderFlags & 0x108) != 0;
 
 		switch (SubPassIndex)
 		{
@@ -390,7 +390,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 				cullMode = 1;
 
 			useScrapConstant = true;
-			unknownFlag2 = 1;
+			alphaTest = 1;
 
 			if (byte_1431F54CD)
 				alphaBlendUnknown = 1;
@@ -409,7 +409,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 				cullMode = 0;
 
 			useScrapConstant = true;
-			unknownFlag2 = 1;
+			alphaTest = 1;
 
 			if (byte_1431F54CD)
 				alphaBlendUnknown = 1;
@@ -420,7 +420,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 				cullMode = 1;
 
 			useScrapConstant = true;
-			unknownFlag2 = 1;
+			alphaTest = 1;
 			alphaBlendUnknown = 0;
 			break;
 		}
@@ -461,19 +461,19 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 			if (count == ARRAYSIZE(temp))
 			{
 				// 3 x BSRenderPass, 1 packet
-				MTRenderer::InsertCommand<MTRenderer::DrawGeometryMultiRenderCommand>(temp, Technique, unknownFlag2, a5);
+				MTRenderer::InsertCommand<MTRenderer::DrawGeometryMultiRenderCommand>(temp, Technique, alphaTest, RenderFlags);
 			}
 			else
 			{
 				for (int i = 0; i < count; i++)
-					MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(temp[i], Technique, unknownFlag2, a5);
+					MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(temp[i], Technique, alphaTest, RenderFlags);
 			}
 		}
 	}
 	else
 	{
 		for (; currentPass; currentPass = currentPass->m_Next)
-			SetupAndDrawPass(currentPass, Technique, unknownFlag2, a5);
+			SetupAndDrawPass(currentPass, Technique, alphaTest, RenderFlags);
 	}
 
 	// a1+108 is probably a "remove list" flag after it's rendered, but the memory is not freed yet
@@ -588,7 +588,7 @@ void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, b
 			qword_1434B5220 = (uintptr_t)material;
 		}
 
-		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;
+		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;// WARNING: MT data write hazard. Although geometry can only be rendered once?
 
 		if (Pass->m_Geometry->QSkinInstance())
 			DrawPassSkinned(Pass, AlphaTest, RenderFlags);
@@ -718,8 +718,8 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 		int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
 
 		AssertMsg(particleCount <= MAX_SHARED_PARTICLES_SIZE,
-			"This emitter emits more particles than allowed in our rendering buffers."
-			"Please investigate on emitter or increase MAX_SHARED_PARTICLES_SIZE");
+			"This emitter emits more particles than allowed in our rendering buffers. "
+			"Please investigate emitter or increase MAX_SHARED_PARTICLES_SIZE");
 
 		if (particleCount > 0)
 		{

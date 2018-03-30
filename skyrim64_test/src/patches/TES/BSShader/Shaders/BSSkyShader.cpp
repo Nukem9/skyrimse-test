@@ -3,6 +3,7 @@
 #include "../../NiMain/NiSourceTexture.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
+#include "BSSkyShaderProperty.h"
 #include "BSSkyShader.h"
 
 //
@@ -20,7 +21,6 @@ AutoPtr(__int64, qword_1431F5810, 0x31F5810);
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(__int64, qword_1431F55F8, 0x31F55F8);
 AutoPtr(float, qword_143257D80, 0x3257D80);
-AutoPtr(unsigned int, gameTlsIndex, 0x34BBA78);
 
 BSShaderAccumulator *GetCurrentAccumulator();
 
@@ -59,7 +59,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	renderer->DepthStencilStateSetDepthMode(1);
 
-	*(uint32_t *)(*(uintptr_t *)(__readgsqword(0x58u) + 8i64 * gameTlsIndex) + 2544i64) = rawTechnique;
+	GAME_TLS(uint32_t, 0x9F0) = rawTechnique;
 
 	switch (rawTechnique)
 	{
@@ -120,13 +120,12 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::SetupGeometry, Pass, RenderFlags);
 
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto property = static_cast<const BSSkyShaderProperty *>(Pass->m_Property);
+
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
-	uintptr_t shaderProperty = (uintptr_t)Pass->m_Property;
-	uint32_t propertyType = *(uint32_t *)(shaderProperty + 192);
-	uint32_t tlsRawTechnique = *(uint32_t *)(*(uintptr_t *)(__readgsqword(0x58u) + 8i64 * gameTlsIndex) + 2544i64);
-
+	uint32_t rawTechnique = GAME_TLS(uint32_t, 0x9F0);
 	NiTransform geoTransform = Pass->m_Geometry->GetWorldTransform();
 
 	if (*(bool *)((uintptr_t)GetCurrentAccumulator() + 0x128))
@@ -182,19 +181,19 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		XMFLOAT2& pparams = pixelCG.ParamPS<XMFLOAT2, 0>();
 
-		if (propertyType == 3)
+		if (property->uiSkyObjectType == 3)
 		{
-			if (tlsRawTechnique == RAW_TECHNIQUE_CLOUDSFADE && !*(bool *)(shaderProperty + 190))
-				pparams.x = 1.0f - *(float *)(shaderProperty + 184);
+			if (rawTechnique == RAW_TECHNIQUE_CLOUDSFADE && !property->bUnknown)
+				pparams.x = 1.0f - property->fBlendValue;
 			else
-				pparams.x = *(float *)(shaderProperty + 184);
+				pparams.x = property->fBlendValue;
 
 			pparams.y = dword_141E32FBC * *(float *)(qword_1431F5810 + 228);
 
 			// VS: p5 float2 TexCoordOff
-			vertexCG.ParamVS<XMFLOAT2, 5>() = *((XMFLOAT2 *)&qword_143257D80 + *(unsigned __int16 *)(shaderProperty + 0xBC));
+			vertexCG.ParamVS<XMFLOAT2, 5>() = *((XMFLOAT2 *)&qword_143257D80 + property->usUnknown);
 		}
-		else if (propertyType != 6 && propertyType != 1)
+		else if (property->uiSkyObjectType != 6 && property->uiSkyObjectType != 1)
 		{
 			pparams.y = dword_141E32FBC * *(float *)(qword_1431F5810 + 228);
 		}
@@ -214,7 +213,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	//
 	auto& blendColor = vertexCG.ParamVS<XMVECTOR[3], 3>();
 
-	switch (propertyType)
+	switch (property->uiSkyObjectType)
 	{
 	case 0:
 	case 1:
@@ -222,7 +221,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	case 5:
 	case 6:
 	case 7:
-		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[0], *(const NiColorA *)(shaderProperty + 136));
+		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[0], property->kBlendColor);
 		//blendColor[1] = _mm_loadzero_ps(); -- Already zeroed
 		//blendColor[2] = _mm_loadzero_ps(); -- Already zeroed
 		break;
@@ -243,12 +242,12 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
-	switch (tlsRawTechnique)
+	switch (rawTechnique)
 	{
 	case RAW_TECHNIQUE_SUNOCCLUDE:
 	case RAW_TECHNIQUE_STARS:
 	{
-		NiSourceTexture *baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
+		NiSourceTexture *baseSamplerTex = property->pBaseTexture;
 
 		if (!baseSamplerTex)
 			baseSamplerTex = BSShader_DefHeightMap;
@@ -264,7 +263,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	case RAW_TECHNIQUE_CLOUDSLERP:
 	case RAW_TECHNIQUE_TEXTURE:
 	{
-		NiSourceTexture *baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
+		NiSourceTexture *baseSamplerTex = property->pBaseTexture;
 
 		if (!baseSamplerTex)
 			baseSamplerTex = BSShader_DefNormalMap;
@@ -272,13 +271,13 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		renderer->SetTextureMode(0, 3, 1);
 
-		if (tlsRawTechnique == RAW_TECHNIQUE_CLOUDSLERP)
+		if (rawTechnique == RAW_TECHNIQUE_CLOUDSLERP)
 		{
-			NiSourceTexture *blendSamplerTex = *(NiSourceTexture **)(shaderProperty + 160);
+			NiSourceTexture *blendSamplerTex = property->pBlendTexture;
 
 			if (!blendSamplerTex)
 			{
-				blendSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
+				blendSamplerTex = property->pBaseTexture;
 
 				if (!blendSamplerTex)
 					break;
@@ -292,10 +291,10 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	case RAW_TECHNIQUE_CLOUDSFADE:
 	{
-		NiSourceTexture *baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 152);
+		NiSourceTexture *baseSamplerTex = property->pBaseTexture;
 
-		if (*(bool *)(shaderProperty + 190))
-			baseSamplerTex = *(NiSourceTexture **)(shaderProperty + 160);
+		if (property->bUnknown)
+			baseSamplerTex = property->pBlendTexture;
 
 		if (!baseSamplerTex)
 			baseSamplerTex = BSShader_DefNormalMap;
@@ -306,7 +305,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	break;
 	}
 
-	if (propertyType == 0 || propertyType == 6)
+	if (property->uiSkyObjectType == 0 || property->uiSkyObjectType == 6)
 		renderer->AlphaBlendStateSetMode(2);
 }
 
@@ -314,9 +313,9 @@ void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::RestoreGeometry, Pass, RenderFlags);
 
-	uint32_t propertyType = *(uint32_t *)((uintptr_t)Pass->m_Property + 0xC0);
+	uint32_t skyObjectType = static_cast<const BSSkyShaderProperty *>(Pass->m_Property)->uiSkyObjectType;
 
-	if (propertyType == 0 || propertyType == 6)
+	if (skyObjectType == 0 || skyObjectType == 6)
 		BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetMode(1);
 }
 

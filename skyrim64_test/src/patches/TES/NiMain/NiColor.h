@@ -29,14 +29,13 @@ public:
 		a = initA;
 	}
 
-	/*
 	inline NiColorA(const NiColor& Src, float A)
 	{
 		r = Src.r;
 		g = Src.g;
 		b = Src.b;
 		a = A;
-	}*/
+	}
 
 	inline void Set(float R = 0.0f, float G = 0.0f, float B = 0.0f, float A = 0.0f)
 	{

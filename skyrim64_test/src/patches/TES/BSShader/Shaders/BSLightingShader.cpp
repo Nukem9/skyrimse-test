@@ -261,6 +261,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 	switch (baseTechniqueID)
 	{
+	// BSLightingShaderMaterialEnvmap
 	case RAW_TECHNIQUE_ENVMAP:
 	{
 		sub_14130C470(*(uintptr_t *)(v3 + 160), v3);
@@ -274,20 +275,25 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	}
 	break;
 
+	// BSLightingShaderMaterialGlowmap
 	case RAW_TECHNIQUE_GLOWMAP:
 		sub_14130C220(6, *(uintptr_t *)(v3 + 160), v3);
 		break;
 
+	// BSLightingShaderMaterialParallax
 	case RAW_TECHNIQUE_PARALLAX:
 		sub_14130C220(3, *(uintptr_t *)(v3 + 160), v3);
 		break;
 
+	// BSLightingShaderMaterialFacegen
 	case RAW_TECHNIQUE_FACEGEN:
 		sub_14130C220(3, *(uintptr_t *)(v3 + 160), v3);
 		sub_14130C220(4, *(uintptr_t *)(v3 + 168), v3);
 		sub_14130C220(12, *(uintptr_t *)(v3 + 176), v3);
 		break;
 
+	// BSLightingShaderMaterialFacegenTint
+	// BSLightingShaderMaterialHairTint
 	case RAW_TECHNIQUE_FACEGENRGBTINT:
 	case RAW_TECHNIQUE_HAIR:
 	{
@@ -300,6 +306,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	}
 	break;
 
+	// BSLightingShaderMaterialParallaxOcc
 	case RAW_TECHNIQUE_PARALLAXOCC:
 	{
 		// PS: p22 float4 ParallaxOccData
@@ -373,6 +380,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	}
 	break;
 
+	// BSLightingShaderMaterialLODLandscape
 	case RAW_TECHNIQUE_LODLAND:
 	case RAW_TECHNIQUE_LODLANDNOISE:
 	{
@@ -396,6 +404,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	}
 	break;
 
+	// BSLightingShaderMaterialMultiLayerParallax
 	case RAW_TECHNIQUE_MULTILAYERPARALLAX:
 	{
 		sub_14130C220(8, *(uintptr_t *)(v3 + 160), v3);
@@ -435,6 +444,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	}
 	break;
 
+	// BSLightingShaderMaterialEye
 	case RAW_TECHNIQUE_EYE:
 	{
 		sub_14130C470(*(uintptr_t *)(v3 + 160), v3);
@@ -629,17 +639,12 @@ void BSLightingShader::RestoreMaterial(BSShaderMaterial const *Material)
 // BSUtilities::GetInverseWorldMatrix(const NiTransform& Transform, bool UseInputTransform, D3DMATRIX& Matrix)
 void GetInverseWorldMatrix(const NiTransform& Transform, bool UseWorldPosition, XMMATRIX& OutMatrix)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	const NiPoint3& posAdjust = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
 
 	if (UseWorldPosition)
 	{
-		// XMMatrixIdentity(), row[3] = { world.x, world.y, world.z, 1.0f }
-		XMMATRIX worldTranslation = XMMatrixTranslation(
-			renderer->m_CurrentPosAdjust.x,
-			renderer->m_CurrentPosAdjust.y,
-			renderer->m_CurrentPosAdjust.z);
-
-		OutMatrix = XMMatrixInverse(nullptr, worldTranslation);
+		// XMMatrixIdentity(), row[3] = { world.x, world.y, world.z, 1.0f }, XMMatrixInverse()
+		OutMatrix = XMMatrixInverse(nullptr, XMMatrixTranslation(posAdjust.x, posAdjust.y, posAdjust.z));
 	}
 	else
 	{

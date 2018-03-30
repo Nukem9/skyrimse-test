@@ -51,7 +51,7 @@ public:
 	bool sub_14131E700(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4);
 	bool sub_14131ECE0(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4);
 	bool sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex, __int64 *a4);
-	bool sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, unsigned int a5);
+	bool sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, uint32_t RenderFlags);
 	void sub_14131D6E0();
 
 	static void SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags);

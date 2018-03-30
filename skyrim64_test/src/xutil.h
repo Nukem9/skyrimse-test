@@ -12,6 +12,8 @@
 
 #define VTABLE_FUNCTION_INDEX(Function) vtable_index_util::getIndexOf(&Function)
 
+#define GAME_TLS(Type, Offset) *(Type *)(*(uintptr_t *)(__readgsqword(0x58u) + 8i64 * (*(uint32_t *)(g_ModuleBase + 0x34BBA78))) + (Offset))
+
 class vtable_index_util
 {
 private:

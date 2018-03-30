@@ -13,7 +13,7 @@ struct BSRenderPass
 	uint8_t Byte1E;
 	char _pad[17];
 	BSRenderPass *m_Next;
-	void *unkPtr1;
+	void *unkPtr1;// Pointer to an array of lights (directional only?)
 
 	NiAlphaProperty *QAlphaProperty()
 	{

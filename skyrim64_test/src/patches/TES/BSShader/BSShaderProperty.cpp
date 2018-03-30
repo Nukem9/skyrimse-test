@@ -104,7 +104,7 @@ void BSShaderProperty::GetMaterialString(uint64_t Flags, char *Buffer, size_t Bu
 	{
 		uint32_t bit = UniqueMaterialFlags[i];
 
-		// assert(bit < 64);
+		Assert(bit < 64);
 
 		if (Flags & (1ull << bit))
 		{
@@ -123,7 +123,7 @@ void BSShaderProperty::GetMaterialString(uint64_t Flags, char *Buffer, size_t Bu
 	{
 		uint32_t bit = i;
 
-		// assert(bit < 64);
+		Assert(bit < 64);
 
 		if (Flags & (1ull << bit))
 		{

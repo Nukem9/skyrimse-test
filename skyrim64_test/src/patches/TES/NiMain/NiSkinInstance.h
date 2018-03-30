@@ -19,9 +19,20 @@ public:
 		uint32_t m_UnkDword4;
 	};
 
+	char _pad0[0x38];
+	void *m_pvBoneMatrices;
+	void *m_pvPrevBoneMatrices;
+	char _pad1[0x8];
+	CRITICAL_SECTION m_csLock;
+
 	virtual ~NiSkinInstance();
 	virtual void VFunc37(UnknownData *Data) = 0;
 };
+static_assert(sizeof(NiSkinInstance) == 0x88);
+static_assert_offset(NiSkinInstance, m_pvBoneMatrices, 0x48);
+static_assert_offset(NiSkinInstance, m_pvPrevBoneMatrices, 0x50);
+static_assert_offset(NiSkinInstance, m_csLock, 0x60);
+
 static_assert_offset(NiSkinInstance::UnknownData, m_BoneSetter, 0x0);
 static_assert_offset(NiSkinInstance::UnknownData, m_Geometry, 0x8);
 static_assert_offset(NiSkinInstance::UnknownData, m_UnkPtr, 0x10);

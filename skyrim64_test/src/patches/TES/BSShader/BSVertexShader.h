@@ -3,6 +3,8 @@
 #include "../../../common.h"
 #include "BSShaderManager.h"
 
+#define MAX_VS_CONSTANTS 20
+
 struct BSVertexShader
 {
 	uint32_t m_TechniqueID;			// Bit flags
@@ -22,11 +24,10 @@ struct BSVertexShader
 		BSConstantGroup m_ConstantGroups[3];
 	};
 
-
-	uint64_t m_VertexDescription;	// ID3D11Device::CreateInputLayout (for VSMain())
-	uint8_t m_ConstantOffsets[20];	// Actual offset is multiplied by 4
-	uint8_t __padding[4];
-	uint8_t m_RawBytecode[0];		// Raw bytecode
+	uint64_t m_VertexDescription;				// ID3D11Device::CreateInputLayout (for VSMain())
+	uint8_t m_ConstantOffsets[MAX_VS_CONSTANTS];// Actual offset is multiplied by 4
+	uint8_t __padding[4];						//
+	uint8_t m_RawBytecode[0];					// Raw bytecode
 };
 static_assert(offsetof(BSVertexShader, m_TechniqueID) == 0x0, "");
 static_assert(offsetof(BSVertexShader, m_Shader) == 0x8, "");

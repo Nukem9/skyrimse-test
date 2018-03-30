@@ -14,8 +14,9 @@ __int64 LogFunc3(__int64 a1, const char *Format, ...)
 {
 	va_list va;
 	va_start(va, Format);
-
 	LogVa(Format, va);
+	va_end(va);
+
 	return 0;
 }
 
