@@ -154,7 +154,7 @@ namespace BSGraphics
 			ID3D11Buffer	*m_ConstantBuffers6[20];			// Sizes: 0, 16, 32, 48, ... 304 bytes
 			ID3D11Buffer	*m_ConstantBuffers7[40];			// Sizes: 0, 16, 32, 48, ... 624 bytes
 			ID3D11Buffer	*m_TempConstantBuffer2;				// 576 bytes
-			ID3D11Buffer	*m_TempConstantBuffer3;				// CONSTANT_GROUP_LEVEL_SCREENSPACEINFO (Index 12) - 720 bytes
+			ID3D11Buffer	*m_TempConstantBuffer3;				// CONSTANT_GROUP_LEVEL_PERFRAME (Index 12) - 720 bytes
 			ID3D11Buffer	*m_TempConstantBuffer4;				// 16 bytes
 
 			IDXGIOutput *m_DXGIAdapterOutput;
@@ -203,7 +203,15 @@ namespace BSGraphics
 					D3D11_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
 					NiPoint3 m_CurrentPosAdjust;
 					NiPoint3 m_PreviousPosAdjust;
-					char _a_zz2[0x26C];
+					char _zpad3[0x3C];
+					DirectX::XMMATRIX m_ViewMat;
+					DirectX::XMMATRIX m_ProjMat;
+					DirectX::XMMATRIX m_ViewProjMat;
+					char _a_pad4[0x40];
+					DirectX::XMMATRIX m_ViewProjMatrixUnjittered;
+					DirectX::XMMATRIX m_PreviousViewProjMatrixUnjittered;
+					DirectX::XMMATRIX m_ProjMatrixUnjittered;
+					char _a_zz2[0x70];
 				};
 
 				char __zz2[0x2A0];
@@ -275,4 +283,10 @@ namespace BSGraphics
 	CHECK_OFFSET(m_PrimitiveTopology, 0x14304E208);
 	CHECK_OFFSET(m_CurrentPosAdjust, 0x14304E20C);
 	CHECK_OFFSET(m_PreviousPosAdjust, 0x14304E218);
+	CHECK_OFFSET(m_ViewMat, 0x14304E260);
+	CHECK_OFFSET(m_ProjMat, 0x14304E2A0);
+	CHECK_OFFSET(m_ViewProjMat, 0x14304E2E0);
+	CHECK_OFFSET(m_ViewProjMatrixUnjittered, 0x14304E360);
+	CHECK_OFFSET(m_PreviousViewProjMatrixUnjittered, 0x14304E3A0);
+	CHECK_OFFSET(m_ProjMatrixUnjittered, 0x14304E3E0);
 }
