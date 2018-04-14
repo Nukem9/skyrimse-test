@@ -137,7 +137,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 	MTRenderer::UnlockShader(lockType);
 }
 
-void BSBatchRenderer::PassInfo::Render(unsigned int a2)
+void BSBatchRenderer::RenderGroup::Render(unsigned int a2)
 {
 	//auto Render = (void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x131CB70);
 
@@ -175,8 +175,9 @@ void BSBatchRenderer::PassInfo::Render(unsigned int a2)
 
 	if (*(uint64_t *)v4)
 	{
-		if (!*(BYTE *)(v6 + 108))
+		if (!this->m_BatchRenderer->m_DiscardPassesAfterRender)
 			return;
+
 		if (*(uint64_t *)(v6 + 96))
 		{
 			do
@@ -207,7 +208,7 @@ LABEL_14:
 	this->UnkWord1 = 0;
 }
 
-void BSBatchRenderer::PassInfo::Unregister()
+void BSBatchRenderer::RenderGroup::Unregister()
 {
 	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
 
@@ -289,7 +290,7 @@ bool BSBatchRenderer::sub_14131ECE0(uint32_t& Technique, uint32_t& SubPassIndex,
 {
 	uint32_t passArray = m_TechToArrayMap.get(Technique);
 
-	if (*(BYTE *)((uintptr_t)this + 108))
+	if (m_DiscardPassesAfterRender)
 		m_RenderArrays[passArray].Clear(true);
 
 	return sub_14131E700(Technique, SubPassIndex, a4);
@@ -322,7 +323,7 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex,
 	if (v8 > *(DWORD *)(v6 + 84))
 		return false;
 
-	if (*(BYTE *)(v6 + 108))
+	if (m_DiscardPassesAfterRender)
 	{
 		AssertMsg(m_EndingTech >= m_StartingTech, "RenderPasses in active lists are out of order, passes will probably be leaked");
 
@@ -356,9 +357,6 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex,
 }
 
 BSShaderAccumulator *GetCurrentAccumulator();
-
-extern int commandThreshold;
-extern int commandThreshold2;
 
 bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, uint32_t RenderFlags)
 {
@@ -476,8 +474,8 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 			SetupAndDrawPass(currentPass, Technique, alphaTest, RenderFlags);
 	}
 
-	// a1+108 is probably a "remove list" flag after it's rendered, but the memory is not freed yet
-	if (*(BYTE *)((uintptr_t)this + 108))
+	// Zero the pointers only - the memory is freed elsewhere
+	if (m_DiscardPassesAfterRender)
 	{
 		Assert(SubPassIndex >= 0 && SubPassIndex < ARRAYSIZE(passArray->m_Pass));
 

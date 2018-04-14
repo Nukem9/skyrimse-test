@@ -7,7 +7,7 @@
 class BSBatchRenderer
 {
 public:
-	struct PassInfo
+	struct RenderGroup
 	{
 		BSBatchRenderer *m_BatchRenderer;
 		uintptr_t UnkPtr2;// pShaderProperty
@@ -39,9 +39,10 @@ public:
 	uint32_t m_StartingTech;
 	uint32_t m_EndingTech;
 	char _pad2[0x10];
-	int iGroupingAlphas;
-	PassInfo *m_Passes[16];
-	PassInfo *m_OtherPass;
+	int m_GroupingAlphas;
+	bool m_DiscardPassesAfterRender;
+	RenderGroup *m_Groups[16];
+	RenderGroup *m_UnknownGroup;
 	void *unk1;
 	void *unk2;
 
@@ -61,22 +62,24 @@ public:
 	static void DrawPassCustom(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags);
 	static void DrawGeometry(BSRenderPass *Pass);
 };
-static_assert(sizeof(BSBatchRenderer::PassInfo) == 0x28, "");
-static_assert(offsetof(BSBatchRenderer::PassInfo, m_BatchRenderer) == 0x0, "");
-static_assert(offsetof(BSBatchRenderer::PassInfo, UnkPtr2) == 0x8, "");
-static_assert(offsetof(BSBatchRenderer::PassInfo, UnkPtr3) == 0x10, "");
-static_assert(offsetof(BSBatchRenderer::PassInfo, UnkPtr4) == 0x18, "");
-static_assert(offsetof(BSBatchRenderer::PassInfo, UnkWord1) == 0x24, "");
-static_assert(offsetof(BSBatchRenderer::PassInfo, UnkByte1) == 0x26, "");
+static_assert(sizeof(BSBatchRenderer::RenderGroup) == 0x28, "");
+static_assert(offsetof(BSBatchRenderer::RenderGroup, m_BatchRenderer) == 0x0, "");
+static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkPtr2) == 0x8, "");
+static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkPtr3) == 0x10, "");
+static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkPtr4) == 0x18, "");
+static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkWord1) == 0x24, "");
+static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkByte1) == 0x26, "");
 
 static_assert(sizeof(BSBatchRenderer::RenderPassArray) == 0x30, "");
 
 static_assert(sizeof(BSBatchRenderer) == 0x108, "");
+static_assert(offsetof(BSBatchRenderer, m_RenderArrays) == 0x8, "");
 static_assert(offsetof(BSBatchRenderer, m_TechToArrayMap) == 0x20, "");
 static_assert(offsetof(BSBatchRenderer, m_StartingTech) == 0x50, "");
 static_assert(offsetof(BSBatchRenderer, m_EndingTech) == 0x54, "");
-static_assert(offsetof(BSBatchRenderer, iGroupingAlphas) == 0x68, "");
-static_assert(offsetof(BSBatchRenderer, m_Passes) == 0x70, "");
-static_assert(offsetof(BSBatchRenderer, m_OtherPass) == 0xF0, "");
+static_assert(offsetof(BSBatchRenderer, m_GroupingAlphas) == 0x68, "");
+static_assert(offsetof(BSBatchRenderer, m_DiscardPassesAfterRender) == 0x6C, "");
+static_assert(offsetof(BSBatchRenderer, m_Groups) == 0x70, "");
+static_assert(offsetof(BSBatchRenderer, m_UnknownGroup) == 0xF0, "");
 static_assert(offsetof(BSBatchRenderer, unk1) == 0xF8, "");
 static_assert(offsetof(BSBatchRenderer, unk2) == 0x100, "");

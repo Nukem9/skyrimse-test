@@ -37,13 +37,11 @@ void ClearShaderAndTechnique()
 
 	if (qword_1432A8218)
 	{
-		(*(void(__fastcall **)(__int64, uint64_t))(*(uint64_t *)qword_1432A8218 + 24i64))(
-			qword_1432A8218,
-			(unsigned int)dword_1432A8214);
+		((BSShader *)qword_1432A8218)->RestoreTechnique(dword_1432A8214);
+		qword_1432A8218 = 0;// Shader
 	}
 
-	qword_1432A8218 = 0;
-	dword_1432A8214 = 0;
+	dword_1432A8214 = 0;// Technique
 	qword_1434B5220 = 0;
 }
 
@@ -52,10 +50,8 @@ bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
 	ClearShaderAndTechnique();
 
 	auto GraphicsGlobals = HACK_GetThreadedGlobals();
-	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
 	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
-	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
 
 	if (Shader->SetupTechnique(Technique))
 	{
@@ -69,12 +65,13 @@ bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
 	return false;
 }
 
-void BSShaderAccumulator::sub_1412E1600(__int64 a1, uint32_t RenderFlags, float a3)
+void BSShaderAccumulator::sub_1412E1600(uint32_t RenderFlags)
 {
 	annotation->BeginEvent(L"BSShaderAccumulator: Draw1");
 	ProfileTimer("BSShaderAccumulator");
 
-	auto accumulator = (BSShaderAccumulator *)a1;
+	__int64 a1 = (__int64)this;
+	auto accumulator = this;
 	auto renderer = BSGraphics::Renderer::GetGlobals();
 
 	if (!accumulator->m_pkCamera)
@@ -105,7 +102,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, uint32_t RenderFlags, float 
 	// RenderWaterStencil
 	//
 
-	if (!v7)
+	if (false && !v7)
 	{
 		// RenderBatches
 		GameCommandList renderBatches(0, [accumulator, RenderFlags]
@@ -116,7 +113,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, uint32_t RenderFlags, float 
 		// LowAniso
 		DeferredCommandList lowAniso(1, [accumulator, RenderFlags]
 		{
-			auto pass = accumulator->m_MainBatch->m_Passes[9];
+			auto pass = accumulator->m_MainBatch->m_Groups[9];
 
 			if (pass)
 			{
@@ -136,7 +133,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, uint32_t RenderFlags, float 
 		// RenderNoShadowGroup
 		DeferredCommandList renderNoShadowGroup(3, [accumulator, RenderFlags]
 		{
-			auto pass = accumulator->m_MainBatch->m_Passes[8];
+			auto pass = accumulator->m_MainBatch->m_Groups[8];
 
 			if (pass)
 			{
@@ -150,7 +147,7 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, uint32_t RenderFlags, float 
 		// RenderLODObjects
 		DeferredCommandList renderLODObjects(4, [renderer, accumulator, a1, RenderFlags]
 		{
-			auto pass = accumulator->m_MainBatch->m_Passes[1];
+			auto pass = accumulator->m_MainBatch->m_Groups[1];
 
 			if (pass)
 			{
@@ -165,9 +162,9 @@ void BSShaderAccumulator::sub_1412E1600(__int64 a1, uint32_t RenderFlags, float 
 		});
 
 		// RenderLODLand
-		DeferredCommandList renderLODLand(5, [accumulator, a1, RenderFlags]
+		DeferredCommandList renderLODLand(5, [accumulator, RenderFlags]
 		{
-			auto pass = accumulator->m_MainBatch->m_Passes[0];
+			auto pass = accumulator->m_MainBatch->m_Groups[0];
 
 			if (pass)
 			{
@@ -222,7 +219,7 @@ else
 		// LowAniso
 		annotation->BeginEvent(L"LowAniso");
 		{
-			auto pass = accumulator->m_MainBatch->m_Passes[9];
+			auto pass = accumulator->m_MainBatch->m_Groups[9];
 
 			if (pass)
 			{
@@ -244,7 +241,7 @@ else
 		// RenderNoShadowGroup
 		annotation->BeginEvent(L"RenderNoShadowGroup");
 		{
-			auto pass = accumulator->m_MainBatch->m_Passes[8];
+			auto pass = accumulator->m_MainBatch->m_Groups[8];
 
 			if (pass)
 			{
@@ -259,7 +256,7 @@ else
 		// RenderLODObjects
 		annotation->BeginEvent(L"RenderLODObjects");
 		{
-			auto pass = accumulator->m_MainBatch->m_Passes[1];
+			auto pass = accumulator->m_MainBatch->m_Groups[1];
 
 			if (pass)
 			{
@@ -279,7 +276,7 @@ else
 		{
 			ProfileTimer("LOD");
 
-			auto pass = accumulator->m_MainBatch->m_Passes[0];
+			auto pass = accumulator->m_MainBatch->m_Groups[0];
 
 			if (pass)
 			{
@@ -309,7 +306,7 @@ else
 	{
 		renderer->AlphaBlendStateSetUnknown2(11);
 
-		auto pass = accumulator->m_MainBatch->m_Passes[13];
+		auto pass = accumulator->m_MainBatch->m_Groups[13];
 
 		if (pass)
 		{
@@ -410,32 +407,32 @@ else
 	annotation->EndEvent();
 }
 
-void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int PassType)
+void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType)
 {
-	//auto RenderTechniques = (__int64(__fastcall *)(__int64 a1, int a2, int a3, int a4, int a5))(g_ModuleBase + 0x12E3AD0);
-	__int64 a1 = (__int64)this;
+	Assert(StartTechnique <= EndTechnique);
 
-	BSBatchRenderer::PassInfo *subPass = nullptr;
+	BSBatchRenderer::RenderGroup *group = nullptr;
 	BSBatchRenderer *batch = nullptr;
 
-	// We always run the full function because I'm not sure if the structure
+	// Always run the full function because I'm not sure if the structure
 	// is used somewhere important.
 	MTRenderer::InsertCommand<MTRenderer::SetAccumulatorRenderCommand>(this);
 	SetCurrentAccumulator(this);
 
-	if (PassType <= -1)
+	if (GroupType <= -1)
 	{
-		// Render EVERYTHING with the given techniques
-		subPass = nullptr;
+		// Wildcard: render everything with the given techniques
+		group = nullptr;
 		batch = this->m_MainBatch;
 	}
 	else
 	{
-		// Render a single sub-pass with given techniques
-		subPass = this->m_MainBatch->m_Passes[PassType];
-		batch = subPass->m_BatchRenderer;
+		// Render a single group with given techniques
+		group = this->m_MainBatch->m_Groups[GroupType];
+		batch = group->m_BatchRenderer;
 	}
 
+	__int64 a1 = (__int64)this;
 	__int64 v14;
 	m_CurrentTech = 0;
 
@@ -447,30 +444,24 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 		m_CurrentSubPass = 0;
 		v14 = (__int64)batch + 88;
 
-		*(BYTE *)(a1 + 320) = batch->sub_14131E700(m_CurrentTech, m_CurrentSubPass, (__int64)&v14);
+		m_HasPendingDraws = batch->sub_14131E700(m_CurrentTech, m_CurrentSubPass, (__int64)&v14);
+
+		while (m_HasPendingDraws)
+		{
+			if ((unsigned int)(m_CurrentTech - BSSM_GRASS_SHADOW_L) <= 3 && (*(BYTE *)(a1 + 296) || *(BYTE *)(a1 + 297)))// if (is grass shadow) ???
+				m_HasPendingDraws = batch->sub_14131ECE0(m_CurrentTech, m_CurrentSubPass, (__int64)&v14);// Probably discards pass, returns true if there's remaining sub passes
+			else
+				m_HasPendingDraws = batch->sub_14131E960(m_CurrentTech, m_CurrentSubPass, (__int64)&v14, RenderFlags);
+		}
 	}
 	else
 	{
-		*(BYTE *)(a1 + 320) = 0;
+		// No batcher available to render these, so just drop them
+		m_HasPendingDraws = false;
 	}
 
-	if (*(BYTE *)(a1 + 320))
-	{
-		bool v12;
-
-		do
-		{
-			if ((unsigned int)(m_CurrentTech - BSSM_GRASS_SHADOW_L) <= 3 && (*(BYTE *)(a1 + 296) || *(BYTE *)(a1 + 297)))// if (is grass shadow) ???
-				v12 = batch->sub_14131ECE0(m_CurrentTech, m_CurrentSubPass, (__int64)&v14);// Probably discards pass, returns true if there's remaining sub passes
-			else
-				v12 = batch->sub_14131E960(m_CurrentTech, m_CurrentSubPass, (__int64)&v14, RenderFlags);
-
-			*(BYTE *)(a1 + 320) = v12;
-		} while (v12);
-	}
-
-	if (subPass)
-		subPass->Unregister();
+	if (group)
+		group->Unregister();
 
 	MTRenderer::ClearShaderAndTechnique();
 }
