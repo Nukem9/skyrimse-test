@@ -37,7 +37,7 @@ namespace BSGraphics
 
 	const uint32_t VertexIndexRingBufferSize = 32 * 1024 * 1024;
 	const uint32_t ShaderConstantRingBufferSize = 32 * 1024 * 1024;
-	const uint32_t RingBufferMaxFrames = 16;
+	const uint32_t RingBufferMaxFrames = 8;
 
 	thread_local BSVertexShader *TLS_CurrentVertexShader;
 	thread_local BSPixelShader *TLS_CurrentPixelShader;
@@ -45,8 +45,8 @@ namespace BSGraphics
 	GpuCircularBuffer *DynamicBuffer;		// Holds vertices and indices
 	GpuCircularBuffer *ShaderConstantBuffer;// Holds shader constant values
 
-	ID3D11Query *FrameCompletedQueries[16];
-	bool FrameCompletedQueryPending[16];
+	ID3D11Query *FrameCompletedQueries[8];
+	bool FrameCompletedQueryPending[8];
 
 	thread_local uint64_t TestBufferUsedBits[4];
 	ID3D11Buffer *TestBuffers[4][64];
@@ -162,7 +162,7 @@ namespace BSGraphics
 		int prevQueryIndex = CurrentFrameIndex - 6;
 
 		if (prevQueryIndex < 0)
-			prevQueryIndex += 16;
+			prevQueryIndex += 8;
 
 		if (FrameCompletedQueryPending[prevQueryIndex])
 		{
@@ -180,7 +180,7 @@ namespace BSGraphics
 		FlushThreadedVars();
 		CurrentFrameIndex++;
 
-		if (CurrentFrameIndex >= 16)
+		if (CurrentFrameIndex >= 8)
 			CurrentFrameIndex = 0;
 	}
 
