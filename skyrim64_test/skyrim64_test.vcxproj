@@ -133,6 +133,7 @@
     <ClInclude Include="src\patches\rendering\GpuTimer.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsTypes.h" />
     <ClInclude Include="src\patches\TES\BSRenderPass.h" />
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShaderProperty.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderProperty.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShader.h" />

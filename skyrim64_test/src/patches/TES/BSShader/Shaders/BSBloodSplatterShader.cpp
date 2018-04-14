@@ -95,23 +95,19 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFla
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::SetupGeometry, Pass, RenderFlags);
 
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto property = static_cast<const BSBloodSplatterShaderProperty *>(Pass->m_Property);
+
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-
-	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
-	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
-
-	uintptr_t v12 = (uintptr_t)Pass->m_Property;
-
-	// BSBloodSplatterShaderProperty::GetAlpha() * BSShaderProperty::GetAlpha() * fGlobalAlpha?
-	float alpha = (**(float **)(v12 + 168) * *(float *)(v12 + 48)) * fGlobalAlpha;
-
-	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)
-		alpha *= fFlareMult * fAlpha;
 
 	//
 	// PS: p0 float Alpha
 	//
+	float alpha = property->GetAlpha() * fGlobalAlpha;
+
+	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)
+		alpha *= fFlareMult * fAlpha;
+
 	pixelCG.ParamPS<float, 0>() = alpha;
 
 	//
@@ -119,7 +115,10 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFla
 	// VS: p1 float4 LightLoc
 	// VS: p2 float Ctrl
 	//
-	vertexCG.ParamVS<XMMATRIX, 0>()	= worldViewProj;
+	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
+	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, renderer->m_ViewProjMat);
+
+	vertexCG.ParamVS<XMMATRIX, 0>() = worldViewProj;
 	vertexCG.ParamVS<XMVECTOR, 1>()	= LightLoc.XmmVector();
 	vertexCG.ParamVS<float, 2>()	= fFlareOffsetScale;
 
@@ -128,21 +127,18 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFla
 
 	if (m_CurrentRawTechnique == RAW_TECHNIQUE_FLARE)
 	{
-		NiSourceTexture *flareColorTexture = *(NiSourceTexture **)(v12 + 152);
-
-		renderer->SetTexture(2, flareColorTexture->QRendererTexture());// FlareColor
+		renderer->SetTexture(2, property->pFlareColorTexture->QRendererTexture());// FlareColor
 		renderer->SetTextureMode(2, 0, 1);
 	}
-	else
+	else if (m_CurrentRawTechnique == RAW_TECHNIQUE_SPLATTER)
 	{
-		NiSourceTexture *bloodColorTexture = *(NiSourceTexture **)(v12 + 136);
+		AssertMsgDebug(property->pBloodColorTexture, "Missing texture");
+		AssertMsgDebug(property->pBloodAlphaTexture, "Missing texture");
 
-		renderer->SetTexture(0, bloodColorTexture->QRendererTexture());// BloodColor
+		renderer->SetTexture(0, property->pBloodColorTexture->QRendererTexture());// BloodColor
 		renderer->SetTextureMode(0, 0, 1);
 
-		NiSourceTexture *bloodAlphaTexture = *(NiSourceTexture **)(v12 + 144);
-
-		renderer->SetTexture(1, bloodAlphaTexture->QRendererTexture());// BloodAlpha
+		renderer->SetTexture(1, property->pBloodAlphaTexture->QRendererTexture());// BloodAlpha
 		renderer->SetTextureMode(1, 0, 1);
 	}
 }
