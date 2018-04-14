@@ -224,7 +224,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		}
 	}
 
-	if ((*(uintptr_t *)(property + 56) & 0x80000000000i64) == 0)
+	if (!Pass->m_Property->GetFlag(BSShaderProperty::BSSP_FLAG_UNIFORM_SCALE))
 	{
 		data->ScaleMask[0] = 0.0f;
 		data->ScaleMask[1] = 0.0f;

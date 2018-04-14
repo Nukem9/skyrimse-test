@@ -675,7 +675,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	uint8_t v12 = Pass->Byte1C;
 	uint8_t v103 = (unsigned __int8)(v12 - 2) <= 1u;
 
-	if (v12 == 3 && property->QFlags() & 0x100000000i64)
+	if (v12 == 3 && property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE))
 	{
 		TLS_dword_141E35280 = *(uint32_t *)&renderer->__zz0[72];
 		renderer->AlphaBlendStateSetUnknown2(1);
@@ -918,13 +918,13 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		uint32_t oldDepthMode = *(uint32_t *)&renderer->__zz0[32];
 
-		if ((property->QFlags() & 0x100000000i64) == 0)
+		if (!property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE))
 		{
 			TLS_dword_141E35280 = oldDepthMode;
 			renderer->DepthStencilStateSetDepthMode(1);
 		}
 
-		if ((property->QFlags() & 0x80000000) == 0)
+		if (!property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_TEST))
 		{
 			TLS_dword_141E35280 = oldDepthMode;
 			renderer->DepthStencilStateSetDepthMode(0);

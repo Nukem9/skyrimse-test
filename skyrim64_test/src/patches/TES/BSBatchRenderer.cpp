@@ -112,7 +112,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 
 		if ((a2 & 0x108) == 0)
 		{
-			if (i->m_Property->QFlags() & 0x1000000000i64)
+			if (i->m_Property->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
 				MTRenderer::RasterStateSetCullMode(0);
 			else
 				MTRenderer::RasterStateSetCullMode(1);
