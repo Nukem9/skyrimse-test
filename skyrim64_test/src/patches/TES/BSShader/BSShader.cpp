@@ -169,5 +169,5 @@ void BSShader::SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderP
 	// NiAlphaProperty::GetTestRef() * BSShaderProperty::GetAlpha()
 	float alphaRef = trunc((float)*(unsigned __int8 *)(a2 + 50) * ShaderProperty->GetAlpha());
 
-	BSGraphics::Renderer::GetGlobals()->SetScrapConstantValue(alphaRef * (1.0f / 255.0f));
+	BSGraphics::Renderer::GetGlobals()->SetAlphaTestRef(alphaRef * (1.0f / 255.0f));
 }

@@ -58,8 +58,8 @@ namespace BSGraphics
 		void AlphaBlendStateSetUnknown1(uint32_t Value);
 		void AlphaBlendStateSetUnknown2(uint32_t Value);
 
-		void SetUseScrapConstantValue(bool UseStoredValue);
-		void SetScrapConstantValue(float Value);
+		void SetUseAlphaTestRef(bool UseStoredValue);
+		void SetAlphaTestRef(float Value);
 
 		void SetVertexDescription(uint64_t VertexDesc);
 		void SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology);
@@ -146,7 +146,7 @@ namespace BSGraphics
 			//
 			uint32_t		m_NextConstantBufferIndex;
 			ID3D11Buffer	*m_ConstantBuffers1[4];				// Sizes: 3840 bytes
-			ID3D11Buffer	*m_TempConstantBuffer1;				// CONSTANT_GROUP_LEVEL_SCRAP_VALUE (Index 11) - 16 bytes
+			ID3D11Buffer	*m_AlphaTestRefCB;					// CONSTANT_GROUP_LEVEL_ALPHA_TEST_REF (Index 11) - 16 bytes
 			ID3D11Buffer	*m_ConstantBuffers2[20];			// Sizes: 0, 16, 32, 48, ... 304 bytes
 			ID3D11Buffer	*m_ConstantBuffers3[10];			// Sizes: 0, 16, 32, 48, ... 144 bytes
 			ID3D11Buffer	*m_ConstantBuffers4[28];			// Sizes: 0, 16, 32, 48, ... 432 bytes
@@ -180,7 +180,7 @@ namespace BSGraphics
 			uint32_t m_RenderTargetStates[8];					// enum SetRenderTargetMode: SRTM_CLEAR...SRTM_INIT
 
 			char __zz0[0x50];
-			float m_ScrapConstantValue;							// Can hold any float value. Used for the CONSTANT_GROUP_LEVEL_SCRAP_VALUE buffer.
+			float m_AlphaTestRef;							// Can hold any float value. Used for the CONSTANT_GROUP_LEVEL_SCRAP_VALUE buffer.
 
 			uint32_t m_PSSamplerAddressMode[16];
 			uint32_t m_PSSamplerFilterMode[16];
@@ -237,7 +237,7 @@ namespace BSGraphics
 	CHECK_OFFSET(m_SamplerStates, 0x14304D910);
 	CHECK_OFFSET(m_NextConstantBufferIndex, 0x14304DA00);
 	CHECK_OFFSET(m_ConstantBuffers1, 0x14304DA08);
-	CHECK_OFFSET(m_TempConstantBuffer1, 0x14304DA28);
+	CHECK_OFFSET(m_AlphaTestRefCB, 0x14304DA28);
 	CHECK_OFFSET(m_ConstantBuffers2, 0x14304DA30);
 	CHECK_OFFSET(m_ConstantBuffers3, 0x14304DAD0);
 	CHECK_OFFSET(m_ConstantBuffers4, 0x14304DB20);
@@ -261,7 +261,7 @@ namespace BSGraphics
 	CHECK_OFFSET(rshadowState_iDepthStencilSlice, 0x14304DEEC);
 	CHECK_OFFSET(m_RenderTargetStates, 0x14304DEF8);
 	CHECK_OFFSET(__zz0, 0x14304DF18);
-	CHECK_OFFSET(m_ScrapConstantValue, 0x14304DF68);
+	CHECK_OFFSET(m_AlphaTestRef, 0x14304DF68);
 	CHECK_OFFSET(m_PSSamplerAddressMode, 0x14304DF6C);
 	CHECK_OFFSET(m_PSSamplerFilterMode, 0x14304DFAC);
 	CHECK_OFFSET(m_PSResources, 0x14304DFF0);

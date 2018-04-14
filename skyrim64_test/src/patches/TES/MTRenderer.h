@@ -145,11 +145,11 @@ namespace MTRenderer
 				break;
 
 			case UseScrapConstantValue_1:
-				r->SetUseScrapConstantValue((bool)Data.part1);
+				r->SetUseAlphaTestRef((bool)Data.part1);
 				break;
 
 			case UseScrapConstantValue_2:
-				r->SetUseScrapConstantValue(*(float *)&Data.part1);
+				r->SetAlphaTestRef(*(float *)&Data.part1);
 				break;
 
 			default:

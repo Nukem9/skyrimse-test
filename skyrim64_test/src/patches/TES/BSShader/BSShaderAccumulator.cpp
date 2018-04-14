@@ -298,8 +298,8 @@ else
 	// RenderSky
 	annotation->BeginEvent(L"RenderSky");
 	{
-		renderer->SetUseScrapConstantValue(true);
-		renderer->SetScrapConstantValue(0.50196081f);
+		renderer->SetUseAlphaTestRef(true);
+		renderer->SetAlphaTestRef(0.50196081f);
 		accumulator->RenderTechniques(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
 	}
 	annotation->EndEvent();

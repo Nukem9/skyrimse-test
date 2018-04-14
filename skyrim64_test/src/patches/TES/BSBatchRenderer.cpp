@@ -390,7 +390,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 				cullMode = 1;
 
 			useScrapConstant = true;
-			alphaTest = 1;
+			alphaTest = true;
 
 			if (byte_1431F54CD)
 				alphaBlendUnknown = 1;
@@ -409,7 +409,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 				cullMode = 0;
 
 			useScrapConstant = true;
-			alphaTest = 1;
+			alphaTest = true;
 
 			if (byte_1431F54CD)
 				alphaBlendUnknown = 1;
@@ -420,7 +420,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 				cullMode = 1;
 
 			useScrapConstant = true;
-			alphaTest = 1;
+			alphaTest = true;
 			alphaBlendUnknown = 0;
 			break;
 		}
@@ -431,7 +431,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 		if (alphaBlendUnknown != -1)
 			MTRenderer::AlphaBlendStateSetUnknown1(0);
 
-		renderer->SetUseScrapConstantValue(useScrapConstant);
+		renderer->SetUseAlphaTestRef(useScrapConstant);
 	}
 
 	// Render this group with a specific render pass list

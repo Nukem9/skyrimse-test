@@ -74,7 +74,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 		break;
 
 	case RAW_TECHNIQUE_MOONANDSTARSMASK:
-		renderer->SetUseScrapConstantValue(true);
+		renderer->SetUseAlphaTestRef(true);
 		renderer->AlphaBlendStateSetUnknown2(0);
 		renderer->DepthStencilStateSetDepthMode(3);
 		renderer->RasterStateSetUnknown1(3);
@@ -110,7 +110,7 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 	renderer->AlphaBlendStateSetMode(0);
 	renderer->AlphaBlendStateSetUnknown2(1);
 	renderer->DepthStencilStateSetDepthMode(3);
-	renderer->SetUseScrapConstantValue(false);
+	renderer->SetUseAlphaTestRef(false);
 	renderer->RasterStateSetUnknown1(0);
 	EndTechnique();
 }
