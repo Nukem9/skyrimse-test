@@ -3,25 +3,11 @@
 // BloodSplatter
 //
 // Possible technique defines:
-// - SPLATTER
-// - FLARE
+// - SPLATTER       Unique
+// - FLARE          Unique
 //
 //
-#ifndef WINPC
-#error Shader is only for Windows
-#endif
-
-#ifndef DX11
-#error Shader is only for DirectX 11
-#endif
-
-#if defined(SPLATTER) && defined(FLARE)
-#error Multiple base techniques defined
-#endif
-
-#if !defined(SPLATTER) && !defined(FLARE)
-#error No base technique defined
-#endif
+#include "ShaderCommon.h"
 
 struct VS_INPUT
 {
@@ -50,14 +36,6 @@ struct PS_OUTPUT
 // Vertex shader code
 //
 #ifdef VSHADER
-cbuffer PerTechnique : register(b0)
-{
-};
-
-cbuffer PerMaterial : register(b1)
-{
-};
-
 cbuffer PerGeometry : register(b2)
 {
 	row_major float4x4 WorldViewProj;
@@ -65,13 +43,11 @@ cbuffer PerGeometry : register(b2)
 	float Ctrl;
 };
 
-VS_OUTPUT vs_main(VS_INPUT input)
+VS_OUTPUT main(VS_INPUT input)
 {
 	VS_OUTPUT vsout;
 
-	float4 position = float4(input.Position.xy, 0.0, 1.0);
 	float4 projected = mul(WorldViewProj, float4(input.Position.xy, 0.0, 1.0));
-
 	float2 r1 = (-LightLoc.xy + projected.xy) * LightLoc.ww;
 
 #if defined(SPLATTER)
@@ -91,37 +67,29 @@ VS_OUTPUT vs_main(VS_INPUT input)
 // Pixel shader code
 //
 #ifdef PSHADER
-SamplerState BloodColorSamp : register(s0);
-SamplerState BloodAlphaSamp : register(s1);
-SamplerState FlareColorSamp : register(s2);
-SamplerState FlareHDRSamp : register(s3);
+SamplerState SampBloodColor : register(s0);
+SamplerState SampBloodAlpha : register(s1);
+SamplerState SampFlareColor : register(s2);
+SamplerState SampFlareHDR : register(s3);
 
-Texture2D<float4> BloodColorTex : register(t0);
-Texture2D<float4> BloodAlphaTex : register(t1);
-Texture2D<float4> FlareColorTex : register(t2);
-Texture2D<float4> FlareHDRTex : register(t3);
-
-cbuffer PerTechnique : register(b0)
-{
-};
-
-cbuffer PerMaterial : register(b1)
-{
-};
+Texture2D<float4> TexBloodColor : register(t0);
+Texture2D<float4> TexBloodAlpha : register(t1);
+Texture2D<float4> TexFlareColor : register(t2);
+Texture2D<float4> TexFlareHDR : register(t3);
 
 cbuffer PerGeometry : register(b2)
 {
 	float Alpha;
 };
 
-PS_OUTPUT ps_main(PS_INPUT input)
+PS_OUTPUT main(PS_INPUT input)
 {
 	PS_OUTPUT psout;
 
 #if defined(SPLATTER)
 	float4 r0,r1;
-	r0.xyz = BloodAlphaTex.Sample(BloodAlphaSamp, input.TexCoordAlpha.xy).xyz;
-	r1.xyzw = BloodColorTex.Sample(BloodColorSamp, input.TexCoordColor.xy).xyzw;
+	r0.xyz = TexBloodAlpha.Sample(SampBloodAlpha, input.TexCoordAlpha.xy).xyz;
+	r1.xyzw = TexBloodColor.Sample(SampBloodColor, input.TexCoordColor.xy).xyzw;
 	r1.xyz = float3(-1,-1,-1) + r1.xyz;
 
 	r0.w = Alpha * input.TexCoordColor.z;
@@ -131,10 +99,10 @@ PS_OUTPUT ps_main(PS_INPUT input)
 
 	psout.Color = float4(r0.www * r0.xyz + r1.xyz, 1.0);
 #elif defined(FLARE)
-	float colorMult = FlareColorTex.Sample(FlareColorSamp, input.TexCoordColor.xy).x;
-	float4 colorHDR = FlareHDRTex.Sample(FlareHDRSamp, input.TexCoordColor.xy).xyzw;
+	float flareMult = TexFlareColor.Sample(SampFlareColor, input.TexCoordColor.xy).x;
+	float4 colorHDR = TexFlareHDR.Sample(SampFlareHDR, input.TexCoordColor.xy).xyzw;
 
-	psout.Color = (colorHDR * colorMult) * Alpha;
+	psout.Color = (colorHDR * flareMult) * Alpha;
 #endif
 
 	return psout;

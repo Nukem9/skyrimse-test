@@ -13,13 +13,7 @@
 // - CLOUDS
 //
 //
-#ifndef WINPC
-#error Shader is only for Windows
-#endif
-
-#ifndef DX11
-#error Shader is only for DirectX 11
-#endif
+#include "ShaderCommon.h"
 
 struct VS_INPUT
 {
@@ -56,8 +50,8 @@ struct VS_OUTPUT
 	float4 Color : COLOR0;
 #endif
 
-	float4 WorldPos : POSITION1;
-	float4 PrevWorldPos : POSITION2;
+	float4 WorldPosition : POSITION1;
+	float4 PreviousWorldPosition : POSITION2;
 };
 
 typedef VS_OUTPUT PS_INPUT;
@@ -65,22 +59,14 @@ typedef VS_OUTPUT PS_INPUT;
 struct PS_OUTPUT
 {
 	float4 Color : SV_Target0;
-	float2 MotionVector : SV_Target1;
-	float4 Normals : SV_Target2;
+	float2 MotionVectors : SV_Target1;
+	float4 Normal : SV_Target2;
 };
 
 //
 // Vertex shader code
 //
 #ifdef VSHADER
-cbuffer PerTechnique : register(b0)
-{
-};
-
-cbuffer PerMaterial : register(b1)
-{
-};
-
 cbuffer PerGeometry : register(b2)
 {
 	row_major float4x4 WorldViewProj;
@@ -92,7 +78,7 @@ cbuffer PerGeometry : register(b2)
 	float2 TexCoordOff;
 };
 
-VS_OUTPUT vs_main(VS_INPUT input)
+VS_OUTPUT main(VS_INPUT input)
 {
 	VS_OUTPUT vsout;
 
@@ -152,8 +138,8 @@ VS_OUTPUT vs_main(VS_INPUT input)
 #endif // OCCLUSION MOONMASK HORIZFADE
 
 	vsout.Position = mul(WorldViewProj, r0).xyww;
-	vsout.WorldPos = mul(World, r0);
-	vsout.PrevWorldPos = mul(PreviousWorld, r0);
+	vsout.WorldPosition = mul(World, r0);
+	vsout.PreviousWorldPosition = mul(PreviousWorld, r0);
 
 	return vsout;
 }
@@ -163,30 +149,22 @@ VS_OUTPUT vs_main(VS_INPUT input)
 // Pixel shader code
 //
 #ifdef PSHADER
-SamplerState BaseSampler : register(s0);
-SamplerState BlendSampler : register(s1);
-SamplerState NoiseGradSampler : register(s2);
+SamplerState SampBaseSampler : register(s0);
+SamplerState SampBlendSampler : register(s1);
+SamplerState SampNoiseGradSampler : register(s2);
 
-Texture2D<float4> BaseTex : register(t0);
-Texture2D<float4> BlendTex : register(t1);
-Texture2D<float4> NoiseGradTex : register(t2);
-
-cbuffer PerTechnique : register(b0)
-{
-};
-
-cbuffer PerMaterial : register(b1)
-{
-};
+Texture2D<float4> TexBaseSampler : register(t0);
+Texture2D<float4> TexBlendSampler : register(t1);
+Texture2D<float4> TexNoiseGradSampler : register(t2);
 
 cbuffer PerGeometry : register(b2)
 {
 	float2 PParams;
 };
 
-cbuffer cb11 : register(b11)
+cbuffer AlphaTestRefCB : register(b11)
 {
-	float4 cb11[1];
+	float AlphaTestRefRS;
 }
 
 cbuffer cb12 : register(b12)
@@ -194,7 +172,7 @@ cbuffer cb12 : register(b12)
 	float4 cb12[20];
 }
 
-PS_OUTPUT ps_main(PS_INPUT input)
+PS_OUTPUT main(PS_INPUT input)
 {
 	PS_OUTPUT psout;
 
@@ -202,24 +180,24 @@ PS_OUTPUT ps_main(PS_INPUT input)
 
 #ifndef OCCLUSION
 #ifndef TEXLERP
-	r0 = BaseTex.Sample(BaseSampler, input.TexCoord0.xy);
+	r0 = TexBaseSampler.Sample(SampBaseSampler, input.TexCoord0.xy);
 #ifdef TEXFADE
 	r0.w = r0.w * PParams.x;
 #endif
 #else
-	r0 = BlendTex.Sample(BlendSampler, input.TexCoord1.xy);
-	r1 = BaseTex.Sample(BaseSampler, input.TexCoord0.xy);
+	r0 = TexBlendSampler.Sample(SampBlendSampler, input.TexCoord1.xy);
+	r1 = TexBaseSampler.Sample(SampBaseSampler, input.TexCoord0.xy);
 	r0.xyzw = -r1.xyzw + r0.xyzw;
 	r0.xyzw = PParams.xxxx * r0.xyzw + r1.xyzw;
 #endif
 
 #if defined(DITHER)
 	r0.xy = float2(0.125,0.125) * input.Position.xy;
-	r0.x = NoiseGradTex.Sample(NoiseGradSampler, r0.xy).x;
+	r0.x = TexNoiseGradSampler.Sample(SampNoiseGradSampler, r0.xy).x;
 	r0.x = r0.x * 0.03125 + -0.0078125;
 
 #ifdef TEX
-	float4 baseTex = BaseTex.Sample(BaseSampler, input.TexCoord0.xy);
+	float4 baseTex = TexBaseSampler.Sample(SampBaseSampler, input.TexCoord0.xy);
 
 	r0.yzw = input.Color.xyz * baseTex.xyz + PParams.yyy;
 	psout.Color.xyz = r0.yzw + r0.xxx;
@@ -230,7 +208,7 @@ PS_OUTPUT ps_main(PS_INPUT input)
 	psout.Color.w = input.Color.w;
 #endif // TEX
 #elif defined(MOONMASK)
-	r1.x = r0.w - cb11[0].x;
+	r1.x = r0.w - AlphaTestRefRS.x;
 	psout.Color.xyzw = r0;
 
 	if (r1.x < 0)
@@ -250,17 +228,17 @@ PS_OUTPUT ps_main(PS_INPUT input)
 	psout.Color = float4(0, 0, 0, 1.0);
 #endif // OCCLUSION
 
-	r0.x = dot(cb12[12].xyzw, input.WorldPos);
-	r0.y = dot(cb12[13].xyzw, input.WorldPos);
-	r0.z = dot(cb12[15].xyzw, input.WorldPos);
+	r0.x = dot(cb12[12].xyzw, input.WorldPosition);
+	r0.y = dot(cb12[13].xyzw, input.WorldPosition);
+	r0.z = dot(cb12[15].xyzw, input.WorldPosition);
 	r0.xy = r0.xy / r0.zz;
-	r1.x = dot(cb12[16].xyzw, input.PrevWorldPos);
-	r1.y = dot(cb12[17].xyzw, input.PrevWorldPos);
-	r0.z = dot(cb12[19].xyzw, input.PrevWorldPos);
+	r1.x = dot(cb12[16].xyzw, input.PreviousWorldPosition);
+	r1.y = dot(cb12[17].xyzw, input.PreviousWorldPosition);
+	r0.z = dot(cb12[19].xyzw, input.PreviousWorldPosition);
 	r0.zw = r1.xy / r0.zz;
 	r0.xy = r0.xy + -r0.zw;
-	psout.MotionVector = float2(-0.5, 0.5) * r0.xy;
-	psout.Normals = float4(0.5, 0.5, 0, 0);
+	psout.MotionVectors = float2(-0.5, 0.5) * r0.xy;
+	psout.Normal = float4(0.5, 0.5, 0, 0);
 
 	return psout;
 }

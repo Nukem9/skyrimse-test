@@ -3,26 +3,20 @@
 // DistantTree
 //
 // Possible technique defines:
-// - RENDER_DEPTH
+// - RENDER_DEPTH   Unique
 // - DO_ALPHA_TEST
 //
 //
-#ifndef WINPC
-#error Shader is only for Windows
-#endif
-
-#ifndef DX11
-#error Shader is only for DirectX 11
-#endif
+#include "ShaderCommon.h"
 
 struct VS_INPUT
 {
 	float3 Position : POSITION0;
-	float2 TexCoord0 : TEXCOORD0;
-	float4 TexCoord4 : TEXCOORD4;
-	float4 TexCoord5 : TEXCOORD5;
-	float4 TexCoord6 : TEXCOORD6;
-	float4 TexCoord7 : TEXCOORD7;
+	float2 TexCoord0 : TEXCOORD0;// InstDataX
+	float4 TexCoord4 : TEXCOORD4;// InstDataX
+	float4 TexCoord5 : TEXCOORD5;// InstDataX
+	float4 TexCoord6 : TEXCOORD6;// InstDataX
+	float4 TexCoord7 : TEXCOORD7;// InstDataX
 };
 
 struct VS_OUTPUT
@@ -31,10 +25,10 @@ struct VS_OUTPUT
 	float3 TexCoord : TEXCOORD0;
 
 #if defined(RENDER_DEPTH)
-	float4 TexCoordDepth : TEXCOORD3;
+	float4 Depth : TEXCOORD3;
 #else
-	float4 WorldPos : POSITION1;
-	float4 PrevWorldPos : POSITION2;
+	float4 WorldPosition : POSITION1;
+	float4 PreviousWorldPosition : POSITION2;
 #endif
 };
 
@@ -42,11 +36,11 @@ typedef VS_OUTPUT PS_INPUT;
 
 struct PS_OUTPUT
 {
-	float4 Color : SV_Target0;
+	float4 Albedo : SV_Target0;
 
 #if !defined(RENDER_DEPTH)
 	float2 MotionVector : SV_Target1;
-	float4 Normals : SV_Target2;
+	float4 Normal : SV_Target2;
 #endif
 };
 
@@ -59,10 +53,7 @@ cbuffer PerTechnique : register(b0)
 	float4 FogParam;
 	float4 FogNearColor;
 	float4 FogFarColor;
-};
-
-cbuffer PerMaterial : register(b1)
-{
+	float4 DiffuseDir;
 };
 
 cbuffer PerGeometry : register(b2)
@@ -71,9 +62,10 @@ cbuffer PerGeometry : register(b2)
 	row_major float4x4 WorldViewProj;
 	row_major float4x4 World;
 	row_major float4x4 PreviousWorld;
+	float IndexScale;
 };
 
-VS_OUTPUT vs_main(VS_INPUT input)
+VS_OUTPUT main(VS_INPUT input)
 {
 	VS_OUTPUT vsout;
 
@@ -87,11 +79,11 @@ VS_OUTPUT vs_main(VS_INPUT input)
 	float4 worldProjection = mul(WorldViewProj, r0);
 
 #ifdef RENDER_DEPTH
-	vsout.TexCoordDepth.xy = worldProjection.zw;
-	vsout.TexCoordDepth.zw = input.TexCoord5.zw;
+	vsout.Depth.xy = worldProjection.zw;
+	vsout.Depth.zw = input.TexCoord5.zw;
 #else
-	vsout.WorldPos = mul(World, r0);
-	vsout.PrevWorldPos = mul(PreviousWorld, r0);
+	vsout.WorldPosition = mul(World, r0);
+	vsout.PreviousWorldPosition = mul(PreviousWorld, r0);
 #endif
 
 	vsout.Position = worldProjection;
@@ -105,9 +97,9 @@ VS_OUTPUT vs_main(VS_INPUT input)
 // Pixel shader code
 //
 #ifdef PSHADER
-SamplerState DiffuseSamp : register(s0);
+SamplerState SampDiffuse : register(s0);
 
-Texture2D<float4> DiffuseTex : register(t0);
+Texture2D<float4> TexDiffuse : register(t0);
 
 cbuffer PerTechnique : register(b0)
 {
@@ -115,27 +107,17 @@ cbuffer PerTechnique : register(b0)
 	float4 AmbientColor;
 };
 
-cbuffer PerMaterial : register(b1)
+cbuffer AlphaTestRefCB : register(b11)
 {
-};
-
-cbuffer PerGeometry : register(b2)
-{
-};
-
-cbuffer ScrapValueBuffer : register(b11)
-{
-	// Real name is unknown, CONSTANT_GROUP_LEVEL_SCRAP_VALUE
-	float DiffuseModifier;
+	float AlphaTestRefRS;
 }
 
-cbuffer cb12 : register(b12)
+cbuffer PerFrame : register(b12)
 {
-	// Real name is unknown, CONSTANT_GROUP_LEVEL_SCREENSPACEINFO
 	float4 cb12[20];
 }
 
-static const float DepthOffsets[16] =
+const static float SampleOffsets[16] =
 {
 	0.003921568,
 	0.533333361,
@@ -155,7 +137,7 @@ static const float DepthOffsets[16] =
 	0.333333343
 };
 
-PS_OUTPUT ps_main(PS_INPUT input)
+PS_OUTPUT main(PS_INPUT input)
 {
 	PS_OUTPUT psout;
 
@@ -164,50 +146,49 @@ PS_OUTPUT ps_main(PS_INPUT input)
 	uint2 temp = (uint2)input.Position.xy;
 	uint maskIndex = (temp.y & 3) | (((temp.x << 2) & 12) & ~3);
 
-	float r0 = -DepthOffsets[maskIndex];
+	float r0 = -SampleOffsets[maskIndex];
 	r0 += 0.5;
-	r0 = input.TexCoordDepth.w * r0 + input.TexCoordDepth.z;
+	r0 = input.Depth.w * r0 + input.Depth.z;
 	r0 -= 0.5;
 
 	if (r0 < 0)
 		discard;
 
-	r0 = DiffuseTex.Sample(DiffuseSamp, input.TexCoord.xy).w;
-	r0 -= DiffuseModifier;
+	r0 = TexDiffuse.Sample(SampDiffuse, input.TexCoord.xy).w;
+	r0 -= AlphaTestRefRS;
 
 	if (r0 < 0)
 		discard;
 
-	psout.Color.xyz = input.TexCoordDepth.xxx / input.TexCoordDepth.yyy;
-	psout.Color.w = 0;
+	psout.Albedo.xyz = input.Depth.xxx / input.Depth.yyy;
+	psout.Albedo.w = 0;
 #else
 	float4 r0, r1;
 
-	r0 = DiffuseTex.Sample(DiffuseSamp, input.TexCoord.xy);
+	r0 = TexDiffuse.Sample(SampDiffuse, input.TexCoord.xy);
 	r1.xyz = input.TexCoord.zzz * DiffuseColor.xyz + AmbientColor.xyz;
 
-#ifdef DO_ALPHA_TEST
-	r0.w -= DiffuseModifier;
+	#ifdef DO_ALPHA_TEST
+		r0.w -= AlphaTestRefRS;
 
-	if (r0.w < 0)
-		discard;
-#endif
+		if (r0.w < 0)
+			discard;
+	#endif
 
-	psout.Color.xyz = r1.xyz * r0.xyz;
-	psout.Color.w = 1;
+	psout.Albedo = float4(r1.xyz * r0.xyz, 1.0);
 
-	r0.x = dot(cb12[12].xyzw, input.WorldPos);
-	r0.y = dot(cb12[13].xyzw, input.WorldPos);
-	r0.z = dot(cb12[15].xyzw, input.WorldPos);
+	r0.x = dot(cb12[12].xyzw, input.WorldPosition);
+	r0.y = dot(cb12[13].xyzw, input.WorldPosition);
+	r0.z = dot(cb12[15].xyzw, input.WorldPosition);
 	r0.xy = r0.xy / r0.zz;
-	r1.x = dot(cb12[16].xyzw, input.PrevWorldPos);
-	r1.y = dot(cb12[17].xyzw, input.PrevWorldPos);
-	r0.z = dot(cb12[19].xyzw, input.PrevWorldPos);
+	r1.x = dot(cb12[16].xyzw, input.PreviousWorldPosition);
+	r1.y = dot(cb12[17].xyzw, input.PreviousWorldPosition);
+	r0.z = dot(cb12[19].xyzw, input.PreviousWorldPosition);
 	r0.zw = r1.xy / r0.zz;
 	r0.xy = r0.xy + -r0.zw;
 
 	psout.MotionVector = float2(-0.5, 0.5) * r0.xy;
-	psout.Normals = float4(0.5, 0.5, 0, 0);
+	psout.Normal = float4(0.5, 0.5, 0, 0);
 #endif
 
 	return psout;
