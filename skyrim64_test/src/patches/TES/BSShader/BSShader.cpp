@@ -126,8 +126,7 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 			if (pixelShader->m_ConstantOffsets[i] == BSGraphics::INVALID_CONSTANT_BUFFER_OFFSET)
 				continue;
 
-			if (pixelShader->m_ConstantOffsets[i] != e->m_ConstantOffsets[i])
-				Assert(false);
+			Assert(pixelShader->m_ConstantOffsets[i] == e->m_ConstantOffsets[i]);
 		}
 	}
 

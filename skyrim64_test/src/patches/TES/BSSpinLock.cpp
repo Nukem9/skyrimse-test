@@ -3,8 +3,11 @@
 
 BSSpinLock::BSSpinLock()
 {
-	m_OwningThread = 0;
-	m_LockCount = 0;
+}
+
+BSSpinLock::~BSSpinLock()
+{
+	Assert(m_LockCount == 0);
 }
 
 void BSSpinLock::Acquire(int InitialAttemps)

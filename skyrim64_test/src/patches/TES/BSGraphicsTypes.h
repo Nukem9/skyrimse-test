@@ -50,20 +50,12 @@ namespace BSGraphics
 		inline static char EmptyWriteBuffer[1024];
 
 	public:
-		D3D11_MAPPED_SUBRESOURCE m_Map;
-		ID3D11Buffer *m_Buffer;
-		bool m_Unified;					// True if buffer is from global ringbuffer
-		uint32_t m_UnifiedByteOffset;	// Offset into ringbuffer
+		D3D11_MAPPED_SUBRESOURCE m_Map {};
+		ID3D11Buffer *m_Buffer			= nullptr;
+		bool m_Unified					= false;	// True if buffer is from global ring buffer
+		uint32_t m_UnifiedByteOffset	= 0;		// Offset into ring buffer
 
 	public:
-		inline CustomConstantGroup()
-		{
-			memset(&m_Map, 0, sizeof(m_Map));
-			m_Buffer = nullptr;
-			m_Unified = false;
-			m_UnifiedByteOffset = 0;
-		}
-
 		inline void *RawData() const
 		{
 			return m_Map.pData;
@@ -84,7 +76,7 @@ namespace BSGraphics
 			static_assert(ParamIndex < ARRAYSIZE(T::m_ConstantOffsets));
 			static_assert(sizeof(U) <= sizeof(EmptyWriteBuffer));
 
-			if (m_Shader->m_ConstantOffsets[ParamIndex] == INVALID_CONSTANT_BUFFER_OFFSET)
+			if (RawData() == nullptr || m_Shader->m_ConstantOffsets[ParamIndex] == INVALID_CONSTANT_BUFFER_OFFSET)
 				return *(U *)EmptyWriteBuffer;
 
 			uintptr_t data = (uintptr_t)RawData();
@@ -100,7 +92,7 @@ namespace BSGraphics
 			static_assert(ParamIndex < ARRAYSIZE(T::m_ConstantOffsets));
 			static_assert(sizeof(U) <= sizeof(EmptyWriteBuffer));
 
-			if (m_Shader->m_ConstantOffsets[ParamIndex] == INVALID_CONSTANT_BUFFER_OFFSET)
+			if (RawData() == nullptr || m_Shader->m_ConstantOffsets[ParamIndex] == INVALID_CONSTANT_BUFFER_OFFSET)
 				return *(U *)EmptyWriteBuffer;
 
 			uintptr_t data = (uintptr_t)RawData();

@@ -3,13 +3,11 @@
 
 BSReadWriteLock::BSReadWriteLock()
 {
-	m_Bits = 0;
-	m_ThreadId = 0;
-	m_WriteCount = 0;
 }
 
 BSReadWriteLock::~BSReadWriteLock()
 {
+	Assert(m_Bits == 0 && m_WriteCount == 0);
 }
 
 void BSReadWriteLock::LockForRead()
@@ -38,7 +36,7 @@ bool BSReadWriteLock::TryLockForRead()
 
 	// fetch_add is considerably (100%) faster than compare_exchange,
 	// so here we are optimizing for the common (lock success) case.
-	int32_t value = m_Bits.fetch_add(READER, std::memory_order_acquire);
+	int16_t value = m_Bits.fetch_add(READER, std::memory_order_acquire);
 
 	if (value & WRITER)
 	{
@@ -77,11 +75,11 @@ bool BSReadWriteLock::TryLockForWrite()
 		return true;
 	}
 
-	int32_t expect = 0;
+	int16_t expect = 0;
 	if (m_Bits.compare_exchange_strong(expect, WRITER, std::memory_order_acq_rel))
 	{
 		m_WriteCount = 1;
-		m_ThreadId.store((uint16_t)GetCurrentThreadId(), std::memory_order_release);
+		m_ThreadId.store(GetCurrentThreadId(), std::memory_order_release);
 		return true;
 	}
 
@@ -95,7 +93,7 @@ void BSReadWriteLock::LockForReadAndWrite()
 
 bool BSReadWriteLock::IsWritingThread()
 {
-	return m_ThreadId == (uint16_t)GetCurrentThreadId();
+	return m_ThreadId == GetCurrentThreadId();
 }
 
 BSAutoReadAndWriteLock *BSAutoReadAndWriteLock::Initialize(BSReadWriteLock *Child)

@@ -531,14 +531,14 @@ namespace BSGraphics
 			if (flags & (0x200 | 0x100))
 			{
 				D3D11_MAPPED_SUBRESOURCE resource;
-				renderer->m_DeviceContext->Map(renderer->m_TempConstantBuffer1, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+				renderer->m_DeviceContext->Map(renderer->m_AlphaTestRefCB, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
 
 				if (renderer->__zz0[76])
-					*(float *)resource.pData = renderer->m_ScrapConstantValue;
+					*(float *)resource.pData = renderer->m_AlphaTestRef;
 				else
 					*(float *)resource.pData = 0.0f;
 
-				renderer->m_DeviceContext->Unmap(renderer->m_TempConstantBuffer1, 0);
+				renderer->m_DeviceContext->Unmap(renderer->m_AlphaTestRefCB, 0);
 			}
 
 			// Shader input layout creation + updates
@@ -738,12 +738,12 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::SetUseScrapConstantValue(bool UseStoredValue)
+	void Renderer::SetUseAlphaTestRef(bool UseStoredValue)
 	{
 		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_1, UseStoredValue))
 			return;
 
-		// When UseStoredValue is false, the constant buffer data is zeroed, but m_ScrapConstantValue is saved
+		// When UseStoredValue is false, the constant buffer data is zeroed, but m_AlphaTestRef is saved
 		if (__zz0[76] != UseStoredValue)
 		{
 			__zz0[76] = UseStoredValue;
@@ -751,14 +751,14 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::SetScrapConstantValue(float Value)
+	void Renderer::SetAlphaTestRef(float Value)
 	{
 		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_2, *(uint32_t *)&Value))
 			return;
 
-		if (m_ScrapConstantValue != Value)
+		if (m_AlphaTestRef != Value)
 		{
-			m_ScrapConstantValue = Value;
+			m_AlphaTestRef = Value;
 			m_StateUpdateFlags |= 0x200u;
 		}
 	}
