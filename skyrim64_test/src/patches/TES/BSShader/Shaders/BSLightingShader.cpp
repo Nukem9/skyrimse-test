@@ -13,7 +13,7 @@
 // - Constructor is not implemented
 // - Destructor is not implemented
 // - Global variables eliminated in each Setup/Restore function
-// - A lock is held in GeoUpdateMTLandExtraConstants()
+// - A lock is held in GeometrySetupMTLandExtraConstants()
 //
 using namespace DirectX;
 
@@ -70,6 +70,8 @@ DefineIniSetting(fSnowNormalSpecPower, Display);
 DefineIniSetting(bEnableSnowRimLighting, Display);
 DefineIniSetting(fSpecMaskBegin, Display);
 DefineIniSetting(fSpecMaskSpan, Display);
+DefineIniSetting(bEnableProjecteUVDiffuseNormals, Display);
+DefineIniSetting(bEnableProjecteUVDiffuseNormalsOnCubemap, Display);
 DefineIniSetting(fProjectedUVDiffuseNormalTilingScale, Display);
 DefineIniSetting(fProjectedUVNormalDetailTilingScale, Display);
 DefineIniSetting(bEnableParallaxOcclusion, Display);
@@ -689,7 +691,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		// NOTE: The game updates view projection twice...? See the if() after this switch.
 		if ((rawTechnique & RAW_FLAG_SKINNED) == 0)
-			GeoUpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
+			GeometrySetupViewProjection(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
 
 		v16 = 0;
 		v102 = 0;
@@ -703,7 +705,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	case RAW_TECHNIQUE_MTLAND:
 	case RAW_TECHNIQUE_MTLANDLODBLEND:
-		GeoUpdateMTLandExtraConstants(
+		GeometrySetupMTLandExtraConstants(
 			vertexCG,
 			Pass->m_Geometry->GetWorldTranslate(),
 			*(float *)((uintptr_t)property->pMaterial + 264i64),
@@ -714,8 +716,8 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	case RAW_TECHNIQUE_LODLAND:
 	case RAW_TECHNIQUE_LODOBJ:
 	case RAW_TECHNIQUE_LODOBJHD:
-		GeoUpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
-		GeoUpdateViewProjectionConstants(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, &renderer->m_PreviousPosAdjust);
+		GeometrySetupViewProjection(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
+		GeometrySetupViewProjection(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, &renderer->m_PreviousPosAdjust);
 		isLOD = true;
 		v16 = v102;
 		break;
@@ -736,15 +738,15 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		const NiTransform& world = Pass->m_Geometry->GetWorldTransform();
 		const NiTransform& temp = (RenderFlags & 0x10) ? world : Pass->m_Geometry->GetPreviousWorldTransform();
 
-		GeoUpdateViewProjectionConstants(vertexCG, world, false, nullptr);
-		GeoUpdateViewProjectionConstants(vertexCG, temp, true, &renderer->m_PreviousPosAdjust);
+		GeometrySetupViewProjection(vertexCG, world, false, nullptr);
+		GeometrySetupViewProjection(vertexCG, temp, true, &renderer->m_PreviousPosAdjust);
 	}
 
 	XMMATRIX inverseWorldMatrix;
 	GetInverseWorldMatrix(Pass->m_Geometry->GetWorldTransform(), false, inverseWorldMatrix);
 
-	GeoUpdateDirectionalLightConstants(pixelCG, Pass, inverseWorldMatrix, v16);
-	GeoUpdateAmbientLightConstants(pixelCG, Pass->m_Geometry->GetWorldTransform(), v16);
+	GeometrySetupDirectionalLights(pixelCG, Pass, inverseWorldMatrix, v16);
+	GeometrySetupAmbientLights(pixelCG, Pass->m_Geometry->GetWorldTransform(), v16);
 
 	// PS: p7 float4 MaterialData
 	{
@@ -756,10 +758,10 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			materialData.f[2] = property->GetAlpha();
 	}
 
-	GeoUpdateEmitColorConstants(pixelCG, property);
+	GeometrySetupEmitColorConstants(pixelCG, property);
 
-	uint32_t lightCount = (rawTechnique >> 3) & 7;
-	uint32_t shadowLightCount = (rawTechnique >> 6) & 7;
+	uint32_t lightCount = (rawTechnique >> 3) & 0b111;		// 0 - 7
+	uint32_t shadowLightCount = (rawTechnique >> 6) & 0b111;// 0 - 7
 
 	// PS: p0 float2 NumLightNumShadowLight
 	{
@@ -774,7 +776,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	// PS: p2 float4 PointLightColor[7]
 	//
 	// Original code just memset()'s these but it's already zeroed now. The values get
-	// set up in the relevant function (GeoUpdatePointLightConstants).
+	// set up in the relevant function (GeometrySetupConstantPointLights).
 	//
 	//{
 	//	auto& pointLightPosition = pixelCG.Param<XMVECTOR[7], 1>(ps);
@@ -792,7 +794,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		if (baseTechniqueID == RAW_TECHNIQUE_ENVMAP || baseTechniqueID == RAW_TECHNIQUE_EYE)
 			scale = 1.0f;
 
-		GeoUpdatePointLightConstants(pixelCG, Pass, inverseWorldMatrix, lightCount, shadowLightCount, scale, v102);
+		GeometrySetupConstantPointLights(pixelCG, Pass, inverseWorldMatrix, lightCount, shadowLightCount, scale, v102);
 	}
 
 	if (rawTechnique & RAW_FLAG_SPECULAR)
@@ -807,10 +809,10 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	if (rawTechnique & (RAW_FLAG_SOFT_LIGHTING | RAW_FLAG_RIM_LIGHTING | RAW_FLAG_BACK_LIGHTING | RAW_FLAG_AMBIENT_SPECULAR))
 		doPrecipitationOcclusion = true;
 
-	bool enableProjectedUvNormals = byte_141E35308 && (!(RenderFlags & 0x8) || !byte_141E35320);
-
 	if ((rawTechnique & RAW_FLAG_PROJECTED_UV) && (baseTechniqueID != RAW_TECHNIQUE_HAIR))
 	{
+		bool enableProjectedUvNormals = bEnableProjecteUVDiffuseNormals->uValue.b && (!(RenderFlags & 0x8) || !bEnableProjecteUVDiffuseNormalsOnCubemap->uValue.b);
+
 		renderer->SetTexture(11, ProjectedNoiseTexture->QRendererTexture());
 		renderer->SetTextureMode(11, 3, 1);
 
@@ -849,7 +851,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			fVars3[10] = v60[101];
 			fVars3[11] = v60[105];
 
-			GeoUpdateProjectedUvConstants(pixelCG, Pass->m_Geometry, property, enableProjectedUvNormals);
+			GeometrySetupProjectedUv(pixelCG, Pass->m_Geometry, property, enableProjectedUvNormals);
 		}
 		else
 		{
@@ -859,7 +861,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			// VS: p6 float3x4 fVars3
 			BSShaderUtil::TransposeStoreMatrix3x4(&vertexCG.ParamVS<float, 6>(), outputTemp);
 
-			GeoUpdateProjectedUvConstants(pixelCG, nullptr, property, enableProjectedUvNormals);
+			GeometrySetupProjectedUv(pixelCG, nullptr, property, enableProjectedUvNormals);
 		}
 	}
 
@@ -1169,7 +1171,7 @@ __int64 BSLightingShader::sub_141314170(__int64 a1)
 	return *(unsigned int *)(a1 + 8);
 }
 
-void BSLightingShader::GeoUpdateViewProjectionConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust)
+void BSLightingShader::GeometrySetupViewProjection(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust)
 {
 	//
 	// Instead of using the typical 4x4 matrix like everywhere else, someone decided that the
@@ -1196,7 +1198,7 @@ void BSLightingShader::GeoUpdateViewProjectionConstants(BSGraphics::ConstantGrou
 
 SRWLOCK asdf = SRWLOCK_INIT;
 
-void BSLightingShader::GeoUpdateMTLandExtraConstants(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4)
+void BSLightingShader::GeometrySetupMTLandExtraConstants(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4)
 {
 	float v4 = 0.0f;
 	float v6 = (flt_141E32F40 - flt_141E32FD8) / (flt_141E32FB8 * 5.0f);
@@ -1255,7 +1257,7 @@ void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexSha
 	sub_14130BC60(&temp, Property);
 }
 
-void BSLightingShader::GeoUpdateDirectionalLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
+void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
 {
 	uintptr_t v7 = 0;
 
@@ -1282,7 +1284,7 @@ void BSLightingShader::GeoUpdateDirectionalLightConstants(const BSGraphics::Cons
 	XMStoreFloat3(&dirLightDirection, XMVector3Normalize(tempDir));
 }
 
-void BSLightingShader::GeoUpdateAmbientLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const NiTransform& Transform, int a3)
+void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const NiTransform& Transform, int a3)
 {
 	// __int64 __fastcall sub_14130B2A0(__int64 a1, __int64 a2, int a3)
 
@@ -1298,7 +1300,7 @@ void BSLightingShader::GeoUpdateAmbientLightConstants(const BSGraphics::Constant
 	GeoUpdateAmbientLightConstants(&temp, Transform, a3);
 }
 
-void BSLightingShader::GeoUpdateEmitColorConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSLightingShaderProperty *Property)
+void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSLightingShaderProperty *Property)
 {
 	// PS: p8 float4 EmitColor
 	XMVECTORF32& emitColor = PixelCG.ParamPS<XMVECTORF32, 8>();
@@ -1308,7 +1310,7 @@ void BSLightingShader::GeoUpdateEmitColorConstants(const BSGraphics::ConstantGro
 	emitColor.f[2] = Property->pEmitColor->b * Property->fEmitColorScale;
 }
 
-void BSLightingShader::GeoUpdatePointLightConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
+void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
 {
 	// __int64 __fastcall sub_14130B390(__int64 a1, __int64 a2, __int64 a3, int a4, int a5, float a6, int a7)
 
@@ -1324,7 +1326,7 @@ void BSLightingShader::GeoUpdatePointLightConstants(const BSGraphics::ConstantGr
 	GeoUpdatePointLightConstants(&temp, Pass, Transform, LightCount, ShadowLightCount, Scale, a7);
 }
 
-void BSLightingShader::GeoUpdateProjectedUvConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals)
+void BSLightingShader::GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals)
 {
 	// PS: p12 float4 ProjectedUVParams
 	{

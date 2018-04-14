@@ -6,6 +6,28 @@
 #include "BSSkyShaderProperty.h"
 #include "BSSkyShader.h"
 
+DEFINE_SHADER_DESCRIPTOR(
+	// Vertex
+	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float4x4,	WorldViewProj)
+	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float4x4,	World)
+	CONFIG_ENTRY(VS, PER_GEO, 2, row_major float4x4,	PreviousWorld)
+	CONFIG_ENTRY(VS, PER_GEO, 3, float4[3],				BlendColor)
+	CONFIG_ENTRY(VS, PER_GEO, 4, float3,				EyePosition)
+	CONFIG_ENTRY(VS, PER_GEO, 5, float2,				TexCoordOff)
+	CONFIG_ENTRY(VS, PER_GEO, 6, float,					VParams)
+
+	// Pixel
+	CONFIG_ENTRY(PS, PER_GEO, 0, float2,				PParams)
+
+	CONFIG_ENTRY(PS, SAMPLER, 0, SamplerState,			SampBaseSampler)
+	CONFIG_ENTRY(PS, SAMPLER, 1, SamplerState,			SampBlendSampler)
+	CONFIG_ENTRY(PS, SAMPLER, 2, SamplerState,			SampNoiseGradSampler)
+
+	CONFIG_ENTRY(PS, TEXTURE, 0, Texture2D<float4>,		TexBaseSampler)
+	CONFIG_ENTRY(PS, TEXTURE, 1, Texture2D<float4>,		TexBlendSampler)
+	CONFIG_ENTRY(PS, TEXTURE, 2, Texture2D<float4>,		TexNoiseGradSampler)
+);
+
 //
 // Shader notes:
 //
@@ -152,7 +174,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	// VS: p1 float4x4 World
 	//
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(geoTransform);
-	vertexCG.ParamVS<XMMATRIX, 0>() = XMMatrixMultiplyTranspose(xmmGeoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
+	vertexCG.ParamVS<XMMATRIX, 0>() = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_ViewProjMat);
 	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixTranspose(xmmGeoTransform);
 
 	//
@@ -322,7 +344,7 @@ void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 void BSSkyShader::CreateVertexShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
-	auto getConstant = BSShaderInfo::BSSkyShader::VSConstants::GetString;
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.at(i)->Name; };
 
 	BSShader::CreateVertexShader(Technique, "Sky", getDefines, getConstant);
 }
@@ -330,8 +352,8 @@ void BSSkyShader::CreateVertexShader(uint32_t Technique)
 void BSSkyShader::CreatePixelShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
-	auto getSampler = BSShaderInfo::BSSkyShader::Samplers::GetString;
-	auto getConstant = BSShaderInfo::BSSkyShader::PSConstants::GetString;
+	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.at(i)->Name; };
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.at(i)->Name; };
 
 	BSShader::CreatePixelShader(Technique, "Sky", getDefines, getSampler, getConstant);
 }

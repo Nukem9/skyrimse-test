@@ -6,6 +6,32 @@
 #include "../BSShaderUtil.h"
 #include "BSGrassShader.h"
 
+DEFINE_SHADER_DESCRIPTOR(
+	// Vertex
+	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float4x4,	WorldViewProj)
+	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float4x4,	WorldView)
+	CONFIG_ENTRY(VS, PER_GEO, 2, row_major float4x4,	World)
+	CONFIG_ENTRY(VS, PER_GEO, 3, row_major float4x4,	PreviousWorld)
+	CONFIG_ENTRY(VS, PER_GEO, 4, float4,				FogNearColor)
+	CONFIG_ENTRY(VS, PER_GEO, 5, float3,				WindVector)
+	CONFIG_ENTRY(VS, PER_GEO, 6, float,					WindTimer)
+	CONFIG_ENTRY(VS, PER_GEO, 7, float3,				DirLightDirection)
+	CONFIG_ENTRY(VS, PER_GEO, 8, float,					PreviousWindTimer)
+	CONFIG_ENTRY(VS, PER_GEO, 9, float3,				DirLightColor)
+	CONFIG_ENTRY(VS, PER_GEO, 10, float,				AlphaParam1)
+	CONFIG_ENTRY(VS, PER_GEO, 11, float3,				AmbientColor)
+	CONFIG_ENTRY(VS, PER_GEO, 12, float,				AlphaParam2)
+	CONFIG_ENTRY(VS, PER_GEO, 13, float3,				ScaleMask)
+	CONFIG_ENTRY(VS, PER_GEO, 14, float,				ShadowClampValue)
+
+	// Pixel
+	CONFIG_ENTRY(PS, SAMPLER, 0, SamplerState,			SampBaseSampler)
+	CONFIG_ENTRY(PS, SAMPLER, 1, SamplerState,			SampShadowMaskSampler)
+
+	CONFIG_ENTRY(PS, TEXTURE, 0, Texture2D<float4>,		TexBaseSampler)
+	CONFIG_ENTRY(PS, TEXTURE, 1, Texture2D<float4>,		TexShadowMaskSampler)
+);
+
 //
 // Shader notes:
 //
@@ -237,8 +263,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		data->ScaleMask[2] = 1.0f;
 	}
 
-	// Wtf? padding is 0.3 and not zero...?
-	data->padding = fShadowClampValue->uValue.f;
+	data->ShadowClampValue = fShadowClampValue->uValue.f;
 
 	renderer->FlushConstantGroupVSPS(&vertexCG, nullptr);
 	renderer->ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
@@ -274,8 +299,8 @@ void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const Ni
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(GeoTransform);
 
-	Data->WorldViewProj = XMMatrixMultiplyTranspose(xmmGeoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
-	Data->WorldView = XMMatrixMultiplyTranspose(xmmGeoTransform, *(XMMATRIX *)&renderer->__zz2[112]);
+	Data->WorldViewProj = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_ViewProjMat);
+	Data->WorldView = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_ViewMat);
 	Data->World = XMMatrixTranspose(xmmGeoTransform);
 	Data->PreviousWorld = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(GeoTransform, renderer->m_PreviousPosAdjust));
 }

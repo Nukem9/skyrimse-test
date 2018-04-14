@@ -40,7 +40,7 @@ private:
 		float AmbientColor[3];
 		float AlphaParam2;
 		float ScaleMask[3];
-		float padding;
+		float ShadowClampValue;
 	};
 #pragma pack(pop)
 
@@ -69,4 +69,4 @@ public:
 	static uint32_t GetVertexTechnique(uint32_t RawTechnique);
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 };
-static_assert(sizeof(BSGrassShader) == 0x90, "");
+static_assert(sizeof(BSGrassShader) == 0x90);

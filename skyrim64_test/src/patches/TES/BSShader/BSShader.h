@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <stdint.h>
 #include <functional>
 #include "../NiMain/common.h"
@@ -24,6 +25,73 @@ struct BSIStream;
 
 #define BSSHADER_FORWARD_CALL(OptionIndex, Func, ...) \
 if (g_ShaderToggles[m_Type][BSGraphics::CONSTANT_GROUP_LEVEL_##OptionIndex]) { BSSHADER_FORWARD_CALL_ALWAYS(OptionIndex, Func, __VA_ARGS__) }
+
+#define DEFINE_SHADER_DESCRIPTOR(Entries) const static ShaderDescriptor ShaderConfig({ Entries })
+#define CONFIG_ENTRY(a, b, c, d, e) { ShaderDescriptor::##a, ShaderDescriptor::##b, c, #d, #e },
+
+class ShaderDescriptor
+{
+public:
+	enum ShaderType
+	{
+		PS,			// Pixel shader
+		VS,			// Vertex shader
+		CS,			// Compute shader
+	};
+
+	enum DeclType
+	{
+		PER_TEC,	// Constants
+		PER_MAT,	// Constants
+		PER_GEO,	// Constants
+		SAMPLER,	// Samplers
+		TEXTURE,	// Textures
+	};
+
+	struct Entry
+	{
+		ShaderType m_ShaderType;
+		DeclType m_DeclType;
+		int Index;
+		const char *DataType;
+		const char *Name;
+	};
+
+	std::map<int, const Entry *> ByConstantIndexVS;
+	std::map<int, const Entry *> ByConstantIndexPS;
+	std::map<int, const Entry *> ByConstantIndexCS;
+	std::map<int, const Entry *> BySamplerIndex;
+	std::map<int, const Entry *> ByTextureIndex;
+
+private:
+	std::vector<Entry> m_Entries;
+
+public:
+	ShaderDescriptor(std::initializer_list<Entry> InputData) : m_Entries(InputData)
+	{
+		for (Entry& e : m_Entries)
+		{
+			if (e.m_DeclType == PER_TEC || e.m_DeclType == PER_MAT || e.m_DeclType == PER_GEO)
+			{
+				switch (e.m_ShaderType)
+				{
+				case VS: ByConstantIndexVS[e.Index] = &e; break;
+				case PS: ByConstantIndexPS[e.Index] = &e; break;
+				case CS: ByConstantIndexCS[e.Index] = &e; break;
+				default: Assert(false); break;
+				}
+			}
+
+			if (e.m_DeclType == SAMPLER)
+				BySamplerIndex[e.Index] = &e;
+
+			if (e.m_DeclType == TEXTURE)
+				ByTextureIndex[e.Index] = &e;
+		}
+
+		// m_Entries should never be modified after this point
+	}
+};
 
 class NiBoneMatrixSetterI
 {

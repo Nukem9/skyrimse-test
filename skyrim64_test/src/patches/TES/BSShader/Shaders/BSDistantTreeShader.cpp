@@ -4,6 +4,27 @@
 #include "../BSShaderUtil.h"
 #include "BSDistantTreeShader.h"
 
+DEFINE_SHADER_DESCRIPTOR(
+	// Vertex
+	CONFIG_ENTRY(VS, PER_GEO, 0, undefined,				InstanceData)
+	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float4x4,	WorldViewProj)
+	CONFIG_ENTRY(VS, PER_GEO, 2, row_major float4x4,	World)
+	CONFIG_ENTRY(VS, PER_GEO, 3, row_major float4x4,	PreviousWorld)
+	CONFIG_ENTRY(VS, PER_TEC, 4, float4,				FogParam)
+	CONFIG_ENTRY(VS, PER_TEC, 5, float4,				FogNearColor)
+	CONFIG_ENTRY(VS, PER_TEC, 6, float4,				FogFarColor)
+	CONFIG_ENTRY(VS, PER_TEC, 7, float4,				DiffuseDir)
+	CONFIG_ENTRY(VS, PER_GEO, 8, float,					IndexScale)
+
+	// Pixel
+	CONFIG_ENTRY(PS, PER_TEC, 0, float4,				DiffuseColor)
+	CONFIG_ENTRY(PS, PER_TEC, 1, float4,				AmbientColor)
+
+	CONFIG_ENTRY(PS, SAMPLER, 0, SamplerState,			SampDiffuse)
+
+	CONFIG_ENTRY(PS, TEXTURE, 0, Texture2D<float4>,		TexDiffuse)
+);
+
 //
 // Shader notes:
 //
@@ -156,7 +177,7 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags
 	// VS: p2 float4x4 World
 	// VS: p3 float4x4 PreviousWorld
 	//
-	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixMultiplyTranspose(geoTransform, *(XMMATRIX *)&renderer->__zz2[240]);
+	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixMultiplyTranspose(geoTransform, renderer->m_ViewProjMat);
 	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(geoTransform);
 	vertexCG.ParamVS<XMMATRIX, 3>() = XMMatrixTranspose(prevGeoTransform);
 
@@ -172,7 +193,7 @@ void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFla
 void BSDistantTreeShader::CreateVertexShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
-	auto getConstant = BSShaderInfo::BSDistantTreeShader::VSConstants::GetString;
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.at(i)->Name; };
 
 	BSShader::CreateVertexShader(Technique, "DistantTree", getDefines, getConstant);
 }
@@ -180,8 +201,8 @@ void BSDistantTreeShader::CreateVertexShader(uint32_t Technique)
 void BSDistantTreeShader::CreatePixelShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
-	auto getSampler = BSShaderInfo::BSDistantTreeShader::Samplers::GetString;
-	auto getConstant = BSShaderInfo::BSDistantTreeShader::PSConstants::GetString;
+	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.at(i)->Name; };
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.at(i)->Name; };
 
 	BSShader::CreatePixelShader(Technique, "DistantTree", getDefines, getSampler, getConstant);
 }
