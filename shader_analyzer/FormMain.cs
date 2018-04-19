@@ -6,12 +6,14 @@ namespace shader_analyzer
 {
     public partial class FormMain : Form
     {
+        private string[] m_FileList;
+
         public FormMain()
         {
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void FormMain_Load(object sender, EventArgs e)
         {
             listViewShaders.Columns.Add(new ColumnHeader
             {
@@ -42,29 +44,54 @@ namespace shader_analyzer
             // Bring up a diff view with the selected file
             string selectedFile = listViewShaders.SelectedItems[0].Text;
 
-            FormDiff differ = new FormDiff($"C:\\Diffs\\{selectedFile}-new.txt", $"C:\\diffs\\{selectedFile}-old.txt", true);
+            FormDiff differ = new FormDiff($"{Program.ShaderDiffDirectory}\\{selectedFile}-old.txt", $"{Program.ShaderDiffDirectory}\\{selectedFile}-new.txt", true);
             differ.Show();
         }
 
         private void buttonRun_Click(object sender, EventArgs e)
         {
-            ShaderAnalyzer.DoStuff();
+            buttonRun.Enabled = false;
+            ClearListView();
+
+            ShaderAnalyzer.DoStuff(() =>
+            {
+                Invoke(new Action(() => { PopulateListView(); buttonRun.Enabled = true; }));
+            });
+        }
+
+        private void buttonClearList_Click(object sender, EventArgs e)
+        {
+            ClearListView();
+        }
+
+        private void buttonClearLog_Click(object sender, EventArgs e)
+        {
+            richTextBoxLog.Text = "";
+            richTextBoxLog.SelectionStart = 0;
+        }
+
+        private void textBoxFilter_TextChanged(object sender, EventArgs e)
+        {
+            listViewShaders.Items.Clear();
+            PopulateListView();
         }
 
         private void PopulateListView()
         {
-            listViewShaders.Items.Clear();
-            string[] fileList = Directory.GetFiles("C:\\diffs\\", "*.*");
+            m_FileList = Directory.GetFiles(Program.ShaderDiffDirectory, "*.*");
 
             //
             // ListView layout:
             //
             // "Shader", "Symbolic", "Whitelisted"
             //
-            foreach (string file in fileList)
+            foreach (string file in m_FileList)
             {
                 // Completely skip any file with "-new" in the name to eliminate duplicate listings
                 if (file.Contains("-new"))
+                    continue;
+
+                if (textBoxFilter.Text.Length > 0 && !file.Contains(textBoxFilter.Text))
                     continue;
 
                 string fixedFile = Path.GetFileNameWithoutExtension(file).Replace("-old", "");
@@ -78,6 +105,15 @@ namespace shader_analyzer
                 item.SubItems.Add("No");
                 listViewShaders.Items.Add(item);
             }
+        }
+
+        private void ClearListView()
+        {
+            if (Directory.Exists(Program.ShaderDiffDirectory))
+                Directory.Delete(Program.ShaderDiffDirectory, true);
+
+            Directory.CreateDirectory(Program.ShaderDiffDirectory);
+            listViewShaders.Items.Clear();
         }
 
         public void Log(string Format, params object[] Parameters)

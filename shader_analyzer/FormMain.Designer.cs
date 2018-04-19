@@ -46,6 +46,9 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.listViewShaders = new System.Windows.Forms.ListView();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.buttonClearList = new System.Windows.Forms.Button();
+            this.buttonClearLog = new System.Windows.Forms.Button();
+            this.textBoxFilter = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -247,15 +250,16 @@
             // 
             // listViewShaders
             // 
-            this.listViewShaders.Location = new System.Drawing.Point(6, 19);
+            this.listViewShaders.Location = new System.Drawing.Point(6, 44);
             this.listViewShaders.Name = "listViewShaders";
-            this.listViewShaders.Size = new System.Drawing.Size(558, 340);
+            this.listViewShaders.Size = new System.Drawing.Size(558, 315);
             this.listViewShaders.TabIndex = 7;
             this.listViewShaders.UseCompatibleStateImageBehavior = false;
             this.listViewShaders.DoubleClick += new System.EventHandler(this.listViewShaders_DoubleClick);
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.textBoxFilter);
             this.groupBox3.Controls.Add(this.listViewShaders);
             this.groupBox3.Location = new System.Drawing.Point(441, 12);
             this.groupBox3.Name = "groupBox3";
@@ -264,11 +268,41 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Mismatched Shader List";
             // 
+            // buttonClearList
+            // 
+            this.buttonClearList.Location = new System.Drawing.Point(93, 354);
+            this.buttonClearList.Name = "buttonClearList";
+            this.buttonClearList.Size = new System.Drawing.Size(75, 23);
+            this.buttonClearList.TabIndex = 9;
+            this.buttonClearList.Text = "Clear List";
+            this.buttonClearList.UseVisualStyleBackColor = true;
+            this.buttonClearList.Click += new System.EventHandler(this.buttonClearList_Click);
+            // 
+            // buttonClearLog
+            // 
+            this.buttonClearLog.Location = new System.Drawing.Point(174, 354);
+            this.buttonClearLog.Name = "buttonClearLog";
+            this.buttonClearLog.Size = new System.Drawing.Size(75, 23);
+            this.buttonClearLog.TabIndex = 10;
+            this.buttonClearLog.Text = "Clear Log";
+            this.buttonClearLog.UseVisualStyleBackColor = true;
+            this.buttonClearLog.Click += new System.EventHandler(this.buttonClearLog_Click);
+            // 
+            // textBoxFilter
+            // 
+            this.textBoxFilter.Location = new System.Drawing.Point(6, 16);
+            this.textBoxFilter.Name = "textBoxFilter";
+            this.textBoxFilter.Size = new System.Drawing.Size(558, 20);
+            this.textBoxFilter.TabIndex = 8;
+            this.textBoxFilter.TextChanged += new System.EventHandler(this.textBoxFilter_TextChanged);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1023, 599);
+            this.Controls.Add(this.buttonClearLog);
+            this.Controls.Add(this.buttonClearList);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.buttonRun);
@@ -276,12 +310,13 @@
             this.Controls.Add(this.richTextBoxLog);
             this.Name = "FormMain";
             this.Text = "ShaderAnalyzer";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            this.Load += new System.EventHandler(this.FormMain_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -306,6 +341,9 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.ListView listViewShaders;
         private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.Button buttonClearList;
+        private System.Windows.Forms.Button buttonClearLog;
+        private System.Windows.Forms.TextBox textBoxFilter;
     }
 }
 

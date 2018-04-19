@@ -4,12 +4,32 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using SharpDX.D3DCompiler;
 
 namespace shader_analyzer
 {
     static class ShaderAnalyzer
     {
+        public class IncludeFX : Include
+        {
+            public IDisposable Shadow { get; set; }
+
+            public void Dispose()
+            {
+            }
+
+            public void Close(Stream stream)
+            {
+                stream.Close();
+            }
+
+            public Stream Open(IncludeType type, string fileName, Stream parentStream)
+            {
+                return new FileStream(Path.Combine(Program.ShaderSourceDirectory, fileName), FileMode.Open, FileAccess.Read, FileShare.Read);
+            }
+        }
+
         // This removes as much as physically possible from the compiled code
         private readonly static StripFlags m_StripFlags =
             StripFlags.CompilerStripDebugInformation |
@@ -18,17 +38,26 @@ namespace shader_analyzer
             StripFlags.CompilerStripRootSignature |
             StripFlags.CompilerStripTestBlobs;
 
-        public static void DoStuff()
+        public static void DoStuff(Action OnFinish)
         {
-            ValidateAllShadersOfType("BloodSplatter");
-            ValidateAllShadersOfType("DistantTree");
-            //ValidateAllShadersOfType("Effect");
-            //ValidateAllShadersOfType("Lighting");
-            //ValidateAllShadersOfType("Particle");
-            //ValidateAllShadersOfType("RunGrass");
-            ValidateAllShadersOfType("Sky");
-            //ValidateAllShadersOfType("Utility");
-            ValidateAllShadersOfType("Water");
+            new Thread(() =>
+            {
+                List<string> types = new List<string>()
+                {
+                    "BloodSplatter",
+                    "DistantTree",
+                    //"Effect",
+                    //"Lighting",
+                    //"Particle",
+                    //"RunGrass",
+                    "Sky",
+                    //"Utility",
+                    "Water",
+                };
+
+                Parallel.ForEach(types, i => ValidateAllShadersOfType(i));
+                OnFinish();
+            }).Start();
         }
 
         public static void ValidateAllShadersOfType(string Type)
@@ -43,6 +72,15 @@ namespace shader_analyzer
                 return;
             }
 
+            // Sanity check: make sure the HLSL source code exists
+            string hlslSourcePath = Path.Combine(Program.ShaderSourceDirectory, Type) + ".hlsl";
+
+            if (!File.Exists(hlslSourcePath))
+            {
+                Program.LogLine($"Unable to find HLSL source: {hlslSourcePath}");
+                return;
+            }
+
             string[] vsFiles = Directory.GetFiles(inputDir, "*.vs.hlsl");
             string[] psFiles = Directory.GetFiles(inputDir, "*.ps.hlsl");
             string[] csFiles = Directory.GetFiles(inputDir, "*.cs.hlsl");
@@ -51,37 +89,34 @@ namespace shader_analyzer
                 $"ValidateAllShadersOfType({Type}): " +
                 $"{vsFiles.Length} vertex shaders, {psFiles.Length} pixel shaders, {csFiles.Length} compute shaders.");
 
-            new Thread(() =>
+            int succeses = 0;
+            int fails = 0;
+
+            System.Threading.Tasks.Parallel.For(0, vsFiles.Length, i =>
             {
-                int succeses = 0;
-                int fails = 0;
+                if (ValidateShaderOfType(Type, "vs_5_0", vsFiles[i]))
+                    Interlocked.Increment(ref succeses);
+                else
+                    Interlocked.Increment(ref fails);
+            });
 
-                System.Threading.Tasks.Parallel.For(0, vsFiles.Length, i =>
-                {
-                    if (ValidateShaderOfType(Type, "vs_5_0", vsFiles[i]))
-                        Interlocked.Increment(ref succeses);
-                    else
-                        Interlocked.Increment(ref fails);
-                });
+            System.Threading.Tasks.Parallel.For(0, psFiles.Length, i =>
+            {
+                if (ValidateShaderOfType(Type, "ps_5_0", psFiles[i]))
+                    Interlocked.Increment(ref succeses);
+                else
+                    Interlocked.Increment(ref fails);
+            });
 
-                System.Threading.Tasks.Parallel.For(0, psFiles.Length, i =>
-                {
-                    if (ValidateShaderOfType(Type, "ps_5_0", psFiles[i]))
-                        Interlocked.Increment(ref succeses);
-                    else
-                        Interlocked.Increment(ref fails);
-                });
+            System.Threading.Tasks.Parallel.For(0, csFiles.Length, i =>
+            {
+                if (ValidateShaderOfType(Type, "cs_5_0", csFiles[i]))
+                    Interlocked.Increment(ref succeses);
+                else
+                    Interlocked.Increment(ref fails);
+            });
 
-                System.Threading.Tasks.Parallel.For(0, csFiles.Length, i =>
-                {
-                    if (ValidateShaderOfType(Type, "cs_5_0", csFiles[i]))
-                        Interlocked.Increment(ref succeses);
-                    else
-                        Interlocked.Increment(ref fails);
-                });
-
-                Program.LogLine($"ValidateAllShadersOfType({Type}): {succeses} shaders matched, {fails} failed.");
-            }).Start();
+            Program.LogLine($"ValidateAllShadersOfType({Type}): {succeses} shaders matched, {fails} failed.");
         }
 
         public static bool ValidateShaderOfType(string Type, string HlslType, string OriginalFile)
@@ -103,9 +138,9 @@ namespace shader_analyzer
                 originalBytecode = ShaderBytecode.FromFile(OriginalFile).Strip(m_StripFlags);
                 newBytecode = CompileShaderOfType(Type, HlslType, macros).Strip(m_StripFlags);
             }
-            catch(Exception)
+            catch(InvalidProgramException e)
             {
-                //Program.LogLine("Shader compilation failed.");
+                Program.Log($"{OriginalFile}\n{e.Message}");
                 return false;
             }
 
@@ -135,8 +170,8 @@ namespace shader_analyzer
                 //Program.LogLine("Validation failed.");
 
                 // Dump raw disassembly to file
-                File.WriteAllLines($"C:\\diffs\\{Type}-{techniqueId}-{HlslType}-old.txt", originalDisasm);
-                File.WriteAllLines($"C:\\diffs\\{Type}-{techniqueId}-{HlslType}-new.txt", newDisasm);
+                File.WriteAllLines($"{Program.ShaderDiffDirectory}\\{Type}-{techniqueId:X}-{HlslType}-old.txt", originalDisasm);
+                File.WriteAllLines($"{Program.ShaderDiffDirectory}\\{Type}-{techniqueId:X}-{HlslType}-new.txt", newDisasm);
 
                 //
                 // Generate the "symbolic" diff by:
@@ -153,8 +188,8 @@ namespace shader_analyzer
                     newDisasm[i] = tempRegisterExpr.Replace(newDisasm[i], "rX.xxxx");
                 }
 
-                File.WriteAllLines($"C:\\diffs\\{Type}-{techniqueId}-{HlslType}-symbolic-old.txt", originalDisasm.Where(x => !string.IsNullOrWhiteSpace(x)).OrderBy(x => x));
-                File.WriteAllLines($"C:\\diffs\\{Type}-{techniqueId}-{HlslType}-symbolic-new.txt", newDisasm.Where(x => !string.IsNullOrWhiteSpace(x)).OrderBy(x => x));
+                File.WriteAllLines($"{Program.ShaderDiffDirectory}\\{Type}-{techniqueId:X}-{HlslType}-symbolic-old.txt", originalDisasm.Where(x => !string.IsNullOrWhiteSpace(x)).OrderBy(x => x));
+                File.WriteAllLines($"{Program.ShaderDiffDirectory}\\{Type}-{techniqueId:X}-{HlslType}-symbolic-new.txt", newDisasm.Where(x => !string.IsNullOrWhiteSpace(x)).OrderBy(x => x));
                 return false;
             }
 
@@ -173,7 +208,7 @@ namespace shader_analyzer
                     break;
 
                 if (!OldData[i].Equals(NewData[i], StringComparison.InvariantCultureIgnoreCase))
-                    throw new Exception();
+                    throw new FormatException();
             }
         }
 
@@ -195,23 +230,23 @@ namespace shader_analyzer
                     continue;
 
                 if (!OldData[i].Equals(NewData[i], StringComparison.InvariantCultureIgnoreCase))
-                    throw new Exception();
+                    throw new FormatException();
             }
         }
 
         public static ShaderBytecode CompileShaderOfType(string Type, string HlslType, SharpDX.Direct3D.ShaderMacro[] Macros = null)
         {
             var result = ShaderBytecode.CompileFromFile(
-                Path.Combine(Program.ShaderSourceDirectory, Type) + ".fxp",
+                Path.Combine(Program.ShaderSourceDirectory, Type) + ".hlsl",
                 "main",
                 HlslType,
                 ShaderFlags.EnableStrictness | ShaderFlags.OptimizationLevel3,
                 EffectFlags.None,
                 Macros,
-                null);
+                new IncludeFX());
 
             if (result.HasErrors || (result.Message != null && result.Message.Contains("error")))
-                throw new Exception(result.Message);
+                throw new InvalidProgramException(result.Message);
 
             return result.Bytecode;
         }

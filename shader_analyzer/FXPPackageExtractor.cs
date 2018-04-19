@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace shader_analyzer
 {
@@ -57,6 +53,7 @@ namespace shader_analyzer
                 ExtractSSE(dir, "Lighting");
                 ExtractSSE(dir, "Utility");
                 ExtractSSE(dir, "Water");
+                // TODO: Imagespace
             }
             else
             {

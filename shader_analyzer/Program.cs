@@ -9,7 +9,7 @@ namespace shader_analyzer
         private static FormMain m_MainForm;
         public static string ShaderDumpDirectory;
         public static string ShaderSourceDirectory;
-        public static string GarbageDumpFolder;
+        public static string ShaderDiffDirectory;
 
         /// <summary>
         /// The main entry point for the application.
@@ -21,19 +21,22 @@ namespace shader_analyzer
             Application.SetCompatibleTextRenderingDefault(false);
             m_MainForm = new FormMain();
 
+            var test = new FXPPackageExtractor(@"E:\Projects\Skyrim\SkyrimSETest\Resources\SSE_PS4_Shaders011.fxp", FXPPackageExtractor.PackageType.SkyrimSpecialEditionPS4);
+            test.Extract();
+
             // Create the temporary folders to hold our garbage in the meantime
-            ShaderDumpDirectory = "C:\\SkyrimShaders";
+            ShaderDumpDirectory = "C:\\ShaderDump";
             ShaderSourceDirectory = "C:\\ShaderSource";
-            GarbageDumpFolder = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            ShaderDiffDirectory = "C:\\ShaderDiff";
 
             Directory.CreateDirectory(ShaderDumpDirectory);
             Directory.CreateDirectory(ShaderSourceDirectory);
-            Directory.CreateDirectory(GarbageDumpFolder);
+            Directory.CreateDirectory(ShaderDiffDirectory);
 
             LogLine("Working directory: {0}", Environment.CurrentDirectory);
             LogLine("Shader source directory: {0}", ShaderSourceDirectory);
             LogLine("Shader dump directory: {0}", ShaderDumpDirectory);
-            LogLine("Temporary file directory: {0}", GarbageDumpFolder);
+            LogLine("Diff file directory: {0}", ShaderDiffDirectory);
             LogLine("");
 
             Application.Run(m_MainForm);

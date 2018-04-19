@@ -10,22 +10,22 @@ namespace shader_analyzer
 {
     public partial class FormDiff : Form
     {
-        private string m_FileSide1;
-        private string m_FileSide2;
+        private string m_FileSideOld;
+        private string m_FileSideNew;
         private bool m_AllowUpdates;
 
         private FileSystemWatcher m_File1Watcher;
         private FileSystemWatcher m_File2Watcher;
-        private string m_File1Content;
-        private string m_File2Content;
+        private string m_FileOldContent;
+        private string m_FileNewContent;
         private ISideBySideDiffBuilder m_DiffBuilder;
 
-        public FormDiff(string File1, string File2, bool AllowUpdates)
+        public FormDiff(string OldFile, string NewFile, bool AllowUpdates)
         {
             InitializeComponent();
 
-            m_FileSide1 = File1;
-            m_FileSide2 = File2;
+            m_FileSideOld = OldFile;
+            m_FileSideNew = NewFile;
             m_AllowUpdates = AllowUpdates;
             m_DiffBuilder = new SideBySideDiffBuilder(new DiffPlex.Differ());
 
@@ -49,16 +49,16 @@ namespace shader_analyzer
             {
                 m_File1Watcher = new FileSystemWatcher()
                 {
-                    Path = Path.GetDirectoryName(m_FileSide1),
-                    Filter = Path.GetFileName(m_FileSide1),
+                    Path = Path.GetDirectoryName(m_FileSideOld),
+                    Filter = Path.GetFileName(m_FileSideOld),
                     NotifyFilter = NotifyFilters.LastWrite,
                     EnableRaisingEvents = true
                 };
 
                 m_File2Watcher = new FileSystemWatcher()
                 {
-                    Path = Path.GetDirectoryName(m_FileSide2),
-                    Filter = Path.GetFileName(m_FileSide2),
+                    Path = Path.GetDirectoryName(m_FileSideNew),
+                    Filter = Path.GetFileName(m_FileSideNew),
                     NotifyFilter = NotifyFilters.LastWrite,
                     EnableRaisingEvents = true
                 };
@@ -88,8 +88,8 @@ namespace shader_analyzer
         {
             try
             {
-                m_File1Content = File.ReadAllText(m_FileSide1);
-                m_File2Content = File.ReadAllText(m_FileSide2);
+                m_FileOldContent = File.ReadAllText(m_FileSideOld);
+                m_FileNewContent = File.ReadAllText(m_FileSideNew);
 
                 BuildDiffView();
             }
@@ -102,10 +102,10 @@ namespace shader_analyzer
         private void BuildDiffView()
         {
             // Show the file paths at the beginning
-            richTextBoxSide1.Text = $"   | {m_FileSide1}" + Environment.NewLine;
-            richTextBoxSide2.Text = $"   | {m_FileSide2}" + Environment.NewLine;
+            richTextBoxSide1.Text = $"   | {m_FileSideOld}" + Environment.NewLine;
+            richTextBoxSide2.Text = $"   | {m_FileSideNew}" + Environment.NewLine;
 
-            var diffModel = m_DiffBuilder.BuildDiffModel(m_File1Content, m_File2Content);
+            var diffModel = m_DiffBuilder.BuildDiffModel(m_FileOldContent, m_FileNewContent);
 
             foreach (DiffPiece line in diffModel.OldText.Lines)
                 InsertAndColor(richTextBoxSide1, line);
