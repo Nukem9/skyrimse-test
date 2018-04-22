@@ -202,34 +202,25 @@ PS_OUTPUT main(PS_INPUT input)
 	float4 r1;
 	float4 r2;
 
+	float4 baseColor = TexBaseSampler.Sample(SampBaseSampler, input.TexCoord.xy);
+
+#if defined(RENDER_DEPTH) || defined(DO_ALPHA_TEST)
+	float diffuseAlpha = input.DiffuseColor.w * baseColor.w;
+
+	if ((diffuseAlpha - AlphaTestRefRS) < 0)
+		discard;
+#endif
+
 #if defined(RENDER_DEPTH)
 	// Depth
-	r0.x = TexBaseSampler.Sample(SampBaseSampler, input.TexCoord.xy).w;
-	r0.y = input.DiffuseColor.w * r0.x;
-	r0.x = r0.y - AlphaTestRefRS;
-
-	if (r0.x < 0)
-		discard;
-
 	psout.PS.xyz = input.Depth.xxx / input.Depth.yyy;
-	psout.PS.w = r0.y;
+	psout.PS.w = diffuseAlpha;
 #else
-	float4 texBaseColor = TexBaseSampler.Sample(SampBaseSampler, input.TexCoord.xy);
-
-	#if defined(DO_ALPHA_TEST)
-	r0.w = input.DiffuseColor.w * texBaseColor.w;
-	r0.w = r0.w - AlphaTestRefRS;
-
-	if (r0.w < 0)
-		discard;
-	#endif
-
-	float sunShadowMask = TexShadowMaskSampler.Load(int3(trunc(input.HPosition.xy), 0)).x;// Redundant truncation....
+	float sunShadowMask = TexShadowMaskSampler.Load(int3(trunc(input.HPosition.xy), 0)).x;// Redundant truncation...
 
 	// Albedo
-	r0.y = 1 - sunShadowMask;
-	r0.x = input.AmbientColor.w * r0.y + sunShadowMask;
-	r0.yzw = texBaseColor.xyz;
+	r0.x = lerp(sunShadowMask, 1, input.AmbientColor.w);
+	r0.yzw = baseColor.xyz;
 	r1.xyz = input.DiffuseColor.xyz * r0.yzw;
 	r0.yzw = input.AmbientColor.xyz * r0.yzw;
 	r0.xyz = r1.xyz * r0.xxx + r0.yzw;
@@ -248,13 +239,11 @@ PS_OUTPUT main(PS_INPUT input)
 	r0.xy = r0.xy - r0.zw;
 	psout.MotionVectors = float2(-0.5,0.5) * r0.xy;
 	
-	// Generated normals
+	// Generated normals (tangent space)
 	r0.xyz = ddx_coarse(input.ViewSpacePosition.zxy);
 	r1.xyz = ddy_coarse(input.ViewSpacePosition.yzx);
 	r2.xyz = r1.xyz * r0.xyz;
-	r0.xyz = r0.zxy * r1.yzx - r2.xyz;
-	r0.w = rsqrt(dot(r0.xyz, r0.xyz));
-	r0.xyz = r0.xyz * r0.www;
+	r0.xyz = normalize(r0.zxy * r1.yzx - r2.xyz);// This is actually normalize(cross(r0.yzx, r1.zxy));
 	r0.z = r0.z * -8 + 8;
 	r0.z = max(1.0 / 1000.0, sqrt(r0.z));
 	r0.xy = r0.xy / r0.zz;
