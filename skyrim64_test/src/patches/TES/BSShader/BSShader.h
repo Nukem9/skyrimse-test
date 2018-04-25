@@ -5,12 +5,11 @@
 #include <functional>
 #include "../NiMain/common.h"
 #include "../BSTScatterTable.h"
+#include "../BSGraphicsRenderer.h"
 #include "BSShaderProperty.h"
 #include "BSShaderMaterial.h"
 
 struct BSRenderPass;
-struct BSVertexShader;
-struct BSPixelShader;
 struct BSIStream;
 
 #define BSSHADER_FORWARD_DEBUG 0
@@ -199,15 +198,15 @@ public:
 	void SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty);
 
 	uint32_t m_Type;
-	TechniqueIDMap<BSVertexShader *> m_VertexShaderTable;
-	TechniqueIDMap<BSPixelShader *> m_PixelShaderTable;
+	TechniqueIDMap<BSGraphics::VertexShader *> m_VertexShaderTable;
+	TechniqueIDMap<BSGraphics::PixelShader *> m_PixelShaderTable;
 	const char *m_LoaderType;
 };
-static_assert(sizeof(BSShader) == 0x90, "");
-static_assert(offsetof(BSShader, m_Type) == 0x20, "");
-static_assert(offsetof(BSShader, m_VertexShaderTable) == 0x28, "");
-static_assert(offsetof(BSShader, m_PixelShaderTable) == 0x58, "");
-static_assert(offsetof(BSShader, m_LoaderType) == 0x88, "");
+static_assert(sizeof(BSShader) == 0x90);
+static_assert_offset(BSShader, m_Type, 0x20);
+static_assert_offset(BSShader, m_VertexShaderTable, 0x28);
+static_assert_offset(BSShader, m_PixelShaderTable, 0x58);
+static_assert_offset(BSShader, m_LoaderType, 0x88);
 
 STATIC_CONSTRUCTOR(__CheckBSShaderVtable, []
 {

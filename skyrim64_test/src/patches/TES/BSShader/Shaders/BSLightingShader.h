@@ -86,8 +86,8 @@ public:
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 
 private:
-	static void TechUpdateAccelerationConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG);
-	static void TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSGraphics::ConstantGroup<BSPixelShader>& PixelCG);
+	static void TechUpdateAccelerationConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG);
+	static void TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG);
 
 	static void sub_14130C470(__int64 a1, __int64 a2);
 	static void sub_14130C4D0(__int64 a1, __int64 a2);
@@ -95,15 +95,15 @@ private:
 	static void MatSetMultiTextureLandOverrides(__int64 a1);
 	static __int64 sub_141314170(__int64 a1);
 
-	static void GeometrySetupViewProjection(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust);
-	static void GeometrySetupMTLandExtraConstants(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4);
-	static void sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSLightingShaderProperty *Property);
-	static void GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const BSRenderPass *Pass, DirectX::XMMATRIX& a3, int a4);
-	static void GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const NiTransform& Transform, int a3);
-	static void GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSLightingShaderProperty *Property);
-	static void GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSRenderPass *Pass, DirectX::XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7);
-	static void GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals);
+	static void GeometrySetupViewProjection(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust);
+	static void GeometrySetupMTLandExtraConstants(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4);
+	static void sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSLightingShaderProperty *Property);
+	static void GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const BSRenderPass *Pass, DirectX::XMMATRIX& a3, int a4);
+	static void GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const NiTransform& Transform, int a3);
+	static void GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSLightingShaderProperty *Property);
+	static void GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSRenderPass *Pass, DirectX::XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7);
+	static void GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals);
 	static void sub_14130C8A0(const NiTransform& Transform, DirectX::XMMATRIX& OutMatrix, bool DontMultiply);
 };
-static_assert(sizeof(BSLightingShader) == 0xF8, "");
-static_assert(offsetof(BSLightingShader, m_CurrentRawTechnique) == 0x94, "");
+static_assert(sizeof(BSLightingShader) == 0xF8);
+static_assert_offset(BSLightingShader, m_CurrentRawTechnique, 0x94);

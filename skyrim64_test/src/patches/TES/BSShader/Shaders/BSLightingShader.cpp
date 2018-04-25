@@ -1027,7 +1027,7 @@ uint32_t BSLightingShader::GetPixelTechnique(uint32_t RawTechnique)
 	return flags | RAW_FLAG_VC;
 }
 
-void BSLightingShader::TechUpdateAccelerationConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG)
+void BSLightingShader::TechUpdateAccelerationConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
@@ -1040,7 +1040,7 @@ void BSLightingShader::TechUpdateAccelerationConstants(BSGraphics::ConstantGroup
 			flt_141E32F60 - 15.0f));
 }
 
-void BSLightingShader::TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSGraphics::ConstantGroup<BSPixelShader>& PixelCG)
+void BSLightingShader::TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG)
 {
 	auto sub_1412AC860 = (uintptr_t(__fastcall *)(BYTE))(g_ModuleBase + 0x12AC860);
 	uintptr_t fogParams = sub_1412AC860(byte_141E32FE0);
@@ -1171,7 +1171,7 @@ __int64 BSLightingShader::sub_141314170(__int64 a1)
 	return *(unsigned int *)(a1 + 8);
 }
 
-void BSLightingShader::GeometrySetupViewProjection(BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust)
+void BSLightingShader::GeometrySetupViewProjection(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust)
 {
 	//
 	// Instead of using the typical 4x4 matrix like everywhere else, someone decided that the
@@ -1198,7 +1198,7 @@ void BSLightingShader::GeometrySetupViewProjection(BSGraphics::ConstantGroup<BSV
 
 SRWLOCK asdf = SRWLOCK_INIT;
 
-void BSLightingShader::GeometrySetupMTLandExtraConstants(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4)
+void BSLightingShader::GeometrySetupMTLandExtraConstants(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4)
 {
 	float v4 = 0.0f;
 	float v6 = (flt_141E32F40 - flt_141E32FD8) / (flt_141E32FB8 * 5.0f);
@@ -1241,7 +1241,7 @@ void BSLightingShader::GeometrySetupMTLandExtraConstants(const BSGraphics::Const
 	fVars0.f[3] = v11.y - Translate.y;
 }
 
-void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexShader>& VertexCG, BSLightingShaderProperty *Property)
+void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSLightingShaderProperty *Property)
 {
 	// __int64 __fastcall sub_14130BC60(__int64 a1, __int64 a2)
 
@@ -1257,7 +1257,7 @@ void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSVertexSha
 	sub_14130BC60(&temp, Property);
 }
 
-void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
+void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
 {
 	uintptr_t v7 = 0;
 
@@ -1284,7 +1284,7 @@ void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::Constant
 	XMStoreFloat3(&dirLightDirection, XMVector3Normalize(tempDir));
 }
 
-void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, const NiTransform& Transform, int a3)
+void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const NiTransform& Transform, int a3)
 {
 	// __int64 __fastcall sub_14130B2A0(__int64 a1, __int64 a2, int a3)
 
@@ -1300,7 +1300,7 @@ void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGrou
 	GeoUpdateAmbientLightConstants(&temp, Transform, a3);
 }
 
-void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSLightingShaderProperty *Property)
+void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSLightingShaderProperty *Property)
 {
 	// PS: p8 float4 EmitColor
 	XMVECTORF32& emitColor = PixelCG.ParamPS<XMVECTORF32, 8>();
@@ -1310,7 +1310,7 @@ void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::Constan
 	emitColor.f[2] = Property->pEmitColor->b * Property->fEmitColorScale;
 }
 
-void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
+void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
 {
 	// __int64 __fastcall sub_14130B390(__int64 a1, __int64 a2, __int64 a3, int a4, int a5, float a6, int a7)
 
@@ -1326,7 +1326,7 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::Consta
 	GeoUpdatePointLightConstants(&temp, Pass, Transform, LightCount, ShadowLightCount, Scale, a7);
 }
 
-void BSLightingShader::GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<BSPixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals)
+void BSLightingShader::GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals)
 {
 	// PS: p12 float4 ProjectedUVParams
 	{

@@ -78,9 +78,9 @@ void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, co
 {
 	// Build source disk path, hand off to D3D11
 	wchar_t fxpPath[MAX_PATH];
-	swprintf_s(fxpPath, L"C:\\myshaders\\%S.fxp", SourceFile);
+	swprintf_s(fxpPath, L"C:\\myshaders\\%S.hlsl", SourceFile);
 
-	BSVertexShader *vertexShader = BSGraphics::Renderer::GetGlobals()->CompileVertexShader(fxpPath, Defines, GetConstant);
+	BSGraphics::VertexShader *vertexShader = BSGraphics::Renderer::GetGlobals()->CompileVertexShader(fxpPath, Defines, GetConstant);
 
 	auto e = m_VertexShaderTable.find(Technique);
 
@@ -109,9 +109,9 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 {
 	// Build source disk path, hand off to D3D11
 	wchar_t fxpPath[MAX_PATH];
-	swprintf_s(fxpPath, L"C:\\myshaders\\%S.fxp", SourceFile);
+	swprintf_s(fxpPath, L"C:\\myshaders\\%S.hlsl", SourceFile);
 
-	BSPixelShader *pixelShader = BSGraphics::Renderer::GetGlobals()->CompilePixelShader(fxpPath, Defines, GetSampler, GetConstant);
+	BSGraphics::PixelShader *pixelShader = BSGraphics::Renderer::GetGlobals()->CompilePixelShader(fxpPath, Defines, GetSampler, GetConstant);
 
 	auto e = m_PixelShaderTable.find(Technique);
 
@@ -136,8 +136,8 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
 {
-	BSVertexShader *vertexShader = nullptr;
-	BSPixelShader *pixelShader = nullptr;
+	BSGraphics::VertexShader *vertexShader = nullptr;
+	BSGraphics::PixelShader *pixelShader = nullptr;
 
 	if (!m_VertexShaderTable.get(VertexShaderID, vertexShader))
 		return false;

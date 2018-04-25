@@ -221,8 +221,8 @@ struct ShaderBufferData
 
 std::unordered_map<void *, ShaderBufferData> m_ShaderBuffers;
 
-void DumpVertexShader(BSVertexShader *Shader, const char *Type);
-void DumpPixelShader(BSPixelShader *Shader, const char *Type, void *Buffer, size_t BufferLen);
+void DumpVertexShader(BSGraphics::VertexShader *Shader, const char *Type);
+void DumpPixelShader(BSGraphics::PixelShader *Shader, const char *Type, void *Buffer, size_t BufferLen);
 void hk_BuildShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
 {
 	hook();
@@ -273,7 +273,7 @@ void hk_BuildShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
 				{
 					if (std::find(Doneshaders.begin(), Doneshaders.end(), (void *)first->shader) == Doneshaders.end())
 					{
-						DumpVertexShader((BSVertexShader *)first->shader, NextShaderType);
+						DumpVertexShader((BSGraphics::VertexShader *)first->shader, NextShaderType);
 						Doneshaders.push_back((void *)first->shader);
 					}
 				}
@@ -301,7 +301,7 @@ void hk_BuildShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
 				{
 					if (std::find(Doneshaders.begin(), Doneshaders.end(), (void *)first->shader) == Doneshaders.end())
 					{
-						auto p = (BSPixelShader *)first->shader;
+						auto p = (BSGraphics::PixelShader *)first->shader;
 						auto& data = m_ShaderBuffers[p->m_Shader];
 
 						DumpPixelShader(p, NextShaderType, data.Buffer, data.BufferLength);

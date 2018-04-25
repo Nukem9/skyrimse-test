@@ -1,5 +1,6 @@
 #include "BSVertexShader.h"
 
+/*
 VertexShaderDecoder::VertexShaderDecoder(const char *Type, BSVertexShader *Shader) : ShaderDecoder(Type, BSSM_SHADER_TYPE::VERTEX)
 {
 	m_Shader = Shader;
@@ -104,3 +105,4 @@ void VertexShaderDecoder::GetInputLayoutString(char *Buffer, size_t BufferSize)
 	Trim(Buffer, ' ');
 	Trim(Buffer, ',');
 }
+*/

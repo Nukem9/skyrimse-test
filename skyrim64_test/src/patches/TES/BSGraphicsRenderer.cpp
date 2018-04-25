@@ -39,8 +39,8 @@ namespace BSGraphics
 	const uint32_t ShaderConstantRingBufferSize = 32 * 1024 * 1024;
 	const uint32_t RingBufferMaxFrames = 8;
 
-	thread_local BSVertexShader *TLS_CurrentVertexShader;
-	thread_local BSPixelShader *TLS_CurrentPixelShader;
+	thread_local VertexShader *TLS_CurrentVertexShader;
+	thread_local PixelShader *TLS_CurrentPixelShader;
 
 	GpuCircularBuffer *DynamicBuffer;		// Holds vertices and indices
 	GpuCircularBuffer *ShaderConstantBuffer;// Holds shader constant values
@@ -195,8 +195,8 @@ namespace BSGraphics
 		// Other code in Skyrim might be setting the parameters before I do,
 		// so it's not guaranteed to be cleared. (Pretend something is set)
 		//
-		TLS_CurrentVertexShader = (BSVertexShader *)0xFEFEFEFEFEFEFEFE;
-		TLS_CurrentPixelShader = (BSPixelShader *)0xFEFEFEFEFEFEFEFE;
+		TLS_CurrentVertexShader = (VertexShader *)0xFEFEFEFEFEFEFEFE;
+		TLS_CurrentPixelShader = (PixelShader *)0xFEFEFEFEFEFEFEFE;
 	}
 
 	void Renderer::DrawLineShape(LineShape *GraphicsLineShape, uint32_t StartIndex, uint32_t Count)
@@ -744,7 +744,7 @@ namespace BSGraphics
 			return;
 
 		// When UseStoredValue is false, the constant buffer data is zeroed, but m_AlphaTestRef is saved
-		if (__zz0[76] != UseStoredValue)
+		if (__zz0[76] != (char)UseStoredValue)
 		{
 			__zz0[76] = UseStoredValue;
 			m_StateUpdateFlags |= 0x100u;
@@ -781,7 +781,7 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::SetVertexShader(BSVertexShader *Shader)
+	void Renderer::SetVertexShader(VertexShader *Shader)
 	{
 		if (Shader == TLS_CurrentVertexShader)
 			return;
@@ -793,7 +793,7 @@ namespace BSGraphics
 		m_DeviceContext->VSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
 	}
 
-	void Renderer::SetPixelShader(BSPixelShader *Shader)
+	void Renderer::SetPixelShader(PixelShader *Shader)
 	{
 		if (Shader == TLS_CurrentPixelShader)
 			return;
@@ -965,28 +965,28 @@ namespace BSGraphics
 		return map.pData;
 	}
 
-	void ReflectConstantBuffers(ID3D11ShaderReflection *Reflector, BSConstantGroup *Groups, uint32_t MaxGroups, std::function<const char *(int Index)> GetConstant, uint8_t *Offsets, uint32_t MaxOffsets)
+	void ReflectConstantBuffers(ID3D11ShaderReflection *Reflector, Buffer *ConstantGroups, uint32_t MaxGroups, std::function<const char *(int Index)> GetConstant, uint8_t *Offsets, uint32_t MaxOffsets)
 	{
 		D3D11_SHADER_DESC desc;
 		Assert(SUCCEEDED(Reflector->GetDesc(&desc)));
 
 		// These should always be cleared first - invalid offsets don't get sent to the GPU
 		memset(Offsets, INVALID_CONSTANT_BUFFER_OFFSET, MaxOffsets * sizeof(uint8_t));
-		memset(Groups, 0, MaxGroups * sizeof(BSConstantGroup));
+		memset(ConstantGroups, 0, MaxGroups * sizeof(Buffer));
 
 		if (desc.ConstantBuffers <= 0)
 			return;
 
-		auto mapBufferConsts = [&](ID3D11ShaderReflectionConstantBuffer *Buffer, BSConstantGroup *Group)
+		auto mapBufferConsts = [&](ID3D11ShaderReflectionConstantBuffer *Reflector, Buffer *ConstantGroup)
 		{
 			// If this call fails, it's an invalid buffer
 			D3D11_SHADER_BUFFER_DESC bufferDesc;
-			if (FAILED(Buffer->GetDesc(&bufferDesc)))
+			if (FAILED(Reflector->GetDesc(&bufferDesc)))
 				return;
 
 			for (uint32_t i = 0; i < bufferDesc.Variables; i++)
 			{
-				ID3D11ShaderReflectionVariable *var = Buffer->GetVariableByIndex(i);
+				ID3D11ShaderReflectionVariable *var = Reflector->GetVariableByIndex(i);
 
 				D3D11_SHADER_VARIABLE_DESC varDesc;
 				Assert(SUCCEEDED(var->GetDesc(&varDesc)));
@@ -1013,15 +1013,15 @@ namespace BSGraphics
 			}
 
 			// Nasty type cast here, but it's how the game does it (round up to nearest 16 bytes)
-			*(uintptr_t *)&Group->m_Buffer = (bufferDesc.Size + 15) & ~15;
+			*(uintptr_t *)&ConstantGroup->m_Buffer = (bufferDesc.Size + 15) & ~15;
 		};
 
 		// Each buffer is optional (nullptr if nonexistent)
 		Assert(MaxGroups == 3);
 
-		mapBufferConsts(Reflector->GetConstantBufferByName("PerGeometry"), &Groups[2]);
-		mapBufferConsts(Reflector->GetConstantBufferByName("PerMaterial"), &Groups[1]);
-		mapBufferConsts(Reflector->GetConstantBufferByName("PerTechnique"), &Groups[0]);
+		mapBufferConsts(Reflector->GetConstantBufferByName("PerGeometry"), &ConstantGroups[2]);
+		mapBufferConsts(Reflector->GetConstantBufferByName("PerMaterial"), &ConstantGroups[1]);
+		mapBufferConsts(Reflector->GetConstantBufferByName("PerTechnique"), &ConstantGroups[0]);
 	}
 
 	void ReflectSamplers(ID3D11ShaderReflection *Reflector, std::function<const char *(int Index)> GetSampler)
@@ -1067,6 +1067,7 @@ namespace BSGraphics
 
 	void Renderer::ValidateShaderReplacement(void *Original, void *Replacement, const GUID& Guid)
 	{
+		return;
 		// First get the shader<->bytecode entry
 		const auto& oldData = m_ShaderBytecodeMap.find(Original);
 		const auto& newData = m_ShaderBytecodeMap.find(Replacement);
@@ -1143,7 +1144,7 @@ namespace BSGraphics
 		m_ShaderBytecodeMap.emplace(Shader, std::make_pair(codeCopy, BytecodeLength));
 	}
 
-	BSVertexShader *Renderer::CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
+	VertexShader *Renderer::CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
 	{
 		// Build defines (aka convert vector->D3DCONSTANT array)
 		D3D_SHADER_MACRO macros[20 + 3 + 1];
@@ -1165,11 +1166,11 @@ namespace BSGraphics
 		macros[Defines.size() + 2].Definition = "";
 
 		// Compiler setup
-		UINT flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_WARNINGS_ARE_ERRORS;
+		UINT flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
 		ID3DBlob *shaderBlob = nullptr;
 		ID3DBlob *shaderErrors = nullptr;
 
-		if (FAILED(D3DCompileFromFile(FilePath, macros, nullptr, "vs_main", "vs_5_0", flags, 0, &shaderBlob, &shaderErrors)))
+		if (FAILED(D3DCompileFromFile(FilePath, macros, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0", flags, 0, &shaderBlob, &shaderErrors)))
 		{
 			AssertMsgVa(false, "Vertex shader compilation failed:\n\n%s", shaderErrors ? (const char *)shaderErrors->GetBufferPointer() : "Unknown error");
 
@@ -1185,8 +1186,8 @@ namespace BSGraphics
 		if (shaderErrors)
 			shaderErrors->Release();
 
-		void *rawPtr = malloc(sizeof(BSVertexShader) + shaderBlob->GetBufferSize());
-		BSVertexShader *vs = new (rawPtr) BSVertexShader;
+		void *rawPtr = malloc(sizeof(VertexShader) + shaderBlob->GetBufferSize());
+		VertexShader *vs = new (rawPtr) VertexShader;
 
 		// Shader reflection: gather constant buffer variable offsets
 		ID3D11ShaderReflection *reflector;
@@ -1208,7 +1209,7 @@ namespace BSGraphics
 		return vs;
 	}
 
-	BSPixelShader *Renderer::CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant)
+	PixelShader *Renderer::CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant)
 	{
 		// Build defines (aka convert vector->D3DCONSTANT array)
 		D3D_SHADER_MACRO macros[20 + 3 + 1];
@@ -1230,11 +1231,11 @@ namespace BSGraphics
 		macros[Defines.size() + 2].Definition = "";
 
 		// Compiler setup
-		UINT flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3 | D3DCOMPILE_WARNINGS_ARE_ERRORS;
+		UINT flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
 		ID3DBlob *shaderBlob = nullptr;
 		ID3DBlob *shaderErrors = nullptr;
 
-		if (FAILED(D3DCompileFromFile(FilePath, macros, nullptr, "ps_main", "ps_5_0", flags, 0, &shaderBlob, &shaderErrors)))
+		if (FAILED(D3DCompileFromFile(FilePath, macros, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0", flags, 0, &shaderBlob, &shaderErrors)))
 		{
 			AssertMsgVa(false, "Pixel shader compilation failed:\n\n%s", shaderErrors ? (const char *)shaderErrors->GetBufferPointer() : "Unknown error");
 
@@ -1250,8 +1251,8 @@ namespace BSGraphics
 		if (shaderErrors)
 			shaderErrors->Release();
 
-		void *rawPtr = malloc(sizeof(BSPixelShader));
-		BSPixelShader *ps = new (rawPtr) BSPixelShader;
+		void *rawPtr = malloc(sizeof(PixelShader));
+		PixelShader *ps = new (rawPtr) PixelShader;
 
 		// Shader reflection: gather constant buffer variable offsets and check for valid sampler mappings
 		ID3D11ShaderReflection *reflector;
@@ -1283,9 +1284,9 @@ namespace BSGraphics
 		return temp;
 	}
 
-	ConstantGroup<BSVertexShader> Renderer::GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level)
+	ConstantGroup<VertexShader> Renderer::GetShaderConstantGroup(VertexShader *Shader, ConstantGroupLevel Level)
 	{
-		ConstantGroup<BSVertexShader> temp;
+		ConstantGroup<VertexShader> temp;
 		temp.m_Shader = Shader;
 		temp.m_Buffer = Shader->m_ConstantGroups[Level].m_Buffer;
 
@@ -1314,9 +1315,9 @@ namespace BSGraphics
 		return temp;
 	}
 
-	ConstantGroup<BSPixelShader> Renderer::GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level)
+	ConstantGroup<PixelShader> Renderer::GetShaderConstantGroup(PixelShader *Shader, ConstantGroupLevel Level)
 	{
-		ConstantGroup<BSPixelShader> temp;
+		ConstantGroup<PixelShader> temp;
 		temp.m_Shader = Shader;
 		temp.m_Buffer = Shader->m_ConstantGroups[Level].m_Buffer;
 
@@ -1357,7 +1358,7 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::FlushConstantGroupVSPS(ConstantGroup<BSVertexShader> *VertexGroup, ConstantGroup<BSPixelShader> *PixelGroup)
+	void Renderer::FlushConstantGroupVSPS(ConstantGroup<VertexShader> *VertexGroup, ConstantGroup<PixelShader> *PixelGroup)
 	{
 		if (VertexGroup)
 			FlushConstantGroup(VertexGroup);
@@ -1394,7 +1395,7 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level)
+	void Renderer::ApplyConstantGroupVSPS(const ConstantGroup<VertexShader> *VertexGroup, const ConstantGroup<PixelShader> *PixelGroup, ConstantGroupLevel Level)
 	{
 		if (VertexGroup)
 			ApplyConstantGroupVS(VertexGroup, Level);

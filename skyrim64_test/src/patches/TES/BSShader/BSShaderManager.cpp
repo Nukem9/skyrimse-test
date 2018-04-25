@@ -293,8 +293,9 @@ std::vector<std::pair<const char *, const char *>> ShaderDecoder::GetDefineArray
 	return std::vector<std::pair<const char *, const char *>>();
 }
 
-void DumpVertexShader(BSVertexShader *Shader, const char *Type)
+void DumpVertexShader(BSGraphics::VertexShader *Shader, const char *Type)
 {
+	/*
 	if (!_stricmp(Type, "BloodSplatter"))
 	{
 	}
@@ -327,11 +328,12 @@ void DumpVertexShader(BSVertexShader *Shader, const char *Type)
 
 	VertexShaderDecoder decoder(Type, Shader);
 	decoder.SetShaderData((void *)((uintptr_t)Shader + sizeof(BSVertexShader)), Shader->m_ShaderLength);
-	decoder.DumpShader();
+	decoder.DumpShader();*/
 }
 
-void DumpPixelShader(BSPixelShader *Shader, const char *Type, void *Buffer, size_t BufferLen)
+void DumpPixelShader(BSGraphics::PixelShader *Shader, const char *Type, void *Buffer, size_t BufferLen)
 {
+	/*
 	if (!_stricmp(Type, "BloodSplatter"))
 	{
 	}
@@ -364,7 +366,7 @@ void DumpPixelShader(BSPixelShader *Shader, const char *Type, void *Buffer, size
 
 	PixelShaderDecoder decoder(Type, Shader);
 	decoder.SetShaderData(Buffer, BufferLen);
-	decoder.DumpShader();
+	decoder.DumpShader();*/
 }
 
 const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, int ConstantIndex)

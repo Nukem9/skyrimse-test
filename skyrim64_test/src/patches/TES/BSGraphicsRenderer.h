@@ -1,10 +1,9 @@
 #pragma once
 
+#include <functional>
 #include <DirectXMath.h>
 #include "NiMain/NiColor.h"
 #include "NiMain/NiTransform.h"
-#include "BSShader/BSVertexShader.h"
-#include "BSShader/BSPixelShader.h"
 #include "BSGraphicsTypes.h"
 
 namespace BSGraphics::Utility
@@ -64,8 +63,8 @@ namespace BSGraphics
 		void SetVertexDescription(uint64_t VertexDesc);
 		void SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology);
 
-		void SetVertexShader(BSVertexShader *Shader);
-		void SetPixelShader(BSPixelShader *Shader);
+		void SetVertexShader(VertexShader *Shader);
+		void SetPixelShader(PixelShader *Shader);
 
 		void SetTexture(uint32_t Index, Texture *Resource);
 		void SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode);
@@ -90,20 +89,20 @@ namespace BSGraphics
 		void ValidateShaderReplacement(void *Original, void *Replacement, const GUID& Guid);
 		void RegisterShaderBytecode(void *Shader, const void *Bytecode, size_t BytecodeLength);
 
-		BSVertexShader *CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant);
-		BSPixelShader *CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant);
+		VertexShader *CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant);
+		PixelShader *CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant);
 
 		//
 		// Shader constant buffers
 		//
 		CustomConstantGroup GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level);
-		ConstantGroup<BSVertexShader> GetShaderConstantGroup(BSVertexShader *Shader, ConstantGroupLevel Level);
-		ConstantGroup<BSPixelShader> GetShaderConstantGroup(BSPixelShader *Shader, ConstantGroupLevel Level);
+		ConstantGroup<VertexShader> GetShaderConstantGroup(VertexShader *Shader, ConstantGroupLevel Level);
+		ConstantGroup<PixelShader> GetShaderConstantGroup(PixelShader *Shader, ConstantGroupLevel Level);
 		void FlushConstantGroup(CustomConstantGroup *Group);
-		void FlushConstantGroupVSPS(ConstantGroup<BSVertexShader> *VertexGroup, ConstantGroup<BSPixelShader> *PixelGroup);
+		void FlushConstantGroupVSPS(ConstantGroup<VertexShader> *VertexGroup, ConstantGroup<PixelShader> *PixelGroup);
 		void ApplyConstantGroupVS(const CustomConstantGroup *Group, ConstantGroupLevel Level);
 		void ApplyConstantGroupPS(const CustomConstantGroup *Group, ConstantGroupLevel Level);
-		void ApplyConstantGroupVSPS(const ConstantGroup<BSVertexShader> *VertexGroup, const ConstantGroup<BSPixelShader> *PixelGroup, ConstantGroupLevel Level);
+		void ApplyConstantGroupVSPS(const ConstantGroup<VertexShader> *VertexGroup, const ConstantGroup<PixelShader> *PixelGroup, ConstantGroupLevel Level);
 
 		struct
 		{
@@ -198,8 +197,8 @@ namespace BSGraphics
 				struct
 				{
 					uint64_t m_VertexDescSetting;
-					struct BSVertexShader *m_CurrentVertexShader;
-					struct BSPixelShader *m_CurrentPixelShader;
+					VertexShader *m_CurrentVertexShader;
+					PixelShader *m_CurrentPixelShader;
 					D3D11_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
 					NiPoint3 m_CurrentPosAdjust;
 					NiPoint3 m_PreviousPosAdjust;
