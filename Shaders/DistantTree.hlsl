@@ -117,7 +117,7 @@ cbuffer PerFrame : register(b12)
 	float4 cb12[20];
 }
 
-const static float SampleOffsets[16] =
+const static float DepthOffsets[16] =
 {
 	0.003921568,
 	0.533333361,
@@ -141,42 +141,40 @@ PS_OUTPUT main(PS_INPUT input)
 {
 	PS_OUTPUT psout;
 
-#ifdef RENDER_DEPTH
+	float4 r0, r1;
+
+#if defined(RENDER_DEPTH)
 	// Weird code to restrict the XY values between 0 and 15 (branchless)
-	uint2 temp = (uint2)input.Position.xy;
-	uint maskIndex = (temp.y & 3) | (((temp.x << 2) & 12) & ~3);
+	uint2 temp = uint2(input.Position.xy);
+	uint index = ((temp.x << 2) & 12) | (temp.y & 3);
 
-	float r0 = -SampleOffsets[maskIndex];
-	r0 += 0.5;
-	r0 = input.Depth.w * r0 + input.Depth.z;
-	r0 -= 0.5;
+	float depthOffset = DepthOffsets[index] - 0.5;
+	float depthModifier = (input.Depth.w * depthOffset) + input.Depth.z - 0.5;
 
-	if (r0 < 0)
+	if (depthModifier < 0)
 		discard;
 
-	r0 = TexDiffuse.Sample(SampDiffuse, input.TexCoord.xy).w;
-	r0 -= AlphaTestRefRS;
+	float alpha = TexDiffuse.Sample(SampDiffuse, input.TexCoord.xy).w;
 
-	if (r0 < 0)
+	if ((alpha - AlphaTestRefRS) < 0)
 		discard;
 
+	// Depth
 	psout.Albedo.xyz = input.Depth.xxx / input.Depth.yyy;
 	psout.Albedo.w = 0;
 #else
-	float4 r0, r1;
+	float4 baseColor = TexDiffuse.Sample(SampDiffuse, input.TexCoord.xy);
 
-	r0 = TexDiffuse.Sample(SampDiffuse, input.TexCoord.xy);
-	r1.xyz = input.TexCoord.zzz * DiffuseColor.xyz + AmbientColor.xyz;
-
-	#ifdef DO_ALPHA_TEST
-		r0.w -= AlphaTestRefRS;
-
-		if (r0.w < 0)
-			discard;
+	#if defined(DO_ALPHA_TEST)
+	if ((baseColor.w - AlphaTestRefRS) < 0)
+		discard;
 	#endif
 
-	psout.Albedo = float4(r1.xyz * r0.xyz, 1.0);
+	// Albedo
+	r1.xyz = input.TexCoord.zzz * DiffuseColor.xyz + AmbientColor.xyz;
+	psout.Albedo = float4(r1.xyz * baseColor.xyz, 1.0);
 
+	// Motion vectors
 	r0.x = dot(cb12[12].xyzw, input.WorldPosition);
 	r0.y = dot(cb12[13].xyzw, input.WorldPosition);
 	r0.z = dot(cb12[15].xyzw, input.WorldPosition);
@@ -186,8 +184,9 @@ PS_OUTPUT main(PS_INPUT input)
 	r0.z = dot(cb12[19].xyzw, input.PreviousWorldPosition);
 	r0.zw = r1.xy / r0.zz;
 	r0.xy = r0.xy + -r0.zw;
-
 	psout.MotionVector = float2(-0.5, 0.5) * r0.xy;
+
+	// Normals (tangent space, constant no normals)
 	psout.Normal = float4(0.5, 0.5, 0, 0);
 #endif
 

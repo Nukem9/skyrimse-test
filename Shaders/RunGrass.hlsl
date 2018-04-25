@@ -28,7 +28,7 @@ struct VS_OUTPUT
 {
 	float4 HPosition : SV_POSITION0;
 	float4 DiffuseColor : COLOR0;
-	float4 TexCoord : TEXCOORD0;
+	float3 TexCoord : TEXCOORD0;
 	float4 AmbientColor : TEXCOORD1;
 	float3 ViewSpacePosition : TEXCOORD2;
 #if defined(RENDER_DEPTH)
@@ -55,7 +55,7 @@ struct PS_OUTPUT
 // Vertex shader code
 //
 #ifdef VSHADER
-cbuffer PerTechnique : register(b2)
+cbuffer PerGeometry : register(b2)
 {
 	row_major float4x4 WorldViewProj             : packoffset(c0);      // @ 0 - 0x0000
 	row_major float4x4 WorldView                 : packoffset(c4);      // @ 16 - 0x0040
@@ -132,17 +132,7 @@ VS_OUTPUT main(VS_INPUT input)
 	r1.yzw = input.InstanceData1.www * input.Color.xyz;
 	r1.yzw = r1.yzw * r0.www;
 
-	//
-	// The next line generates a redundant float conversion.....it can be fixed but won't match
-	// the original Skyrim shader.
-	//
-	// and r0.z, cb7[0].x, l(3)                                                                                                                                                                                                        
-	// itof r0.z, r0.z                                                                                                                                                                                                        
-	// ftou r0.z, r0.z                                                                                                                                                                                                        
-	// ushr r0.w, cb7[0].x, l(2)                                                                                                                                                                                                        
-	// dp4 r0.z, cb8[r0.w + 0].xyzw, icb[r0.z + 0].xyzw   
-	//
-	r0.w = dot(cb8[(asuint(cb7[0].x) >> 2) + 0.0].xyzw, M_IdentityMatrix[(asint(cb7[0].x) & 3) + 0.0].xyzw);
+	r0.w = dot(cb8[(asuint(cb7[0].x) >> 2)].xyzw, M_IdentityMatrix[(asint(cb7[0].x) & 3)].xyzw);
 	r0.y = 1 - saturate((length(projSpacePosition.xyz) - AlphaParam1) / AlphaParam2);
 
 	vsout.DiffuseColor.xyz = DirLightColor.xyz * r1.yzw;
@@ -216,7 +206,7 @@ PS_OUTPUT main(PS_INPUT input)
 	psout.PS.xyz = input.Depth.xxx / input.Depth.yyy;
 	psout.PS.w = diffuseAlpha;
 #else
-	float sunShadowMask = TexShadowMaskSampler.Load(int3(trunc(input.HPosition.xy), 0)).x;// Redundant truncation...
+	float sunShadowMask = TexShadowMaskSampler.Load(int3(input.HPosition.xy, 0)).x;
 
 	// Albedo
 	r0.x = lerp(sunShadowMask, 1, input.AmbientColor.w);
