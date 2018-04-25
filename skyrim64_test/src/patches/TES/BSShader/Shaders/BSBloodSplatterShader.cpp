@@ -44,7 +44,7 @@ void TestHook1()
 
 BSBloodSplatterShader::BSBloodSplatterShader() : BSShader(ShaderConfig.Type)
 {
-	m_Type = 4;
+	m_Type = BSSM_SHADER_BLOODSPLATTER;
 
 	// Added in FO4:
 	// BSShaderManager::GetTexture("Textures\\Blood\\FXBloodFlare.dds", 1, &spDefaultFlareTexture, 0, 0, 0);

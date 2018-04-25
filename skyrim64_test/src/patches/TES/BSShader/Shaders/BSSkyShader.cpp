@@ -54,12 +54,12 @@ void TestHook3()
 
 BSSkyShader::BSSkyShader() : BSShader(ShaderConfig.Type)
 {
-	m_Type = 2;
+	m_Type = BSSM_SHADER_SKY;
 	pInstance = this;
 
-	xmmword_143257D48 = NiColorA::BLACK;
-	xmmword_143257D58 = NiColorA::BLACK;
-	xmmword_143257D68 = NiColorA::BLACK;
+	NightBlendColor0 = NiColorA::BLACK;
+	NightBlendColor1 = NiColorA::BLACK;
+	NightBlendColor2 = NiColorA::BLACK;
 }
 
 BSSkyShader::~BSSkyShader()
@@ -250,9 +250,9 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		break;
 
 	case 2:
-		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[0], xmmword_143257D48);
-		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[1], xmmword_143257D58);
-		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[2], xmmword_143257D68);
+		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[0], NightBlendColor0);
+		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[1], NightBlendColor1);
+		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[2], NightBlendColor2);
 		break;
 
 	default:

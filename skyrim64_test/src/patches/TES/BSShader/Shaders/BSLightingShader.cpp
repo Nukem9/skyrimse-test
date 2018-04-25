@@ -102,7 +102,7 @@ BSLightingShader::BSLightingShader() : BSShader("Lighting")
 	auto sub_141307BD0 = (uintptr_t(__fastcall *)(BSLightingShader *))(g_ModuleBase + 0x1307BD0);
 	sub_141307BD0(this);
 
-	m_Type = 6;
+	m_Type = BSSM_SHADER_LIGHTING;
 	pInstance = this;
 
 	*(uintptr_t *)((uintptr_t)this + 0x0) = v1;

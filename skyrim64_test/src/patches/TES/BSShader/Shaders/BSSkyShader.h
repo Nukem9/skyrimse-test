@@ -18,9 +18,9 @@ private:
 		RAW_TECHNIQUE_SKY = 8,
 	};
 
-	inline AutoPtr(NiColorA, xmmword_143257D48, 0x3257D48);
-	inline AutoPtr(NiColorA, xmmword_143257D58, 0x3257D58);
-	inline AutoPtr(NiColorA, xmmword_143257D68, 0x3257D68);
+	inline AutoPtr(NiColorA, NightBlendColor0, 0x3257D48);
+	inline AutoPtr(NiColorA, NightBlendColor1, 0x3257D58);
+	inline AutoPtr(NiColorA, NightBlendColor2, 0x3257D68);
 
 	const static uintptr_t OriginalVTableBase = 0x1880A60;
 

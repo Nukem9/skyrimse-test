@@ -51,7 +51,7 @@ void TestHook2()
 
 BSDistantTreeShader::BSDistantTreeShader() : BSShader(ShaderConfig.Type)
 {
-	m_Type = 9;
+	m_Type = BSSM_SHADER_DISTANTTREE;
 	pInstance = this;
 }
 
