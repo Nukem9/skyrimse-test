@@ -240,7 +240,7 @@ else
 	annotation->BeginEvent(L"RenderSky");
 	{
 		renderer->SetUseAlphaTestRef(true);
-		renderer->SetAlphaTestRef(0.50196081f);
+		renderer->SetAlphaTestRef(128.0f / 255.0f);
 		accumulator->RenderTechniques(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
 	}
 	annotation->EndEvent();

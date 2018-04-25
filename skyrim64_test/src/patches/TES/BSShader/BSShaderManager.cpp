@@ -238,9 +238,11 @@ const char *ShaderDecoder::GetGroupName(int Index)
 {
 	switch (Index)
 	{
-	case 0:return "PerGeometry";
+	case 0:return "PerTechnique";
 	case 1:return "PerMaterial";
-	case 2:return "PerTechnique";
+	case 2:return "PerGeometry";
+	case 11:return "AlphaTestRefCB";
+	case 12:return "PerFrame";
 	}
 
 	return nullptr;
@@ -253,6 +255,16 @@ const char *ShaderDecoder::GetGroupRegister(int Index)
 	case 0:return "b0";
 	case 1:return "b1";
 	case 2:return "b2";
+	case 3:return "b3";
+	case 4:return "b4";
+	case 5:return "b5";
+	case 6:return "b6";
+	case 7:return "b7";
+	case 8:return "b8";
+	case 9:return "b9";
+	case 10:return "b10";
+	case 11:return "b11";
+	case 12:return "b12";
 	}
 
 	return nullptr;
