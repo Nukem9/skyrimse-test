@@ -977,7 +977,6 @@ namespace BSGraphics
 		if (desc.ConstantBuffers <= 0)
 			return;
 
-		int variableCount = 0;
 		auto mapBufferConsts = [&](ID3D11ShaderReflectionConstantBuffer *Buffer, BSConstantGroup *Group)
 		{
 			// If this call fails, it's an invalid buffer
@@ -992,15 +991,25 @@ namespace BSGraphics
 				D3D11_SHADER_VARIABLE_DESC varDesc;
 				Assert(SUCCEEDED(var->GetDesc(&varDesc)));
 
-				const char *ourConstName = GetConstant(variableCount);
-				const char *dxConstName = varDesc.Name;
+				AssertMsgVa(varDesc.StartOffset % 4 == 0, "Variable '%s' is not aligned to 4", varDesc.Name);
 
-				// Ensure that variable names match with hardcoded ones in this project
-				AssertMsgVa(varDesc.StartOffset % 4 == 0, "Variable '%s' is not aligned to 4", dxConstName);
-				AssertMsgVa(_stricmp(ourConstName, dxConstName) == 0, "Shader constant variable name doesn't match up (%s != %s)", ourConstName, dxConstName);
+				// Variable name maps to hardcoded index in SSE executable
+				for (int j = 0;; j++)
+				{
+					const char *hardConstName = GetConstant(j);
 
-				Offsets[variableCount] = varDesc.StartOffset / 4;
-				variableCount++;
+					if (!hardConstName)
+						break;
+
+					if (_stricmp(hardConstName, varDesc.Name) == 0)
+					{
+						// Found!
+						Offsets[j] = varDesc.StartOffset / 4;
+						var = nullptr;
+					}
+				}
+
+				AssertMsgVa(var == nullptr, "Variable '%s' did not have an index mapping in the executable", varDesc.Name);
 			}
 
 			// Nasty type cast here, but it's how the game does it (round up to nearest 16 bytes)
