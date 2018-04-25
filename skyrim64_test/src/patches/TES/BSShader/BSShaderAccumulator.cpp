@@ -9,62 +9,6 @@
 
 extern ID3DUserDefinedAnnotation *annotation;
 
-void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator)
-{
-	auto GraphicsGlobals = HACK_GetThreadedGlobals();
-
-	// BSShaderManager::pCurrentShaderAccumulator
-	uint64_t& qword_1431F5490 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3600);
-
-	qword_1431F5490 = (uint64_t)Accumulator;
-}
-
-BSShaderAccumulator *GetCurrentAccumulator()
-{
-	auto GraphicsGlobals = HACK_GetThreadedGlobals();
-
-	// BSShaderManager::pCurrentShaderAccumulator
-	return *(BSShaderAccumulator **)((uintptr_t)GraphicsGlobals + 0x3600);
-}
-
-void ClearShaderAndTechnique()
-{
-	auto GraphicsGlobals = HACK_GetThreadedGlobals();
-	uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
-	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
-	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
-	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
-
-	if (qword_1432A8218)
-	{
-		((BSShader *)qword_1432A8218)->RestoreTechnique(dword_1432A8214);
-		qword_1432A8218 = 0;// Shader
-	}
-
-	dword_1432A8214 = 0;// Technique
-	qword_1434B5220 = 0;
-}
-
-bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
-{
-	ClearShaderAndTechnique();
-
-	auto GraphicsGlobals = HACK_GetThreadedGlobals();
-	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
-	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
-
-	if (Shader->SetupTechnique(Technique))
-	{
-		qword_1432A8218 = (uint64_t)Shader;
-		dword_1432A8214 = Technique;
-		return true;
-	}
-
-	qword_1432A8218 = 0;
-	dword_1432A8214 = 0;
-	return false;
-}
-
 void BSShaderAccumulator::sub_1412E1600(uint32_t RenderFlags)
 {
 	annotation->BeginEvent(L"BSShaderAccumulator: Draw1");

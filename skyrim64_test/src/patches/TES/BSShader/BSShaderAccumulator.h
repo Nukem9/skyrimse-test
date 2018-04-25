@@ -76,6 +76,3 @@ static_assert(offsetof(BSShaderAccumulator, m_MainBatch) == 0x130, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentTech) == 0x138, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentSubPass) == 0x13C, "");
 static_assert(offsetof(BSShaderAccumulator, m_HasPendingDraws) == 0x140, "");
-
-void ClearShaderAndTechnique();
-bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique);

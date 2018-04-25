@@ -1,5 +1,8 @@
 #pragma once
 
+#include "BSShader.h"
+#include "BSShaderAccumulator.h"
+
 #define BAD_SHADER 0x11223344
 
 #define BSSM_AMBIENT_OCCLUSION 0x2
@@ -77,6 +80,10 @@ struct BSConstantGroup
 	// Based on shader load flags, these **CAN BE NULL**. At least one of the
 	// pointers is guaranteed to be non-null.
 };
+
+void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator);
+void ClearShaderAndTechnique();
+bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique);
 
 #include "../BSRenderPass.h"
 #include "BSShaderAccumulator.h"
