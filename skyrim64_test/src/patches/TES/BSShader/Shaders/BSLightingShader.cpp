@@ -988,7 +988,7 @@ uint32_t BSLightingShader::GetRawTechnique(uint32_t Technique)
 	{
 		outputTech = outputTech & 0xC9FFFFFF | 0x9000000;
 	}
-	else if (subIndex == RAW_TECHNIQUE_PARALLAXOCC && !byte_141E352F0)
+	else if (subIndex == RAW_TECHNIQUE_PARALLAXOCC && !bEnableParallaxOcclusion->uValue.b)
 	{
 		outputTech &= 0xC0FFFFFF;
 	}
@@ -1261,7 +1261,7 @@ void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::Constant
 {
 	uintptr_t v7 = 0;
 
-	if (*(BYTE *)((uintptr_t)Pass + 31))
+	if (Pass->m_LightCount > 0)
 		v7 = *(uintptr_t *)((uintptr_t)Pass + 56);
 
 	float *v10 = *(float **)(*(uintptr_t *)v7 + 72i64);
