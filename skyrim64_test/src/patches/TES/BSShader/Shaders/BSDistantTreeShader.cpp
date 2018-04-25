@@ -5,6 +5,7 @@
 #include "BSDistantTreeShader.h"
 
 DEFINE_SHADER_DESCRIPTOR(
+	"DistantTree",
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, undefined,				InstanceData)
 	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float4x4,	WorldViewProj)
@@ -48,7 +49,7 @@ void TestHook2()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1318050), &BSDistantTreeShader::__ctor__);
 }
 
-BSDistantTreeShader::BSDistantTreeShader() : BSShader("DistantTree")
+BSDistantTreeShader::BSDistantTreeShader() : BSShader(ShaderConfig.Type)
 {
 	m_Type = 9;
 	pInstance = this;
@@ -190,21 +191,34 @@ void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFla
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::RestoreGeometry, Pass, RenderFlags);
 }
 
+void BSDistantTreeShader::CreateAllShaders()
+{
+	CreatePixelShader(RAW_TECHNIQUE_BLOCK);
+	CreateVertexShader(RAW_TECHNIQUE_BLOCK);
+	CreatePixelShader(RAW_TECHNIQUE_BLOCK | RAW_FLAG_DO_ALPHA);
+	CreateVertexShader(RAW_TECHNIQUE_BLOCK | RAW_FLAG_DO_ALPHA);
+
+	CreatePixelShader(RAW_TECHNIQUE_DEPTH);
+	CreateVertexShader(RAW_TECHNIQUE_DEPTH);
+	CreatePixelShader(RAW_TECHNIQUE_DEPTH | RAW_FLAG_DO_ALPHA);
+	CreateVertexShader(RAW_TECHNIQUE_DEPTH | RAW_FLAG_DO_ALPHA);
+}
+
 void BSDistantTreeShader::CreateVertexShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.at(i)->Name; };
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.count(i) ? ShaderConfig.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, "DistantTree", getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfig.Type, getDefines, getConstant);
 }
 
 void BSDistantTreeShader::CreatePixelShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
-	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.at(i)->Name; };
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.at(i)->Name; };
+	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.count(i) ? ShaderConfig.BySamplerIndex.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.count(i) ? ShaderConfig.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, "DistantTree", getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfig.Type, getDefines, getSampler, getConstant);
 }
 
 uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)

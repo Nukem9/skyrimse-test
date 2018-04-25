@@ -8,6 +8,7 @@
 #include "../TES/BSShader/Shaders/BSBloodSplatterShader.h"
 #include "../TES/BSShader/Shaders/BSDistantTreeShader.h"
 #include "../TES/BSShader/Shaders/BSSkyShader.h"
+#include "../TES/BSShader/Shaders/BSGrassShader.h"
 #include "../TES/BSGraphicsRenderer.h"
 #include "../TES/BSBatchRenderer.h"
 
@@ -228,6 +229,18 @@ void hk_BuildShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
 
 	NextShaderType = (const char *)*(uintptr_t *)(shaderGroupObject + 136);
 	((decltype(&hk_BuildShaderBundle))BuildShaderBundle)(shaderGroupObject, fileStream);
+	
+	if (shaderGroupObject == (__int64)BSBloodSplatterShader::pInstance)
+		BSBloodSplatterShader::pInstance->CreateAllShaders();
+
+	if (shaderGroupObject == (__int64)BSDistantTreeShader::pInstance)
+		BSDistantTreeShader::pInstance->CreateAllShaders();
+
+	if (shaderGroupObject == (__int64)BSGrassShader::pInstance)
+		BSGrassShader::pInstance->CreateAllShaders();
+
+	//if (shaderGroupObject == (__int64)BSSkyShader::pInstance)
+	//	BSSkyShader::pInstance->CreateAllShaders();
 
 	return;
 	uint32_t vsEntryCount = *(uint32_t *)(shaderGroupObject + 0x34);

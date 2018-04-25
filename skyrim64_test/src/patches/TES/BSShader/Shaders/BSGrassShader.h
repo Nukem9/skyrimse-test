@@ -44,11 +44,11 @@ private:
 	};
 #pragma pack(pop)
 
-	inline AutoPtr(BSGrassShader *, pInstance, 0x31F63E0);
-
 	const static uintptr_t OriginalVTableBase = 0x1878260;
 
 public:
+	inline AutoPtr(BSGrassShader *, pInstance, 0x31F63E0);
+
 	DECLARE_CONSTRUCTOR_HOOK(BSGrassShader);
 
 	BSGrassShader();
@@ -64,6 +64,10 @@ public:
 	void UpdateFogParameters();
 	void UpdateGeometryProjections(VertexConstantData *Data, const NiTransform& GeoTransform);
 	void UpdateGeometryInstanceData(const BSGeometry *Geometry, BSShaderProperty *Property);
+
+	void CreateAllShaders();
+	void CreateVertexShader(uint32_t Technique);
+	void CreatePixelShader(uint32_t Technique);
 
 	static uint32_t GetRawTechnique(uint32_t Technique);
 	static uint32_t GetVertexTechnique(uint32_t RawTechnique);

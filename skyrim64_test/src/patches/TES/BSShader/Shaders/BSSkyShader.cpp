@@ -7,6 +7,7 @@
 #include "BSSkyShader.h"
 
 DEFINE_SHADER_DESCRIPTOR(
+	"Sky",
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float4x4,	WorldViewProj)
 	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float4x4,	World)
@@ -51,7 +52,7 @@ void TestHook3()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13113F0), &BSSkyShader::__ctor__);
 }
 
-BSSkyShader::BSSkyShader() : BSShader("Sky")
+BSSkyShader::BSSkyShader() : BSShader(ShaderConfig.Type)
 {
 	m_Type = 2;
 	pInstance = this;
@@ -341,21 +342,33 @@ void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetMode(1);
 }
 
+void BSSkyShader::CreateAllShaders()
+{
+	static_assert(RAW_TECHNIQUE_SUNOCCLUDE == 0, "Please update this function to match the enum");
+	static_assert(RAW_TECHNIQUE_SKY == 8, "Please update this function to match the enum");
+
+	for (int i = RAW_TECHNIQUE_SUNOCCLUDE; i <= RAW_TECHNIQUE_SKY; i++)
+	{
+		CreateVertexShader(i);
+		CreatePixelShader(i);
+	}
+}
+
 void BSSkyShader::CreateVertexShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.at(i)->Name; };
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.count(i) ? ShaderConfig.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, "Sky", getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfig.Type, getDefines, getConstant);
 }
 
 void BSSkyShader::CreatePixelShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
-	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.at(i)->Name; };
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.at(i)->Name; };
+	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.count(i) ? ShaderConfig.BySamplerIndex.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.count(i) ? ShaderConfig.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, "Sky", getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfig.Type, getDefines, getSampler, getConstant);
 }
 
 uint32_t BSSkyShader::GetRawTechnique(uint32_t Technique)

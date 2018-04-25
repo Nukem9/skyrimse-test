@@ -26,7 +26,7 @@ struct BSIStream;
 #define BSSHADER_FORWARD_CALL(OptionIndex, Func, ...) \
 if (g_ShaderToggles[m_Type][BSGraphics::CONSTANT_GROUP_LEVEL_##OptionIndex]) { BSSHADER_FORWARD_CALL_ALWAYS(OptionIndex, Func, __VA_ARGS__) }
 
-#define DEFINE_SHADER_DESCRIPTOR(Entries) const static ShaderDescriptor ShaderConfig({ Entries })
+#define DEFINE_SHADER_DESCRIPTOR(Type, Entries) static const ShaderDescriptor ShaderConfig(Type, { Entries })
 #define CONFIG_ENTRY(a, b, c, d, e) { ShaderDescriptor::##a, ShaderDescriptor::##b, c, #d, #e },
 
 class ShaderDescriptor
@@ -57,6 +57,7 @@ public:
 		const char *Name;
 	};
 
+	const char *const Type;
 	std::map<int, const Entry *> ByConstantIndexVS;
 	std::map<int, const Entry *> ByConstantIndexPS;
 	std::map<int, const Entry *> ByConstantIndexCS;
@@ -67,7 +68,7 @@ private:
 	std::vector<Entry> m_Entries;
 
 public:
-	ShaderDescriptor(std::initializer_list<Entry> InputData) : m_Entries(InputData)
+	ShaderDescriptor(const char *FXType, std::initializer_list<Entry> InputData) : Type(FXType), m_Entries(InputData)
 	{
 		for (Entry& e : m_Entries)
 		{

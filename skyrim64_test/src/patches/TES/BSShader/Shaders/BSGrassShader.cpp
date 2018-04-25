@@ -7,6 +7,7 @@
 #include "BSGrassShader.h"
 
 DEFINE_SHADER_DESCRIPTOR(
+	"RunGrass",
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float4x4,	WorldViewProj)
 	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float4x4,	WorldView)
@@ -66,7 +67,7 @@ void TestHook4()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E4C10), &BSGrassShader::__ctor__);
 }
 
-BSGrassShader::BSGrassShader() : BSShader("RunGrass")
+BSGrassShader::BSGrassShader() : BSShader(ShaderConfig.Type)
 {
 	m_Type = 1;
 	pInstance = this;
@@ -327,6 +328,38 @@ void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSSha
 
 	renderer->FlushConstantGroup(&constantGroup);
 	renderer->ApplyConstantGroupVS(&constantGroup, BSGraphics::CONSTANT_GROUP_LEVEL_INSTANCE);
+}
+
+void BSGrassShader::CreateAllShaders()
+{
+	static_assert(RAW_TECHNIQUE_VERTEXL == 0, "Please update this function to match the enum");
+	static_assert(RAW_TECHNIQUE_RENDERDEPTH == 8, "Please update this function to match the enum");
+
+	for (int i = RAW_TECHNIQUE_VERTEXL; i <= RAW_TECHNIQUE_RENDERDEPTH; i++)
+	{
+		CreateVertexShader(i);
+		CreatePixelShader(i);
+
+		CreateVertexShader(i | RAW_FLAG_DO_ALPHA);
+		CreatePixelShader(i | RAW_FLAG_DO_ALPHA);
+	}
+}
+
+void BSGrassShader::CreateVertexShader(uint32_t Technique)
+{
+	auto getDefines = BSShaderInfo::BSGrassShader::Defines::GetArray(Technique);
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.count(i) ? ShaderConfig.ByConstantIndexVS.at(i)->Name : nullptr; };
+
+	BSShader::CreateVertexShader(Technique, ShaderConfig.Type, getDefines, getConstant);
+}
+
+void BSGrassShader::CreatePixelShader(uint32_t Technique)
+{
+	auto getDefines = BSShaderInfo::BSGrassShader::Defines::GetArray(Technique);
+	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.count(i) ? ShaderConfig.BySamplerIndex.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.count(i) ? ShaderConfig.ByConstantIndexPS.at(i)->Name : nullptr; };
+
+	BSShader::CreatePixelShader(Technique, ShaderConfig.Type, getDefines, getSampler, getConstant);
 }
 
 uint32_t BSGrassShader::GetRawTechnique(uint32_t Technique)

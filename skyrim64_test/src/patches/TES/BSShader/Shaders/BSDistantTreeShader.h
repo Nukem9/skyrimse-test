@@ -31,6 +31,7 @@ public:
 	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;	// Implemented
 	virtual void RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;// Nullsub
 
+	void CreateAllShaders();
 	void CreateVertexShader(uint32_t Technique);
 	void CreatePixelShader(uint32_t Technique);
 
