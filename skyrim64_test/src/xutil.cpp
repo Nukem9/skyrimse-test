@@ -137,7 +137,10 @@ void XutilAssert(const char *File, int Line, const char *Format, ...)
 	MessageBoxA(nullptr, message, "ASSERTION", MB_ICONERROR);
 
 	if (IsDebuggerPresent())
+	{
+		OutputDebugStringA(message);
 		__debugbreak();
+	}
 
 	ExitProcess(1);
 }
