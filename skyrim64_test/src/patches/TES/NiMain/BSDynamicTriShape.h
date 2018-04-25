@@ -8,14 +8,14 @@ class BSDynamicTriShape : public BSTriShape
 public:
 	virtual ~BSDynamicTriShape();
 
-	char _pad0[0x20];
+	void *pDynamicData;
+	BSSpinLock DynamicDataAccessSpinLock;
+	char _pad0[0x10];
 
 	void *LockDynamicData()
 	{
-		BSSpinLock *lock = (BSSpinLock *)((uintptr_t)this + 0x168);
-		lock->Acquire();
-
-		return *(void **)((uintptr_t)this + 0x160);
+		DynamicDataAccessSpinLock.Acquire();
+		return pDynamicData;
 	}
 
 	const void *LockDynamicDataForRead()
@@ -25,8 +25,9 @@ public:
 
 	void UnlockDynamicData()
 	{
-		BSSpinLock *lock = (BSSpinLock *)((uintptr_t)this + 0x168);
-		lock->Release();
+		DynamicDataAccessSpinLock.Release();
 	}
 };
 static_assert(sizeof(BSDynamicTriShape) == 0x180);
+static_assert_offset(BSDynamicTriShape, pDynamicData, 0x160);
+static_assert_offset(BSDynamicTriShape, DynamicDataAccessSpinLock, 0x168);
