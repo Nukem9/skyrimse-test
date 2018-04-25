@@ -338,7 +338,7 @@ namespace BSGrassShader
 			case 4:defines.emplace_back("VERTLIT", ""); defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); break;
 			case 5:defines.emplace_back("BILLBOARD", ""); break;
 			case 6:defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); break;
-			case 7:defines.emplace_back("VERTLIT", ""); defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); break;
+			case 7:defines.emplace_back("VERTLIT", ""); defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); defines.emplace_back("RENDER_DEPTH", ""); break;
 			case 8:defines.emplace_back("RENDER_DEPTH", ""); break;
 			default:__debugbreak(); break;
 			}
