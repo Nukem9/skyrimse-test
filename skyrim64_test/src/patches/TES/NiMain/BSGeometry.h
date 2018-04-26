@@ -28,36 +28,48 @@ class BSGeometry : public NiAVObject
 public:
 	virtual ~BSGeometry();
 
-	char _pad[0x48];
+	char _pad[0x10];
+	NiProperty *spProperties[2];	// NiPointer<NiProperty> spProperties[2];
+	NiSkinInstance *spSkinInstance;	// NiPointer<NiSkinInstance>
+	void *pRendererData;
+	char _pad2[0x8];
+	uint64_t uiVertexDesc;
+	char ucType;
+	// bool Registered?
 
 	NiAlphaProperty *QAlphaProperty() const
 	{
-		return *(NiAlphaProperty **)((uintptr_t)this + 0x120);
+		return static_cast<NiAlphaProperty *>(spProperties[0]);
 	}
 
 	NiSkinInstance *QSkinInstance() const
 	{
-		return *(NiSkinInstance **)((uintptr_t)this + 0x130);
+		return spSkinInstance;
 	}
 
-	void *QRendererData()
+	void *QRendererData() const
 	{
-		return *(void **)((uintptr_t)this + 0x138);
+		return pRendererData;
 	}
 
-	uint64_t GetVertexDesc()
+	uint64_t GetVertexDesc() const
 	{
-		return *(uint64_t *)((uintptr_t)this + 0x148);
+		return uiVertexDesc;
 	}
 
-	uint32_t GetVertexSize1()
+	uint32_t GetVertexSize1() const
 	{
 		return (GetVertexDesc() >> 2) & 0x3C;
 	}
 
 	int QType() const
 	{
-		return *(uint8_t *)((uintptr_t)this + 0x150);
+		return ucType;
 	}
 };
 static_assert(sizeof(BSGeometry) == 0x158);
+static_assert_offset(BSGeometry, spProperties, 0x120);
+static_assert_offset(BSGeometry, spSkinInstance, 0x130);
+static_assert_offset(BSGeometry, pRendererData, 0x138);
+static_assert_offset(BSGeometry, uiVertexDesc, 0x148);
+static_assert_offset(BSGeometry, ucType, 0x150);
