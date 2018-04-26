@@ -19,6 +19,7 @@ extern LARGE_INTEGER g_FrameDelta;
 
 namespace ui
 {
+	bool showDemoWindow;
     bool showFPSWindow;
     bool showTESFormWindow;
     bool showLockWindow;
@@ -59,64 +60,22 @@ namespace ui
 
     void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext)
     {
+		ImGui::CreateContext();
         ImGui_ImplDX11_Init(Wnd, Device, DeviceContext);
 
-        ImGui::GetIO().MouseDrawCursor = true;
-
-        // Dark theme
-        ImGuiStyle &style = ImGui::GetStyle();
-
-        style.WindowRounding                        = 6.f;
-        style.ScrollbarRounding                     = 2.f;
-        style.WindowTitleAlign.x                    = 0.45f;
-        style.Colors[ImGuiCol_Text]                 = ImVec4(0.98f, 0.98f, 0.98f, 1.00f);
-        style.Colors[ImGuiCol_TextDisabled]         = ImVec4(0.98f, 0.98f, 0.98f, 0.50f);
-        style.Colors[ImGuiCol_WindowBg]             = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-        style.Colors[ImGuiCol_ChildWindowBg]        = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-        style.Colors[ImGuiCol_PopupBg]              = ImVec4(0.10f, 0.10f, 0.10f, 0.90f);
-        style.Colors[ImGuiCol_Border]               = ImVec4(0.27f, 0.27f, 0.27f, 1.00f);
-        style.Colors[ImGuiCol_BorderShadow]         = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
-        style.Colors[ImGuiCol_FrameBg]              = ImVec4(0.23f, 0.23f, 0.23f, 1.00f);
-        style.Colors[ImGuiCol_FrameBgHovered]       = ImVec4(0.28f, 0.28f, 0.28f, 0.40f);
-        style.Colors[ImGuiCol_FrameBgActive]        = ImVec4(0.31f, 0.31f, 0.31f, 0.45f);
-        style.Colors[ImGuiCol_TitleBg]              = ImVec4(0.19f, 0.19f, 0.19f, 1.00f);
-        style.Colors[ImGuiCol_TitleBgCollapsed]     = ImVec4(0.19f, 0.19f, 0.19f, 0.20f);
-        style.Colors[ImGuiCol_TitleBgActive]        = ImVec4(0.30f, 0.30f, 0.30f, 0.87f);
-        style.Colors[ImGuiCol_MenuBarBg]            = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-        style.Colors[ImGuiCol_ScrollbarBg]          = ImVec4(0.30f, 0.30f, 0.30f, 0.60f);
-        style.Colors[ImGuiCol_ScrollbarGrab]        = ImVec4(0.80f, 0.80f, 0.80f, 0.30f);
-        style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.80f, 0.80f, 0.80f, 0.40f);
-        style.Colors[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.86f, 0.86f, 0.86f, 0.52f);
-        //style.Colors[ImGuiCol_ComboBg]              = ImVec4(0.21f, 0.21f, 0.21f, 0.99f);
-        style.Colors[ImGuiCol_CheckMark]            = ImVec4(0.47f, 0.47f, 0.47f, 1.00f);
-        style.Colors[ImGuiCol_SliderGrab]           = ImVec4(0.60f, 0.60f, 0.60f, 0.34f);
-        style.Colors[ImGuiCol_SliderGrabActive]     = ImVec4(0.84f, 0.84f, 0.84f, 0.34f);
-        style.Colors[ImGuiCol_Button]               = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
-        style.Colors[ImGuiCol_ButtonHovered]        = ImVec4(0.33f, 0.33f, 0.33f, 1.00f);
-        style.Colors[ImGuiCol_ButtonActive]         = ImVec4(0.42f, 0.42f, 0.42f, 1.00f);
-        style.Colors[ImGuiCol_Header]               = ImVec4(0.34f, 0.34f, 0.34f, 1.00f);
-        style.Colors[ImGuiCol_HeaderHovered]        = ImVec4(0.42f, 0.42f, 0.42f, 1.00f);
-        style.Colors[ImGuiCol_HeaderActive]         = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-        style.Colors[ImGuiCol_Separator]            = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-        style.Colors[ImGuiCol_SeparatorHovered]     = ImVec4(0.70f, 0.60f, 0.60f, 1.00f);
-        style.Colors[ImGuiCol_SeparatorActive]      = ImVec4(0.90f, 0.70f, 0.70f, 1.00f);
-        style.Colors[ImGuiCol_ResizeGrip]           = ImVec4(1.00f, 1.00f, 1.00f, 0.30f);
-        style.Colors[ImGuiCol_ResizeGripHovered]    = ImVec4(1.00f, 1.00f, 1.00f, 0.60f);
-        style.Colors[ImGuiCol_ResizeGripActive]     = ImVec4(1.00f, 1.00f, 1.00f, 0.90f);
-        style.Colors[ImGuiCol_CloseButton]          = ImVec4(1.00f, 1.00f, 1.00f, 0.50f);
-        style.Colors[ImGuiCol_CloseButtonHovered]   = ImVec4(0.90f, 0.90f, 0.90f, 0.60f);
-        style.Colors[ImGuiCol_CloseButtonActive]    = ImVec4(0.70f, 0.70f, 0.70f, 1.00f);
-        style.Colors[ImGuiCol_PlotLines]            = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-        style.Colors[ImGuiCol_PlotLinesHovered]     = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-        style.Colors[ImGuiCol_PlotHistogram]        = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-        style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
-        style.Colors[ImGuiCol_TextSelectedBg]       = ImVec4(0.27f, 0.36f, 0.59f, 0.61f);
-        style.Colors[ImGuiCol_ModalWindowDarkening] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+		ImGui::StyleColorsDark();
+		ImGui::GetStyle().ChildRounding = 0.0f;
+		ImGui::GetStyle().FrameRounding = 0.0f;
+		ImGui::GetStyle().GrabRounding = 0.0f;
+		ImGui::GetStyle().PopupRounding = 0.0f;
+		ImGui::GetStyle().ScrollbarRounding = 0.0f;
+		ImGui::GetStyle().WindowRounding = 0.0f;
+		ImGui::GetIO().MouseDrawCursor = true;
     }
 
     void HandleInput(HWND Wnd, UINT Msg, WPARAM wParam, LPARAM lParam)
     {
-        ImGui_ImplDX11_WndProcHandler(Wnd, Msg, wParam, lParam);
+		ImGui_ImplWin32_WndProcHandler(Wnd, Msg, wParam, lParam);
     }
 
     void Render()
@@ -124,17 +83,21 @@ namespace ui
         ImGui_ImplDX11_NewFrame();
         {
             RenderMenubar();
-            RenderFramerate();
+			RenderFramerate();
             RenderSynchronization();
             RenderTESFormCache();
             RenderMemory();
 			RenderShaderTweaks();
 			RenderINITweaks();
 
+			if (showDemoWindow)
+				ImGui::ShowDemoWindow(&showDemoWindow);
+
             if (showLogWindow)
                 log::Draw();
         }
         ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
     }
 
     void RenderMenubar()
@@ -175,7 +138,8 @@ namespace ui
 
         if (ImGui::BeginMenu("Windows"))
         {
-            ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
+			ImGui::MenuItem("ImGui Debug", nullptr, &showDemoWindow);
+			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
             ImGui::MenuItem("Framerate", nullptr, &showFPSWindow);
             ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
             ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
@@ -578,7 +542,7 @@ namespace ui::log
     void Draw()
     {
         ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
-        ImGui::Begin("Debug Log");
+        ImGui::Begin("Debug Log", &ui::showLogWindow);
         if (ImGui::Button("Clear"))
             Clear();
         ImGui::SameLine();
