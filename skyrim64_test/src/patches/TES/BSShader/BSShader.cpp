@@ -163,10 +163,7 @@ void BSShader::SetupGeometryAlphaBlending(const NiAlphaProperty *AlphaProperty, 
 
 void BSShader::SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty)
 {
-	uintptr_t a2 = (uintptr_t)AlphaProperty;
-
-	// NiAlphaProperty::GetTestRef() * BSShaderProperty::GetAlpha()
-	float alphaRef = trunc((float)*(unsigned __int8 *)(a2 + 50) * ShaderProperty->GetAlpha());
+	int alphaRef = (int)((float)AlphaProperty->GetTestRef() * ShaderProperty->GetAlpha());
 
 	BSGraphics::Renderer::GetGlobals()->SetAlphaTestRef(alphaRef * (1.0f / 255.0f));
 }

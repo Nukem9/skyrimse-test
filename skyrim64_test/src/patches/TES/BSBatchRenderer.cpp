@@ -118,13 +118,12 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 				MTRenderer::RasterStateSetCullMode(1);
 		}
 
-		__int64 v9 = *(uint64_t *)((uintptr_t)i->m_Geometry + 288i64);// BSGeometry::GetModelBound?
-		bool v10 = v9 && (*(WORD *)(v9 + 48) >> 9) & 1;
+		bool alphaTest = i->m_Geometry->QAlphaProperty() && i->m_Geometry->QAlphaProperty()->GetAlphaTesting();
 
 		if (mtrContext)
-			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_TechniqueID, v10, a2);
+			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_TechniqueID, alphaTest, a2);
 		else
-			BSBatchRenderer::SetupAndDrawPass(i, i->m_TechniqueID, v10, a2);
+			BSBatchRenderer::SetupAndDrawPass(i, i->m_TechniqueID, alphaTest, a2);
 	}
 
 	if ((a2 & 0x108) == 0)

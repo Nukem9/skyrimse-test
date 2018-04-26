@@ -2,7 +2,7 @@
 
 #include "BSShaderMaterial.h"
 
-class BSShaderProperty
+class BSShaderProperty /*: NiShadeProperty*/
 {
 private:
 	static const uint32_t UniqueMaterialFlags[15];
