@@ -128,7 +128,7 @@ public:
 			break;
 
 		case ST_INT:
-			value.i = (unsigned char)atoi(Input);
+			value.i = atoi(Input);
 			break;
 
 		case ST_UINT:
