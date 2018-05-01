@@ -45,8 +45,6 @@ AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(__int64, qword_1431F55F8, 0x31F55F8);
 AutoPtr(float, qword_143257D80, 0x3257D80);
 
-BSShaderAccumulator *GetCurrentAccumulator();
-
 void TestHook3()
 {
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13113F0), &BSSkyShader::__ctor__);
@@ -54,7 +52,7 @@ void TestHook3()
 
 BSSkyShader::BSSkyShader() : BSShader(ShaderConfig.Type)
 {
-	m_Type = BSSM_SHADER_SKY;
+	m_Type = BSShaderManager::BSSM_SHADER_SKY;
 	pInstance = this;
 
 	NightBlendColor0 = NiColorA::BLACK;
@@ -151,12 +149,12 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	uint32_t rawTechnique = GAME_TLS(uint32_t, 0x9F0);
 	NiTransform geoTransform = Pass->m_Geometry->GetWorldTransform();
 
-	if (*(bool *)((uintptr_t)GetCurrentAccumulator() + 0x128))
+	if (*(bool *)((uintptr_t)BSShaderManager::GetCurrentAccumulator() + 0x128))
 	{
 		float v13 = geoTransform.m_Translate.x - *(float *)(qword_1431F55F8 + 160);
 		float v14 = geoTransform.m_Translate.y - *(float *)(qword_1431F55F8 + 164);
 		float v15 = geoTransform.m_Translate.z - *(float *)(qword_1431F55F8 + 168);
-		float *v16 = *(float **)&GetCurrentAccumulator()->m_pkCamera;
+		float *v16 = *(float **)&BSShaderManager::GetCurrentAccumulator()->m_pkCamera;
 
 		if (v16)
 		{
@@ -192,7 +190,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		XMFLOAT3& eyePos = vertexCG.ParamVS<XMFLOAT3, 4>();
 
-		float *v27 = (float *)GetCurrentAccumulator();
+		float *v27 = (float *)BSShaderManager::GetCurrentAccumulator();
 		eyePos.x = v27[91] - renderer->m_CurrentPosAdjust.x;
 		eyePos.y = v27[92] - renderer->m_CurrentPosAdjust.y;
 		eyePos.z = v27[93] - renderer->m_CurrentPosAdjust.z;

@@ -257,6 +257,9 @@
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShaderProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShader_Dumper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -536,6 +539,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\rendering\GpuTimer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShader_Dumper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

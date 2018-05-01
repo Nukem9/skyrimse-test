@@ -133,6 +133,7 @@
     <ClInclude Include="src\patches\rendering\GpuTimer.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsTypes.h" />
     <ClInclude Include="src\patches\TES\BSRenderPass.h" />
+    <ClInclude Include="src\patches\TES\BSShader\BSShader_Dumper.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShaderProperty.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderProperty.h" />
@@ -259,6 +260,7 @@
     <ClCompile Include="src\patches\TES\BSShader\BSPixelShader.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderProperty.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderUtil.cpp" />
+    <ClCompile Include="src\patches\TES\BSShader\BSShader_Dumper.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSVertexShader.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphicsRenderTargetManager.cpp" />

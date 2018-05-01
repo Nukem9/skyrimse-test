@@ -69,7 +69,7 @@ void TestHook4()
 
 BSGrassShader::BSGrassShader() : BSShader(ShaderConfig.Type)
 {
-	m_Type = BSSM_SHADER_RUNGRASS;
+	m_Type = BSShaderManager::BSSM_SHADER_RUNGRASS;
 	pInstance = this;
 }
 

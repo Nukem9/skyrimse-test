@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../BSRenderPass.h"
 #include "BSShader.h"
 #include "BSShaderAccumulator.h"
 
@@ -42,20 +43,42 @@
 #define BSSM_SKY_CLOUDSFADE 0x5C000064
 #define BSSM_SKY_SUNGLARE 0x5C006072
 
-enum ShaderEnum
+class BSShaderManager
 {
-	BSSM_SHADER_INVALID = 0,
-	BSSM_SHADER_RUNGRASS = 1,
-	BSSM_SHADER_SKY = 2,
-	BSSM_SHADER_WATER = 3,
-	BSSM_SHADER_BLOODSPLATTER = 4,
-	BSSM_SHADER_IMAGESPACE = 5,
-	BSSM_SHADER_LIGHTING = 6,
-	BSSM_SHADER_EFFECT = 7,
-	BSSM_SHADER_UTILITY = 8,
-	BSSM_SHADER_DISTANTTREE = 9,
-	BSSM_SHADER_PARTICLE = 10,
-	BSSM_SHADER_COUNT = 11,
+public:
+	enum ShaderEnum
+	{
+		BSSM_SHADER_INVALID = 0,
+		BSSM_SHADER_RUNGRASS = 1,
+		BSSM_SHADER_SKY = 2,
+		BSSM_SHADER_WATER = 3,
+		BSSM_SHADER_BLOODSPLATTER = 4,
+		BSSM_SHADER_IMAGESPACE = 5,
+		BSSM_SHADER_LIGHTING = 6,
+		BSSM_SHADER_EFFECT = 7,
+		BSSM_SHADER_UTILITY = 8,
+		BSSM_SHADER_DISTANTTREE = 9,
+		BSSM_SHADER_PARTICLE = 10,
+		BSSM_SHADER_COUNT = 11,
+	};
+
+	enum BSShaderTimerMode
+	{
+	};
+
+	enum etRenderMode
+	{
+	};
+
+private:
+	// inline static BSShaderAccumulator *pCurrentShaderAccumulator;
+	inline static uint32_t usRenderMode;
+
+public:
+	static void SetRenderMode(uint32_t RenderMode);
+
+	static void SetCurrentAccumulator(BSShaderAccumulator *Accumulator);
+	static BSShaderAccumulator *GetCurrentAccumulator();
 };
 
 enum class BSSM_SHADER_TYPE
@@ -79,55 +102,6 @@ struct BSConstantGroup
 
 	// Based on shader load flags, these **CAN BE NULL**. At least one of the
 	// pointers is guaranteed to be non-null.
-};
-
-void /*BSShaderManager::*/SetCurrentAccumulator(BSShaderAccumulator *Accumulator);
-void ClearShaderAndTechnique();
-bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique);
-
-#include "../BSRenderPass.h"
-#include "BSShaderAccumulator.h"
-
-namespace BSShaderMappings { struct Entry; }
-
-class ShaderDecoder
-{
-protected:
-	struct ParamIndexPair
-	{
-		int Index;
-		const char *Name;
-		const struct BSShaderMappings::Entry *Remap;
-	};
-
-	void *m_HlslData;
-	size_t m_HlslDataLen;
-
-	char m_Type[256];
-	BSSM_SHADER_TYPE m_CodeType;
-
-public:
-	ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType);
-	~ShaderDecoder();
-
-	void SetShaderData(void *Buffer, size_t BufferSize);
-	void DumpShader();
-
-protected:
-	void DumpShaderInfo();
-	void DumpCBuffer(FILE *File, BSConstantGroup *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex);
-
-	virtual uint32_t GetTechnique() = 0;
-	virtual const uint8_t *GetConstantArray() = 0;
-	virtual size_t GetConstantArraySize() = 0;
-	virtual void DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined) = 0;
-
-	const char *GetGroupName(int Index);
-	const char *GetGroupRegister(int Index);
-	const char *GetConstantName(int Index);
-	void GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t Technique);
-	const char *GetSamplerName(int Index, uint32_t Technique);
-	std::vector<std::pair<const char *, const char *>> GetDefineArray(uint32_t Technique);
 };
 
 //

@@ -80,8 +80,6 @@ thread_local uint32_t TLS_m_CurrentRawTechnique;
 thread_local uint32_t TLS_dword_141E35280;
 thread_local uint32_t TLS_dword_141E3527C;
 
-BSShaderAccumulator *GetCurrentAccumulator();
-
 char hookbuffer[50];
 
 void TestHook5()
@@ -102,7 +100,7 @@ BSLightingShader::BSLightingShader() : BSShader("Lighting")
 	auto sub_141307BD0 = (uintptr_t(__fastcall *)(BSLightingShader *))(g_ModuleBase + 0x1307BD0);
 	sub_141307BD0(this);
 
-	m_Type = BSSM_SHADER_LIGHTING;
+	m_Type = BSShaderManager::BSSM_SHADER_LIGHTING;
 	pInstance = this;
 
 	*(uintptr_t *)((uintptr_t)this + 0x0) = v1;
@@ -887,14 +885,14 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 		if (v102 == 1)
 		{
-			float *v83 = (float *)GetCurrentAccumulator();
+			float *v83 = (float *)BSShaderManager::GetCurrentAccumulator();
 			XMVECTOR coord = XMVectorSet(v83[91], v83[92], v83[93], 0.0f);
 
 			XMStoreFloat3(&precipitationOcclusionWorldViewProj, XMVector3TransformCoord(coord, inverseWorldMatrix));
 		}
 		else
 		{
-			float *v86 = (float *)GetCurrentAccumulator();
+			float *v86 = (float *)BSShaderManager::GetCurrentAccumulator();
 
 			// Equivalent to XMMatrixTranslation(x, y, z) -- missing rows/cols are multiplied in shader code
 			precipitationOcclusionWorldViewProj.x = v86[91] - renderer->m_CurrentPosAdjust.x;
