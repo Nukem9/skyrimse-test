@@ -12,9 +12,6 @@ namespace ui::opt
 	bool LogHitches = true;
 }
 
-int commandThreshold = 500;
-int commandThreshold2 = 500;
-
 extern LARGE_INTEGER g_FrameDelta;
 
 namespace ui
@@ -82,7 +79,10 @@ namespace ui
     {
         ImGui_ImplDX11_NewFrame();
         {
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
             RenderMenubar();
+			ImGui::PopStyleVar();
+
 			RenderFramerate();
             RenderSynchronization();
             RenderTESFormCache();
@@ -136,10 +136,8 @@ namespace ui
 		}
 #endif
 
-        if (ImGui::BeginMenu("Windows"))
+        if (ImGui::BeginMenu("Statistics"))
         {
-			ImGui::MenuItem("ImGui Debug", nullptr, &showDemoWindow);
-			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
             ImGui::MenuItem("Framerate", nullptr, &showFPSWindow);
             ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
             ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
@@ -149,17 +147,27 @@ namespace ui
 
         if (ImGui::BeginMenu("Game"))
         {
-			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
-
             bool g_BlockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
 
             if (ImGui::MenuItem("Block Input", nullptr, &g_BlockInput))
                 ProxyIDirectInputDevice8A::ToggleGlobalInput(!g_BlockInput);
 
+			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
+			ImGui::Separator();
+			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
 			ImGui::MenuItem("Shader Tweaks", nullptr, &showShaderTweakWindow);
 			ImGui::MenuItem("INISetting Viewer", nullptr, &showIniListWindow);
+			ImGui::Separator();
+			if (ImGui::MenuItem("Terminate Process"))
+				TerminateProcess(GetCurrentProcess(), 0x13371337);
             ImGui::EndMenu();
         }
+
+		if (ImGui::BeginMenu("Misc"))
+		{
+			ImGui::MenuItem("ImGui Debug", nullptr, &showDemoWindow);
+			ImGui::EndMenu();
+		}
 
         ImGui::EndMainMenuBar();
     }
@@ -341,8 +349,6 @@ namespace ui
 
             ImGui::Text("FPS: %.2f", CalculateTrueAverageFPS());
             ImGui::Spacing();
-			ImGui::InputInt("Command Threshold", &commandThreshold, 10, 100);
-			ImGui::InputInt("Command Threshold Min", &commandThreshold2, 10, 100);
             ImGui::Text("Havok fMaxTime: %.2f FPS", 1.0f / test);
             ImGui::Text("Havok fMaxTimeComplex: %.2f FPS", 1.0f / test);
 			ImGui::Spacing();
@@ -354,36 +360,13 @@ namespace ui
 			ImGui::Text("Generating D3D11 command lists: %.5f ms", ProfileGetDeltaTime("GameCommandListToD3D") * 1000);
 			ImGui::Text("Waiting for command list completion: %.5f ms", ProfileGetDeltaTime("Waiting for command list completion") * 1000);
 
-			ImGui::Text("T1: %.5f ms", ProfileGetDeltaTime("T1") * 1000);
-			ImGui::Text("RenderBatches: %.5f ms", ProfileGetDeltaTime("RenderBatches") * 1000);
-			ImGui::Text("LowAniso: %.5f ms", ProfileGetDeltaTime("LowAniso") * 1000);
-			ImGui::Text("RenderGrass: %.5f ms", ProfileGetDeltaTime("RenderGrass") * 1000);
-			ImGui::Text("DC_WaitDeferred: %.5f ms", ProfileGetDeltaTime("DC_WaitDeferred") * 1000);
-			ImGui::Text("LOD: %.5f ms", ProfileGetDeltaTime("LOD") * 1000);
-			ImGui::Text("BSShaderAccumulator: %.5f ms", ProfileGetDeltaTime("BSShaderAccumulator") * 1000);
-			ImGui::Text("Spins: %lld", ProfileGetDeltaValue("Spins"));
-			ImGui::Text("Command Count: %lld", ProfileGetDeltaValue("Command Count"));
-			ImGui::Text("MTCommandCount Count: %lld", ProfileGetDeltaValue("DrawPassGeometry"));
-
-			ProfileGetValue("DrawPassGeometry");
-
 			ProfileGetValue("CB Bytes Requested");
 			ProfileGetValue("VIB Bytes Requested");
 			ProfileGetValue("CB Bytes Wasted");
 
 			ProfileGetTime("GameCommandList");
 			ProfileGetTime("GameCommandListToD3D");
-
-			ProfileGetValue("Command Count");
-			ProfileGetValue("Spins");
 			ProfileGetTime("Waiting for command list completion");
-			ProfileGetTime("T1");
-			ProfileGetTime("RenderBatches");
-			ProfileGetTime("LowAniso");
-			ProfileGetTime("RenderGrass");
-			ProfileGetTime("DC_WaitDeferred");
-			ProfileGetTime("LOD");
-			ProfileGetTime("BSShaderAccumulator");
 		}
         ImGui::End();
     }
