@@ -1,6 +1,5 @@
 #include "common.h"
 #include "patches/rendering/d3d11_tls.h"
-#include "patches/patches.h"
 
 ULONG_PTR g_ModuleBase;
 ULONG_PTR g_ModuleSize;
@@ -59,6 +58,8 @@ void LoadModules()
 
 void ApplyPatches()
 {
+	SetThreadName(GetCurrentThreadId(), "Main Thread");
+
     // Called once the exe has been unpacked. Before applying code modifications:
     // ensure that exceptions are not swallowed when dispatching certain Windows
     // messages.
@@ -84,9 +85,8 @@ void ApplyPatches()
         }
     }
 
-    DWORD oldMode = 0;
     SetErrorMode(0);
-    SetThreadErrorMode(0, &oldMode);
+    SetThreadErrorMode(0, nullptr);
 
 #if SKYRIM64_USE_VFS
 	once();
@@ -94,32 +94,8 @@ void ApplyPatches()
 #endif
 
 	InitializeTLSMain();
-	//LoadModules();
-
-	SetThreadName(GetCurrentThreadId(), "Main Thread");
-
-    // Now hook everything
-    PatchThreading();
-    //PatchWindow();
-    PatchDInput();
-    //PatchD3D11();
-	PatchSteam();
-    PatchAchievements();
-    PatchSettings();
-    PatchMemory();
-    PatchLocks();
-    PatchTESForm();
-    PatchBSThread();
-	PatchBSGraphicsRenderTargetManager();
-	PatchLogging();
-
-	ExperimentalPatchEmptyFunctions();
-	ExperimentalPatchMemInit();
-
-	// Broken printf statement that triggers invalid_parameter_handler(), "%08" should really be "%08X"
-	const char *newFormat = "World object count changed on object '%s' %08X from %i to %i";
-
-	PatchMemory(g_ModuleBase + 0x1696030, (PBYTE)newFormat, strlen(newFormat) + 1);
+	LoadModules();
+	Patch_TESV();
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)

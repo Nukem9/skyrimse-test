@@ -43,7 +43,6 @@
 #include "dump.h"
 #include "ansel.h"
 #include "profiler.h"
-#include "patches/patches.h"
 
 extern ULONG_PTR g_ModuleBase;
 extern ULONG_PTR g_ModuleSize;

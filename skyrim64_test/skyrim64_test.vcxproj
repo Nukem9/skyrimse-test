@@ -143,7 +143,6 @@
     <ClInclude Include="src\patches\TES\MTRenderer.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSDynamicTriShape.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h" />
-    <ClInclude Include="src\patches\patches.h" />
     <ClInclude Include="src\patches\rendering\codegen.h" />
     <ClInclude Include="src\patches\rendering\common.h" />
     <ClInclude Include="src\patches\rendering\d3d11_tls.h" />
@@ -241,6 +240,7 @@
     <ClCompile Include="jemalloc\witness.c" />
     <ClCompile Include="src\ansel.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />
+    <ClCompile Include="src\patches\patches.cpp" />
     <ClCompile Include="src\patches\rendering\codegen.cpp" />
     <ClCompile Include="src\patches\rendering\d3d11.cpp" />
     <ClCompile Include="src\d3dx9_debug.cpp" />

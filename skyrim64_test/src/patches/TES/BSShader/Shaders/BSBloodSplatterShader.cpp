@@ -7,6 +7,7 @@
 
 DEFINE_SHADER_DESCRIPTOR(
 	"BloodSplatter",
+
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float4x4,	WorldViewProj)
 	CONFIG_ENTRY(VS, PER_GEO, 1, float4,				LightLoc)
@@ -36,11 +37,6 @@ using namespace DirectX;
 
 AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
 AutoPtr(__int64, qword_14304EF00, 0x304EF00);
-
-void TestHook1()
-{
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12EF750), &BSBloodSplatterShader::__ctor__);
-}
 
 BSBloodSplatterShader::BSBloodSplatterShader() : BSShader(ShaderConfig.Type)
 {

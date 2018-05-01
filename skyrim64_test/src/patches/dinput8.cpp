@@ -1,14 +1,12 @@
 #include "../common.h"
 #include "dinput8.h"
 
-std::shared_mutex ProxyIDirectInputDevice8A::m_Mutex;
-std::vector<IDirectInputDevice8A *> ProxyIDirectInputDevice8A::m_Devices;
 bool ProxyIDirectInputDevice8A::m_EnableInput = true;
 
 uint8_t *CreateDevice;
-HRESULT WINAPI hk_CreateDevice(IDirectInput8A *thisptr, REFGUID rguid, IDirectInputDevice8A **lplpDirectInputDevice, IUnknown *pUnkOuter)
+HRESULT WINAPI hk_DirectInput8CreateDevice(IDirectInput8A *thisptr, REFGUID rguid, IDirectInputDevice8A **lplpDirectInputDevice, IUnknown *pUnkOuter)
 {
-	HRESULT hr = ((decltype(&hk_CreateDevice))CreateDevice)(thisptr, rguid, lplpDirectInputDevice, pUnkOuter);
+	HRESULT hr = ((decltype(&hk_DirectInput8CreateDevice))CreateDevice)(thisptr, rguid, lplpDirectInputDevice, pUnkOuter);
 
 	// Return our proxy device to the caller
 	if (SUCCEEDED(hr))
@@ -30,7 +28,7 @@ HRESULT WINAPI hk_DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID ri
 			return E_FAIL;
 		}
 
-		CreateDevice = Detours::X64::DetourClassVTable(*(uint8_t **)(*ppvOut), &hk_CreateDevice, 3);
+		CreateDevice = Detours::X64::DetourClassVTable(*(uint8_t **)(*ppvOut), &hk_DirectInput8CreateDevice, 3);
 	}
 
 	return hr;
@@ -266,9 +264,4 @@ void ProxyIDirectInputDevice8A::ToggleGlobalInput(bool EnableInput)
 bool ProxyIDirectInputDevice8A::GlobalInputAllowed()
 {
 	return m_EnableInput;
-}
-
-void PatchDInput()
-{
-	PatchIAT(hk_DirectInput8Create, "dinput8.dll", "DirectInput8Create");
 }

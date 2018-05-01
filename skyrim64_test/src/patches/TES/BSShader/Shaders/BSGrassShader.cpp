@@ -8,6 +8,7 @@
 
 DEFINE_SHADER_DESCRIPTOR(
 	"RunGrass",
+
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float4x4,	WorldViewProj)
 	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float4x4,	WorldView)
@@ -61,11 +62,6 @@ DefineIniSetting(fShadowClampValue, Display);
 DefineIniSetting(fWindGrassMultiplier, Display);
 
 thread_local XMVECTOR TLS_FogNearColor;
-
-void TestHook4()
-{
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E4C10), &BSGrassShader::__ctor__);
-}
 
 BSGrassShader::BSGrassShader() : BSShader(ShaderConfig.Type)
 {

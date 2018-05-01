@@ -6,6 +6,7 @@
 
 DEFINE_SHADER_DESCRIPTOR(
 	"DistantTree",
+
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, undefined,				InstanceData)
 	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float4x4,	WorldViewProj)
@@ -43,11 +44,6 @@ AutoPtr(bool, bUseEarlyZ, 0x30528E5);
 AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(__int64, qword_141E32F20, 0x1E32F20);
-
-void TestHook2()
-{
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1318050), &BSDistantTreeShader::__ctor__);
-}
 
 BSDistantTreeShader::BSDistantTreeShader() : BSShader(ShaderConfig.Type)
 {

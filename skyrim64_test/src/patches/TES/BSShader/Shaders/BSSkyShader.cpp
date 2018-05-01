@@ -8,6 +8,7 @@
 
 DEFINE_SHADER_DESCRIPTOR(
 	"Sky",
+
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float4x4,	WorldViewProj)
 	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float4x4,	World)
@@ -44,11 +45,6 @@ AutoPtr(__int64, qword_1431F5810, 0x31F5810);
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(__int64, qword_1431F55F8, 0x31F55F8);
 AutoPtr(float, qword_143257D80, 0x3257D80);
-
-void TestHook3()
-{
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13113F0), &BSSkyShader::__ctor__);
-}
 
 BSSkyShader::BSSkyShader() : BSShader(ShaderConfig.Type)
 {

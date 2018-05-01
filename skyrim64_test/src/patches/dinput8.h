@@ -12,8 +12,8 @@ private:
 	bool m_IsKeyboard;
 	bool m_IsMouse;
 
-	static std::shared_mutex m_Mutex;
-	static std::vector<IDirectInputDevice8A *> m_Devices;
+	inline static std::shared_mutex m_Mutex;
+	inline static std::vector<IDirectInputDevice8A *> m_Devices;
 	static bool m_EnableInput;
 
 public:
@@ -56,3 +56,6 @@ public:
 	static void ToggleGlobalInput(bool EnableInput);
 	static bool GlobalInputAllowed();
 };
+
+HRESULT WINAPI hk_DirectInput8CreateDevice(IDirectInput8A *thisptr, REFGUID rguid, IDirectInputDevice8A **lplpDirectInputDevice, IUnknown *pUnkOuter);
+HRESULT WINAPI hk_DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID *ppvOut, IUnknown *punkOuter);

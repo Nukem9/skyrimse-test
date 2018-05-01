@@ -86,9 +86,6 @@
     <ClInclude Include="src\vfs\vfs_util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\patches.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\ui\imgui_impl_dx11.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -542,6 +539,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSShader\BSShader_Dumper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\patches.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

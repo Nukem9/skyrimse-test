@@ -7,7 +7,7 @@ BSReadWriteLock::BSReadWriteLock()
 
 BSReadWriteLock::~BSReadWriteLock()
 {
-	Assert(m_Bits == 0 && m_WriteCount == 0);
+	AssertMsg(m_Bits == 0 && m_WriteCount == 0, "Destructing a lock that is still in use");
 }
 
 void BSReadWriteLock::LockForRead()
@@ -88,7 +88,7 @@ bool BSReadWriteLock::TryLockForWrite()
 
 void BSReadWriteLock::LockForReadAndWrite()
 {
-	// This is only called from BSAutoReadAndWriteLock (but it's always a write lock now)
+	// This is only called from BSAutoReadAndWriteLock (no-op, it's always a write lock now)
 }
 
 bool BSReadWriteLock::IsWritingThread()
@@ -107,22 +107,4 @@ BSAutoReadAndWriteLock *BSAutoReadAndWriteLock::Initialize(BSReadWriteLock *Chil
 void BSAutoReadAndWriteLock::Deinitialize()
 {
 	m_Lock->UnlockWrite();
-}
-
-void PatchLocks()
-{
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06DF0), &BSReadWriteLock::__ctor__);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06E10), &BSReadWriteLock::LockForRead);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC070D0), &BSReadWriteLock::UnlockRead);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06E90), &BSReadWriteLock::LockForWrite);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC070E0), &BSReadWriteLock::UnlockWrite);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07080), &BSReadWriteLock::TryLockForWrite);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07110), &BSReadWriteLock::IsWritingThread);
-
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07130), &BSAutoReadAndWriteLock::Initialize);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07180), &BSAutoReadAndWriteLock::Deinitialize);
-
-	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xBE9010), &BSSpinLock::LockForWrite);	// EnterUpgradeableReaderLock -- check parent function
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06F90), &BSReadWriteLock::LockForReadAndWrite);		// UpgdateToWriteLock -- this is a no-op
-	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xBE9270), &BSSpinLock::UnlockWrite);	// ExitUpgradeableReaderLock -- name might be wrong
 }

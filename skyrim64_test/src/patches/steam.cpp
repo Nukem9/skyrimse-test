@@ -3,7 +3,6 @@
 typedef void *ISteamUser;
 typedef void *ISteamFriends;
 typedef void *ISteamUserStats;
-class CCallbackBase;
 
 bool SteamAPI_Init()
 {
