@@ -46,6 +46,9 @@ public:
 	void *unk1;
 	void *unk2;
 
+	static bool SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique);
+	static void ClearShaderAndTechnique();
+
 	bool HasTechniquePasses(uint32_t StartTech, uint32_t EndTech);
 
 	bool sub_14131E8F0(unsigned int a2, uint32_t& SubPassIndex);

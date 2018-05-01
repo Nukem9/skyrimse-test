@@ -43,7 +43,7 @@ namespace MTRenderer
 		if (IsGeneratingGameCommandList())
 			InsertCommand<ClearStateRenderCommand>();
 		else
-			::ClearShaderAndTechnique();
+			BSBatchRenderer::ClearShaderAndTechnique();
 	}
 
 	void RasterStateSetCullMode(uint32_t CullMode)
