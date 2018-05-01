@@ -752,14 +752,16 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 		// NiParticles::GetActiveVertexCount
 		int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
 
-		AssertMsg(particleCount <= MAX_SHARED_PARTICLES_SIZE,
-			"This emitter emits more particles than allowed in our rendering buffers. "
-			"Please investigate emitter or increase MAX_SHARED_PARTICLES_SIZE");
+		particleCount = min(particleCount, 2048);
+
+		//AssertMsg(particleCount <= MAX_SHARED_PARTICLES_SIZE,
+		//	"This emitter emits more particles than allowed in our rendering buffers. "
+		//	"Please investigate emitter or increase MAX_SHARED_PARTICLES_SIZE");
 
 		if (particleCount > 0)
 		{
 			BSGraphics::DynamicTriShape *triInfo = renderer->GetParticlesDynamicTriShape();
-			void *map = renderer->MapDynamicTriShapeDynamicData(nullptr, triInfo, 4 * particleCount * geometry->GetVertexSize1());
+			void *map = renderer->MapDynamicTriShapeDynamicData(nullptr, triInfo, 4 * particleCount * geometry->GetDynamicVertexSize());
 
 			if (map)
 			{

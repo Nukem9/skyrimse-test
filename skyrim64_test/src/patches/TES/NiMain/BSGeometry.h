@@ -37,10 +37,27 @@ public:
 	char ucType;
 	// bool Registered?
 
+	NiProperty *QProperty(uint32_t Index) const
+	{
+		AssertDebug(Index < ARRAYSIZE(spProperties));
+
+		return spProperties[Index];
+	}
+
 	NiAlphaProperty *QAlphaProperty() const
 	{
-		return static_cast<NiAlphaProperty *>(spProperties[0]);
+		return static_cast<NiAlphaProperty *>(QProperty(0));
 	}
+
+/*	NiShadeProperty *QNiShadeProperty() const
+	{
+		return static_cast<NiShadeProperty *>(QProperty(1));
+	}
+
+	BSShaderProperty *QShaderProperty() const
+	{
+		return static_cast<BSShaderProperty *>(QProperty(1));
+	}*/
 
 	NiSkinInstance *QSkinInstance() const
 	{
@@ -57,14 +74,50 @@ public:
 		return uiVertexDesc;
 	}
 
-	uint32_t GetVertexSize1() const
+	uint32_t GetVertexAttributeOffset(uint32_t Index) const
 	{
-		return (GetVertexDesc() >> 2) & 0x3C;
+		return CalculateVertexAttributeOffset(uiVertexDesc, Index);
+	}
+
+	uint32_t GetVertexSize() const
+	{
+		return CalculateVertexSize(uiVertexDesc);
+	}
+
+	uint32_t GetDynamicVertexSize() const
+	{
+		return CalculateDyanmicVertexSize(uiVertexDesc);
 	}
 
 	int QType() const
 	{
 		return ucType;
+	}
+
+	//
+	// enum BSGraphics::VertexDescEntry
+	// https://forum.niftools.org/topic/4514-bsvertexdata-bsvertexformat/
+	// https://github.com/ousnius/BodySlide-and-Outfit-Studio/blob/4537c4fc66a79d8a54e72cc12a732dc00008d356/lib/NIF/VertexData.h#L45
+	//
+	static bool HasVertexAttribute(uint64_t VertexDesc, uint32_t AttributeIndex)
+	{
+		return (VertexDesc & (0x40100000000000i64 << AttributeIndex)) != 0;
+	}
+
+	static uint32_t CalculateVertexAttributeOffset(uint64_t VertexDesc, uint32_t Index)
+	{
+		return (VertexDesc >> (4 * Index + 2)) & 0x3C;
+	}
+
+	static uint32_t CalculateVertexSize(uint64_t VertexDesc)
+	{
+		return 4 * VertexDesc & 0x3C;
+	}
+
+	static uint32_t CalculateDyanmicVertexSize(uint64_t VertexDesc)
+	{
+		// VERTEX_DESC_ENTRY_POSITION
+		return CalculateVertexAttributeOffset(VertexDesc, 0);
 	}
 };
 static_assert(sizeof(BSGeometry) == 0x158);

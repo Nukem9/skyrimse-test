@@ -206,7 +206,7 @@ namespace BSGraphics
 
 		SyncD3DState(false);
 
-		UINT stride = (4 * GraphicsLineShape->m_VertexDesc) & 0x3C;
+		UINT stride = BSGeometry::CalculateVertexSize(GraphicsLineShape->m_VertexDesc);
 		UINT offset = 0;
 
 		m_DeviceContext->IASetVertexBuffers(0, 1, &GraphicsLineShape->m_VertexBuffer, &stride, &offset);
@@ -221,7 +221,7 @@ namespace BSGraphics
 
 		SyncD3DState(false);
 
-		UINT stride = (4 * GraphicsTriShape->m_VertexDesc) & 0x3C;
+		UINT stride = BSGeometry::CalculateVertexSize(GraphicsTriShape->m_VertexDesc);
 		UINT offset = 0;
 
 		m_DeviceContext->IASetVertexBuffers(0, 1, &GraphicsTriShape->m_VertexBuffer, &stride, &offset);
@@ -281,8 +281,8 @@ namespace BSGraphics
 		buffers[1] = m_DynamicBuffers[m_CurrentDynamicBufferIndex];
 
 		UINT strides[2];
-		strides[0] = (4 * DrawData->m_VertexDesc) & 0x3C;
-		strides[1] = (DrawData->m_VertexDesc >> 2) & 0x3C;
+		strides[0] = BSGeometry::CalculateVertexSize(DrawData->m_VertexDesc);
+		strides[1] = BSGeometry::CalculateDyanmicVertexSize(DrawData->m_VertexDesc);
 
 		UINT offsets[2];
 		offsets[0] = 0;
