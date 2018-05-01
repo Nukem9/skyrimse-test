@@ -159,9 +159,6 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
-	// Standard world transformation matrix
-	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
-
 	//
 	// GetXMFromNiPosAdjust is a custom function to remove the original global variable
 	// references...I'm copying what FO4 did and passing in another local argument.
@@ -171,6 +168,7 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags
 	//		flt_14304E210 = flt_14304E21C;
 	//		flt_14304E214 = flt_14304E220;
 	//
+	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
 	XMMATRIX prevGeoTransform = BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetWorldTransform(), renderer->m_PreviousPosAdjust);
 
 	//

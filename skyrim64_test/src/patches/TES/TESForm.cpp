@@ -39,6 +39,8 @@ namespace Bitmap
 		sliceBase = max(sliceBase, MemoryBase);
 		sliceSize = min(sliceSize, MemoryEnd - sliceBase);
 
+		ProfileTimer("Cache Bytes Utilized");
+
 		VirtualAlloc((LPVOID)sliceBase, sliceSize, MEM_COMMIT, PAGE_READWRITE);
 		return EXCEPTION_CONTINUE_EXECUTION;
 	}

@@ -1262,6 +1262,9 @@ void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::Constant
 	if (Pass->m_LightCount > 0)
 		v7 = *(uintptr_t *)((uintptr_t)Pass + 56);
 
+	Assert(v7 == (uintptr_t)Pass->QLights());
+	Assert(*(uintptr_t *)v7 == (uintptr_t)Pass->QLights()[0]);
+
 	float *v10 = *(float **)(*(uintptr_t *)v7 + 72i64);
 	float v12 = *(float *)(qword_1431F5810 + 224) * v10[77];
 
@@ -1399,7 +1402,8 @@ void BSLightingShader::sub_14130C8A0(const NiTransform& Transform, XMMATRIX& Out
 		XMMATRIX m1 = BSShaderUtil::GetXMFromNi(temp);
 		XMMATRIX m2 = BSShaderUtil::GetXMFromNi(Transform);
 
-		// out = Translate(m2, renderer->m_CurrentPosAdjust) * m1; -- operator order DOES matter
+		// * Operator order DOES matter
+		// OutMatrix = Mul(Translate(m2, renderer->m_CurrentPosAdjust), m1);
 		m2.r[3] = XMVectorAdd(m2.r[3], XMVectorSet(
 			temp.m_Translate.x,
 			temp.m_Translate.y,

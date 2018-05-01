@@ -16,12 +16,12 @@ struct BSRenderPass
 	BSRenderPass *m_Next;	// Possibly sub-pass
 	void **m_SceneLights;	// Pointer to an array of 16 lights (MaxLightInArrayC, directional only?, restricted to 3?)
 
-	NiAlphaProperty *QAlphaProperty()
+	NiAlphaProperty *QAlphaProperty() const
 	{
 		return m_Geometry->QAlphaProperty();
 	}
 
-	void **QLights()
+	void **QLights() const
 	{
 		return m_SceneLights;
 	}

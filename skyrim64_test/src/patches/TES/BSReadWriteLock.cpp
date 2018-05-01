@@ -125,6 +125,4 @@ void PatchLocks()
 	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xBE9010), &BSSpinLock::LockForWrite);	// EnterUpgradeableReaderLock -- check parent function
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06F90), &BSReadWriteLock::LockForReadAndWrite);		// UpgdateToWriteLock -- this is a no-op
 	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xBE9270), &BSSpinLock::UnlockWrite);	// ExitUpgradeableReaderLock -- name might be wrong
-
-	// C05B30 - Enter any lock mode, returns true if entered write, false if read (no sleep time!), but it's unused by game.
 }
