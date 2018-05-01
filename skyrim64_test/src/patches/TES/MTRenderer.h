@@ -290,12 +290,7 @@ namespace MTRenderer
 
 		void Run()
 		{
-			auto GraphicsGlobals = HACK_GetThreadedGlobals();
-
-			// BSShaderManager::pCurrentShaderAccumulator
-			uint64_t& qword_1431F5490 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3600);
-
-			qword_1431F5490 = (uint64_t)&data;
+			BSShaderManager::SetCurrentAccumulator((BSShaderAccumulator *)&data);
 		}
 	};
 

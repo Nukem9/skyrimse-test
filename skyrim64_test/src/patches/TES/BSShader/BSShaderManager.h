@@ -71,10 +71,12 @@ public:
 	};
 
 private:
-	// inline static BSShaderAccumulator *pCurrentShaderAccumulator;
-	inline static uint32_t usRenderMode;
+	inline static BSShaderAccumulator *pCurrentShaderAccumulator;// NOTE: This is now a per-thread variable in SetCurrentAccumulator
+	inline AutoPtr(uint32_t, usRenderMode, 0x31F5498);
 
 public:
+	// inline static NiCamera *spCamera;
+
 	static void SetRenderMode(uint32_t RenderMode);
 
 	static void SetCurrentAccumulator(BSShaderAccumulator *Accumulator);
