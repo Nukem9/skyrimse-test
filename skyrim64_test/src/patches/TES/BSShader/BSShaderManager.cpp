@@ -22,3 +22,11 @@ BSShaderAccumulator *BSShaderManager::GetCurrentAccumulator()
 	// BSShaderManager::pCurrentShaderAccumulator
 	return *(BSShaderAccumulator **)((uintptr_t)HACK_GetThreadedGlobals() + 0x3600);
 }
+
+class BSFogProperty *BSShaderManager::GetFogProperty(uint32_t Index)
+{
+	auto sub_1412AC860 = (uintptr_t(__fastcall *)(BYTE))(g_ModuleBase + 0x12AC860);
+	uintptr_t fogParams = sub_1412AC860((BYTE)Index);
+
+	return (class BSFogProperty *)fogParams;
+}

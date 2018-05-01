@@ -79,6 +79,8 @@ public:
 
 	static void SetCurrentAccumulator(BSShaderAccumulator *Accumulator);
 	static BSShaderAccumulator *GetCurrentAccumulator();
+
+	static class BSFogProperty *GetFogProperty(uint32_t Index);
 };
 
 enum class BSSM_SHADER_TYPE

@@ -77,8 +77,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	// fogParams is of type NiFogProperty *
-	auto sub_1412AC860 = (uintptr_t(__fastcall *)(BYTE))(g_ModuleBase + 0x12AC860);
-	uintptr_t fogParams = sub_1412AC860(byte_141E32FE0);
+	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(byte_141E32FE0);
 
 	if (fogParams)
 	{
