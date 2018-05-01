@@ -9,6 +9,87 @@
 
 extern ID3DUserDefinedAnnotation *annotation;
 
+void BSShaderAccumulator::InitCallbackTable()
+{
+	// If the pointer is null, it defaults to the function at index 0
+	RegisterObjectArray[0] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 00 RegisterObject_Normal
+	RegisterObjectArray[1] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 01 RegisterObject_Normal
+	RegisterObjectArray[2] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 02 RegisterObject_Normal
+	RegisterObjectArray[3] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 03 RegisterObject_Normal
+	RegisterObjectArray[4] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 04 RegisterObject_Normal
+	RegisterObjectArray[5] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 05 RegisterObject_Normal
+	RegisterObjectArray[6] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 06 RegisterObject_Normal
+	RegisterObjectArray[7] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 07 RegisterObject_Normal
+	RegisterObjectArray[8] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 08 RegisterObject_Normal
+	RegisterObjectArray[9] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 09 RegisterObject_Normal
+	RegisterObjectArray[10] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 10 RegisterObject_Normal
+	RegisterObjectArray[11] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 11 RegisterObject_Normal
+	RegisterObjectArray[12] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 12 RegisterObject_ShadowMapOrMask
+	RegisterObjectArray[13] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 13 RegisterObject_ShadowMapOrMask
+	RegisterObjectArray[14] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 14 RegisterObject_ShadowMapOrMask
+	RegisterObjectArray[15] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 15 RegisterObject_ShadowMapOrMask
+	RegisterObjectArray[16] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 16 RegisterObject_ShadowMapOrMask
+	RegisterObjectArray[17] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 17 RegisterObject_ShadowMapOrMask
+	RegisterObjectArray[18] = (RegisterObjFunc)(g_ModuleBase + 0x12E1400);	// 18 ?
+	RegisterObjectArray[19] = (RegisterObjFunc)(g_ModuleBase + 0x12E1400);	// 19 ?
+	RegisterObjectArray[20] = (RegisterObjFunc)(g_ModuleBase + 0x12E1340);	// 20 RegisterObject_Interface
+	RegisterObjectArray[21] = (RegisterObjFunc)(g_ModuleBase + 0x12E1370);	// 21 ?
+	RegisterObjectArray[22] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 22 RegisterObject_Normal
+	RegisterObjectArray[23] = (RegisterObjFunc)(g_ModuleBase + 0x12E1380);	// 23 ?
+	RegisterObjectArray[24] = (RegisterObjFunc)(g_ModuleBase + 0x12E15E0);	// 24 ?
+	RegisterObjectArray[25] = (RegisterObjFunc)(g_ModuleBase + 0x12E1780);	// 25 RegisterObject_LOD
+	RegisterObjectArray[26] = (RegisterObjFunc)(g_ModuleBase + 0x12E1780);	// 26 RegisterObject_LOD
+	RegisterObjectArray[27] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 27 RegisterObject_Normal
+	RegisterObjectArray[28] = (RegisterObjFunc)(g_ModuleBase + 0x12E1800);	// 28 ?
+	RegisterObjectArray[29] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 29 RegisterObject_Normal
+
+	// If the pointer is null, it defaults to the function at index 0
+	FinishAccumulatingArray[0] = (FinishAccumFunc)(g_ModuleBase + 0x12E1880);	// 00 FinishAccumulating_Normal
+	FinishAccumulatingArray[1] = nullptr;										// 01
+	FinishAccumulatingArray[2] = nullptr;										// 02
+	FinishAccumulatingArray[3] = nullptr;										// 03
+	FinishAccumulatingArray[4] = nullptr;										// 04
+	FinishAccumulatingArray[5] = nullptr;										// 05
+	FinishAccumulatingArray[6] = nullptr;										// 06
+	FinishAccumulatingArray[7] = nullptr;										// 07
+	FinishAccumulatingArray[8] = nullptr;										// 08
+	FinishAccumulatingArray[9] = nullptr;										// 09
+	FinishAccumulatingArray[10] = nullptr;										// 10
+	FinishAccumulatingArray[11] = nullptr;										// 11
+	FinishAccumulatingArray[12] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 12 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[13] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 13 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[14] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 14 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[15] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 15 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[16] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 16 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[17] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 17 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[18] = nullptr;										// 18
+	FinishAccumulatingArray[19] = nullptr;										// 19
+	FinishAccumulatingArray[20] = (FinishAccumFunc)(g_ModuleBase + 0x12E2FE0);	// 20 FinishAccumulating_InterfaceElements
+	FinishAccumulatingArray[21] = nullptr;										// 21
+	FinishAccumulatingArray[22] = (FinishAccumFunc)(g_ModuleBase + 0x12E2B20);	// 22 FinishAccumulating_FirstPerson
+	FinishAccumulatingArray[23] = (FinishAccumFunc)(g_ModuleBase + 0x12E3020);	// 23 ?
+	FinishAccumulatingArray[24] = (FinishAccumFunc)(g_ModuleBase + 0x12E3030);	// 24 ?
+	FinishAccumulatingArray[25] = (FinishAccumFunc)(g_ModuleBase + 0x12E31E0);	// 25 FinishAccumulating_LODOnly
+	FinishAccumulatingArray[26] = (FinishAccumFunc)(g_ModuleBase + 0x12E31E0);	// 26 FinishAccumulating_LODOnly
+	FinishAccumulatingArray[27] = nullptr;										// 27
+	FinishAccumulatingArray[28] = (FinishAccumFunc)(g_ModuleBase + 0x12E32B0);	// 28 ? BSSM_RENDER_PRECIPITATION_OCCLUSION_MAP?
+	FinishAccumulatingArray[29] = nullptr;										// 29
+
+	SetRenderMode(0);
+}
+
+void BSShaderAccumulator::SetRenderMode(uint32_t RenderMode)
+{
+	RegisterObjectCurrent = RegisterObjectArray[RenderMode];
+	FinishAccumulatingCurrent = FinishAccumulatingArray[RenderMode];
+
+	if (!RegisterObjectCurrent)
+		RegisterObjectCurrent = RegisterObjectArray[0];
+
+	if (!FinishAccumulatingCurrent)
+		FinishAccumulatingCurrent = FinishAccumulatingArray[0];
+}
+
 void BSShaderAccumulator::sub_1412E1600(uint32_t RenderFlags)
 {
 	annotation->BeginEvent(L"BSShaderAccumulator: Draw1");
@@ -361,7 +442,7 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 	// Always run the full function because I'm not sure if the structure
 	// is used somewhere important.
 	MTRenderer::InsertCommand<MTRenderer::SetAccumulatorRenderCommand>(this);
-	SetCurrentAccumulator(this);
+	BSShaderManager::SetCurrentAccumulator(this);
 
 	if (GroupType <= -1)
 	{

@@ -4,6 +4,7 @@
 
 class NiCamera;
 class NiRenderObject;
+class BSShader;
 class BSBatchRenderer;
 
 class NiAccumulator : public NiObject
@@ -52,6 +53,9 @@ static_assert(offsetof(NiAlphaAccumulator, m_UnknownByte52) == 0x52, "");
 class BSShaderAccumulator : public NiAlphaAccumulator
 {
 public:
+	typedef void(*RegisterObjFunc)(void *, void *, void *, void *);
+	typedef void(*FinishAccumFunc)(BSShaderAccumulator *Accumulator, uint32_t Flags);
+
 	virtual ~BSShaderAccumulator();
 
 	virtual void StartAccumulating(NiCamera const *) override;
@@ -65,7 +69,23 @@ public:
 	uint32_t m_CurrentTech;
 	uint32_t m_CurrentSubPass;
 	bool m_HasPendingDraws;
-	char _pad[0x39];
+	char _pad[0x27];
+	NiPoint3 m_CurrentViewPos;
+	char _pad2[0xC];
+	// @ 0x68 = Unknown float (1.0f)
+	// @ 0x88 = Pointer to array of unknown D3D11 objects
+	// @ 0xA0 = Pointer to array of unknown D3D11 objects
+	// @ 0xD0 = BSMap<BSFadeNode, uint32_t>
+	// @ 0x118 = NiPoint3(0.300, 0.300, 0.300)
+	// @ 0x148 = ShadowSceneNode/NiNode
+
+	inline static RegisterObjFunc RegisterObjectArray[30];
+	inline static FinishAccumFunc FinishAccumulatingArray[30];
+	inline static RegisterObjFunc RegisterObjectCurrent;
+	inline static FinishAccumFunc FinishAccumulatingCurrent;
+
+	static void InitCallbackTable();
+	static void SetRenderMode(uint32_t RenderMode);
 
 	void sub_1412E1600(uint32_t RenderFlags);
 	void RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType);
@@ -76,3 +96,4 @@ static_assert(offsetof(BSShaderAccumulator, m_MainBatch) == 0x130, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentTech) == 0x138, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentSubPass) == 0x13C, "");
 static_assert(offsetof(BSShaderAccumulator, m_HasPendingDraws) == 0x140, "");
+static_assert(offsetof(BSShaderAccumulator, m_CurrentViewPos) == 0x168, "");
