@@ -1,4 +1,4 @@
-#include "../../../tbb2018/concurrent_unordered_map.h"
+#include "../../../tbb2018/concurrent_hash_map.h"
 #include "../../common.h"
 #include "BSTScatterTable.h"
 #include "BSReadWriteLock.h"
@@ -7,7 +7,7 @@
 AutoPtr(BSReadWriteLock, GlobalFormLock, 0x1EEA0D0);
 AutoPtr(templated(BSTCRCScatterTable<uint32_t, TESForm *> *), GlobalFormList, 0x1EE9C38);
 
-tbb::concurrent_unordered_map<uint32_t, TESForm *> g_FormMap[TES_FORM_MASTER_COUNT];
+tbb::concurrent_hash_map<uint32_t, TESForm *> g_FormMap[TES_FORM_MASTER_COUNT];
 
 namespace Bitmap
 {
@@ -39,7 +39,7 @@ namespace Bitmap
 		sliceBase = max(sliceBase, MemoryBase);
 		sliceSize = min(sliceSize, MemoryEnd - sliceBase);
 
-		ProfileTimer("Cache Bytes Utilized");
+		ProfileCounterAdd("Cache Bytes Utilized", sliceSize);
 
 		VirtualAlloc((LPVOID)sliceBase, sliceSize, MEM_COMMIT, PAGE_READWRITE);
 		return EXCEPTION_CONTINUE_EXECUTION;
@@ -57,23 +57,15 @@ namespace Bitmap
 		AddVectoredExceptionHandler(0, PageFaultExceptionFilter);
     }
 
-#define WORD_OFFSET(b) ((b) / 32)
-#define BIT_OFFSET(b) ((b) % 32)
-
-	void SetNull(uint32_t MasterId, uint32_t BaseId)
+	void SetNull(uint32_t MasterId, uint32_t BaseId, bool Unset)
     {
         if (MasterId >= EntryCount)
             return;
 
-		_interlockedbittestandset(&FormBitmap[MasterId][WORD_OFFSET(BaseId)], BIT_OFFSET(BaseId));
-    }
-
-	void Unset(uint32_t MasterId, uint32_t BaseId)
-    {
-        if (MasterId >= EntryCount)
-            return;
-
-		_interlockedbittestandreset(&FormBitmap[MasterId][WORD_OFFSET(BaseId)], BIT_OFFSET(BaseId));
+		if (Unset)
+			_interlockedbittestandreset(&FormBitmap[MasterId][BaseId / 32], BaseId % 32);
+		else
+			_interlockedbittestandset(&FormBitmap[MasterId][BaseId / 32], BaseId % 32);
     }
 
 	bool IsNull(uint32_t MasterId, uint32_t BaseId)
@@ -82,11 +74,8 @@ namespace Bitmap
             return false;
 
         // If bit is set, return true
-        return _bittest(&FormBitmap[MasterId][WORD_OFFSET(BaseId)], BIT_OFFSET(BaseId)) != 0;
+        return _bittest(&FormBitmap[MasterId][BaseId / 32], BaseId % 32) != 0;
     }
-
-#undef WORD_OFFSET
-#undef BIT_OFFSET
 }
 
 void UpdateFormCache(uint32_t FormId, TESForm *Value, bool Invalidate)
@@ -101,17 +90,17 @@ void UpdateFormCache(uint32_t FormId, TESForm *Value, bool Invalidate)
     if (!Value && !Invalidate)
     {
         // Atomic write can be outside of the lock
-        Bitmap::SetNull(masterId, baseId);
+        Bitmap::SetNull(masterId, baseId, false);
     }
 	else
 	{
 		if (Invalidate)
-			Bitmap::Unset(masterId, baseId);
+			Bitmap::SetNull(masterId, baseId, true);
 
 		if (Invalidate)
-			g_FormMap[masterId][baseId] = (TESForm *)1;
+			g_FormMap[masterId].erase(baseId);
 		else
-			g_FormMap[masterId][baseId] = Value;
+			g_FormMap[masterId].insert(std::make_pair(baseId, Value));
 	}
 }
 
@@ -137,13 +126,13 @@ bool GetFormCache(uint32_t FormId, TESForm *&Form)
     }
 	else
 	{
-		// Slow method: Check if the hashmap entry exists
-		const auto &map = g_FormMap[masterId];
+		// Try a hash map lookup instead
+		tbb::concurrent_hash_map<uint32_t, TESForm *>::accessor accessor;
 
-		if (auto e = map.find(baseId); e != map.end() && e->second != (TESForm *)1)
+		if (g_FormMap[masterId].find(accessor, baseId))
 		{
 			hit = true;
-			Form = e->second;
+			Form = accessor->second;
 		}
 		else
 		{
