@@ -4,32 +4,32 @@
 //
 // VS2015 CRT hijacked functions
 //
-MemoryManager *fakeManager = nullptr;
+MemoryManager fakeManager;
 
 void *__fastcall hk_calloc(size_t Count, size_t Size)
 {
 	// The allocated memory is always zeroed
-	return fakeManager->Alloc(Count * Size, 0, false);
+	return fakeManager.Alloc(Count * Size, 0, false);
 }
 
 void *__fastcall hk_malloc(size_t Size)
 {
-	return fakeManager->Alloc(Size, 0, false);
+	return fakeManager.Alloc(Size, 0, false);
 }
 
 void *__fastcall hk_aligned_malloc(size_t Size, size_t Alignment)
 {
-	return fakeManager->Alloc(Size, (int)Alignment, true);
+	return fakeManager.Alloc(Size, (int)Alignment, true);
 }
 
 void __fastcall hk_free(void *Block)
 {
-	return fakeManager->Free(Block, false);
+	return fakeManager.Free(Block, false);
 }
 
 void __fastcall hk_aligned_free(void *Block)
 {
-	return fakeManager->Free(Block, true);
+	return fakeManager.Free(Block, true);
 }
 
 size_t __fastcall hk_msize(void *Block)
