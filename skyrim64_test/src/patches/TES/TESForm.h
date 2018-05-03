@@ -141,11 +141,6 @@ public:
 	virtual NiNode *GetNiNode();
 };
 
-class TESObjectTREE : public TESObjectREFR
-{
-public:
-};
-
 STATIC_CONSTRUCTOR(CheckTESForm, []
 {
 	assert_vtable_index(&BaseFormComponent::~BaseFormComponent, 0);

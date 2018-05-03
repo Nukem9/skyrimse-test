@@ -4,9 +4,10 @@
 #include "Setting.h"
 #include "BGSDistantTreeBlock.h"
 
+AutoPtr(uintptr_t, qword_141EE43A8, 0x1EE43A8);
 DefineIniSetting(bEnableStippleFade, Display);
 
-tbb::concurrent_hash_map<uint32_t, TESObjectTREE *> InstanceFormCache;
+tbb::concurrent_hash_map<uint32_t, TESObjectREFR *> InstanceFormCache;
 
 void BGSDistantTreeBlock::InvalidateCachedForm(uint32_t FormId)
 {
@@ -25,17 +26,17 @@ void BGSDistantTreeBlock::UpdateLODAlphaFade(ResourceData *Data)
 			const uint32_t maskedFormId = instance->FormId & 0x00FFFFFF;
 
 			// Check if this instance was cached, otherwise search each plugin
-			tbb::concurrent_hash_map<uint32_t, TESObjectTREE *>::accessor accessor;
-			TESObjectTREE *treeObject = nullptr;
+			tbb::concurrent_hash_map<uint32_t, TESObjectREFR *>::accessor accessor;
+			TESObjectREFR *treeReference = nullptr;
 
 			if (InstanceFormCache.find(accessor, maskedFormId))
 			{
-				treeObject = accessor->second;
+				treeReference = accessor->second;
 			}
 			else
 			{
-				// Find first valid tree object by ESP/ESM load order
-				for (int k = 0; k < TES_FORM_MASTER_COUNT; k++)
+				// Find first valid tree object by ESP/ESM load order (TESDataHandler::Singleton()->PluginCount)
+				for (uint32_t k = 0; k < *(uint32_t *)(qword_141EE43A8 + 0xD80); k++)
 				{
 					TESForm *form = TESForm::LookupFormById((k << 24) | maskedFormId);
 					TESObjectREFR *ref = nullptr;
@@ -45,31 +46,31 @@ void BGSDistantTreeBlock::UpdateLODAlphaFade(ResourceData *Data)
 
 					if (ref)
 					{
-						__int64 unkPtr = *(__int64 *)((__int64)ref + 0x40);
+						TESForm *baseForm = *(TESForm **)((__int64)ref + 0x40);
 
-						if (unkPtr)
+						if (baseForm)
 						{
 							// Checks if the form type is TREE (TESObjectTREE) and some other flag 0x40
-							if ((*(uint32_t *)((__int64)unkPtr + 16) >> 6) & 1 || *(uint8_t *)((__int64)unkPtr + 0x1A) == 38)
-								treeObject = static_cast<TESObjectTREE *>(ref);
+							if ((*(uint32_t *)((__int64)baseForm + 16) >> 6) & 1 || *(uint8_t *)((__int64)baseForm + 0x1A) == 38)
+								treeReference = ref;
 						}
 					}
 
-					if (treeObject)
+					if (treeReference)
 						break;
 				}
 
 				// Insert even if it's a null pointer
-				InstanceFormCache.insert(std::make_pair(maskedFormId, treeObject));
+				InstanceFormCache.insert(std::make_pair(maskedFormId, treeReference));
 			}
 
 			bool fullyHidden = false;
 			float alpha = 1.0f;
 
-			if (treeObject)
+			if (treeReference)
 			{
-				NiNode *node = treeObject->GetNiNode();
-				__int64 cell = *(__int64 *)((__int64)treeObject + 0x60);// TESObjectREFR::GetParentCell()?
+				NiNode *node = treeReference->GetNiNode();
+				__int64 cell = *(__int64 *)((__int64)treeReference + 0x60);// TESObjectREFR::GetParentCell()?
 
 				if (node && !node->GetAppCulled() && *(uint8_t *)(cell + 0x44) == 7)
 				{
@@ -92,7 +93,7 @@ void BGSDistantTreeBlock::UpdateLODAlphaFade(ResourceData *Data)
 					}
 				}
 
-				if (*(uint32_t *)((__int64)treeObject + 16) & 0x820)
+				if (*(uint32_t *)((__int64)treeReference + 16) & 0x820)
 					fullyHidden = true;
 			}
 
