@@ -3,6 +3,7 @@
 #include "BSTScatterTable.h"
 #include "BSReadWriteLock.h"
 #include "TESForm.h"
+#include "BGSDistantTreeBlock.h"
 
 AutoPtr(BSReadWriteLock, GlobalFormLock, 0x1EEA0D0);
 AutoPtr(templated(BSTCRCScatterTable<uint32_t, TESForm *> *), GlobalFormList, 0x1EE9C38);
@@ -59,7 +60,7 @@ namespace Bitmap
 
 	void SetNull(uint32_t MasterId, uint32_t BaseId, bool Unset)
     {
-        if (MasterId >= EntryCount)
+        if (!ui::opt::EnableCacheBitmap || MasterId >= EntryCount)
             return;
 
 		if (Unset)
@@ -70,7 +71,7 @@ namespace Bitmap
 
 	bool IsNull(uint32_t MasterId, uint32_t BaseId)
     {
-        if (MasterId >= EntryCount)
+        if (!ui::opt::EnableCacheBitmap || MasterId >= EntryCount)
             return false;
 
         // If bit is set, return true
@@ -102,6 +103,8 @@ void UpdateFormCache(uint32_t FormId, TESForm *Value, bool Invalidate)
 		else
 			g_FormMap[masterId].insert(std::make_pair(baseId, Value));
 	}
+
+	BGSDistantTreeBlock::InvalidateCachedForm(FormId);
 }
 
 bool GetFormCache(uint32_t FormId, TESForm *&Form)
@@ -202,6 +205,11 @@ void UnknownFormFunction0(__int64 form, bool a2)
     UpdateFormCache(*(uint32_t *)(form + 0x14), nullptr, true);
 
 	((decltype(&UnknownFormFunction0))origFunc0)(form, a2);
+}
+
+TESForm *TESForm::LookupFormById(uint32_t FormId)
+{
+	return GetFormById(FormId);
 }
 
 void PatchTESForm()

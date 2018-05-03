@@ -27,6 +27,11 @@ public:
 	{
 		return m_kWorld.m_Translate;
 	}
+
+	inline bool GetAppCulled() const
+	{
+		return (*(BYTE *)((__int64)this + 0xF4) & 1);
+	}
 };
 static_assert(sizeof(NiAVObject) == 0x110);
 static_assert(offsetof(NiAVObject, m_kWorld) == 0x7C);

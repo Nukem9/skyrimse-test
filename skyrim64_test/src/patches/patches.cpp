@@ -1,6 +1,7 @@
 #include "../common.h"
 #include "dinput8.h"
 #include "TES/BSReadWriteLock.h"
+#include "TES/BGSDistantTreeBlock.h"
 #include "TES/BSShader/BSShaderManager.h"
 #include "TES/BSShader/Shaders/BSBloodSplatterShader.h"
 #include "TES/BSShader/Shaders/BSDistantTreeShader.h"
@@ -56,6 +57,11 @@ void Patch_TESV()
 
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07130), &BSAutoReadAndWriteLock::Initialize);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07180), &BSAutoReadAndWriteLock::Deinitialize);
+
+	//
+	// BGSDistantTreeBlock
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x4A8360), &BGSDistantTreeBlock::UpdateLODAlphaFade);
 
 	//
 	// Shaders

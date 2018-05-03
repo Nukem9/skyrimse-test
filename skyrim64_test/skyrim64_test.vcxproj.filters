@@ -257,6 +257,12 @@
     <ClInclude Include="src\patches\TES\BSShader\BSShader_Dumper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\BGSDistantTreeBlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -542,6 +548,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\patches.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BGSDistantTreeBlock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
