@@ -172,6 +172,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiColor.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiNode.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiRefObject.h" />

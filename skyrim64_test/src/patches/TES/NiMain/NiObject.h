@@ -2,6 +2,7 @@
 
 #include "NiRefObject.h"
 
+class NiNode;
 class NiStream;
 class NiCloningProcess;
 class NiObjectGroup;
@@ -15,7 +16,7 @@ class NiObject : public NiRefObject
 public:
 	// Verified
 	virtual const NiRTTI *GetRTTI();
-	virtual const void *IsNode();		// const NiNode *
+	virtual const NiNode *IsNode();		// const NiNode *
 	virtual void *IsSwitchNode();		// NiSwitchNode *
 	virtual void *IsFadeNode();			// BSFadeNode *
 	virtual void *IsMultiBoundNode();	// BSMultiBoundNode *
