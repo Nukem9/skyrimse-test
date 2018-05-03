@@ -15,12 +15,12 @@ public:
 	{
 	}
 
-	void *QBuffer()
+	void *QBuffer() const
 	{
 		return m_Buffer;
 	}
 
-	uint32_t QAllocSize()
+	uint32_t QAllocSize() const
 	{
 		return m_AllocSize;
 	}
@@ -38,12 +38,12 @@ public:
 	{
 	}
 
-	uint32_t QSize()
+	uint32_t QSize() const
 	{
 		return m_Size;
 	}
 
-	bool QEmpty()
+	bool QEmpty() const
 	{
 		return m_Size == 0;
 	}
