@@ -3,6 +3,7 @@
 class BaseFormComponent;
 class TESForm;
 class TESObjectREFR;
+class TESObjectCell;
 
 #define TES_FORM_MASTER_COUNT	256			// Maximum master file index + 1 (2^8, 8 bits)
 #define TES_FORM_INDEX_COUNT	16777216	// Maximum index + 1 (2^24, 24 bits)
@@ -139,6 +140,25 @@ public:
 	virtual void VFunc110();
 	virtual void VFunc111();
 	virtual NiNode *GetNiNode();
+
+	TESForm *GetBaseObject() const
+	{
+		return *(TESForm **)((__int64)this + 0x40);
+	}
+
+	TESObjectCell *GetParentCell() const
+	{
+		return *(TESObjectCell **)((__int64)this + 0x60);
+	}
+};
+
+class TESObjectCell : public TESForm/*, public TESFullName */
+{
+public:
+	bool IsAttached() const
+	{
+		return *(uint8_t *)((__int64)this + 0x44) == 7;
+	}
 };
 
 STATIC_CONSTRUCTOR(CheckTESForm, []

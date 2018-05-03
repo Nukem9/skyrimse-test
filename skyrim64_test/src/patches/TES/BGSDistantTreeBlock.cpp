@@ -39,28 +39,34 @@ void BGSDistantTreeBlock::UpdateLODAlphaFade(ResourceData *Data)
 				for (uint32_t k = 0; k < *(uint32_t *)(qword_141EE43A8 + 0xD80); k++)
 				{
 					TESForm *form = TESForm::LookupFormById((k << 24) | maskedFormId);
-					TESObjectREFR *ref = nullptr;
 
-					if (form)
-						ref = form->IsREFR();
+					//
+					// This has a few requirements...the form must:
+					// - Be Loaded
+					// - Be TESObjectREFR
+					// - Have a base object that is TESObjectTREE or have a flag set (0x40)
+					//
+					if (!form)
+						continue;
 
-					if (ref)
+					TESObjectREFR *ref = form->IsREFR();
+
+					if (!ref)
+						continue;
+
+					TESForm *baseForm = ref->GetBaseObject();
+
+					if (baseForm)
 					{
-						TESForm *baseForm = *(TESForm **)((__int64)ref + 0x40);
+						if ((*(uint32_t *)((__int64)baseForm + 16) >> 6) & 1 || *(uint8_t *)((__int64)baseForm + 0x1A) == 38)
+							treeReference = ref;
 
-						if (baseForm)
-						{
-							// Checks if the form type is TREE (TESObjectTREE) and some other flag 0x40
-							if ((*(uint32_t *)((__int64)baseForm + 16) >> 6) & 1 || *(uint8_t *)((__int64)baseForm + 0x1A) == 38)
-								treeReference = ref;
-						}
+						if (treeReference)
+							break;
 					}
-
-					if (treeReference)
-						break;
 				}
 
-				// Insert even if it's a null pointer
+				// Cache even if it's a null pointer
 				InstanceFormCache.insert(std::make_pair(maskedFormId, treeReference));
 			}
 
@@ -70,9 +76,8 @@ void BGSDistantTreeBlock::UpdateLODAlphaFade(ResourceData *Data)
 			if (treeReference)
 			{
 				NiNode *node = treeReference->GetNiNode();
-				__int64 cell = *(__int64 *)((__int64)treeReference + 0x60);// TESObjectREFR::GetParentCell()?
 
-				if (node && !node->GetAppCulled() && *(uint8_t *)(cell + 0x44) == 7)
+				if (node && !node->GetAppCulled() && treeReference->GetParentCell()->IsAttached())
 				{
 					if (bEnableStippleFade->uValue.b)
 					{
@@ -93,7 +98,7 @@ void BGSDistantTreeBlock::UpdateLODAlphaFade(ResourceData *Data)
 					}
 				}
 
-				if (*(uint32_t *)((__int64)treeReference + 16) & 0x820)
+				if (*(uint32_t *)((__int64)treeReference + 16) & (0x800 | 0x20))// IsDisabled | IsDeleted
 					fullyHidden = true;
 			}
 
