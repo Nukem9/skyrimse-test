@@ -8,7 +8,7 @@
 
 namespace ui::opt
 {
-    bool EnableCache = true;
+	bool EnableCache = true;
 	bool LogHitches = true;
 }
 
@@ -447,14 +447,11 @@ namespace ui
             {
                 int64_t cacheLookups = ProfileGetDeltaValue("Cache Lookups");
                 int64_t cacheMisses  = ProfileGetDeltaValue("Cache Misses");
-                int64_t nullFetches  = ProfileGetDeltaValue("Null Fetches");
 
                 char tempBuf[256];
                 ImGui::Text("Lookups: %s", format_commas(cacheLookups, tempBuf));
                 ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf));
                 ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf));
-                ImGui::Spacing();
-                ImGui::Text("Bitmap nullptr fetches: %s (%.2f%%)", format_commas(nullFetches, tempBuf), ((double)nullFetches / (double)cacheLookups) * 100);
                 ImGui::Spacing();
                 ImGui::Text("Update time: %.5f seconds", ProfileGetDeltaTime("Cache Update Time"));
                 ImGui::Text("Fetch time: %.5f seconds", ProfileGetDeltaTime("Cache Fetch Time"));
@@ -465,17 +462,14 @@ namespace ui
             {
                 int64_t cacheLookups = ProfileGetValue("Cache Lookups");
                 int64_t cacheMisses  = ProfileGetValue("Cache Misses");
-                int64_t nullFetches  = ProfileGetValue("Null Fetches");
 
                 char tempBuf[256];
                 ImGui::Text("Lookups: %s", format_commas(cacheLookups, tempBuf));
                 ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf));
                 ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf));
                 ImGui::Spacing();
-                ImGui::Text("Bitmap nullptr fetches: %s (%.2f%%)", format_commas(nullFetches, tempBuf), ((double)nullFetches / (double)cacheLookups) * 100);
-                ImGui::Spacing();
                 ImGui::Text("Update time: %.5f seconds", ProfileGetTime("Cache Update Time"));
-                ImGui::Text("Fetch time: %.5f seconds", ProfileGetTime("Cache Fetch Time"));
+				ImGui::Text("Fetch time: %.5f seconds", ProfileGetTime("Cache Fetch Time"));
                 ImGui::EndGroupSplitter();
             }
         }
