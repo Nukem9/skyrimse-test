@@ -8,6 +8,18 @@ public:
 	float r;
 	float g;
 	float b;
+
+	inline NiColor(float initR = 0.0f, float initG = 0.0f, float initB = 0.0f)
+	{
+		Set(initR, initG, initB);
+	}
+
+	inline void Set(float R = 0.0f, float G = 0.0f, float B = 0.0f)
+	{
+		r = R;
+		g = G;
+		b = B;
+	}
 };
 
 class NiColorA
@@ -23,23 +35,16 @@ public:
 
 	inline NiColorA(float initR = 0.0f, float initG = 0.0f, float initB = 0.0f, float initA = 0.0f)
 	{
-		r = initR;
-		g = initG;
-		b = initB;
-		a = initA;
+		Set(initR, initG, initB, initA);
 	}
 
 	inline NiColorA(const NiColor& Src, float A)
 	{
-		r = Src.r;
-		g = Src.g;
-		b = Src.b;
-		a = A;
+		Set(Src.r, Src.g, Src.b, A);
 	}
 
 	inline void Set(float R = 0.0f, float G = 0.0f, float B = 0.0f, float A = 0.0f)
 	{
-		// Don't know why they have a separate function for this
 		r = R;
 		g = G;
 		b = B;

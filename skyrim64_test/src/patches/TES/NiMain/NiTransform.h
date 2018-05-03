@@ -44,6 +44,11 @@ public:
 		}
 	}
 
+	inline void Normalize()
+	{
+		Unitize();
+	}
+
 	inline NiPoint3 operator- () const
 	{
 		return NiPoint3(-x, -y, -z);
@@ -54,7 +59,7 @@ public:
 		return NiPoint3(x * Scale, y * Scale, z * Scale);
 	}
 };
-static_assert(sizeof(NiPoint3) == 0xC, "");
+static_assert(sizeof(NiPoint3) == 0xC);
 
 class NiMatrix3
 {
@@ -101,7 +106,8 @@ public:
 		return p;
 	}
 };
-static_assert(sizeof(NiMatrix3) == 0x24, "");
+static_assert(sizeof(NiMatrix3) == 0x24);
+static_assert_offset(NiMatrix3, m_pEntry, 0x0);
 
 class NiTransform : public NiMemObject
 {
@@ -127,6 +133,6 @@ public:
 	}
 };
 static_assert(sizeof(NiTransform) == 0x34, "");
-static_assert(offsetof(NiTransform, m_Rotate) == 0x0, "");
-static_assert(offsetof(NiTransform, m_Translate) == 0x24, "");
-static_assert(offsetof(NiTransform, m_fScale) == 0x30, "");
+static_assert_offset(NiTransform, m_Rotate, 0x0);
+static_assert_offset(NiTransform, m_Translate, 0x24);
+static_assert_offset(NiTransform, m_fScale, 0x30);
