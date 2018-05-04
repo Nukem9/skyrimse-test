@@ -22,10 +22,10 @@ public:
 		void Unregister();
 	};
 
-	struct RenderPassArray
+	struct AlphaGroupPass
 	{
 		BSRenderPass *m_Pass[5];
-		DWORD m_PassIndexBits;									// OR'd with (1 << PassIndex)
+		uint32_t m_PassIndexBits;								// OR'd with (1 << PassIndex)
 
 		void Clear(bool Validate);								// Simply zeros this structure
 	};
@@ -35,7 +35,7 @@ public:
 	virtual void VFunc02() = 0;									// Registers a pass?
 	virtual void VFunc03() = 0;									// Unknown (render?)
 
-	BSTArray<RenderPassArray> m_RenderArrays;
+	BSTArray<AlphaGroupPass> m_RenderArrays;
 	BSTDefaultScatterTable<uint32_t, uint32_t> m_TechToArrayMap;// Technique ID -> Index in m_RenderArrays
 	uint32_t m_StartingTech;
 	uint32_t m_EndingTech;
@@ -52,11 +52,11 @@ public:
 
 	bool HasTechniquePasses(uint32_t StartTech, uint32_t EndTech);
 
-	bool sub_14131E8F0(unsigned int a2, uint32_t& SubPassIndex);
-	bool sub_14131E700(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4);
-	bool sub_14131ECE0(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4);
-	bool sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex, __int64 *a4);
-	bool sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, uint32_t RenderFlags);
+	bool sub_14131E8F0(unsigned int a2, uint32_t& GroupIndex);
+	bool sub_14131E700(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4);
+	bool sub_14131ECE0(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4);
+	bool sub_14131E7B0(uint32_t& Technique, uint32_t& GroupIndex, __int64 *a4);
+	bool sub_14131E960(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4, uint32_t RenderFlags);
 	void sub_14131D6E0();
 
 	static void SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags);
@@ -75,7 +75,7 @@ static_assert(offsetof(BSBatchRenderer::RenderGroup, m_Distance) == 0x20, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkWord1) == 0x24, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkByte1) == 0x26, "");
 
-static_assert(sizeof(BSBatchRenderer::RenderPassArray) == 0x30, "");
+static_assert(sizeof(BSBatchRenderer::AlphaGroupPass) == 0x30, "");
 
 static_assert(sizeof(BSBatchRenderer) == 0x108, "");
 static_assert(offsetof(BSBatchRenderer, m_RenderArrays) == 0x8, "");

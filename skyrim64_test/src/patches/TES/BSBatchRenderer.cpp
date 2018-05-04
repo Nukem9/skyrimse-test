@@ -172,28 +172,28 @@ void BSBatchRenderer::RenderGroup::Unregister()
 	this->UnkWord1 = 0;
 }
 
-void BSBatchRenderer::RenderPassArray::Clear(bool Validate)
+void BSBatchRenderer::AlphaGroupPass::Clear(bool Validate)
 {
-	for (int i = 0; i < ARRAYSIZE(this->m_Pass); i++)
+	for (int i = 0; i < ARRAYSIZE(m_Pass); i++)
 	{
-		if (Validate && this->m_Pass[i])
+		if (Validate && m_Pass[i])
 			AssertMsg(false, "Pass still has passes");
 
 		// This is removed in public builds? Sets the bool to indicate pass is no longer registered
 		// for (result = *(_QWORD *)(v4 + 8 * v3); result; result = *(_QWORD *)(result + 48))
 		//	*(_BYTE *)(result + 33) = 0;
 
-		this->m_Pass[i] = nullptr;
+		m_Pass[i] = nullptr;
 	}
 
-	this->m_PassIndexBits = 0;
+	m_PassIndexBits = 0;
 }
 
 bool BSBatchRenderer::HasTechniquePasses(uint32_t StartTech, uint32_t EndTech)
 {
 	BSSimpleList<uint32_t> *node = &m_UnknownList;
 
-	if (!node->QNext() || node->QItem() == 0)
+	if (!node->QNext() && node->QItem() == 0)
 		return false;
 
 	while (node && node->QItem() <= EndTech)
@@ -207,22 +207,22 @@ bool BSBatchRenderer::HasTechniquePasses(uint32_t StartTech, uint32_t EndTech)
 	return false;
 }
 
-bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, uint32_t& SubPassIndex)
+bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, uint32_t& GroupIndex)
 {
-	if (SubPassIndex > 4)
-		SubPassIndex = 0;
+	if (GroupIndex > 4)
+		GroupIndex = 0;
 
-	uint32_t v4 = SubPassIndex;
-	bool v5 = SubPassIndex == 5;
+	uint32_t v4 = GroupIndex;
+	bool v5 = GroupIndex == 5;
 
-	if (SubPassIndex < 5)
+	if (GroupIndex < 5)
 	{
-		uint32_t v6 = SubPassIndex;
+		uint32_t v6 = GroupIndex;
 		do
 		{
 			if (this->m_RenderArrays[a2].m_Pass[v6])
 			{
-				SubPassIndex = v4;
+				GroupIndex = v4;
 				v4 = 5;
 				v6 = 5i64;
 			}
@@ -232,34 +232,34 @@ bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, uint32_t& SubPassIndex)
 		} while (v4 < 5);
 	}
 	if (v5)
-		SubPassIndex = 0;
+		GroupIndex = 0;
 	return v4 == 6;
 }
 
-bool BSBatchRenderer::sub_14131E700(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4)
+bool BSBatchRenderer::sub_14131E700(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4)
 {
 	if (!Technique)
-		return sub_14131E7B0(Technique, SubPassIndex, (__int64 *)a4);
+		return sub_14131E7B0(Technique, GroupIndex, (__int64 *)a4);
 
 	uint32_t passArray = m_TechToArrayMap.get(Technique);
 
-	if (!sub_14131E8F0(passArray, SubPassIndex))
-		return sub_14131E7B0(Technique, SubPassIndex, (__int64 *)a4);
+	if (!sub_14131E8F0(passArray, GroupIndex))
+		return sub_14131E7B0(Technique, GroupIndex, (__int64 *)a4);
 
 	return true;
 }
 
-bool BSBatchRenderer::sub_14131ECE0(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4)
+bool BSBatchRenderer::sub_14131ECE0(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4)
 {
 	uint32_t passArray = m_TechToArrayMap.get(Technique);
 
 	if (m_DiscardPassesAfterRender)
 		m_RenderArrays[passArray].Clear(true);
 
-	return sub_14131E700(Technique, SubPassIndex, a4);
+	return sub_14131E700(Technique, GroupIndex, a4);
 }
 
-bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex, __int64 *a4)
+bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& GroupIndex, __int64 *a4)
 {
 	__int64 v7; // rax
 	unsigned int v8; // ecx
@@ -294,10 +294,10 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& SubPassIndex,
 		*a4 = *(uint64_t *)(*a4 + 8);
 	}
 
-	return sub_14131E8F0(m_TechToArrayMap.get(Technique), SubPassIndex);
+	return sub_14131E8F0(m_TechToArrayMap.get(Technique), GroupIndex);
 }
 
-bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex, __int64 a4, uint32_t RenderFlags)
+bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4, uint32_t RenderFlags)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	bool alphaTest;
@@ -312,7 +312,7 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 		alphaTest = false;
 		unknownFlag = (RenderFlags & 0x108) != 0;
 
-		switch (SubPassIndex)
+		switch (GroupIndex)
 		{
 		case 0:
 			if (!unknownFlag)
@@ -373,8 +373,8 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 
 	// Render this group with a specific render pass list
 	int shaderType = -1;
-	RenderPassArray *passArray = &m_RenderArrays[m_TechToArrayMap.get(Technique)];
-	BSRenderPass *currentPass = passArray->m_Pass[SubPassIndex];
+	AlphaGroupPass *group = &m_RenderArrays[m_TechToArrayMap.get(Technique)];
+	BSRenderPass *currentPass = group->m_Pass[GroupIndex];
 
 	if (currentPass)
 		shaderType = currentPass->m_Shader->m_Type;
@@ -416,18 +416,18 @@ bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& SubPassIndex,
 	// Zero the pointers only - the memory is freed elsewhere
 	if (m_DiscardPassesAfterRender)
 	{
-		Assert(SubPassIndex >= 0 && SubPassIndex < ARRAYSIZE(passArray->m_Pass));
+		Assert(GroupIndex >= 0 && GroupIndex < ARRAYSIZE(group->m_Pass));
 
-		passArray->m_PassIndexBits &= ~(1 << SubPassIndex);
-		passArray->m_Pass[SubPassIndex] = nullptr;
+		group->m_PassIndexBits &= ~(1 << GroupIndex);
+		group->m_Pass[GroupIndex] = nullptr;
 	}
 
 	MTRenderer::ClearShaderAndTechnique();
 	MTRenderer::AlphaBlendStateSetUnknown1(0);
 	MTRenderer::UnlockShader(shaderType);
 
-	SubPassIndex++;
-	return sub_14131E700(Technique, SubPassIndex, a4);
+	GroupIndex++;
+	return sub_14131E700(Technique, GroupIndex, a4);
 }
 
 void BSBatchRenderer::sub_14131D6E0()
@@ -494,7 +494,7 @@ void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, b
 			qword_1434B5220 = (uintptr_t)material;
 		}
 
-		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;// WARNING: MT data write hazard. Although geometry can only be rendered once?
+		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;// WARNING: MT data write hazard
 
 		if (Pass->m_Geometry->QSkinInstance())
 			DrawPassSkinned(Pass, AlphaTest, RenderFlags);

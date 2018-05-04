@@ -457,26 +457,24 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 		batch = group->m_BatchRenderer;
 	}
 
-	__int64 a1 = (__int64)this;
-	__int64 v14;
 	m_CurrentTech = 0;
 
 	if (batch)
 	{
+		auto *currentNode = &batch->m_UnknownList;
+
 		batch->m_StartingTech = StartTechnique;
 		batch->m_EndingTech = EndTechnique;
 
-		m_CurrentSubPass = 0;
-		v14 = (__int64)batch + 88;
-
-		m_HasPendingDraws = batch->sub_14131E700(m_CurrentTech, m_CurrentSubPass, (__int64)&v14);
+		m_CurrentGroupIndex = 0;
+		m_HasPendingDraws = batch->sub_14131E700(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode);
 
 		while (m_HasPendingDraws)
 		{
-			if ((unsigned int)(m_CurrentTech - BSSM_GRASS_SHADOW_L) <= 3 && (*(BYTE *)(a1 + 296) || *(BYTE *)(a1 + 297)))// if (is grass shadow) ???
-				m_HasPendingDraws = batch->sub_14131ECE0(m_CurrentTech, m_CurrentSubPass, (__int64)&v14);// Probably discards pass, returns true if there's remaining sub passes
+			if ((unsigned int)(m_CurrentTech - BSSM_GRASS_SHADOW_L) <= 3 && (*(BYTE *)((__int64)this + 296) || *(BYTE *)((__int64)this + 297)))// if (is grass shadow) ???
+				m_HasPendingDraws = batch->sub_14131ECE0(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode);// Probably discards pass, returns true if there's remaining sub passes
 			else
-				m_HasPendingDraws = batch->sub_14131E960(m_CurrentTech, m_CurrentSubPass, (__int64)&v14, RenderFlags);
+				m_HasPendingDraws = batch->sub_14131E960(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode, RenderFlags);
 		}
 	}
 	else

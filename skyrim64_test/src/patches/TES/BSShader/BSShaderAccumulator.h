@@ -67,7 +67,7 @@ public:
 	char _pad1[0xD8];
 	BSBatchRenderer *m_MainBatch;
 	uint32_t m_CurrentTech;
-	uint32_t m_CurrentSubPass;
+	uint32_t m_CurrentGroupIndex;
 	bool m_HasPendingDraws;
 	char _pad[0x27];
 	NiPoint3 m_CurrentViewPos;
@@ -94,6 +94,6 @@ static_assert(sizeof(BSShaderAccumulator) == 0x180, "");
 static_assert(offsetof(BSShaderAccumulator, _pad1) == 0x58, "");
 static_assert(offsetof(BSShaderAccumulator, m_MainBatch) == 0x130, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentTech) == 0x138, "");
-static_assert(offsetof(BSShaderAccumulator, m_CurrentSubPass) == 0x13C, "");
+static_assert(offsetof(BSShaderAccumulator, m_CurrentGroupIndex) == 0x13C, "");
 static_assert(offsetof(BSShaderAccumulator, m_HasPendingDraws) == 0x140, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentViewPos) == 0x168, "");
