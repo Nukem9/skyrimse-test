@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BSTArray.h"
+#include "BSTList.h"
 #include "BSTScatterTable.h"
 #include "BSShader/BSShaderManager.h"
 
@@ -10,12 +11,12 @@ public:
 	struct RenderGroup
 	{
 		BSBatchRenderer *m_BatchRenderer;
-		uintptr_t UnkPtr2;// pShaderProperty
-		uintptr_t UnkPtr3;// pGeometry
+		BSRenderPass *UnkPtr2;
+		BSRenderPass *UnkPtr3;
 		uintptr_t UnkPtr4;
-		char _pad[4];
+		float m_Distance;	// Distance from geometry to camera location
 		uint16_t UnkWord1;
-		uint8_t UnkByte1;		// Flags
+		uint8_t UnkByte1;	// Flags
 
 		void Render(unsigned int a2);
 		void Unregister();
@@ -38,7 +39,7 @@ public:
 	BSTDefaultScatterTable<uint32_t, uint32_t> m_TechToArrayMap;// Technique ID -> Index in m_RenderArrays
 	uint32_t m_StartingTech;
 	uint32_t m_EndingTech;
-	char _pad2[0x10];
+	BSSimpleList<uint32_t> m_UnknownList;
 	int m_GroupingAlphas;
 	bool m_DiscardPassesAfterRender;
 	RenderGroup *m_Groups[16];
@@ -70,6 +71,7 @@ static_assert(offsetof(BSBatchRenderer::RenderGroup, m_BatchRenderer) == 0x0, ""
 static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkPtr2) == 0x8, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkPtr3) == 0x10, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkPtr4) == 0x18, "");
+static_assert(offsetof(BSBatchRenderer::RenderGroup, m_Distance) == 0x20, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkWord1) == 0x24, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkByte1) == 0x26, "");
 
@@ -80,6 +82,7 @@ static_assert(offsetof(BSBatchRenderer, m_RenderArrays) == 0x8, "");
 static_assert(offsetof(BSBatchRenderer, m_TechToArrayMap) == 0x20, "");
 static_assert(offsetof(BSBatchRenderer, m_StartingTech) == 0x50, "");
 static_assert(offsetof(BSBatchRenderer, m_EndingTech) == 0x54, "");
+static_assert(offsetof(BSBatchRenderer, m_UnknownList) == 0x58, "");
 static_assert(offsetof(BSBatchRenderer, m_GroupingAlphas) == 0x68, "");
 static_assert(offsetof(BSBatchRenderer, m_DiscardPassesAfterRender) == 0x6C, "");
 static_assert(offsetof(BSBatchRenderer, m_Groups) == 0x70, "");
