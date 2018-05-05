@@ -11,29 +11,28 @@ public:
 	struct RenderGroup
 	{
 		BSBatchRenderer *m_BatchRenderer;
-		BSRenderPass *UnkPtr2;
-		BSRenderPass *UnkPtr3;
+		BSRenderPass *m_UnkPtrs[2];
 		uintptr_t UnkPtr4;
 		float m_Distance;	// Distance from geometry to camera location
 		uint16_t UnkWord1;
 		uint8_t UnkByte1;	// Flags
 
-		void Render(unsigned int a2);
+		void Render(uint32_t RenderFlags);
 		void Unregister();
 	};
 
 	struct AlphaGroupPass
 	{
 		BSRenderPass *m_Pass[5];
-		uint32_t m_PassIndexBits;								// OR'd with (1 << PassIndex)
+		uint32_t m_PassIndexBits;	// OR'd with (1 << PassIndex)
 
-		void Clear(bool Validate);								// Simply zeros this structure
+		void Clear(bool Validate);	// Simply zeros this structure
 	};
 
 	virtual ~BSBatchRenderer();
-	virtual void VFunc01() = 0;									// Registers a pass?
-	virtual void VFunc02() = 0;									// Registers a pass?
-	virtual void VFunc03() = 0;									// Unknown (render?)
+	virtual void VFunc01();															// Registers a pass?
+	virtual void VFunc02();															// Registers a pass?
+	virtual void VFunc03(uint32_t StartTech, uint32_t EndTech, uint32_t RenderFlags);// Unknown (renders something?)
 
 	BSTArray<AlphaGroupPass> m_RenderArrays;
 	BSTDefaultScatterTable<uint32_t, uint32_t> m_TechToArrayMap;// Technique ID -> Index in m_RenderArrays
@@ -68,8 +67,7 @@ public:
 };
 static_assert(sizeof(BSBatchRenderer::RenderGroup) == 0x28, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, m_BatchRenderer) == 0x0, "");
-static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkPtr2) == 0x8, "");
-static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkPtr3) == 0x10, "");
+static_assert(offsetof(BSBatchRenderer::RenderGroup, m_UnkPtrs) == 0x8, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkPtr4) == 0x18, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, m_Distance) == 0x20, "");
 static_assert(offsetof(BSBatchRenderer::RenderGroup, UnkWord1) == 0x24, "");

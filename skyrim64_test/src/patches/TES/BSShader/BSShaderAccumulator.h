@@ -88,6 +88,7 @@ public:
 	static void SetRenderMode(uint32_t RenderMode);
 
 	void sub_1412E1600(uint32_t RenderFlags);
+	void RenderFromMainGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType);
 	void RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType);
 };
 static_assert(sizeof(BSShaderAccumulator) == 0x180, "");

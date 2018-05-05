@@ -68,19 +68,19 @@ void sub_14131F910(BSSimpleList<uint32_t> *Node, void *UserData)
 	}
 }
 
-void sub_14131F9F0(__int64 *a1, unsigned int a2)
+void sub_14131F9F0(BSRenderPass *RenderPasses[2], uint32_t RenderFlags)
 {
-	if (!*a1)
+	if (!RenderPasses[0])
 		return;
 
 	MTRenderer::ClearShaderAndTechnique();
 
 	bool mtrContext = MTRenderer::IsGeneratingGameCommandList();
-	int lockType = ((BSRenderPass *)*a1)->m_Shader->m_Type;
+	int lockType = RenderPasses[0]->m_Shader->m_Type;
 
 	MTRenderer::LockShader(lockType);
 
-	for (BSRenderPass *i = (BSRenderPass *)*a1; i; i = i->m_Next)
+	for (BSRenderPass *i = RenderPasses[0]; i; i = i->m_Next)
 	{
 		if (!i->m_Geometry)
 			continue;
@@ -93,7 +93,7 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 			MTRenderer::LockShader(lockType);
 		}
 
-		if ((a2 & 0x108) == 0)
+		if ((RenderFlags & 0x108) == 0)
 		{
 			if (i->m_Property->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
 				MTRenderer::RasterStateSetCullMode(0);
@@ -104,47 +104,34 @@ void sub_14131F9F0(__int64 *a1, unsigned int a2)
 		bool alphaTest = i->m_Geometry->QAlphaProperty() && i->m_Geometry->QAlphaProperty()->GetAlphaTesting();
 
 		if (mtrContext)
-			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_TechniqueID, alphaTest, a2);
+			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_TechniqueID, alphaTest, RenderFlags);
 		else
-			BSBatchRenderer::SetupAndDrawPass(i, i->m_TechniqueID, alphaTest, a2);
+			BSBatchRenderer::SetupAndDrawPass(i, i->m_TechniqueID, alphaTest, RenderFlags);
 	}
 
-	if ((a2 & 0x108) == 0)
+	if ((RenderFlags & 0x108) == 0)
 		MTRenderer::RasterStateSetCullMode(1);
 
-	a1[0] = 0i64;
-	a1[1] = 0i64;
+	RenderPasses[0] = nullptr;
+	RenderPasses[1] = nullptr;
 
 	MTRenderer::ClearShaderAndTechnique();
 	MTRenderer::UnlockShader(lockType);
 }
 
-void BSBatchRenderer::RenderGroup::Render(unsigned int a2)
+void BSBatchRenderer::RenderGroup::Render(uint32_t RenderFlags)
 {
-	//auto Render = (void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x131CB70);
-
-	__int64 a1 = (__int64)this;
+	static_assert(ARRAYSIZE(m_UnkPtrs) == 2);
 
 	if (this->UnkByte1 & 1)
 	{
-		sub_14131F9F0((__int64 *)(a1 + 8), a2);
+		sub_14131F9F0(m_UnkPtrs, RenderFlags);
 	}
-	else
+	else if(m_BatchRenderer)
 	{
-		if (!this->m_BatchRenderer)
-			goto LABEL_14;
+		AssertMsg(false, "This is never called...?");
 
-		__debugbreak();
-
-		uint64_t v5 = (uint64_t)this->m_BatchRenderer;
-
-		// m_BatchRenderer->VFunc03(1, BSSM_BLOOD_SPLATTER, a2);
-		(*(void(__fastcall **)(__int64, signed __int64, signed __int64, uint64_t, signed __int64))(*(uint64_t *)v5 + 24i64))(
-			v5,
-			1i64,
-			BSSM_BLOOD_SPLATTER,
-			a2,
-			-2i64);
+		m_BatchRenderer->VFunc03(1, BSSM_BLOOD_SPLATTER, RenderFlags);
 	}
 
 	if (m_BatchRenderer)
@@ -155,7 +142,6 @@ void BSBatchRenderer::RenderGroup::Render(unsigned int a2)
 		m_BatchRenderer->m_UnknownList.RemoveAllNodes(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
 	}
 
-LABEL_14:
 	this->UnkWord1 = 0;
 }
 
@@ -163,8 +149,8 @@ void BSBatchRenderer::RenderGroup::Unregister()
 {
 	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
 
-	this->UnkPtr2 = 0;
-	this->UnkPtr3 = 0;
+	m_UnkPtrs[0] = nullptr;
+	m_UnkPtrs[1] = nullptr;
 
 	if (m_BatchRenderer)
 		m_BatchRenderer->sub_14131D6E0();
@@ -538,7 +524,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	AssertMsgDebug(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
 	AssertMsgDebug(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
 
-	// "Render Error : Skin instance is nullptr"
+	AssertMsgDebug(Pass->m_Geometry->QSkinInstance(), "Render Error: Skin instance is nullptr");
 	// "Render Error : Skin partition is nullptr"
 	// "Render Error : Skin partition array is nullptr"
 	AssertMsgDebug(Pass->m_Property, "Don't have a shader property when we expected one.");
@@ -571,7 +557,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 		params.m_UnkDword1 = v10;
 		params.m_UnkDword2 = v11;
 		params.m_UnkDword3 = 0;
-		params.m_UnkDword4 = -1;
+		params.m_VertexBufferOffset = -1;
 
 		// Runtime-updated vertices are sent to a GPU vertex buffer directly (non-static objects like trees/characters)
 		BSDynamicTriShape *dynamicTri = Pass->m_Geometry->IsDynamicTriShape();
@@ -579,7 +565,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 		if (dynamicTri)
 		{
 			uint32_t v16 = *(uint32_t *)((uintptr_t)dynamicTri + 0x170);
-			void *vertexBuffer = sub_140D6BF00(0, v16, &params.m_UnkDword4);
+			void *vertexBuffer = sub_140D6BF00(0, v16, &params.m_VertexBufferOffset);
 
 			const void *data = dynamicTri->LockDynamicDataForRead();
 			memcpy_s(vertexBuffer, v16, data, v16);

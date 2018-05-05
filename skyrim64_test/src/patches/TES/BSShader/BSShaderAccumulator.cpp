@@ -237,59 +237,35 @@ else
 		// RenderBatches
 		annotation->BeginEvent(L"RenderBatches");
 		{
-			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
+			RenderFromMainGroup(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
 		}
 		annotation->EndEvent();
 
 		// LowAniso
 		annotation->BeginEvent(L"LowAniso");
 		{
-			auto pass = accumulator->m_MainBatch->m_Groups[9];
-
-			if (pass)
-			{
-				if (pass->UnkByte1 & 1)
-					pass->Render(RenderFlags);
-				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
-			}
+			RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
 		}
 		annotation->EndEvent();
 
 		// RenderGrass
 		annotation->BeginEvent(L"RenderGrass");
 		{
-			accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
+			RenderFromMainGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
 		}
 		annotation->EndEvent();
 
 		// RenderNoShadowGroup
 		annotation->BeginEvent(L"RenderNoShadowGroup");
 		{
-			auto pass = accumulator->m_MainBatch->m_Groups[8];
-
-			if (pass)
-			{
-				if (pass->UnkByte1 & 1)
-					pass->Render(RenderFlags);
-				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
-			}
+			RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
 		}
 		annotation->EndEvent();
 
 		// RenderLODObjects
 		annotation->BeginEvent(L"RenderLODObjects");
 		{
-			auto pass = accumulator->m_MainBatch->m_Groups[1];
-
-			if (pass)
-			{
-				if (pass->UnkByte1 & 1)
-					pass->Render(RenderFlags);
-				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
-			}
+			RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 
 			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
 				renderer->DepthStencilStateSetDepthMode(3);
@@ -301,15 +277,7 @@ else
 		{
 			ProfileTimer("LOD");
 
-			auto pass = accumulator->m_MainBatch->m_Groups[0];
-
-			if (pass)
-			{
-				if (pass->UnkByte1 & 1)
-					pass->Render(RenderFlags);
-				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
-			}
+			RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 
 			if (!v7)
 				((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
@@ -322,7 +290,8 @@ else
 	{
 		renderer->SetUseAlphaTestRef(true);
 		renderer->SetAlphaTestRef(128.0f / 255.0f);
-		accumulator->RenderTechniques(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
+
+		RenderFromMainGroup(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
 	}
 	annotation->EndEvent();
 
@@ -331,15 +300,7 @@ else
 	{
 		renderer->AlphaBlendStateSetUnknown2(11);
 
-		auto pass = accumulator->m_MainBatch->m_Groups[13];
-
-		if (pass)
-		{
-			if (pass->UnkByte1 & 1)
-				pass->Render(RenderFlags);
-			else
-				accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 13);
-		}
+		RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 13);
 
 		renderer->AlphaBlendStateSetUnknown2(1);
 	}
@@ -403,7 +364,7 @@ else
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
-			accumulator->RenderTechniques(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc, RenderFlags, -1);
+			RenderFromMainGroup(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc, RenderFlags, -1);
 			sub_140D69DA0((DWORD *)flt_14304E490);
 			*(DWORD *)(*(uint64_t *)((*(uint64_t*)(g_ModuleBase + 0x31F5810)) + 496) + 44i64) = 1;
 		}
@@ -430,6 +391,26 @@ else
 		((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
 
 	annotation->EndEvent();
+}
+
+void BSShaderAccumulator::RenderFromMainGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType)
+{
+	if (GroupType == -1)
+	{
+		RenderTechniques(StartTechnique, EndTechnique, RenderFlags, -1);
+	}
+	else
+	{
+		auto pass = m_MainBatch->m_Groups[GroupType];
+
+		if (pass)
+		{
+			if (pass->UnkByte1 & 1)
+				pass->Render(RenderFlags);
+			else
+				RenderTechniques(StartTechnique, EndTechnique, RenderFlags, GroupType);
+		}
+	}
 }
 
 void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType)

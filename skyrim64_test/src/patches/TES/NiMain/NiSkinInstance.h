@@ -16,7 +16,7 @@ public:
 		uint32_t m_UnkDword1;
 		uint32_t m_UnkDword2;
 		uint32_t m_UnkDword3;
-		uint32_t m_UnkDword4;
+		uint32_t m_VertexBufferOffset;
 	};
 
 	char _pad0[0x38];
@@ -39,7 +39,7 @@ static_assert_offset(NiSkinInstance::UnknownData, m_UnkPtr, 0x10);
 static_assert_offset(NiSkinInstance::UnknownData, m_UnkDword1, 0x18);
 static_assert_offset(NiSkinInstance::UnknownData, m_UnkDword2, 0x1C);
 static_assert_offset(NiSkinInstance::UnknownData, m_UnkDword3, 0x20);
-static_assert_offset(NiSkinInstance::UnknownData, m_UnkDword4, 0x24);
+static_assert_offset(NiSkinInstance::UnknownData, m_VertexBufferOffset, 0x24);
 
 STATIC_CONSTRUCTOR(__CheckNiSkinInstance, []
 {
