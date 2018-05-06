@@ -10,7 +10,8 @@ public:
 
 	void *pDynamicData;
 	BSSpinLock DynamicDataAccessSpinLock;
-	char _pad0[0x10];
+	uint32_t DynamicDataSize;
+	char _pad0[0xC];
 
 	void *LockDynamicData()
 	{
@@ -26,6 +27,11 @@ public:
 	void UnlockDynamicData()
 	{
 		DynamicDataAccessSpinLock.Release();
+	}
+
+	uint32_t QDynamicDataSize() const
+	{
+		return DynamicDataSize;
 	}
 };
 static_assert(sizeof(BSDynamicTriShape) == 0x180);

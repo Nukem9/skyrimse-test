@@ -550,32 +550,25 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 		uint32_t v10 = (Pass->Byte1E >> 7) & 1;
 		uint32_t v11 = (Pass->Byte1E & 0x7F);
 
-		NiSkinInstance::UnknownData params;
-		params.m_BoneSetter = static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader);
-		params.m_Geometry = Pass->m_Geometry;
-		params.m_UnkPtr = nullptr;
-		params.m_UnkDword1 = v10;
-		params.m_UnkDword2 = v11;
-		params.m_UnkDword3 = 0;
-		params.m_VertexBufferOffset = -1;
+		SkinRenderData skinData(static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader), Pass->m_Geometry, nullptr, v10, v11);
 
 		// Runtime-updated vertices are sent to a GPU vertex buffer directly (non-static objects like trees/characters)
 		BSDynamicTriShape *dynamicTri = Pass->m_Geometry->IsDynamicTriShape();
 
 		if (dynamicTri)
 		{
-			uint32_t v16 = *(uint32_t *)((uintptr_t)dynamicTri + 0x170);
-			void *vertexBuffer = sub_140D6BF00(0, v16, &params.m_VertexBufferOffset);
+			uint32_t size = dynamicTri->QDynamicDataSize();
+			void *vertexBuffer = sub_140D6BF00(0, size, &skinData.m_VertexBufferOffset);
 
 			const void *data = dynamicTri->LockDynamicDataForRead();
-			memcpy_s(vertexBuffer, v16, data, v16);
+			memcpy_s(vertexBuffer, size, data, size);
 			dynamicTri->UnlockDynamicData();
 
 			UnmapDynamicData();
 		}
 
 		// Renders multiple skinned instances (SetupTechnique, SetBoneMatrix)
-		Pass->m_Geometry->QSkinInstance()->VFunc37(&params);
+		Pass->m_Geometry->QSkinInstance()->VFunc37(&skinData);
 	}
 
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);

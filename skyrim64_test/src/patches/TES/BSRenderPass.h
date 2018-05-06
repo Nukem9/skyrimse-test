@@ -12,7 +12,7 @@ struct BSRenderPass
 	uint32_t m_TechniqueID;
 	uint8_t Byte1C;
 	uint8_t Byte1D;
-	uint8_t Byte1E;
+	uint8_t Byte1E;			// Possibly LOD information?
 	uint8_t m_LightCount;
 	uint16_t Word20;
 	void *UnkPtr28;			// Possibly previous sub-pass
@@ -46,7 +46,7 @@ struct BSRenderPass
 
 	void SetLights(uint8_t SceneLightCount, void **SceneLights)
 	{
-		Assert(SceneLightCount <= MaxLightInArrayC, "MaxLightInArrayC is too small");
+		AssertMsg(SceneLightCount <= MaxLightInArrayC, "MaxLightInArrayC is too small");
 
 		m_LightCount = SceneLightCount;
 
