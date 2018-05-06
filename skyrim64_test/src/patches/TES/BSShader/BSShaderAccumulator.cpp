@@ -44,7 +44,7 @@ void BSShaderAccumulator::InitCallbackTable()
 	RegisterObjectArray[29] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 29 RegisterObject_Normal
 
 	// If the pointer is null, it defaults to the function at index 0
-	FinishAccumulatingArray[0] = (FinishAccumFunc)(g_ModuleBase + 0x12E1880);	// 00 FinishAccumulating_Normal
+	FinishAccumulatingArray[0] = FinishAccumulating_Normal;						// 00 FinishAccumulating_Normal
 	FinishAccumulatingArray[1] = nullptr;										// 01
 	FinishAccumulatingArray[2] = nullptr;										// 02
 	FinishAccumulatingArray[3] = nullptr;										// 03
@@ -56,23 +56,23 @@ void BSShaderAccumulator::InitCallbackTable()
 	FinishAccumulatingArray[9] = nullptr;										// 09
 	FinishAccumulatingArray[10] = nullptr;										// 10
 	FinishAccumulatingArray[11] = nullptr;										// 11
-	FinishAccumulatingArray[12] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 12 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[13] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 13 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[14] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 14 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[15] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 15 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[16] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 16 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[17] = (FinishAccumFunc)(g_ModuleBase + 0x12E3050);	// 17 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[12] = FinishAccumulating_ShadowMapOrMask;			// 12 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[13] = FinishAccumulating_ShadowMapOrMask;			// 13 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[14] = FinishAccumulating_ShadowMapOrMask;			// 14 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[15] = FinishAccumulating_ShadowMapOrMask;			// 15 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[16] = FinishAccumulating_ShadowMapOrMask;			// 16 FinishAccumulating_ShadowMapOrMask
+	FinishAccumulatingArray[17] = FinishAccumulating_ShadowMapOrMask;			// 17 FinishAccumulating_ShadowMapOrMask
 	FinishAccumulatingArray[18] = nullptr;										// 18
 	FinishAccumulatingArray[19] = nullptr;										// 19
-	FinishAccumulatingArray[20] = (FinishAccumFunc)(g_ModuleBase + 0x12E2FE0);	// 20 FinishAccumulating_InterfaceElements
+	FinishAccumulatingArray[20] = FinishAccumulating_InterfaceElements;			// 20 FinishAccumulating_InterfaceElements
 	FinishAccumulatingArray[21] = nullptr;										// 21
-	FinishAccumulatingArray[22] = (FinishAccumFunc)(g_ModuleBase + 0x12E2B20);	// 22 FinishAccumulating_FirstPerson
+	FinishAccumulatingArray[22] = FinishAccumulating_FirstPerson;				// 22 FinishAccumulating_FirstPerson
 	FinishAccumulatingArray[23] = (FinishAccumFunc)(g_ModuleBase + 0x12E3020);	// 23 ?
 	FinishAccumulatingArray[24] = (FinishAccumFunc)(g_ModuleBase + 0x12E3030);	// 24 ?
-	FinishAccumulatingArray[25] = (FinishAccumFunc)(g_ModuleBase + 0x12E31E0);	// 25 FinishAccumulating_LODOnly
-	FinishAccumulatingArray[26] = (FinishAccumFunc)(g_ModuleBase + 0x12E31E0);	// 26 FinishAccumulating_LODOnly
+	FinishAccumulatingArray[25] = FinishAccumulating_LODOnly;					// 25 FinishAccumulating_LODOnly
+	FinishAccumulatingArray[26] = FinishAccumulating_LODOnly;					// 26 FinishAccumulating_LODOnly
 	FinishAccumulatingArray[27] = nullptr;										// 27
-	FinishAccumulatingArray[28] = (FinishAccumFunc)(g_ModuleBase + 0x12E32B0);	// 28 ? BSSM_RENDER_PRECIPITATION_OCCLUSION_MAP?
+	FinishAccumulatingArray[28] = FinishAccumulating_Unknown1;					// 28 Never used? BSSM_RENDER_PRECIPITATION_OCCLUSION_MAP?
 	FinishAccumulatingArray[29] = nullptr;										// 29
 
 	SetRenderMode(0);
@@ -90,16 +90,34 @@ void BSShaderAccumulator::SetRenderMode(uint32_t RenderMode)
 		FinishAccumulatingCurrent = FinishAccumulatingArray[0];
 }
 
-void BSShaderAccumulator::sub_1412E1600(uint32_t RenderFlags)
+void BSShaderAccumulator::hk_FinishAccumulatingDispatch(uint32_t RenderFlags)
+{
+	uint32_t renderMode = *(uint32_t *)((__int64)this + 0x150);
+
+	SetRenderMode(renderMode);
+
+	if (renderMode != 0)
+		FinishAccumulatingCurrent(this, RenderFlags);
+	else
+		RenderSceneNormal(this, RenderFlags);
+}
+
+void BSShaderAccumulator::FinishAccumulating_Normal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+{
+	annotation->BeginEvent(L"FinishAccumulating_Normal");
+	RenderSceneNormal(Accumulator, RenderFlags);
+	RenderSceneNormalAlphaZ(Accumulator, RenderFlags);
+	annotation->EndEvent();
+}
+
+void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
 	annotation->BeginEvent(L"BSShaderAccumulator: Draw1");
-	ProfileTimer("BSShaderAccumulator");
 
-	__int64 a1 = (__int64)this;
-	auto accumulator = this;
+	__int64 a1 = (__int64)Accumulator;
 	auto renderer = BSGraphics::Renderer::GetGlobals();
 
-	if (!accumulator->m_pkCamera)
+	if (!Accumulator->m_pkCamera)
 		return;
 
 	if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
@@ -126,146 +144,41 @@ void BSShaderAccumulator::sub_1412E1600(uint32_t RenderFlags)
 	// BlendedDecals
 	// RenderWaterStencil
 	//
-
-	if (false && !v7)
-	{
-		// RenderBatches
-		GameCommandList renderBatches(0, [accumulator, RenderFlags]
-		{
-			accumulator->RenderTechniques(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
-		});
-
-		// LowAniso
-		DeferredCommandList lowAniso(1, [accumulator, RenderFlags]
-		{
-			auto pass = accumulator->m_MainBatch->m_Groups[9];
-
-			if (pass)
-			{
-				if (pass->UnkByte1 & 1)
-					pass->Render(RenderFlags);
-				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
-			}
-		});
-
-		// RenderGrass
-		DeferredCommandList renderGrass(2, [accumulator, RenderFlags]
-		{
-			accumulator->RenderTechniques(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
-		});
-
-		// RenderNoShadowGroup
-		DeferredCommandList renderNoShadowGroup(3, [accumulator, RenderFlags]
-		{
-			auto pass = accumulator->m_MainBatch->m_Groups[8];
-
-			if (pass)
-			{
-				if (pass->UnkByte1 & 1)
-					pass->Render(RenderFlags);
-				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
-			}
-		});
-
-		// RenderLODObjects
-		DeferredCommandList renderLODObjects(4, [renderer, accumulator, a1, RenderFlags]
-		{
-			auto pass = accumulator->m_MainBatch->m_Groups[1];
-
-			if (pass)
-			{
-				if (pass->UnkByte1 & 1)
-					pass->Render(RenderFlags);
-				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
-			}
-
-			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
-				renderer->DepthStencilStateSetDepthMode(3);
-		});
-
-		// RenderLODLand
-		DeferredCommandList renderLODLand(5, [accumulator, RenderFlags]
-		{
-			auto pass = accumulator->m_MainBatch->m_Groups[0];
-
-			if (pass)
-			{
-				if (pass->UnkByte1 & 1)
-					pass->Render(RenderFlags);
-				else
-					accumulator->RenderTechniques(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
-			}
-		});
-
-		{
-			ProfileTimer("RenderBatches");
-			annotation->BeginEvent(L"RenderBatches");
-			renderBatches.Wait();
-			annotation->EndEvent();
-		}
-
-		{
-			ProfileTimer("LowAniso");
-
-			annotation->BeginEvent(L"lowAniso");
-			lowAniso.Wait();
-			annotation->EndEvent();
-			annotation->BeginEvent(L"renderGrass");
-			renderGrass.Wait();
-			annotation->EndEvent();
-			annotation->BeginEvent(L"renderNoShadowGroup");
-			renderNoShadowGroup.Wait();
-			annotation->EndEvent();
-			annotation->BeginEvent(L"renderLODObjects");
-			renderLODObjects.Wait();
-			annotation->EndEvent();
-			annotation->BeginEvent(L"renderLODLand");
-			renderLODLand.Wait();
-			annotation->EndEvent();
-		}
-
-		if (!v7)
-			((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
-	}
-else
 	{
 		ProfileTimer("RenderBatches");
 
 		// RenderBatches
 		annotation->BeginEvent(L"RenderBatches");
 		{
-			RenderFromMainGroup(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
+			Accumulator->RenderFromMainGroup(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
 		}
 		annotation->EndEvent();
 
 		// LowAniso
 		annotation->BeginEvent(L"LowAniso");
 		{
-			RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
+			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
 		}
 		annotation->EndEvent();
 
 		// RenderGrass
 		annotation->BeginEvent(L"RenderGrass");
 		{
-			RenderFromMainGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
+			Accumulator->RenderFromMainGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
 		}
 		annotation->EndEvent();
 
 		// RenderNoShadowGroup
 		annotation->BeginEvent(L"RenderNoShadowGroup");
 		{
-			RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
+			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
 		}
 		annotation->EndEvent();
 
 		// RenderLODObjects
 		annotation->BeginEvent(L"RenderLODObjects");
 		{
-			RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
+			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 
 			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
 				renderer->DepthStencilStateSetDepthMode(3);
@@ -277,7 +190,7 @@ else
 		{
 			ProfileTimer("LOD");
 
-			RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
+			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 
 			if (!v7)
 				((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
@@ -291,7 +204,7 @@ else
 		renderer->SetUseAlphaTestRef(true);
 		renderer->SetAlphaTestRef(128.0f / 255.0f);
 
-		RenderFromMainGroup(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
+		Accumulator->RenderFromMainGroup(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
 	}
 	annotation->EndEvent();
 
@@ -300,7 +213,7 @@ else
 	{
 		renderer->AlphaBlendStateSetUnknown2(11);
 
-		RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 13);
+		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 13);
 
 		renderer->AlphaBlendStateSetUnknown2(1);
 	}
@@ -338,7 +251,7 @@ else
 
 	DWORD *flt_14304E490 = (DWORD *)(g_ModuleBase + 0x304E490);
 
-	if ((RenderFlags & 0x80) != 0 && accumulator->m_MainBatch->HasTechniquePasses(0x5C000071, 0x5C006071))
+	if ((RenderFlags & 0x80) != 0 && Accumulator->m_MainBatch->HasTechniquePasses(0x5C000071, 0x5C006071))
 	{
 		int aiSource = sub_140D744B0();
 
@@ -354,7 +267,7 @@ else
 	// RenderWaterStencil
 	annotation->BeginEvent(L"RenderWaterStencil");
 	{
-		if (accumulator->m_MainBatch->HasTechniquePasses(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc))
+		if (Accumulator->m_MainBatch->HasTechniquePasses(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc))
 		{
 			sub_140D69E70((__int64)flt_14304E490, 2u);// BSGraphics::Renderer::ClearDepthStencil(CLEAR_DEPTH_STENCIL_TARGET_STENCIL)
 			sub_140D69D30((float *)flt_14304E490, 0.0, 0.0, 0.0, 0);
@@ -364,7 +277,7 @@ else
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
-			RenderFromMainGroup(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc, RenderFlags, -1);
+			Accumulator->RenderFromMainGroup(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc, RenderFlags, -1);
 			sub_140D69DA0((DWORD *)flt_14304E490);
 			*(DWORD *)(*(uint64_t *)((*(uint64_t*)(g_ModuleBase + 0x31F5810)) + 496) + 44i64) = 1;
 		}
@@ -393,6 +306,59 @@ else
 	annotation->EndEvent();
 }
 
+void BSShaderAccumulator::RenderSceneNormalAlphaZ(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+{
+	((FinishAccumFunc)(g_ModuleBase + 0x12E1F70))(Accumulator, RenderFlags);
+}
+
+void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+{
+	annotation->BeginEvent(L"FinishAccumulating_ShadowMapOrMask");
+	((FinishAccumFunc)(g_ModuleBase + 0x12E3050))(Accumulator, RenderFlags);
+	annotation->EndEvent();
+}
+
+void BSShaderAccumulator::FinishAccumulating_InterfaceElements(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+{
+	annotation->BeginEvent(L"FinishAccumulating_InterfaceElements");
+	((FinishAccumFunc)(g_ModuleBase + 0x12E2FE0))(Accumulator, RenderFlags);
+	annotation->EndEvent();
+}
+
+void BSShaderAccumulator::FinishAccumulating_FirstPerson(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+{
+	annotation->BeginEvent(L"FinishAccumulating_FirstPerson");
+	((FinishAccumFunc)(g_ModuleBase + 0x12E2B20))(Accumulator, RenderFlags);
+	annotation->EndEvent();
+}
+
+void BSShaderAccumulator::FinishAccumulating_LODOnly(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+{
+	annotation->BeginEvent(L"FinishAccumulating_LODOnly");
+
+	if (!Accumulator->m_pkCamera)
+		return;
+
+	*(bool *)(g_ModuleBase + 0x1E32E89) = false;
+	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
+	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
+	*(bool *)(g_ModuleBase + 0x1E32E89) = true;
+
+	annotation->EndEvent();
+}
+
+void BSShaderAccumulator::FinishAccumulating_Unknown1(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+{
+	annotation->BeginEvent(L"FinishAccumulating_Unknown1");
+
+	if (!Accumulator->m_pkCamera)
+		return;
+
+	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 14);
+
+	annotation->EndEvent();
+}
+
 void BSShaderAccumulator::RenderFromMainGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType)
 {
 	if (GroupType == -1)
@@ -415,6 +381,7 @@ void BSShaderAccumulator::RenderFromMainGroup(uint32_t StartTechnique, uint32_t 
 
 void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType)
 {
+	Assert(GroupType >= -1 && GroupType < 16);
 	Assert(StartTechnique <= EndTechnique);
 
 	BSBatchRenderer::RenderGroup *group = nullptr;

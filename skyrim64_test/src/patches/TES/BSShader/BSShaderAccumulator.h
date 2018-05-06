@@ -6,6 +6,8 @@ class NiCamera;
 class NiRenderObject;
 class BSShader;
 class BSBatchRenderer;
+class BSGeometry;
+class BSShaderProperty;
 
 class NiAccumulator : public NiObject
 {
@@ -53,16 +55,16 @@ static_assert(offsetof(NiAlphaAccumulator, m_UnknownByte52) == 0x52, "");
 class BSShaderAccumulator : public NiAlphaAccumulator
 {
 public:
-	typedef void(*RegisterObjFunc)(void *, void *, void *, void *);
+	typedef void(*RegisterObjFunc)(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown);
 	typedef void(*FinishAccumFunc)(BSShaderAccumulator *Accumulator, uint32_t Flags);
 
 	virtual ~BSShaderAccumulator();
-
 	virtual void StartAccumulating(NiCamera const *) override;
-	virtual void FinishAccumulating() override;
+	virtual void Unknown1();
 	virtual void Unknown2();
 	virtual void Unknown3();
 	virtual void Unknown4();
+	virtual void FinishAccumulatingDispatch(uint32_t RenderFlags);
 
 	char _pad1[0xD8];
 	BSBatchRenderer *m_MainBatch;
@@ -78,6 +80,7 @@ public:
 	// @ 0xD0 = BSMap<BSFadeNode, uint32_t>
 	// @ 0x118 = NiPoint3(0.300, 0.300, 0.300)
 	// @ 0x148 = ShadowSceneNode/NiNode
+	// @ 0x150 = uiRenderMode
 
 	inline static RegisterObjFunc RegisterObjectArray[30];
 	inline static FinishAccumFunc FinishAccumulatingArray[30];
@@ -86,8 +89,18 @@ public:
 
 	static void InitCallbackTable();
 	static void SetRenderMode(uint32_t RenderMode);
+	void hk_FinishAccumulatingDispatch(uint32_t RenderFlags);
 
-	void sub_1412E1600(uint32_t RenderFlags);
+	static void FinishAccumulating_Normal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
+	static void RenderSceneNormal(BSShaderAccumulator * Accumulator, uint32_t RenderFlags);
+	static void RenderSceneNormalAlphaZ(BSShaderAccumulator * Accumulator, uint32_t RenderFlags);
+
+	static void FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
+	static void FinishAccumulating_InterfaceElements(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
+	static void FinishAccumulating_FirstPerson(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
+	static void FinishAccumulating_LODOnly(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
+	static void FinishAccumulating_Unknown1(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
+
 	void RenderFromMainGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType);
 	void RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType);
 };
@@ -98,3 +111,10 @@ static_assert(offsetof(BSShaderAccumulator, m_CurrentTech) == 0x138, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentGroupIndex) == 0x13C, "");
 static_assert(offsetof(BSShaderAccumulator, m_HasPendingDraws) == 0x140, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentViewPos) == 0x168, "");
+
+STATIC_CONSTRUCTOR(CheckBSShaderAccumulator, []
+{
+	assert_vtable_index(&BSShaderAccumulator::~BSShaderAccumulator, 0);
+	assert_vtable_index(&BSShaderAccumulator::StartAccumulating, 37);
+	assert_vtable_index(&BSShaderAccumulator::FinishAccumulatingDispatch, 42);
+});

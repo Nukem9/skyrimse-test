@@ -73,6 +73,8 @@ namespace BSGraphics
 
 	void Renderer::Initialize()
 	{
+		BSShaderAccumulator::InitCallbackTable();
+
 		auto *renderer = GetGlobalsNonThreaded();
 
 		for (uint32_t i = 0; i < RingBufferMaxFrames; i++)
