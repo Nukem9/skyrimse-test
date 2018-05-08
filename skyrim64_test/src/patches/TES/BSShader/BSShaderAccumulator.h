@@ -91,6 +91,8 @@ public:
 	static void SetRenderMode(uint32_t RenderMode);
 	void hk_FinishAccumulatingDispatch(uint32_t RenderFlags);
 
+	static bool IsGrassShadowBlacklist(uint32_t Technique);
+
 	static void FinishAccumulating_Normal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
 	static void RenderSceneNormal(BSShaderAccumulator * Accumulator, uint32_t RenderFlags);
 	static void RenderSceneNormalAlphaZ(BSShaderAccumulator * Accumulator, uint32_t RenderFlags);

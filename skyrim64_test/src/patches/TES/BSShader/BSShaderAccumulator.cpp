@@ -1,6 +1,8 @@
 #include "../../rendering/common.h"
 #include "../../../common.h"
 #include "../BSGraphicsRenderer.h"
+#include "../BSGraphicsRenderTargetManager.h"
+#include "BSShaderRenderTargets.h"
 #include "../BSBatchRenderer.h"
 #include "BSShaderManager.h"
 #include "BSShaderAccumulator.h"
@@ -100,6 +102,14 @@ void BSShaderAccumulator::hk_FinishAccumulatingDispatch(uint32_t RenderFlags)
 		FinishAccumulatingCurrent(this, RenderFlags);
 	else
 		RenderSceneNormal(this, RenderFlags);
+}
+
+bool BSShaderAccumulator::IsGrassShadowBlacklist(uint32_t Technique)
+{
+	return Technique == BSSM_GRASS_SHADOW_L ||
+		Technique == BSSM_GRASS_SHADOW_LS ||
+		Technique == BSSM_GRASS_SHADOW_LB ||
+		Technique == BSSM_GRASS_SHADOW_LSB;
 }
 
 void ApplySceneDepthShift()
@@ -454,7 +464,7 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 
 		while (m_HasPendingDraws)
 		{
-			if ((unsigned int)(m_CurrentTech - BSSM_GRASS_SHADOW_L) <= 3 && (*(BYTE *)((__int64)this + 296) || *(BYTE *)((__int64)this + 297)))// if (is grass shadow) ???
+			if (IsGrassShadowBlacklist(m_CurrentTech) && (*(BYTE *)((__int64)this + 296) || *(BYTE *)((__int64)this + 297)))// if (is grass shadow) ???
 				m_HasPendingDraws = batch->sub_14131ECE0(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode);// Probably discards pass, returns true if there's remaining sub passes
 			else
 				m_HasPendingDraws = batch->sub_14131E960(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode, RenderFlags);

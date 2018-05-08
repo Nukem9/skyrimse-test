@@ -429,11 +429,6 @@ void BSBatchRenderer::sub_14131D6E0()
 	m_UnknownList.RemoveAllNodes(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
 }
 
-bool __fastcall sub_1412E3AB0(int a1)
-{
-	return (unsigned int)(a1 - 0x5C000058) <= 3;
-}
-
 void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset);
 
 void UnmapDynamicData()
@@ -495,7 +490,7 @@ void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader
 {
 	if (Shader != BSSkyShader::pInstance)
 	{
-		if ((RenderFlags & 4) && !sub_1412E3AB0(Pass->m_TechniqueID))
+		if ((RenderFlags & 4) && !BSShaderAccumulator::IsGrassShadowBlacklist(Pass->m_TechniqueID))
 			Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, AlphaTest);
 
 		if (AlphaTest && Pass->QAlphaProperty())
