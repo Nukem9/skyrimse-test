@@ -334,25 +334,25 @@ void BSShaderAccumulator::FinishAccumulating_FirstPerson(BSShaderAccumulator *Ac
 
 void BSShaderAccumulator::FinishAccumulating_LODOnly(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
-	annotation->BeginEvent(L"FinishAccumulating_LODOnly");
-
 	if (!Accumulator->m_pkCamera)
 		return;
 
-	*(bool *)(g_ModuleBase + 0x1E32E89) = false;
+	annotation->BeginEvent(L"FinishAccumulating_LODOnly");
+
+	BSShaderManager::bLODLandscapeNoise = false;
 	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
-	*(bool *)(g_ModuleBase + 0x1E32E89) = true;
+	BSShaderManager::bLODLandscapeNoise = true;
 
 	annotation->EndEvent();
 }
 
 void BSShaderAccumulator::FinishAccumulating_Unknown1(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
-	annotation->BeginEvent(L"FinishAccumulating_Unknown1");
-
 	if (!Accumulator->m_pkCamera)
 		return;
+
+	annotation->BeginEvent(L"FinishAccumulating_Unknown1");
 
 	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 14);
 

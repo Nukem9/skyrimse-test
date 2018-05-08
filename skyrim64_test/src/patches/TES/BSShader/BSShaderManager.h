@@ -74,7 +74,11 @@ private:
 	inline AutoPtr(BSShaderAccumulator *, pCurrentShaderAccumulator, 0x31F5490);// NOTE: This is now a per-thread variable in SetCurrentAccumulator
 	inline AutoPtr(uint32_t, usRenderMode, 0x31F5498);
 
+	const char *DefaultErrorMapID = "\bERR";
+	const char *DefaultNormalMapID = "\bNOR";
+
 public:
+	inline AutoPtr(bool, bLODLandscapeNoise, 0x1E32E89);
 	// inline static NiCamera *spCamera;
 
 	static void SetRenderMode(uint32_t RenderMode);

@@ -61,7 +61,6 @@ AutoPtr(float, flt_141E32FD8, 0x1E32FD8);
 AutoPtr(float, flt_141E32FB8, 0x1E32FB8);
 AutoPtr(BYTE, byte_1431F547C, 0x31F547C);
 AutoPtr(XMFLOAT4, xmmword_141E32FC8, 0x1E32FC8);
-AutoPtr(bool, byte_141E32E89, 0x1E32E89);
 
 DefineIniSetting(bEnableSnowMask, Display);
 DefineIniSetting(iLandscapeMultiNormalTilingFactor, Display);
@@ -983,7 +982,7 @@ uint32_t BSLightingShader::GetRawTechnique(uint32_t Technique)
 	uint32_t outputTech = Technique - 0x4800002D;
 	uint32_t subIndex = (outputTech >> 24) & 0x3F;
 
-	if (subIndex == RAW_TECHNIQUE_LODLANDNOISE && !byte_141E32E89)
+	if (subIndex == RAW_TECHNIQUE_LODLANDNOISE && !BSShaderManager::bLODLandscapeNoise)
 	{
 		outputTech = outputTech & 0xC9FFFFFF | 0x9000000;
 	}
