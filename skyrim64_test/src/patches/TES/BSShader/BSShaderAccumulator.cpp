@@ -102,6 +102,16 @@ void BSShaderAccumulator::hk_FinishAccumulatingDispatch(uint32_t RenderFlags)
 		RenderSceneNormal(this, RenderFlags);
 }
 
+void ApplySceneDepthShift()
+{
+	((void(__fastcall *)())(g_ModuleBase + 0x12F8B10))();
+}
+
+void ResetSceneDepthShift()
+{
+	((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
+}
+
 void BSShaderAccumulator::FinishAccumulating_Normal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
 	annotation->BeginEvent(L"FinishAccumulating_Normal");
@@ -112,22 +122,22 @@ void BSShaderAccumulator::FinishAccumulating_Normal(BSShaderAccumulator *Accumul
 
 void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
+	if (!Accumulator->m_pkCamera)
+		return;
+
 	annotation->BeginEvent(L"BSShaderAccumulator: Draw1");
 
 	__int64 a1 = (__int64)Accumulator;
 	auto renderer = BSGraphics::Renderer::GetGlobals();
 
-	if (!Accumulator->m_pkCamera)
-		return;
-
 	if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
 		renderer->DepthStencilStateSetDepthMode(4);
 
-	// v7 = RenderDepthOnly()? RenderAlphaOnly()?
+	// v7 = RenderDepthOnly()? RenderAlphaOnly()? BSShaderManager::BSS_SHADOWS?
 	bool v7 = (RenderFlags & 0xA) != 0;
 
 	if (!v7)
-		((void(__fastcall *)())(g_ModuleBase + 0x12F8B10))();
+		ApplySceneDepthShift();
 
 	//
 	// Original draw order:
@@ -193,7 +203,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 
 			if (!v7)
-				((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
+				ResetSceneDepthShift();
 		}
 		annotation->EndEvent();
 	}
@@ -220,7 +230,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	annotation->EndEvent();
 
 	if (!v7)
-		((void(__fastcall *)())(g_ModuleBase + 0x12F8B10))();
+		ApplySceneDepthShift();
 
 	// NormalDecals?...CK doesn't have a specific name for this
 	{
@@ -301,7 +311,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	}
 
 	if (!v7)
-		((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
+		ResetSceneDepthShift();
 
 	annotation->EndEvent();
 }
@@ -313,8 +323,33 @@ void BSShaderAccumulator::RenderSceneNormalAlphaZ(BSShaderAccumulator *Accumulat
 
 void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
+	if (!Accumulator->m_pkCamera)
+		return;
+
 	annotation->BeginEvent(L"FinishAccumulating_ShadowMapOrMask");
-	((FinishAccumFunc)(g_ModuleBase + 0x12E3050))(Accumulator, RenderFlags);
+
+	if ((RenderFlags & 0x22) == 0x20)
+		ApplySceneDepthShift();
+
+	if (RenderFlags & 0x100)
+	{
+		BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(0);
+		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 15);
+	}
+	else
+	{
+		Accumulator->RenderFromMainGroup(0x2B, 0x4000002B, RenderFlags, -1);
+		Accumulator->RenderFromMainGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
+
+		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
+		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
+
+		((void(__fastcall *)(BSShaderAccumulator *, uint32_t))(g_ModuleBase + 0x12E2950))(Accumulator, RenderFlags);
+	}
+
+	if ((RenderFlags & 0x22) == 0x20)
+		ResetSceneDepthShift();
+
 	annotation->EndEvent();
 }
 
