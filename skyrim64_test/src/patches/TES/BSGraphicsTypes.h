@@ -9,6 +9,28 @@
 namespace BSGraphics
 {
 	//
+	// Render targets/depth/stencil
+	//
+	enum ClearDepthStencilTarget
+	{
+		CLEAR_DEPTH_STENCIL_TARGET_DEPTH = 0x1,
+		CLEAR_DEPTH_STENCIL_TARGET_STENCIL = 0x2,
+		CLEAR_DEPTH_STENCIL_TARGET_ALL = 0x3,
+	};
+
+	enum SetRenderTargetMode
+	{
+		// Probably wrong
+		SRTM_CLEAR = 0x0,
+		SRTM_CLEAR_DEPTH = 0x1,
+		SRTM_CLEAR_STENCIL = 0x2,
+		SRTM_NO_CLEAR = 0x3,
+		SRTM_RESTORE = 0x3,
+		SRTM_FORCE_COPY_RESTORE = 0x4,
+		SRTM_INIT = 0x5,
+	};
+
+	//
 	// General resources
 	//
 	struct Texture

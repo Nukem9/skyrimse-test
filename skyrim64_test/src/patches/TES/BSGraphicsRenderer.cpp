@@ -378,7 +378,7 @@ namespace BSGraphics
 						uint32_t& rtState = renderer->m_RenderTargetStates[i];
 						uint32_t rtIndex = renderer->m_RenderTargetIndexes[i];
 
-						if (rtIndex == BSShaderRenderTargets::RENDER_TARGET_NONE)
+						if (rtIndex == RENDER_TARGET_NONE)
 							break;
 
 						renderTargetViews[i] = (ID3D11RenderTargetView *)*((uint64_t *)v3 + 6 * rtIndex + 0x14B);

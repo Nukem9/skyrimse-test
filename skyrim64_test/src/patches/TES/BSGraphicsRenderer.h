@@ -106,7 +106,7 @@ namespace BSGraphics
 
 		struct
 		{
-			float			m_UnkownFloatsScreen[4];			// Unknown
+			float			m_PreviousClearColor[4];			// Render target clear color
 
 			void			*qword_14304BF00;					// Unknown class pointer
 
@@ -162,7 +162,7 @@ namespace BSGraphics
 			void *m_FrameDurationStringHandle;					// "Frame Duration" but stored in their global string pool
 
 			//
-			// This is probably a separate structure...possibly the BSGraphics::Renderer class itself
+			// This is probably a separate structure...possibly the BSGraphics::RendererData class
 			//
 			uint32_t m_StateUpdateFlags;						// Flags; global state updates
 			uint32_t m_PSResourceModifiedBits;					// Flags
@@ -220,7 +220,7 @@ namespace BSGraphics
 
 #define CHECK_OFFSET(member, actualAddr) static_assert(offsetof(Renderer, member) == (actualAddr - 0x14304BEF0), "")
 	static_assert(sizeof(Renderer) == 0x25A0, "");
-	CHECK_OFFSET(m_UnkownFloatsScreen, 0x14304BEF0);
+	CHECK_OFFSET(m_PreviousClearColor, 0x14304BEF0);
 	CHECK_OFFSET(qword_14304BF00, 0x14304BF00);
 	CHECK_OFFSET(m_Device, 0x14304BF08);
 	CHECK_OFFSET(m_Window, 0x14304BF10);
