@@ -93,7 +93,7 @@ void InitializeTLSDll()
 	size_t(*GetStaticTlsDataSize)();
 	uint32_t(*GetStaticTlsSlot)();
 
-	AssertMsg(g_TlsIndex == 0, "TlsIndex is trying to be initialized twice");
+	AssertMsg(g_TlsIndex == 0, "TlsIndex would be initialized twice");
 
 	HMODULE lib = LoadLibraryA("skyrim64_tls_mt.dll");
 	*(FARPROC *)&GetStaticTlsData = GetProcAddress(lib, "GetStaticTlsData");

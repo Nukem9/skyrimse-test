@@ -8,13 +8,10 @@ uintptr_t g_CodeRegion;
 void CreateXbyakPatches()
 {
 	// Initialize disassembler
-	if (!ZYDIS_SUCCESS(ZydisDecoderInit(&g_Decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64)))
-	{
-		fputs("Failed to initialize decoder\n", stderr);
-		exit(EXIT_FAILURE);
-	}
+	Assert(ZYDIS_SUCCESS(ZydisDecoderInit(&g_Decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64)));
 
-	// Log file
+#if SKYRIM64_GENERATE_OFFSETS
+	// Offset dump file
 	freopen("C:\\out.txt", "w", stdout);
 
 #if TLS_DEBUG_MEMORY_ACCESS
@@ -34,6 +31,7 @@ void CreateXbyakPatches()
 
 	for (uintptr_t xref : XrefList2)
 		GenerateInstruction(xref - 0x140000000 + g_ModuleBase);
+#endif
 
 	// Do the actual code modifications
 	std::unordered_map<uint32_t, void *> codeCache;
@@ -85,8 +83,7 @@ void CreateXbyakCodeBlock()
 		start = (uintptr_t)memInfo.BaseAddress + 4096 + 1;
 	}
 
-	if (!g_CodeRegion)
-		__debugbreak();
+	Assert(g_CodeRegion);
 }
 
 PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t MemorySize) : CodeGenerator(MemorySize, (void *)Memory)
@@ -184,7 +181,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 		case PatchType::MOVSD_REG_MEM:movsd(xmmReg, memop); break;		// movsd  xmm, [address]
 		case PatchType::MOVSD_MEM_REG:movsd(memop, xmmReg); break;		// movsd  [address], xmm
 
-		default:__debugbreak();
+		default:Assert(false); break;
 		}
 	}
 	else if (Patch->Type == PatchType::INC_MEM ||
@@ -196,7 +193,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 		case PatchType::INC_MEM:inc(memop); break;		// inc [address]
 		case PatchType::DEC_MEM:dec(memop); break;		// dec [address]
 
-		default:__debugbreak();
+		default:Assert(false); break;
 		}
 	}
 	else
@@ -219,7 +216,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 			case PatchType::CMP_MEM_IMM:cmp(memop, (uint32_t)Patch->Immediate); break;
 			case PatchType::OR_MEM_IMM:or(memop, (uint32_t)Patch->Immediate); break;
 
-			default:__debugbreak();
+			default:Assert(false); break;
 			}
 		}
 		else
@@ -245,7 +242,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 			case PatchType::OR_MEM_REG:or(memop, r); break;
 			case PatchType::XADD_MEM_REG:xadd(memop, r); break;
 
-			default:__debugbreak();
+			default:Assert(false); break;
 			}
 		}
 	}
@@ -571,8 +568,7 @@ void GenerateInstruction(uintptr_t Address)
 	ZydisDecodedInstruction instruction;
 	ZydisDecodedOperand *operands = instruction.operands;
 
-	if (!ZYDIS_SUCCESS(ZydisDecoderDecodeBuffer(&g_Decoder, (BYTE *)Address, ZYDIS_MAX_INSTRUCTION_LENGTH, Address, &instruction)))
-		__debugbreak();
+	Assert(ZYDIS_SUCCESS(ZydisDecoderDecodeBuffer(&g_Decoder, (BYTE *)Address, ZYDIS_MAX_INSTRUCTION_LENGTH, Address, &instruction)));
 
 	auto foundItem = std::find_if(OpTable.begin(), OpTable.end(),
 		[&](const OpTableEntry &Entry)
@@ -589,10 +585,8 @@ void GenerateInstruction(uintptr_t Address)
 		return true;
 	});
 
-	if (foundItem != OpTable.end())
-		GenerateCommonInstruction(&instruction, operands, foundItem->OutputType);
-	else
-		__debugbreak();
+	Assert(foundItem != OpTable.end());
+	GenerateCommonInstruction(&instruction, operands, foundItem->OutputType);
 
 	if (instruction.mnemonic == ZYDIS_MNEMONIC_SHUFPS)
 		printf("DO_SHUFPS_FIXUP(0x%llX, %lld)\n", Address - g_ModuleBase, instruction.operands[2].imm.value.s);
@@ -615,20 +609,7 @@ void GenerateCommonInstruction(ZydisDecodedInstruction *Instruction, ZydisDecode
 
 	if (Instruction->operandCount == 1)
 	{
-		if (Operands[0].type == ZYDIS_OPERAND_TYPE_MEMORY)
-		{
-			uint64_t outAddr;
-			ZydisCalcAbsoluteAddress(Instruction, &Operands[0], &outAddr);
-
-			if (Operands[0].mem.base != ZYDIS_REGISTER_RIP || Operands[0].mem.scale != 0)
-				return;// TODO
-
-			printf("DO_THREADING_PATCH_%s(0x%llX, %s, 0x%llX, %d)\n", Type, Instruction->instrAddress - g_ModuleBase, "NONE", outAddr - g_ModuleBase, Operands[0].size);
-		}
-		else
-		{
-			__debugbreak();
-		}
+		Assert(false);
 	}
 	else if (Instruction->operandCount >= 2)
 	{
@@ -642,7 +623,7 @@ void GenerateCommonInstruction(ZydisDecodedInstruction *Instruction, ZydisDecode
 			else if (ZYDIS_SUCCESS(ZydisCalcAbsoluteAddress(Instruction, &Operands[0], &outAddr)))
 				outAddr -= g_ModuleBase;
 			else
-				__debugbreak();
+				Assert(false);
 
 			outAddr -= BSGRAPHICS_BASE_OFFSET;
 
@@ -667,7 +648,7 @@ void GenerateCommonInstruction(ZydisDecodedInstruction *Instruction, ZydisDecode
 			else if (ZYDIS_SUCCESS(ZydisCalcAbsoluteAddress(Instruction, &Operands[0], &outAddr)))
 				outAddr -= g_ModuleBase;
 			else
-				__debugbreak();
+				Assert(false);
 
 			outAddr -= BSGRAPHICS_BASE_OFFSET;
 
@@ -693,7 +674,7 @@ void GenerateCommonInstruction(ZydisDecodedInstruction *Instruction, ZydisDecode
 			else if (ZYDIS_SUCCESS(ZydisCalcAbsoluteAddress(Instruction, &Operands[1], &outAddr)))
 				outAddr -= g_ModuleBase;
 			else
-				__debugbreak();
+				Assert(false);
 
 			outAddr -= BSGRAPHICS_BASE_OFFSET;
 
@@ -710,23 +691,21 @@ void GenerateCommonInstruction(ZydisDecodedInstruction *Instruction, ZydisDecode
 		}
 		else
 		{
-			__debugbreak();
+			Assert(false);
 		}
 	}
 	else
 	{
-		__debugbreak();
+		Assert(false);
 	}
 }
 
 void WriteCodeHook(uintptr_t TargetAddress, void *Code)
 {
 	ZydisDecodedInstruction instruction;
-	if (!ZYDIS_SUCCESS(ZydisDecoderDecodeBuffer(&g_Decoder, (BYTE *)TargetAddress, ZYDIS_MAX_INSTRUCTION_LENGTH, TargetAddress, &instruction)))
-		__debugbreak();
 
-	if (instruction.length < 5)
-		__debugbreak();
+	Assert(ZYDIS_SUCCESS(ZydisDecoderDecodeBuffer(&g_Decoder, (BYTE *)TargetAddress, ZYDIS_MAX_INSTRUCTION_LENGTH, TargetAddress, &instruction)));
+	Assert(instruction.length >= 5)
 
 	BYTE data[ZYDIS_MAX_INSTRUCTION_LENGTH];
 	memset(data, 0x90, sizeof(data));
