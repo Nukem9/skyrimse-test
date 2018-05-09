@@ -73,10 +73,11 @@ const uintptr_t XrefList2[] =
 	0x14131fda4,
 	0x14131fea7,
 
+	// No longer needed. See BSShaderManager::SetCurrentAccumulator
 	// qword_1431F5490
-	0x1412AABFD,
-	0x1412AD330,
-	0x1412AD340,
+	// 0x1412AABFD,
+	// 0x1412AD330,
+	// 0x1412AD340,
 };
 
 const PatchEntry XrefGeneratedPatches[] =
