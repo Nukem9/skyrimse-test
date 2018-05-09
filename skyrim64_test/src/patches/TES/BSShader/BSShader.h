@@ -208,9 +208,9 @@ static_assert_offset(BSShader, m_VertexShaderTable, 0x28);
 static_assert_offset(BSShader, m_PixelShaderTable, 0x58);
 static_assert_offset(BSShader, m_LoaderType, 0x88);
 
-STATIC_CONSTRUCTOR(__CheckBSShaderVtable, []
+STATIC_CONSTRUCTOR(CheckBSShaderVtable, []
 {
-	assert_vtable_index(&BSShader::~BSShader, 0);
+	//assert_vtable_index(&BSShader::~BSShader, 0);
 	assert_vtable_index(&BSShader::DeleteThis, 1);
 	assert_vtable_index(&BSShader::SetupTechnique, 2);
 	assert_vtable_index(&BSShader::RestoreTechnique, 3);

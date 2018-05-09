@@ -163,17 +163,17 @@ public:
 
 STATIC_CONSTRUCTOR(CheckTESForm, []
 {
-	assert_vtable_index(&BaseFormComponent::~BaseFormComponent, 0);
+	//assert_vtable_index(&BaseFormComponent::~BaseFormComponent, 0);
 	assert_vtable_index(&BaseFormComponent::VFunc01, 1);
 	assert_vtable_index(&BaseFormComponent::VFunc02, 2);
 	assert_vtable_index(&BaseFormComponent::VFunc03, 3);
 
-	assert_vtable_index(&TESForm::~TESForm, 0);
+	//assert_vtable_index(&TESForm::~TESForm, 0);
 	assert_vtable_index(&TESForm::VFunc04, 4);
 	assert_vtable_index(&TESForm::IsREFR, 44);
 	assert_vtable_index(&TESForm::VFunc59, 59);
 
-	assert_vtable_index(&TESObjectREFR::~TESObjectREFR, 0);
+	//assert_vtable_index(&TESObjectREFR::~TESObjectREFR, 0);
 	assert_vtable_index(&TESObjectREFR::VFunc60, 60);
 	assert_vtable_index(&TESObjectREFR::VFunc100, 100);
 	assert_vtable_index(&TESObjectREFR::GetNiNode, 112);

@@ -60,10 +60,6 @@ public:
 
 	virtual ~BSShaderAccumulator();
 	virtual void StartAccumulating(NiCamera const *) override;
-	virtual void Unknown1();
-	virtual void Unknown2();
-	virtual void Unknown3();
-	virtual void Unknown4();
 	virtual void FinishAccumulatingDispatch(uint32_t RenderFlags);
 
 	char _pad1[0xD8];
@@ -116,7 +112,7 @@ static_assert(offsetof(BSShaderAccumulator, m_CurrentViewPos) == 0x168, "");
 
 STATIC_CONSTRUCTOR(CheckBSShaderAccumulator, []
 {
-	assert_vtable_index(&BSShaderAccumulator::~BSShaderAccumulator, 0);
+	//assert_vtable_index(&BSShaderAccumulator::~BSShaderAccumulator, 0);
 	assert_vtable_index(&BSShaderAccumulator::StartAccumulating, 37);
 	assert_vtable_index(&BSShaderAccumulator::FinishAccumulatingDispatch, 42);
 });
