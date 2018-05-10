@@ -21,7 +21,7 @@ namespace BSGraphics::Utility
 
 	void CopyNiColorAToFloat(DirectX::XMVECTOR *Floats, const NiColorA& Color)
 	{
-		*Floats = Color.XmmVector();
+		*Floats = Color.AsXmm();
 	}
 
 	void PackDynamicParticleData(uint32_t ParticleCount, class NiParticles *Particles, void *Buffer)

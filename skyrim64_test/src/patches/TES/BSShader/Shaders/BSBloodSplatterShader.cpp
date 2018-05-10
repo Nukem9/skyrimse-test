@@ -130,15 +130,18 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFla
 
 	//
 	// VS: p0 float4x4 WorldViewProj
-	// VS: p1 float4 LightLoc
-	// VS: p2 float Ctrl
 	//
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
 	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, renderer->m_ViewProjMat);
 
 	vertexCG.ParamVS<XMMATRIX, 0>() = worldViewProj;
-	vertexCG.ParamVS<XMVECTOR, 1>()	= LightLoc.XmmVector();
-	vertexCG.ParamVS<float, 2>()	= fFlareOffsetScale;
+
+	//
+	// VS: p1 float4 LightLoc
+	// VS: p2 float Ctrl
+	//
+	BSGraphics::Utility::CopyNiColorAToFloat(&vertexCG.ParamVS<XMVECTOR, 1>(), LightLoc);
+	vertexCG.ParamVS<float, 2>() = fFlareOffsetScale;
 
 	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);

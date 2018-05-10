@@ -43,4 +43,5 @@ public:
 		return ms_uiObjects;
 	}
 };
+static_assert(sizeof(NiRefObject) == 0x10);
 //static_assert(offsetof(NiRefObject, m_RefCount) == 0x8, "");

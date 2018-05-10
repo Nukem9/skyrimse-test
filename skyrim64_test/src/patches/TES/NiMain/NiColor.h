@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DirectXMath.h>
+#include <xmmintrin.h>
 
 class NiColor
 {
@@ -27,6 +27,9 @@ class NiColorA
 public:
 	const static NiColorA BLACK;
 	const static NiColorA WHITE;
+	const static NiColorA RED;
+	const static NiColorA GREEN;
+	const static NiColorA BLUE;
 
 	float r;
 	float g;
@@ -51,15 +54,13 @@ public:
 		a = A;
 	}
 
-	inline DirectX::XMVECTOR XmmVector() const
+	inline __m128 AsXmm() const
 	{
-		// This should only be in BSGraphics::Utility::CopyNiColorAToFloat but there's so
-		// much abstraction I don't care anymore.
 		return _mm_load_ps(&r);
 	}
 };
 static_assert(sizeof(NiColorA) == 0x10);
-static_assert(offsetof(NiColorA, r) == 0x0);
-static_assert(offsetof(NiColorA, g) == 0x4);
-static_assert(offsetof(NiColorA, b) == 0x8);
-static_assert(offsetof(NiColorA, a) == 0xC);
+static_assert_offset(NiColorA, r, 0x0);
+static_assert_offset(NiColorA, g, 0x4);
+static_assert_offset(NiColorA, b, 0x8);
+static_assert_offset(NiColorA, a, 0xC);

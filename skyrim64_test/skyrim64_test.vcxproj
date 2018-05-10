@@ -136,6 +136,7 @@
     <ClInclude Include="src\patches\TES\BSRenderPass.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSLight.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShader_Dumper.h" />
+    <ClInclude Include="src\patches\TES\BSShader\BSShadowLight.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShaderProperty.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderProperty.h" />
@@ -174,10 +175,13 @@
     <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiColor.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiDirectionalLight.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiLight.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiMatrix.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiNode.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiPoint.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiRefObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiSkinInstance.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiSourceTexture.h" />
@@ -280,7 +284,7 @@
     <ClCompile Include="src\patches\TES\BSSpinLock.cpp" />
     <ClCompile Include="src\patches\TES\BSThread_Win32.cpp" />
     <ClCompile Include="src\patches\TES\MTRenderer.cpp" />
-    <ClCompile Include="src\patches\TES\NiMain\NiColor.cpp" />
+    <ClCompile Include="src\patches\TES\NiMain\NiMain.cpp" />
     <ClCompile Include="src\profiler.cpp" />
     <ClCompile Include="src\typeinfo\hk_typeinfo.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />

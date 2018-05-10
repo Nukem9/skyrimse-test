@@ -14,28 +14,28 @@ struct NiRTTI
 class NiObject : public NiRefObject
 {
 public:
-	// Verified
 	virtual const NiRTTI *GetRTTI();
-	virtual const NiNode *IsNode();		// const NiNode *
-	virtual void *IsSwitchNode();		// NiSwitchNode *
-	virtual void *IsFadeNode();			// BSFadeNode *
-	virtual void *IsMultiBoundNode();	// BSMultiBoundNode *
-	virtual void *IsGeometry();			// BSGeometry *
-	virtual void *IsTriStrips();		// NiTriStrips *
-	virtual class BSTriShape *IsTriShape();			// BSTriShape *
-	virtual void *IsSegmentedTriShape();// BSSegmentedTriShape *
-	virtual void *IsSubIndexTriShape();	// BSSubIndexTriShape *
-	virtual class BSDynamicTriShape *IsDynamicTriShape();	// BSDynamicTriShape *
-	virtual void *IsNiGeometry();		// NiGeometry *
-	virtual void *IsNiTriBasedGeom();	// NiTriBasedGeom *
-	virtual void *IsNiTriShape();		// NiTriShape *
-	virtual void *IsParticlesGeom();	// NiParticles*
-	virtual void *IsLinesGeom();		// BSLines *
-	virtual void *IsBhkNiCollisionObject();// bhkNiCollisionObject *
-	virtual void *IsBhkBlendCollisionObject();// bhkBlendCollisionObject *
-	virtual void *unknown2();
-	virtual void *IsBhkRigidBody();		// bhkRigidBody *
-	virtual void *IsBhkLimitedHingeConstraint();// bhkLimitedHingeConstraint *
+
+	virtual const NiNode						*IsNode();
+	virtual class NiSwitchNode					*IsSwitchNode();
+	virtual class BSFadeNode					*IsFadeNode();
+	virtual class BSMultiBoundNode				*IsMultiBoundNode();
+	virtual class BSGeometry					*IsGeometry();
+	virtual class NiTriStrips					*IsTriStrips();
+	virtual class BSTriShape					*IsTriShape();
+	virtual class BSSegmentedTriShape			*IsSegmentedTriShape();
+	virtual class BSSubIndexTriShape			*IsSubIndexTriShape();
+	virtual class BSDynamicTriShape				*IsDynamicTriShape();
+	virtual class NiGeometry					*IsNiGeometry();
+	virtual class NiTriBasedGeom				*IsNiTriBasedGeom();
+	virtual class NiTriShape					*IsNiTriShape();
+	virtual class NiParticles					*IsParticlesGeom();
+	virtual void								*IsLinesGeom();
+	virtual class bhkNiCollisionObject			*IsBhkNiCollisionObject();
+	virtual class bhkBlendCollisionObject		*IsBhkBlendCollisionObject();
+	virtual void								*IsUnknown1();
+	virtual class bhkRigidBody					*IsBhkRigidBody();
+	virtual class bhkLimitedHingeConstraint		*IsBhkLimitedHingeConstraint();
 
 	virtual NiObject *CreateClone(NiCloningProcess &);
 	virtual void LoadBinary(NiStream &);
@@ -50,6 +50,6 @@ public:
 	virtual unsigned int GetBlockAllocationSize();
 	virtual NiObjectGroup *GetGroup();
 	virtual void *SetGroup(NiObjectGroup *);
-	virtual void *IsNiControllerManager();// NiControllerManager *
+	virtual class NiControllerManager *IsNiControllerManager();
 };
 static_assert(sizeof(NiObject) == 0x10);
