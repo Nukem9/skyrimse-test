@@ -85,6 +85,8 @@ namespace shader_analyzer
             //
             // "Shader", "Symbolic", "Whitelisted"
             //
+            listViewShaders.BeginUpdate();
+
             foreach (string file in m_FileList)
             {
                 // Completely skip any file with "-new" in the name to eliminate duplicate listings
@@ -105,6 +107,8 @@ namespace shader_analyzer
                 item.SubItems.Add("No");
                 listViewShaders.Items.Add(item);
             }
+
+            listViewShaders.EndUpdate();
         }
 
         private void ClearListView()
