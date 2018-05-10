@@ -1345,7 +1345,7 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::Consta
 		}
 
 		if (i < ShadowLightCount)
-			shadowLightMaskSelect[i] = (float)static_cast<BSShadowLight *>(screenSpaceLight)->UnkDword540;
+			shadowLightMaskSelect[i] = (float)static_cast<BSShadowLight *>(screenSpaceLight)->UnkDword520;
 	}
 }
 
