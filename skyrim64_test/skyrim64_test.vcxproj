@@ -134,6 +134,7 @@
     <ClInclude Include="src\patches\TES\BGSDistantTreeBlock.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsTypes.h" />
     <ClInclude Include="src\patches\TES\BSRenderPass.h" />
+    <ClInclude Include="src\patches\TES\BSShader\BSLight.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShader_Dumper.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShaderProperty.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h" />
@@ -173,6 +174,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiColor.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiLight.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiNode.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h" />

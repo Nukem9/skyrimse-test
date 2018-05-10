@@ -2,6 +2,8 @@
 
 #include "BSShader/BSShader.h"
 
+class BSLight;
+
 struct BSRenderPass
 {
 	const static int MaxLightInArrayC = 16;
@@ -17,7 +19,7 @@ struct BSRenderPass
 	uint16_t Word20;
 	void *UnkPtr28;			// Possibly previous sub-pass
 	BSRenderPass *m_Next;	// Possibly next sub-pass
-	void **m_SceneLights;	// Pointer to an array of 16 lights (MaxLightInArrayC, directional only?, restricted to 3?)
+	BSLight **m_SceneLights;// Pointer to an array of 16 lights (MaxLightInArrayC, directional only?, restricted to 3?)
 	uint32_t UnkDword40;	// Set from TLS variable. Index in BSRenderPassCache?
 
 	/*
@@ -44,7 +46,7 @@ struct BSRenderPass
 	}
 	*/
 
-	void SetLights(uint8_t SceneLightCount, void **SceneLights)
+	void SetLights(uint8_t SceneLightCount, BSLight **SceneLights)
 	{
 		AssertMsg(SceneLightCount <= MaxLightInArrayC, "MaxLightInArrayC is too small");
 
@@ -59,14 +61,17 @@ struct BSRenderPass
 
 	}
 
-	NiAlphaProperty *QAlphaProperty() const
+	NiAlphaProperty *QAlphaProperty()
 	{
 		return m_Geometry->QAlphaProperty();
 	}
 
-	void **QLights() const
+	BSLight **QLights() const
 	{
-		return m_SceneLights;
+		if (m_LightCount > 0)
+			return m_SceneLights;
+
+		return nullptr;
 	}
 };
 static_assert(sizeof(BSRenderPass) == 0x48);
