@@ -1271,7 +1271,7 @@ void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::Constant
 	dirLightColor.y = v12 * sunDirectionalLight->GetDiffuseColor().g;
 	dirLightColor.z = v12 * sunDirectionalLight->GetDiffuseColor().b;
 
-	XMVECTOR lightDir = sunDirectionalLight->GetWorldDirection().AsXmm();
+	XMVECTOR lightDir = XMVectorNegate(sunDirectionalLight->GetWorldDirection().AsXmm());
 
 	if (a4 == 1)
 		lightDir = XMVector3TransformNormal(lightDir, a3);
