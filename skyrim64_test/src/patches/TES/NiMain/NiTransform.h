@@ -49,9 +49,24 @@ public:
 		Unitize();
 	}
 
+	inline __m128 AsXmm()
+	{
+		return _mm_setr_ps(x, y, z, 0.0f);
+	}
+
 	inline NiPoint3 operator- () const
 	{
 		return NiPoint3(-x, -y, -z);
+	}
+
+	inline NiPoint3 operator- (NiPoint3& Other) const
+	{
+		return NiPoint3(x - Other.x, y - Other.y, z - Other.z);
+	}
+
+	inline NiPoint3 operator+ (NiPoint3& Other) const
+	{
+		return NiPoint3(x + Other.x, y + Other.y, z + Other.z);
 	}
 
 	inline NiPoint3 operator* (float Scale) const

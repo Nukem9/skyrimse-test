@@ -82,6 +82,7 @@ public:
 	// inline static NiCamera *spCamera;
 
 	static void SetRenderMode(uint32_t RenderMode);
+	static uint32_t GetRenderMode();
 
 	static void SetCurrentAccumulator(BSShaderAccumulator *Accumulator);
 	static BSShaderAccumulator *GetCurrentAccumulator();

@@ -11,6 +11,11 @@ void BSShaderManager::SetRenderMode(uint32_t RenderMode)
 	BSShaderAccumulator::SetRenderMode(RenderMode);
 }
 
+uint32_t BSShaderManager::GetRenderMode()
+{
+	return usRenderMode;
+}
+
 void BSShaderManager::SetCurrentAccumulator(BSShaderAccumulator *Accumulator)
 {
 	// pCurrentShaderAccumulator = Accumulator;

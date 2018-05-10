@@ -4,6 +4,7 @@
 #include "../../Setting.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
+#include "../BSLight.h"
 #include "BSLightingShader.h"
 #include "BSLightingShaderProperty.h"
 
@@ -1256,15 +1257,9 @@ void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics:
 
 void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
 {
-	uintptr_t v7 = 0;
+	BSLight *sunDirectionalLight = Pass->QLights()[0];
 
-	if (Pass->m_LightCount > 0)
-		v7 = *(uintptr_t *)((uintptr_t)Pass + 56);
-
-	Assert(v7 == (uintptr_t)Pass->QLights());
-	Assert(*(uintptr_t *)v7 == (uintptr_t)Pass->QLights()[0]);
-
-	float *v10 = *(float **)(*(uintptr_t *)v7 + 72i64);
+	float *v10 = (float *)sunDirectionalLight->GetLight();
 	float v12 = *(float *)(qword_1431F5810 + 224) * v10[77];
 
 	// PS: p4 float3 DirLightColor
@@ -1312,18 +1307,50 @@ void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::Constan
 
 void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
 {
-	// __int64 __fastcall sub_14130B390(__int64 a1, __int64 a2, __int64 a3, int a4, int a5, float a6, int a7)
+	AssertMsg(BSShaderManager::GetRenderMode() != 22 && BSShaderManager::GetRenderMode() != 17, "This code path was removed and should never be called!");
+	AssertMsg(ShadowLightCount <= 4, "Shader only expects shadow selector data to fit in a FLOAT4");
 
-	struct tempbufdata
+	auto& pointLightPosition = PixelCG.ParamPS<XMVECTORF32[7], 1>();// PS: p1 float4[7] PointLightPosition
+	auto& pointLightColor = PixelCG.ParamPS<XMVECTORF32[7], 2>();	// PS: p2 float4[7] PointLightColor
+	auto& shadowLightMaskSelect = PixelCG.ParamPS<float[4], 10>();	// PS: p10 float4 ShadowLightMaskSelect
+
+	for (uint32_t i = 0; i < LightCount; i++)
 	{
-		char _pad[8];
-		void *ptr;
-	} temp;
+		BSLight *screenSpaceLight = Pass->QLights()[i + 1];
+		NiLight *niLight = screenSpaceLight->GetLight();
 
-	temp.ptr = PixelCG.m_Map.pData;
+		AssertMsgDebug(niLight, "If the SSL is non-null, the NiLight should also be non-null.");
 
-	auto GeoUpdatePointLightConstants = (void(__fastcall *)(tempbufdata *, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7))(g_ModuleBase + 0x130B390);
-	GeoUpdatePointLightConstants(&temp, Pass, Transform, LightCount, ShadowLightCount, Scale, a7);
+		float dimmer = niLight->GetDimmer() * screenSpaceLight->GetLODDimmer();
+
+		// if (bLiteBrite->value.b)
+		//	dimmer = 0.0f;
+
+		pointLightColor[i].f[0] = dimmer * niLight->GetDiffuseColor().r;
+		pointLightColor[i].f[1] = dimmer * niLight->GetDiffuseColor().g;
+		pointLightColor[i].f[2] = dimmer * niLight->GetDiffuseColor().b;
+
+		NiPoint3 worldPos = niLight->GetWorldTranslate();
+
+		if (a7 == 1)
+		{
+			pointLightPosition[i].v = DirectX::XMVector3TransformCoord(worldPos.AsXmm(), Transform);
+			pointLightPosition[i].f[3] = niLight->GetSpecularColor().r / Scale;
+		}
+		else
+		{
+			worldPos = worldPos - BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
+
+			pointLightPosition[i].v = worldPos.AsXmm();
+			pointLightPosition[i].f[3] = niLight->GetSpecularColor().r;
+		}
+
+		if (i < ShadowLightCount)
+		{
+			shadowLightMaskSelect[i] = (float)*(int *)((__int64)screenSpaceLight + 0x520);
+			AssertMsgVa(false, "Now figure out what type of light object this is: 0x%p", screenSpaceLight);
+		}
+	}
 }
 
 void BSLightingShader::GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals)
