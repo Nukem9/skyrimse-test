@@ -670,11 +670,10 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	const uint32_t rawTechnique = TLS_m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
 
+	bool drawInWorldSpace = (rawTechnique & RAW_FLAG_SKINNED) == 0;
 	bool doPrecipitationOcclusion = false;
 	bool isLOD = false;
 
-	uint8_t v102 = ~(unsigned __int8)(rawTechnique >> 1) & 1;
-	int v16 = 0;
 	uint8_t v12 = Pass->Byte1C;
 	uint8_t v103 = (unsigned __int8)(v12 - 2) <= 1u;
 
@@ -691,11 +690,10 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	case RAW_TECHNIQUE_EYE:
 	{
 		// NOTE: The game updates view projection twice...? See the if() after this switch.
-		if ((rawTechnique & RAW_FLAG_SKINNED) == 0)
+		if (drawInWorldSpace)
 			GeometrySetupViewProjection(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
 
-		v16 = 0;
-		v102 = 0;
+		drawInWorldSpace = false;
 		doPrecipitationOcclusion = true;
 
 		// PS: p7 float4 MaterialData (NOTE: This is written AGAIN)
@@ -711,7 +709,6 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			Pass->m_Geometry->GetWorldTranslate(),
 			*(float *)((uintptr_t)property->pMaterial + 264i64),
 			*(float *)((uintptr_t)property->pMaterial + 268i64));
-		v16 = v102;
 		break;
 
 	case RAW_TECHNIQUE_LODLAND:
@@ -720,16 +717,10 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		GeometrySetupViewProjection(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
 		GeometrySetupViewProjection(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, &renderer->m_PreviousPosAdjust);
 		isLOD = true;
-		v16 = v102;
 		break;
 
 	case RAW_TECHNIQUE_TREE:
 		sub_14130BC60(vertexCG, property);
-		v16 = v102;
-		break;
-
-	default:
-		v16 = v102;
 		break;
 	}
 
@@ -746,8 +737,8 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	XMMATRIX inverseWorldMatrix;
 	GetInverseWorldMatrix(Pass->m_Geometry->GetWorldTransform(), false, inverseWorldMatrix);
 
-	GeometrySetupDirectionalLights(pixelCG, Pass, inverseWorldMatrix, v16);
-	GeometrySetupAmbientLights(pixelCG, Pass->m_Geometry->GetWorldTransform(), v16);
+	GeometrySetupDirectionalLights(pixelCG, Pass, inverseWorldMatrix, drawInWorldSpace);
+	GeometrySetupAmbientLights(pixelCG, Pass->m_Geometry->GetWorldTransform(), drawInWorldSpace);
 
 	// PS: p7 float4 MaterialData
 	{
@@ -790,12 +781,12 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (lightCount > 0)
 	{
-		float scale = Pass->m_Geometry->GetWorldTransform().m_fScale;
+		float specularScale = Pass->m_Geometry->GetWorldTransform().m_fScale;
 
 		if (baseTechniqueID == RAW_TECHNIQUE_ENVMAP || baseTechniqueID == RAW_TECHNIQUE_EYE)
-			scale = 1.0f;
+			specularScale = 1.0f;
 
-		GeometrySetupConstantPointLights(pixelCG, Pass, inverseWorldMatrix, lightCount, shadowLightCount, scale, v102);
+		GeometrySetupConstantPointLights(pixelCG, Pass, inverseWorldMatrix, lightCount, shadowLightCount, specularScale, drawInWorldSpace);
 	}
 
 	if (rawTechnique & RAW_FLAG_SPECULAR)
@@ -886,7 +877,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		XMFLOAT3& precipitationOcclusionWorldViewProj = vertexCG.ParamVS<XMFLOAT3, 2>();
 
-		if (v102 == 1)
+		if (drawInWorldSpace)
 		{
 			float *v83 = (float *)BSShaderManager::GetCurrentAccumulator();
 			XMVECTOR coord = XMVectorSet(v83[91], v83[92], v83[93], 0.0f);
@@ -1243,6 +1234,7 @@ void BSLightingShader::GeometrySetupMTLandExtraConstants(const BSGraphics::Const
 
 void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSLightingShaderProperty *Property)
 {
+	// Tree leaf animations
 	// __int64 __fastcall sub_14130BC60(__int64 a1, __int64 a2)
 
 	struct tempbufdata
@@ -1257,7 +1249,7 @@ void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics:
 	sub_14130BC60(&temp, Property);
 }
 
-void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
+void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& World, bool WorldSpace)
 {
 	BSLight *bsLight = Pass->QLights()[0];
 	NiDirectionalLight *sunDirectionalLight = static_cast<NiDirectionalLight *>(bsLight->GetLight());
@@ -1273,13 +1265,13 @@ void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::Constant
 
 	XMVECTOR lightDir = XMVectorNegate(sunDirectionalLight->GetWorldDirection().AsXmm());
 
-	if (a4 == 1)
-		lightDir = XMVector3TransformNormal(lightDir, a3);
+	if (WorldSpace)
+		lightDir = XMVector3TransformNormal(lightDir, World);
 
 	XMStoreFloat3(&dirLightDirection, XMVector3Normalize(lightDir));
 }
 
-void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const NiTransform& Transform, int a3)
+void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const NiTransform& Transform, bool WorldSpace)
 {
 	// __int64 __fastcall sub_14130B2A0(__int64 a1, __int64 a2, int a3)
 
@@ -1292,7 +1284,7 @@ void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGrou
 	temp.ptr = PixelCG.m_Map.pData;
 
 	auto GeoUpdateAmbientLightConstants = (void(__fastcall *)(tempbufdata *, const NiTransform&, int))(g_ModuleBase + 0x130B2A0);
-	GeoUpdateAmbientLightConstants(&temp, Transform, a3);
+	GeoUpdateAmbientLightConstants(&temp, Transform, (int)WorldSpace);
 }
 
 void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSLightingShaderProperty *Property)
@@ -1305,7 +1297,7 @@ void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::Constan
 	emitColor.f[2] = Property->pEmitColor->b * Property->fEmitColorScale;
 }
 
-void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, int a7)
+void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, bool WorldSpace)
 {
 	AssertMsg(BSShaderManager::GetRenderMode() != 22 && BSShaderManager::GetRenderMode() != 17, "This code path was removed and should never be called!");
 	AssertMsg(ShadowLightCount <= 4, "Shader only expects shadow selector data to fit in a FLOAT4");
@@ -1331,7 +1323,7 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::Consta
 		pointLightColor[i].f[1] = dimmer * niLight->GetDiffuseColor().g;
 		pointLightColor[i].f[2] = dimmer * niLight->GetDiffuseColor().b;
 
-		if (a7 == 1)
+		if (WorldSpace)
 		{
 			pointLightPosition[i].v = DirectX::XMVector3TransformCoord(worldPos.AsXmm(), Transform);
 			pointLightPosition[i].f[3] = niLight->GetSpecularColor().r / Scale;
