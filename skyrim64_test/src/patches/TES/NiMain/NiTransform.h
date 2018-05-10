@@ -49,7 +49,7 @@ public:
 		Unitize();
 	}
 
-	inline __m128 AsXmm()
+	inline __m128 AsXmm() const
 	{
 		return _mm_setr_ps(x, y, z, 0.0f);
 	}

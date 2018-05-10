@@ -2,9 +2,11 @@
 #include "../../../../common.h"
 #include "../../NiMain/NiSourceTexture.h"
 #include "../../Setting.h"
+#include "../../NiMain/NiDirectionalLight.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "../BSLight.h"
+#include "../BSShadowLight.h"
 #include "BSLightingShader.h"
 #include "BSLightingShaderProperty.h"
 
@@ -1257,26 +1259,24 @@ void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics:
 
 void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& a3, int a4)
 {
-	BSLight *sunDirectionalLight = Pass->QLights()[0];
+	BSLight *bsLight = Pass->QLights()[0];
+	NiDirectionalLight *sunDirectionalLight = static_cast<NiDirectionalLight *>(bsLight->GetLight());
 
-	float *v10 = (float *)sunDirectionalLight->GetLight();
-	float v12 = *(float *)(qword_1431F5810 + 224) * v10[77];
+	float v12 = *(float *)(qword_1431F5810 + 224) * sunDirectionalLight->GetDimmer();
 
-	// PS: p4 float3 DirLightColor
-	XMFLOAT3& dirLightColor = PixelCG.ParamPS<XMFLOAT3, 4>();
+	XMFLOAT3& dirLightColor = PixelCG.ParamPS<XMFLOAT3, 4>();		// PS: p4 float3 DirLightColor
+	XMFLOAT3& dirLightDirection = PixelCG.ParamPS<XMFLOAT3, 3>();	// PS: p3 float3 DirLightDirection
 
-	dirLightColor.x = v12 * v10[71];
-	dirLightColor.y = v12 * v10[72];
-	dirLightColor.z = v12 * v10[73];
+	dirLightColor.x = v12 * sunDirectionalLight->GetDiffuseColor().r;
+	dirLightColor.y = v12 * sunDirectionalLight->GetDiffuseColor().g;
+	dirLightColor.z = v12 * sunDirectionalLight->GetDiffuseColor().b;
 
-	// PS: p3 float3 DirLightDirection
-	XMFLOAT3& dirLightDirection = PixelCG.ParamPS<XMFLOAT3, 3>();
-	XMVECTOR tempDir = XMVectorSet(-v10[80], -v10[81], -v10[82], 0.0f);
+	XMVECTOR lightDir = sunDirectionalLight->GetWorldDirection().AsXmm();
 
 	if (a4 == 1)
-		tempDir = XMVector3TransformNormal(tempDir, a3);
+		lightDir = XMVector3TransformNormal(lightDir, a3);
 
-	XMStoreFloat3(&dirLightDirection, XMVector3Normalize(tempDir));
+	XMStoreFloat3(&dirLightDirection, XMVector3Normalize(lightDir));
 }
 
 void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const NiTransform& Transform, int a3)
@@ -1321,6 +1321,7 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::Consta
 
 		AssertMsgDebug(niLight, "If the SSL is non-null, the NiLight should also be non-null.");
 
+		NiPoint3 worldPos = niLight->GetWorldTranslate();
 		float dimmer = niLight->GetDimmer() * screenSpaceLight->GetLODDimmer();
 
 		// if (bLiteBrite->value.b)
@@ -1329,8 +1330,6 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::Consta
 		pointLightColor[i].f[0] = dimmer * niLight->GetDiffuseColor().r;
 		pointLightColor[i].f[1] = dimmer * niLight->GetDiffuseColor().g;
 		pointLightColor[i].f[2] = dimmer * niLight->GetDiffuseColor().b;
-
-		NiPoint3 worldPos = niLight->GetWorldTranslate();
 
 		if (a7 == 1)
 		{
@@ -1346,10 +1345,7 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::Consta
 		}
 
 		if (i < ShadowLightCount)
-		{
-			shadowLightMaskSelect[i] = (float)*(int *)((__int64)screenSpaceLight + 0x520);
-			AssertMsgVa(false, "Now figure out what type of light object this is: 0x%p", screenSpaceLight);
-		}
+			shadowLightMaskSelect[i] = (float)static_cast<BSShadowLight *>(screenSpaceLight)->UnkDword540;
 	}
 }
 
