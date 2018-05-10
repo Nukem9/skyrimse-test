@@ -113,7 +113,11 @@ DWORD WINAPI MessageThread(LPVOID)
 		}
 
 		if (msg.message == WM_MOUSEMOVE && msg.hwnd == g_SkyrimWindow)
-			WindowProc(msg.hwnd, WM_APP_UPDATE_CURSOR, 0, 0);
+		{
+			// GFW hack since alt+tab or windows key don't always play nice
+			if (msg.hwnd == GetForegroundWindow())
+				WindowProc(msg.hwnd, WM_APP_UPDATE_CURSOR, 0, 0);
+		}
 	}
 
 	// Message loop exited (WM_QUIT) or there was an error
