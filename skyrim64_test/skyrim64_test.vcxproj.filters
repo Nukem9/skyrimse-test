@@ -281,6 +281,9 @@
     <ClInclude Include="src\patches\TES\NiMain\NiPoint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\rendering\d3d11_proxy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -569,6 +572,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\NiMain\NiMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\rendering\d3d11_proxy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
