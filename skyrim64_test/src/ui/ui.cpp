@@ -157,15 +157,15 @@ namespace ui
 			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
 			ImGui::MenuItem("Shader Tweaks", nullptr, &showShaderTweakWindow);
 			ImGui::MenuItem("INISetting Viewer", nullptr, &showIniListWindow);
-			ImGui::Separator();
-			if (ImGui::MenuItem("Terminate Process"))
-				TerminateProcess(GetCurrentProcess(), 0x13371337);
             ImGui::EndMenu();
         }
 
 		if (ImGui::BeginMenu("Misc"))
 		{
 			ImGui::MenuItem("ImGui Debug", nullptr, &showDemoWindow);
+			ImGui::Separator();
+			if (ImGui::MenuItem("Terminate Process"))
+				TerminateProcess(GetCurrentProcess(), 0x13371337);
 			ImGui::EndMenu();
 		}
 
@@ -269,6 +269,9 @@ namespace ui
 	float DeltasGraph5[240];
 	float DeltasGraphGPU[240];
 
+	float DeltasGraphDrawCalls[240];
+	float DeltasGraphDispatchCalls[240];
+
 	double CalculateTrueAverageFPS()
 	{
 		// This includes the overhead from calling Present() (backbuffer flip)
@@ -317,6 +320,9 @@ namespace ui
 		memmove(&DeltasGraph5[0], &DeltasGraph5[1], sizeof(DeltasGraph5) - sizeof(float));
 		memmove(&DeltasGraphGPU[0], &DeltasGraphGPU[1], sizeof(DeltasGraphGPU) - sizeof(float));
 
+		memmove(&DeltasGraphDrawCalls[0], &DeltasGraphDrawCalls[1], sizeof(DeltasGraphDrawCalls) - sizeof(float));
+		memmove(&DeltasGraphDispatchCalls[0], &DeltasGraphDispatchCalls[1], sizeof(DeltasGraphDispatchCalls) - sizeof(float));
+
         float test = 0.0f; // *(float *)(g_ModuleBase + 0x1DADCA0);
 
         if (ImGui::Begin("Framerate", &showFPSWindow))
@@ -345,6 +351,21 @@ namespace ui
 				void *datas[4] = { (void *)DeltasGraph2, (void *)DeltasGraph3, (void *)DeltasGraph4, (void *)DeltasGraph5 };
 
 				ImGui::PlotMultiLines("Processor Usage (%)", 4, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 100.0f, ImVec2(400, 100));
+			}
+
+			// Draw calls
+			{
+				DeltasGraphDrawCalls[239] = ProfileGetDeltaValue("Draw Calls");
+				DeltasGraphDispatchCalls[239] = ProfileGetDeltaValue("Dispatch Calls");
+
+				const char *names[2] = { "Draws", "Dispatches" };
+				ImColor colors[2] = { ImColor(0.839f, 0.152f, 0.156f), ImColor(0.172f, 0.627f, 0.172f) };
+				void *datas[2] = { (void *)DeltasGraphDrawCalls, (void *)DeltasGraphDispatchCalls };
+
+				ImGui::PlotMultiLines("Draw Calls", 2, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 10000.0f, ImVec2(400, 100));
+
+				ProfileGetValue("Draw Calls");
+				ProfileGetValue("Dispatch Calls");
 			}
 
             ImGui::Text("FPS: %.2f", CalculateTrueAverageFPS());
