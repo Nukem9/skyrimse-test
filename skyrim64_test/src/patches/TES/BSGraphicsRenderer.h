@@ -15,6 +15,9 @@ namespace BSGraphics::Utility
 
 namespace BSGraphics
 {
+	void BeginEvent(wchar_t *Marker);
+	void EndEvent();
+
 	class Renderer
 	{
 	public:
@@ -25,6 +28,12 @@ namespace BSGraphics
 		static void OnNewFrame();
 
 		static void FlushThreadedVars();
+
+		//
+		// Debug
+		//
+		void BeginEvent(wchar_t *Marker) const;
+		void EndEvent() const;
 
 		//
 		// Drawing
@@ -157,7 +166,7 @@ namespace BSGraphics
 			ID3D11Buffer	*m_TempConstantBuffer4;				// 16 bytes
 
 			IDXGIOutput *m_DXGIAdapterOutput;
-			ID3D11DeviceContext *m_DeviceContext;
+			ID3D11DeviceContext2 *m_DeviceContext;
 
 			void *m_FrameDurationStringHandle;					// "Frame Duration" but stored in their global string pool
 

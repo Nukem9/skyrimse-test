@@ -9,8 +9,6 @@
 #include "../BSReadWriteLock.h"
 #include "../MTRenderer.h"
 
-extern ID3DUserDefinedAnnotation *annotation;
-
 void BSShaderAccumulator::InitCallbackTable()
 {
 	// If the pointer is null, it defaults to the function at index 0
@@ -124,10 +122,10 @@ void ResetSceneDepthShift()
 
 void BSShaderAccumulator::FinishAccumulating_Normal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
-	annotation->BeginEvent(L"FinishAccumulating_Normal");
+	BSGraphics::BeginEvent(L"FinishAccumulating_Normal");
 	RenderSceneNormal(Accumulator, RenderFlags);
 	RenderSceneNormalAlphaZ(Accumulator, RenderFlags);
-	annotation->EndEvent();
+	BSGraphics::EndEvent();
 }
 
 void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
@@ -135,10 +133,10 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	if (!Accumulator->m_pkCamera)
 		return;
 
-	annotation->BeginEvent(L"BSShaderAccumulator: Draw1");
-
 	__int64 a1 = (__int64)Accumulator;
 	auto renderer = BSGraphics::Renderer::GetGlobals();
+
+	renderer->BeginEvent(L"BSShaderAccumulator: Draw1");
 
 	if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
 		renderer->DepthStencilStateSetDepthMode(4);
@@ -168,45 +166,45 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		ProfileTimer("RenderBatches");
 
 		// RenderBatches
-		annotation->BeginEvent(L"RenderBatches");
+		renderer->BeginEvent(L"RenderBatches");
 		{
 			Accumulator->RenderFromMainGroup(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
 		}
-		annotation->EndEvent();
+		renderer->EndEvent();
 
 		// LowAniso
-		annotation->BeginEvent(L"LowAniso");
+		renderer->BeginEvent(L"LowAniso");
 		{
 			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
 		}
-		annotation->EndEvent();
+		renderer->EndEvent();
 
 		// RenderGrass
-		annotation->BeginEvent(L"RenderGrass");
+		renderer->BeginEvent(L"RenderGrass");
 		{
 			Accumulator->RenderFromMainGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
 		}
-		annotation->EndEvent();
+		renderer->EndEvent();
 
 		// RenderNoShadowGroup
-		annotation->BeginEvent(L"RenderNoShadowGroup");
+		renderer->BeginEvent(L"RenderNoShadowGroup");
 		{
 			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
 		}
-		annotation->EndEvent();
+		renderer->EndEvent();
 
 		// RenderLODObjects
-		annotation->BeginEvent(L"RenderLODObjects");
+		renderer->BeginEvent(L"RenderLODObjects");
 		{
 			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 
 			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
 				renderer->DepthStencilStateSetDepthMode(3);
 		}
-		annotation->EndEvent();
+		renderer->EndEvent();
 
 		// RenderLODLand
-		annotation->BeginEvent(L"RenderLODLand");
+		renderer->BeginEvent(L"RenderLODLand");
 		{
 			ProfileTimer("LOD");
 
@@ -215,21 +213,21 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 			if (!v7)
 				ResetSceneDepthShift();
 		}
-		annotation->EndEvent();
+		renderer->EndEvent();
 	}
 
 	// RenderSky
-	annotation->BeginEvent(L"RenderSky");
+	renderer->BeginEvent(L"RenderSky");
 	{
 		renderer->SetUseAlphaTestRef(true);
 		renderer->SetAlphaTestRef(128.0f / 255.0f);
 
 		Accumulator->RenderFromMainGroup(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
 	}
-	annotation->EndEvent();
+	renderer->EndEvent();
 
 	// RenderSkyClouds
-	annotation->BeginEvent(L"RenderSkyClouds");
+	renderer->BeginEvent(L"RenderSkyClouds");
 	{
 		renderer->AlphaBlendStateSetUnknown2(11);
 
@@ -237,7 +235,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 
 		renderer->AlphaBlendStateSetUnknown2(1);
 	}
-	annotation->EndEvent();
+	renderer->EndEvent();
 
 	if (!v7)
 		ApplySceneDepthShift();
@@ -245,16 +243,16 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	// NormalDecals?...CK doesn't have a specific name for this
 	{
 		renderer->AlphaBlendStateSetUnknown2(10);
-		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E27B0))(a1, RenderFlags);
+		((void(__fastcall *)(BSShaderAccumulator *, unsigned int))(g_ModuleBase + 0x12E27B0))(Accumulator, RenderFlags);
 	}
 
 	// BlendedDecals
-	annotation->BeginEvent(L"BlendedDecals");
+	renderer->BeginEvent(L"BlendedDecals");
 	{
 		renderer->AlphaBlendStateSetUnknown2(11);
-		((void(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0x12E2950))(a1, RenderFlags);
+		((void(__fastcall *)(BSShaderAccumulator *, unsigned int))(g_ModuleBase + 0x12E2950))(Accumulator, RenderFlags);
 	}
-	annotation->EndEvent();
+	renderer->EndEvent();
 
 	renderer->AlphaBlendStateSetMode(0);
 	renderer->AlphaBlendStateSetUnknown2(1);
@@ -285,7 +283,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	}
 
 	// RenderWaterStencil
-	annotation->BeginEvent(L"RenderWaterStencil");
+	renderer->BeginEvent(L"RenderWaterStencil");
 	{
 		if (Accumulator->m_MainBatch->HasTechniquePasses(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc))
 		{
@@ -302,7 +300,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 			*(DWORD *)(*(uint64_t *)((*(uint64_t*)(g_ModuleBase + 0x31F5810)) + 496) + 44i64) = 1;
 		}
 	}
-	annotation->EndEvent();
+	renderer->EndEvent();
 
 	if (RenderFlags & 0x40)
 	{
@@ -323,7 +321,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	if (!v7)
 		ResetSceneDepthShift();
 
-	annotation->EndEvent();
+	renderer->EndEvent();
 }
 
 void BSShaderAccumulator::RenderSceneNormalAlphaZ(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
@@ -336,7 +334,7 @@ void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator
 	if (!Accumulator->m_pkCamera)
 		return;
 
-	annotation->BeginEvent(L"FinishAccumulating_ShadowMapOrMask");
+	BSGraphics::BeginEvent(L"FinishAccumulating_ShadowMapOrMask");
 
 	if ((RenderFlags & 0x22) == 0x20)
 		ApplySceneDepthShift();
@@ -360,21 +358,21 @@ void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator
 	if ((RenderFlags & 0x22) == 0x20)
 		ResetSceneDepthShift();
 
-	annotation->EndEvent();
+	BSGraphics::EndEvent();
 }
 
 void BSShaderAccumulator::FinishAccumulating_InterfaceElements(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
-	annotation->BeginEvent(L"FinishAccumulating_InterfaceElements");
+	BSGraphics::BeginEvent(L"FinishAccumulating_InterfaceElements");
 	((FinishAccumFunc)(g_ModuleBase + 0x12E2FE0))(Accumulator, RenderFlags);
-	annotation->EndEvent();
+	BSGraphics::EndEvent();
 }
 
 void BSShaderAccumulator::FinishAccumulating_FirstPerson(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
-	annotation->BeginEvent(L"FinishAccumulating_FirstPerson");
+	BSGraphics::BeginEvent(L"FinishAccumulating_FirstPerson");
 	((FinishAccumFunc)(g_ModuleBase + 0x12E2B20))(Accumulator, RenderFlags);
-	annotation->EndEvent();
+	BSGraphics::EndEvent();
 }
 
 void BSShaderAccumulator::FinishAccumulating_LODOnly(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
@@ -382,14 +380,14 @@ void BSShaderAccumulator::FinishAccumulating_LODOnly(BSShaderAccumulator *Accumu
 	if (!Accumulator->m_pkCamera)
 		return;
 
-	annotation->BeginEvent(L"FinishAccumulating_LODOnly");
+	BSGraphics::BeginEvent(L"FinishAccumulating_LODOnly");
 
 	BSShaderManager::bLODLandscapeNoise = false;
 	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 	BSShaderManager::bLODLandscapeNoise = true;
 
-	annotation->EndEvent();
+	BSGraphics::EndEvent();
 }
 
 void BSShaderAccumulator::FinishAccumulating_Unknown1(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
@@ -397,11 +395,11 @@ void BSShaderAccumulator::FinishAccumulating_Unknown1(BSShaderAccumulator *Accum
 	if (!Accumulator->m_pkCamera)
 		return;
 
-	annotation->BeginEvent(L"FinishAccumulating_Unknown1");
+	BSGraphics::BeginEvent(L"FinishAccumulating_Unknown1");
 
 	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 14);
 
-	annotation->EndEvent();
+	BSGraphics::EndEvent();
 }
 
 void BSShaderAccumulator::RenderFromMainGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType)

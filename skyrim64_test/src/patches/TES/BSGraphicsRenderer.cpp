@@ -33,6 +33,16 @@ namespace BSGraphics::Utility
 
 namespace BSGraphics
 {
+	void BeginEvent(wchar_t *Marker)
+	{
+		Renderer::GetGlobals()->BeginEvent(Marker);
+	}
+
+	void EndEvent()
+	{
+		Renderer::GetGlobals()->EndEvent();
+	}
+
 	int CurrentFrameIndex;
 
 	const uint32_t VertexIndexRingBufferSize = 32 * 1024 * 1024;
@@ -199,6 +209,20 @@ namespace BSGraphics
 		//
 		TLS_CurrentVertexShader = (VertexShader *)0xFEFEFEFEFEFEFEFE;
 		TLS_CurrentPixelShader = (PixelShader *)0xFEFEFEFEFEFEFEFE;
+	}
+
+	void Renderer::BeginEvent(wchar_t *Marker) const
+	{
+#if SKYRIM64_USE_PROFILER
+		m_DeviceContext->BeginEventInt(Marker, 0);
+#endif
+	}
+
+	void Renderer::EndEvent() const
+	{
+#if SKYRIM64_USE_PROFILER
+		m_DeviceContext->EndEvent();
+#endif
 	}
 
 	void Renderer::DrawLineShape(LineShape *GraphicsLineShape, uint32_t StartIndex, uint32_t Count)
