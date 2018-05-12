@@ -130,13 +130,7 @@ HRESULT STDMETHODCALLTYPE D3D11DeviceProxy::CreatePixelShader(const void *pShade
 	HRESULT hr = m_Device->CreatePixelShader(pShaderBytecode, BytecodeLength, pClassLinkage, ppPixelShader);
 
 	if (SUCCEEDED(hr))
-	{
-		void *mem = malloc(BytecodeLength);
-		memcpy(mem, pShaderBytecode, BytecodeLength);
-
-		//m_ShaderBuffers[(void *)*ppPixelShader] = { mem, BytecodeLength };
 		BSGraphics::Renderer::GetGlobals()->RegisterShaderBytecode(*ppPixelShader, pShaderBytecode, BytecodeLength);
-	}
 
 	return hr;
 }
