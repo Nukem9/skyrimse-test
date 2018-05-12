@@ -57,6 +57,7 @@ namespace BSGraphics
 		static void SyncD3DResources();
 
 		void DepthStencilStateSetDepthMode(uint32_t Mode);
+		uint32_t DepthStencilStateGetDepthMode() const;
 		void DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef);
 
 		void RasterStateSetCullMode(uint32_t CullMode);
@@ -65,6 +66,7 @@ namespace BSGraphics
 		void AlphaBlendStateSetMode(uint32_t Mode);
 		void AlphaBlendStateSetUnknown1(uint32_t Value);
 		void AlphaBlendStateSetUnknown2(uint32_t Value);
+		uint32_t AlphaBlendStateGetUnknown2() const;
 
 		void SetUseAlphaTestRef(bool UseStoredValue);
 		void SetAlphaTestRef(float Value);

@@ -706,6 +706,11 @@ namespace BSGraphics
 		}
 	}
 
+	uint32_t Renderer::DepthStencilStateGetDepthMode() const
+	{
+		return *(DWORD *)&__zz0[32];
+	}
+
 	void Renderer::DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)
 	{
 		if (*(DWORD *)&__zz0[40] != Mode || *(DWORD *)&__zz0[44] != StencilRef)
@@ -762,6 +767,11 @@ namespace BSGraphics
 			*(DWORD *)&__zz0[72] = Value;
 			m_StateUpdateFlags |= 0x80;
 		}
+	}
+
+	uint32_t Renderer::AlphaBlendStateGetUnknown2() const
+	{
+		return *(DWORD *)&__zz0[72];
 	}
 
 	void Renderer::SetUseAlphaTestRef(bool UseStoredValue)

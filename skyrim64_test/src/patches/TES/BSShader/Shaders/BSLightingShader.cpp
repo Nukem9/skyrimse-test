@@ -679,7 +679,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (v12 == 3 && property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE))
 	{
-		TLS_dword_141E35280 = *(uint32_t *)&renderer->__zz0[72];
+		TLS_dword_141E35280 = renderer->AlphaBlendStateGetUnknown2();
 		renderer->AlphaBlendStateSetUnknown2(1);
 	}
 
@@ -724,7 +724,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		break;
 	}
 
-	if ((rawTechnique & RAW_FLAG_SKINNED) == 0 && !isLOD)
+	if (drawInWorldSpace && !isLOD)
 	{
 		// Unknown renderer flag: Determines if previous world projection is used
 		const NiTransform& world = Pass->m_Geometry->GetWorldTransform();
@@ -910,7 +910,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (!v103)
 	{
-		uint32_t oldDepthMode = *(uint32_t *)&renderer->__zz0[32];
+		uint32_t oldDepthMode = renderer->DepthStencilStateGetDepthMode();
 
 		if (!property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE))
 		{
@@ -1388,8 +1388,6 @@ void BSLightingShader::GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<
 
 void BSLightingShader::sub_14130C8A0(const NiTransform& Transform, XMMATRIX& OutMatrix, bool DontMultiply)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
-
 	NiTransform temp;
 
 	temp.m_Rotate.m_pEntry[0][0] = 0.0f;
@@ -1404,7 +1402,7 @@ void BSLightingShader::sub_14130C8A0(const NiTransform& Transform, XMMATRIX& Out
 	temp.m_Rotate.m_pEntry[2][1] = 0.0f;
 	temp.m_Rotate.m_pEntry[2][2] = 1.0f;
 
-	temp.m_Translate = renderer->m_CurrentPosAdjust;
+	temp.m_Translate = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
 	temp.m_fScale = 1.0f;
 
 	if (DontMultiply)
