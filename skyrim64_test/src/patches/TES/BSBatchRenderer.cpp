@@ -438,8 +438,6 @@ void UnmapDynamicData()
 	renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
 }
 
-AutoPtr(bool, zbUseEarlyZ, 0x30528E5);
-
 void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags)
 {
 	auto *GraphicsGlobals = BSGraphics::Renderer::GetGlobals();
@@ -508,7 +506,7 @@ void BSBatchRenderer::DrawPass(BSRenderPass *Pass, bool AlphaTest, uint32_t Rend
 	AssertMsgDebug(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
 	AssertMsgDebug(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
 
-	SetupGeometryBlending(Pass, Pass->m_Shader, (AlphaTest || zbUseEarlyZ) ? true : false, RenderFlags);
+	SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest || BSShaderManager::bUseEarlyZ, RenderFlags);
 	DrawGeometry(Pass);
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }

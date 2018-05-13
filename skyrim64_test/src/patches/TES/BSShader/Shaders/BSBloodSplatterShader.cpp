@@ -30,7 +30,6 @@ DEFINE_SHADER_DESCRIPTOR(
 //
 // Shader notes:
 //
-// - Destructor is not implemented
 // - m_CurrentRawTechnique is an implicit global variable (TODO)
 //
 using namespace DirectX;
@@ -53,7 +52,7 @@ BSBloodSplatterShader::BSBloodSplatterShader() : BSShader(ShaderConfig.Type)
 
 BSBloodSplatterShader::~BSBloodSplatterShader()
 {
-	Assert(false);
+	pInstance = nullptr;
 }
 
 bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)

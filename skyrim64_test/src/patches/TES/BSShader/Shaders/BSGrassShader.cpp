@@ -37,14 +37,12 @@ DEFINE_SHADER_DESCRIPTOR(
 //
 // Shader notes:
 //
-// - Destructor is not implemented
 // - UpdateFogParameters() was modified to remove the use of global variables (TLS_FogNearColor)
 // - SetupGeometry() same as above
 //
 using namespace DirectX;
 
 AutoPtr(NiSourceTexture *, DefaultWhiteMap, 0x30528F0);
-AutoPtr(bool, bUseEarlyZ, 0x30528E5);
 AutoPtr(BYTE, byte_14304E4C5, 0x304E4C5);
 AutoPtr(BYTE, byte_141E32E9D, 0x1E32E9D);
 AutoPtr(BYTE, byte_141E32F65, 0x1E32F65);
@@ -71,7 +69,7 @@ BSGrassShader::BSGrassShader() : BSShader(ShaderConfig.Type)
 
 BSGrassShader::~BSGrassShader()
 {
-	Assert(false);
+	pInstance = nullptr;
 }
 
 bool BSGrassShader::SetupTechnique(uint32_t Technique)
@@ -397,7 +395,7 @@ uint32_t BSGrassShader::GetRawTechnique(uint32_t Technique)
 		break;
 	}
 
-	if (bUseEarlyZ)
+	if (BSShaderManager::bUseEarlyZ)
 		outputTech |= RAW_FLAG_DO_ALPHA;
 
 	return outputTech;

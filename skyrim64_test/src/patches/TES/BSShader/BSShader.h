@@ -119,7 +119,6 @@ public:
 
 	virtual ~NiBoneMatrixSetterI()
 	{
-		Assert(false);
 	}
 
 	virtual void SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform) = 0;

@@ -30,7 +30,6 @@ DEFINE_SHADER_DESCRIPTOR(
 //
 // Shader notes:
 //
-// - Destructor is not implemented
 // - VS Parameter 0 is never set (InstanceData)
 // - VS Parameter 7 is never set (DiffuseDir)
 // - VS Parameter 8 is never set (IndexScale)
@@ -40,7 +39,6 @@ DEFINE_SHADER_DESCRIPTOR(
 using namespace DirectX;
 
 AutoPtr(NiSourceTexture *, WorldTreeLODAtlas, 0x32A7F58);
-AutoPtr(bool, bUseEarlyZ, 0x30528E5);
 AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(__int64, qword_141E32F20, 0x1E32F20);
@@ -53,7 +51,7 @@ BSDistantTreeShader::BSDistantTreeShader() : BSShader(ShaderConfig.Type)
 
 BSDistantTreeShader::~BSDistantTreeShader()
 {
-	Assert(false);
+	pInstance = nullptr;
 }
 
 bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
@@ -225,7 +223,7 @@ uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)
 	default:AssertMsg(false, "BSDistantTreeShader: bad technique ID"); break;
 	}
 
-	if (bUseEarlyZ)
+	if (BSShaderManager::bUseEarlyZ)
 		outputTech |= RAW_FLAG_DO_ALPHA;
 	
 	return outputTech;

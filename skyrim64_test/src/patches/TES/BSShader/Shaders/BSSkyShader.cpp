@@ -58,7 +58,7 @@ BSSkyShader::BSSkyShader() : BSShader(ShaderConfig.Type)
 
 BSSkyShader::~BSSkyShader()
 {
-	Assert(false);
+	pInstance = nullptr;
 }
 
 bool BSSkyShader::SetupTechnique(uint32_t Technique)

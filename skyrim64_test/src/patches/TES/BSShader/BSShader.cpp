@@ -14,7 +14,7 @@ BSShader::BSShader(const char *LoaderType)
 
 BSShader::~BSShader()
 {
-	Assert(false);
+	AssertMsg(false, "Destructor not implemented");
 }
 
 void BSShader::SetupMaterial(BSShaderMaterial const *Material)
