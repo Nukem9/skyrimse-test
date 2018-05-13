@@ -654,7 +654,7 @@ void GetInverseWorldMatrix(const NiTransform& Transform, bool UseWorldPosition, 
 		NiTransform inverted;
 		Transform.Invert(inverted);
 
-		OutMatrix = BSShaderUtil::GetXMFromNiPosAdjust(inverted, NiPoint3(0.0f, 0.0f, 0.0f));
+		OutMatrix = BSShaderUtil::GetXMFromNiPosAdjust(inverted, NiPoint3::ZERO);
 	}
 }
 
@@ -1273,18 +1273,20 @@ void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::Constant
 
 void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const NiTransform& Transform, bool WorldSpace)
 {
-	// __int64 __fastcall sub_14130B2A0(__int64 a1, __int64 a2, int a3)
+	// PS: p5 float3x4 DirectionalAmbient
+	auto directionalAmbient = PixelCG.ParamPS<float[3][4], 5>();
 
-	struct tempbufdata
+	NiTransform unkTransform = *(NiTransform *)(g_ModuleBase + 0x1E32FE8);
+
+	if (WorldSpace)
 	{
-		char _pad[8];
-		void *ptr;
-	} temp;
+		unkTransform = unkTransform * Transform;
+		unkTransform.m_Translate.x = *(float *)(g_ModuleBase + 0x1E3300C);
+		unkTransform.m_Translate.y = *(float *)(g_ModuleBase + 0x1E33010);
+		unkTransform.m_Translate.z = *(float *)(g_ModuleBase + 0x1E33014);
+	}
 
-	temp.ptr = PixelCG.m_Map.pData;
-
-	auto GeoUpdateAmbientLightConstants = (void(__fastcall *)(tempbufdata *, const NiTransform&, int))(g_ModuleBase + 0x130B2A0);
-	GeoUpdateAmbientLightConstants(&temp, Transform, (int)WorldSpace);
+	BSShaderUtil::StoreTransform3x4NoScale(directionalAmbient, unkTransform);
 }
 
 void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSLightingShaderProperty *Property)

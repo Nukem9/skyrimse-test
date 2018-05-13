@@ -53,3 +53,28 @@ void BSShaderUtil::TransposeStoreMatrix3x4(float *Dest, const XMMATRIX& Source)
 	_mm_store_ps(&Dest[8], transposed.r[2]);
 	// Implied Dest[12...15] = { 0, 0, 0, 1 };
 }
+
+void BSShaderUtil::StoreTransform3x4NoScale(float Dest[3][4], const NiTransform& Source)
+{
+	//
+	// Shove a Matrix3+Point3 directly into a float[3][4] with no modifications
+	//
+	// Dest[0][#] = Source.m_Rotate.m_pEntry[0][#];
+	// Dest[0][3] = Source.m_Translate.x;
+	// Dest[1][#] = Source.m_Rotate.m_pEntry[1][#];
+	// Dest[1][3] = Source.m_Translate.x;
+	// Dest[2][#] = Source.m_Rotate.m_pEntry[2][#];
+	// Dest[2][3] = Source.m_Translate.x;
+	//
+	static_assert(sizeof(NiTransform::m_Rotate) == 3 * 3 * sizeof(float));	// NiMatrix3
+	static_assert(sizeof(NiTransform::m_Translate) == 3 * sizeof(float));	// NiPoint3
+	static_assert(offsetof(NiTransform, m_Translate) > offsetof(NiTransform, m_Rotate));
+
+	_mm_store_ps(Dest[0], _mm_loadu_ps(Source.m_Rotate.m_pEntry[0]));
+	_mm_store_ps(Dest[1], _mm_loadu_ps(Source.m_Rotate.m_pEntry[1]));
+	_mm_store_ps(Dest[2], _mm_loadu_ps(Source.m_Rotate.m_pEntry[2]));
+
+	Dest[0][3] = Source.m_Translate.x;
+	Dest[1][3] = Source.m_Translate.y;
+	Dest[2][3] = Source.m_Translate.z;
+}

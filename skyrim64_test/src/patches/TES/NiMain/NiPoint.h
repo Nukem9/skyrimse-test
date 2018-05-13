@@ -76,3 +76,8 @@ public:
 	}
 };
 static_assert(sizeof(NiPoint3) == 0xC);
+
+inline NiPoint3 operator* (float lhs, NiPoint3& rhs)
+{
+	return rhs * lhs;
+}
