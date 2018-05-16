@@ -212,14 +212,22 @@ namespace BSGraphics
 		ID3D11Buffer *m_VertexBuffer;
 		ID3D11Buffer *m_IndexBuffer;
 		uint64_t m_VertexDesc;
+		uint32_t m_RefCount;
 	};
+	static_assert(sizeof(LineShape) == 0x20);
 	static_assert_offset(LineShape, m_VertexBuffer, 0x0);
 	static_assert_offset(LineShape, m_IndexBuffer, 0x8);
 	static_assert_offset(LineShape, m_VertexDesc, 0x10);
+	static_assert_offset(LineShape, m_RefCount, 0x18);
 
 	struct TriShape : LineShape
 	{
+		void *m_RawVertexData;
+		void *m_RawIndexData;
 	};
+	static_assert(sizeof(TriShape) == 0x30);
+	static_assert_offset(TriShape, m_RawVertexData, 0x20);
+	static_assert_offset(TriShape, m_RawIndexData, 0x28);
 
 	struct DynamicTriShape
 	{

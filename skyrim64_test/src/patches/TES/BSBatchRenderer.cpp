@@ -473,7 +473,7 @@ void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, b
 			qword_1434B5220 = (uintptr_t)material;
 		}
 
-		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;// WARNING: MT data write hazard
+		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;// WARNING: MT data write hazard. ucCurrentMeshLODLevel?
 
 		if (Pass->m_Geometry->QSkinInstance())
 			DrawPassSkinned(Pass, AlphaTest, RenderFlags);

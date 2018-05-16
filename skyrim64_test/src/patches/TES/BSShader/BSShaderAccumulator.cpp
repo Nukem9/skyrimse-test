@@ -90,13 +90,47 @@ void BSShaderAccumulator::SetRenderMode(uint32_t RenderMode)
 		FinishAccumulatingCurrent = FinishAccumulatingArray[0];
 }
 
+bool BSShaderAccumulator::hk_RegisterObjectDispatch(BSGeometry *Geometry, void *Unknown)
+{
+	NiSkinInstance *skinInstance = Geometry->QSkinInstance();
+	BSShaderProperty *shaderProperty = Geometry->QShaderProperty();
+
+	if (!shaderProperty)
+		return true;
+
+	// BSDismemberSkinInstance::bVisible
+	if (skinInstance && skinInstance->GetRTTI() == (NiRTTI *)(g_ModuleBase + 0x3039660) && !*(BYTE *)((__int64)skinInstance + 0x98))
+		return true;
+
+	if (!Geometry->QRendererData() && !skinInstance && !Geometry->IsParticlesGeom() && Geometry->QType() != GEOMETRY_TYPE_PARTICLE_SHADER_DYNAMIC_TRISHAPE)
+		return true;
+
+	bool result = RegisterObjectArray[m_RenderMode](this, Geometry, shaderProperty, Unknown);
+
+	uint32_t v9 = *(uint32_t *)((__int64)this + 0x160);
+
+	if (v9 != 0)
+	{
+		uint32_t v9 = 0;
+		__int64 v10 = *(__int64 *)((__int64)shaderProperty + 0x70);
+
+		if (v10)
+		{
+			if (v9 == 0xFFFF)
+				*(uint32_t *)(v10 + 0x1C) = 0;// BSShaderPropertyLightData::uiShadowAccumFlags
+			else
+				*(uint32_t *)(v10 + 0x1C) |= *(uint32_t *)((__int64)this + 0x164);
+		}
+	}
+
+	return result;
+}
+
 void BSShaderAccumulator::hk_FinishAccumulatingDispatch(uint32_t RenderFlags)
 {
-	uint32_t renderMode = *(uint32_t *)((__int64)this + 0x150);
+	SetRenderMode(m_RenderMode);
 
-	SetRenderMode(renderMode);
-
-	if (renderMode != 0)
+	if (m_RenderMode != 0)
 		FinishAccumulatingCurrent(this, RenderFlags);
 	else
 		RenderSceneNormal(this, RenderFlags);

@@ -4,6 +4,9 @@
 #include "NiAlphaProperty.h"
 #include "NiSkinInstance.h"
 
+class NiShadeProperty;
+class BSShaderProperty;
+
 enum
 {
 	GEOMETRY_TYPE_GEOMETRY = 0x0,
@@ -49,15 +52,15 @@ public:
 		return static_cast<NiAlphaProperty *>(QProperty(0));
 	}
 
-/*	NiShadeProperty *QNiShadeProperty() const
+	NiShadeProperty *QNiShadeProperty() const
 	{
-		return static_cast<NiShadeProperty *>(QProperty(1));
+		return reinterpret_cast<NiShadeProperty *>(QProperty(1));
 	}
 
 	BSShaderProperty *QShaderProperty() const
 	{
-		return static_cast<BSShaderProperty *>(QProperty(1));
-	}*/
+		return reinterpret_cast<BSShaderProperty *>(QProperty(1));
+	}
 
 	NiSkinInstance *QSkinInstance() const
 	{

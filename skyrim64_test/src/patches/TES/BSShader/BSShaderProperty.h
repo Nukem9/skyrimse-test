@@ -91,7 +91,7 @@ public:
 	char _pad2[0x20];
 	class BSFadeNode *pFadeNode;
 	class BSEffectShaderData *pEffectData;
-	char _pad3[0x8];
+	char _pad3[0x8];// BSShaderPropertyLightData *
 	BSShaderMaterial *pMaterial;
 	char _pad4[0x8];
 

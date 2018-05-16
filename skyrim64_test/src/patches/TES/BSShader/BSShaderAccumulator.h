@@ -55,7 +55,7 @@ static_assert(offsetof(NiAlphaAccumulator, m_UnknownByte52) == 0x52, "");
 class BSShaderAccumulator : public NiAlphaAccumulator
 {
 public:
-	typedef void(*RegisterObjFunc)(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown);
+	typedef bool(*RegisterObjFunc)(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown);
 	typedef void(*FinishAccumFunc)(BSShaderAccumulator *Accumulator, uint32_t Flags);
 
 	virtual ~BSShaderAccumulator();
@@ -67,9 +67,11 @@ public:
 	uint32_t m_CurrentTech;
 	uint32_t m_CurrentGroupIndex;
 	bool m_HasPendingDraws;
-	char _pad[0x27];
+	char _pad[0xF];
+	uint32_t m_RenderMode;
+	char _pad2[0x14];
 	NiPoint3 m_CurrentViewPos;
-	char _pad2[0xC];
+	char _pad3[0xC];
 	// @ 0x68 = Unknown float (1.0f)
 	// @ 0x88 = Pointer to array of unknown D3D11 objects
 	// @ 0xA0 = Pointer to array of unknown D3D11 objects
@@ -85,6 +87,7 @@ public:
 
 	static void InitCallbackTable();
 	static void SetRenderMode(uint32_t RenderMode);
+	bool hk_RegisterObjectDispatch(BSGeometry *Geometry, void *Unknown);
 	void hk_FinishAccumulatingDispatch(uint32_t RenderFlags);
 
 	static bool IsGrassShadowBlacklist(uint32_t Technique);
@@ -108,6 +111,7 @@ static_assert(offsetof(BSShaderAccumulator, m_MainBatch) == 0x130, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentTech) == 0x138, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentGroupIndex) == 0x13C, "");
 static_assert(offsetof(BSShaderAccumulator, m_HasPendingDraws) == 0x140, "");
+static_assert(offsetof(BSShaderAccumulator, m_RenderMode) == 0x150, "");
 static_assert(offsetof(BSShaderAccumulator, m_CurrentViewPos) == 0x168, "");
 
 STATIC_CONSTRUCTOR(CheckBSShaderAccumulator, []
