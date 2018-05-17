@@ -9,26 +9,26 @@
 #  ifndef JEMALLOC_NO_DEMANGLE
 #    define JEMALLOC_NO_DEMANGLE
 #  endif
+#  define aligned_alloc jet_aligned_alloc
+#  define calloc jet_calloc
+#  define dallocx jet_dallocx
+#  define free jet_free
+#  define mallctl jet_mallctl
+#  define mallctlbymib jet_mallctlbymib
+#  define mallctlnametomib jet_mallctlnametomib
+#  define malloc jet_malloc
 #  define malloc_conf jet_malloc_conf
 #  define malloc_message jet_malloc_message
-#  define malloc jet_malloc
-#  define calloc jet_calloc
-#  define posix_memalign jet_posix_memalign
-#  define aligned_alloc jet_aligned_alloc
-#  define realloc jet_realloc
-#  define free jet_free
-#  define mallocx jet_mallocx
-#  define rallocx jet_rallocx
-#  define xallocx jet_xallocx
-#  define sallocx jet_sallocx
-#  define dallocx jet_dallocx
-#  define sdallocx jet_sdallocx
-#  define nallocx jet_nallocx
-#  define mallctl jet_mallctl
-#  define mallctlnametomib jet_mallctlnametomib
-#  define mallctlbymib jet_mallctlbymib
 #  define malloc_stats_print jet_malloc_stats_print
 #  define malloc_usable_size jet_malloc_usable_size
+#  define mallocx jet_mallocx
+#  define nallocx jet_nallocx
+#  define posix_memalign jet_posix_memalign
+#  define rallocx jet_rallocx
+#  define realloc jet_realloc
+#  define sallocx jet_sallocx
+#  define sdallocx jet_sdallocx
+#  define xallocx jet_xallocx
 #endif
 
 /*
@@ -39,24 +39,24 @@
  * and/or --with-jemalloc-prefix.
  */
 #ifndef JEMALLOC_NO_DEMANGLE
+#  undef jet_aligned_alloc
+#  undef jet_calloc
+#  undef jet_dallocx
+#  undef jet_free
+#  undef jet_mallctl
+#  undef jet_mallctlbymib
+#  undef jet_mallctlnametomib
+#  undef jet_malloc
 #  undef jet_malloc_conf
 #  undef jet_malloc_message
-#  undef jet_malloc
-#  undef jet_calloc
-#  undef jet_posix_memalign
-#  undef jet_aligned_alloc
-#  undef jet_realloc
-#  undef jet_free
-#  undef jet_mallocx
-#  undef jet_rallocx
-#  undef jet_xallocx
-#  undef jet_sallocx
-#  undef jet_dallocx
-#  undef jet_sdallocx
-#  undef jet_nallocx
-#  undef jet_mallctl
-#  undef jet_mallctlnametomib
-#  undef jet_mallctlbymib
 #  undef jet_malloc_stats_print
 #  undef jet_malloc_usable_size
+#  undef jet_mallocx
+#  undef jet_nallocx
+#  undef jet_posix_memalign
+#  undef jet_rallocx
+#  undef jet_realloc
+#  undef jet_sallocx
+#  undef jet_sdallocx
+#  undef jet_xallocx
 #endif
