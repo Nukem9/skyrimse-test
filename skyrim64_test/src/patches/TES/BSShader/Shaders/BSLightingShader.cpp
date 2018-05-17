@@ -15,6 +15,7 @@
 //
 // - Constructor is not implemented
 // - Destructor is not implemented
+// - Vanilla bug fix for SetupMaterial() case RAW_TECHNIQUE_MULTIINDEXTRISHAPESNOW
 // - Global variables eliminated in each Setup/Restore function
 // - A lock is held in GeometrySetupMTLandExtraConstants()
 //
@@ -440,10 +441,20 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		// PS: p26 float4 SparkleParams
 		XMVECTORF32& sparkleParams = pixelCG.ParamPS<XMVECTORF32, 26>();
 
-		sparkleParams.f[0] = *(float *)(v3 + 160);
-		sparkleParams.f[1] = *(float *)(v3 + 164);
-		sparkleParams.f[2] = *(float *)(v3 + 168);
-		sparkleParams.f[3] = *(float *)(v3 + 172);
+		// if (is BSLightingShaderMaterialSnow RTTI instance)
+		if (*(uintptr_t *)(*(uintptr_t *)(v3) - 8) == (g_ModuleBase + 0x19AA838))
+		{
+			sparkleParams.f[0] = *(float *)(v3 + 160);
+			sparkleParams.f[1] = *(float *)(v3 + 164);
+			sparkleParams.f[2] = *(float *)(v3 + 168);
+			sparkleParams.f[3] = *(float *)(v3 + 172);
+		}
+		else
+		{
+			// Bug fix: Without the RTTI check, this would read out-of-bounds data causing a crash or
+			// simply invalid values
+			sparkleParams.v = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
+		}
 	}
 	break;
 

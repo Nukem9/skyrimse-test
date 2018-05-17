@@ -33,7 +33,6 @@ DEFINE_SHADER_DESCRIPTOR(
 //
 // Shader notes:
 //
-// - Destructor is not implemented
 // - A global variable update was manually removed in SetupGeometry()
 //
 using namespace DirectX;
