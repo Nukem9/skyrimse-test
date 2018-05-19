@@ -96,10 +96,6 @@ void MemoryManager::Free(void *Memory, bool Aligned)
 
 void PatchMemory()
 {
-	bool option;
-	option = true;  je_mallctl("background_thread", nullptr, nullptr, &option, sizeof(bool));
-	option = false; je_mallctl("prof.active", nullptr, nullptr, &option, sizeof(bool));
-
 	PatchIAT(hk_calloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc");
 	PatchIAT(hk_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc");
 	PatchIAT(hk_aligned_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc");

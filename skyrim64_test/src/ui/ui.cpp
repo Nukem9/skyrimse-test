@@ -424,6 +424,15 @@ namespace ui
 
         if (ImGui::Begin("Memory", &showMemoryWindow))
         {
+			if (ImGui::Button("Dump jemalloc stats"))
+			{
+				// Explicitly omit arena information
+				je_malloc_stats_print([](void *, const char *text)
+				{
+					ui::log::Add(text);
+				}, nullptr, "a");
+			}
+
             if (ImGui::BeginGroupSplitter("Per Frame"))
             {
                 ImGui::Text("Allocs: %lld", ProfileGetDeltaValue("Alloc Count"));
