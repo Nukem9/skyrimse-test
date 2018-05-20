@@ -1,46 +1,7 @@
 #include "../../common.h"
 #include "MemoryManager.h"
 
-//
-// VS2015 CRT hijacked functions
-//
-MemoryManager fakeManager;
-
-void *__fastcall hk_calloc(size_t Count, size_t Size)
-{
-	// The allocated memory is always zeroed
-	return fakeManager.Alloc(Count * Size, 0, false);
-}
-
-void *__fastcall hk_malloc(size_t Size)
-{
-	return fakeManager.Alloc(Size, 0, false);
-}
-
-void *__fastcall hk_aligned_malloc(size_t Size, size_t Alignment)
-{
-	return fakeManager.Alloc(Size, (int)Alignment, true);
-}
-
-void __fastcall hk_free(void *Block)
-{
-	return fakeManager.Free(Block, false);
-}
-
-void __fastcall hk_aligned_free(void *Block)
-{
-	return fakeManager.Free(Block, true);
-}
-
-size_t __fastcall hk_msize(void *Block)
-{
-	return je_malloc_usable_size(Block);
-}
-
-//
-// Internal engine heap allocator backed by VirtualAlloc()
-//
-void *MemoryManager::Alloc(size_t Size, uint32_t Alignment, bool Aligned)
+void *Jemalloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zeroed = false)
 {
 	ProfileCounterInc("Alloc Count");
 	ProfileCounterAdd("Byte Count", Size);
@@ -77,13 +38,13 @@ void *MemoryManager::Alloc(size_t Size, uint32_t Alignment, bool Aligned)
 		ptr = je_malloc(Size);
 	}
 
-	if (!ptr)
-		return nullptr;
+	if (ptr && Zeroed)
+		return memset(ptr, 0, Size);
 
-	return memset(ptr, 0, Size);
+	return ptr;
 }
 
-void MemoryManager::Free(void *Memory, bool Aligned)
+void Jefree(void *Memory)
 {
 	ProfileCounterInc("Free Count");
 	ProfileTimer("Time Spent Freeing");
@@ -92,6 +53,66 @@ void MemoryManager::Free(void *Memory, bool Aligned)
 		return;
 
 	je_free(Memory);
+}
+
+//
+// VS2015 CRT hijacked functions
+//
+void *__fastcall hk_calloc(size_t Count, size_t Size)
+{
+	// The allocated memory is always zeroed
+	return Jemalloc(Count * Size, 0, false, true);
+}
+
+void *__fastcall hk_malloc(size_t Size)
+{
+	return Jemalloc(Size);
+}
+
+void *__fastcall hk_aligned_malloc(size_t Size, size_t Alignment)
+{
+	return Jemalloc(Size, Alignment, true);
+}
+
+void __fastcall hk_free(void *Block)
+{
+	Jefree(Block);
+}
+
+void __fastcall hk_aligned_free(void *Block)
+{
+	Jefree(Block);
+}
+
+size_t __fastcall hk_msize(void *Block)
+{
+	return je_malloc_usable_size(Block);
+}
+
+//
+// Internal engine heap allocators backed by VirtualAlloc()
+//
+void *MemoryManager::Alloc(size_t Size, uint32_t Alignment, bool Aligned)
+{
+	return Jemalloc(Size, Alignment, Aligned, true);
+}
+
+void MemoryManager::Free(void *Memory, bool Aligned)
+{
+	Jefree(Memory);
+}
+
+void *ScrapHeap::Alloc(size_t Size, uint32_t Alignment)
+{
+	if (Size > MAX_ALLOC_SIZE)
+		return nullptr;
+
+	return Jemalloc(Size, Alignment, Alignment != 0);
+}
+
+void ScrapHeap::Free(void *Memory)
+{
+	Jefree(Memory);
 }
 
 void PatchMemory()
@@ -103,11 +124,15 @@ void PatchMemory()
 	PatchIAT(hk_aligned_free, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free");
 	PatchIAT(hk_msize, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize");
 
-	PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);// [3GB] MemoryManager - Default/Static/File heaps
-	PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);// [1GB] BSSmallBlockAllocator
-	// [128MB] BSScaleformSysMemMapper is untouched due to complexity
-	// [512MB] hkMemoryAllocator is untouched due to complexity
+	PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);// [3GB  ] MemoryManager - Default/Static/File heaps
+	PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);// [1GB  ] BSSmallBlockAllocator
+														   // [512MB] hkMemoryAllocator is untouched due to complexity
+														   // [128MB] BSScaleformSysMemMapper is untouched due to complexity
+	PatchMemory(g_ModuleBase + 0xC02E60, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap init
+	PatchMemory(g_ModuleBase + 0xC037C0, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap deinit
 
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC01DA0), &MemoryManager::Alloc);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC020A0), &MemoryManager::Free);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC02FE0), &ScrapHeap::Alloc);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC03600), &ScrapHeap::Free);
 }
