@@ -755,7 +755,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		XMVECTORF32& materialData = pixelCG.ParamPS<XMVECTORF32, 7>();
 
-		if (Pass->Byte1E & 0x80)
+		if (Pass->m_Lod.SingleLevel)
 			materialData.f[2] = property->GetAlpha() * *(float *)((uintptr_t)property->pFadeNode + 332i64);
 		else
 			materialData.f[2] = property->GetAlpha();
@@ -911,7 +911,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		uintptr_t v89 = (uintptr_t)property->pFadeNode;
 		float v90;
 		
-		if (Pass->Byte1E & 0x80)
+		if (Pass->m_Lod.SingleLevel)
 			v90 = *(float *)(v89 + 332) * 31.0f;
 		else
 			v90 = *(float *)(v89 + 304) * 31.0f;

@@ -473,7 +473,7 @@ void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, b
 			qword_1434B5220 = (uintptr_t)material;
 		}
 
-		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = Pass->Byte1E;// WARNING: MT data write hazard. ucCurrentMeshLODLevel?
+		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = *(BYTE *)(&Pass->m_Lod);// WARNING: MT data write hazard. ucCurrentMeshLODLevel?
 
 		if (Pass->m_Geometry->QSkinInstance())
 			DrawPassSkinned(Pass, AlphaTest, RenderFlags);
@@ -540,10 +540,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	{
 		SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
 
-		uint32_t v10 = (Pass->Byte1E >> 7) & 1;
-		uint32_t v11 = (Pass->Byte1E & 0x7F);
-
-		SkinRenderData skinData(static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader), Pass->m_Geometry, nullptr, v10, v11);
+		SkinRenderData skinData(static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader), Pass->m_Geometry, nullptr, Pass->m_Lod.SingleLevel, Pass->m_Lod.Index);
 
 		// Runtime-updated vertices are sent to a GPU vertex buffer directly (non-static objects like trees/characters)
 		BSDynamicTriShape *dynamicTri = Pass->m_Geometry->IsDynamicTriShape();
