@@ -7,6 +7,7 @@
 #include "TES/BSShader/Shaders/BSDistantTreeShader.h"
 #include "TES/BSShader/Shaders/BSSkyShader.h"
 #include "TES/BSShader/Shaders/BSGrassShader.h"
+#include "TES/BSShader/Shaders/BSParticleShader.h"
 
 void PatchAchievements();
 void PatchD3D11();
@@ -77,6 +78,7 @@ void Patch_TESV()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1318050), &BSDistantTreeShader::__ctor__);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13113F0), &BSSkyShader::__ctor__);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E4C10), &BSGrassShader::__ctor__);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1336C80), &BSParticleShader::__ctor__);
 	TestHook5();// BSLightingShader
 
 	//
