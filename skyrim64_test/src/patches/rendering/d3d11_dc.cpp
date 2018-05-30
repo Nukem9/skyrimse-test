@@ -35,7 +35,7 @@ struct JobCommandData
 	unsigned int a2;
 	void(*Callback)(__int64, unsigned int);
 
-	ID3D11DeviceContext *DeferredContext;
+	ID3D11DeviceContext2 *DeferredContext;
 	ID3D11CommandList *CommandList;
 
 	union
@@ -102,7 +102,7 @@ DWORD WINAPI DC_Thread(LPVOID Arg)
 	return 0;
 }
 
-void DC_Init(ID3D11Device1 *Device, int DeferredContextCount)
+void DC_Init(ID3D11Device2 *Device, int DeferredContextCount)
 {
 	// I'm declaring it here because it's inside the init function and not globally visible
 	static JobCommandData jobCommands[MAXIMUM_JOBS];
@@ -129,7 +129,7 @@ void DC_Init(ID3D11Device1 *Device, int DeferredContextCount)
 		memset(&jobCommands[i], 0, sizeof(JobCommandData));
 		jobCommands[i].Id = i;
 
-		Assert(SUCCEEDED(Device->CreateDeferredContext(0, &jobCommands[i].DeferredContext)));
+		Assert(SUCCEEDED(Device->CreateDeferredContext2(0, &jobCommands[i].DeferredContext)));
 
 		FreeJobSlots.push(&jobCommands[i]);
 		CompletedJobs[i].store(nullptr);

@@ -1,4 +1,6 @@
+#include "../../xbyak/xbyak.h"
 #include "common.h"
+#include "d3d11_proxy.h"
 #include "GpuTimer.h"
 #include "../../ui/ui.h"
 #include "../TES/BSShader/BSPixelShader.h"
@@ -12,14 +14,16 @@
 #include "../TES/BSGraphicsRenderer.h"
 #include "../TES/BSBatchRenderer.h"
 
+ID3D11Device2 *g_Device;
 IDXGISwapChain *g_SwapChain;
 ID3D11DeviceContext2 *g_DeviceContext;
 double g_AverageFps;
-ID3DUserDefinedAnnotation *annotation;
 
 decltype(&IDXGISwapChain::Present) ptrPresent;
 decltype(&CreateDXGIFactory) ptrCreateDXGIFactory;
 decltype(&D3D11CreateDeviceAndSwapChain) ptrD3D11CreateDeviceAndSwapChain;
+
+void DC_Init(ID3D11Device2 *Device, int DeferredContextCount);
 
 void UpdateHavokTimer(int FPS)
 {
@@ -49,28 +53,17 @@ LARGE_INTEGER g_FrameDelta;
 bool init = false;
 HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval, UINT Flags)
 {
-	ui::Render();
-
-	if (!g_DeviceContext)
-	{
-		ID3D11DeviceContext1 *ctx = nullptr;
-		ID3D11Device1 *dev;
-		This->GetDevice(__uuidof(ID3D11Device1), (void **)&dev);
-		dev->GetImmediateContext1(&ctx);
-
-		ctx->QueryInterface<ID3D11DeviceContext2>(&g_DeviceContext);
-		ctx->QueryInterface<ID3DUserDefinedAnnotation>(&annotation);
-	}
-
 	if (init)
 	{
 		g_GPUTimers.StopTimer(g_DeviceContext, 0);
 		QueryPerformanceCounter(&g_FrameEnd);
 
 		g_FrameDelta.QuadPart = g_FrameEnd.QuadPart - g_FrameStart.QuadPart;
+		g_GPUTimers.EndFrame(g_DeviceContext);
 	}
 
-	g_GPUTimers.EndFrame(g_DeviceContext);
+	ui::Render();
+
     HRESULT hr = (This->*ptrPresent)(SyncInterval, Flags);
 	g_GPUTimers.BeginFrame(g_DeviceContext);
 
@@ -95,7 +88,7 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 	//
 	// NvAPI_D3D_SetResourceHint() or agsDriverExtensionsDX11_CreateTexture2D(TransferDisable) are better options.
 	//
-	annotation->BeginEvent(L"SLI Hacks");
+	g_DeviceContext->BeginEventInt(L"SLI Hacks", 0);
 	{
 		g_DeviceContext->ClearState();
 
@@ -122,7 +115,7 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 		//g_DeviceContext->ClearRenderTargetView(g_RenderTargets[RENDER_TARGET_RAW_WATER], black);
 		//g_DeviceContext->ClearRenderTargetView(g_RenderTargets[RENDER_TARGET_MENUBG], black);		// Fixes flickering in the system menu, but background screen is black
 	}
-	annotation->EndEvent();
+	g_DeviceContext->EndEvent();
 
 	return hr;
 }
@@ -132,8 +125,7 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 	return BSGraphics::Renderer::GetGlobals()->MapDynamicBuffer(AllocationSize, AllocationOffset);
 
 #if 0
-	//if (AllocationSize <= 0)
-	//	bAssert((__int64)"Win32\\BSGraphicsRenderer.cpp", 3163i64, (__int64)"Size must be > 0");
+	AssertMsg(AllocationSize > 0, "Size must be > 0");
 
 	uint32_t frameDataOffset = globals->m_FrameDataUsedSize;
 	uint32_t frameBufferIndex = globals->m_CurrentDynamicBufferIndex;
@@ -145,8 +137,7 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 	//
 	if (newFrameDataSzie > 0x400000)
 	{
-		//if (AllocationSize > 0x400000)
-		//	bAssert((__int64)"Win32\\BSGraphicsRenderer.cpp", 3174i64, (__int64)"Dynamic geometry buffer overflow.");
+		AssertMsg(AllocationSize <= 0x400000, "Dynamic geometry buffer overflow.");
 
 		newFrameDataSzie = AllocationSize;
 		frameDataOffset = 0;
@@ -188,7 +179,7 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 #endif
 }
 
-uint8_t *sub_1412E1600;
+uint8_t *RenderSceneNormal;
 
 HRESULT WINAPI hk_CreateDXGIFactory(REFIID riid, void **ppFactory)
 {
@@ -202,9 +193,6 @@ HRESULT WINAPI hk_CreateDXGIFactory(REFIID riid, void **ppFactory)
 
     return ptrCreateDXGIFactory(__uuidof(IDXGIFactory), ppFactory);
 }
-
-bool hooked = false;
-void hook();
 
 #include <direct.h>
 const char *NextShaderType;
@@ -225,8 +213,6 @@ void DumpVertexShader(BSGraphics::VertexShader *Shader, const char *Type);
 void DumpPixelShader(BSGraphics::PixelShader *Shader, const char *Type, void *Buffer, size_t BufferLen);
 void hk_BuildShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
 {
-	hook();
-
 	NextShaderType = (const char *)*(uintptr_t *)(shaderGroupObject + 136);
 	((decltype(&hk_BuildShaderBundle))BuildShaderBundle)(shaderGroupObject, fileStream);
 	
@@ -239,8 +225,8 @@ void hk_BuildShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
 	if (shaderGroupObject == (__int64)BSGrassShader::pInstance)
 		BSGrassShader::pInstance->CreateAllShaders();
 
-	//if (shaderGroupObject == (__int64)BSSkyShader::pInstance)
-	//	BSSkyShader::pInstance->CreateAllShaders();
+	if (shaderGroupObject == (__int64)BSSkyShader::pInstance)
+		BSSkyShader::pInstance->CreateAllShaders();
 
 	return;
 	uint32_t vsEntryCount = *(uint32_t *)(shaderGroupObject + 0x34);
@@ -331,8 +317,6 @@ void hk_BuildShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
 uint8_t *BuildComputeShaderBundle;
 void hk_BuildComputeShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
 {
-	hook();
-
 	NextShaderType = (const char *)*(uintptr_t *)(shaderGroupObject + 24);
 	((decltype(&hk_BuildComputeShaderBundle))BuildComputeShaderBundle)(shaderGroupObject, fileStream);
 	NextShaderType = nullptr;
@@ -353,7 +337,7 @@ void DumpShader(const char *Prefix, int Index, const void *Bytecode, size_t Byte
 	sprintf_s(buffer, "C:\\Shaders\\%s\\%s_%d.hlsl", NextShaderType, Prefix, Index);
 
 	FILE *w = fopen(buffer, "wb");
-	if ( w)
+	if (w)
 	{
 		fwrite(Bytecode, 1, BytecodeLength, w);
 		fflush(w);
@@ -361,69 +345,66 @@ void DumpShader(const char *Prefix, int Index, const void *Bytecode, size_t Byte
 	}
 }
 
-uint8_t *CreatePixelShader;
-HRESULT WINAPI hk_CreatePixelShader(ID3D11Device *This, const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11PixelShader **ppPixelShader)
+HRESULT WINAPI NsightHack_D3D11CreateDeviceAndSwapChain(
+	IDXGIAdapter *pAdapter,
+	D3D_DRIVER_TYPE DriverType,
+	HMODULE Software,
+	UINT Flags,
+	const D3D_FEATURE_LEVEL *pFeatureLevels,
+	UINT FeatureLevels,
+	UINT SDKVersion,
+	const DXGI_SWAP_CHAIN_DESC *pSwapChainDesc,
+	IDXGISwapChain **ppSwapChain,
+	ID3D11Device **ppDevice,
+	D3D_FEATURE_LEVEL *pFeatureLevel,
+	ID3D11DeviceContext **ppImmediateContext)
 {
-	ProfileCounterInc("Pixel Shaders Created");
-
-	HRESULT hr = ((decltype(&hk_CreatePixelShader))CreatePixelShader)(This, pShaderBytecode, BytecodeLength, pClassLinkage, ppPixelShader);
-
-	if (SUCCEEDED(hr))
+	//
+	// Nvidia NSight checks the return address of D3D11CreateDeviceAndSwapChain to see if it's
+	// a blacklisted directx dll. "d3dx9_42.dll" happens to be in that list. So, now I need to
+	// generate code which spoofs the return address to something random.
+	//
+	// NOTE: Do NOT touch rcx, rdx, r8, r9
+	//
+	class d3djmp : public Xbyak::CodeGenerator
 	{
-		void *mem = malloc(BytecodeLength);
-		memcpy(mem, pShaderBytecode, BytecodeLength);
+	public:
+		d3djmp() : Xbyak::CodeGenerator()
+		{
+			push(rbx);
+			push(rsi);
+			push(rdi);
+			sub(rsp, 0x60);
+			mov(rax, qword[rsp + 0xD8]);
+			mov(r10, qword[rsp + 0xD0]);
+			mov(r11, qword[rsp + 0xC8]);
+			mov(rbx, qword[rsp + 0xC0]);
+			mov(rdi, qword[rsp + 0xB8]);
+			mov(rsi, qword[rsp + 0xA0]);
+			mov(qword[rsp + 0x58], rax);
+			mov(eax, dword[rsp + 0xB0]);
+			mov(qword[rsp + 0x50], r10);
+			mov(qword[rsp + 0x48], r11);
+			mov(qword[rsp + 0x40], rbx);
+			mov(qword[rsp + 0x38], rdi);
+			mov(dword[rsp + 0x30], eax);
+			mov(eax, dword[rsp + 0xA8]);
+			mov(dword[rsp + 0x28], eax);
+			mov(qword[rsp + 0x20], rsi);
 
-		m_ShaderBuffers[(void *)*ppPixelShader] = { mem, BytecodeLength };
-	}
+			mov(rax, (uintptr_t)ptrD3D11CreateDeviceAndSwapChain);
+			call(rax);
 
-	return hr;
-}
+			add(rsp, 0x60);
+			pop(rdi);
+			pop(rsi);
+			pop(rbx);
+			ret();
+		}
+	} hack;
 
-decltype(&ID3D11Device::CreateComputeShader) CreateComputeShader;
-HRESULT WINAPI hk_CreateComputeShader(ID3D11Device *This, const void *pShaderBytecode, SIZE_T BytecodeLength, ID3D11ClassLinkage *pClassLinkage, ID3D11ComputeShader **ppComputeShader)
-{
-	ProfileCounterInc("Compute Shaders Created");
-
-	return (This->*CreateComputeShader)(pShaderBytecode, BytecodeLength, pClassLinkage, ppComputeShader);
-}
-
-void DC_Init(ID3D11Device1 *Device, int DeferredContextCount);
-void hook()
-{
-	//return;
-	if (hooked)
-		return;
-
-	hooked = true;
-
-	BSGraphics::Renderer::Initialize();
-
-	uintptr_t ptr = *(uintptr_t *)(&BSGraphics::Renderer::GetGlobalsNonThreaded()->qword_14304BF00);
-	//uintptr_t ptr = *(uintptr_t *)(g_ModuleBase + 0x304BF00);
-	ID3D11Device *dev = *(ID3D11Device **)(ptr + 56);
-	IDXGISwapChain *swap = *(IDXGISwapChain **)(ptr + 96);
-
-	ID3D11Device2 *newDev = nullptr;
-
-	if (FAILED((dev)->QueryInterface<ID3D11Device2>(&newDev)))
-		__debugbreak();
-
-	ID3D11DeviceContext1 *ctx;
-	newDev->GetImmediateContext1(&ctx);
-	ctx->QueryInterface<ID3D11DeviceContext2>(&g_DeviceContext);
-
-	if (FAILED(g_DeviceContext->QueryInterface<ID3DUserDefinedAnnotation>(&annotation)))
-		__debugbreak();
-
-	if (!ptrPresent)
-		*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)swap, &hk_IDXGISwapChain_Present, 8);
-
-	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x131F0D0, (PBYTE)&BSBatchRenderer::SetupAndDrawPass);
-	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&BSGraphics::Renderer::SyncD3DState);
-	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF30, (PBYTE)&sub_140D6BF00);
-	*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1960, (PBYTE)&BSShaderAccumulator::sub_1412E1600);
-
-	DC_Init(newDev, 0);
+	auto newPtr = hack.getCode<decltype(&D3D11CreateDeviceAndSwapChain)>();
+	return newPtr(pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, pSwapChainDesc, ppSwapChain, ppDevice, pFeatureLevel, ppImmediateContext);
 }
 
 HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
@@ -450,14 +431,12 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
     // D3D_FEATURE_LEVEL_11_1 on a computer that doesn't have the Direct3D 11.1 runtime installed,
     // this function immediately fails with E_INVALIDARG.
 	//
-    const D3D_FEATURE_LEVEL testFeatureLevels[] = {
+    const D3D_FEATURE_LEVEL testFeatureLevels[] =
+	{
         D3D_FEATURE_LEVEL_11_1,
         D3D_FEATURE_LEVEL_11_0,
         D3D_FEATURE_LEVEL_10_1,
         D3D_FEATURE_LEVEL_10_0,
-        D3D_FEATURE_LEVEL_9_3,
-        D3D_FEATURE_LEVEL_9_2,
-        D3D_FEATURE_LEVEL_9_1
     };
 
 	//
@@ -469,7 +448,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 
     for (int i = 0; i < ARRAYSIZE(testFeatureLevels); i++)
     {
-        hr = ptrD3D11CreateDeviceAndSwapChain(
+        hr = NsightHack_D3D11CreateDeviceAndSwapChain(
             pAdapter,
             DriverType,
             Software,
@@ -483,7 +462,6 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
             &level,
             ppImmediateContext);
 
-        // Exit if device was created
         if (SUCCEEDED(hr))
         {
             if (pFeatureLevel)
@@ -493,43 +471,47 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
         }
     }
 
-    if (FAILED(hr))
-        return hr;
+	// Skyrim never checks the return value of D3D11CreateDeviceAndSwapChain, so do it ourselves
+	if (FAILED(hr))
+	{
+		ShowWindow(pSwapChainDesc->OutputWindow, SW_HIDE);
+
+		AssertMsg(false, "DirectX11 device creation failed. Game will now exit.");
+		ExitProcess(0);
+	}
 
 	// Force DirectX11.2 in case we use features later (11.3+ requires Win10 or higher)
-	ID3D11Device2 *newDev = nullptr;
-	ID3D11DeviceContext2 *newContext = nullptr;
+	ID3D11Device2 *proxyDevice = new D3D11DeviceProxy(*ppDevice);
+	ID3D11DeviceContext2 *proxyContext = new D3D11DeviceContextProxy(*ppImmediateContext);
 
-	if (FAILED((*ppDevice)->QueryInterface<ID3D11Device2>(&newDev)))
-		return E_FAIL;
+	proxyDevice->SetExceptionMode(D3D11_RAISE_FLAG_DRIVER_INTERNAL_ERROR);
 
-	if (FAILED((*ppImmediateContext)->QueryInterface<ID3D11DeviceContext2>(&newContext)))
-		return E_FAIL;
+	g_Device = proxyDevice;
+	*ppDevice = proxyDevice;
 
-	if (FAILED(newContext->QueryInterface<ID3DUserDefinedAnnotation>(&annotation)))
-		return E_FAIL;
+	g_DeviceContext = proxyContext;
+	*ppImmediateContext = proxyContext;
 
-	*ppDevice = newDev;
-	*ppImmediateContext = newContext;
-
-	g_DeviceContext = newContext;
 	g_SwapChain = *ppSwapChain;
 
-	OutputDebugStringA("Created everything\n");
-
-	newDev->SetExceptionMode(D3D11_RAISE_FLAG_DRIVER_INTERNAL_ERROR);
-	BSGraphics::Renderer::FlushThreadedVars();
-
     // Create ImGui globals
-    ui::Initialize(pSwapChainDesc->OutputWindow, newDev, newContext);
+    ui::Initialize(pSwapChainDesc->OutputWindow, g_Device, g_DeviceContext);
     ui::log::Add("Created D3D11 device with feature level %X...\n", level);
+
+	BSGraphics::Renderer::FlushThreadedVars();
+	BSGraphics::Renderer::Initialize();
 
     // Now hook the render function
 	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
-	//CreatePixelShader = Detours::X64::DetourClassVTable(*(PBYTE *)newDev, &hk_CreatePixelShader, 15);
 
-	//Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&CommitShaderChanges);
-	//*(PBYTE *)&sub_1412E1600 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1960, (PBYTE)&BSShaderAccumulator::sub_1412E1600);
+	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x131F0D0, (PBYTE)&BSBatchRenderer::SetupAndDrawPass);
+	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&BSGraphics::Renderer::SyncD3DState);
+	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF30, (PBYTE)&sub_140D6BF00);
+	*(PBYTE *)&RenderSceneNormal = Detours::X64::DetourFunctionClass((PBYTE)g_ModuleBase + 0x12E1960, &BSShaderAccumulator::RenderSceneNormal);
+
+	g_GPUTimers.Create(g_Device, 1);
+	DC_Init(g_Device, 0);
+
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1F70, (PBYTE)&hk_sub_1412E1C10);
 
     return hr;
@@ -540,23 +522,48 @@ void CreateXbyakPatches();
 
 __int64 __fastcall sub_141318C10(__int64 a1, int a2, char a3, char a4, char a5)
 {
-	annotation->BeginEvent(L"BSCubemapCamera: Draw");
+	g_DeviceContext->BeginEventInt(L"BSCubemapCamera: Draw", 0);
 
 	__int64 result = ((__int64(__fastcall *)(__int64 a1, int a2, char a3, char a4, char a5))(g_ModuleBase + 0x1319000))(a1, a2, a3, a4, a5);
 
-	annotation->EndEvent();
+	g_DeviceContext->EndEvent();
 
 	return result;
 }
 
-void asdf1(__int64 a1, BSVertexShader *Shader)
+PBYTE sub_1412E25C0;
+__int64 __fastcall hk_sub_1412E25C0(__int64 a1, unsigned int a2)
 {
-//	BSGraphics::Renderer::SetVertexShader(Shader);
+	g_DeviceContext->BeginEventInt(L"hk_sub_1412E25C0", 0);
+
+	__int64 ret = ((decltype(&hk_sub_1412E25C0))sub_1412E25C0)(a1, a2);
+
+	g_DeviceContext->EndEvent();
+
+	return ret;
 }
 
-void asdf2(__int64 a1, BSPixelShader *Shader)
+PBYTE sub_14131FF10;
+float *__fastcall hk_sub_14131FF10(__int64 a1, float *a2, float *a3, char a4)
 {
-//	BSGraphics::Renderer::SetPixelShader(Shader);
+	g_DeviceContext->BeginEventInt(L"hk_sub_14131FF10", 0);
+
+	float *ret = ((decltype(&hk_sub_14131FF10))sub_14131FF10)(a1, a2, a3, a4);
+
+	g_DeviceContext->EndEvent();
+
+	return ret;
+}
+
+PBYTE SetRenderTarget;
+__int64 __fastcall hk_SetRenderTarget(__int64 a1, unsigned int a2, int a3, int a4, char a5)
+{
+	//if (a3 >= BSShaderRenderTargets::RENDER_TARGET_SAO && a3 <= BSShaderRenderTargets::RENDER_TARGET_SAO_TEMP_BLUR_DOWNSCALED)
+	//	__debugbreak();
+
+	__int64 ret = ((decltype(&hk_SetRenderTarget))SetRenderTarget)(a1, a2, a3, a4, a5);
+
+	return ret;
 }
 
 void PatchD3D11()
@@ -569,17 +576,17 @@ void PatchD3D11()
 
     *(FARPROC *)&ptrD3D11CreateDeviceAndSwapChain = GetProcAddress(g_DllD3D11, "D3D11CreateDeviceAndSwapChain");
 
-    if (!ptrCreateDXGIFactory || !ptrD3D11CreateDeviceAndSwapChain)
-    {
-        // Couldn't find one of the exports
-        __debugbreak();
-    }
+	AssertMsg(ptrCreateDXGIFactory, "CreateDXGIFactory import not found");
+	AssertMsg(ptrD3D11CreateDeviceAndSwapChain, "D3D11CreateDeviceAndSwapChain import not found");
 
 	CreateXbyakCodeBlock();
 	CreateXbyakPatches();
 
-	//Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x0D6F040), (PBYTE)&asdf1);
-	//Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x0D6F3F0), (PBYTE)&asdf2);
+	*(PBYTE *)&SetRenderTarget = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xD74550), (PBYTE)&hk_SetRenderTarget);
+
+	*(PBYTE *)&sub_1412E25C0 = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x12E25C0), (PBYTE)&hk_sub_1412E25C0);
+	*(PBYTE *)&sub_14131FF10 = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x131FF10), (PBYTE)&hk_sub_14131FF10);
+
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1318C10), (PBYTE)&sub_141318C10);
 
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1336860), &BSShader::BeginTechnique);
@@ -588,4 +595,8 @@ void PatchD3D11()
 
     PatchIAT(hk_CreateDXGIFactory, "dxgi.dll", "CreateDXGIFactory");
     PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");
+
+	// +0x1302B69 to +0x1303341
+	//for (uintptr_t i = 0; i < (0x1303341 - 0x1302B69); i++)
+	//	PatchMemory(g_ModuleBase + i + 0x1302B69, (PBYTE)"\x90", 1);
 }
