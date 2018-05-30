@@ -7,6 +7,7 @@ class GPUTimer
 private:
 	struct GPUTimerState
 	{
+		bool Started;
 		bool TimestampQueryInFlight;
 		ID3D11Query *GPUTimerBegin;
 		ID3D11Query *GPUTimerEnd;
@@ -26,6 +27,7 @@ public:
 	float GetGPUTimeInMS(uint32_t Id);
 
 protected:
+	bool m_InFrame;
 	bool m_DisjointQueryInFlight;
 	ID3D11Query *m_DisjointTimestampQuery;
 	std::vector<GPUTimerState> m_Timers;

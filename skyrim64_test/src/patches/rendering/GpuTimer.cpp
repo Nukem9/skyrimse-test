@@ -4,8 +4,9 @@ GPUTimer g_GPUTimers;
 
 void GPUTimer::Create(ID3D11Device *D3DDevice, uint32_t NumTimers)
 {
-	m_Timers.resize(NumTimers);
+	m_InFrame = false;
 	m_DisjointQueryInFlight = false;
+	m_Timers.resize(NumTimers);
 
 	D3D11_QUERY_DESC queryDesc;
 	memset(&queryDesc, 0, sizeof(D3D11_QUERY_DESC));
@@ -41,12 +42,18 @@ void GPUTimer::Release()
 
 void GPUTimer::BeginFrame(ID3D11DeviceContext *DeviceContext)
 {
+	AssertMsgDebug(!m_InFrame, "Starting frame while already in frame");
+
+	m_InFrame = true;
+
 	if (!m_DisjointQueryInFlight)
 		DeviceContext->Begin(m_DisjointTimestampQuery);
 }
 
 void GPUTimer::EndFrame(ID3D11DeviceContext *DeviceContext)
 {
+	AssertMsgDebug(m_InFrame, "Ending a frame that was never started");
+
 	if (!m_DisjointQueryInFlight)
 		DeviceContext->End(m_DisjointTimestampQuery);
 
@@ -78,25 +85,32 @@ void GPUTimer::EndFrame(ID3D11DeviceContext *DeviceContext)
 			}
 		}
 	}
+
+	m_InFrame = false;
 }
 
 void GPUTimer::StartTimer(ID3D11DeviceContext *DeviceContext, uint32_t Id)
 {
+	AssertMsgDebug(!m_Timers[Id].Started, "Starting a timer that's already started");
+
+	m_Timers[Id].Started = true;
+
 	if (!m_Timers[Id].TimestampQueryInFlight)
 		DeviceContext->End(m_Timers[Id].GPUTimerBegin);
 }
 
 void GPUTimer::StopTimer(ID3D11DeviceContext *DeviceContext, uint32_t Id)
 {
+	AssertMsgDebug(m_Timers[Id].Started, "Ending a timer that wasn't started");
+
 	if (!m_Timers[Id].TimestampQueryInFlight)
 		DeviceContext->End(m_Timers[Id].GPUTimerEnd);
 
 	m_Timers[Id].TimestampQueryInFlight = true;
+	m_Timers[Id].Started = false;
 }
 
 float GPUTimer::GetGPUTimeInMS(uint32_t Id)
 {
-	Assert(Id < m_Timers.size());
-
-	return m_Timers[Id].GPUTimeInMS;
+	return m_Timers.at(Id).GPUTimeInMS;
 }
