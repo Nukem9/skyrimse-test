@@ -28,7 +28,7 @@ public:
 
 protected:
 	void DumpShaderInfo();
-	void DumpCBuffer(FILE *File, BSConstantGroup *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex);
+	void DumpCBuffer(FILE *File, BSGraphics::Buffer *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex);
 
 	virtual uint32_t GetTechnique() = 0;
 	virtual const uint8_t *GetConstantArray() = 0;
@@ -41,4 +41,34 @@ protected:
 	void GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t Technique);
 	const char *GetSamplerName(int Index, uint32_t Technique);
 	std::vector<std::pair<const char *, const char *>> GetDefineArray(uint32_t Technique);
+};
+
+class VertexShaderDecoder : public ShaderDecoder
+{
+private:
+	BSGraphics::VertexShader *m_Shader;
+
+public:
+	VertexShaderDecoder(const char *Type, BSGraphics::VertexShader *Shader);
+
+private:
+	virtual uint32_t GetTechnique() override;
+	virtual const uint8_t *GetConstantArray() override;
+	virtual size_t GetConstantArraySize() override;
+	virtual void DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined) override;
+};
+
+class PixelShaderDecoder : public ShaderDecoder
+{
+private:
+	BSGraphics::PixelShader *m_Shader;
+
+public:
+	PixelShaderDecoder(const char *Type, BSGraphics::PixelShader *Shader);
+
+private:
+	virtual uint32_t GetTechnique() override;
+	virtual const uint8_t *GetConstantArray() override;
+	virtual size_t GetConstantArraySize() override;
+	virtual void DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined) override;
 };

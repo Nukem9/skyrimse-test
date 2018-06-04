@@ -1,8 +1,6 @@
 #include "../../../common.h"
 #include "../MemoryContextTracker.h"
 #include "../BSGraphicsRenderer.h"
-#include "BSVertexShader.h"
-#include "BSPixelShader.h"
 #include "BSShader.h"
 
 bool BSShader::g_ShaderToggles[16][3];

@@ -152,12 +152,6 @@
     <ClInclude Include="src\patches\TES\BSShader\BSShaderAccumulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSVertexShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSPixelShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\BSShader\BSComputeShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -284,6 +278,15 @@
     <ClInclude Include="src\patches\rendering\d3d11_proxy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MaskedOcclusionCulling\CullingThreadpool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MaskedOcclusionCulling\MaskedOcclusionCulling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSParticleShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -343,22 +346,10 @@
     <ClCompile Include="jemalloc\arena.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="jemalloc\atomic.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="jemalloc\base.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="jemalloc\bitmap.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\chunk.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\chunk_dss.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\chunk_mmap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="jemalloc\ckh.c">
@@ -373,13 +364,7 @@
     <ClCompile Include="jemalloc\hash.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="jemalloc\huge.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="jemalloc\jemalloc.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\mb.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="jemalloc\mutex.c">
@@ -397,13 +382,7 @@
     <ClCompile Include="jemalloc\prof.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="jemalloc\quarantine.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="jemalloc\rtree.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\spin.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="jemalloc\stats.c">
@@ -416,9 +395,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="jemalloc\tsd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="jemalloc\witness.c">
@@ -526,12 +502,6 @@
     <ClCompile Include="src\patches\TES\BSShader\BSShaderAccumulator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\BSPixelShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\BSVertexShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\TES\BSShader\BSShaderProperty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -577,6 +547,57 @@
     <ClCompile Include="src\patches\rendering\d3d11_proxy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MaskedOcclusionCulling\CullingThreadpool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MaskedOcclusionCulling\MaskedOcclusionCulling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MaskedOcclusionCulling\MaskedOcclusionCullingAVX2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MaskedOcclusionCulling\MaskedOcclusionCullingAVX512.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\bin.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\background_thread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\div.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\extent_dss.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\extent_mmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\hooks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\large.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\log.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\malloc_io.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\mutex_pool.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="jemalloc\sz.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSParticleShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\fileio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
@@ -593,6 +614,12 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="src\patches\rendering\d3d11_codegen_tables.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="MaskedOcclusionCulling\CompilerSpecific.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="MaskedOcclusionCulling\MaskedOcclusionCullingCommon.inl">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>

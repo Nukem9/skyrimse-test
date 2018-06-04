@@ -5,6 +5,8 @@
 #include "BSShaderAccumulator.h"
 #include "BSShader_Dumper.h"
 
+#define SHADER_DUMP_PATH "C:\\ShaderDump"
+
 const char *GetShaderConstantName(const char *ShaderType, BSSM_SHADER_TYPE CodeType, int ConstantIndex);
 
 ShaderDecoder::ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType)
@@ -16,7 +18,7 @@ ShaderDecoder::ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType)
 
 	// Guarantee that the sub-folder exists
 	char buf[1024];
-	sprintf_s(buf, "C:\\ShaderDump\\%s\\", Type);
+	sprintf_s(buf, "%s\\%s\\", SHADER_DUMP_PATH, Type);
 	_mkdir(buf);
 }
 
@@ -100,77 +102,74 @@ void ShaderDecoder::DumpShaderInfo()
 	DumpShaderSpecific(technique, geoIndexes, matIndexes, tecIndexes, undefinedIndexes);
 }
 
-void ShaderDecoder::DumpCBuffer(FILE *File, BSConstantGroup *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex)
+void ShaderDecoder::DumpCBuffer(FILE *File, BSGraphics::Buffer *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex)
 {
-	D3D11_BUFFER_DESC desc;
+	// NOTE: Some buffers might be undefined (= unused in shader) but offsets are still valid
+	if (Buffer->m_Buffer)
+	{
+		D3D11_BUFFER_DESC desc;
+		Buffer->m_Buffer->GetDesc(&desc);
 
-	//if (Buffer->m_Buffer)
-	//{
-	//	Buffer->m_Buffer->GetDesc(&desc);
-	//	fprintf(File, "// Dynamic buffer: Size = %d (0x%X)\n", desc.ByteWidth, desc.ByteWidth);
-	//}
+		fprintf(File, "// Dynamic buffer: Size = %d (0x%X)\n", desc.ByteWidth, desc.ByteWidth);
+	}
 
 	fprintf(File, "cbuffer %s : register(%s)\n{\n", GetGroupName(GroupIndex), GetGroupRegister(GroupIndex));
 
-	// Buffer undefined? Don't print anything
-	//if (Buffer->m_Buffer)
+	// Sort each variable by offset
+	std::sort(Params.begin(), Params.end(),
+		[this](ParamIndexPair& a1, ParamIndexPair& a2)
 	{
-		// Sort each variable by offset
-		std::sort(Params.begin(), Params.end(),
-			[this](ParamIndexPair& a1, ParamIndexPair& a2)
+		return GetConstantArray()[a1.Index] < GetConstantArray()[a2.Index];
+	});
+
+	for (auto& entry : Params)
+	{
+		// Generate var and type names
+		char varName[256];
+
+		if (entry.Remap->ParamTypeOverride)
 		{
-			return GetConstantArray()[a1.Index] < GetConstantArray()[a2.Index];
-		});
+			const char *start = entry.Remap->ParamTypeOverride;
+			const char *end = strchr(start, '[');
 
-		for (auto& entry : Params)
-		{
-			// Generate var and type names
-			char varName[256];
-
-			if (entry.Remap->ParamTypeOverride)
-			{
-				const char *start = entry.Remap->ParamTypeOverride;
-				const char *end = strchr(start, '[');
-
-				if (end)
-					sprintf_s(varName, "%.*s %s%s", (int)(strlen(start) - strlen(end)), start, entry.Name, end);
-				else
-					sprintf_s(varName, "%s %s", start, entry.Name);
-			}
+			if (end)
+				sprintf_s(varName, "%.*s %s%s", (int)(strlen(start) - strlen(end)), start, entry.Name, end);
 			else
-			{
-				// Undefined type; default to float4
-				sprintf_s(varName, "float4 %s", entry.Name);
-			}
-
-			// Convert cbOffset to packoffset(c0) or packoffset(c0.x) or packoffset(c0.y) or .... to enforce compiler
-			// offset ordering
-			uint8_t cbOffset = GetConstantArray()[entry.Index];
-			char packOffset[64];
-
-			switch (cbOffset % 4)
-			{
-			case 0:sprintf_s(packOffset, "packoffset(c%d)", cbOffset / 4); break;  // Normal register on 16 byte boundary
-			case 1:sprintf_s(packOffset, "packoffset(c%d.y)", cbOffset / 4); break;// Requires swizzle index
-			case 2:sprintf_s(packOffset, "packoffset(c%d.z)", cbOffset / 4); break;// Requires swizzle index
-			case 3:sprintf_s(packOffset, "packoffset(c%d.w)", cbOffset / 4); break;// Requires swizzle index
-			default:__debugbreak(); break;
-			}
-
-			fprintf(File, "\t%s", varName);
-
-			// Add space alignment
-			for (size_t i = 45 - max(0, strlen(varName)); i > 0; i--)
-				fprintf(File, " ");
-
-			fprintf(File, ": %s;", packOffset);
-
-			// Add space alignment
-			for (size_t i = 20 - max(0, strlen(packOffset)); i > 0; i--)
-				fprintf(File, " ");
-
-			fprintf(File, "// @ %d - 0x%04X\n", cbOffset, cbOffset * 4);
+				sprintf_s(varName, "%s %s", start, entry.Name);
 		}
+		else
+		{
+			// Undefined type; default to float4
+			sprintf_s(varName, "float4 %s", entry.Name);
+		}
+
+		// Convert cbOffset to packoffset(c0) or packoffset(c0.x) or packoffset(c0.y) or .... to enforce compiler
+		// offset ordering
+		uint8_t cbOffset = GetConstantArray()[entry.Index];
+		char packOffset[64];
+
+		switch (cbOffset % 4)
+		{
+		case 0:sprintf_s(packOffset, "packoffset(c%d)", cbOffset / 4); break;  // Normal register on 16 byte boundary
+		case 1:sprintf_s(packOffset, "packoffset(c%d.y)", cbOffset / 4); break;// Requires swizzle index
+		case 2:sprintf_s(packOffset, "packoffset(c%d.z)", cbOffset / 4); break;// Requires swizzle index
+		case 3:sprintf_s(packOffset, "packoffset(c%d.w)", cbOffset / 4); break;// Requires swizzle index
+		default:__debugbreak(); break;
+		}
+
+		fprintf(File, "\t%s", varName);
+
+		// Add space alignment
+		for (size_t i = 45 - max(0, strlen(varName)); i > 0; i--)
+			fprintf(File, " ");
+
+		fprintf(File, ": %s;", packOffset);
+
+		// Add space alignment
+		for (size_t i = 20 - max(0, strlen(packOffset)); i > 0; i--)
+			fprintf(File, " ");
+
+		fprintf(File, "// @ %d - 0x%04X\n", cbOffset, cbOffset * 4);
 	}
 
 	fprintf(File, "}\n\n");
@@ -502,4 +501,152 @@ void ValidateShaderParamTable()
 
 	doValidation(BSShaderMappings::Vertex, ARRAYSIZE(BSShaderMappings::Vertex), BSSM_SHADER_TYPE::VERTEX);
 	doValidation(BSShaderMappings::Pixel, ARRAYSIZE(BSShaderMappings::Pixel), BSSM_SHADER_TYPE::PIXEL);
+}
+
+VertexShaderDecoder::VertexShaderDecoder(const char *Type, BSGraphics::VertexShader *Shader) : ShaderDecoder(Type, BSSM_SHADER_TYPE::VERTEX)
+{
+	m_Shader = Shader;
+}
+
+uint32_t VertexShaderDecoder::GetTechnique()
+{
+	return m_Shader->m_TechniqueID;
+}
+
+const uint8_t *VertexShaderDecoder::GetConstantArray()
+{
+	return m_Shader->m_ConstantOffsets;
+}
+
+size_t VertexShaderDecoder::GetConstantArraySize()
+{
+	return ARRAYSIZE(BSGraphics::VertexShader::m_ConstantOffsets);
+}
+
+void VertexShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined)
+{
+	char buf[1024];
+	sprintf_s(buf, "%s\\%s\\%s_%s_%X.vs.txt", SHADER_DUMP_PATH, m_Type, m_Type, TechName, m_Shader->m_TechniqueID);
+
+	// Something went really wrong if the shader exists already
+	AssertMsg(GetFileAttributesA(buf) == INVALID_FILE_ATTRIBUTES, "Trying to overwrite a shader that already exists!");
+
+	if (FILE *file; fopen_s(&file, buf, "w") == 0)
+	{
+		fprintf(file, "// %s\n", m_Type);
+		fprintf(file, "// TechniqueID: 0x%X\n", m_Shader->m_TechniqueID);
+		fprintf(file, "// Vertex description: 0x%llX\n//\n", m_Shader->m_VertexDescription);
+		fprintf(file, "// Technique: %s\n\n", TechName);
+
+		// Defines
+		if (auto& defs = GetDefineArray(m_Shader->m_TechniqueID); defs.size() > 0)
+		{
+			for (const auto& define : defs)
+				fprintf(file, "#define %s %s\n", define.first, define.second);
+
+			fprintf(file, "\n");
+		}
+
+		DumpCBuffer(file, &m_Shader->m_PerGeometry, PerGeo, 0); // Constant buffer 0 : register(b0)
+		DumpCBuffer(file, &m_Shader->m_PerMaterial, PerMat, 1); // Constant buffer 1 : register(b1)
+		DumpCBuffer(file, &m_Shader->m_PerTechnique, PerTec, 2);// Constant buffer 2 : register(b2)
+
+		// Dump undefined variables
+		for (auto& entry : Undefined)
+			fprintf(file, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
+
+		fclose(file);
+	}
+
+	// Now write raw HLSL
+	if (m_HlslData)
+	{
+		sprintf_s(buf, "%s\\%s\\%s_%s_%X.vs.hlsl", SHADER_DUMP_PATH, m_Type, m_Type, TechName, m_Shader->m_TechniqueID);
+
+		if (FILE *file; fopen_s(&file, buf, "wb") == 0)
+		{
+			fwrite(m_HlslData, 1, m_HlslDataLen, file);
+			fclose(file);
+		}
+	}
+}
+
+PixelShaderDecoder::PixelShaderDecoder(const char *Type, BSGraphics::PixelShader *Shader) : ShaderDecoder(Type, BSSM_SHADER_TYPE::PIXEL)
+{
+	m_Shader = Shader;
+}
+
+uint32_t PixelShaderDecoder::GetTechnique()
+{
+	return m_Shader->m_TechniqueID;
+}
+
+const uint8_t *PixelShaderDecoder::GetConstantArray()
+{
+	return m_Shader->m_ConstantOffsets;
+}
+
+size_t PixelShaderDecoder::GetConstantArraySize()
+{
+	return ARRAYSIZE(BSGraphics::PixelShader::m_ConstantOffsets);
+}
+
+void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<ParamIndexPair>& PerGeo, std::vector<ParamIndexPair>& PerMat, std::vector<ParamIndexPair>& PerTec, std::vector<ParamIndexPair>& Undefined)
+{
+	char buf[1024];
+	sprintf_s(buf, "%s\\%s\\%s_%s_%X.ps.txt", SHADER_DUMP_PATH, m_Type, m_Type, TechName, m_Shader->m_TechniqueID);
+
+	// Something went really wrong if the shader exists already
+	AssertMsg(GetFileAttributesA(buf) == INVALID_FILE_ATTRIBUTES, "Trying to overwrite a shader that already exists!");
+
+	if (FILE *file; fopen_s(&file, buf, "w") == 0)
+	{
+		fprintf(file, "// %s\n", m_Type);
+		fprintf(file, "// TechniqueID: 0x%X\n//\n", m_Shader->m_TechniqueID);
+		fprintf(file, "// Technique: %s\n\n", TechName);
+
+		// Defines
+		if (auto& defs = GetDefineArray(m_Shader->m_TechniqueID); defs.size() > 0)
+		{
+			for (auto& define : defs)
+				fprintf(file, "#define %s %s\n", define.first, define.second);
+
+			fprintf(file, "\n");
+		}
+
+		// Samplers
+		for (int i = 0;; i++)
+		{
+			const char *name = GetSamplerName(i, m_Shader->m_TechniqueID);
+
+			if (strstr(name, "Add-your-"))
+				break;
+
+			fprintf(file, "// Sampler[%d]: %s\n", i, name);
+		}
+
+		fprintf(file, "\n");
+
+		DumpCBuffer(file, &m_Shader->m_PerGeometry, PerGeo, 0); // Constant buffer 0 : register(b0)
+		DumpCBuffer(file, &m_Shader->m_PerMaterial, PerMat, 1); // Constant buffer 1 : register(b1)
+		DumpCBuffer(file, &m_Shader->m_PerTechnique, PerTec, 2);// Constant buffer 2 : register(b2)
+
+		// Dump undefined variables
+		for (auto& entry : Undefined)
+			fprintf(file, "// UNDEFINED PARAMETER: Index: %02d Offset: 0x%04X Name: %s\n", entry.Index, m_Shader->m_ConstantOffsets[entry.Index] * 4, entry.Name);
+
+		fclose(file);
+	}
+
+	// Now write raw HLSL
+	if (m_HlslData)
+	{
+		sprintf_s(buf, "%s\\%s\\%s_%s_%X.ps.hlsl", SHADER_DUMP_PATH, m_Type, m_Type, TechName, m_Shader->m_TechniqueID);
+
+		if (FILE *file; fopen_s(&file, buf, "wb") == 0)
+		{
+			fwrite(m_HlslData, 1, m_HlslDataLen, file);
+			fclose(file);
+		}
+	}
 }
