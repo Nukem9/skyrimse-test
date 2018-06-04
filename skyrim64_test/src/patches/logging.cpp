@@ -10,6 +10,14 @@ void LogVa(const char *Format, va_list va)
 	ui::log::Add("%s\n", buffer);
 }
 
+void LogFunc4(__int64 a1, const char *Format, ...)
+{
+	va_list va;
+	va_start(va, Format);
+	LogVa(Format, va);
+	va_end(va);
+}
+
 __int64 LogFunc3(__int64 a1, const char *Format, ...)
 {
 	va_list va;
@@ -59,7 +67,8 @@ int hk_sprintf_s(char *DstBuf, size_t SizeInBytes, const char *Format, ...)
 		STARTS_WITH(DstBuf, "Interface\\") ||
 		STARTS_WITH(DstBuf, "SHADERSFX") ||
 		STARTS_WITH(Format, "%s (%08X)[%d]/%s") ||
-		STARTS_WITH(Format, "alias %s on"))
+		STARTS_WITH(Format, "alias %s on") ||
+		STARTS_WITH(Format, "%d/%d/%02d"))
 		return len;
 
 	ui::log::Add("%s\n", DstBuf);
@@ -72,5 +81,6 @@ void PatchLogging()
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1660D0), (PBYTE)&LogFunc2);
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x578F70), (PBYTE)&LogFunc2);
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x179C40), (PBYTE)&LogFunc3);
+	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x5844F0), (PBYTE)&LogFunc4);
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x142550), (PBYTE)&hk_sprintf_s);
 }
