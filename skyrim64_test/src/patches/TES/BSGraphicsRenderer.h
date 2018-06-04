@@ -24,7 +24,7 @@ namespace BSGraphics
 		static Renderer *GetGlobals();
 		static Renderer *GetGlobalsNonThreaded();
 
-		static void Initialize();
+		static void Initialize(ID3D11Device2 *Device);
 		static void OnNewFrame();
 
 		static void FlushThreadedVars();

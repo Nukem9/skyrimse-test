@@ -81,11 +81,9 @@ namespace BSGraphics
 		return (Renderer *)HACK_GetMainGlobals();
 	}
 
-	void Renderer::Initialize()
+	void Renderer::Initialize(ID3D11Device2 *Device)
 	{
 		BSShaderAccumulator::InitCallbackTable();
-
-		auto *renderer = GetGlobalsNonThreaded();
 
 		for (uint32_t i = 0; i < RingBufferMaxFrames; i++)
 		{
@@ -93,7 +91,7 @@ namespace BSGraphics
 			desc.Query = D3D11_QUERY_EVENT;
 			desc.MiscFlags = 0;
 
-			Assert(SUCCEEDED(renderer->m_Device->CreateQuery(&desc, &FrameCompletedQueries[i])));
+			Assert(SUCCEEDED(Device->CreateQuery(&desc, &FrameCompletedQueries[i])));
 		}
 
 		//
@@ -111,10 +109,10 @@ namespace BSGraphics
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 			desc.MiscFlags = 0;
 			desc.StructureByteStride = 0;
-			Assert(SUCCEEDED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TempDynamicBuffers[i])));
+			Assert(SUCCEEDED(Device->CreateBuffer(&desc, nullptr, &TempDynamicBuffers[i])));
 		}
 
-		DynamicBuffer = new GpuCircularBuffer(renderer->m_Device, D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER, VertexIndexRingBufferSize, RingBufferMaxFrames);
+		DynamicBuffer = new GpuCircularBuffer(Device, D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_INDEX_BUFFER, VertexIndexRingBufferSize, RingBufferMaxFrames);
 
 		//
 		// Small temporary shader constant buffers and ring buffer
@@ -141,7 +139,7 @@ namespace BSGraphics
 			desc.StructureByteStride = 0;
 
 			for (int j = 0; j < 4; j++)
-				Assert(SUCCEEDED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TestBuffers[j][i])));
+				Assert(SUCCEEDED(Device->CreateBuffer(&desc, nullptr, &TestBuffers[j][i])));
 		}
 
 		D3D11_BUFFER_DESC desc;
@@ -151,12 +149,9 @@ namespace BSGraphics
 		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		desc.MiscFlags = 0;
 		desc.StructureByteStride = 0;
-		Assert(SUCCEEDED(renderer->m_Device->CreateBuffer(&desc, nullptr, &TestLargeBuffer)));
+		Assert(SUCCEEDED(Device->CreateBuffer(&desc, nullptr, &TestLargeBuffer)));
 
-		ShaderConstantBuffer = new GpuCircularBuffer(renderer->m_Device, D3D11_BIND_CONSTANT_BUFFER, ShaderConstantRingBufferSize, RingBufferMaxFrames);
-
-		// Make sure first-time pointers are set up too
-		OnNewFrame();
+		ShaderConstantBuffer = new GpuCircularBuffer(Device, D3D11_BIND_CONSTANT_BUFFER, ShaderConstantRingBufferSize, RingBufferMaxFrames);
 	}
 
 	void Renderer::OnNewFrame()

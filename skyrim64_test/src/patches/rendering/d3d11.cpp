@@ -499,7 +499,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
     ui::log::Add("Created D3D11 device with feature level %X...\n", level);
 
 	BSGraphics::Renderer::FlushThreadedVars();
-	BSGraphics::Renderer::Initialize();
+	BSGraphics::Renderer::Initialize(g_Device);
 
     // Now hook the render function
 	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
