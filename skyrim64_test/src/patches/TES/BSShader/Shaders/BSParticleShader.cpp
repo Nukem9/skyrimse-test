@@ -126,7 +126,23 @@ void BSParticleShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 void BSParticleShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL_ALWAYS(GEOMETRY, &BSParticleShader::RestoreGeometry, Pass, RenderFlags);
+	BSSHADER_FORWARD_CALL(GEOMETRY, &BSParticleShader::RestoreGeometry, Pass, RenderFlags);
+
+	auto *renderer = Renderer::GetGlobals();
+	BSShaderProperty *property = Pass->m_Property;
+
+	if (!property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_TEST))
+		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DEFAULT);
+	
+	if (*(uintptr_t *)((uintptr_t)property + 0x190))
+	{
+		renderer->SetUseAlphaTestRef(false);
+		renderer->AlphaBlendStateSetMode(0);
+		renderer->RasterStateSetCullMode(RASTER_STATE_CULL_MODE_DEFAULT);
+	}
+
+	if ((dword_1434BA458 == RAW_TECHNIQUE_ENVCUBESNOW || dword_1434BA458 == RAW_TECHNIQUE_ENVCUBERAIN) && dword_141E33048 == 2)
+		renderer->DepthStencilStateSetStencilMode(DEPTH_STENCIL_STENCIL_MODE_DEFAULT, 255);
 }
 
 void BSParticleShader::CreateAllShaders()
