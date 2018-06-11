@@ -56,8 +56,8 @@ namespace BSGraphics
 		static void SyncD3DState(bool Unknown);
 		static void SyncD3DResources();
 
-		void DepthStencilStateSetDepthMode(uint32_t Mode);
-		uint32_t DepthStencilStateGetDepthMode() const;
+		void DepthStencilStateSetDepthMode(DepthStencilDepthMode Mode);
+		DepthStencilDepthMode DepthStencilStateGetDepthMode() const;
 		void DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef);
 
 		void RasterStateSetCullMode(uint32_t CullMode);

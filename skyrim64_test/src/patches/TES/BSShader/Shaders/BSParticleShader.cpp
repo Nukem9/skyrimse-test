@@ -5,6 +5,7 @@
 #include "BSParticleShader.h"
 
 using namespace DirectX;
+using namespace BSGraphics;
 
 DEFINE_SHADER_DESCRIPTOR(
 	"Particle",
@@ -50,6 +51,7 @@ AutoPtr(float, flt_141E357A0, 0x1E357A0);
 AutoPtr(uint32_t, dword_143051B3C, 0x3051B3C);
 AutoPtr(uint32_t, dword_143051B40, 0x3051B40);
 AutoPtr(uint32_t, dword_1434BA458, 0x34BA458);
+AutoPtr(uint32_t, dword_141E33048, 0x1E33048);
 
 BSParticleShader::BSParticleShader() : BSShader(ShaderConfig.Type)
 {
@@ -74,7 +76,7 @@ bool BSParticleShader::SetupTechnique(uint32_t Technique)
 	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
 		return false;
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = Renderer::GetGlobals();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	dword_1434BA458 = rawTechnique;
@@ -85,7 +87,7 @@ bool BSParticleShader::SetupTechnique(uint32_t Technique)
 	}
 	else
 	{
-		renderer->DepthStencilStateSetDepthMode(1);
+		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST);
 	}
 
 	// VS: p13 float4 ScaleAdjust
@@ -107,17 +109,12 @@ void BSParticleShader::RestoreTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSParticleShader::RestoreTechnique, Technique);
 
-	switch (Technique)
+	if (dword_1434BA458 == RAW_TECHNIQUE_ENVCUBESNOW || dword_1434BA458 == RAW_TECHNIQUE_ENVCUBERAIN)
 	{
-	case BSSM_ENVCUBESNOWPARTICLE:
-	case BSSM_ENVCUBERAINPARTICLE:
 		//sub_140D74380((__int64)renderTargetManager, 1u, 85, 3, 1);// RENDER_TARGET_TEMPORAL_AA_MASK
-		break;
-
-	default:
-		BSGraphics::Renderer::GetGlobals()->DepthStencilStateSetDepthMode(3);
-		break;
 	}
+	else
+		Renderer::GetGlobals()->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
 
 	BSShader::EndTechnique();
 }

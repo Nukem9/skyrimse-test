@@ -682,7 +682,7 @@ namespace BSGraphics
 #undef for_each_bit
 	}
 
-	void Renderer::DepthStencilStateSetDepthMode(uint32_t Mode)
+	void Renderer::DepthStencilStateSetDepthMode(DepthStencilDepthMode Mode)
 	{
 		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::DepthStencilStateDepthMode, Mode))
 			return;
@@ -699,9 +699,9 @@ namespace BSGraphics
 		}
 	}
 
-	uint32_t Renderer::DepthStencilStateGetDepthMode() const
+	DepthStencilDepthMode Renderer::DepthStencilStateGetDepthMode() const
 	{
-		return *(DWORD *)&__zz0[32];
+		return (DepthStencilDepthMode)*(DWORD *)&__zz0[32];
 	}
 
 	void Renderer::DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)

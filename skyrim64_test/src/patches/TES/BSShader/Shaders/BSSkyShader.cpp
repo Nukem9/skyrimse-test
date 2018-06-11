@@ -36,6 +36,7 @@ DEFINE_SHADER_DESCRIPTOR(
 // - A global variable update was manually removed in SetupGeometry()
 //
 using namespace DirectX;
+using namespace BSGraphics;
 
 AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
 AutoPtr(NiSourceTexture *, BSShader_DefNormalMap, 0x3052920);
@@ -73,7 +74,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 		return false;
 
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
-	renderer->DepthStencilStateSetDepthMode(1);
+	renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST);
 
 	GAME_TLS(uint32_t, 0x9F0) = rawTechnique;
 
@@ -84,7 +85,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 		break;
 
 	case RAW_TECHNIQUE_SUNGLARE:
-		renderer->DepthStencilStateSetDepthMode(0);
+		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DISABLED);
 		renderer->AlphaBlendStateSetMode(2);
 		renderer->AlphaBlendStateSetUnknown2(11);
 		break;
@@ -92,7 +93,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 	case RAW_TECHNIQUE_MOONANDSTARSMASK:
 		renderer->SetUseAlphaTestRef(true);
 		renderer->AlphaBlendStateSetUnknown2(0);
-		renderer->DepthStencilStateSetDepthMode(3);
+		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
 		renderer->RasterStateSetUnknown1(3);
 		break;
 
@@ -125,7 +126,7 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	renderer->AlphaBlendStateSetMode(0);
 	renderer->AlphaBlendStateSetUnknown2(1);
-	renderer->DepthStencilStateSetDepthMode(3);
+	renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DEFAULT);
 	renderer->SetUseAlphaTestRef(false);
 	renderer->RasterStateSetUnknown1(0);
 	EndTechnique();

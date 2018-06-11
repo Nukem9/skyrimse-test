@@ -173,7 +173,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	renderer->BeginEvent(L"BSShaderAccumulator: Draw1");
 
 	if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
-		renderer->DepthStencilStateSetDepthMode(4);
+		renderer->DepthStencilStateSetDepthMode(BSGraphics::DEPTH_STENCIL_DEPTH_MODE_TESTEQUAL);
 
 	// v7 = RenderDepthOnly()? RenderAlphaOnly()? BSShaderManager::BSS_SHADOWS?
 	bool v7 = (RenderFlags & 0xA) != 0;
@@ -233,7 +233,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 
 			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
-				renderer->DepthStencilStateSetDepthMode(3);
+				renderer->DepthStencilStateSetDepthMode(BSGraphics::DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
 		}
 		renderer->EndEvent();
 
@@ -349,7 +349,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		int v21 = sub_140D744B0();
 		sub_140D74370((__int64)(g_ModuleBase + 0x3051B20), v21, 3, 0);
 
-		renderer->DepthStencilStateSetDepthMode(1);
+		renderer->DepthStencilStateSetDepthMode(BSGraphics::DEPTH_STENCIL_DEPTH_MODE_TEST);
 	}
 
 	if (!v7)

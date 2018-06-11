@@ -20,6 +20,7 @@
 // - A lock is held in GeometrySetupMTLandExtraConstants()
 //
 using namespace DirectX;
+using namespace BSGraphics;
 
 AutoPtr(NiSourceTexture *, BSShader_DefNormalMap, 0x3052920);
 AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
@@ -81,7 +82,7 @@ DefineIniSetting(bEnableParallaxOcclusion, Display);
 DefineIniSetting(iShadowMaskQuarter, Display);
 
 thread_local uint32_t TLS_m_CurrentRawTechnique;
-thread_local uint32_t TLS_dword_141E35280;
+thread_local DepthStencilDepthMode TLS_dword_141E35280;
 thread_local uint32_t TLS_dword_141E3527C;
 
 char hookbuffer[50];
@@ -689,7 +690,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (v12 == 3 && property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE))
 	{
-		TLS_dword_141E35280 = renderer->AlphaBlendStateGetUnknown2();
+		TLS_dword_141E3527C = renderer->AlphaBlendStateGetUnknown2();
 		renderer->AlphaBlendStateSetUnknown2(1);
 	}
 
@@ -920,18 +921,18 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (!v103)
 	{
-		uint32_t oldDepthMode = renderer->DepthStencilStateGetDepthMode();
+		auto oldDepthMode = renderer->DepthStencilStateGetDepthMode();
 
 		if (!property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE))
 		{
 			TLS_dword_141E35280 = oldDepthMode;
-			renderer->DepthStencilStateSetDepthMode(1);
+			renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST);
 		}
 
 		if (!property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_TEST))
 		{
 			TLS_dword_141E35280 = oldDepthMode;
-			renderer->DepthStencilStateSetDepthMode(0);
+			renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DISABLED);
 		}
 	}
 
@@ -966,12 +967,12 @@ void BSLightingShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
 	if (Pass->Byte1C == 10)
-		renderer->DepthStencilStateSetStencilMode(0, 255);
+		renderer->DepthStencilStateSetStencilMode(DEPTH_STENCIL_STENCIL_MODE_DEFAULT, 255);
 
-	if (TLS_dword_141E35280 != 6)
+	if (TLS_dword_141E35280 != DEPTH_STENCIL_DEPTH_MODE_TESTGREATER)
 	{
 		renderer->DepthStencilStateSetDepthMode(TLS_dword_141E35280);
-		TLS_dword_141E35280 = 6;
+		TLS_dword_141E35280 = DEPTH_STENCIL_DEPTH_MODE_TESTGREATER;
 	}
 
 	if (TLS_dword_141E3527C != 13)

@@ -33,6 +33,7 @@ DEFINE_SHADER_DESCRIPTOR(
 // - m_CurrentRawTechnique is an implicit global variable (TODO)
 //
 using namespace DirectX;
+using namespace BSGraphics;
 
 AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
 AutoPtr(__int64, qword_14304EF00, 0x304EF00);
@@ -85,12 +86,12 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 
 		renderer->SetTextureMode(3, 0, 1);
 		renderer->AlphaBlendStateSetMode(5);
-		renderer->DepthStencilStateSetDepthMode(0);
+		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DISABLED);
 	} 
 	else if (rawTechnique == RAW_TECHNIQUE_SPLATTER)
 	{
 		renderer->AlphaBlendStateSetMode(4);
-		renderer->DepthStencilStateSetDepthMode(0);
+		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DISABLED);
 	}
 
 	m_CurrentRawTechnique = rawTechnique;
@@ -103,7 +104,7 @@ void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	renderer->AlphaBlendStateSetMode(0);
-	renderer->DepthStencilStateSetDepthMode(3);
+	renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DEFAULT);
 	EndTechnique();
 }
 

@@ -30,6 +30,31 @@ namespace BSGraphics
 		SRTM_INIT = 0x5,
 	};
 
+	enum DepthStencilStencilMode
+	{
+		DEPTH_STENCIL_STENCIL_MODE_DISABLED = 0,
+
+		DEPTH_STENCIL_STENCIL_MODE_DEFAULT = DEPTH_STENCIL_STENCIL_MODE_DISABLED,	// Used for BSShader::RestoreX
+	};
+
+	enum DepthStencilDepthMode
+	{
+		DEPTH_STENCIL_DEPTH_MODE_DISABLED = 0,
+		DEPTH_STENCIL_DEPTH_MODE_TEST = 1,
+		DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE = 3,
+		DEPTH_STENCIL_DEPTH_MODE_TESTEQUAL = 4,										// Unverified
+		DEPTH_STENCIL_DEPTH_MODE_TESTGREATER = 6,									// Unverified
+
+		DEPTH_STENCIL_DEPTH_MODE_DEFAULT = DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE,		// Used for BSShader::RestoreX
+	};
+
+	enum RasterStateCullMode
+	{
+		RASTER_STATE_CULL_MODE_BACK = 1,
+
+		RASTER_STATE_CULL_MODE_DEFAULT = RASTER_STATE_CULL_MODE_BACK,				// Used for BSShader::RestoreX
+	};
+
 	//
 	// General resources
 	//
