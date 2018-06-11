@@ -33,15 +33,16 @@ private:
 		DirectX::XMVECTOR FogNearColor;
 		float WindVector[3];
 		float WindTimer;
-		float DirLightDirection[3];
+		NiPoint3 DirLightDirection;
 		float PreviousWindTimer;
-		float DirLightColor[3];
+		NiColor DirLightColor;
 		float AlphaParam1;
-		float AmbientColor[3];
+		NiColor AmbientColor;
 		float AlphaParam2;
 		float ScaleMask[3];
 		float ShadowClampValue;
 	};
+	static_assert(sizeof(VertexConstantData) == 0x160);
 #pragma pack(pop)
 
 	const static uintptr_t OriginalVTableBase = 0x1878260;

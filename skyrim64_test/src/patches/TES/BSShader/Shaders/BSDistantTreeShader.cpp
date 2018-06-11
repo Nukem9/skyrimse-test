@@ -1,5 +1,7 @@
 #include "../../../../common.h"
 #include "../../NiMain/NiSourceTexture.h"
+#include "../../NiMain/NiDirectionalLight.h"
+#include "../BSLight.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "BSDistantTreeShader.h"
@@ -105,26 +107,21 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 		}
 	}
 
-	// lightSource is of type NiDirectionalLight *
-	uintptr_t lightSource = *(uintptr_t *)(*(uintptr_t *)(qword_141E32F20 + 512) + 72i64);
+	// Sun is always of type NiDirectionalLight *
+	NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)(qword_141E32F20 + 512))->GetLight());
 
-	if (lightSource)
+	if (sunLight)
 	{
 		XMVECTOR& ps_DiffuseColor = pixelCG.ParamPS<XMVECTOR, 0>();	// PS: p0 float4 DiffuseColor
 		XMVECTOR& ps_AmbientColor = pixelCG.ParamPS<XMVECTOR, 1>();	// PS: p1 float4 AmbientColor
 		XMVECTOR& ps_Unknown = pixelCG.ParamPS<XMVECTOR, 7>();		// TODO: WHAT IS THIS PARAM??? It should be for vertex instead of pixel?
 
+		BSGraphics::Utility::CopyNiColorAToFloat(&ps_DiffuseColor, NiColorA(sunLight->GetDiffuseColor(), 1.0f));
+		BSGraphics::Utility::CopyNiColorAToFloat(&ps_AmbientColor, NiColorA(sunLight->GetAmbientColor(), dword_141E32FBC));
+
 		// NiPoint3 normalizedDir = NiDirectionalLight::GetWorldDirection().Unitize();
-		NiPoint3 normalizedDir(*(const NiPoint3 *)(lightSource + 320));
+		NiPoint3 normalizedDir = sunLight->GetWorldDirection();
 		normalizedDir.Unitize();
-
-		// NiLight::GetAmbientColor(v21);
-		BSGraphics::Utility::CopyNiColorAToFloat(&ps_AmbientColor,
-			NiColorA(*(float *)(lightSource + 272), *(float *)(lightSource + 276), *(float *)(lightSource + 280), dword_141E32FBC));
-
-		// NiLight::GetDiffuseColor(v21);
-		BSGraphics::Utility::CopyNiColorAToFloat(&ps_DiffuseColor,
-			NiColorA(*(float *)(lightSource + 284), *(float *)(lightSource + 288), *(float *)(lightSource + 292), 1.0f));
 
 		BSGraphics::Utility::CopyNiColorAToFloat(&ps_Unknown,
 			NiColorA(-normalizedDir.x, -normalizedDir.y, -normalizedDir.z, 1.0f));

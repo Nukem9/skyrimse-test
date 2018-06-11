@@ -1,7 +1,9 @@
 #include "../../../../common.h"
 #include "../../NiMain/NiSourceTexture.h"
+#include "../../NiMain/NiDirectionalLight.h"
 #include "../../BSTArray.h"
 #include "../../Setting.h"
+#include "../BSLight.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "BSGrassShader.h"
@@ -153,40 +155,17 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (byte_141E32F65)
 	{
-		data->AmbientColor[0] = 1.0f;
-		data->AmbientColor[1] = 1.0f;
-		data->AmbientColor[2] = 1.0f;
-
-		data->DirLightColor[0] = 0.0f;
-		data->DirLightColor[1] = 0.0f;
-		data->DirLightColor[2] = 0.0f;
-
-		data->DirLightDirection[0] = 1.0f;
-		data->DirLightDirection[1] = 0.0f;
-		data->DirLightDirection[2] = 0.0f;
+		data->AmbientColor = NiColor::WHITE;
+		data->DirLightColor = NiColor::BLACK;
+		data->DirLightDirection = NiPoint3(1.0f, 0.0f, 0.0f);
 	}
 	else
 	{
-		uintptr_t v9 = *(uintptr_t *)(*(uintptr_t *)(qword_141E32F20 + 512) + 72i64);
-		uintptr_t v13 = v9 + 0x11C;
+		NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)(qword_141E32F20 + 512))->GetLight());
 
-		AssertMsg(v9, "Game expects v9 to be non-null");
-
-		float v10 = *(float *)(v9 + 320);
-		float v11 = *(float *)(v9 + 324);
-		float v12 = *(float *)(v9 + 328);
-
-		data->AmbientColor[0] = *(float *)(v9 + 272);
-		data->AmbientColor[1] = *(float *)(v9 + 276);
-		data->AmbientColor[2] = *(float *)(v9 + 280);
-
-		data->DirLightColor[0] = *(float *)(v13 + 0);
-		data->DirLightColor[1] = *(float *)(v13 + 4);
-		data->DirLightColor[2] = *(float *)(v13 + 8);
-
-		data->DirLightDirection[0] = -v10;
-		data->DirLightDirection[1] = -v11;
-		data->DirLightDirection[2] = -v12;
+		data->AmbientColor = sunLight->GetAmbientColor();
+		data->DirLightColor = sunLight->GetDiffuseColor();
+		data->DirLightDirection = -sunLight->GetWorldDirection();
 	}
 
 	data->AlphaParam1 = flt_1431F6198;

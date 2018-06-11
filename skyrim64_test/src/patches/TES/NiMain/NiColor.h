@@ -5,6 +5,9 @@
 class NiColor
 {
 public:
+	const static NiColor BLACK;
+	const static NiColor WHITE;
+
 	float r;
 	float g;
 	float b;

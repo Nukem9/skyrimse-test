@@ -3,8 +3,6 @@
 #include <d3dcompiler.h>
 #include "BSGraphicsRenderer.h"
 #include "BSShader/BSShaderAccumulator.h"
-#include "BSShader/BSVertexShader.h"
-#include "BSShader/BSPixelShader.h"
 #include "BSShader/BSShaderRenderTargets.h"
 #include "BSReadWriteLock.h"
 #include "MTRenderer.h"

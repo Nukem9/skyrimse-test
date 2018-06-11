@@ -3,8 +3,6 @@
 #include "d3d11_proxy.h"
 #include "GpuTimer.h"
 #include "../../ui/ui.h"
-#include "../TES/BSShader/BSPixelShader.h"
-#include "../TES/BSShader/BSVertexShader.h"
 #include "../TES/BSShader/BSShaderManager.h"
 #include "../TES/BSShader/BSShaderRenderTargets.h"
 #include "../TES/BSShader/Shaders/BSBloodSplatterShader.h"

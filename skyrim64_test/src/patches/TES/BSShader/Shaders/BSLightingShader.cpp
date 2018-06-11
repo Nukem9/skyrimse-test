@@ -31,7 +31,6 @@ AutoPtr(NiSourceTexture *, ProjectedDiffuseTexture, 0x3052898);
 AutoPtr(NiSourceTexture *, ProjectedNormalDetailTexture, 0x30528A8);
 AutoPtr(int, dword_143051B3C, 0x3051B3C);
 AutoPtr(int, dword_143051B40, 0x3051B40);
-AutoPtr(int, dword_141E338A0, 0x1E338A0);
 AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
 AutoPtr(float, flt_143257C50, 0x3257C50);
 AutoPtr(float, flt_143257C54, 0x3257C54);
@@ -79,6 +78,7 @@ DefineIniSetting(bEnableProjecteUVDiffuseNormalsOnCubemap, Display);
 DefineIniSetting(fProjectedUVDiffuseNormalTilingScale, Display);
 DefineIniSetting(fProjectedUVNormalDetailTilingScale, Display);
 DefineIniSetting(bEnableParallaxOcclusion, Display);
+DefineIniSetting(iShadowMaskQuarter, Display);
 
 thread_local uint32_t TLS_m_CurrentRawTechnique;
 thread_local uint32_t TLS_dword_141E35280;
@@ -214,7 +214,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	if (shadowed && defShadow)
 	{
 		renderer->SetShaderResource(14, (ID3D11ShaderResourceView *)qword_14304F260);
-		renderer->SetTextureMode(14, 0, (dword_141E338A0 != 4) ? 1 : 0);
+		renderer->SetTextureMode(14, 0, (iShadowMaskQuarter->uValue.i != 4) ? 1 : 0);
 
 		// PS: p11 float4 VPOSOffset
 		XMVECTORF32& vposOffset = pixelCG.ParamPS<XMVECTORF32, 11>();
@@ -227,7 +227,6 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 
 	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-
 	return true;
 }
 

@@ -88,15 +88,15 @@ bool BSParticleShader::SetupTechnique(uint32_t Technique)
 		renderer->DepthStencilStateSetDepthMode(1);
 	}
 
-	//
 	// VS: p13 float4 ScaleAdjust
-	//
-	XMVECTORF32& scaleAdjust = vertexCG.ParamVS<XMVECTORF32, 13>();
+	{
+		XMVECTORF32& scaleAdjust = vertexCG.ParamVS<XMVECTORF32, 13>();
 
-	scaleAdjust.f[0] = 1.0f / flt_141E357A0;
-	scaleAdjust.f[1] = ((float)dword_143051B3C / (float)dword_143051B40) / flt_141E357A0;
-	scaleAdjust.f[2] = 1.0f;
-	scaleAdjust.f[3] = 1.0f;
+		scaleAdjust.f[0] = 1.0f / flt_141E357A0;
+		scaleAdjust.f[1] = ((float)dword_143051B3C / (float)dword_143051B40) / flt_141E357A0;
+		scaleAdjust.f[2] = 1.0f;
+		scaleAdjust.f[3] = 1.0f;
+	}
 
 	renderer->FlushConstantGroupVSPS(&vertexCG, nullptr);
 	renderer->ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
