@@ -251,6 +251,22 @@ namespace ui
 				ImGui::EndGroupSplitter();
 			}
 
+			// IDC script dumper
+			if (ImGui::BeginGroupSplitter("Dumper"))
+			{
+				static char filePath[1024] = { "C:\\ini_idc_script.idc" };
+				ImGui::InputText("##iniDumpFilePath", filePath, ARRAYSIZE(filePath));
+
+				if (ImGui::Button("Dump list to IDC script"))
+				{
+					ui::log::Add("Attempting to dump INI variables to %s...\n", filePath);
+					INISettingCollectionSingleton->DumpOffsetScript(filePath);
+					INIPrefSettingCollectionSingleton->DumpOffsetScript(filePath);
+				}
+
+				ImGui::EndGroupSplitter();
+			}
+
 			ImGui::PopItemWidth();
 		}
 

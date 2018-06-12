@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdio.h>
 #include "BSTList.h"
 
 union SETTING_VALUE
@@ -39,127 +38,10 @@ public:
 		ST_NONE = 0x9,
 	};
 
-	static SETTING_TYPE TypeFromPrefix(const char *Prefix)
-	{
-		switch (Prefix[0])
-		{
-		case 'a': return ST_RGBA;
-		case 'b': return ST_BINARY;
-		case 'c': return ST_CHAR;
-		case 'f': return ST_FLOAT;
-		case 'h': return ST_UCHAR;
-		case 'i': return ST_INT;
-		case 'r': return ST_RGB;
-		case 'S': return ST_STRING;
-		case 's': return ST_STRING;
-		case 'u': return ST_UINT;
-		}
+	static SETTING_TYPE TypeFromPrefix(const char *Prefix);
 
-		return ST_NONE;
-	}
-
-	void GetAsString(char *Buffer, size_t BufferLen)
-	{
-		switch (TypeFromPrefix(pKey))
-		{
-		case ST_BINARY:
-			strncpy_s(Buffer, BufferLen, uValue.b ? "true" : "false", _TRUNCATE);
-			break;
-
-		case ST_CHAR:
-			_snprintf_s(Buffer, BufferLen, _TRUNCATE, "%d", (int)uValue.c);
-			break;
-
-		case ST_UCHAR:
-			_snprintf_s(Buffer, BufferLen, _TRUNCATE, "%u", (uint32_t)uValue.h);
-			break;
-
-		case ST_INT:
-			_snprintf_s(Buffer, BufferLen, _TRUNCATE, "%d", uValue.i);
-			break;
-
-		case ST_UINT:
-			_snprintf_s(Buffer, BufferLen, _TRUNCATE, "%u", uValue.u);
-			break;
-
-		case ST_FLOAT:
-			_snprintf_s(Buffer, BufferLen, _TRUNCATE, "%.4f", uValue.f);
-			break;
-
-		case ST_STRING:
-			strncpy_s(Buffer, BufferLen, uValue.str, _TRUNCATE);
-			break;
-
-		case ST_RGB:
-			_snprintf_s(Buffer, BufferLen, _TRUNCATE, "%hhu %hhu %hhu", uValue.rgba.r, uValue.rgba.g, uValue.rgba.b);
-			break;
-
-		case ST_RGBA:
-			_snprintf_s(Buffer, BufferLen, _TRUNCATE, "%hhu %hhu %hhu %hhu", uValue.rgba.r, uValue.rgba.g, uValue.rgba.b, uValue.rgba.a);
-			break;
-
-		case ST_NONE:
-			strcpy_s(Buffer, BufferLen, "");
-			break;
-		}
-	}
-
-	bool SetFromString(const char *Input)
-	{
-		SETTING_VALUE value;
-
-		switch (TypeFromPrefix(pKey))
-		{
-		case ST_BINARY:
-			if (!_stricmp(Input, "true") || !_stricmp(Input, "1"))
-				value.b = true;
-			else if (!_stricmp(Input, "false") || !_stricmp(Input, "0"))
-				value.b = false;
-			else
-				return false;
-			break;
-
-		case ST_CHAR:
-			value.c = (char)atoi(Input);
-			break;
-
-		case ST_UCHAR:
-			value.h = (unsigned char)atoi(Input);
-			break;
-
-		case ST_INT:
-			value.i = atoi(Input);
-			break;
-
-		case ST_UINT:
-			value.u = (unsigned int)strtoul(Input, nullptr, 10);
-			break;
-
-		case ST_FLOAT:
-			value.f = (float)atof(Input);
-			break;
-
-		case ST_STRING:
-			// I don't know how to handle these as far as the engine is concerned
-			return false;
-
-		case ST_RGB:
-			if (sscanf_s(Input, "%hhu %hhu %hhu", &value.rgba.r, &value.rgba.g, &value.rgba.b) != 3)
-				return false;
-			break;
-
-		case ST_RGBA:
-			if (sscanf_s(Input, "%hhu %hhu %hhu %hhu", &value.rgba.r, &value.rgba.g, &value.rgba.b, &value.rgba.a) != 4)
-				return false;
-			break;
-
-		case ST_NONE:
-			return false;
-		}
-
-		uValue = value;
-		return true;
-	}
+	void GetAsString(char *Buffer, size_t BufferLen);
+	bool SetFromString(const char *Input);
 
 	virtual ~Setting();
 	virtual bool IsPrefSetting();
@@ -205,16 +87,8 @@ static_assert_offset(SettingCollectionList<Setting>, SettingsA, 0x118);
 class INISettingCollection : public SettingCollectionList<Setting>
 {
 public:
-	Setting *FindSetting(const char *Key)
-	{
-		for (auto *s = SettingsA.QNext(); s; s = s->QNext())
-		{
-			if (!_stricmp(Key, s->QItem()->pKey))
-				return s->QItem();
-		}
-
-		return nullptr;
-	}
+	Setting *FindSetting(const char *Key);
+	void DumpOffsetScript(const char *FilePath);
 };
 
 class INIPrefSettingCollection : public INISettingCollection
@@ -237,23 +111,6 @@ private:
 	Setting *m_Ptr;
 
 public:
-	SettingResolverHack(const char *Key) : m_Key(Key), m_Ptr(nullptr)
-	{
-	}
-
-	Setting *operator ->()
-	{
-		if (!m_Ptr)
-		{
-			// Sometimes it's stored in SkyrimPrefs.ini or sometimes Skyrim.ini
-			m_Ptr = INIPrefSettingCollectionSingleton->FindSetting(m_Key);
-
-			if (!m_Ptr)
-				m_Ptr = INISettingCollectionSingleton->FindSetting(m_Key);
-
-			AssertMsgVa(m_Ptr, "Setting '%s' wasn't found!", m_Key);
-		}
-
-		return m_Ptr;
-	}
+	SettingResolverHack(const char *Key);
+	Setting *operator ->();
 };
