@@ -5,9 +5,9 @@
 class BSShaderProperty /*: NiShadeProperty*/
 {
 private:
-	static const uint32_t UniqueMaterialFlags[15];
-	static const char *UniqueMaterialNames[15];
-	static const char *MaterialBitNames[64];
+	static const uint32_t UniqueFlagIndexes[15];
+	static const char *UniqueFlagNames[15];
+	static const char *FlagNames[64];
 
 public:
 	enum EShaderPropertyFlag
@@ -79,19 +79,24 @@ public:
 		BSSP_FLAG_COUNT = 0x40,
 	};
 
-	static void GetMaterialString(uint64_t Flags, char *Buffer, size_t BufferSize);
+	struct RenderPassArray
+	{
+		/*BSRenderPass* */void *pPassList;
+	};
 
-	// kRenderPassList @ 0x40
-	// kDebugRenderPassList @ 0x50
+	static void GetFlagsDescription(uint64_t Flags, char *Buffer, size_t BufferSize);
 
 	char _pad0[0x30];
 	float fAlpha;// Might be part of a parent class
 	int iLastRenderPassState;
 	uint64_t ulFlags;
-	char _pad2[0x20];
+	RenderPassArray kRenderPassList;
+	char _pad1[0x8];
+	RenderPassArray kDebugRenderPassList;
+	char _pad2[0x8];
 	class BSFadeNode *pFadeNode;
 	class BSEffectShaderData *pEffectData;
-	char _pad3[0x8];// BSShaderPropertyLightData *
+	class BSShaderPropertyLightData *pLightData;
 	BSShaderMaterial *pMaterial;
 	char _pad4[0x8];
 
@@ -123,13 +128,16 @@ public:
 		if (FlagIndex >= BSSP_FLAG_COUNT)
 			return nullptr;
 
-		return MaterialBitNames[FlagIndex];
+		return FlagNames[FlagIndex];
 	}
 };
 static_assert(sizeof(BSShaderProperty) == 0x88);
 static_assert_offset(BSShaderProperty, fAlpha, 0x30);
 static_assert_offset(BSShaderProperty, iLastRenderPassState, 0x34);
 static_assert_offset(BSShaderProperty, ulFlags, 0x38);
+static_assert_offset(BSShaderProperty, kRenderPassList, 0x40);
+static_assert_offset(BSShaderProperty, kDebugRenderPassList, 0x50);
 static_assert_offset(BSShaderProperty, pFadeNode, 0x60);
 static_assert_offset(BSShaderProperty, pEffectData, 0x68);
+static_assert_offset(BSShaderProperty, pLightData, 0x70);
 static_assert_offset(BSShaderProperty, pMaterial, 0x78);

@@ -16,7 +16,7 @@ struct BSRenderPass
 	uint8_t Byte1D;				// Instance index (offset) in an instance group?
 	struct						// LOD information
 	{
-		uint8_t Index : 7;
+		uint8_t Index : 7;		// Also referred to as "texture degrade level"
 		bool SingleLevel : 1;
 	} m_Lod;
 	uint8_t m_LightCount;

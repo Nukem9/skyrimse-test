@@ -1402,11 +1402,11 @@ namespace BSGraphics
 		{
 			UINT offset = Group->m_UnifiedByteOffset / 16;
 			UINT size = Group->m_Map.RowPitch / 16;
-			((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
+			m_DeviceContext->VSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
 		}
 		else
 		{
-			((ID3D11DeviceContext1 *)m_DeviceContext)->VSSetConstantBuffers(Level, 1, &Group->m_Buffer);
+			m_DeviceContext->VSSetConstantBuffers(Level, 1, &Group->m_Buffer);
 		}
 	}
 
@@ -1416,11 +1416,11 @@ namespace BSGraphics
 		{
 			UINT offset = Group->m_UnifiedByteOffset / 16;
 			UINT size = Group->m_Map.RowPitch / 16;
-			((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
+			m_DeviceContext->PSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
 		}
 		else
 		{
-			((ID3D11DeviceContext1 *)m_DeviceContext)->PSSetConstantBuffers(Level, 1, &Group->m_Buffer);
+			m_DeviceContext->PSSetConstantBuffers(Level, 1, &Group->m_Buffer);
 		}
 	}
 

@@ -1,14 +1,14 @@
 #include "../../../common.h"
 #include "BSShaderProperty.h"
 
-const uint32_t BSShaderProperty::UniqueMaterialFlags[15] =
+const uint32_t BSShaderProperty::UniqueFlagIndexes[15] =
 {
 	0x07, 0x26, 0x0B, 0x0A, 0x15, 0x12, 0x1C,
 	0x0E, 0x21, 0x38, 0x3D, 0x22, 0x29, 0x3F,
 	0x2E
 };
 
-const char *BSShaderProperty::UniqueMaterialNames[15] =
+const char *BSShaderProperty::UniqueFlagNames[15] =
 {
 	"Envmap",
 	"Glowmap",
@@ -27,7 +27,7 @@ const char *BSShaderProperty::UniqueMaterialNames[15] =
 	"Multitexture Landscape (LOD Blend)"
 };
 
-const char *BSShaderProperty::MaterialBitNames[64] =
+const char *BSShaderProperty::FlagNames[64] =
 {
 	"specular",
 	"skinned",
@@ -95,20 +95,20 @@ const char *BSShaderProperty::MaterialBitNames[64] =
 	"hd lod objects"
 };
 
-void BSShaderProperty::GetMaterialString(uint64_t Flags, char *Buffer, size_t BufferSize)
+void BSShaderProperty::GetFlagsDescription(uint64_t Flags, char *Buffer, size_t BufferSize)
 {
 	// Uniques - can only have 1 of these bits set at once
 	strcpy_s(Buffer, BufferSize, "Unique flags: [");
 
-	for (int i = 0; i < ARRAYSIZE(UniqueMaterialFlags); i++)
+	for (int i = 0; i < ARRAYSIZE(UniqueFlagIndexes); i++)
 	{
-		uint32_t bit = UniqueMaterialFlags[i];
+		uint32_t bit = UniqueFlagIndexes[i];
 
 		Assert(bit < 64);
 
 		if (Flags & (1ull << bit))
 		{
-			strcat_s(Buffer, BufferSize, UniqueMaterialNames[i]);
+			strcat_s(Buffer, BufferSize, UniqueFlagNames[i]);
 			strcat_s(Buffer, BufferSize, ", ");
 		}
 
@@ -119,7 +119,7 @@ void BSShaderProperty::GetMaterialString(uint64_t Flags, char *Buffer, size_t Bu
 	// Everything - each bit corresponds to an array index
 	strcat_s(Buffer, BufferSize, "] Flags: [");
 
-	for (int i = 0; i < ARRAYSIZE(MaterialBitNames); i++)
+	for (int i = 0; i < ARRAYSIZE(FlagNames); i++)
 	{
 		uint32_t bit = i;
 
@@ -127,7 +127,7 @@ void BSShaderProperty::GetMaterialString(uint64_t Flags, char *Buffer, size_t Bu
 
 		if (Flags & (1ull << bit))
 		{
-			strcat_s(Buffer, BufferSize, MaterialBitNames[i]);
+			strcat_s(Buffer, BufferSize, FlagNames[i]);
 			strcat_s(Buffer, BufferSize, ", ");
 		}
 
