@@ -3,6 +3,18 @@
 
 #ifdef _DEBUG
 
+#pragma comment(linker, "/export:D3DXSaveSurfaceToFileA=C:\\Windows\\System32\\d3dx9_42.D3DXSaveSurfaceToFileA")
+#pragma comment(linker, "/export:D3DXSaveTextureToFileA=C:\\Windows\\System32\\d3dx9_42.D3DXSaveTextureToFileA")
+#pragma comment(linker, "/export:D3DXCreateTexture=C:\\Windows\\System32\\d3dx9_42.D3DXCreateTexture")
+#pragma comment(linker, "/export:D3DXCreateTextureFromFileA=C:\\Windows\\System32\\d3dx9_42.D3DXCreateTextureFromFileA")
+#pragma comment(linker, "/export:D3DXCreateTextureFromFileExA=C:\\Windows\\System32\\d3dx9_42.D3DXCreateTextureFromFileExA")
+#pragma comment(linker, "/export:D3DXGetImageInfoFromFileA=C:\\Windows\\System32\\d3dx9_42.D3DXGetImageInfoFromFileA")
+#pragma comment(linker, "/export:D3DXMatrixRotationQuaternion=C:\\Windows\\System32\\d3dx9_42.D3DXMatrixRotationQuaternion")
+#pragma comment(linker, "/export:D3DXMatrixOrthoLH=C:\\Windows\\System32\\d3dx9_42.D3DXMatrixOrthoLH")
+#pragma comment(linker, "/export:D3DXMatrixPerspectiveFovLH=C:\\Windows\\System32\\d3dx9_42.D3DXMatrixPerspectiveFovLH")
+#pragma comment(linker, "/export:D3DXMatrixLookAtLH=C:\\Windows\\System32\\d3dx9_42.D3DXMatrixLookAtLH")
+#pragma comment(linker, "/export:D3DXQuaternionMultiply=C:\\Windows\\System32\\d3dx9_42.D3DXQuaternionMultiply")
+
 //#define TEST_MATRIX(x) (x)
 #define TEST_MATRIX(x) ((D3DXMATRIX *)0x5550000DEADBEEF)
 
@@ -23,6 +35,18 @@ D3DXMATRIX* D3DAPI D3DXMatrixInverse(
 	assert(!pDeterminant);
 
 	AS_XMM(pOut) = DirectX::XMMatrixInverse(nullptr, AS_XMM(pM));
+	return TEST_MATRIX(pOut);
+}
+
+D3D_EXPORT
+D3DXMATRIX* D3DAPI D3DXMatrixTranslation(
+	_Inout_ DirectX::XMMATRIX	*pOut,
+	_In_    FLOAT				x,
+	_In_    FLOAT				y,
+	_In_    FLOAT				z
+)
+{
+	AS_XMM(pOut) = DirectX::XMMatrixTranslation(x, y, z);
 	return TEST_MATRIX(pOut);
 }
 

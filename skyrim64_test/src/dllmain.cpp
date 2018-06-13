@@ -60,6 +60,14 @@ void ApplyPatches()
 {
 	SetThreadName(GetCurrentThreadId(), "Main Thread");
 
+	char filePath[MAX_PATH];
+	GetModuleFileNameA(GetModuleHandleA(nullptr), filePath, MAX_PATH);
+
+	if (strstr(filePath, "SkyrimSE"))
+		g_IsCreationKit = false;
+	else if (strstr(filePath, "CreationKit"))
+		g_IsCreationKit = true;
+
     // Called once the exe has been unpacked. Before applying code modifications:
     // ensure that exceptions are not swallowed when dispatching certain Windows
     // messages.
@@ -88,14 +96,21 @@ void ApplyPatches()
     SetErrorMode(0);
     SetThreadErrorMode(0, nullptr);
 
+	if (g_IsCreationKit)
+	{
+		Patch_TESVCreationKit();
+	}
+	else
+	{
 #if SKYRIM64_USE_VFS
-	once();
-    DoHook();
+		once();
+		DoHook();
 #endif
 
-	InitializeTLSMain();
-	LoadModules();
-	Patch_TESV();
+		InitializeTLSMain();
+		LoadModules();
+		Patch_TESV();
+	}
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)

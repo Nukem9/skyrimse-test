@@ -16,6 +16,7 @@ void PatchSettings();
 void PatchSteam();
 void PatchThreading();
 void PatchWindow();
+void PatchFileIO();
 void ExperimentalPatchEmptyFunctions();
 void ExperimentalPatchMemInit();
 
@@ -34,6 +35,7 @@ void Patch_TESV()
 	PatchAchievements();
 	PatchSettings();
 	PatchMemory();
+	PatchFileIO();
 	PatchTESForm();
 	PatchBSThread();
 	PatchBSGraphicsRenderTargetManager();
@@ -91,4 +93,20 @@ void Patch_TESV()
 	const char *newFormat = "World object count changed on object '%s' %08X from %i to %i";
 
 	PatchMemory(g_ModuleBase + 0x1696030, (PBYTE)newFormat, strlen(newFormat) + 1);
+
+	//
+	// Bug fix for when TAA/FXAA/DOF are disabled and quicksave doesn't work without
+	// opening a menu
+	//
+	PatchMemory(g_ModuleBase + 0x12AE2DD, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);	// Kill jnz
+	PatchMemory(g_ModuleBase + 0x12AE2E8, (PBYTE)"\x80\xBD\x11\x02\x00\x00\x00", 7);// Rewrite to 'cmp byte ptr [rbp+211h], 0'
+	PatchMemory(g_ModuleBase + 0x12AE2EF, (PBYTE)"\x90\x90\x90\x90", 4);			// Extra rewrite padding
+}
+
+void Patch_TESVCreationKit()
+{
+	PatchThreading();
+	PatchWindow();
+	PatchSteam();
+	PatchFileIO();
 }

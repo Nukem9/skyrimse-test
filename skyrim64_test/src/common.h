@@ -60,4 +60,6 @@ extern HMODULE g_DllVTune;
 extern HMODULE g_DllDXGI;
 extern HMODULE g_DllD3D11;
 
+extern bool g_IsCreationKit;
+
 #define PatchIAT(detour, module, procname) Detours::IATHook((PBYTE)g_ModuleBase, (module), (procname), (PBYTE)(detour));

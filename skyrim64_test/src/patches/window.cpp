@@ -1,4 +1,5 @@
 #include <future>
+#include "../../../tbb2018/concurrent_hash_map.h"
 #include "../common.h"
 #include "dinput8.h"
 
@@ -8,6 +9,10 @@
 HWND g_SkyrimWindow;
 WNDPROC g_OriginalWndProc;
 DWORD MessageThreadId;
+
+std::unordered_map<HWND, void *> g_ParentDialogHwnds;
+std::mutex dialogMutex;
+std::atomic<uint64_t> g_OpenDialogCount;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -150,10 +155,70 @@ HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWin
 	return taskVar.get();
 }
 
+INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+{
+	dialogMutex.lock();
+	Assert(hWndParent);
+	Assert(IsWindow(hWndParent));
+	Assert(g_ParentDialogHwnds.count(hWndParent) <= 0);
+
+	g_ParentDialogHwnds.insert(std::pair(hWndParent, (void *)lpTemplateName));
+	dialogMutex.unlock();
+
+	g_OpenDialogCount++;
+	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+}
+
+BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult)
+{
+	if (g_OpenDialogCount <= 0)
+		return FALSE;
+
+	dialogMutex.lock();
+	Assert(hDlg);
+	Assert(g_ParentDialogHwnds.count(GetParent(hDlg)) > 0);
+
+	g_ParentDialogHwnds.erase(GetParent(hDlg));
+	dialogMutex.unlock();
+
+	g_OpenDialogCount--;
+	return EndDialog(hDlg, nResult);
+}
+
+LRESULT WINAPI hk_SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	if (hWnd && Msg == WM_DESTROY)
+	{
+		dialogMutex.lock();
+		bool found = g_ParentDialogHwnds.count(GetParent(hWnd)) > 0;
+		dialogMutex.unlock();
+
+		if (found)
+		{
+			// This is a dialog, we can't call DestroyWindow on it
+			return 0;
+		}
+
+		DestroyWindow(hWnd);
+		return 0;
+	}
+
+	return SendMessageA(hWnd, Msg, wParam, lParam);
+}
+
 void PatchWindow()
 {
-	PatchMemory(g_ModuleBase + 0x5AF310, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
-	CreateThread(nullptr, 0, MessageThread, nullptr, 0, &MessageThreadId);
+	if (g_IsCreationKit)
+	{
+		PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
+		PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
+		PatchIAT(hk_SendMessageA, "USER32.DLL", "SendMessageA");
+	}
+	else
+	{
+		PatchMemory(g_ModuleBase + 0x5AF310, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
+		CreateThread(nullptr, 0, MessageThread, nullptr, 0, &MessageThreadId);
 
-	PatchIAT(hk_CreateWindowExA, "user32.dll", "CreateWindowExA");
+		PatchIAT(hk_CreateWindowExA, "USER32.DLL", "CreateWindowExA");
+	}
 }
