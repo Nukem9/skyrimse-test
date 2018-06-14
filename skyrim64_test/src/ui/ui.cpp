@@ -2,9 +2,12 @@
 #include "../patches/dinput8.h"
 #include "imgui_ext.h"
 #include "imgui_impl_dx11.h"
+#include "ui_renderer.h"
 #include "../patches/TES/BSShader/BSShader.h"
 #include "../patches/TES/Setting.h"
 #include "../patches/rendering/GpuTimer.h"
+
+extern bool thingy;
 
 namespace ui::opt
 {
@@ -12,18 +15,18 @@ namespace ui::opt
 	bool LogHitches = true;
 }
 
-extern LARGE_INTEGER g_FrameDelta;
-
 namespace ui
 {
 	bool showDemoWindow;
-    bool showFPSWindow;
     bool showTESFormWindow;
     bool showLockWindow;
     bool showMemoryWindow;
 	bool showShaderTweakWindow;
 	bool showIniListWindow;
 	bool showLogWindow;
+
+	bool showFrameStatsWindow;
+	bool showRTViewerWindow;
 
     char *format_commas(int64_t n, char *out)
     {
@@ -83,7 +86,9 @@ namespace ui
             RenderMenubar();
 			ImGui::PopStyleVar();
 
-			RenderFramerate();
+			RenderFrameStatistics();
+			RenderRenderTargetMenu();
+
             RenderSynchronization();
             RenderTESFormCache();
             RenderMemory();
@@ -138,7 +143,8 @@ namespace ui
 
         if (ImGui::BeginMenu("Statistics"))
         {
-            ImGui::MenuItem("Framerate", nullptr, &showFPSWindow);
+			ImGui::MenuItem("Frame Statistics", nullptr, &showFrameStatsWindow);
+			ImGui::MenuItem("Render Target Viewer", nullptr, &showRTViewerWindow);
             ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
             ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
             ImGui::MenuItem("TESForm Cache", nullptr, &showTESFormWindow);
@@ -182,50 +188,26 @@ namespace ui
 			static ImGuiTextFilter iniFilter;
 			static int selectedIndex;
 
-			iniFilter.Draw("Filter", -100.0f);
-
-			// Filter the listbox input before we send it to imgui - which doesn't support dynamic filtering
+			// Convert from the game's containers to a standard c++ vector
 			std::vector<Setting *> settingList;
+			settingList.reserve(1000);
 
 			for (auto *s = INISettingCollectionSingleton->SettingsA.QNext(); s; s = s->QNext())
-			{
-				if (iniFilter.IsActive())
-				{
-					if (iniFilter.PassFilter(s->QItem()->pKey))
-						settingList.push_back(s->QItem());
-				}
-				else
-				{
-					// No filter present
 					settingList.push_back(s->QItem());
-				}
-			}
 
 			for (auto *s = INIPrefSettingCollectionSingleton->SettingsA.QNext(); s; s = s->QNext())
-			{
-				if (iniFilter.IsActive())
-				{
-					if (iniFilter.PassFilter(s->QItem()->pKey))
-						settingList.push_back(s->QItem());
-				}
-				else
-				{
-					// No filter present
 					settingList.push_back(s->QItem());
-				}
-			}
 
 			ImGui::PushItemWidth(-1);
 
 			// Draw the list itself
-			ImGui::ListBox("##inibox", &selectedIndex, [](void *data, int index, const char **out)
+			ImGui::ListBoxVector<decltype(settingList)>("##rtbox", "Filter", &iniFilter, settingList, &selectedIndex, [](const decltype(settingList) *Vec, size_t Index)
 			{
-				*out = reinterpret_cast<std::vector<Setting *> *>(data)->at(index)->pKey;
-				return true;
-			}, (void *)&settingList, settingList.size(), 16);
+				return Vec->at(Index)->pKey;
+			}, 16);
 
 			// Now the editor inputs
-			if (ImGui::BeginGroupSplitter("Selection") && selectedIndex < settingList.size())
+			if (ImGui::BeginGroupSplitter("Selection") && selectedIndex != -1)
 			{
 				Setting *s = settingList.at(selectedIndex);
 
@@ -272,141 +254,6 @@ namespace ui
 
 		ImGui::End();
 	}
-
-	int64_t LastFrame;
-	int64_t TickSum;
-	int64_t TickDeltas[32];
-	int TickDeltaIndex;
-
-	float DeltasGraph[240];
-	float DeltasGraph2[240];
-	float DeltasGraph3[240];
-	float DeltasGraph4[240];
-	float DeltasGraph5[240];
-	float DeltasGraphGPU[240];
-
-	float DeltasGraphDrawCalls[240];
-	float DeltasGraphDispatchCalls[240];
-
-	double CalculateTrueAverageFPS()
-	{
-		// This includes the overhead from calling Present() (backbuffer flip)
-		LARGE_INTEGER ticksPerSecond;
-		QueryPerformanceFrequency(&ticksPerSecond);
-
-		LARGE_INTEGER frameEnd;
-		QueryPerformanceCounter(&frameEnd);
-
-		if (LastFrame == 0)
-			LastFrame = frameEnd.QuadPart;
-
-		int64_t delta = frameEnd.QuadPart - LastFrame;
-		LastFrame = frameEnd.QuadPart;
-
-		TickSum -= TickDeltas[TickDeltaIndex];
-		TickSum += delta;
-		TickDeltas[TickDeltaIndex++] = delta;
-
-		if (TickDeltaIndex >= ARRAYSIZE(TickDeltas))
-			TickDeltaIndex = 0;
-
-		double averageFrametime = (TickSum / 32.0) / (double)ticksPerSecond.QuadPart;
-		return 1.0 / averageFrametime;
-	}
-
-    void RenderFramerate()
-    {
-		// Always calculate the frame time even if the window isn't visible
-		LARGE_INTEGER ticksPerSecond;
-		QueryPerformanceFrequency(&ticksPerSecond);
-
-		double frameTimeMs = 1000.0 * (g_FrameDelta.QuadPart / (double)ticksPerSecond.QuadPart);
-
-		if (ui::opt::LogHitches && frameTimeMs >= 50.0)
-			ui::log::Add("FRAME HITCH WARNING (%g ms)\n", frameTimeMs);
-
-        if (!showFPSWindow)
-            return;
-
-		// Shift everything else back first...
-		memmove(&DeltasGraph[0], &DeltasGraph[1], sizeof(DeltasGraph) - sizeof(float));
-		memmove(&DeltasGraph2[0], &DeltasGraph2[1], sizeof(DeltasGraph2) - sizeof(float));
-		memmove(&DeltasGraph3[0], &DeltasGraph3[1], sizeof(DeltasGraph3) - sizeof(float));
-		memmove(&DeltasGraph4[0], &DeltasGraph4[1], sizeof(DeltasGraph4) - sizeof(float));
-		memmove(&DeltasGraph5[0], &DeltasGraph5[1], sizeof(DeltasGraph5) - sizeof(float));
-		memmove(&DeltasGraphGPU[0], &DeltasGraphGPU[1], sizeof(DeltasGraphGPU) - sizeof(float));
-
-		memmove(&DeltasGraphDrawCalls[0], &DeltasGraphDrawCalls[1], sizeof(DeltasGraphDrawCalls) - sizeof(float));
-		memmove(&DeltasGraphDispatchCalls[0], &DeltasGraphDispatchCalls[1], sizeof(DeltasGraphDispatchCalls) - sizeof(float));
-
-        float test = 0.0f; // *(float *)(g_ModuleBase + 0x1DADCA0);
-
-        if (ImGui::Begin("Framerate", &showFPSWindow))
-        {
-			// Draw frame time graph
-			{
-				DeltasGraph[239] = frameTimeMs;
-				DeltasGraphGPU[239] = g_GPUTimers.GetGPUTimeInMS(0);
-
-				const char *names[2] = { "CPU", "GPU" };
-				ImColor colors[2] = { ImColor(0.839f, 0.152f, 0.156f), ImColor(0.172f, 0.627f, 0.172f) };
-				void *datas[2] = { (void *)DeltasGraph, (void *)DeltasGraphGPU };
-
-				ImGui::PlotMultiLines("Frame Time (ms)\n** Minus Present() flip", 2, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 32.0f, ImVec2(400, 100));
-			}
-
-			// Draw processor usage (CPU, GPU) graph
-			{
-				DeltasGraph2[239] = Profiler::GetProcessorUsagePercent();
-				DeltasGraph3[239] = Profiler::GetThreadUsagePercent();
-				DeltasGraph4[239] = Profiler::GetGpuUsagePercent(0);
-				DeltasGraph5[239] = Profiler::GetGpuUsagePercent(1);
-
-				const char *names[4] = { "CPU Total", "Main Thread", "GPU 0", "GPU 1" };
-				ImColor colors[4] = { ImColor(0.839f, 0.152f, 0.156f), ImColor(0.172f, 0.627f, 0.172f), ImColor(1.0f, 0.498f, 0.054f), ImColor(0.121f, 0.466f, 0.705f) };
-				void *datas[4] = { (void *)DeltasGraph2, (void *)DeltasGraph3, (void *)DeltasGraph4, (void *)DeltasGraph5 };
-
-				ImGui::PlotMultiLines("Processor Usage (%)", 4, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 100.0f, ImVec2(400, 100));
-			}
-
-			// Draw calls
-			{
-				DeltasGraphDrawCalls[239] = ProfileGetDeltaValue("Draw Calls");
-				DeltasGraphDispatchCalls[239] = ProfileGetDeltaValue("Dispatch Calls");
-
-				const char *names[2] = { "Draws", "Dispatches" };
-				ImColor colors[2] = { ImColor(0.839f, 0.152f, 0.156f), ImColor(0.172f, 0.627f, 0.172f) };
-				void *datas[2] = { (void *)DeltasGraphDrawCalls, (void *)DeltasGraphDispatchCalls };
-
-				ImGui::PlotMultiLines("Draw Calls", 2, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 10000.0f, ImVec2(400, 100));
-
-				ProfileGetValue("Draw Calls");
-				ProfileGetValue("Dispatch Calls");
-			}
-
-            ImGui::Text("FPS: %.2f", CalculateTrueAverageFPS());
-            ImGui::Spacing();
-            ImGui::Text("Havok fMaxTime: %.2f FPS", 1.0f / test);
-            ImGui::Text("Havok fMaxTimeComplex: %.2f FPS", 1.0f / test);
-			ImGui::Spacing();
-			ImGui::Text("CB Bytes Requested: %lld", ProfileGetDeltaValue("CB Bytes Requested"));
-			ImGui::Text("VIB Bytes Requested: %lld", ProfileGetDeltaValue("VIB Bytes Requested"));
-			ImGui::Text("CB Bytes Wasted: %lld", ProfileGetDeltaValue("CB Bytes Wasted"));
-			ImGui::Spacing();
-			ImGui::Text("Generating game command lists: %.5f ms", ProfileGetDeltaTime("GameCommandList") * 1000);
-			ImGui::Text("Generating D3D11 command lists: %.5f ms", ProfileGetDeltaTime("GameCommandListToD3D") * 1000);
-			ImGui::Text("Waiting for command list completion: %.5f ms", ProfileGetDeltaTime("Waiting for command list completion") * 1000);
-
-			ProfileGetValue("CB Bytes Requested");
-			ProfileGetValue("VIB Bytes Requested");
-			ProfileGetValue("CB Bytes Wasted");
-
-			ProfileGetTime("GameCommandList");
-			ProfileGetTime("GameCommandListToD3D");
-			ProfileGetTime("Waiting for command list completion");
-		}
-        ImGui::End();
-    }
 
     void RenderSynchronization()
     {

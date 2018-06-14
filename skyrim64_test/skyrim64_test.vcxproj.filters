@@ -287,6 +287,9 @@
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSParticleShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\ui_renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -599,6 +602,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\Setting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\ui_renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

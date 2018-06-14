@@ -3,6 +3,7 @@
 #include "BSGraphicsRenderTargetManager.h"
 
 using namespace BSShaderRenderTargets;
+std::vector<std::pair<ID3D11ShaderResourceView *, std::string>> g_ResourceViews;
 
 void SetName(uintptr_t Resource, const char *Format, ...)
 {
@@ -67,6 +68,9 @@ __int64 hk_CreateRenderTarget(__int64 a1, unsigned int aTargetIndex, __int64 a3,
 
 	g_RenderTargetTextures[aTargetIndex] = *(ID3D11Texture2D **)(v13 + 2648);
 	g_RenderTargets[aTargetIndex] = *(ID3D11RenderTargetView **)(v13 + 2664);
+
+	g_ResourceViews.push_back(std::pair(*(ID3D11ShaderResourceView **)(v13 + 2672), GetTargetName(aTargetIndex)));
+	g_ResourceViews.push_back(std::pair(*(ID3D11ShaderResourceView **)(v13 + 2680), std::string(GetTargetName(aTargetIndex)) + " COPY"));
 	return ret;
 }
 

@@ -210,6 +210,7 @@
     <ClInclude Include="src\common.h" />
     <ClInclude Include="src\patches\TES\TESForm.h" />
     <ClInclude Include="src\ui\ui.h" />
+    <ClInclude Include="src\ui\ui_renderer.h" />
     <ClInclude Include="src\vfs\vfs.h" />
     <ClInclude Include="src\vfs\vfs_hook.h" />
     <ClInclude Include="src\vfs\vfs_util.h" />
@@ -310,6 +311,7 @@
     <ClCompile Include="src\patches\TES\TESForm.cpp" />
     <ClCompile Include="src\patches\threading.cpp" />
     <ClCompile Include="src\ui\ui.cpp" />
+    <ClCompile Include="src\ui\ui_renderer.cpp" />
     <ClCompile Include="src\vfs\vfs.cpp" />
     <ClCompile Include="src\vfs\vfs_hook.cpp" />
     <ClCompile Include="src\vfs\vfs_util.cpp" />
