@@ -33,34 +33,31 @@ AutoPtr(NiSourceTexture *, ProjectedNormalDetailTexture, 0x30528A8);
 AutoPtr(int, dword_143051B3C, 0x3051B3C);
 AutoPtr(int, dword_143051B40, 0x3051B40);
 AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
-AutoPtr(float, flt_143257C50, 0x3257C50);
-AutoPtr(float, flt_143257C54, 0x3257C54);
-AutoPtr(float, flt_143257C58, 0x3257C58);
+AutoPtr(float, flt_143257C50, 0x3257C50);// fLightingOutputColourClampPostLit_General
+AutoPtr(float, flt_143257C54, 0x3257C54);// fLightingOutputColourClampPostEnv_General
+AutoPtr(float, flt_143257C58, 0x3257C58);// fLightingOutputColourClampPostSpec_General
 AutoPtr(float, flt_141E32F54, 0x1E32F54);
 AutoPtr(float, flt_141E32F58, 0x1E32F58);
 AutoPtr(float, flt_141E32F5C, 0x1E32F5C);
 AutoPtr(float, flt_141E32F60, 0x1E32F60);
 AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(int, dword_141E33BA0, 0x1E33BA0);
-AutoPtr(BYTE, byte_141E32F66, 0x1E32F66);
-AutoPtr(float, xmmword_141E3302C, 0x1E3302C);// This is really XMVECTORF32
+AutoPtr(BYTE, byte_141E32F66, 0x1E32F66);// bEnableCharacterLighting
+AutoPtr(float, xmmword_141E3302C, 0x1E3302C);// CharacterLightingStrength { Primary, Secondary, Luminance, Max Luminance } 
 AutoPtr(XMVECTORF32, xmmword_141E3301C, 0x1E3301C);
 AutoPtr(int, dword_141E33040, 0x1E33040);
-AutoPtr(uintptr_t, qword_1431F5810, 0x31F5810);
+AutoPtr(uintptr_t, qword_1431F5810, 0x31F5810);// ImagespaceShaderManager
 AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 AutoPtr(XMVECTORF32, xmmword_14187D940, 0x187D940);
 AutoPtr(BYTE, byte_141E32E88, 0x1E32E88);
 AutoPtr(uintptr_t, qword_14304EF00, 0x304EF00);
-AutoPtr(BYTE, byte_141E352F0, 0x1E352F0);
 AutoPtr(float, flt_143257C40, 0x3257C40);
-AutoPtr(uint32_t, dword_141E35280, 0x1E35280);
-AutoPtr(NiColorA, dword_1431F5540, 0x31F5540);
-AutoPtr(NiColorA, dword_1431F5550, 0x31F5550);
-AutoPtr(BYTE, byte_141E35308, 0x1E35308);
-AutoPtr(BYTE, byte_141E35320, 0x1E35320);
-AutoPtr(uint32_t, dword_141E3527C, 0x1E3527C);
+AutoPtr(uint32_t, dword_141E3527C, 0x1E3527C);// Replaced by TLS
+AutoPtr(uint32_t, dword_141E35280, 0x1E35280);// Replaced by TLS
+AutoPtr(NiColorA, dword_1431F5540, 0x31F5540);// Unknown setting from SceneGraph
+AutoPtr(NiColorA, dword_1431F5550, 0x31F5550);// 4x fMapMenuOverlayScale settings
 AutoPtr(float, xmmword_141880020, 0x1880020);
-AutoPtr(float, flt_141E32F40, 0x1E32F40);
+AutoPtr(float, flt_141E32F40, 0x1E32F40);// Part of BSShaderManager timer array
 AutoPtr(float, flt_141E32FD8, 0x1E32FD8);
 AutoPtr(float, flt_141E32FB8, 0x1E32FB8);
 AutoPtr(BYTE, byte_1431F547C, 0x31F547C);

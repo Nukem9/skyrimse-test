@@ -46,14 +46,14 @@ using namespace DirectX;
 
 AutoPtr(NiSourceTexture *, DefaultWhiteMap, 0x30528F0);
 AutoPtr(BYTE, byte_14304E4C5, 0x304E4C5);
-AutoPtr(BYTE, byte_141E32E9D, 0x1E32E9D);
-AutoPtr(BYTE, byte_141E32F65, 0x1E32F65);
+AutoPtr(BYTE, byte_141E32E9D, 0x1E32E9D);// bShadowsOnGrass_Display
+AutoPtr(BYTE, byte_141E32F65, 0x1E32F65);// BSShaderManager::bLiteBrite
 AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
 AutoPtr(uintptr_t, qword_141E32F20, 0x1E32F20);
 AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
-AutoPtr(float, flt_1431F6198, 0x31F6198);
-AutoPtr(float, flt_1431F619C, 0x31F619C);
-AutoPtr(float, flt_141E32F50, 0x1E32F50);
+AutoPtr(float, flt_1431F6198, 0x31F6198);// Fade parameter
+AutoPtr(float, flt_1431F619C, 0x31F619C);// Fade parameter
+AutoPtr(float, flt_141E32F50, 0x1E32F50);// Part of BSShaderManager timer array
 AutoPtr(float, flt_1431F63E8, 0x31F63E8);
 AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 
