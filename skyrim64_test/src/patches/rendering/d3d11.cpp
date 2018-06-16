@@ -12,6 +12,9 @@
 #include "../TES/BSGraphicsRenderer.h"
 #include "../TES/BSBatchRenderer.h"
 
+ID3D11Texture2D *g_OcclusionTexture;
+ID3D11ShaderResourceView *g_OcclusionTextureSRV;
+
 ID3D11Device2 *g_Device;
 IDXGISwapChain *g_SwapChain;
 ID3D11DeviceContext2 *g_DeviceContext;
@@ -511,6 +514,21 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	DC_Init(g_Device, 0);
 
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1F70, (PBYTE)&hk_sub_1412E1C10);
+
+	// Culling test buffers
+	CD3D11_TEXTURE2D_DESC cpuRenderTargetDescAVX
+	(
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		1920 * 2, // TODO: round up to full tile sizes
+		1080 / 2,
+		1, // Array Size
+		1, // MIP Levels
+		D3D11_BIND_SHADER_RESOURCE,
+		D3D11_USAGE_DEFAULT,
+		0
+	);
+	Assert(SUCCEEDED(g_Device->CreateTexture2D(&cpuRenderTargetDescAVX, nullptr, &g_OcclusionTexture)));
+	Assert(SUCCEEDED(g_Device->CreateShaderResourceView(g_OcclusionTexture, nullptr, &g_OcclusionTextureSRV)));
 
     return hr;
 }

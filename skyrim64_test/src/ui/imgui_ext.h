@@ -8,26 +8,22 @@ namespace ImGui
 	void PlotMultiHistograms(const char* label, int num_hists, const char** names, const ImColor* colors, float(*getter)(const void* data, int idx), const void * const * datas, int values_count, float scale_min, float scale_max, ImVec2 graph_size);
 
 	template<typename T>
-	bool ListBoxVector(const char *Label, const char *FilterLabel, ImGuiTextFilter *Filter, const T& List, int *CurrentItem, const char *(*Getter)(const T *List, size_t Index), int HeightInItems = -1)
+	bool ListBoxVector(const char *Label, const char *FilterLabel, ImGuiTextFilter *Filter, const T *List, int *CurrentItem, const char *(* Getter)(const T *List, size_t Index), int HeightInItems = -1)
 	{
 		Filter->Draw(FilterLabel, -100.0f);
 
-		const T *listCopy = nullptr;
+		const T *listCopy = List;
 		T tempList;
 
 		if (Filter->IsActive())
 		{
-			for (size_t i = 0; i < List.size(); i++)
+			for (size_t i = 0; i < List->size(); i++)
 			{
-				if (Filter->PassFilter(Getter(&List, i)))
-					tempList.push_back(List[i]);
+				if (Filter->PassFilter(Getter(List, i)))
+					tempList.push_back(List->at(i));
 			}
 
 			listCopy = &tempList;
-		}
-		else
-		{
-			listCopy = &List;
 		}
 
 		if (!ListBoxHeader(Label, (int)listCopy->size(), HeightInItems))

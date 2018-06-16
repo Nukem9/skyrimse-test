@@ -27,6 +27,7 @@ namespace ui
 
 	bool showFrameStatsWindow;
 	bool showRTViewerWindow;
+	bool showCullingWindow;
 
     char *format_commas(int64_t n, char *out)
     {
@@ -88,6 +89,7 @@ namespace ui
 
 			RenderFrameStatistics();
 			RenderRenderTargetMenu();
+			RenderOcclusionCullingMenu();
 
             RenderSynchronization();
             RenderTESFormCache();
@@ -145,6 +147,7 @@ namespace ui
         {
 			ImGui::MenuItem("Frame Statistics", nullptr, &showFrameStatsWindow);
 			ImGui::MenuItem("Render Target Viewer", nullptr, &showRTViewerWindow);
+			ImGui::MenuItem("Masked Occlusion Buffer Viewer", nullptr, &showCullingWindow);
             ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
             ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
             ImGui::MenuItem("TESForm Cache", nullptr, &showTESFormWindow);
@@ -201,7 +204,7 @@ namespace ui
 			ImGui::PushItemWidth(-1);
 
 			// Draw the list itself
-			ImGui::ListBoxVector<decltype(settingList)>("##rtbox", "Filter", &iniFilter, settingList, &selectedIndex, [](const decltype(settingList) *Vec, size_t Index)
+			ImGui::ListBoxVector<decltype(settingList)>("##rtbox", "Filter", &iniFilter, &settingList, &selectedIndex, [](const decltype(settingList) *Vec, size_t Index)
 			{
 				return Vec->at(Index)->pKey;
 			}, 16);

@@ -8,6 +8,7 @@
 
 extern LARGE_INTEGER g_FrameDelta;
 extern std::vector<std::pair<ID3D11ShaderResourceView *, std::string>> g_ResourceViews;
+extern ID3D11ShaderResourceView *g_OcclusionTextureSRV;
 
 namespace ui
 {
@@ -149,7 +150,7 @@ namespace ui
 			static int selectedIndex;
 
 			ImGui::PushItemWidth(-1);
-			ImGui::ListBoxVector<decltype(g_ResourceViews)>("##rtbox", "Filter", &rtFilter, g_ResourceViews, &selectedIndex, [](const decltype(g_ResourceViews) *Vec, size_t Index)
+			ImGui::ListBoxVector<decltype(g_ResourceViews)>("##rtbox", "Filter", &rtFilter, &g_ResourceViews, &selectedIndex, [](const decltype(g_ResourceViews) *Vec, size_t Index)
 			{
 				return Vec->at(Index).second.c_str();
 			}, 10);
@@ -157,6 +158,23 @@ namespace ui
 
 			if (selectedIndex != -1 && g_ResourceViews[selectedIndex].first)
 				ImGui::Image((ImTextureID)g_ResourceViews[selectedIndex].first, ImVec2(1024, 768));
+		}
+		ImGui::End();
+		ImGui::PopStyleColor();
+	}
+
+	//
+	// Occlusion culling
+	//
+	void RenderOcclusionCullingMenu()
+	{
+		if (!showCullingWindow)
+			return;
+
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 1));
+		if (ImGui::Begin("Masked Occlusion Buffer Viewer", &showRTViewerWindow))
+		{
+			ImGui::Image((ImTextureID)g_OcclusionTextureSRV, ImVec2(1024, 768));
 		}
 		ImGui::End();
 		ImGui::PopStyleColor();
