@@ -168,13 +168,36 @@ namespace ui
 	//
 	void RenderOcclusionCullingMenu()
 	{
+		static int viewerResolutionIndex;
+		static bool disableViewerUpdates;
+
+		opt::RealtimeOcclusionView = showCullingWindow && !disableViewerUpdates;
+
 		if (!showCullingWindow)
 			return;
 
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 1));
-		if (ImGui::Begin("Masked Occlusion Buffer Viewer", &showRTViewerWindow))
+		if (ImGui::Begin("Masked Occlusion Culling", &showCullingWindow, ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			ImGui::Image((ImTextureID)g_OcclusionTextureSRV, ImVec2(1024, 768));
+			ImGui::Text("Triangles Tested: %lld", ProfileGetDeltaValue("Triangles Tested"));
+			ImGui::Text("Triangles Rendered: %lld", ProfileGetDeltaValue("Triangles Rendered"));
+
+			ProfileGetValue("Triangles Tested");
+			ProfileGetValue("Triangles Rendered");
+
+			ImGui::Spacing();
+			ImGui::Checkbox("Disable Viewer Updates", &disableViewerUpdates);
+			ImGui::Combo("Viewer Resolution", &viewerResolutionIndex, " 640 x 480\0 1024 x 768\0 1920 x 1080\0\0");
+			ImGui::Spacing();
+			ImGui::Text("Viewer");
+			ImGui::Separator();
+
+			switch (viewerResolutionIndex)
+			{
+			default:ImGui::Image((ImTextureID)g_OcclusionTextureSRV, ImVec2(640, 480)); break;
+			case 1: ImGui::Image((ImTextureID)g_OcclusionTextureSRV, ImVec2(1024, 768)); break;
+			case 2: ImGui::Image((ImTextureID)g_OcclusionTextureSRV, ImVec2(1920, 1080)); break;
+			}
 		}
 		ImGui::End();
 		ImGui::PopStyleColor();

@@ -13,6 +13,7 @@ namespace ui::opt
 {
 	bool EnableCache = true;
 	bool LogHitches = true;
+	bool RealtimeOcclusionView = false;
 }
 
 namespace ui

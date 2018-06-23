@@ -77,6 +77,7 @@ public:
 	// @ 0xA0 = Pointer to array of unknown D3D11 objects
 	// @ 0xD0 = BSMap<BSFadeNode, uint32_t>
 	// @ 0x118 = NiPoint3(0.300, 0.300, 0.300)
+	// @ 0x12C = bDrawDecals
 	// @ 0x148 = ShadowSceneNode/NiNode
 	// @ 0x150 = uiRenderMode
 

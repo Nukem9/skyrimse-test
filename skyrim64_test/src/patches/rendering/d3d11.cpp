@@ -519,8 +519,8 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	CD3D11_TEXTURE2D_DESC cpuRenderTargetDescAVX
 	(
 		DXGI_FORMAT_R8G8B8A8_UNORM,
-		1920 * 2, // TODO: round up to full tile sizes
-		1080 / 2,
+		1920, // TODO: round up to full tile sizes
+		1080,
 		1, // Array Size
 		1, // MIP Levels
 		D3D11_BIND_SHADER_RESOURCE,

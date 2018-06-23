@@ -9,6 +9,9 @@
 #include "../BSReadWriteLock.h"
 #include "../MTRenderer.h"
 
+#include "../../../MaskedOcclusionCulling/CullingThreadpool.h"
+#include "../../../MaskedOcclusionCulling/MaskedOcclusionCulling.h"
+
 void BSShaderAccumulator::InitCallbackTable()
 {
 	// If the pointer is null, it defaults to the function at index 0
@@ -111,8 +114,7 @@ bool BSShaderAccumulator::hk_RegisterObjectDispatch(BSGeometry *Geometry, void *
 
 	if (v9 != 0)
 	{
-		uint32_t v9 = 0;
-		__int64 v10 = *(__int64 *)((__int64)shaderProperty + 0x70);
+		__int64 v10 = (__int64)shaderProperty->pLightData;
 
 		if (v10)
 		{
@@ -162,8 +164,329 @@ void BSShaderAccumulator::FinishAccumulating_Normal(BSShaderAccumulator *Accumul
 	BSGraphics::EndEvent();
 }
 
+AutoPtr(BSShaderAccumulator *, ZPrePassAccumulator, 0x3257A68);
+AutoPtr(BSShaderAccumulator *, MainPassAccumulator, 0x3257A70);
+BSShaderAccumulator *currentAccum = nullptr;
+
+MaskedOcclusionCulling *moc1 = nullptr;
+MaskedOcclusionCulling *moc2 = nullptr;
+MaskedOcclusionCulling *mocCurrent = nullptr;
+CullingThreadpool *ctp = nullptr;
+
+void Init()
+{
+	moc1 = MaskedOcclusionCulling::Create();
+	moc1->SetResolution(1920, 1080);
+	moc1->ClearBuffer();
+
+	moc2 = MaskedOcclusionCulling::Create();
+	moc2->SetResolution(1920, 1080);
+	moc2->ClearBuffer();
+
+	mocCurrent = moc1;
+
+	//ctp = new CullingThreadpool(2, 2, 2);
+	//ctp->SetBuffer(moc);
+	//ctp->WakeThreads();
+}
+
+#include "BSShaderUtil.h"
+bool once = false;
+
+uint32_t *hack_convertIndices(void *input, int count, uint32_t maxVertex)
+{
+	uint16_t *in = (uint16_t *)input;
+	uint32_t *out = new uint32_t[count];
+
+	for (int i = 0; i < count; i++)
+	{
+		out[i] = in[i];
+
+		if (out[i] >= maxVertex)
+			__debugbreak();
+	}
+
+	return out;
+}
+
+static void DepthColorize(const float * inFloatArray, char	*outColorArray)
+{
+	int w = 1920;
+	int h = 1080;
+
+	// Find min/max w coordinate (discard cleared pixels)
+	float minW = FLT_MAX, maxW = 0.0f;
+	for (int i = 0; i < w*h; ++i)
+	{
+		if (inFloatArray[i] > 0.0f)
+		{
+			minW = min(minW, inFloatArray[i]);
+			maxW = max(maxW, inFloatArray[i]);
+		}
+	}
+
+	// Tonemap depth values
+	for (int i = 0; i < w*h; ++i)
+	{
+		int intensity = 0;
+		if (inFloatArray[i] > 0)
+			intensity = (unsigned char)(223.0*(inFloatArray[i] - minW) / (maxW - minW) + 32.0);
+
+		outColorArray[i * 4 + 0] = intensity;
+		outColorArray[i * 4 + 1] = intensity;
+		outColorArray[i * 4 + 2] = intensity;
+		outColorArray[i * 4 + 3] = intensity;
+	}
+}
+
+bool thingy;
+bool dohack = false;
+
+float *convertVerts(float *in, uint32_t count, uint32_t stride)
+{
+	uintptr_t data = (uintptr_t)(new float[count * 4]);
+	uintptr_t base = data;
+	uintptr_t uin = (uintptr_t)in;
+
+	for (uint32_t i = 0; i < count; i++)
+	{
+		memcpy((void *)data, (void *)uin, 3 * sizeof(float));
+		*(float *)(data + 12) = 1.0f;
+
+		for (int j = 0; j < 4; j++)
+		{
+			if (std::isnan(*(float *)(data + 4 * j)) ||
+				!std::isfinite(*(float *)(data + 4 * j)) ||
+				*(float *)(data + 4 * j) > 50000.0f ||
+				*(float *)(data + 4 * j) < -50000.0f)
+				__debugbreak();
+		}
+		
+		data += 4 * sizeof(float);
+		uin += stride;
+	}
+
+	return (float *)base;
+}
+
+#include <d3dcompiler.h>
+
+ID3DBlob *myTestVertexShaderBlob;
+ID3D11VertexShader *myTestVertexShader;
+ID3D11InputLayout *myTestInputLayout;
+
+ID3DBlob *myTestPixelShaderBlob;
+ID3D11PixelShader *myTestPixelShader;
+
+void InitTest()
+{
+	auto renderer = BSGraphics::Renderer::GetGlobals();
+
+	{
+		static const char* vertexShader =
+            "struct VS_INPUT\
+            {\
+            float4 pos : POSITION;\
+            };\
+            \
+            struct PS_INPUT\
+            {\
+            float4 pos : SV_POSITION;\
+            };\
+            \
+            PS_INPUT main(VS_INPUT input)\
+            {\
+            PS_INPUT output;\
+            output.pos = input.pos;\
+            return output;\
+            }";
+
+		D3DCompile(vertexShader, strlen(vertexShader), NULL, NULL, NULL, "main", "vs_5_0", 0, 0, &myTestVertexShaderBlob, NULL);
+		if (myTestVertexShaderBlob == NULL)
+			Assert(false);
+		if (renderer->m_Device->CreateVertexShader(myTestVertexShaderBlob->GetBufferPointer(), myTestVertexShaderBlob->GetBufferSize(), NULL, &myTestVertexShader) != S_OK)
+			Assert(false);
+
+		// Create the input layout
+		D3D11_INPUT_ELEMENT_DESC local_layout[] = {
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT,   0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		};
+		if (renderer->m_Device->CreateInputLayout(local_layout, 1, myTestVertexShaderBlob->GetBufferPointer(), myTestVertexShaderBlob->GetBufferSize(), &myTestInputLayout) != S_OK)
+			Assert(false);
+
+	}
+
+	{
+		static const char* pixelShader =
+			"struct PS_INPUT\
+            {\
+            float4 pos : SV_POSITION;\
+            };\
+            \
+            float4 main(PS_INPUT input) : SV_Target\
+            {\
+			return (1.0f - input.pos.z) * 10.0f; \
+            }";
+
+		D3DCompile(pixelShader, strlen(pixelShader), NULL, NULL, NULL, "main", "ps_5_0", 0, 0, &myTestPixelShaderBlob, NULL);
+		if (myTestPixelShaderBlob == NULL)
+			Assert(false);
+		if (renderer->m_Device->CreatePixelShader(myTestPixelShaderBlob->GetBufferPointer(), myTestPixelShaderBlob->GetBufferSize(), NULL, &myTestPixelShader) != S_OK)
+			Assert(false);
+	}
+}
+
+bool RegisterGeo(BSGeometry *Geometry)
+{
+	if (!dohack)
+		return true;
+
+	BSShaderProperty *shaderProperty = Geometry->QShaderProperty();
+
+	if (Geometry->QType() == GEOMETRY_TYPE_TRISHAPE && *(uintptr_t *)(shaderProperty) == (g_ModuleBase + 0x18773F0))
+	{
+		Assert(Geometry->IsTriShape());
+
+		auto triShape = static_cast<BSTriShape *>(Geometry);
+		auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
+
+		if (rendererData && rendererData->m_RawIndexData && triShape->m_TriangleCount > 1)
+		{
+			//
+			// float X +0x0
+			// float Y +0x4
+			// float Z +0x8
+			// float W +0xC
+			//
+			MaskedOcclusionCulling::VertexLayout vertexLayout(BSGeometry::CalculateVertexSize(rendererData->m_VertexDesc), 0x4, 0xC);
+
+			Assert(BSGeometry::CalculateVertexAttributeOffset(rendererData->m_VertexDesc, 0) == 0);
+			Assert(BSGeometry::HasVertexAttribute(rendererData->m_VertexDesc, 0));
+			Assert(vertexLayout.mStride >= 16);
+
+			using namespace DirectX;
+
+			D3D11_BUFFER_DESC desc;
+			rendererData->m_IndexBuffer->GetDesc(&desc);
+			Assert((desc.ByteWidth / sizeof(uint16_t)) == (triShape->m_TriangleCount * 3));
+
+			rendererData->m_VertexBuffer->GetDesc(&desc);
+			uint32_t vertCount = desc.ByteWidth / vertexLayout.mStride;
+
+			XMMATRIX World = BSShaderUtil::GetXMFromNi(triShape->GetWorldTransform());
+			XMMATRIX ViewProj = BSGraphics::Renderer::GetGlobals()->m_ViewProjMat;
+			DirectX::XMMATRIX worldViewProj = DirectX::XMMatrixMultiply(World, ViewProj);
+
+
+			auto renderer = BSGraphics::Renderer::GetGlobals();
+			UINT stride = 16;// BSGeometry::CalculateVertexSize(rendererData->m_VertexDesc);//16;// bytes
+
+			// vertex data upload
+			float *vertexRawData;
+			uint32_t vertexOffset;
+			{
+				vertexRawData = convertVerts((float *)rendererData->m_RawVertexData, vertCount, vertexLayout.mStride);
+
+				if (!vertexRawData)
+					return true;
+
+
+				mocCurrent->TransformVertices((float *)&worldViewProj, (float *)vertexRawData, vertexRawData, vertCount, MaskedOcclusionCulling::VertexLayout(16, 4, 8));
+
+				uint32_t vertexSize = vertCount * sizeof(float) * 4;
+
+				//void *vertdata = renderer->MapDynamicBuffer(vertexSize, &vertexOffset);
+				//memcpy(vertdata, vertexRawData, vertexSize);
+				//renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
+
+			}
+
+			// index data upload
+			uint32_t *indexRawData;
+			uint32_t indexOffset;
+			{
+				indexRawData = hack_convertIndices((uint16_t *)rendererData->m_RawIndexData, triShape->m_TriangleCount * 3, vertCount);
+
+				uint32_t indexSize = ((triShape->m_TriangleCount * 3 * sizeof(uint32_t)) + 15) & ~15;
+
+				//void *inddata = renderer->MapDynamicBuffer(indexSize, &indexOffset);
+				//memcpy(inddata, indexRawData, indexSize);
+				//renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
+			}
+			
+			// draw
+			/*
+			renderer->m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			renderer->SetVertexDescription(rendererData->m_VertexDesc);
+			renderer->SyncD3DState(false);
+
+			renderer->m_DeviceContext->IASetInputLayout(myTestInputLayout);
+			renderer->m_DeviceContext->VSSetShader(myTestVertexShader, nullptr, 0);
+			renderer->m_DeviceContext->PSSetShader(myTestPixelShader, nullptr, 0);
+
+			renderer->m_DeviceContext->IASetVertexBuffers(0, 1, &renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], &stride, &vertexOffset);
+			renderer->m_DeviceContext->IASetIndexBuffer(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], DXGI_FORMAT_R32_UINT, indexOffset);
+			renderer->m_DeviceContext->DrawIndexed(3 * triShape->m_TriangleCount, 0, 0);
+			*/
+
+			MaskedOcclusionCulling *mocOther = moc1;
+			if (mocCurrent == moc1)
+				mocOther = moc2;
+
+			//if (shaderProperty->GetFlag(BSShaderProperty::BSSP_VERTEX_ALPHA))
+			if (!Geometry->QAlphaProperty() || !Geometry->QAlphaProperty()->GetAlphaTesting())
+			{
+				mocCurrent->RenderTriangles(
+					vertexRawData,
+					indexRawData,
+					triShape->m_TriangleCount,
+					nullptr,
+					MaskedOcclusionCulling::BACKFACE_CW,
+					MaskedOcclusionCulling::CLIP_PLANE_SIDES,
+					MaskedOcclusionCulling::VertexLayout(16, 4, 8));
+			}
+
+			auto r = mocOther->TestTriangles(
+				vertexRawData,
+				indexRawData,
+				triShape->m_TriangleCount,
+				nullptr,
+				MaskedOcclusionCulling::BACKFACE_CW,
+				MaskedOcclusionCulling::CLIP_PLANE_SIDES,
+				MaskedOcclusionCulling::VertexLayout(16, 4, 8));
+
+			ProfileCounterAdd("Triangles Tested", triShape->m_TriangleCount);
+
+			if (r == MaskedOcclusionCulling::VISIBLE)
+				ProfileCounterAdd("Triangles Rendered", triShape->m_TriangleCount);
+
+			delete[] vertexRawData;
+			delete[] indexRawData;
+
+			if (r != MaskedOcclusionCulling::VISIBLE)
+				return false;
+
+			return true;
+		}
+	}
+
+	return true;
+}
+
+extern ID3D11Texture2D *g_OcclusionTexture;
+extern ID3D11ShaderResourceView *g_OcclusionTextureSRV;
+
+static char *mpGPUDepthBuf = (char*)_aligned_malloc(sizeof(char) * ((1920 * 1080 * 4 + 31) & 0xFFFFFFE0), 32);
+
 void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
+	if (!once)
+	{
+		once = true;
+		InitTest();
+		Init();
+	}
+
 	if (!Accumulator->m_pkCamera)
 		return;
 
@@ -180,6 +503,26 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 
 	if (!v7)
 		ApplySceneDepthShift();
+
+	if (Accumulator == MainPassAccumulator)
+	{
+		if (ui::opt::RealtimeOcclusionView)
+		{
+			float *pixels = new float[1920 * 1080];
+			mocCurrent->ComputePixelDepthBuffer(pixels, false);
+			DepthColorize(pixels, mpGPUDepthBuf);
+			BSGraphics::Renderer::GetGlobals()->m_DeviceContext->UpdateSubresource(g_OcclusionTexture, 0, nullptr, mpGPUDepthBuf, 1920 * 4, 0);
+			delete[] pixels;
+		}
+
+		if (mocCurrent == moc1)
+			mocCurrent = moc2;
+		else
+			mocCurrent = moc1;
+
+		mocCurrent->ClearBuffer();
+		dohack = true;
+	}
 
 	//
 	// Original draw order:
@@ -248,6 +591,9 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 				ResetSceneDepthShift();
 		}
 		renderer->EndEvent();
+
+		if (Accumulator == MainPassAccumulator)
+			dohack = false;
 	}
 
 	// RenderSky
