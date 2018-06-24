@@ -45,6 +45,24 @@ static constexpr uint32_t crc_table[256] =
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
+template<int size, int idx = 0, class dummy = void>
+struct XCRCCalculate
+{
+	static constexpr unsigned int crc32(const char *str, unsigned int prev_crc = 0xFFFFFFFF)
+	{
+		return XCRCCalculate<size, idx + 1>::crc32(str, (prev_crc >> 8) ^ crc_table[(prev_crc ^ str[idx]) & 0xFF]);
+	}
+};
+
+template<int size, class dummy>
+struct XCRCCalculate<size, size, dummy>
+{
+	static constexpr unsigned int crc32(const char *str, unsigned int prev_crc = 0xFFFFFFFF)
+	{
+		return prev_crc ^ 0xFFFFFFFF;
+	}
+};
+
 constexpr uint32_t CRC32(const char *in)
 {
 	uint32_t crc = 0xFFFFFFFF;
@@ -70,7 +88,5 @@ extern std::array<Entry, MaxEntries> GlobalCounters;
 extern std::unordered_map<uint32_t, Entry *> LookupMap;
 extern int64_t CpuFrequency;
 
-constexpr uint32_t CRC32Index(const char *in)
-{
-	return CRC32(in) % MaxEntries;
-}
+#define COMPILE_TIME_CRC32_STR(x) (Profiler::Internal::XCRCCalculate<sizeof(x)-1>::crc32(x))
+#define COMPILE_TIME_CRC32_INDEX(x) (COMPILE_TIME_CRC32_STR(x) % Profiler::Internal::MaxEntries)
