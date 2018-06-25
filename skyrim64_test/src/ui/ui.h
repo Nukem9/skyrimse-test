@@ -20,6 +20,9 @@ namespace ui
 	extern bool showFrameStatsWindow;
 	extern bool showRTViewerWindow;
 	extern bool showCullingWindow;
+	extern bool showScenegraphWorldWindow;
+	extern bool showSceneGraphMenuWindow;
+	extern bool showSceneGraphMenu3DWindow;
 
 	void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext);
 	void HandleInput(HWND Wnd, UINT Msg, WPARAM wParam, LPARAM lParam);

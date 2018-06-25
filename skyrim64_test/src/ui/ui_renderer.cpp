@@ -3,6 +3,7 @@
 #include "../patches/TES/Setting.h"
 #include "../patches/rendering/GpuTimer.h"
 #include "../patches/TES/BSShader/BSShaderRenderTargets.h"
+#include "../patches/TES/NiMain/NiNode.h"
 #include "imgui_ext.h"
 #include "ui.h"
 
@@ -201,5 +202,96 @@ namespace ui
 		}
 		ImGui::End();
 		ImGui::PopStyleColor();
+	}
+
+	//
+	// Scene graphs
+	//
+	AutoPtr(NiNode *, WorldScenegraph, 0x2F4CE30);
+	AutoPtr(NiNode *, MenuScenegraph, 0x2F4CE38);
+	AutoPtr(NiNode *, Menu3DScenegraph, 0x2F4CE40);
+
+	void EnumerateSceneTree(NiAVObject *Object, bool Tree, bool ForceEnable, bool ForceDisable)
+	{
+		if (!Object)
+			return;
+
+		bool wasCulled = Object->GetAppCulled();
+		bool forceEnableCull = ForceEnable;
+		bool forceDisableCull = ForceDisable;
+
+		const NiNode *node = Object->IsNode();
+
+		char displayStr[256];
+		sprintf_s(displayStr, "%s \"%s\" [%d]", Object->GetRTTI()->GetName(), Object->GetName()->c_str(), node ? node->GetChildCount() : 0);
+
+		if (wasCulled)
+		{
+			strcat_s(displayStr, " [Culled]");
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+		}
+
+		// Tree view with dropdown arrow
+		bool treeIsOpen = Tree && ImGui::TreeNode(Object, displayStr);
+
+		// Context menu
+		if (Tree && ImGui::BeginPopupContextItem())
+		{
+			if (ImGui::Selectable("Toggle culling"))
+				Object->SetAppCulled(!wasCulled);
+
+			if (ImGui::Selectable("Enable culling recursively"))
+				forceEnableCull = true;
+
+			if (ImGui::Selectable("Disable culling recursively"))
+				forceDisableCull = true;
+
+			ImGui::EndPopup();
+		}
+
+		if (forceEnableCull)
+			Object->SetAppCulled(true);
+		else if (forceDisableCull)
+			Object->SetAppCulled(false);
+
+		// Recursively enumerate child nodes
+		if (node)
+		{
+			for (uint32_t i = 0; i < node->GetArrayCount(); i++)
+				EnumerateSceneTree(node->GetAt(i), treeIsOpen, forceEnableCull, forceDisableCull);
+		}
+
+		if (treeIsOpen)
+			ImGui::TreePop();
+
+		if (wasCulled)
+			ImGui::PopStyleColor();
+	}
+
+	void RenderSceneGraphWindows()
+	{
+		if (showScenegraphWorldWindow)
+		{
+			if (ImGui::Begin("World Scene Graph", &showScenegraphWorldWindow))
+				EnumerateSceneTree(WorldScenegraph, true, false, false);
+
+			ImGui::End();
+		}
+
+		if (showSceneGraphMenuWindow)
+		{
+			if (ImGui::Begin("Menu Scene Graph", &showSceneGraphMenuWindow))
+				EnumerateSceneTree(MenuScenegraph, true, false, false);
+
+			ImGui::End();
+		}
+
+		if (showSceneGraphMenu3DWindow)
+		{
+			if (ImGui::Begin("Menu3D Scene Graph", &showSceneGraphMenu3DWindow))
+				EnumerateSceneTree(Menu3DScenegraph, true, false, false);
+
+			ImGui::End();
+		}
 	}
 }

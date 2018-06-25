@@ -29,6 +29,9 @@ namespace ui
 	bool showFrameStatsWindow;
 	bool showRTViewerWindow;
 	bool showCullingWindow;
+	bool showScenegraphWorldWindow;
+	bool showSceneGraphMenuWindow;
+	bool showSceneGraphMenu3DWindow;
 
     char *format_commas(int64_t n, char *out)
     {
@@ -91,6 +94,7 @@ namespace ui
 			RenderFrameStatistics();
 			RenderRenderTargetMenu();
 			RenderOcclusionCullingMenu();
+			RenderSceneGraphWindows();
 
             RenderSynchronization();
             RenderTESFormCache();
@@ -151,7 +155,10 @@ namespace ui
 			ImGui::MenuItem("Masked Occlusion Buffer Viewer", nullptr, &showCullingWindow);
             ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
             ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
-            ImGui::MenuItem("TESForm Cache", nullptr, &showTESFormWindow);
+			ImGui::MenuItem("TESForm Cache", nullptr, &showTESFormWindow);
+			ImGui::MenuItem("World Scene Graph", nullptr, &showScenegraphWorldWindow);
+			ImGui::MenuItem("Menu Scene Graph", nullptr, &showSceneGraphMenuWindow);
+			ImGui::MenuItem("Menu3D Scene Graph", nullptr, &showSceneGraphMenu3DWindow);
             ImGui::EndMenu();
         }
 
