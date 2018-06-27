@@ -31,28 +31,28 @@ static_assert(sizeof(NiRTTI) == 0x10);
 class NiObject : public NiRefObject
 {
 public:
-	virtual const NiRTTI *GetRTTI();
+	virtual const NiRTTI *GetRTTI() const;
 
-	virtual const NiNode						*IsNode();
-	virtual class NiSwitchNode					*IsSwitchNode();
-	virtual class BSFadeNode					*IsFadeNode();
-	virtual class BSMultiBoundNode				*IsMultiBoundNode();
-	virtual class BSGeometry					*IsGeometry();
-	virtual class NiTriStrips					*IsTriStrips();
-	virtual class BSTriShape					*IsTriShape();
-	virtual class BSSegmentedTriShape			*IsSegmentedTriShape();
-	virtual class BSSubIndexTriShape			*IsSubIndexTriShape();
-	virtual class BSDynamicTriShape				*IsDynamicTriShape();
-	virtual class NiGeometry					*IsNiGeometry();
-	virtual class NiTriBasedGeom				*IsNiTriBasedGeom();
-	virtual class NiTriShape					*IsNiTriShape();
-	virtual class NiParticles					*IsParticlesGeom();
-	virtual void								*IsLinesGeom();
-	virtual class bhkNiCollisionObject			*IsBhkNiCollisionObject();
-	virtual class bhkBlendCollisionObject		*IsBhkBlendCollisionObject();
-	virtual void								*IsUnknown1();
-	virtual class bhkRigidBody					*IsBhkRigidBody();
-	virtual class bhkLimitedHingeConstraint		*IsBhkLimitedHingeConstraint();
+	virtual const NiNode						*IsNode() const;
+	virtual class NiSwitchNode					*IsSwitchNode() const;
+	virtual class BSFadeNode					*IsFadeNode() const;
+	virtual class BSMultiBoundNode				*IsMultiBoundNode() const;
+	virtual class BSGeometry					*IsGeometry() const;
+	virtual class NiTriStrips					*IsTriStrips() const;
+	virtual class BSTriShape					*IsTriShape() const;
+	virtual class BSSegmentedTriShape			*IsSegmentedTriShape() const;
+	virtual class BSSubIndexTriShape			*IsSubIndexTriShape() const;
+	virtual class BSDynamicTriShape				*IsDynamicTriShape() const;
+	virtual class NiGeometry					*IsNiGeometry() const;
+	virtual class NiTriBasedGeom				*IsNiTriBasedGeom() const;
+	virtual class NiTriShape					*IsNiTriShape() const;
+	virtual class NiParticles					*IsParticlesGeom() const;
+	virtual void								*IsLinesGeom() const;
+	virtual class bhkNiCollisionObject			*IsBhkNiCollisionObject() const;
+	virtual class bhkBlendCollisionObject		*IsBhkBlendCollisionObject() const;
+	virtual void								*IsUnknown1() const;
+	virtual class bhkRigidBody					*IsBhkRigidBody() const;
+	virtual class bhkLimitedHingeConstraint		*IsBhkLimitedHingeConstraint() const;
 
 	virtual NiObject *CreateClone(NiCloningProcess &);
 	virtual void LoadBinary(NiStream &);

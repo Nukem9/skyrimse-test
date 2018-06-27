@@ -77,7 +77,7 @@ void BGSDistantTreeBlock::UpdateLODAlphaFade(ResourceData *Data)
 			{
 				NiNode *node = treeReference->GetNiNode();
 
-				if (node && !node->GetAppCulled() && treeReference->GetParentCell()->IsAttached())
+				if (node && !node->QAppCulled() && treeReference->GetParentCell()->IsAttached())
 				{
 					if (bEnableStippleFade->uValue.b)
 					{

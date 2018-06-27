@@ -172,6 +172,8 @@
     <ClInclude Include="src\patches\TES\BSThread_Win32.h" />
     <ClInclude Include="src\patches\TES\BSTScatterTable.h" />
     <ClInclude Include="src\patches\TES\MemoryContextTracker.h" />
+    <ClInclude Include="src\patches\TES\NiMain\BSMultiBoundNode.h" />
+    <ClInclude Include="src\patches\TES\NiMain\BSNiNode.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSTriShape.h" />
     <ClInclude Include="src\patches\TES\NiMain\common.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h" />
