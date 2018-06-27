@@ -6,6 +6,22 @@ struct BSFixedString
 {
 	void *ptr;
 
+	BSFixedString(const char *String)
+	{
+		((void(*)(BSFixedString&, const char *))(g_ModuleBase + 0xC28280))(*this, String);
+	}
+
+	~BSFixedString()
+	{
+		((void(*)(BSFixedString&))(g_ModuleBase + 0xC283D0))(*this);
+	}
+
+	BSFixedString& operator= (BSFixedString &Other)
+	{
+		((void(*)(BSFixedString&, BSFixedString&))(g_ModuleBase + 0xC284B0))(*this, Other);
+		return *this;
+	}
+
 	const char *c_str() const
 	{
 		return (const char *)ptr;
@@ -23,6 +39,11 @@ public:
 	const BSFixedString *GetName()
 	{
 		return &m_kName;
+	}
+
+	void SetName(BSFixedString& Name)
+	{
+		m_kName = Name;
 	}
 };
 static_assert(sizeof(NiObjectNET) == 0x30);

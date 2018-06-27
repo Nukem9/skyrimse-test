@@ -216,7 +216,7 @@ namespace ui
 		if (!Object)
 			return;
 
-		bool wasCulled = Object->GetAppCulled();
+		bool wasCulled = Object->QAppCulled();
 		bool forceEnableCull = ForceEnable;
 		bool forceDisableCull = ForceDisable;
 
@@ -247,6 +247,49 @@ namespace ui
 				forceDisableCull = true;
 
 			ImGui::EndPopup();
+		}
+
+		if (treeIsOpen)
+		{
+			if (ImGui::TreeNode("Attributes"))
+			{
+				ImGui::Text("Object = 0x%p", Object);
+				ImGui::Text("World Translate = (%g, %g, %g)",
+					Object->m_kWorld.m_Translate.x,
+					Object->m_kWorld.m_Translate.y,
+					Object->m_kWorld.m_Translate.z);
+				ImGui::Text("World Bound = (%g, %g, %g) %g",
+					Object->m_kWorldBound.m_kCenter.x,
+					Object->m_kWorldBound.m_kCenter.y,
+					Object->m_kWorldBound.m_kCenter.z,
+					Object->m_kWorldBound.m_fRadius);
+
+				if (BSMultiBoundNode *multiBoundNode = Object->IsMultiBoundNode())
+				{
+					if (multiBoundNode->spMultiBound && multiBoundNode->spMultiBound->spShape)
+					{
+						auto shape = multiBoundNode->spMultiBound->spShape;
+
+						if (!strcmp(shape->GetRTTI()->GetName(), "BSMultiBoundAABB"))
+						{
+							auto aabb = static_cast<BSMultiBoundAABB *>(shape);
+
+							ImGui::Text("-- BSMultiBoundAABB --");
+
+							ImGui::Text("Center = (%g, %g, %g)",
+								aabb->m_kCenter.x,
+								aabb->m_kCenter.y,
+								aabb->m_kCenter.z);
+							ImGui::Text("Half Extents = (%g, %g, %g)",
+								aabb->m_kHalfExtents.x,
+								aabb->m_kHalfExtents.y,
+								aabb->m_kHalfExtents.z);
+						}
+					}
+				}
+
+				ImGui::TreePop();
+			}
 		}
 
 		if (forceEnableCull)

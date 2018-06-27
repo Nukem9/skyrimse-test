@@ -1,5 +1,7 @@
 #pragma once
 
+#include "NiMain/NiNode.h"
+
 class BaseFormComponent;
 class TESForm;
 class TESObjectREFR;
@@ -67,7 +69,8 @@ public:
 	virtual void VFunc47();
 	virtual void VFunc48();
 	virtual void VFunc49();
-	virtual void VFunc50();
+	//virtual void VFunc50();
+	virtual const char *GetFormName();
 	virtual void VFunc51();
 	virtual void VFunc52();
 	virtual void VFunc53();
@@ -159,6 +162,78 @@ public:
 	{
 		return *(uint8_t *)((__int64)this + 0x44) == 7;
 	}
+
+	bool IsInterior()
+	{
+		return (*(uint8_t *)((__int64)this + 64) & 1) != 0;
+	}
+
+	int GetGridX()
+	{
+		__int64 v11 = *(__int64 *)((__int64)this + 96);
+
+		if (v11)
+			return *(int *)v11;
+
+		return 0;
+	}
+
+	int GetGridY()
+	{
+		__int64 v11 = *(__int64 *)((__int64)this + 96);
+
+		if (v11)
+			return *(int *)(v11 + 4);
+
+		return 0;
+	}
+
+	NiNode *hk_CreateRootMultiBoundNode()
+	{
+		// Created on demand if pointer is null
+		NiNode *node = (this->*CreateRootMultiBoundNode)();
+
+		if (node)
+		{
+			static BSFixedString bsActorNode("ActorNode");
+			static BSFixedString bsMarkerNode("MarkerNode");
+			static BSFixedString bsLightMarkerNode("LightMarker Node");
+			static BSFixedString bsSoundMarkerNode("SoundMarker Node");
+			static BSFixedString bsLandNode("LandNode");
+			static BSFixedString bsStaticNode("StaticNode");
+			static BSFixedString bsDynamicNode("DynamicNode");
+			static BSFixedString bsOcclusionPlaneNode("OcclusionPlane Node");
+			static BSFixedString bsPortalNode("Portal Node");
+			static BSFixedString bsMultiBoundNode("MultiBoundNode Node");
+			static BSFixedString bsCollisionNode("Collision Node");
+
+			char cellName[256];
+
+			if (IsInterior())
+				sprintf_s(cellName, "Cell \"%s\" (Interior)", GetFormName());
+			else
+				sprintf_s(cellName, "Cell \"%s\" (%d, %d)", GetFormName(), GetGridX(), GetGridY());
+
+			node->SetName(BSFixedString(cellName));
+			node->GetAt(0)->SetName(bsActorNode);
+
+			node->GetAt(1)->SetName(bsMarkerNode);
+			static_cast<NiNode *>(node->GetAt(1))->GetAt(0)->SetName(bsLightMarkerNode);
+			static_cast<NiNode *>(node->GetAt(1))->GetAt(1)->SetName(bsSoundMarkerNode);
+
+			node->GetAt(2)->SetName(bsLandNode);
+			node->GetAt(3)->SetName(bsStaticNode);
+			node->GetAt(4)->SetName(bsDynamicNode);
+			node->GetAt(5)->SetName(bsOcclusionPlaneNode);
+			node->GetAt(6)->SetName(bsPortalNode);
+			node->GetAt(7)->SetName(bsMultiBoundNode);
+			node->GetAt(8)->SetName(bsCollisionNode);
+		}
+
+		return node;
+	}
+
+	inline static decltype(&hk_CreateRootMultiBoundNode) CreateRootMultiBoundNode;
 };
 
 STATIC_CONSTRUCTOR(CheckTESForm, []
