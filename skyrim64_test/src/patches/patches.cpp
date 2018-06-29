@@ -89,6 +89,21 @@ void Patch_TESV()
 	TestHook5();// BSLightingShader
 
 	//
+	// BGSDistantTreeBlock
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x4A8360), &BGSDistantTreeBlock::UpdateLODAlphaFade);
+
+	//
+	// Temporary hack to fix array overflow in BSParticleShader::SetupGeometry
+	//
+	uint32_t test = 0x2000;
+	PatchMemory(g_ModuleBase + 0x02493CC + 1, (PBYTE)&test, sizeof(uint32_t));
+	PatchMemory(g_ModuleBase + 0x0249374 + 1, (PBYTE)&test, sizeof(uint32_t));
+
+	test = 100;
+	PatchMemory(g_ModuleBase + 0x02494A8 + 2, (PBYTE)&test, sizeof(uint32_t));
+
+	//
 	// Misc
 	//
 	ExperimentalPatchEmptyFunctions();
@@ -106,6 +121,8 @@ void Patch_TESV()
 	PatchMemory(g_ModuleBase + 0x12AE2DD, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);	// Kill jnz
 	PatchMemory(g_ModuleBase + 0x12AE2E8, (PBYTE)"\x80\xBD\x11\x02\x00\x00\x00", 7);// Rewrite to 'cmp byte ptr [rbp+211h], 0'
 	PatchMemory(g_ModuleBase + 0x12AE2EF, (PBYTE)"\x90\x90\x90\x90", 4);			// Extra rewrite padding
+
+	*(PBYTE *)&TESObjectCell::CreateRootMultiBoundNode = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x264230), &TESObjectCell::hk_CreateRootMultiBoundNode);
 }
 
 void Patch_TESVCreationKit()

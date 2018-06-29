@@ -18,8 +18,12 @@ HMODULE g_DllVTune;
 HMODULE g_DllDXGI;
 HMODULE g_DllD3D11;
 
+bool g_IsCreationKit;
+
 void once();
 void DoHook();
+void Patch_TESV();
+void Patch_TESVCreationKit();
 
 void LoadModules()
 {

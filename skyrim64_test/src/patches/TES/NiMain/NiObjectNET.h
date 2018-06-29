@@ -36,7 +36,7 @@ public:
 	BSFixedString m_kName;
 	char _pad[0x18];
 
-	const BSFixedString *GetName()
+	const BSFixedString *GetName() const
 	{
 		return &m_kName;
 	}
