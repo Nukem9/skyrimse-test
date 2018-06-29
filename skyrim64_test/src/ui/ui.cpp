@@ -14,6 +14,10 @@ namespace ui::opt
 	bool EnableCache = true;
 	bool LogHitches = true;
 	bool RealtimeOcclusionView = false;
+	bool EnableOcclusionTesting = true;
+	bool EnableOccluderRendering = true;
+	float OccluderMaxDistance = 15000.0f;
+	float OccluderFirstLevelMinSize = 550.0f;
 }
 
 namespace ui
@@ -83,9 +87,29 @@ namespace ui
 		ImGui_ImplWin32_WndProcHandler(Wnd, Msg, wParam, lParam);
     }
 
-    void Render()
+	bool inFrame = false;
+
+	void BeginFrame()
+	{
+		inFrame = true;
+		ImGui_ImplDX11_NewFrame();
+
+		// Draw a fullscreen overlay that renders over the game but not other menus
+		ImGui::SetNextWindowPos(ImVec2(-1000.0f, -1000.0f));
+		ImGui::SetNextWindowSize(ImVec2(1.0f, 1.0f));
+		ImGui::Begin("##InvisiblePreOverlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNav);
+		ImGui::GetWindowDrawList()->PushClipRectFullScreen();
+	}
+
+    void EndFrame()
     {
-        ImGui_ImplDX11_NewFrame();
+		if (!inFrame)
+			return;
+
+		// ##InvisiblePreOverlay
+		ImGui::GetWindowDrawList()->PopClipRect();
+		ImGui::End();
+
         {
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
             RenderMenubar();
@@ -108,6 +132,8 @@ namespace ui
             if (showLogWindow)
                 log::Draw();
         }
+
+		// Finally present everything to the screen
         ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
     }

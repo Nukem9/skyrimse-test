@@ -63,9 +63,9 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 		g_GPUTimers.EndFrame(g_DeviceContext);
 	}
 
-	ui::Render();
-
+	ui::EndFrame();
     HRESULT hr = (This->*ptrPresent)(SyncInterval, Flags);
+	ui::BeginFrame();
 	g_GPUTimers.BeginFrame(g_DeviceContext);
 
 	g_GPUTimers.StartTimer(g_DeviceContext, 0);
