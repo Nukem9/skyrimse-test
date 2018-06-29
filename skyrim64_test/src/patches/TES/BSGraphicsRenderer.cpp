@@ -265,51 +265,51 @@ namespace BSGraphics
 		return &particles;
 	}
 
-	void *Renderer::MapDynamicTriShapeDynamicData(class BSDynamicTriShape *TriShape, DynamicTriShape *GraphicsTriShape, uint32_t Size)
+	void *Renderer::MapDynamicTriShapeDynamicData(BSDynamicTriShape *Shape, DynamicTriShape *ShapeData, DynamicTriShapeDrawData *DrawData, uint32_t VertexSize)
 	{
-		if (Size <= 0)
-			Size = GraphicsTriShape->m_VertexAllocationSize;
+		if (VertexSize <= 0)
+			VertexSize = ShapeData->m_VertexAllocationSize;
 
-		return MapDynamicBuffer(Size, &GraphicsTriShape->m_VertexAllocationOffset);
+		return MapDynamicBuffer(VertexSize, &ShapeData->m_VertexAllocationOffset);
 	}
 
-	void Renderer::UnmapDynamicTriShapeDynamicData(DynamicTriShape *GraphicsTriShape)
+	void Renderer::UnmapDynamicTriShapeDynamicData(DynamicTriShape *Shape, DynamicTriShapeDrawData *DrawData)
 	{
 		m_DeviceContext->Unmap(m_DynamicBuffers[m_CurrentDynamicBufferIndex], 0);
 	}
 
-	void Renderer::DrawDynamicTriShape(DynamicTriShape *GraphicsTriShape, uint32_t StartIndex, uint32_t Count)
+	void Renderer::DrawDynamicTriShape(DynamicTriShape *Shape, DynamicTriShapeDrawData *DrawData, uint32_t IndexStartOffset, uint32_t TriangleCount)
 	{
-		DynamicTriShapeDrawData drawData;
-		drawData.m_IndexBuffer = GraphicsTriShape->m_IndexBuffer;
-		drawData.m_VertexBuffer = GraphicsTriShape->m_VertexBuffer;
-		drawData.m_VertexDesc = GraphicsTriShape->m_VertexDesc;
+		UnknownStruct params;
+		params.m_VertexBuffer = Shape->m_VertexBuffer;
+		params.m_IndexBuffer = Shape->m_IndexBuffer;
+		params.m_VertexDesc = Shape->m_VertexDesc;
 
-		DrawDynamicTriShape(&drawData, StartIndex, Count, GraphicsTriShape->m_VertexAllocationOffset);
+		DrawDynamicTriShape(&params, DrawData, IndexStartOffset, TriangleCount, Shape->m_VertexAllocationOffset);
 	}
 
-	void Renderer::DrawDynamicTriShape(DynamicTriShapeDrawData *DrawData, uint32_t StartIndex, uint32_t Count, uint32_t VertexOffset)
+	void Renderer::DrawDynamicTriShape(UnknownStruct *Params, DynamicTriShapeDrawData *DrawData, uint32_t IndexStartOffset, uint32_t TriangleCount, uint32_t VertexBufferOffset)
 	{
-		SetVertexDescription(DrawData->m_VertexDesc);
+		SetVertexDescription(Params->m_VertexDesc);
 		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		SyncD3DState(false);
 
 		ID3D11Buffer *buffers[2];
-		buffers[0] = DrawData->m_VertexBuffer;
+		buffers[0] = Params->m_VertexBuffer;
 		buffers[1] = m_DynamicBuffers[m_CurrentDynamicBufferIndex];
 
 		UINT strides[2];
-		strides[0] = BSGeometry::CalculateVertexSize(DrawData->m_VertexDesc);
-		strides[1] = BSGeometry::CalculateDyanmicVertexSize(DrawData->m_VertexDesc);
+		strides[0] = BSGeometry::CalculateVertexSize(Params->m_VertexDesc);
+		strides[1] = BSGeometry::CalculateDyanmicVertexSize(Params->m_VertexDesc);
 
 		UINT offsets[2];
 		offsets[0] = 0;
-		offsets[1] = VertexOffset;
+		offsets[1] = VertexBufferOffset;
 
 		m_DeviceContext->IASetVertexBuffers(0, 2, buffers, strides, offsets);
-		m_DeviceContext->IASetIndexBuffer(DrawData->m_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-		m_DeviceContext->DrawIndexed(3 * Count, StartIndex, 0);
+		m_DeviceContext->IASetIndexBuffer(Params->m_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+		m_DeviceContext->DrawIndexed(TriangleCount * 3, IndexStartOffset, 0);
 	}
 
 	void Renderer::DrawParticleShaderTriShape(const void *DynamicData, uint32_t Count)
@@ -320,7 +320,7 @@ namespace BSGraphics
 		void *particleBuffer = MapDynamicBuffer(vertexStride * Count, &vertexOffset);
 
 		memcpy_s(particleBuffer, vertexStride * Count, DynamicData, vertexStride * Count);
-		UnmapDynamicTriShapeDynamicData(nullptr);
+		UnmapDynamicTriShapeDynamicData(nullptr, nullptr);
 
 		// Update flags but don't update the input layout - we use a custom one here
 		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

@@ -261,20 +261,32 @@ namespace BSGraphics
 		uint64_t m_VertexDesc;
 		uint32_t m_VertexAllocationOffset;
 		uint32_t m_VertexAllocationSize;
-		uint32_t m_Unknown3;
+		uint32_t m_RefCount;
 		void *m_Unknown4;
 		void *m_Unknown5;
 	};
+	static_assert(sizeof(DynamicTriShape) == 0x38);
 	static_assert_offset(DynamicTriShape, m_VertexBuffer, 0x0);
 	static_assert_offset(DynamicTriShape, m_IndexBuffer, 0x8);
 	static_assert_offset(DynamicTriShape, m_VertexDesc, 0x10);
 	static_assert_offset(DynamicTriShape, m_VertexAllocationOffset, 0x18);
 	static_assert_offset(DynamicTriShape, m_VertexAllocationSize, 0x1C);
-	static_assert_offset(DynamicTriShape, m_Unknown3, 0x20);
+	static_assert_offset(DynamicTriShape, m_RefCount, 0x20);
 	static_assert_offset(DynamicTriShape, m_Unknown4, 0x28);
 	static_assert_offset(DynamicTriShape, m_Unknown5, 0x30);
 
-	struct DynamicTriShapeDrawData : TriShape
+	struct UnknownStruct
 	{
+		ID3D11Buffer *m_VertexBuffer;
+		ID3D11Buffer *m_IndexBuffer;
+		uint64_t m_VertexDesc;
+	};
+	static_assert_offset(UnknownStruct, m_VertexBuffer, 0x0);
+	static_assert_offset(UnknownStruct, m_IndexBuffer, 0x8);
+	static_assert_offset(UnknownStruct, m_VertexDesc, 0x10);
+
+	struct DynamicTriShapeDrawData
+	{
+		uint32_t m_Unknown;
 	};
 }

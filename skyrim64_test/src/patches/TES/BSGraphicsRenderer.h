@@ -6,6 +6,9 @@
 #include "NiMain/NiTransform.h"
 #include "BSGraphicsTypes.h"
 
+class BSTriShape;
+class BSDynamicTriShape;
+
 namespace BSGraphics::Utility
 {
 	void CopyNiColorAToFloat(float *Floats, const NiColorA& Color);
@@ -43,10 +46,10 @@ namespace BSGraphics
 		void DrawTriShape(TriShape *GraphicsTriShape, uint32_t StartIndex, uint32_t Count);
 
 		DynamicTriShape *GetParticlesDynamicTriShape();
-		void *MapDynamicTriShapeDynamicData(class BSDynamicTriShape *TriShape, DynamicTriShape *GraphicsTriShape, uint32_t Size);
-		void UnmapDynamicTriShapeDynamicData(DynamicTriShape *GraphicsTriShape);
-		void DrawDynamicTriShape(DynamicTriShape *GraphicsTriShape, uint32_t StartIndex, uint32_t Count);
-		void DrawDynamicTriShape(DynamicTriShapeDrawData *DrawData, uint32_t StartIndex, uint32_t Count, uint32_t VertexOffset);
+		void *MapDynamicTriShapeDynamicData(BSDynamicTriShape *Shape, DynamicTriShape *ShapeData, DynamicTriShapeDrawData *DrawData, uint32_t VertexSize);
+		void UnmapDynamicTriShapeDynamicData(DynamicTriShape *Shape, DynamicTriShapeDrawData *DrawData);
+		void DrawDynamicTriShape(DynamicTriShape *Shape, DynamicTriShapeDrawData *DrawData, uint32_t IndexStartOffset, uint32_t TriangleCount);
+		void DrawDynamicTriShape(UnknownStruct *Params, DynamicTriShapeDrawData *DrawData, uint32_t IndexStartOffset, uint32_t TriangleCount, uint32_t VertexBufferOffset);
 
 		void DrawParticleShaderTriShape(const void *DynamicData, uint32_t Count);
 
@@ -114,6 +117,14 @@ namespace BSGraphics
 		void ApplyConstantGroupVS(const CustomConstantGroup *Group, ConstantGroupLevel Level);
 		void ApplyConstantGroupPS(const CustomConstantGroup *Group, ConstantGroupLevel Level);
 		void ApplyConstantGroupVSPS(const ConstantGroup<VertexShader> *VertexGroup, const ConstantGroup<PixelShader> *PixelGroup, ConstantGroupLevel Level);
+
+		//
+		// Geometry
+		//
+		void IncRef(TriShape *Shape);
+		void DecRef(TriShape *Shape);
+		void IncRef(DynamicTriShape *Shape);
+		void DecRef(DynamicTriShape *Shape);
 
 		struct
 		{

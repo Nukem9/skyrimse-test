@@ -1,7 +1,9 @@
 #include "../common.h"
 #include "dinput8.h"
+#include "TES/TESForm.h"
 #include "TES/BSReadWriteLock.h"
 #include "TES/BGSDistantTreeBlock.h"
+#include "TES/BSGraphicsRenderer.h"
 #include "TES/BSShader/BSShaderManager.h"
 #include "TES/BSShader/Shaders/BSBloodSplatterShader.h"
 #include "TES/BSShader/Shaders/BSDistantTreeShader.h"
@@ -62,9 +64,12 @@ void Patch_TESV()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07180), &BSAutoReadAndWriteLock::Deinitialize);
 
 	//
-	// BGSDistantTreeBlock
+	// BSGraphicsRenderer
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x4A8360), &BGSDistantTreeBlock::UpdateLODAlphaFade);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>((PBYTE)(g_ModuleBase + 0x133EC20), &BSGraphics::Renderer::IncRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>((PBYTE)(g_ModuleBase + 0xD6B9B0), &BSGraphics::Renderer::DecRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0x133ED50), &BSGraphics::Renderer::IncRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0xD6C7D0), &BSGraphics::Renderer::DecRef);
 
 	//
 	// Shaders

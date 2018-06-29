@@ -576,21 +576,30 @@ void BSBatchRenderer::DrawPassCustom(BSRenderPass *Pass, bool AlphaTest, uint32_
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
+#include "MOC.h"
+
+AutoPtr(uint32_t, dword_1430528DC, 0x30528DC);
+
 void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	BSGeometry *geometry = Pass->m_Geometry;
 
+	if (!MOC::RegisterGeo(geometry, true, false))
+		return;
+
 	switch (geometry->QType())
 	{
 	case GEOMETRY_TYPE_PARTICLES:
 	{
+		int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
+
 		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
 		sub_14131DDF0(Pass);
 		return;
 
 		// NiParticles::GetActiveVertexCount
-		int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
+		//int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
 
 		particleCount = min(particleCount, 2048);
 
@@ -600,16 +609,18 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 
 		if (particleCount > 0)
 		{
-			BSGraphics::DynamicTriShape *triInfo = renderer->GetParticlesDynamicTriShape();
-			void *map = renderer->MapDynamicTriShapeDynamicData(nullptr, triInfo, 4 * particleCount * geometry->GetDynamicVertexSize());
+			BSGraphics::DynamicTriShapeDrawData drawData;
+			BSGraphics::DynamicTriShape *triShape = renderer->GetParticlesDynamicTriShape();
+
+			void *map = renderer->MapDynamicTriShapeDynamicData(nullptr, triShape, &drawData, particleCount * 4 * geometry->GetDynamicVertexSize());
 
 			if (map)
 			{
 				BSGraphics::Utility::PackDynamicParticleData(particleCount, (class BSGraphics::Utility::NiParticles *)geometry, map);
-				renderer->UnmapDynamicTriShapeDynamicData(triInfo);
+				renderer->UnmapDynamicTriShapeDynamicData(triShape, &drawData);
 			}
 
-			renderer->DrawDynamicTriShape(triInfo, 0, 2 * particleCount);
+			renderer->DrawDynamicTriShape(triShape, &drawData, 0, particleCount * 2);
 		}
 	}
 	break;
@@ -617,7 +628,8 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 	case GEOMETRY_TYPE_STRIP_PARTICLES:
 	{
 		// WARNING: Do not enable this function without fixing the input layout lookups first
-		Assert(false);
+		// Winterhold
+		//Assert(false);
 	}
 	break;
 	
@@ -634,8 +646,26 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 
 	case GEOMETRY_TYPE_DYNAMIC_TRISHAPE:
 	{
-		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
-		sub_14131DDF0(Pass);
+		AssertDebug(geometry->IsDynamicTriShape());
+
+		auto dynTriShape = static_cast<BSDynamicTriShape *>(geometry);
+		auto rendererData = reinterpret_cast<BSGraphics::DynamicTriShape *>(dynTriShape->QRendererData());
+
+		// Only upload data once per frame
+		if (dynTriShape->uiFrameCount != dword_1430528DC)
+		{
+			dynTriShape->uiFrameCount = dword_1430528DC;
+
+			void *gpuData = renderer->MapDynamicTriShapeDynamicData(dynTriShape, rendererData, &dynTriShape->DrawData, 0);
+
+			const void *dynamicData = dynTriShape->LockDynamicDataForRead();
+			memcpy(gpuData, dynamicData, dynTriShape->DynamicDataSize);
+			dynTriShape->UnlockDynamicData();
+
+			renderer->UnmapDynamicTriShapeDynamicData(rendererData, &dynTriShape->DrawData);
+		}
+
+		renderer->DrawDynamicTriShape(rendererData, &dynTriShape->DrawData, 0, dynTriShape->m_TriangleCount);
 	}
 	break;
 
@@ -653,7 +683,9 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 
 	case GEOMETRY_TYPE_MULTIINDEX_TRISHAPE:
 	{
-		AssertDebug(false);
+		// Winterhold
+		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		sub_14131DDF0(Pass);
 	}
 	break;
 
