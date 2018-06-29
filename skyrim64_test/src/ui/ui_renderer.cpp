@@ -7,6 +7,8 @@
 #include "imgui_ext.h"
 #include "ui.h"
 
+#include "../patches/TES/NiMain/BSMultiBoundNode.h"
+
 extern LARGE_INTEGER g_FrameDelta;
 extern std::vector<std::pair<ID3D11ShaderResourceView *, std::string>> g_ResourceViews;
 extern ID3D11ShaderResourceView *g_OcclusionTextureSRV;
@@ -187,6 +189,10 @@ namespace ui
 			ProfileGetValue("Triangles Rendered");
 
 			ImGui::Spacing();
+			ImGui::DragFloat("Max 2D Render Distance", &ui::opt::OccluderMaxDistance, 100.0f, 1.0f, 1000000.0f);
+			ImGui::DragFloat("First Level Occluder Size", &ui::opt::OccluderFirstLevelMinSize, 100.0f, 1.0f, 100000.0f);
+			ImGui::Checkbox("Draw Occluders", &ui::opt::EnableOccluderRendering);
+			ImGui::Checkbox("Enable Occlusion Testing", &ui::opt::EnableOcclusionTesting);
 			ImGui::Checkbox("Disable Viewer Updates", &disableViewerUpdates);
 			ImGui::Combo("Viewer Resolution", &viewerResolutionIndex, " 640 x 480\0 1024 x 768\0 1920 x 1080\0\0");
 			ImGui::Spacing();

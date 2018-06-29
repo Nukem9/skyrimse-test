@@ -147,6 +147,7 @@
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShaderProperty.h" />
     <ClInclude Include="src\patches\TES\BSTList.h" />
+    <ClInclude Include="src\patches\TES\MOC.h" />
     <ClInclude Include="src\patches\TES\MTRenderer.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSDynamicTriShape.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h" />
@@ -297,6 +298,7 @@
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSSkyShader.cpp" />
     <ClCompile Include="src\patches\TES\BSSpinLock.cpp" />
     <ClCompile Include="src\patches\TES\BSThread_Win32.cpp" />
+    <ClCompile Include="src\patches\TES\MOC.cpp" />
     <ClCompile Include="src\patches\TES\MTRenderer.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiMain.cpp" />
     <ClCompile Include="src\patches\TES\Setting.cpp" />

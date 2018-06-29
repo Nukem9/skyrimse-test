@@ -7,6 +7,10 @@ namespace ui
 		extern bool EnableCache;
 		extern bool LogHitches;
 		extern bool RealtimeOcclusionView;
+		extern bool EnableOcclusionTesting;
+		extern bool EnableOccluderRendering;
+		extern float OccluderMaxDistance;
+		extern float OccluderFirstLevelMinSize;
 	}
 
 	extern bool showDemoWindow;
