@@ -6,6 +6,7 @@
 #include "BSShader/BSShaderRenderTargets.h"
 #include "BSReadWriteLock.h"
 #include "MTRenderer.h"
+#include "MOC.h"
 
 namespace BSGraphics::Utility
 {
@@ -1431,5 +1432,53 @@ namespace BSGraphics
 
 		if (PixelGroup)
 			ApplyConstantGroupPS(PixelGroup, Level);
+	}
+
+	void Renderer::IncRef(TriShape *Shape)
+	{
+		InterlockedIncrement(&Shape->m_RefCount);
+	}
+
+	void Renderer::DecRef(TriShape *Shape)
+	{
+		if (InterlockedDecrement(&Shape->m_RefCount) == 0)
+		{
+			MOC::RemoveCachedVerticesAndIndices(Shape);
+
+			if (Shape->m_VertexBuffer)
+				Shape->m_VertexBuffer->Release();
+
+			if (Shape->m_IndexBuffer)
+				Shape->m_IndexBuffer->Release();
+
+			if (Shape->m_RawVertexData)
+				((void(__fastcall *)(void *))(g_ModuleBase + 0xF7DC0))(Shape->m_RawVertexData);
+
+			if (Shape->m_RawIndexData)
+				((void(__fastcall *)(void *))(g_ModuleBase + 0xF7DC0))(Shape->m_RawIndexData);
+
+			((void(__fastcall *)(void *, __int64))(g_ModuleBase + 0x136112C))(Shape, sizeof(TriShape));
+		}
+	}
+
+	void Renderer::IncRef(DynamicTriShape *Shape)
+	{
+		InterlockedIncrement(&Shape->m_RefCount);
+	}
+
+	void Renderer::DecRef(DynamicTriShape *Shape)
+	{
+		if (InterlockedDecrement(&Shape->m_RefCount) == 0)
+		{
+			MOC::RemoveCachedVerticesAndIndices(Shape);
+
+			if (Shape->m_VertexBuffer)
+				Shape->m_VertexBuffer->Release();
+
+			Shape->m_IndexBuffer->Release();
+
+			((void(__fastcall *)(void *))(g_ModuleBase + 0xF7DC0))(Shape->m_Unknown5);
+			((void(__fastcall *)(void *, __int64))(g_ModuleBase + 0x136112C))(Shape, sizeof(DynamicTriShape));
+		}
 	}
 }
