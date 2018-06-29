@@ -10,13 +10,30 @@ static_assert(sizeof(NiProperty) == 0x30);
 class NiAlphaProperty : public NiProperty
 {
 private:
-	uint16_t m_uFlags;
+	union
+	{
+		uint16_t Value;
+		struct
+		{
+			uint16_t DoBlending : 1;
+			uint16_t SrcBlend : 4;	// BlendFunction
+			uint16_t DstBlend : 4;	// BlendFunction
+			uint16_t DoTesting : 1;
+			uint16_t TestFunc : 3;	// BlendFunction
+			uint16_t NoSorter : 1;
+		};
+	} AlphaFlags;
 	uint8_t m_ucAlphaTestRef;
 
 public:
+	bool GetAlphaBlending() const
+	{
+		return AlphaFlags.DoBlending;
+	}
+
 	bool GetAlphaTesting() const
 	{
-		return (m_uFlags >> 9) & 1;
+		return AlphaFlags.DoTesting;
 	}
 
 	uint8_t GetTestRef() const
