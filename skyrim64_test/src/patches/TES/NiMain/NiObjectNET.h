@@ -45,6 +45,15 @@ public:
 	{
 		m_kName = Name;
 	}
+
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	{
+		if (Recursive)
+			__super::GetViewerStrings(Callback, Recursive);
+
+		Callback("-- NiObjectNET --\n");
+		Callback("Name = %s\n", GetName()->c_str());
+	}
 };
 static_assert(sizeof(NiObjectNET) == 0x30);
 static_assert(offsetof(NiObjectNET, m_kName) == 0x10);

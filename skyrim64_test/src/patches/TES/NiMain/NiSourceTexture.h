@@ -9,9 +9,9 @@ public:
 	NiSourceTexture();
 	virtual ~NiSourceTexture();
 
-	char _pad0[0x8];
+	char _pad0[0x8];// BSResource::Stream *
 	BSGraphics::Texture *pRendererTexture;
-	char _pad1[0x8];
+	char _pad1[0x8];// uint8_t flags
 
 	BSGraphics::Texture *QRendererTexture() const
 	{

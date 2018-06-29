@@ -67,6 +67,25 @@ public:
 	{
 		return m_kWorldBound.m_iRadiusAsInt;
 	}
+
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	{
+		if (Recursive)
+			__super::GetViewerStrings(Callback, Recursive);
+
+		Callback("-- NiAVObject --\n");
+		Callback("Flags = 0x%X\n", m_uFlags);
+		Callback("App Culled = %s\n", QAppCulled() ? "true" : "false");
+		Callback("World Translate = (%g, %g, %g)\n",
+			m_kWorld.m_Translate.x,
+			m_kWorld.m_Translate.y,
+			m_kWorld.m_Translate.z);
+		Callback("World Bound = (%g, %g, %g) %g\n",
+			m_kWorldBound.m_kCenter.x,
+			m_kWorldBound.m_kCenter.y,
+			m_kWorldBound.m_kCenter.z,
+			m_kWorldBound.m_fRadius);
+	}
 };
 static_assert(sizeof(NiAVObject) == 0x110);
 static_assert(offsetof(NiAVObject, m_kWorld) == 0x7C);

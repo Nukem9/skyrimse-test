@@ -4,6 +4,27 @@
 
 class NiProperty : public NiObjectNET
 {
+public:
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	{
+		if (Recursive)
+			__super::GetViewerStrings(Callback, Recursive);
+
+		Callback("-- NiProperty --\n");
+	}
+};
+static_assert(sizeof(NiProperty) == 0x30);
+
+class NiShadeProperty : public NiProperty
+{
+public:
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	{
+		if (Recursive)
+			__super::GetViewerStrings(Callback, Recursive);
+
+		Callback("-- NiShadeProperty --\n");
+	}
 };
 static_assert(sizeof(NiProperty) == 0x30);
 
@@ -39,6 +60,17 @@ public:
 	uint8_t GetTestRef() const
 	{
 		return m_ucAlphaTestRef;
+	}
+
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	{
+		if (Recursive)
+			__super::GetViewerStrings(Callback, Recursive);
+
+		Callback("-- NiAlphaProperty --\n");
+		Callback("Alpha Blend: %s\n", GetAlphaBlending() ? "true" : "false");
+		Callback("Alpha Test: %s\n", GetAlphaTesting() ? "true" : "false");
+		Callback("Test Ref: %u\n", (uint32_t)GetTestRef());
 	}
 };
 static_assert(sizeof(NiAlphaProperty) == 0x38);

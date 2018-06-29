@@ -66,6 +66,15 @@ public:
 	{
 		return m_kChildren.At(Index);
 	}
+
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	{
+		if (Recursive)
+			__super::GetViewerStrings(Callback, Recursive);
+
+		Callback("-- NiNode --\n");
+		Callback("Child Count = %d\n", GetChildCount());
+	}
 };
 static_assert(sizeof(NiNode) == 0x128);
 static_assert(offsetof(NiNode, m_kChildren) == 0x110);

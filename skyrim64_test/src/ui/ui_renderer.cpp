@@ -7,7 +7,9 @@
 #include "imgui_ext.h"
 #include "ui.h"
 
+#include "../patches/TES/NiMain/BSGeometry.h"
 #include "../patches/TES/NiMain/BSMultiBoundNode.h"
+#include "../patches/TES/BSShader/BSShaderProperty.h"
 
 extern LARGE_INTEGER g_FrameDelta;
 extern std::vector<std::pair<ID3D11ShaderResourceView *, std::string>> g_ResourceViews;
@@ -257,18 +259,14 @@ namespace ui
 
 		if (treeIsOpen)
 		{
+			auto geometry = Object->IsGeometry();
+
 			if (ImGui::TreeNode("Attributes"))
 			{
-				ImGui::Text("Object = 0x%p", Object);
-				ImGui::Text("World Translate = (%g, %g, %g)",
-					Object->m_kWorld.m_Translate.x,
-					Object->m_kWorld.m_Translate.y,
-					Object->m_kWorld.m_Translate.z);
-				ImGui::Text("World Bound = (%g, %g, %g) %g",
-					Object->m_kWorldBound.m_kCenter.x,
-					Object->m_kWorldBound.m_kCenter.y,
-					Object->m_kWorldBound.m_kCenter.z,
-					Object->m_kWorldBound.m_fRadius);
+				if (geometry)
+					geometry->GetViewerStrings(ImGui::Text, true);
+				else
+					Object->GetViewerStrings(ImGui::Text, true);
 
 				if (BSMultiBoundNode *multiBoundNode = Object->IsMultiBoundNode())
 				{
@@ -280,18 +278,26 @@ namespace ui
 						{
 							auto aabb = static_cast<BSMultiBoundAABB *>(shape);
 
-							ImGui::Text("-- BSMultiBoundAABB --");
-
-							ImGui::Text("Center = (%g, %g, %g)",
-								aabb->m_kCenter.x,
-								aabb->m_kCenter.y,
-								aabb->m_kCenter.z);
-							ImGui::Text("Half Extents = (%g, %g, %g)",
-								aabb->m_kHalfExtents.x,
-								aabb->m_kHalfExtents.y,
-								aabb->m_kHalfExtents.z);
+							aabb->GetViewerStrings(ImGui::Text, false);
 						}
 					}
+				}
+
+				ImGui::TreePop();
+			}
+
+			if (geometry && ImGui::TreeNode("Properties"))
+			{
+				if (geometry->QAlphaProperty() && ImGui::TreeNode("Alpha Property"))
+				{
+					geometry->QAlphaProperty()->GetViewerStrings(ImGui::Text, true);
+					ImGui::TreePop();
+				}
+
+				if (geometry->QShaderProperty() && ImGui::TreeNode("Shader Property"))
+				{
+					geometry->QShaderProperty()->GetViewerStrings(ImGui::Text, true);
+					ImGui::TreePop();
 				}
 
 				ImGui::TreePop();

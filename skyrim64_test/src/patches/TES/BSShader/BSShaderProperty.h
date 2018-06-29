@@ -1,8 +1,9 @@
 #pragma once
 
 #include "BSShaderMaterial.h"
+#include "../NiMain/NiAlphaProperty.h"
 
-class BSShaderProperty /*: NiShadeProperty*/
+class BSShaderProperty : public NiShadeProperty
 {
 private:
 	static const uint32_t UniqueFlagIndexes[15];
@@ -86,7 +87,6 @@ public:
 
 	static void GetFlagsDescription(uint64_t Flags, char *Buffer, size_t BufferSize);
 
-	char _pad0[0x30];
 	float fAlpha;// Might be part of a parent class
 	int iLastRenderPassState;
 	uint64_t ulFlags;

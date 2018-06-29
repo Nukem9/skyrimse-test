@@ -68,5 +68,19 @@ public:
 	virtual NiObjectGroup *GetGroup();
 	virtual void *SetGroup(NiObjectGroup *);
 	virtual class NiControllerManager *IsNiControllerManager();
+
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	{
+		if (Recursive)
+			__super::GetViewerStrings(Callback, Recursive);
+
+		Callback("-- NiObject --\n");
+		Callback("NiRTTI = %s\n", GetRTTI()->GetName());
+	}
+
+	bool IsExactKindOf(NiRTTI *RTTI) const
+	{
+		return GetRTTI() == RTTI;
+	}
 };
 static_assert(sizeof(NiObject) == 0x10);

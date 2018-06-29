@@ -97,6 +97,18 @@ public:
 		return ucType;
 	}
 
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	{
+		if (Recursive)
+			__super::GetViewerStrings(Callback, Recursive);
+
+		Callback("-- BSGeometry --\n");
+		Callback("Type = %d\n", QType());
+		Callback("Vertex Desc = 0x%llX\n", GetVertexDesc());
+		Callback("Renderer Data = 0x%p\n", QRendererData());
+		Callback("Skin Instance = 0x%p\n", QSkinInstance());
+	}
+
 	//
 	// enum BSGraphics::VertexDescEntry
 	// https://forum.niftools.org/topic/4514-bsvertexdata-bsvertexformat/

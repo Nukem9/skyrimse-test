@@ -18,6 +18,22 @@ public:
 	char _pad1[0x4];
 	NiPoint3 m_kHalfExtents;
 	char _pad2[0x8];
+
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	{
+		if (Recursive)
+			__super::GetViewerStrings(Callback, Recursive);
+
+		Callback("-- BSMultiBoundAABB --\n");
+		Callback("Center = (%g, %g, %g)\n",
+			m_kCenter.x,
+			m_kCenter.y,
+			m_kCenter.z);
+		Callback("Half Extents = (%g, %g, %g)\n",
+			m_kHalfExtents.x,
+			m_kHalfExtents.y,
+			m_kHalfExtents.z);
+	}
 };
 static_assert(sizeof(BSMultiBoundAABB) == 0x40);
 static_assert(offsetof(BSMultiBoundAABB, m_kCenter) == 0x1C);
