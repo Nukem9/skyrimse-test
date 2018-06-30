@@ -1,4 +1,5 @@
 #include "../../../common.h"
+#include "../BSRenderPass.h"
 #include "BSShaderProperty.h"
 
 const uint32_t BSShaderProperty::UniqueFlagIndexes[15] =
@@ -95,45 +96,80 @@ const char *BSShaderProperty::FlagNames[64] =
 	"hd lod objects"
 };
 
-void BSShaderProperty::GetFlagsDescription(uint64_t Flags, char *Buffer, size_t BufferSize)
+float BSShaderProperty::GetAlpha() const
 {
-	// Uniques - can only have 1 of these bits set at once
-	strcpy_s(Buffer, BufferSize, "Unique flags: [");
+	return fAlpha;
+}
 
-	for (int i = 0; i < ARRAYSIZE(UniqueFlagIndexes); i++)
+class BSFadeNode *BSShaderProperty::QFadeNode() const
+{
+	return pFadeNode;
+}
+
+const BSShaderProperty::RenderPassArray *BSShaderProperty::QRenderPasses() const
+{
+	return &kRenderPassList;
+}
+
+const BSShaderProperty::RenderPassArray *BSShaderProperty::QDebugRenderPasses() const
+{
+	return &kDebugRenderPassList;
+}
+
+uint64_t BSShaderProperty::QFlags() const
+{
+	return ulFlags;
+}
+
+bool BSShaderProperty::GetFlag(uint32_t FlagIndex) const
+{
+	if (FlagIndex >= BSSP_FLAG_COUNT)
+		return false;
+
+	return QFlags() & (1ull << FlagIndex);
+}
+
+void BSShaderProperty::GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+{
+	if (Recursive)
+		__super::GetViewerStrings(Callback, Recursive);
+
+	Callback("-- BSShaderProperty --\n");
+
+	for (int i = 0; i < BSSP_FLAG_COUNT; i++)
 	{
-		uint32_t bit = UniqueFlagIndexes[i];
-
-		Assert(bit < 64);
-
-		if (Flags & (1ull << bit))
-		{
-			strcat_s(Buffer, BufferSize, UniqueFlagNames[i]);
-			strcat_s(Buffer, BufferSize, ", ");
-		}
-
-		Trim(Buffer, ' ');
-		Trim(Buffer, ',');
+		if (GetFlag(i))
+			Callback("Flag = %s\n", FlagNames[i]);
 	}
 
-	// Everything - each bit corresponds to an array index
-	strcat_s(Buffer, BufferSize, "] Flags: [");
+	if (fAlpha < 1.0f)
+		Callback("Alpha = %g\n", GetAlpha());
 
-	for (int i = 0; i < ARRAYSIZE(FlagNames); i++)
-	{
-		uint32_t bit = i;
+	Callback("Last Render Pass State = %d\n", iLastRenderPassState);
 
-		Assert(bit < 64);
+	int passCount = 0;
+	int debugPassCount = 0;
 
-		if (Flags & (1ull << bit))
-		{
-			strcat_s(Buffer, BufferSize, FlagNames[i]);
-			strcat_s(Buffer, BufferSize, ", ");
-		}
+	for (auto pass = QRenderPasses()->pPassList; pass; pass = pass->m_Previous)
+		passCount++;
 
-		Trim(Buffer, ' ');
-		Trim(Buffer, ',');
-	}
+	for (auto pass = QDebugRenderPasses()->pPassList; pass; pass = pass->m_Previous)
+		debugPassCount++;
 
-	strcat_s(Buffer, BufferSize, "]");
+	Callback("Pass Count = %d\n", passCount);
+	Callback("Debug Pass Count = %d\n", debugPassCount);
+
+	for (auto pass = QRenderPasses()->pPassList; pass; pass = pass->m_Previous)
+		Callback("%s Pass\n", ((const char *(*)(uint32_t))(g_ModuleBase + 0x12ABF00))(pass->m_TechniqueID));
+
+	for (auto pass = QDebugRenderPasses()->pPassList; pass; pass = pass->m_Previous)
+		Callback("%s Debug Pass\n", ((const char *(*)(uint32_t))(g_ModuleBase + 0x12ABF00))(pass->m_TechniqueID));
+}
+
+const char *BSShaderProperty::GetFlagString(uint32_t FlagIndex)
+{
+	if (FlagIndex >= BSSP_FLAG_COUNT)
+		return nullptr;
+
+	return FlagNames[FlagIndex];
 }

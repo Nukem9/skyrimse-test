@@ -3,6 +3,8 @@
 #include "BSShaderMaterial.h"
 #include "../NiMain/NiAlphaProperty.h"
 
+struct BSRenderPass;
+
 class BSShaderProperty : public NiShadeProperty
 {
 private:
@@ -82,12 +84,10 @@ public:
 
 	struct RenderPassArray
 	{
-		/*BSRenderPass* */void *pPassList;
+		BSRenderPass *pPassList;
 	};
 
-	static void GetFlagsDescription(uint64_t Flags, char *Buffer, size_t BufferSize);
-
-	float fAlpha;// Might be part of a parent class
+	float fAlpha;
 	int iLastRenderPassState;
 	uint64_t ulFlags;
 	RenderPassArray kRenderPassList;
@@ -100,36 +100,17 @@ public:
 	BSShaderMaterial *pMaterial;
 	char _pad4[0x8];
 
-	float GetAlpha() const
-	{
-		return fAlpha;
-	}
+	float GetAlpha() const;
+	class BSFadeNode *QFadeNode() const;
+	const RenderPassArray *QRenderPasses() const;
+	const RenderPassArray *QDebugRenderPasses() const;
 
-	class BSFadeNode *QFadeNode() const
-	{
-		return pFadeNode;
-	}
+	uint64_t QFlags() const;
+	bool GetFlag(uint32_t FlagIndex) const;
 
-	uint64_t QFlags() const
-	{
-		return ulFlags;
-	}
+	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const;
 
-	bool GetFlag(uint32_t FlagIndex) const
-	{
-		if (FlagIndex >= BSSP_FLAG_COUNT)
-			return false;
-
-		return QFlags() & (1ull << FlagIndex);
-	}
-
-	static const char *GetFlagString(uint32_t FlagIndex)
-	{
-		if (FlagIndex >= BSSP_FLAG_COUNT)
-			return nullptr;
-
-		return FlagNames[FlagIndex];
-	}
+	static const char *GetFlagString(uint32_t FlagIndex);
 };
 static_assert(sizeof(BSShaderProperty) == 0x88);
 static_assert_offset(BSShaderProperty, fAlpha, 0x30);
