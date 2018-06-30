@@ -261,8 +261,6 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		// RenderLODLand
 		renderer->BeginEvent(L"RenderLODLand");
 		{
-			ProfileTimer("LOD");
-
 			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 
 			if (!v7)

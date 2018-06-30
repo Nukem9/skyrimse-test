@@ -288,15 +288,18 @@ namespace ui
 
 			if (geometry && ImGui::TreeNode("Properties"))
 			{
-				if (geometry->QAlphaProperty() && ImGui::TreeNode("Alpha Property"))
+				auto alphaProperty = geometry->QAlphaProperty();
+				auto shaderProperty = geometry->QShaderProperty();
+
+				if (alphaProperty && ImGui::TreeNode(alphaProperty->GetRTTI()->GetName()))
 				{
-					geometry->QAlphaProperty()->GetViewerStrings(ImGui::Text, true);
+					alphaProperty->GetViewerStrings(ImGui::Text, true);
 					ImGui::TreePop();
 				}
 
-				if (geometry->QShaderProperty() && ImGui::TreeNode("Shader Property"))
+				if (shaderProperty && ImGui::TreeNode(shaderProperty->GetRTTI()->GetName()))
 				{
-					geometry->QShaderProperty()->GetViewerStrings(ImGui::Text, true);
+					shaderProperty->GetViewerStrings(ImGui::Text, true);
 					ImGui::TreePop();
 				}
 

@@ -60,10 +60,12 @@ namespace BSGraphics
 	//
 	struct Texture
 	{
-		char _pad0[0x10];
-		ID3D11ShaderResourceView *m_D3DTexture;
+		ID3D11Texture2D *m_Texture;
+		char _pad0[0x8];
+		ID3D11ShaderResourceView *m_ResourceView;
 	};
-	static_assert_offset(Texture, m_D3DTexture, 0x10);
+	static_assert_offset(Texture, m_Texture, 0x0);
+	static_assert_offset(Texture, m_ResourceView, 0x10);
 
 	struct Buffer
 	{

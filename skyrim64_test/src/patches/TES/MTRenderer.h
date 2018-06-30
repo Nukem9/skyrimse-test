@@ -141,7 +141,7 @@ namespace MTRenderer
 				break;
 
 			case DepthStencilStateDepthMode:
-				r->DepthStencilStateSetDepthMode(Data.part1);
+				//r->DepthStencilStateSetDepthMode(Data.part1);
 				break;
 
 			case UseScrapConstantValue_1:

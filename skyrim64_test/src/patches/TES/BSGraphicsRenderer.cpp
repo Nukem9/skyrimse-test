@@ -835,7 +835,7 @@ namespace BSGraphics
 
 	void Renderer::SetTexture(uint32_t Index, Texture *Resource)
 	{
-		SetShaderResource(Index, Resource ? Resource->m_D3DTexture : nullptr);
+		SetShaderResource(Index, Resource ? Resource->m_ResourceView : nullptr);
 	}
 
 	void Renderer::SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode)

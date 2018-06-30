@@ -40,7 +40,7 @@ private:
 			uint16_t SrcBlend : 4;	// BlendFunction
 			uint16_t DstBlend : 4;	// BlendFunction
 			uint16_t DoTesting : 1;
-			uint16_t TestFunc : 3;	// BlendFunction
+			uint16_t TestFunc : 3;	// TestFunction
 			uint16_t NoSorter : 1;
 		};
 	} AlphaFlags;
@@ -74,5 +74,5 @@ public:
 	}
 };
 static_assert(sizeof(NiAlphaProperty) == 0x38);
-//static_assert_offset(NiAlphaProperty, m_uFlags, 0x30);
+//static_assert_offset(NiAlphaProperty, AlphaFlags, 0x30);
 //static_assert_offset(NiAlphaProperty, m_ucAlphaTestRef, 0x32);
