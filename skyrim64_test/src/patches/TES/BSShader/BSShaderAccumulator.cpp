@@ -100,7 +100,7 @@ bool BSShaderAccumulator::hk_RegisterObjectDispatch(BSGeometry *Geometry, void *
 		return true;
 
 	// BSDismemberSkinInstance::bVisible
-	if (skinInstance && skinInstance->GetRTTI() == (NiRTTI *)(g_ModuleBase + 0x3039660) && !*(BYTE *)((__int64)skinInstance + 0x98))
+	if (skinInstance && skinInstance->IsExactKindOf(NiRTTI::ms_BSDismemberSkinInstance) && !*(BYTE *)((__int64)skinInstance + 0x98))
 		return true;
 
 	if (!Geometry->QRendererData() && !skinInstance && !Geometry->IsParticlesGeom() && Geometry->QType() != GEOMETRY_TYPE_PARTICLE_SHADER_DYNAMIC_TRISHAPE)

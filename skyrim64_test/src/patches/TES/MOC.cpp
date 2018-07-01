@@ -233,7 +233,7 @@ namespace MOC
 		if (!shaderProperty)
 			return false;
 
-		if (Geometry->QType() == GEOMETRY_TYPE_TRISHAPE && *(uintptr_t *)(shaderProperty) == (g_ModuleBase + 0x18773F0))
+		if (Geometry->QType() == GEOMETRY_TYPE_TRISHAPE && shaderProperty->IsExactKindOf(NiRTTI::ms_BSLightingShaderProperty))
 		{
 			Assert(Geometry->IsTriShape());
 
@@ -311,7 +311,7 @@ namespace MOC
 			{
 				auto shape = multiBoundNode->spMultiBound->spShape;
 
-				if (shape->GetRTTI() == (NiRTTI *)(g_ModuleBase + 0x3043730))
+				if (shape->IsExactKindOf(NiRTTI::ms_BSMultiBoundAABB))
 				{
 					auto aabb = static_cast<BSMultiBoundAABB *>(shape);
 
@@ -396,7 +396,7 @@ namespace MOC
 		if (auto node = Object->IsNode())
 		{
 			// Don't care about leaf anim nodes (trees, bushes, plants [alpha])
-			if (node->GetRTTI() != (NiRTTI *)(g_ModuleBase + 0x31F5438))
+			if (!node->IsExactKindOf(NiRTTI::ms_BSLeafAnimNode))
 			{
 				// Enumerate children, but don't render this node specifically
 				for (int i = 0; i < node->GetArrayCount(); i++)
@@ -470,7 +470,7 @@ namespace MOC
 		node = node->GetAt(1)->IsNode();		// ShadowSceneNode
 		node = node->GetAt(3)->IsNode();		// NiNode (ObjectLODRoot)
 
-												// Skip the first 2 child nodes
+		// Skip the first 2 child nodes
 		for (int i = 2; i < node->GetArrayCount(); i++)
 		{
 			// Recursively render everything in the CELL

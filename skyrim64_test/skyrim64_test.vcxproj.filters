@@ -299,6 +299,9 @@
     <ClInclude Include="src\patches\TES\MOC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiRTTI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -619,6 +622,9 @@
     <ClCompile Include="src\patches\TES\MOC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
@@ -641,6 +647,9 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="MaskedOcclusionCulling\MaskedOcclusionCullingCommon.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="src\patches\TES\NiMain\NiRTTI.inl">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>

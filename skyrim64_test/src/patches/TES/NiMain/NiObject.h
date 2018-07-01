@@ -1,32 +1,12 @@
 #pragma once
 
 #include "NiRefObject.h"
+#include "NiRTTI.h"
 
 class NiNode;
 class NiStream;
 class NiCloningProcess;
 class NiObjectGroup;
-
-class NiRTTI
-{
-private:
-	const char *m_pcName;
-	NiRTTI *m_pkBaseRTTI;
-
-public:
-	const char *GetName() const
-	{
-		return m_pcName;
-	}
-
-	const NiRTTI *GetBaseRTTI() const
-	{
-		return m_pkBaseRTTI;
-	}
-};
-static_assert(sizeof(NiRTTI) == 0x10);
-//static_assert(offsetof(NiRTTI, m_pcName) == 0x0);
-//static_assert(offsetof(NiRTTI, m_pkBaseRTTI) == 0x10);
 
 class NiObject : public NiRefObject
 {

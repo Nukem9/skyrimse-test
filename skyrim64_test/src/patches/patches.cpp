@@ -94,6 +94,11 @@ void Patch_TESV()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x4A8360), &BGSDistantTreeBlock::UpdateLODAlphaFade);
 
 	//
+	// NiRTTI
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC66F80), &NiRTTI::__ctor__);
+
+	//
 	// Temporary hack to fix array overflow in BSParticleShader::SetupGeometry
 	//
 	uint32_t test = 0x2000;
