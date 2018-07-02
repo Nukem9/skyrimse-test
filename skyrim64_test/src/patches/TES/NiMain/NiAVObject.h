@@ -88,7 +88,7 @@ public:
 	}
 };
 static_assert(sizeof(NiAVObject) == 0x110);
-static_assert(offsetof(NiAVObject, m_kWorld) == 0x7C);
-static_assert(offsetof(NiAVObject, m_kPreviousWorld) == 0xB0);
-static_assert(offsetof(NiAVObject, m_kWorldBound) == 0xE4);
-static_assert(offsetof(NiAVObject, m_uFlags) == 0xF4);
+static_assert_offset(NiAVObject, m_kWorld, 0x7C);
+static_assert_offset(NiAVObject, m_kPreviousWorld, 0xB0);
+static_assert_offset(NiAVObject, m_kWorldBound, 0xE4);
+static_assert_offset(NiAVObject, m_uFlags, 0xF4);

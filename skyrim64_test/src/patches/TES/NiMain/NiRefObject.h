@@ -51,4 +51,4 @@ public:
 	}
 };
 static_assert(sizeof(NiRefObject) == 0x10);
-//static_assert(offsetof(NiRefObject, m_uiRefCount) == 0x8, "");
+//static_assert_offset(NiRefObject, m_uiRefCount, 0x8);

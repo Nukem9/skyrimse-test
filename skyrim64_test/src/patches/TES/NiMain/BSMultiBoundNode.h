@@ -8,7 +8,7 @@ public:
 	uint32_t kCullResult;
 };
 static_assert(sizeof(BSMultiBoundShape) == 0x18);
-static_assert(offsetof(BSMultiBoundShape, kCullResult) == 0x10);
+static_assert_offset(BSMultiBoundShape, kCullResult, 0x10);
 
 class BSMultiBoundAABB : public BSMultiBoundShape
 {
@@ -36,8 +36,8 @@ public:
 	}
 };
 static_assert(sizeof(BSMultiBoundAABB) == 0x40);
-static_assert(offsetof(BSMultiBoundAABB, m_kCenter) == 0x1C);
-static_assert(offsetof(BSMultiBoundAABB, m_kHalfExtents) == 0x2C);
+static_assert_offset(BSMultiBoundAABB, m_kCenter, 0x1C);
+static_assert_offset(BSMultiBoundAABB, m_kHalfExtents, 0x2C);
 
 class BSMultiBound : public NiObject
 {
@@ -46,8 +46,8 @@ public:
 	BSMultiBoundShape *spShape;
 };
 static_assert(sizeof(BSMultiBound) == 0x20);
-static_assert(offsetof(BSMultiBound, uiBoundFrameCount) == 0x10);
-static_assert(offsetof(BSMultiBound, spShape) == 0x18);
+static_assert_offset(BSMultiBound, uiBoundFrameCount, 0x10);
+static_assert_offset(BSMultiBound, spShape, 0x18);
 
 class BSMultiBoundNode : public BSNiNode
 {

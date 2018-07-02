@@ -20,5 +20,5 @@ public:
 #undef DefineNiRTTI
 };
 static_assert(sizeof(NiRTTI) == 0x10);
-//static_assert(offsetof(NiRTTI, m_pcName) == 0x0);
-//static_assert(offsetof(NiRTTI, m_pkBaseRTTI) == 0x10);
+//static_assert_offset(NiRTTI, m_pcName, 0x0);
+//static_assert_offset(NiRTTI, m_pkBaseRTTI, 0x10);

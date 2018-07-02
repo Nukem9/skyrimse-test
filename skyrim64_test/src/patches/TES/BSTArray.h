@@ -125,12 +125,12 @@ private:
 
 class __BSTArrayCheckOffsets
 {
-	static_assert(offsetof(BSTArrayHeapAllocator, m_Buffer) == 0x0, "");
-	static_assert(offsetof(BSTArrayHeapAllocator, m_AllocSize) == 0x8, "");
+	static_assert_offset(BSTArrayHeapAllocator, m_Buffer, 0x0);
+	static_assert_offset(BSTArrayHeapAllocator, m_AllocSize, 0x8);
 
-	static_assert(offsetof(BSTArrayBase, m_Size) == 0x0, "");
+	static_assert_offset(BSTArrayBase, m_Size, 0x0);
 
-	static_assert(offsetof(BSTArray<int>, m_Buffer) == 0x0, "");
-	static_assert(offsetof(BSTArray<int>, m_AllocSize) == 0x8, "");
-	static_assert(offsetof(BSTArray<int>, m_Size) == 0x10, "");
+	static_assert_offset(BSTArray<int>, m_Buffer, 0x0);
+	static_assert_offset(BSTArray<int>, m_AllocSize, 0x8);
+	static_assert_offset(BSTArray<int>, m_Size, 0x10);
 };

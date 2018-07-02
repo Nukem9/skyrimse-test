@@ -47,4 +47,4 @@ public:
 	// float QGlobalAlpha(); fGlobalAlpha
 };
 static_assert(sizeof(BSBloodSplatterShader) == 0x98, "");
-//static_assert(offsetof(BSBloodSplatterShader, m_CurrentRawTechnique) == 0x90, "");
+//static_assert_offset(BSBloodSplatterShader, m_CurrentRawTechnique, 0x90);

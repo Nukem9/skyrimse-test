@@ -2,11 +2,7 @@
 
 #include "NiMatrix.h"
 
-class NiMemObject
-{
-};
-
-class NiTransform : public NiMemObject
+class NiTransform
 {
 public:
 	NiMatrix3 m_Rotate;

@@ -31,6 +31,7 @@ public:
 
 	static void InvalidateCachedForm(uint32_t FormId);
 	static void UpdateLODAlphaFade(ResourceData *Data);
+
 	// struct ResourceData @ 0x28
 };
 static_assert(sizeof(BGSDistantTreeBlock::LODGroupInstance) == 0x14);

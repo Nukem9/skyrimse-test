@@ -189,6 +189,7 @@ namespace BSGraphics
 		uint8_t m_RawBytecode[0];					// Raw bytecode
 	};
 #pragma warning(pop)
+	static_assert(sizeof(VertexShader) == 0x68);
 	static_assert_offset(VertexShader, m_TechniqueID, 0x0);
 	static_assert_offset(VertexShader, m_Shader, 0x8);
 	static_assert_offset(VertexShader, m_ShaderLength, 0x10);
@@ -198,7 +199,6 @@ namespace BSGraphics
 	static_assert_offset(VertexShader, m_VertexDescription, 0x48);
 	static_assert_offset(VertexShader, m_ConstantOffsets, 0x50);
 	static_assert_offset(VertexShader, m_RawBytecode, 0x68);
-	static_assert(sizeof(VertexShader) == 0x68);
 
 	struct PixelShader
 	{
@@ -219,13 +219,13 @@ namespace BSGraphics
 
 		uint8_t m_ConstantOffsets[MAX_PS_CONSTANTS];// Actual offset is multiplied by 4
 	};
+	static_assert(sizeof(PixelShader) == 0x80);
 	static_assert_offset(PixelShader, m_TechniqueID, 0x0);
 	static_assert_offset(PixelShader, m_Shader, 0x8);
 	static_assert_offset(PixelShader, m_PerTechnique, 0x10);
 	static_assert_offset(PixelShader, m_PerMaterial, 0x20);
 	static_assert_offset(PixelShader, m_PerGeometry, 0x30);
 	static_assert_offset(PixelShader, m_ConstantOffsets, 0x40);
-	static_assert(sizeof(PixelShader) == 0x80);
 
 	struct ComputeShader
 	{

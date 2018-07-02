@@ -56,4 +56,4 @@ public:
 	}
 };
 static_assert(sizeof(NiObjectNET) == 0x30);
-static_assert(offsetof(NiObjectNET, m_kName) == 0x10);
+static_assert_offset(NiObjectNET, m_kName, 0x10);

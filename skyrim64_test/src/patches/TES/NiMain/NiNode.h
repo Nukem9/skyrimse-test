@@ -77,4 +77,4 @@ public:
 	}
 };
 static_assert(sizeof(NiNode) == 0x128);
-static_assert(offsetof(NiNode, m_kChildren) == 0x110);
+static_assert_offset(NiNode, m_kChildren, 0x110);
