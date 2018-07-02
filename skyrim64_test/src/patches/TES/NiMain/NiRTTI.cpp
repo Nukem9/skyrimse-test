@@ -14,7 +14,7 @@ NiRTTI::NiRTTI(const char *Name, const NiRTTI *BaseType)
 	m_pcName = Name;
 	m_pkBaseRTTI = BaseType;
 
-	NiRTTIMap[Name] = BaseType;
+	NiRTTIMap[Name] = this;
 
 	switch (Profiler::Internal::CRC32(Name))
 	{
@@ -34,10 +34,27 @@ const NiRTTI *NiRTTI::GetBaseRTTI() const
 	return m_pkBaseRTTI;
 }
 
-void NiRTTI::DumpRTTIListing(FILE *File)
+void NiRTTI::DumpRTTIListing(FILE *File, bool IDAScript)
 {
-	for (const auto& kv : NiRTTIMap)
-		fprintf(File, "DefineNiRTTI(%s)\n", kv.first.c_str());
+	if (IDAScript)
+	{
+		fprintf(File, "#include <idc.idc>\n");
+		fprintf(File, "static main()\n");
+		fprintf(File, "{\n");
+
+		for (const auto& kv : NiRTTIMap)
+		{
+			void *addr = (void *)((uintptr_t)kv.second - g_ModuleBase + 0x140000000);
+			fprintf(File, "\tcreate_qword(0x%p); set_name(0x%p, \"%s::ms_RTTI\");\n", addr, addr, kv.first.c_str());
+		}
+
+		fprintf(File, "}\n");
+	}
+	else
+	{
+		for (const auto& kv : NiRTTIMap)
+			fprintf(File, "DefineNiRTTI(%s)\n", kv.first.c_str());
+	}
 }
 
 #define DefineNiRTTI(x) NiRTTI *NiRTTI::ms_##x;

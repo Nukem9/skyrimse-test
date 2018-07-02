@@ -13,7 +13,7 @@ public:
 	const char *GetName() const;
 	const NiRTTI *GetBaseRTTI() const;
 
-	static void DumpRTTIListing(FILE *File);
+	static void DumpRTTIListing(FILE *File, bool IDAScript);
 
 #define DefineNiRTTI(x) static NiRTTI *ms_##x;
 #include "NiRTTI.inl"
