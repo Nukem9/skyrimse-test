@@ -5,6 +5,7 @@
 
 #define MAX_VS_CONSTANTS 20
 #define MAX_PS_CONSTANTS 64
+#define MAX_CS_CONSTANTS 32
 
 namespace BSGraphics
 {
@@ -161,7 +162,7 @@ namespace BSGraphics
 	};
 
 	//
-	// Shaders (TODO: Move from .h files to here)
+	// Shaders
 	//
 #pragma warning(push)
 #pragma warning(disable:4200)
@@ -188,7 +189,6 @@ namespace BSGraphics
 		uint8_t __padding[4];
 		uint8_t m_RawBytecode[0];					// Raw bytecode
 	};
-#pragma warning(pop)
 	static_assert(sizeof(VertexShader) == 0x68);
 	static_assert_offset(VertexShader, m_TechniqueID, 0x0);
 	static_assert_offset(VertexShader, m_Shader, 0x8);
@@ -229,7 +229,29 @@ namespace BSGraphics
 
 	struct ComputeShader
 	{
+		char _pad0[0x8];
+		Buffer m_PerTechnique;						// CONSTANT_GROUP_LEVEL_TECHNIQUE
+		char _pad1[0xC];
+		Buffer m_PerMaterial;						// CONSTANT_GROUP_LEVEL_MATERIAL
+		char _pad2[0xC];
+		Buffer m_PerGeometry;						// CONSTANT_GROUP_LEVEL_GEOMETRY
+		char _pad3[0x4];
+		ID3D11ComputeShader *m_Shader;				// DirectX handle
+		uint32_t m_TechniqueID;						// Bit flags
+		uint32_t m_ShaderLength;					// Raw bytecode length
+		uint8_t m_ConstantOffsets[MAX_CS_CONSTANTS];// Actual offset is multiplied by 4
+		uint8_t m_RawBytecode[0];					// Raw bytecode
 	};
+	static_assert(sizeof(ComputeShader) == 0x90, "");
+	static_assert_offset(ComputeShader, m_PerTechnique, 0x8);
+	static_assert_offset(ComputeShader, m_PerMaterial, 0x28);
+	static_assert_offset(ComputeShader, m_PerGeometry, 0x48);
+	static_assert_offset(ComputeShader, m_Shader, 0x60);
+	static_assert_offset(ComputeShader, m_TechniqueID, 0x68);
+	static_assert_offset(ComputeShader, m_ShaderLength, 0x6C);
+	static_assert_offset(ComputeShader, m_ConstantOffsets, 0x70);
+	static_assert_offset(ComputeShader, m_RawBytecode, 0x90);
+#pragma warning(pop)
 
 	//
 	// Renderer-specific types to handle uploading raw data to the GPU

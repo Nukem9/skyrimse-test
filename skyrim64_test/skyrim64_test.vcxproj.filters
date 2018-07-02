@@ -152,9 +152,6 @@
     <ClInclude Include="src\patches\TES\BSShader\BSShaderAccumulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSComputeShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\BSShader\BSShaderMaterial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
