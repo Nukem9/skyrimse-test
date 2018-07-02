@@ -88,7 +88,7 @@ class INISettingCollection : public SettingCollectionList<Setting>
 {
 public:
 	Setting *FindSetting(const char *Key);
-	void DumpOffsetScript(const char *FilePath);
+	void DumpSettingIDAScript(FILE *File);
 };
 
 class INIPrefSettingCollection : public INISettingCollection

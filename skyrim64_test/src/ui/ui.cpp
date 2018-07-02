@@ -174,38 +174,65 @@ namespace ui
 		}
 #endif
 
-        if (ImGui::BeginMenu("Statistics"))
+		if (ImGui::BeginMenu("SceneGraph"))
+		{
+			ImGui::MenuItem("World Tree", nullptr, &showScenegraphWorldWindow);
+			ImGui::MenuItem("Menu Tree", nullptr, &showSceneGraphMenuWindow);
+			ImGui::MenuItem("Menu3D Tree", nullptr, &showSceneGraphMenu3DWindow);
+			ImGui::EndMenu();
+		}
+
+        if (ImGui::BeginMenu("Renderer"))
         {
-			ImGui::MenuItem("Frame Statistics", nullptr, &showFrameStatsWindow);
 			ImGui::MenuItem("Render Target Viewer", nullptr, &showRTViewerWindow);
 			ImGui::MenuItem("Masked Occlusion Buffer Viewer", nullptr, &showCullingWindow);
-            ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
-            ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
-			ImGui::MenuItem("TESForm Cache", nullptr, &showTESFormWindow);
-			ImGui::MenuItem("World Scene Graph", nullptr, &showScenegraphWorldWindow);
-			ImGui::MenuItem("Menu Scene Graph", nullptr, &showSceneGraphMenuWindow);
-			ImGui::MenuItem("Menu3D Scene Graph", nullptr, &showSceneGraphMenu3DWindow);
-            ImGui::EndMenu();
+			ImGui::MenuItem("Shader Tweaks", nullptr, &showShaderTweakWindow);
+			ImGui::EndMenu();
         }
+
+		if (ImGui::BeginMenu("Statistics"))
+		{
+			ImGui::MenuItem("Frame Statistics", nullptr, &showFrameStatsWindow);
+			ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
+			ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
+			ImGui::MenuItem("TESForm Cache", nullptr, &showTESFormWindow);
+			ImGui::EndMenu();
+		}
 
         if (ImGui::BeginMenu("Game"))
         {
-            bool g_BlockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
-
-            if (ImGui::MenuItem("Block Input", nullptr, &g_BlockInput))
-                ProxyIDirectInputDevice8A::ToggleGlobalInput(!g_BlockInput);
-
-			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
-			ImGui::Separator();
 			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
-			ImGui::MenuItem("Shader Tweaks", nullptr, &showShaderTweakWindow);
 			ImGui::MenuItem("INISetting Viewer", nullptr, &showIniListWindow);
+			ImGui::Separator();
+            bool blockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
+            if (ImGui::MenuItem("Block Input", nullptr, &blockInput))
+                ProxyIDirectInputDevice8A::ToggleGlobalInput(!blockInput);
+			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
             ImGui::EndMenu();
         }
 
-		if (ImGui::BeginMenu("Misc"))
+		if (ImGui::BeginMenu("Miscellaneous"))
 		{
 			ImGui::MenuItem("ImGui Debug", nullptr, &showDemoWindow);
+			ImGui::Separator();
+			if (ImGui::MenuItem("Dump NiRTTI"))
+			{
+				FILE *f = fopen("C:\\nirtti.txt", "w");
+				log::Add("Dumping NiRTTI script to %s...\n", "C:\\nirtti.txt");
+				NiRTTI::DumpRTTIListing(f, true);
+				fclose(f);
+			}
+
+			if (ImGui::MenuItem("Dump INISetting"))
+			{
+				FILE *f = fopen("C:\\inisetting.txt", "w");
+				log::Add("Dumping INISetting script to %s...\n", "C:\\inisetting.txt");
+				INISettingCollectionSingleton->DumpSettingIDAScript(f);
+				INIPrefSettingCollectionSingleton->DumpSettingIDAScript(f);
+				fclose(f);
+			}
+			ImGui::Separator();
+			ImGui::MenuItem("##somespacing");
 			ImGui::Separator();
 			if (ImGui::MenuItem("Terminate Process"))
 				TerminateProcess(GetCurrentProcess(), 0x13371337);
@@ -267,22 +294,6 @@ namespace ui
 					s->SetFromString(tempBuffer);
 
 				ImGui::LabelText("##lblNotice", "Press enter to save inputs. String editing is disabled.");
-				ImGui::EndGroupSplitter();
-			}
-
-			// IDC script dumper
-			if (ImGui::BeginGroupSplitter("Dumper"))
-			{
-				static char filePath[1024] = { "C:\\ini_idc_script.idc" };
-				ImGui::InputText("##iniDumpFilePath", filePath, ARRAYSIZE(filePath));
-
-				if (ImGui::Button("Dump list to IDC script"))
-				{
-					ui::log::Add("Attempting to dump INI variables to %s...\n", filePath);
-					INISettingCollectionSingleton->DumpOffsetScript(filePath);
-					INIPrefSettingCollectionSingleton->DumpOffsetScript(filePath);
-				}
-
 				ImGui::EndGroupSplitter();
 			}
 

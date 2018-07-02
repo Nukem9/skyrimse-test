@@ -134,29 +134,24 @@ Setting *INISettingCollection::FindSetting(const char *Key)
 	return nullptr;
 }
 
-void INISettingCollection::DumpOffsetScript(const char *FilePath)
+void INISettingCollection::DumpSettingIDAScript(FILE *File)
 {
-	FILE *fout;
-
-	if (fopen_s(&fout, FilePath, "a") != 0)
-		return;
-
 	for (auto *s = SettingsA.QNext(); s; s = s->QNext())
 	{
 		void *addr = (void *)((uintptr_t)&s->QItem()->uValue - g_ModuleBase + 0x140000000);
 
 		switch (Setting::TypeFromPrefix(s->QItem()->pKey))
 		{
-		case Setting::ST_BINARY: fprintf(fout, "create_byte(0x%p);\n", addr); break;
-		case Setting::ST_CHAR: fprintf(fout, "create_byte(0x%p);\n", addr); break;
-		case Setting::ST_UCHAR: fprintf(fout, "create_byte(0x%p);\n", addr); break;
-		case Setting::ST_INT: fprintf(fout, "create_dword(0x%p);\n", addr); break;
-		case Setting::ST_UINT: fprintf(fout, "create_dword(0x%p);\n", addr); break;
-		case Setting::ST_FLOAT: fprintf(fout, "create_float(0x%p);\n", addr); break;
-		case Setting::ST_STRING: fprintf(fout, "create_qword(0x%p); op_plain_offset(0x%p, 0, 0);\n", addr, addr); break;
-		case Setting::ST_RGB: fprintf(fout, "create_byte(0x%p); make_array(0x%p, 0x3);\n", addr, addr); break;
-		case Setting::ST_RGBA: fprintf(fout, "create_byte(0x%p); make_array(0x%p, 0x4);\n", addr, addr); break;
-		case Setting::ST_NONE: fprintf(fout, "// UNIMPLEMENTED CASE!\n"); break;
+		case Setting::ST_BINARY: fprintf(File, "create_byte(0x%p);\n", addr); break;
+		case Setting::ST_CHAR: fprintf(File, "create_byte(0x%p);\n", addr); break;
+		case Setting::ST_UCHAR: fprintf(File, "create_byte(0x%p);\n", addr); break;
+		case Setting::ST_INT: fprintf(File, "create_dword(0x%p);\n", addr); break;
+		case Setting::ST_UINT: fprintf(File, "create_dword(0x%p);\n", addr); break;
+		case Setting::ST_FLOAT: fprintf(File, "create_float(0x%p);\n", addr); break;
+		case Setting::ST_STRING: fprintf(File, "create_qword(0x%p); op_plain_offset(0x%p, 0, 0);\n", addr, addr); break;
+		case Setting::ST_RGB: fprintf(File, "create_byte(0x%p); make_array(0x%p, 0x3);\n", addr, addr); break;
+		case Setting::ST_RGBA: fprintf(File, "create_byte(0x%p); make_array(0x%p, 0x4);\n", addr, addr); break;
+		case Setting::ST_NONE: fprintf(File, "// UNIMPLEMENTED CASE!\n"); break;
 		}
 
 		// Replace 'setting:category' with 'setting_category'
@@ -169,10 +164,8 @@ void INISettingCollection::DumpOffsetScript(const char *FilePath)
 		while (strchr(temp, ' '))
 			*strchr(temp, ' ') = '_';
 
-		fprintf(fout, "set_name(0x%p, \"%s\");\n", addr, temp);
+		fprintf(File, "set_name(0x%p, \"%s\");\n", addr, temp);
 	}
-
-	fclose(fout);
 }
 
 SettingResolverHack::SettingResolverHack(const char *Key) : m_Key(Key), m_Ptr(nullptr)
