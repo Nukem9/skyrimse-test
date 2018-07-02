@@ -42,7 +42,6 @@
 
 #include "xutil.h"
 #include "dump.h"
-#include "ansel.h"
 #include "profiler.h"
 
 extern ULONG_PTR g_ModuleBase;

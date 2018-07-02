@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <type_traits>
 #pragma warning(disable:4094) // untagged 'struct' declared no symbols
 
 #define Assert(cond)					if(!(cond)) XutilAssert(__FILE__, __LINE__, #cond);
@@ -43,18 +41,6 @@ struct static_constructor
 template<void(*ctor)()>
 typename static_constructor<ctor>::constructor static_constructor<ctor>::c;
 
-#pragma pack(push, 8)  
-const DWORD MS_VC_EXCEPTION = 0x406D1388;
-
-typedef struct tagTHREADNAME_INFO
-{
-	DWORD dwType;		// Must be 0x1000.  
-	LPCSTR szName;		// Pointer to name (in user addr space).  
-	DWORD dwThreadID;	// Thread ID (-1=caller thread).  
-	DWORD dwFlags;		// Reserved for future use, must be zero.  
-} THREADNAME_INFO;
-#pragma pack(pop)
-
 #define STATIC_CONSTRUCTOR(Id, Lambda) struct { static void Id(){ static_constructor<&Id>::c; Lambda(); } };
 
 #define DECLARE_CONSTRUCTOR_HOOK(Class) \
@@ -69,7 +55,6 @@ typedef struct tagTHREADNAME_INFO
 		return Thisptr; \
 	}
 
-intptr_t FindPattern(const std::vector<unsigned char>& data, intptr_t baseAddress, const unsigned char *lpPattern, const char *pszMask, intptr_t offset, intptr_t resultUsage);
 uintptr_t FindPatternSimple(uintptr_t StartAddress, uintptr_t MaxSize, const BYTE *ByteMask, const char *Mask);
 void PatchMemory(ULONG_PTR Address, PBYTE Data, SIZE_T Size);
 void SetThreadName(DWORD dwThreadID, const char *ThreadName);

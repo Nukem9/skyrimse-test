@@ -128,8 +128,6 @@ VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
 	//
 	if (Reason == DLL_THREAD_ATTACH)
 	{
-		OutputDebugStringA("TLS Callback: Thread attach\n");
-
 		if (!g_MainTLSBlock)
 		{
 			// Still need to track new threads before WinMain()
@@ -153,8 +151,6 @@ VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
 	}
 	else if (Reason == DLL_THREAD_DETACH)
 	{
-		OutputDebugStringA("TLS Callback: Thread detach\n");
-
 		// Sometimes threads are destroyed during process init
 		for (uint32_t i = 0; i < delayedThreadPatchIndex; i++)
 		{

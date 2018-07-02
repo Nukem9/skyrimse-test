@@ -46,18 +46,12 @@ void PatchAchievements()
     // Loop through each fix and exit on the first found
     for (auto &patch : Patches)
     {
-        uintptr_t addr = FindPattern(
-            std::vector<unsigned char>((uint8_t *)g_CodeBase, (uint8_t *)(g_CodeBase + g_CodeSize)),
-            g_CodeBase,
-            (const unsigned char *)patch.BytesToFind,
-            patch.FindMask,
-            patch.AddressModifier,
-            0);
+		uintptr_t addr = FindPatternSimple(g_CodeBase, g_CodeSize, (uint8_t *)patch.BytesToFind, patch.FindMask);
 
         if (!addr)
             continue;
 
-        PatchMemory(addr, (PBYTE)patch.BytePatch, patch.PatchSize);
+        PatchMemory((addr + patch.AddressModifier), (PBYTE)patch.BytePatch, patch.PatchSize);
         return;
     }
 

@@ -194,7 +194,6 @@
     <ClInclude Include="src\patches\TES\NiMain\NiTransform.h" />
     <ClInclude Include="src\patches\TES\Setting.h" />
     <ClInclude Include="src\profiler_internal.h" />
-    <ClInclude Include="src\ansel.h" />
     <ClInclude Include="src\d3dconv.h" />
     <ClInclude Include="src\patches\dinput8.h" />
     <ClInclude Include="src\dump.h" />
@@ -260,7 +259,6 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="MaskedOcclusionCulling\MaskedOcclusionCullingAVX512.cpp" />
-    <ClCompile Include="src\ansel.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />
     <ClCompile Include="src\patches\fileio.cpp" />
     <ClCompile Include="src\patches\patches.cpp" />

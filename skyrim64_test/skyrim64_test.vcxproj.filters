@@ -38,9 +38,6 @@
     <ClInclude Include="imgui\stb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="src\ansel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\d3dconv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -309,9 +306,6 @@
     </ClCompile>
     <ClCompile Include="imgui\imgui_draw.cpp">
       <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ansel.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\d3dx9_debug.cpp">
       <Filter>Source Files</Filter>
