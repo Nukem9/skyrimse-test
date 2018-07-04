@@ -1,6 +1,12 @@
 #include "common.h"
 #include "patches/rendering/d3d11_tls.h"
 
+#if SKYRIM64_USE_VTUNE
+__itt_heap_function ITT_AllocateCallback;
+__itt_heap_function ITT_ReallocateCallback;
+__itt_heap_function ITT_FreeCallback;
+#endif
+
 ULONG_PTR g_ModuleBase;
 ULONG_PTR g_ModuleSize;
 
@@ -55,6 +61,10 @@ void LoadModules()
         libttPath = "libittnotify.dll";
 
     g_DllVTune = LoadLibraryA(libttPath);
+
+	ITT_AllocateCallback = __itt_heap_function_create("Allocate", "MemoryManager");
+	ITT_ReallocateCallback = __itt_heap_function_create("Reallocate", "MemoryManager");
+	ITT_FreeCallback = __itt_heap_function_create("Free", "MemoryManager");
 #endif
 }
 

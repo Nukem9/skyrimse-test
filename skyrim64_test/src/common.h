@@ -22,6 +22,10 @@
 #if SKYRIM64_USE_VTUNE
 #include <ittnotify.h>
 #pragma comment(lib, "libittnotify.lib")
+
+extern __itt_heap_function ITT_AllocateCallback;
+extern __itt_heap_function ITT_ReallocateCallback;
+extern __itt_heap_function ITT_FreeCallback;
 #endif
 
 // Jemalloc

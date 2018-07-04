@@ -58,19 +58,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\include;$(ProjectDir)zydis\src;$(ProjectDir)zydis\include;$(ProjectDir)jemalloc\include\msvc_compat;$(ProjectDir)jemalloc\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(ProjectDir)zydis\src;$(ProjectDir)zydis\include;$(ProjectDir)jemalloc\include\msvc_compat;$(ProjectDir)jemalloc\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
     <TargetName>d3dx9_42</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\include;$(ProjectDir)zydis\src;$(ProjectDir)zydis\include;$(ProjectDir)jemalloc\include\msvc_compat;$(ProjectDir)jemalloc\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(ProjectDir)zydis\src;$(ProjectDir)zydis\include;$(ProjectDir)jemalloc\include\msvc_compat;$(ProjectDir)jemalloc\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
     <TargetName>d3dx9_42</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'">
-    <IncludePath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\include;$(ProjectDir)zydis\src;$(ProjectDir)zydis\include;$(ProjectDir)jemalloc\include\msvc_compat;$(ProjectDir)jemalloc\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2018\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(ProjectDir)zydis\src;$(ProjectDir)zydis\include;$(ProjectDir)jemalloc\include\msvc_compat;$(ProjectDir)jemalloc\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
     <TargetName>d3dx9_42</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

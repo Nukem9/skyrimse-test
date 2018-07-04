@@ -7,6 +7,10 @@ void *Jemalloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 	ProfileCounterAdd("Byte Count", Size);
 	ProfileTimer("Time Spent Allocating");
 
+#if SKYRIM64_USE_VTUNE
+	__itt_heap_allocate_begin(ITT_AllocateCallback, Size, 0);
+#endif
+
 	void *ptr = nullptr;
 
 	// Does this need to be on a certain boundary?
@@ -39,7 +43,11 @@ void *Jemalloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 	}
 
 	if (ptr && Zeroed)
-		return memset(ptr, 0, Size);
+		memset(ptr, 0, Size);
+
+#if SKYRIM64_USE_VTUNE
+	__itt_heap_allocate_end(ITT_AllocateCallback, &ptr, Size, 0);
+#endif
 
 	return ptr;
 }
@@ -52,7 +60,15 @@ void Jefree(void *Memory)
 	if (!Memory)
 		return;
 
+#if SKYRIM64_USE_VTUNE
+	__itt_heap_free_begin(ITT_FreeCallback, Memory);
+#endif
+
 	je_free(Memory);
+
+#if SKYRIM64_USE_VTUNE
+	__itt_heap_free_end(ITT_FreeCallback, Memory);
+#endif
 }
 
 //
@@ -86,7 +102,14 @@ void __fastcall hk_aligned_free(void *Block)
 
 size_t __fastcall hk_msize(void *Block)
 {
+#if SKYRIM64_USE_VTUNE
+	__itt_heap_internal_access_begin();
+	size_t result = je_malloc_usable_size(Block);
+	__itt_heap_internal_access_end();
+	return result;
+#else
 	return je_malloc_usable_size(Block);
+#endif
 }
 
 //

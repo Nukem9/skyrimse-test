@@ -1,5 +1,9 @@
 #include "common.h"
 
+#if SKYRIM64_USE_VTUNE && SKYRIM64_USE_PROFILER
+#pragma message("Warning: Using the built-in profiler code with VTune may skew final results")
+#endif
+
 namespace Profiler
 {
 #define NVAPI_MAX_PHYSICAL_GPUS   64
