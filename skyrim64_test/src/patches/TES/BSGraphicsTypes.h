@@ -101,7 +101,10 @@ namespace BSGraphics
 
 	class CustomConstantGroup
 	{
-	protected:
+		friend class Renderer;
+		template<typename> friend class ConstantGroup;
+
+	private:
 		//
 		// Invalid constant offsets still need a place to be written to. This is supposed to
 		// be in ConstantGroup<T>, but it causes a compiler crash.
@@ -110,11 +113,10 @@ namespace BSGraphics
 		//
 		inline static char EmptyWriteBuffer[1024];
 
-	public:
 		D3D11_MAPPED_SUBRESOURCE m_Map {};
-		ID3D11Buffer *m_Buffer			= nullptr;
-		bool m_Unified					= false;	// True if buffer is from global ring buffer
-		uint32_t m_UnifiedByteOffset	= 0;		// Offset into ring buffer
+		ID3D11Buffer *m_Buffer = nullptr;
+		bool m_Unified = false;				// True if buffer is from global ring buffer
+		uint32_t m_UnifiedByteOffset = 0;	// Offset into ring buffer
 
 	public:
 		inline void *RawData() const
@@ -126,10 +128,11 @@ namespace BSGraphics
 	template<typename T>
 	class ConstantGroup : public CustomConstantGroup
 	{
-	public:
-		T *m_Shader;
+		friend class Renderer;
 
 	private:
+		T *m_Shader = nullptr;
+
 		template<typename U>
 		U& MapVar(uint32_t Offset) const
 		{
@@ -159,13 +162,25 @@ namespace BSGraphics
 
 			return MapVar<U>(m_Shader->m_ConstantOffsets[ParamIndex]);
 		}
+
+		ConstantGroup<T>& operator=(const CustomConstantGroup& Other)
+		{
+			memcpy(&m_Map, &Other.m_Map, sizeof(m_Map));
+			m_Buffer = Other.m_Buffer;
+			m_Unified = Other.m_Unified;
+			m_UnifiedByteOffset = Other.m_UnifiedByteOffset;
+			m_Shader = nullptr;
+
+			return *this;
+		}
 	};
 
 	//
 	// Shaders
 	//
 #pragma warning(push)
-#pragma warning(disable:4200)
+#pragma warning(disable:4200) // MSVC
+#pragma warning(disable:94)   // Intel C++ Compiler
 	struct VertexShader
 	{
 		uint32_t m_TechniqueID;						// Bit flags

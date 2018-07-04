@@ -1251,7 +1251,7 @@ void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics:
 		void *ptr;
 	} temp;
 
-	temp.ptr = VertexCG.m_Map.pData;
+	temp.ptr = VertexCG.RawData();
 
 	auto sub_14130BC60 = (void(__fastcall *)(tempbufdata *, BSLightingShaderProperty *))(g_ModuleBase + 0x130BC60);
 	sub_14130BC60(&temp, Property);

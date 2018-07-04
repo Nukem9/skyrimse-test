@@ -117,15 +117,6 @@ enum class BSSM_GROUP_TYPE
 	PER_TEC,	// PerTechnique
 };
 
-struct BSConstantGroup
-{
-	ID3D11Buffer *m_Buffer;	// Selected from pool in Load*ShaderFromFile()
-	void *m_Data;			// m_ConstantBufferData = DeviceContext->Map(m_ConstantBuffer)
-
-	// Based on shader load flags, these **CAN BE NULL**. At least one of the
-	// pointers is guaranteed to be non-null.
-};
-
 //
 // *** SHADER CONSTANTS ***
 //

@@ -1317,62 +1317,62 @@ namespace BSGraphics
 	ConstantGroup<VertexShader> Renderer::GetShaderConstantGroup(VertexShader *Shader, ConstantGroupLevel Level)
 	{
 		ConstantGroup<VertexShader> temp;
-		temp.m_Shader = Shader;
-		temp.m_Buffer = Shader->m_ConstantGroups[Level].m_Buffer;
+		Buffer *group = &Shader->m_ConstantGroups[Level];
 
-		if (temp.m_Buffer)
+		if (group->m_Buffer)
 		{
 			D3D11_BUFFER_DESC desc;
 
-			if ((uintptr_t)temp.m_Buffer > 0x10000)
+			if ((uintptr_t)group->m_Buffer > 0x10000)
 			{
-				temp.m_Buffer->GetDesc(&desc);
-				Shader->m_ConstantGroups[Level].m_Buffer = (ID3D11Buffer *)desc.ByteWidth;
+				group->m_Buffer->GetDesc(&desc);
+				group->m_Buffer = (ID3D11Buffer *)desc.ByteWidth;
 			}
 			else
 			{
-				desc.ByteWidth = (uint32_t)temp.m_Buffer;
+				desc.ByteWidth = (uint32_t)group->m_Buffer;
 			}
 
-			*static_cast<CustomConstantGroup *>(&temp) = GetShaderConstantGroup(desc.ByteWidth, Level);
+			temp = GetShaderConstantGroup(desc.ByteWidth, Level);
 		}
 		else
 		{
-			temp.m_Map.pData = Shader->m_ConstantGroups[Level].m_Data;
+			temp.m_Map.pData = group->m_Data;
 			// Size to memset() is unknown here
 		}
 
+		temp.m_Shader = Shader;
 		return temp;
 	}
 
 	ConstantGroup<PixelShader> Renderer::GetShaderConstantGroup(PixelShader *Shader, ConstantGroupLevel Level)
 	{
 		ConstantGroup<PixelShader> temp;
-		temp.m_Shader = Shader;
-		temp.m_Buffer = Shader->m_ConstantGroups[Level].m_Buffer;
+		Buffer *group = &Shader->m_ConstantGroups[Level];
 
-		if (temp.m_Buffer)
+		if (group->m_Buffer)
 		{
 			D3D11_BUFFER_DESC desc;
 
-			if ((uintptr_t)temp.m_Buffer > 0x10000)
+			if ((uintptr_t)group->m_Buffer > 0x10000)
 			{
-				temp.m_Buffer->GetDesc(&desc);
-				Shader->m_ConstantGroups[Level].m_Buffer = (ID3D11Buffer *)desc.ByteWidth;
+				group->m_Buffer->GetDesc(&desc);
+				group->m_Buffer = (ID3D11Buffer *)desc.ByteWidth;
 			}
 			else
 			{
-				desc.ByteWidth = (uint32_t)temp.m_Buffer;
+				desc.ByteWidth = (uint32_t)group->m_Buffer;
 			}
 
-			*static_cast<CustomConstantGroup *>(&temp) = GetShaderConstantGroup(desc.ByteWidth, Level);
+			temp = GetShaderConstantGroup(desc.ByteWidth, Level);
 		}
 		else
 		{
-			temp.m_Map.pData = Shader->m_ConstantGroups[Level].m_Data;
+			temp.m_Map.pData = group->m_Data;
 			// Size to memset() is unknown here
 		}
 
+		temp.m_Shader = Shader;
 		return temp;
 	}
 
