@@ -9,6 +9,7 @@
 #include "NiMain/BSMultiBoundNode.h"
 
 #include "NiMain/NiNode.h"
+#include "NiMain/NiCamera.h"
 #include <DirectXCollision.h>
 #include <smmintrin.h>
 using namespace DirectX;
@@ -122,7 +123,8 @@ namespace MOC
 			auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
 			dataPtr = rendererData;
 
-			if (auto itr = m_IndexMap.find(rendererData); itr != m_IndexMap.end())
+			auto itr = m_IndexMap.find(rendererData);
+			if (itr != m_IndexMap.end())
 				*Indices = itr->second;
 			else
 			{
@@ -131,8 +133,9 @@ namespace MOC
 				indexCount = triShape->m_TriangleCount * 3;
 			}
 
-			if (auto itr = m_VertMap.find(rendererData); itr != m_VertMap.end())
-				*Vertices = itr->second;
+			auto itr2 = m_VertMap.find(rendererData);
+			if ( itr2 != m_VertMap.end())
+				*Vertices = itr2->second;
 			else
 			{
 				*Vertices = nullptr;
@@ -214,7 +217,7 @@ namespace MOC
 		if (ui::opt::RealtimeOcclusionView)
 		{
 			float *pixels = new float[1920 * 1080];
-			ctpCurrent->ComputePixelDepthBuffer(pixels, false);
+			moc1->ComputePixelDepthBuffer(pixels, false);
 			DepthColorize(pixels, mpGPUDepthBuf);
 			BSGraphics::Renderer::GetGlobals()->m_DeviceContext->UpdateSubresource(g_OcclusionTexture, 0, nullptr, mpGPUDepthBuf, 1920 * 4, 0);
 			delete[] pixels;
@@ -223,10 +226,13 @@ namespace MOC
 
 	bool dohack = false;
 
+	XMMATRIX MyViewProj;
+	NiPoint3 MyPosAdjust;
+
 	bool RegisterGeo(BSGeometry *Geometry, bool Test, bool Draw)
 	{
-		if (Test && !dohack)
-			return true;
+		//if (Test && !dohack)
+		//	return true;
 
 		BSShaderProperty *shaderProperty = Geometry->QShaderProperty();
 
@@ -251,21 +257,23 @@ namespace MOC
 
 				GetCachedVerticesAndIndices(triShape, &indexRawData, &vertexRawData);
 
-				XMMATRIX worldProj = BSShaderUtil::GetXMFromNi(triShape->GetWorldTransform());
-				XMMATRIX worldViewProj = XMMatrixMultiply(worldProj, BSGraphics::Renderer::GetGlobals()->m_ViewProjMat);
+				XMMATRIX worldProj = BSShaderUtil::GetXMFromNiPosAdjust(triShape->GetWorldTransform(), MyPosAdjust);
+				XMMATRIX worldViewProj = XMMatrixMultiply(worldProj, MyViewProj);
 
 				if (Draw)
 				{
 					//if (ui::opt::EnableOccluderRendering && (!Geometry->QAlphaProperty() || !Geometry->QAlphaProperty()->GetAlphaTesting()))
 					{
-						ctpCurrent->SetMatrix((float *)&worldViewProj);
+						//ctpCurrent->SetMatrix((float *)&worldViewProj);
 
-						ctpCurrent->RenderTriangles(
+						moc1->RenderTriangles(
 							vertexRawData,
 							indexRawData,
 							triShape->m_TriangleCount,
+							(float *)&worldViewProj,
 							MaskedOcclusionCulling::BACKFACE_CW,
-							MaskedOcclusionCulling::CLIP_PLANE_SIDES);
+							MaskedOcclusionCulling::CLIP_PLANE_SIDES,
+							MaskedOcclusionCulling::VertexLayout(16, 4, 12));
 
 						ProfileCounterAdd("Triangles Rendered", triShape->m_TriangleCount);
 					}
@@ -277,21 +285,23 @@ namespace MOC
 				{
 					if (ui::opt::EnableOcclusionTesting)
 					{
-						ctpCurrent->SetMatrix((float *)&worldViewProj);
+						//ctpCurrent->SetMatrix((float *)&worldViewProj);
 
-						r = ctpCurrent->TestTriangles(
+						r = moc1->TestTriangles(
 							vertexRawData,
 							indexRawData,
 							triShape->m_TriangleCount,
-							MaskedOcclusionCulling::BACKFACE_CW,
-							MaskedOcclusionCulling::CLIP_PLANE_SIDES);
+							(float *)&worldViewProj,
+							MaskedOcclusionCulling::BACKFACE_NONE,
+							MaskedOcclusionCulling::CLIP_PLANE_SIDES,
+							MaskedOcclusionCulling::VertexLayout(16, 4, 12));
 
 						ProfileCounterAdd("Triangles Tested", triShape->m_TriangleCount);
-
-						if (r != MaskedOcclusionCulling::VISIBLE)
-							return false;
 					}
 				}
+
+				if (r != MaskedOcclusionCulling::VISIBLE)
+					return false;
 			}
 		}
 
@@ -352,6 +362,11 @@ namespace MOC
 		}
 
 		bool cull = false;
+
+		const char *name = Object->GetName()->c_str();
+
+		if (name && name[0] == 'L' && name[1] == '2' && name[2] == '_')
+			cull = true;
 
 		if (!cull)
 		{
@@ -427,8 +442,12 @@ namespace MOC
 			RenderRecursive(f, Node->GetAt(i), true);
 	}
 
+	AutoPtr(BSShaderAccumulator *, MainPassAccumulatora, 0x3257A70);
+
 	void TraverseSceneGraph()
 	{
+		ProfileTimer("MOC SceneGraph Traverse");
+
 		AutoPtr(NiNode *, WorldScenegraph, 0x2F4CE30);
 
 		//
@@ -461,10 +480,17 @@ namespace MOC
 		// -- "MultiBoundNode Node"   NiNode
 		// -- "Collision Node"        NiNode
 		//
-		ctpCurrent->ClearBuffer();
+		//ctpCurrent->ClearBuffer();
+		moc1->ClearBuffer();
 
 		fplanes p;
-		p.CreateFromViewProjMatrix(BSGraphics::Renderer::GetGlobals()->m_ViewProjMat);
+		XMMATRIX testViewProj;
+
+		MainPassAccumulatora->m_pkCamera->CalculateViewProjection(testViewProj);
+		p.CreateFromViewProjMatrix(testViewProj);
+
+		MyViewProj = testViewProj;
+		MyPosAdjust = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
 
 		const NiNode *node = WorldScenegraph;	// SceneGraph
 		node = node->GetAt(1)->IsNode();		// ShadowSceneNode
@@ -486,6 +512,6 @@ namespace MOC
 			RenderTopLevelNode(p, staticNode);
 		}
 
-		ctpCurrent->Flush();
+		//ctpCurrent->Flush();
 	}
 }

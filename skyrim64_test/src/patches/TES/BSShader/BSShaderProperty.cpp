@@ -157,10 +157,11 @@ void BSShaderProperty::GetViewerStrings(void(*Callback)(const char *, ...), bool
 		debugPassCount++;
 
 	Callback("Pass Count = %d\n", passCount);
-	Callback("Debug Pass Count = %d\n", debugPassCount);
 
 	for (auto pass = QRenderPasses()->pPassList; pass; pass = pass->m_Previous)
 		Callback("%s Pass\n", ((const char *(*)(uint32_t))(g_ModuleBase + 0x12ABF00))(pass->m_TechniqueID));
+
+	Callback("Debug Pass Count = %d\n", debugPassCount);
 
 	for (auto pass = QDebugRenderPasses()->pPassList; pass; pass = pass->m_Previous)
 		Callback("%s Debug Pass\n", ((const char *(*)(uint32_t))(g_ModuleBase + 0x12ABF00))(pass->m_TechniqueID));

@@ -10,6 +10,9 @@
 #include "../MTRenderer.h"
 #include "../MOC.h"
 
+AutoPtr(BSShaderAccumulator *, ZPrePassAccumulator, 0x3257A68);
+AutoPtr(BSShaderAccumulator *, MainPassAccumulator, 0x3257A70);
+
 void BSShaderAccumulator::InitCallbackTable()
 {
 	// If the pointer is null, it defaults to the function at index 0
@@ -91,6 +94,7 @@ void BSShaderAccumulator::SetRenderMode(uint32_t RenderMode)
 		FinishAccumulatingCurrent = FinishAccumulatingArray[0];
 }
 
+SRWLOCK testLock = SRWLOCK_INIT;
 bool BSShaderAccumulator::hk_RegisterObjectDispatch(BSGeometry *Geometry, void *Unknown)
 {
 	NiSkinInstance *skinInstance = Geometry->QSkinInstance();
@@ -105,6 +109,19 @@ bool BSShaderAccumulator::hk_RegisterObjectDispatch(BSGeometry *Geometry, void *
 
 	if (!Geometry->QRendererData() && !skinInstance && !Geometry->IsParticlesGeom() && Geometry->QType() != GEOMETRY_TYPE_PARTICLE_SHADER_DYNAMIC_TRISHAPE)
 		return true;
+
+	// test
+	if (this == MainPassAccumulator || this == ZPrePassAccumulator)
+	{
+		bool ok = true;
+		AcquireSRWLockExclusive(&testLock);
+		if (!MOC::RegisterGeo(Geometry, true, false))
+			ok = false;
+		ReleaseSRWLockExclusive(&testLock);
+
+		if (!ok)
+			return false;
+	}
 
 	bool result = RegisterObjectArray[m_RenderMode](this, Geometry, shaderProperty, Unknown);
 
@@ -161,9 +178,6 @@ void BSShaderAccumulator::FinishAccumulating_Normal(BSShaderAccumulator *Accumul
 	RenderSceneNormalAlphaZ(Accumulator, RenderFlags);
 	BSGraphics::EndEvent();
 }
-
-AutoPtr(BSShaderAccumulator *, ZPrePassAccumulator, 0x3257A68);
-AutoPtr(BSShaderAccumulator *, MainPassAccumulator, 0x3257A70);
 BSShaderAccumulator *currentAccum = nullptr;
 
 bool once = false;
@@ -198,8 +212,10 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		if (ui::opt::RealtimeOcclusionView)
 			MOC::UpdateDepthViewTexture();
 
+		//AcquireSRWLockExclusive(&testLock);
 		MOC::TraverseSceneGraph();
-		MOC::SetDoHack(true);
+		//ReleaseSRWLockExclusive(&testLock);
+		//MOC::SetDoHack(true);
 	}
 
 	//
@@ -268,8 +284,8 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		}
 		renderer->EndEvent();
 
-		if (Accumulator == MainPassAccumulator)
-			MOC::SetDoHack(false);
+		//if (Accumulator == MainPassAccumulator)
+		//	MOC::SetDoHack(false);
 	}
 
 	// RenderSky
