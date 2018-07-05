@@ -178,6 +178,7 @@
     <ClInclude Include="src\patches\TES\NiMain\common.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiCamera.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiColor.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiDirectionalLight.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiLight.h" />

@@ -16,6 +16,14 @@ public:
 		memcpy(&m_pEntry, Src.m_pEntry, sizeof(m_pEntry));
 	}
 
+	template<uint32_t Index>
+	NiPoint3 GetCol() const
+	{
+		static_assert(Index <= 2);
+
+		return NiPoint3(m_pEntry[0][Index], m_pEntry[1][Index], m_pEntry[2][Index]);
+	}
+
 	NiMatrix3 Transpose() const
 	{
 		// Swap [rows, cols] with [cols, rows]. Can only be optimized with AVX.

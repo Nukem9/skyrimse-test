@@ -10,6 +10,7 @@
 #include "../patches/TES/NiMain/BSGeometry.h"
 #include "../patches/TES/NiMain/BSMultiBoundNode.h"
 #include "../patches/TES/BSShader/BSShaderProperty.h"
+#include "../patches/TES/NiMain/NiCamera.h"
 
 extern LARGE_INTEGER g_FrameDelta;
 extern std::vector<std::pair<ID3D11ShaderResourceView *, std::string>> g_ResourceViews;
@@ -186,9 +187,11 @@ namespace ui
 		{
 			ImGui::Text("Triangles Tested: %lld", ProfileGetDeltaValue("Triangles Tested"));
 			ImGui::Text("Triangles Rendered: %lld", ProfileGetDeltaValue("Triangles Rendered"));
+			ImGui::Text("Scene Graph Traversal Time: %.5f seconds", ProfileGetDeltaTime("MOC SceneGraph Traverse"));
 
 			ProfileGetValue("Triangles Tested");
 			ProfileGetValue("Triangles Rendered");
+			ProfileGetTime("MOC SceneGraph Traverse");
 
 			ImGui::Spacing();
 			ImGui::DragFloat("Max 2D Render Distance", &ui::opt::OccluderMaxDistance, 100.0f, 1.0f, 1000000.0f);
@@ -265,6 +268,8 @@ namespace ui
 			{
 				if (geometry)
 					geometry->GetViewerStrings(ImGui::Text, true);
+				else if (Object->IsExactKindOf(NiRTTI::ms_NiCamera))
+					static_cast<NiCamera *>(Object)->GetViewerStrings(ImGui::Text, true);
 				else
 					Object->GetViewerStrings(ImGui::Text, true);
 
