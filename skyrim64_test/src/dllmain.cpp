@@ -62,6 +62,7 @@ void LoadModules()
 
     g_DllVTune = LoadLibraryA(libttPath);
 
+	__itt_domain_create("MemoryManager");
 	ITT_AllocateCallback = __itt_heap_function_create("Allocate", "MemoryManager");
 	ITT_ReallocateCallback = __itt_heap_function_create("Reallocate", "MemoryManager");
 	ITT_FreeCallback = __itt_heap_function_create("Free", "MemoryManager");

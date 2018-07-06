@@ -8,7 +8,7 @@ void *Jemalloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 	ProfileTimer("Time Spent Allocating");
 
 #if SKYRIM64_USE_VTUNE
-	__itt_heap_allocate_begin(ITT_AllocateCallback, Size, 0);
+	__itt_heap_allocate_begin(ITT_AllocateCallback, Size, Zeroed ? 1 : 0);
 #endif
 
 	void *ptr = nullptr;
@@ -46,7 +46,7 @@ void *Jemalloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 		memset(ptr, 0, Size);
 
 #if SKYRIM64_USE_VTUNE
-	__itt_heap_allocate_end(ITT_AllocateCallback, &ptr, Size, 0);
+	__itt_heap_allocate_end(ITT_AllocateCallback, &ptr, Size, Zeroed ? 1 : 0);
 #endif
 
 	return ptr;
