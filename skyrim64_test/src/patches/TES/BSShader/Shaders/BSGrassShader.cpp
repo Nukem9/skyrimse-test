@@ -76,8 +76,6 @@ BSGrassShader::~BSGrassShader()
 
 bool BSGrassShader::SetupTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSGrassShader::SetupTechnique, Technique);
-
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
 	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
@@ -110,13 +108,10 @@ bool BSGrassShader::SetupTechnique(uint32_t Technique)
 
 void BSGrassShader::RestoreTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSGrassShader::RestoreTechnique, Technique);
 }
 
 void BSGrassShader::SetupMaterial(BSShaderMaterial const *Material)
 {
-	BSSHADER_FORWARD_CALL(MATERIAL, &BSGrassShader::SetupMaterial, Material);
-
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	NiSourceTexture *baseTexture = *(NiSourceTexture **)((uintptr_t)Material + 72);
 
@@ -126,13 +121,10 @@ void BSGrassShader::SetupMaterial(BSShaderMaterial const *Material)
 
 void BSGrassShader::RestoreMaterial(BSShaderMaterial const *Material)
 {
-	BSSHADER_FORWARD_CALL(MATERIAL, &BSGrassShader::RestoreMaterial, Material);
 }
 
 void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::SetupGeometry, Pass, RenderFlags);
-
 	uintptr_t geometry = (uintptr_t)Pass->m_Geometry;
 	uintptr_t property = (uintptr_t)Pass->m_Property;
 
@@ -238,7 +230,6 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 void BSGrassShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSGrassShader::RestoreGeometry, Pass, RenderFlags);
 }
 
 void BSGrassShader::UpdateFogParameters()

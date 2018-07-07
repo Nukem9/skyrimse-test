@@ -58,8 +58,6 @@ BSBloodSplatterShader::~BSBloodSplatterShader()
 
 bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSBloodSplatterShader::SetupTechnique, Technique);
-
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
 	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
@@ -100,8 +98,6 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 
 void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSBloodSplatterShader::RestoreTechnique, Technique);
-
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	renderer->AlphaBlendStateSetMode(0);
 	renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DEFAULT);
@@ -110,8 +106,6 @@ void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 
 void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::SetupGeometry, Pass, RenderFlags);
-
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	auto property = static_cast<const BSBloodSplatterShaderProperty *>(Pass->m_Property);
 
@@ -166,7 +160,6 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFla
 
 void BSBloodSplatterShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSBloodSplatterShader::RestoreGeometry, Pass, RenderFlags);
 }
 
 void BSBloodSplatterShader::CreateAllShaders()

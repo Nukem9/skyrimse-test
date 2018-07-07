@@ -58,8 +58,6 @@ BSDistantTreeShader::~BSDistantTreeShader()
 
 bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSDistantTreeShader::SetupTechnique, Technique);
-
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
 	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
@@ -139,13 +137,10 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 
 void BSDistantTreeShader::RestoreTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSDistantTreeShader::RestoreTechnique, Technique);
 }
 
 void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::SetupGeometry, Pass, RenderFlags);
-
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
@@ -176,7 +171,6 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags
 
 void BSDistantTreeShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSDistantTreeShader::RestoreGeometry, Pass, RenderFlags);
 }
 
 void BSDistantTreeShader::CreateAllShaders()

@@ -63,8 +63,6 @@ BSSkyShader::~BSSkyShader()
 
 bool BSSkyShader::SetupTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSSkyShader::SetupTechnique, Technique);
-
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
 	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
@@ -121,8 +119,6 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 
 void BSSkyShader::RestoreTechnique(uint32_t Technique)
 {
-	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSSkyShader::RestoreTechnique, Technique);
-
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	renderer->AlphaBlendStateSetMode(0);
 	renderer->AlphaBlendStateSetUnknown2(1);
@@ -134,8 +130,6 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 
 void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::SetupGeometry, Pass, RenderFlags);
-
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	auto property = static_cast<const BSSkyShaderProperty *>(Pass->m_Property);
 
@@ -328,8 +322,6 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	BSSHADER_FORWARD_CALL(GEOMETRY, &BSSkyShader::RestoreGeometry, Pass, RenderFlags);
-
 	uint32_t skyObjectType = static_cast<const BSSkyShaderProperty *>(Pass->m_Property)->uiSkyObjectType;
 
 	if (skyObjectType == 0 || skyObjectType == 6)
