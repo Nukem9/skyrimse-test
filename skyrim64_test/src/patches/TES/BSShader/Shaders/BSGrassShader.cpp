@@ -140,16 +140,6 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto data = (VertexConstantData *)vertexCG.RawData();
 
-#if BSSHADER_FORWARD_DEBUG
-	// Copy original game data to local buffer
-	memcpy(data, (void *)(g_ModuleBase + 0x31F6400), sizeof(VertexConstantData));
-#else
-	// Sanity check
-	const static char zeroData[sizeof(VertexConstantData)] = { 0 };
-
-	AssertMsg(memcmp(&zeroData, (void *)(g_ModuleBase + 0x31F6400), sizeof(zeroData)) == 0, "BUG: This structure MUST be zeroed. Someone wrote data to it.");
-#endif
-
 	UpdateGeometryProjections(data, Pass->m_Geometry->GetWorldTransform());
 	data->FogNearColor = TLS_FogNearColor;
 
