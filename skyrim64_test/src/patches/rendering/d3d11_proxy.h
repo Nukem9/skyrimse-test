@@ -79,6 +79,7 @@ struct D3D11DeviceProxy : ID3D11Device2
 struct D3D11DeviceContextProxy : ID3D11DeviceContext2
 {
 	ID3D11DeviceContext2 *m_Context;
+	ID3DUserDefinedAnnotation *m_UserAnnotation;
 
 	D3D11DeviceContextProxy(ID3D11DeviceContext *Context);
 	D3D11DeviceContextProxy(ID3D11DeviceContext2 *Context);

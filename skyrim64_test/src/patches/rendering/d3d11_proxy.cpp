@@ -356,11 +356,23 @@ D3D11DeviceContextProxy::D3D11DeviceContextProxy(ID3D11DeviceContext *Context)
 
 	AssertMsg(SUCCEEDED(hr), "D3D11.2 interface is not supported");
 	Assert(m_Context->Release() > 0);
+
+	// Grab ID3DUserDefinedAnnotation for profiling markers
+	hr = m_Context->QueryInterface<ID3DUserDefinedAnnotation>(&m_UserAnnotation);
+
+	if (!SUCCEEDED(hr))
+		m_UserAnnotation = nullptr;
 }
 
 D3D11DeviceContextProxy::D3D11DeviceContextProxy(ID3D11DeviceContext2 *Context)
 {
 	m_Context = Context;
+
+	// Grab ID3DUserDefinedAnnotation for profiling markers
+	HRESULT hr = m_Context->QueryInterface<ID3DUserDefinedAnnotation>(&m_UserAnnotation);
+
+	if (!SUCCEEDED(hr))
+		m_UserAnnotation = nullptr;
 }
 
 // IUnknown
@@ -381,6 +393,12 @@ ULONG STDMETHODCALLTYPE D3D11DeviceContextProxy::Release()
 
 	if (refCount <= 0)
 	{
+		if (m_UserAnnotation)
+		{
+			m_UserAnnotation->Release();
+			m_UserAnnotation = nullptr;
+		}
+
 		m_Context = nullptr;
 		delete this;
 	}
@@ -1097,20 +1115,42 @@ void STDMETHODCALLTYPE D3D11DeviceContextProxy::TiledResourceBarrier(ID3D11Devic
 
 BOOL STDMETHODCALLTYPE D3D11DeviceContextProxy::IsAnnotationEnabled()
 {
+	if (m_UserAnnotation)
+		return m_UserAnnotation->GetStatus();
+
+	return FALSE;
+
+#if 0
 	return m_Context->IsAnnotationEnabled();
+#endif
 }
 
 void STDMETHODCALLTYPE D3D11DeviceContextProxy::SetMarkerInt(LPCWSTR pLabel, INT Data)
 {
+	if (m_UserAnnotation)
+		m_UserAnnotation->SetMarker(pLabel);
+
+#if 0
 	m_Context->SetMarkerInt(pLabel, Data);
+#endif
 }
 
 void STDMETHODCALLTYPE D3D11DeviceContextProxy::BeginEventInt(LPCWSTR pLabel, INT Data)
 {
+	if (m_UserAnnotation)
+		m_UserAnnotation->BeginEvent(pLabel);
+
+#if 0
 	m_Context->BeginEventInt(pLabel, Data);
+#endif
 }
 
 void STDMETHODCALLTYPE D3D11DeviceContextProxy::EndEvent()
 {
+	if (m_UserAnnotation)
+		m_UserAnnotation->EndEvent();
+
+#if 0
 	m_Context->EndEvent();
+#endif
 }
