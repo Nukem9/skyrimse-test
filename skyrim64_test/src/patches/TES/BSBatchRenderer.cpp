@@ -235,8 +235,9 @@ bool BSBatchRenderer::sub_14131E700(uint32_t& Technique, uint32_t& GroupIndex, _
 	return true;
 }
 
-bool BSBatchRenderer::sub_14131ECE0(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4)
+bool BSBatchRenderer::DiscardNextGroup(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4)
 {
+	// Probably discards pass, returns true if there's remaining sub passes
 	uint32_t passArray = m_TechToArrayMap.get(Technique);
 
 	if (m_DiscardPassesAfterRender)
@@ -283,7 +284,7 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& GroupIndex, _
 	return sub_14131E8F0(m_TechToArrayMap.get(Technique), GroupIndex);
 }
 
-bool BSBatchRenderer::sub_14131E960(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4, uint32_t RenderFlags)
+bool BSBatchRenderer::RenderNextGroup(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4, uint32_t RenderFlags)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	bool alphaTest;

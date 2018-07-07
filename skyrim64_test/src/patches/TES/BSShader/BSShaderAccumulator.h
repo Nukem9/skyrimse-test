@@ -62,12 +62,16 @@ public:
 	virtual void StartAccumulating(NiCamera const *) override;
 	virtual void FinishAccumulatingDispatch(uint32_t RenderFlags);
 
-	char _pad1[0xD8];
+	char _pad1[0xD0];
+	bool m_UseUnknownCameraAdjust;
+	char _pad0[0x3];
+	bool m_DrawDecals;
 	BSBatchRenderer *m_MainBatch;
 	uint32_t m_CurrentTech;
 	uint32_t m_CurrentGroupIndex;
 	bool m_HasPendingDraws;
-	char _pad[0xF];
+	char _pad[0x7];
+	class ShadowSceneNode *m_ShadowSceneNode;
 	uint32_t m_RenderMode;
 	char _pad2[0x14];
 	NiPoint3 m_CurrentViewPos;
@@ -77,9 +81,6 @@ public:
 	// @ 0xA0 = Pointer to array of unknown D3D11 objects
 	// @ 0xD0 = BSMap<BSFadeNode, uint32_t>
 	// @ 0x118 = NiPoint3(0.300, 0.300, 0.300)
-	// @ 0x12C = bDrawDecals
-	// @ 0x148 = ShadowSceneNode/NiNode
-	// @ 0x150 = uiRenderMode
 
 	inline static RegisterObjFunc RegisterObjectArray[30];
 	inline static FinishAccumFunc FinishAccumulatingArray[30];
@@ -106,12 +107,15 @@ public:
 	void RenderFromMainGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType);
 	void RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType);
 };
-static_assert(sizeof(BSShaderAccumulator) == 0x180, "");
+static_assert(sizeof(BSShaderAccumulator) == 0x180);
 static_assert_offset(BSShaderAccumulator, _pad1, 0x58);
+static_assert_offset(BSShaderAccumulator, m_UseUnknownCameraAdjust, 0x128);
+static_assert_offset(BSShaderAccumulator, m_DrawDecals, 0x12C);
 static_assert_offset(BSShaderAccumulator, m_MainBatch, 0x130);
 static_assert_offset(BSShaderAccumulator, m_CurrentTech, 0x138);
 static_assert_offset(BSShaderAccumulator, m_CurrentGroupIndex, 0x13C);
 static_assert_offset(BSShaderAccumulator, m_HasPendingDraws, 0x140);
+static_assert_offset(BSShaderAccumulator, m_ShadowSceneNode, 0x148);
 static_assert_offset(BSShaderAccumulator, m_RenderMode, 0x150);
 static_assert_offset(BSShaderAccumulator, m_CurrentViewPos, 0x168);
 

@@ -511,12 +511,12 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 	{
 		// Wildcard: render everything with the given techniques
 		group = nullptr;
-		batch = this->m_MainBatch;
+		batch = m_MainBatch;
 	}
 	else
 	{
 		// Render a single group with given techniques
-		group = this->m_MainBatch->m_Groups[GroupType];
+		group = m_MainBatch->m_Groups[GroupType];
 		batch = group->m_BatchRenderer;
 	}
 
@@ -534,10 +534,10 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 
 		while (m_HasPendingDraws)
 		{
-			if (IsGrassShadowBlacklist(m_CurrentTech) && (*(BYTE *)((__int64)this + 296) || *(BYTE *)((__int64)this + 297)))// if (is grass shadow) ???
-				m_HasPendingDraws = batch->sub_14131ECE0(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode);// Probably discards pass, returns true if there's remaining sub passes
+			if (IsGrassShadowBlacklist(m_CurrentTech) && (m_UseUnknownCameraAdjust || *(BYTE *)((__int64)this + 297)))// if (is grass shadow) ???
+				m_HasPendingDraws = batch->DiscardNextGroup(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode);
 			else
-				m_HasPendingDraws = batch->sub_14131E960(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode, RenderFlags);
+				m_HasPendingDraws = batch->RenderNextGroup(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode, RenderFlags);
 		}
 	}
 	else

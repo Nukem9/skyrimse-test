@@ -70,6 +70,14 @@ public:
 		return NiPoint3(x + Other.x, y + Other.y, z + Other.z);
 	}
 
+	inline NiPoint3& operator+= (const NiPoint3& Other)
+	{
+		x += Other.x;
+		y += Other.y;
+		z += Other.z;
+		return *this;
+	}
+
 	inline NiPoint3 operator* (float Scale) const
 	{
 		return NiPoint3(x * Scale, y * Scale, z * Scale);
@@ -77,7 +85,12 @@ public:
 };
 static_assert(sizeof(NiPoint3) == 0xC);
 
-inline NiPoint3 operator* (float lhs, NiPoint3& rhs)
+inline NiPoint3 operator* (float lhs, const NiPoint3& rhs)
 {
 	return rhs * lhs;
+}
+
+inline NiPoint3 operator- (const NiPoint3& lhs, const NiPoint3& rhs)
+{
+	return NiPoint3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
 }

@@ -1,6 +1,8 @@
 #include "../../../rendering/common.h"
 #include "../../../../common.h"
 #include "../../NiMain/NiSourceTexture.h"
+#include "../../NiMain/NiNode.h"
+#include "../../NiMain/NiCamera.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "BSSkyShaderProperty.h"
@@ -43,7 +45,7 @@ AutoPtr(NiSourceTexture *, BSShader_DefNormalMap, 0x3052920);
 AutoPtr(NiSourceTexture *, BSShader_DitheringNoise, 0x3052928);
 AutoPtr(__int64, qword_1431F5810, 0x31F5810);
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
-AutoPtr(__int64, qword_1431F55F8, 0x31F55F8);
+AutoPtr(NiNode *, qword_1431F55F8, 0x31F55F8);// Points to "World" node in main SceneGraph
 AutoPtr(float, qword_143257D80, 0x3257D80);
 
 BSSkyShader::BSSkyShader() : BSShader(ShaderConfig.Type)
@@ -139,23 +141,14 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	uint32_t rawTechnique = GAME_TLS(uint32_t, 0x9F0);
 	NiTransform geoTransform = Pass->m_Geometry->GetWorldTransform();
 
-	if (*(bool *)((uintptr_t)BSShaderManager::GetCurrentAccumulator() + 0x128))
+	if (auto *accumulator = BSShaderManager::GetCurrentAccumulator(); accumulator->m_UseUnknownCameraAdjust)
 	{
-		float v13 = geoTransform.m_Translate.x - *(float *)(qword_1431F55F8 + 160);
-		float v14 = geoTransform.m_Translate.y - *(float *)(qword_1431F55F8 + 164);
-		float v15 = geoTransform.m_Translate.z - *(float *)(qword_1431F55F8 + 168);
-		float *v16 = *(float **)&BSShaderManager::GetCurrentAccumulator()->m_pkCamera;
+		NiPoint3 adjusted = geoTransform.m_Translate - qword_1431F55F8->GetWorldTranslate();
 
-		if (v16)
-		{
-			v13 += v16[40];
-			v14 += v16[41];
-			v15 += v16[42];
-		}
+		if (accumulator->m_pkCamera)
+			adjusted += accumulator->m_pkCamera->GetWorldTranslate();
 
-		geoTransform.m_Translate.x = v13;
-		geoTransform.m_Translate.y = v14;
-		geoTransform.m_Translate.z = v15;
+		geoTransform.m_Translate = adjusted;
 	}
 
 	//
