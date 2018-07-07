@@ -312,15 +312,15 @@ namespace ui
         {
             if (ImGui::BeginGroupSplitter("Per Frame"))
             {
-                ImGui::Text("Time acquiring read locks: %.5f seconds", ProfileGetDeltaTime("Read Lock Time"));
-                ImGui::Text("Time acquiring write locks: %.5f seconds", ProfileGetDeltaTime("Write Lock Time"));
+                ImGui::Text("Time acquiring read locks: %.2fms", ProfileGetDeltaTime("Read Lock Time"));
+                ImGui::Text("Time acquiring write locks: %.2fms", ProfileGetDeltaTime("Write Lock Time"));
                 ImGui::EndGroupSplitter();
             }
 
             if (ImGui::BeginGroupSplitter("Global"))
             {
-                ImGui::Text("Time acquiring read locks: %.5f seconds", ProfileGetTime("Read Lock Time"));
-                ImGui::Text("Time acquiring write locks: %.5f seconds", ProfileGetTime("Write Lock Time"));
+                ImGui::Text("Time acquiring read locks: %.2fms", ProfileGetTime("Read Lock Time"));
+                ImGui::Text("Time acquiring write locks: %.2fms", ProfileGetTime("Write Lock Time"));
                 ImGui::EndGroupSplitter();
             }
         }
@@ -350,8 +350,8 @@ namespace ui
                 ImGui::Text("Frees: %lld", ProfileGetDeltaValue("Free Count"));
                 ImGui::Text("Bytes: %.3f MB", (double)ProfileGetDeltaValue("Byte Count") / 1024 / 1024);
                 ImGui::Spacing();
-                ImGui::Text("Time spent allocating: %.5f seconds", ProfileGetDeltaTime("Time Spent Allocating"));
-                ImGui::Text("Time spent freeing: %.5f seconds", ProfileGetDeltaTime("Time Spent Freeing"));
+                ImGui::Text("Time spent allocating: %.2fms", ProfileGetDeltaTime("Time Spent Allocating"));
+                ImGui::Text("Time spent freeing: %.2fms", ProfileGetDeltaTime("Time Spent Freeing"));
                 ImGui::EndGroupSplitter();
             }
 
@@ -364,8 +364,8 @@ namespace ui
                 ImGui::Text("Frees: %lld", freeCount);
                 ImGui::Text("Bytes: %.3f MB", (double)ProfileGetValue("Byte Count") / 1024 / 1024);
                 ImGui::Spacing();
-                ImGui::Text("Time spent allocating: %.5f seconds", ProfileGetTime("Time Spent Allocating"));
-                ImGui::Text("Time spent freeing: %.5f seconds", ProfileGetTime("Time Spent Freeing"));
+                ImGui::Text("Time spent allocating: %.2fms", ProfileGetTime("Time Spent Allocating"));
+                ImGui::Text("Time spent freeing: %.2fms", ProfileGetTime("Time Spent Freeing"));
                 ImGui::Spacing();
                 ImGui::Text("Active allocations: %lld", allocCount - freeCount);
                 ImGui::EndGroupSplitter();
@@ -394,8 +394,8 @@ namespace ui
                 ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf));
                 ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf));
                 ImGui::Spacing();
-                ImGui::Text("Update time: %.5f seconds", ProfileGetDeltaTime("Cache Update Time"));
-                ImGui::Text("Fetch time: %.5f seconds", ProfileGetDeltaTime("Cache Fetch Time"));
+                ImGui::Text("Update time: %.2fms", ProfileGetDeltaTime("Cache Update Time"));
+                ImGui::Text("Fetch time: %.2fms", ProfileGetDeltaTime("Cache Fetch Time"));
                 ImGui::EndGroupSplitter();
             }
 
@@ -409,8 +409,8 @@ namespace ui
                 ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf));
                 ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf));
                 ImGui::Spacing();
-                ImGui::Text("Update time: %.5f seconds", ProfileGetTime("Cache Update Time"));
-				ImGui::Text("Fetch time: %.5f seconds", ProfileGetTime("Cache Fetch Time"));
+                ImGui::Text("Update time: %.2fms", ProfileGetTime("Cache Update Time"));
+				ImGui::Text("Fetch time: %.2fms", ProfileGetTime("Cache Fetch Time"));
                 ImGui::EndGroupSplitter();
             }
         }

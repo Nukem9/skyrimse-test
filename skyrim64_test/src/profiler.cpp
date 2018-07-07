@@ -180,12 +180,12 @@ namespace Profiler
 
     double GetTime(uint32_t CRC)
     {
-        return (double)GetValue(CRC) / (double)Internal::CpuFrequency;
+		return ((double)GetValue(CRC) / (double)Internal::CpuFrequency) * 1000.0;
     }
 
 	double GetDeltaTime(uint32_t CRC)
 	{
-		return (double)GetDeltaValue(CRC) / (double)Internal::CpuFrequency;
+		return ((double)GetDeltaValue(CRC) / (double)Internal::CpuFrequency) * 1000.0;
 	}
 
 	uint64_t GetSystemCpuTime()

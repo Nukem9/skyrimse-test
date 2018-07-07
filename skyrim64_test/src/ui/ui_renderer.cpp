@@ -187,11 +187,13 @@ namespace ui
 		{
 			ImGui::Text("Triangles Tested: %lld", ProfileGetDeltaValue("Triangles Tested"));
 			ImGui::Text("Triangles Rendered: %lld", ProfileGetDeltaValue("Triangles Rendered"));
-			ImGui::Text("Scene Graph Traversal Time: %.5f seconds", ProfileGetDeltaTime("MOC SceneGraph Traverse"));
+			ImGui::Text("Scene Graph Traversal Time: %.5fms", ProfileGetDeltaTime("MOC SceneGraph Traverse"));
+			ImGui::Text("Register: %.2fms", ProfileGetDeltaTime("Register"));
 
 			ProfileGetValue("Triangles Tested");
 			ProfileGetValue("Triangles Rendered");
 			ProfileGetTime("MOC SceneGraph Traverse");
+			ProfileGetTime("Register");
 
 			ImGui::Spacing();
 			ImGui::DragFloat("Max 2D Render Distance", &ui::opt::OccluderMaxDistance, 100.0f, 1.0f, 1000000.0f);
