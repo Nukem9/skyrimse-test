@@ -7,9 +7,13 @@ namespace MOC
 	void Init();
 	void UpdateDepthViewTexture();
 	bool RegisterGeo(BSGeometry *Geometry, bool Test, bool Draw);
+	void SendTraverseCommand();
 	void TraverseSceneGraph();
 	void SetDoHack(bool Value);
 	void RemoveCachedVerticesAndIndices(void *RendererData);
+
+	void ForceFlush();
+	bool TestSphere(NiAVObject *Object);
 
 	using namespace DirectX;
 

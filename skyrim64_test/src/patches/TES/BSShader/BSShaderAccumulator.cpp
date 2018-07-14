@@ -94,7 +94,6 @@ void BSShaderAccumulator::SetRenderMode(uint32_t RenderMode)
 		FinishAccumulatingCurrent = FinishAccumulatingArray[0];
 }
 
-SRWLOCK testLock = SRWLOCK_INIT;
 bool BSShaderAccumulator::hk_RegisterObjectDispatch(BSGeometry *Geometry, void *Unknown)
 {
 	NiSkinInstance *skinInstance = Geometry->QSkinInstance();
@@ -109,20 +108,7 @@ bool BSShaderAccumulator::hk_RegisterObjectDispatch(BSGeometry *Geometry, void *
 
 	if (!Geometry->QRendererData() && !skinInstance && !Geometry->IsParticlesGeom() && Geometry->QType() != GEOMETRY_TYPE_PARTICLE_SHADER_DYNAMIC_TRISHAPE)
 		return true;
-
-	// test
-	if (this == MainPassAccumulator || this == ZPrePassAccumulator)
-	{
-		bool ok = true;
-		AcquireSRWLockExclusive(&testLock);
-		if (!MOC::RegisterGeo(Geometry, true, false))
-			ok = false;
-		ReleaseSRWLockExclusive(&testLock);
-
-		if (!ok)
-			return false;
-	}
-
+	
 	bool result = RegisterObjectArray[m_RenderMode](this, Geometry, shaderProperty, Unknown);
 
 	uint32_t v9 = *(uint32_t *)((__int64)this + 0x160);
@@ -212,10 +198,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		if (ui::opt::RealtimeOcclusionView)
 			MOC::UpdateDepthViewTexture();
 
-		//AcquireSRWLockExclusive(&testLock);
-		MOC::TraverseSceneGraph();
-		//ReleaseSRWLockExclusive(&testLock);
-		//MOC::SetDoHack(true);
+		MOC::SendTraverseCommand();
 	}
 
 	//

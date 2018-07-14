@@ -577,17 +577,12 @@ void BSBatchRenderer::DrawPassCustom(BSRenderPass *Pass, bool AlphaTest, uint32_
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
-#include "MOC.h"
-
 AutoPtr(uint32_t, dword_1430528DC, 0x30528DC);
 
 void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	BSGeometry *geometry = Pass->m_Geometry;
-
-	if (!MOC::RegisterGeo(geometry, true, false))
-		return;
 
 	switch (geometry->QType())
 	{
@@ -715,9 +710,9 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 		AssertDebug(geometry->IsDynamicTriShape());
 
 		auto dynTriShape = static_cast<BSDynamicTriShape *>(geometry);
-		auto rendererData = dynTriShape->LockDynamicDataForRead();
 
-		renderer->DrawParticleShaderTriShape(rendererData, dynTriShape->m_VertexCount);
+		auto dynamicData = dynTriShape->LockDynamicDataForRead();
+		renderer->DrawParticleShaderTriShape(dynamicData, dynTriShape->m_VertexCount);
 		dynTriShape->UnlockDynamicData();
 	}
 	break;

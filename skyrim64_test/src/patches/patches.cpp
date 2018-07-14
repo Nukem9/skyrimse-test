@@ -10,6 +10,7 @@
 #include "TES/BSShader/Shaders/BSSkyShader.h"
 #include "TES/BSShader/Shaders/BSGrassShader.h"
 #include "TES/BSShader/Shaders/BSParticleShader.h"
+#include "TES/NiMain/BSCullingProcess.h"
 
 void PatchAchievements();
 void PatchD3D11();
@@ -28,6 +29,27 @@ void PatchMemory();
 void PatchTESForm();
 void TestHook5();
 
+bool doCullTest = false;
+
+char __fastcall test1(__int64 a1, __int64(__fastcall ***a2)(__int64, __int64, __int64), unsigned int a3, unsigned int a4)
+{
+	char result; // al
+
+	if (a3)
+		result = (**a2)((__int64)a2, a3, a4);
+	else
+		result = 1;
+
+	MOC::ForceFlush();
+	doCullTest = true;
+	return result;
+}
+
+void test2()
+{
+	doCullTest = false;
+}
+
 void Patch_TESV()
 {
 	PatchThreading();
@@ -42,6 +64,30 @@ void Patch_TESV()
 	PatchBSThread();
 	PatchBSGraphicsRenderTargetManager();
 	PatchLogging();
+
+	//
+	// BGSDistantTreeBlock
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x4A8360), &BGSDistantTreeBlock::UpdateLODAlphaFade);
+
+	//
+	// BSCullingProcess
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xD50310), &BSCullingProcess::hk_Process);
+
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12F93B1), &test1, Detours::X64Option::USE_REL32_JUMP);
+	PatchMemory(g_ModuleBase + 0x12F93B1, (PBYTE)"\xE8", 1);
+
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12F96C9), &test2, Detours::X64Option::USE_REL32_JUMP);
+	PatchMemory(g_ModuleBase + 0x12F96C9, (PBYTE)"\xE8", 1);
+
+	//
+	// BSGraphicsRenderer
+	//
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>((PBYTE)(g_ModuleBase + 0x133EC20), &BSGraphics::Renderer::IncRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>((PBYTE)(g_ModuleBase + 0xD6B9B0), &BSGraphics::Renderer::DecRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0x133ED50), &BSGraphics::Renderer::IncRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0xD6C7D0), &BSGraphics::Renderer::DecRef);
 
 	//
 	// DirectInput (mouse, keyboard)
@@ -64,12 +110,9 @@ void Patch_TESV()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07180), &BSAutoReadAndWriteLock::Deinitialize);
 
 	//
-	// BSGraphicsRenderer
+	// NiRTTI
 	//
-	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>((PBYTE)(g_ModuleBase + 0x133EC20), &BSGraphics::Renderer::IncRef);
-	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>((PBYTE)(g_ModuleBase + 0xD6B9B0), &BSGraphics::Renderer::DecRef);
-	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0x133ED50), &BSGraphics::Renderer::IncRef);
-	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0xD6C7D0), &BSGraphics::Renderer::DecRef);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC66F80), &NiRTTI::__ctor__);
 
 	//
 	// Shaders
@@ -87,16 +130,6 @@ void Patch_TESV()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E4C10), &BSGrassShader::__ctor__);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1336C80), &BSParticleShader::__ctor__);
 	TestHook5();// BSLightingShader
-
-	//
-	// BGSDistantTreeBlock
-	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x4A8360), &BGSDistantTreeBlock::UpdateLODAlphaFade);
-
-	//
-	// NiRTTI
-	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC66F80), &NiRTTI::__ctor__);
 
 	//
 	// Temporary hack to fix array overflow in BSParticleShader::SetupGeometry
