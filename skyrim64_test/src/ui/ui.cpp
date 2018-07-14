@@ -37,36 +37,6 @@ namespace ui
 	bool showSceneGraphMenuWindow;
 	bool showSceneGraphMenu3DWindow;
 
-    char *format_commas(int64_t n, char *out)
-    {
-        int c;
-        char buf[100];
-        char *p;
-        char *q = out; // Backup pointer for return...
-
-        if (n < 0)
-        {
-            *out++ = '-';
-            n      = abs(n);
-        }
-
-        snprintf(buf, 100, "%lld", n);
-        c = 2 - strlen(buf) % 3;
-
-        for (p = buf; *p != 0; p++)
-        {
-            *out++ = *p;
-            if (c == 1)
-            {
-                *out++ = ',';
-            }
-            c = (c + 1) % 3;
-        }
-        *--out = 0;
-
-        return q;
-    }
-
     void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext)
     {
 		ImGui::CreateContext();
@@ -184,15 +154,15 @@ namespace ui
 
         if (ImGui::BeginMenu("Renderer"))
         {
+			ImGui::MenuItem("Frame Statistics", nullptr, &showFrameStatsWindow);
 			ImGui::MenuItem("Render Target Viewer", nullptr, &showRTViewerWindow);
-			ImGui::MenuItem("Masked Occlusion Buffer Viewer", nullptr, &showCullingWindow);
+			ImGui::MenuItem("Occlusion Culling Viewer", nullptr, &showCullingWindow);
 			ImGui::MenuItem("Shader Tweaks", nullptr, &showShaderTweakWindow);
 			ImGui::EndMenu();
         }
 
 		if (ImGui::BeginMenu("Statistics"))
 		{
-			ImGui::MenuItem("Frame Statistics", nullptr, &showFrameStatsWindow);
 			ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
 			ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
 			ImGui::MenuItem("TESForm Cache", nullptr, &showTESFormWindow);
@@ -389,10 +359,9 @@ namespace ui
                 int64_t cacheLookups = ProfileGetDeltaValue("Cache Lookups");
                 int64_t cacheMisses  = ProfileGetDeltaValue("Cache Misses");
 
-                char tempBuf[256];
-                ImGui::Text("Lookups: %s", format_commas(cacheLookups, tempBuf));
-                ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf));
-                ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf));
+                ImGui::Text("Lookups: %s", ImGui::CommaFormat(cacheLookups));
+                ImGui::Text("Hits: %s", ImGui::CommaFormat(cacheLookups - cacheMisses));
+                ImGui::Text("Misses: %s", ImGui::CommaFormat(cacheMisses));
                 ImGui::Spacing();
                 ImGui::Text("Update time: %.2fms", ProfileGetDeltaTime("Cache Update Time"));
                 ImGui::Text("Fetch time: %.2fms", ProfileGetDeltaTime("Cache Fetch Time"));
@@ -404,10 +373,9 @@ namespace ui
                 int64_t cacheLookups = ProfileGetValue("Cache Lookups");
                 int64_t cacheMisses  = ProfileGetValue("Cache Misses");
 
-                char tempBuf[256];
-                ImGui::Text("Lookups: %s", format_commas(cacheLookups, tempBuf));
-                ImGui::Text("Hits: %s", format_commas(cacheLookups - cacheMisses, tempBuf));
-                ImGui::Text("Misses: %s", format_commas(cacheMisses, tempBuf));
+                ImGui::Text("Lookups: %s", ImGui::CommaFormat(cacheLookups));
+                ImGui::Text("Hits: %s", ImGui::CommaFormat(cacheLookups - cacheMisses));
+                ImGui::Text("Misses: %s", ImGui::CommaFormat(cacheMisses));
                 ImGui::Spacing();
                 ImGui::Text("Update time: %.2fms", ProfileGetTime("Cache Update Time"));
 				ImGui::Text("Fetch time: %.2fms", ProfileGetTime("Cache Fetch Time"));

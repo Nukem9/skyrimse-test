@@ -6,6 +6,40 @@
 namespace ImGui
 {
 	// Custom
+	const char *CommaFormat(__int64 Input)
+	{
+		static char globalBuffer[128];
+
+		char *out = globalBuffer;
+		int c;
+		char buf[128];
+		char *p;
+		char *q = out;
+
+		if (Input < 0)
+		{
+			*out++ = '-';
+			Input = abs(Input);
+		}
+
+		snprintf(buf, 128, "%lld", Input);
+		c = 2 - strlen(buf) % 3;
+
+		for (p = buf; *p != 0; p++)
+		{
+			*out++ = *p;
+
+			if (c == 1)
+				*out++ = ',';
+
+			c = (c + 1) % 3;
+		}
+
+		*--out = '\0';
+
+		return q;
+	}
+
 	bool BeginGroupSplitter(const char *Header)
 	{
 		ImGui::Spacing();

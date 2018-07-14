@@ -130,9 +130,9 @@ namespace ui
 
 			ImGui::Text("FPS: %.2f", CalculateTrueAverageFPS());
 			ImGui::Spacing();
-			ImGui::Text("CB Bytes Requested: %lld", ProfileGetDeltaValue("CB Bytes Requested"));
-			ImGui::Text("CB Bytes Wasted: %lld", ProfileGetDeltaValue("CB Bytes Wasted"));
-			ImGui::Text("VIB Bytes Requested: %lld", ProfileGetDeltaValue("VIB Bytes Requested"));
+			ImGui::Text("CB Bytes Requested: %s", ImGui::CommaFormat(ProfileGetDeltaValue("CB Bytes Requested")));
+			ImGui::Text("CB Bytes Wasted: %s", ImGui::CommaFormat(ProfileGetDeltaValue("CB Bytes Wasted")));
+			ImGui::Text("VIB Bytes Requested: %s", ImGui::CommaFormat(ProfileGetDeltaValue("VIB Bytes Requested")));
 
 			ProfileGetValue("CB Bytes Requested");
 			ProfileGetValue("VIB Bytes Requested");
@@ -185,21 +185,55 @@ namespace ui
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 1));
 		if (ImGui::Begin("Masked Occlusion Culling", &showCullingWindow, ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			ImGui::Text("Triangles Tested: %lld", ProfileGetDeltaValue("Triangles Tested"));
-			ImGui::Text("Triangles Rendered: %lld", ProfileGetDeltaValue("Triangles Rendered"));
-			ImGui::Text("Scene Graph Traversal Time: %.5fms", ProfileGetDeltaTime("MOC SceneGraph Traverse"));
-			ImGui::Text("Register: %.2fms", ProfileGetDeltaTime("Register"));
+			ImGui::Separator();
+			ImGui::Columns(4, "infocolumns", false);
 
-			ProfileGetValue("Triangles Tested");
-			ProfileGetValue("Triangles Rendered");
-			ProfileGetTime("MOC SceneGraph Traverse");
-			ProfileGetTime("Register");
+			ImGui::Text("MOC Rendering"); ImGui::NextColumn(); ImGui::NextColumn();
+			ImGui::Text("MOC Culling"); ImGui::NextColumn(); ImGui::NextColumn();
+
+			ImGui::Text("Scene Graph Traversal:"); ImGui::NextColumn();
+			ImGui::Text("%.2fms", ProfileGetDeltaTime("MOC TraverseSceneGraph")); ImGui::NextColumn();
+
+			ImGui::Text("Wait For Renderer:"); ImGui::NextColumn();
+			ImGui::Text("%.2fms", ProfileGetDeltaTime("MOC WaitForRender")); ImGui::NextColumn();
+
+			ImGui::Text("Draw Occluders:"); ImGui::NextColumn();
+			ImGui::Text("%.2fms", ProfileGetDeltaTime("MOC RenderGeometry")); ImGui::NextColumn();
+
+			ImGui::Text("Test Occludees:"); ImGui::NextColumn();
+			ImGui::Text("%.2fms", ProfileGetDeltaTime("MOC CullTest")); ImGui::NextColumn();
+
+			ImGui::Text("Object Count:"); ImGui::NextColumn();
+			ImGui::Text("%s", ImGui::CommaFormat(ProfileGetDeltaValue("MOC ObjectsRendered"))); ImGui::NextColumn();
+
+			ImGui::Text("Tested Objects:"); ImGui::NextColumn();
+			ImGui::Text("%s", ImGui::CommaFormat(ProfileGetDeltaValue("MOC CullObjectCount"))); ImGui::NextColumn();
+
+			ImGui::Text("Triangle Count:"); ImGui::NextColumn();
+			ImGui::Text("%s", ImGui::CommaFormat(ProfileGetDeltaValue("MOC TrianglesRendered"))); ImGui::NextColumn();
+
+			float culledPercent = 100.0f * (float)ProfileGetDeltaValue("MOC CullObjectPassed") / (float)ProfileGetDeltaValue("MOC CullObjectCount");
+
+			ImGui::Text("Passed Objects:"); ImGui::NextColumn();
+			ImGui::Text("%s (%.1f%%)", ImGui::CommaFormat(ProfileGetDeltaValue("MOC CullObjectPassed")), culledPercent); ImGui::NextColumn();
+
+			ProfileGetTime("MOC TraverseSceneGraph");
+			ProfileGetTime("MOC WaitForRender");
+			ProfileGetTime("MOC RenderGeometry");
+			ProfileGetTime("MOC CullTest");
+			ProfileGetValue("MOC ObjectsRendered");
+			ProfileGetValue("MOC CullObjectCount");
+			ProfileGetValue("MOC TrianglesRendered");
+			ProfileGetValue("MOC CullObjectPassed");
+
+			ImGui::Columns(1);
+			ImGui::Separator();
 
 			ImGui::Spacing();
-			ImGui::DragFloat("Max 2D Render Distance", &ui::opt::OccluderMaxDistance, 100.0f, 1.0f, 1000000.0f);
-			ImGui::DragFloat("First Level Occluder Size", &ui::opt::OccluderFirstLevelMinSize, 100.0f, 1.0f, 100000.0f);
+			ImGui::DragFloat("Max 2D Render Distance", &ui::opt::OccluderMaxDistance, 10.0f, 1.0f, 1000000.0f);
+			ImGui::DragFloat("First Level Occluder Size", &ui::opt::OccluderFirstLevelMinSize, 1.0f, 1.0f, 100000.0f);
 			ImGui::Checkbox("Draw Occluders", &ui::opt::EnableOccluderRendering);
-			ImGui::Checkbox("Enable Occlusion Testing", &ui::opt::EnableOcclusionTesting);
+			ImGui::Checkbox("Test Occludees", &ui::opt::EnableOcclusionTesting);
 			ImGui::Checkbox("Disable Viewer Updates", &disableViewerUpdates);
 			ImGui::Combo("Viewer Resolution", &viewerResolutionIndex, " 640 x 480\0 1024 x 768\0 1920 x 1080\0\0");
 			ImGui::Spacing();
