@@ -78,6 +78,11 @@ public:
 		return *this;
 	}
 
+	float operator* (const NiPoint3& Other) const
+	{
+		return x * Other.x + y * Other.y + z * Other.z;
+	}
+
 	inline NiPoint3 operator* (float Scale) const
 	{
 		return NiPoint3(x * Scale, y * Scale, z * Scale);

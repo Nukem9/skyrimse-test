@@ -149,6 +149,7 @@
     <ClInclude Include="src\patches\TES\BSTList.h" />
     <ClInclude Include="src\patches\TES\MOC.h" />
     <ClInclude Include="src\patches\TES\MTRenderer.h" />
+    <ClInclude Include="src\patches\TES\NiMain\BSCullingProcess.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSDynamicTriShape.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h" />
     <ClInclude Include="src\patches\rendering\codegen.h" />
@@ -180,6 +181,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiCamera.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiColor.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiCullingProcess.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiDirectionalLight.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiLight.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiMatrix.h" />

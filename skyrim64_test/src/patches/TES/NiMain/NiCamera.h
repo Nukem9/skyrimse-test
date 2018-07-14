@@ -21,12 +21,24 @@ static_assert_offset(NiFrustum, m_fNear, 0x10);
 static_assert_offset(NiFrustum, m_fFar, 0x14);
 static_assert_offset(NiFrustum, m_bOrtho, 0x18);
 
+template<typename T>
+struct NiRect
+{
+	T m_left;
+	T m_right;
+	T m_top;
+	T m_bottom;
+};
+
 class NiCamera : public NiAVObject
 {
 public:
 	float m_aafWorldToCam[4][4];
 	NiFrustum m_kViewFrustum;
-	char _pad0[0x1C];
+	float m_fMinNearPlaneDist;
+	float m_fMaxFarNearRatio;
+	NiRect<float> m_kPort;
+	char _pad0[0x4];
 
 	inline const NiPoint3& NiCamera::GetWorldLocation() const
 	{
@@ -109,6 +121,48 @@ public:
 		ViewProj = XMMatrixMultiply(View, Proj);
 	}
 
+	bool WorldToScreen(const NiPoint3& WorldPoint, float& X, float& Y, float fZeroTolerance = 1e-5) const
+	{
+		// Returns X and Y as a percentage of the viewport width and height
+		fZeroTolerance = max(fZeroTolerance, 0.0f);
+
+		// Project a world space point to screen space
+		float fW =
+			WorldPoint.x * m_aafWorldToCam[3][0] +
+			WorldPoint.y * m_aafWorldToCam[3][1] +
+			WorldPoint.z * m_aafWorldToCam[3][2] +
+			m_aafWorldToCam[3][3];
+
+		// Check to see if we're on the appropriate side of the camera.
+		if (fW > fZeroTolerance)
+		{
+			float fInvW = 1.0f / fW;
+
+			X = WorldPoint.x * m_aafWorldToCam[0][0] + WorldPoint.y * m_aafWorldToCam[0][1] +
+				WorldPoint.z * m_aafWorldToCam[0][2] + m_aafWorldToCam[0][3];
+			Y = WorldPoint.x * m_aafWorldToCam[1][0] + WorldPoint.y * m_aafWorldToCam[1][1] +
+				WorldPoint.z * m_aafWorldToCam[1][2] + m_aafWorldToCam[1][3];
+
+			X = X * fInvW;
+			Y = Y * fInvW;
+
+			X *= (m_kPort.m_right - m_kPort.m_left) * 0.5f;
+			Y *= (m_kPort.m_top - m_kPort.m_bottom) * 0.5f;
+
+			X += (m_kPort.m_right + m_kPort.m_left) * 0.5f;
+			Y += (m_kPort.m_top + m_kPort.m_bottom) * 0.5f;
+
+			// If on screen return true. Otherwise, we fall through to false.
+			if (X >= m_kPort.m_left && X <= m_kPort.m_right &&
+				Y >= m_kPort.m_bottom && Y <= m_kPort.m_top)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
 	{
 		if (Recursive)
@@ -132,3 +186,4 @@ public:
 static_assert(sizeof(NiCamera) == 0x188);
 static_assert_offset(NiCamera, m_aafWorldToCam, 0x110);
 static_assert_offset(NiCamera, m_kViewFrustum, 0x150);
+static_assert_offset(NiCamera, m_kPort, 0x174);
