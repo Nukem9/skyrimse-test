@@ -1,5 +1,5 @@
 #include <future>
-#include "../../../tbb2018/concurrent_hash_map.h"
+#include <set>
 #include "../common.h"
 #include "dinput8.h"
 
@@ -10,8 +10,9 @@ HWND g_SkyrimWindow;
 WNDPROC g_OriginalWndProc;
 DWORD MessageThreadId;
 
-std::unordered_map<HWND, void *> g_ParentDialogHwnds;
-std::mutex dialogMutex;
+std::recursive_mutex dialogMutex;
+std::set<HWND> g_ParentCreateDialogHwnds;
+std::set<HWND> g_ParentDialogHwnds;
 std::atomic<uint64_t> g_OpenDialogCount;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -155,14 +156,23 @@ HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWin
 	return taskVar.get();
 }
 
+HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+{
+	// NOTE: This is NOT an actual dialog. It uses CreateWindowExA internally.
+	dialogMutex.lock();
+	g_ParentCreateDialogHwnds.insert(hWndParent);
+	dialogMutex.unlock();
+
+	return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+}
+
 INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
 	dialogMutex.lock();
-	Assert(hWndParent);
 	Assert(IsWindow(hWndParent));
 	Assert(g_ParentDialogHwnds.count(hWndParent) <= 0);
 
-	g_ParentDialogHwnds.insert(std::pair(hWndParent, (void *)lpTemplateName));
+	g_ParentDialogHwnds.insert(hWndParent);
 	dialogMutex.unlock();
 
 	g_OpenDialogCount++;
@@ -171,14 +181,27 @@ INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HW
 
 BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult)
 {
-	if (g_OpenDialogCount <= 0)
-		return FALSE;
+	Assert(hDlg);
+	HWND parent = GetParent(hDlg);
 
 	dialogMutex.lock();
-	Assert(hDlg);
-	Assert(g_ParentDialogHwnds.count(GetParent(hDlg)) > 0);
+	{
+		if (g_OpenDialogCount <= 0)
+		{
+			// Fix for the CK calling EndDialog on a CreateDialogParamA window
+			if (g_ParentCreateDialogHwnds.count(parent) > 0)
+			{
+				g_ParentCreateDialogHwnds.erase(parent);
+				DestroyWindow(hDlg);
+			}
 
-	g_ParentDialogHwnds.erase(GetParent(hDlg));
+			dialogMutex.unlock();
+			return FALSE;
+		}
+
+		AssertMsg(g_ParentDialogHwnds.count(parent) > 0, "Still calling EndDialog on a non-dialog window?");
+		g_ParentDialogHwnds.erase(parent);
+	}
 	dialogMutex.unlock();
 
 	g_OpenDialogCount--;
@@ -210,6 +233,7 @@ void PatchWindow()
 {
 	if (g_IsCreationKit)
 	{
+		PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
 		PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
 		PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
 		PatchIAT(hk_SendMessageA, "USER32.DLL", "SendMessageA");
