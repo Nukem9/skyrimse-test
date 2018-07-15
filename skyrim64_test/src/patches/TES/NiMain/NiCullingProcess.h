@@ -4,7 +4,7 @@
 #include "NiFrustum.h"
 
 class NiCamera;
-struct NiVisibleArray;
+class NiVisibleArray;
 
 class NiFrustumPlanes
 {

@@ -1,19 +1,30 @@
 #pragma once
 
-#include "NiAVObject.h"
-#include "NiCullingProcess.h"
+#include "NiMain/NiAVObject.h"
+#include "NiMain/NiCullingProcess.h"
+#include "NiMain/BSGeometry.h"
+#include "BSTArray.h"
+#include "BSTLocklessQueue.h"
 
-#include "../MOC.h"
+#include "MOC.h"
 extern bool doCullTest;
 
 class BSCullingProcess : public NiCullingProcess
 {
+private:
+	struct UnknownQueueStruct
+	{
+		char data[16];
+	};
+
 public:
-	char _pad2[0x30070];
+	BSTArray<NiAVObject *> m_UnkArray;
+	BSTLocklessQueue::ObjMultiProdCons<UnknownQueueStruct, 4096, 0> m_CullQueue;
+	char _pad2[0x38];
 	int kCullMode;
 	BSCompoundFrustum *pCompoundFrustum;
 	char _pad3[0x2C];
-	bool m_bDontUseVirtualAppend;
+	bool bRecurseToGeometry;
 
 	virtual ~BSCullingProcess();
 	virtual void Process(NiAVObject *Object, uint32_t Unknown) override;
@@ -31,7 +42,7 @@ public:
 
 		auto appendOrAccumulate = [this, Object, Unknown]()-> void
 		{
-			if (!m_bDontUseVirtualAppend)
+			if (!bRecurseToGeometry)
 			{
 				AppendVirtual(static_cast<BSGeometry *>(Object), Unknown);
 				return;
@@ -51,7 +62,7 @@ public:
 		// ALLFAIL
 		if (kCullMode == 2)
 		{
-			if (m_bDontUseVirtualAppend)
+			if (bRecurseToGeometry)
 				SetAccumulated(Object, false);
 
 			return;
@@ -59,7 +70,7 @@ public:
 
 		/*if (doCullTest && !MOC::TestSphere(Object))
 		{
-		if (m_bDontUseVirtualAppend)
+		if (bRecurseToGeometry)
 		SetAccumulated(Object, false);
 
 		return;
@@ -90,7 +101,7 @@ public:
 					// Passed checks
 					appendOrAccumulate();
 				}
-				else if (m_bDontUseVirtualAppend)
+				else if (bRecurseToGeometry)
 				{
 					// Not visible
 					SetAccumulated(Object, false);
@@ -102,7 +113,7 @@ public:
 			else
 			{
 				// Frustum culling only
-				if (m_bDontUseVirtualAppend)
+				if (bRecurseToGeometry)
 				{
 					if (doCullTest && !MOC::TestSphere(Object))
 						return;
@@ -133,14 +144,16 @@ public:
 			if (!Object->QNotVisible())
 				return appendOrAccumulate();
 
-			if (m_bDontUseVirtualAppend)
+			if (bRecurseToGeometry)
 				SetAccumulated(Object, false);
 		}
 	}
 };
+static_assert_offset(BSCullingProcess, m_UnkArray, 0x128);
+static_assert_offset(BSCullingProcess, m_CullQueue, 0x140);
 static_assert_offset(BSCullingProcess, kCullMode, 0x30198);
 static_assert_offset(BSCullingProcess, pCompoundFrustum, 0x301A0);
-static_assert_offset(BSCullingProcess, m_bDontUseVirtualAppend, 0x301D4);
+static_assert_offset(BSCullingProcess, bRecurseToGeometry, 0x301D4);
 
 STATIC_CONSTRUCTOR(CheckBSCullingProcess, []
 {

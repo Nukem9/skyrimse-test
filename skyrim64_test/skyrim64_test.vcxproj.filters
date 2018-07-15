@@ -299,13 +299,18 @@
     <ClInclude Include="src\patches\TES\NiMain\NiCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\patches\TES\NiMain\NiCullingProcess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\BSCullingProcess.h">
+    <ClInclude Include="src\patches\TES\NiMain\NiFrustum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiFrustum.h">
+    <ClInclude Include="src\patches\TES\BSTLocklessQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSCullingProcess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

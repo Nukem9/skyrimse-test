@@ -4,13 +4,13 @@
 #include "TES/BSReadWriteLock.h"
 #include "TES/BGSDistantTreeBlock.h"
 #include "TES/BSGraphicsRenderer.h"
+#include "TES/BSCullingProcess.h"
 #include "TES/BSShader/BSShaderManager.h"
 #include "TES/BSShader/Shaders/BSBloodSplatterShader.h"
 #include "TES/BSShader/Shaders/BSDistantTreeShader.h"
 #include "TES/BSShader/Shaders/BSSkyShader.h"
 #include "TES/BSShader/Shaders/BSGrassShader.h"
 #include "TES/BSShader/Shaders/BSParticleShader.h"
-#include "TES/NiMain/BSCullingProcess.h"
 
 void PatchAchievements();
 void PatchD3D11();
