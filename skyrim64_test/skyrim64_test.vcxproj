@@ -183,6 +183,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiColor.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiCullingProcess.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiDirectionalLight.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiFrustum.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiLight.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiMatrix.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiNode.h" />

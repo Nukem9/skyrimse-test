@@ -9,6 +9,12 @@ extern bool doCullTest;
 class BSCullingProcess : public NiCullingProcess
 {
 public:
+	char _pad2[0x30070];
+	int kCullMode;
+	BSCompoundFrustum *pCompoundFrustum;
+	char _pad3[0x2C];
+	bool m_bDontUseVirtualAppend;
+
 	virtual ~BSCullingProcess();
 	virtual void Process(NiAVObject *Object, uint32_t Unknown) override;
 	virtual void Process(const NiCamera *Camera, NiAVObject *Object, class NiVisibleArray *Array) override;
@@ -132,6 +138,9 @@ public:
 		}
 	}
 };
+static_assert_offset(BSCullingProcess, kCullMode, 0x30198);
+static_assert_offset(BSCullingProcess, pCompoundFrustum, 0x301A0);
+static_assert_offset(BSCullingProcess, m_bDontUseVirtualAppend, 0x301D4);
 
 STATIC_CONSTRUCTOR(CheckBSCullingProcess, []
 {
