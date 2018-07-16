@@ -16,6 +16,7 @@ namespace ui::opt
 {
 	bool EnableCache = true;
 	bool LogHitches = true;
+	bool LogQuestSceneActions = false;
 	bool EnableNavmeshLog = false;
 	bool RealtimeOcclusionView = false;
 	bool EnableOcclusionTesting = true;
@@ -190,6 +191,7 @@ namespace ui
             bool blockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
             if (ImGui::MenuItem("Block Input", nullptr, &blockInput))
                 ProxyIDirectInputDevice8A::ToggleGlobalInput(!blockInput);
+			ImGui::MenuItem("Log Quest/Scene Actions", nullptr, &opt::LogQuestSceneActions);
 			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
             ImGui::EndMenu();
         }

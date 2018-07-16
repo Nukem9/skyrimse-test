@@ -6,6 +6,7 @@ namespace ui
 	{
 		extern bool EnableCache;
 		extern bool LogHitches;
+		extern bool LogQuestSceneActions;
 		extern bool EnableNavmeshLog;
 		extern bool RealtimeOcclusionView;
 		extern bool EnableOcclusionTesting;

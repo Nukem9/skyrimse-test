@@ -30,10 +30,18 @@ __int64 LogFunc3(__int64 a1, const char *Format, ...)
 
 void LogFunc2(const char *Format, ...)
 {
-	if (STARTS_WITH(Format, " %s asking for random") ||
-		STARTS_WITH(Format, " %s got a quest back") ||
-		STARTS_WITH(Format, " %s failed to get"))
-		return;
+	if (!ui::opt::LogQuestSceneActions)
+	{
+		if (STARTS_WITH(Format, " %s is now starting a") ||
+			STARTS_WITH(Format, " %s is trying to start a") ||
+			STARTS_WITH(Format, " %s  walkaway topic") ||
+			STARTS_WITH(Format, " %s advancing the script") ||
+			STARTS_WITH(Format, " %s asking for random") ||
+			STARTS_WITH(Format, " %s got a quest back") ||
+			STARTS_WITH(Format, " %s did not get a quest") ||
+			STARTS_WITH(Format, " %s failed to get"))
+			return;
+	}
 
 	va_list va;
 	va_start(va, Format);
