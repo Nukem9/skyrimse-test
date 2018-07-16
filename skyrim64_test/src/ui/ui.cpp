@@ -420,13 +420,16 @@ namespace ui
 
 namespace ui::log
 {
-    ImGuiTextBuffer Buf;
+	std::recursive_mutex Mutex;
+	std::vector<char> Buf;
     ImGuiTextFilter Filter;
     ImVector<int> LineOffsets; // Index to lines offset
     bool ScrollToBottom;
 
     void Draw()
     {
+		Mutex.lock();
+
         ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
         ImGui::Begin("Debug Log", &ui::showLogWindow);
         if (ImGui::Button("Clear"))
@@ -442,7 +445,7 @@ namespace ui::log
 
         if (Filter.IsActive())
         {
-            const char *buf_begin = Buf.begin();
+			const char *buf_begin = Buf.data();
             const char *line      = buf_begin;
             for (int line_no = 0; line != NULL; line_no++)
             {
@@ -454,7 +457,7 @@ namespace ui::log
         }
         else
         {
-            ImGui::TextUnformatted(Buf.begin());
+            ImGui::TextUnformatted(Buf.data());
         }
 
         if (ScrollToBottom)
@@ -462,24 +465,51 @@ namespace ui::log
         ScrollToBottom = false;
         ImGui::EndChild();
         ImGui::End();
+
+		Mutex.unlock();
     }
 
     void Add(const char *Format, ...)
     {
-        int old_size = Buf.size();
-        va_list args;
-        va_start(args, Format);
-        Buf.appendfv(Format, args);
-        va_end(args);
-        for (int new_size = Buf.size(); old_size < new_size; old_size++)
-            if (Buf[old_size] == '\n')
-                LineOffsets.push_back(old_size);
-        ScrollToBottom = true;
+		va_list args;
+		char tempBuffer[4096];
+
+		va_start(args, Format);
+		size_t len = _vsnprintf_s(tempBuffer, _TRUNCATE, Format, args);
+		va_end(args);
+
+		Mutex.lock();
+		{
+			size_t oldSize = Buf.size();
+
+			// Clear if larger than 1MB
+			if (oldSize > 1 * 1024 * 1024)
+			{
+				Buf.clear();
+				LineOffsets.clear();
+				oldSize = 0;
+			}
+
+			Buf.insert(Buf.end(), tempBuffer, &tempBuffer[len]);
+
+			for (size_t newSize = Buf.size(); oldSize < newSize; oldSize++)
+			{
+				if (Buf[oldSize] == '\n')
+					LineOffsets.push_back((int)oldSize);
+			}
+
+			ScrollToBottom = true;
+		}
+		Mutex.unlock();
     }
 
     void Clear()
     {
-        Buf.clear();
-        LineOffsets.clear();
-    }
+		Mutex.lock();
+		{
+			Buf.clear();
+			LineOffsets.clear();
+		}
+		Mutex.unlock();
+	}
 }
