@@ -6,6 +6,7 @@ namespace ui
 	{
 		extern bool EnableCache;
 		extern bool LogHitches;
+		extern bool EnableNavmeshLog;
 		extern bool RealtimeOcclusionView;
 		extern bool EnableOcclusionTesting;
 		extern bool EnableOccluderRendering;
@@ -27,6 +28,7 @@ namespace ui
 	extern bool showScenegraphWorldWindow;
 	extern bool showSceneGraphMenuWindow;
 	extern bool showSceneGraphMenu3DWindow;
+	extern bool showTaskListWindow;
 
 	void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext);
 	void HandleInput(HWND Wnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -40,6 +42,7 @@ namespace ui
 	void RenderTESFormCache();
 	void RenderShaderTweaks();
 	void RenderINITweaks();
+	void RenderTaskList();
 
 	namespace log
 	{

@@ -1,3 +1,4 @@
+#include <map>
 #include "../common.h"
 #include "../patches/dinput8.h"
 #include "imgui_ext.h"
@@ -7,12 +8,15 @@
 #include "../patches/TES/Setting.h"
 #include "../patches/rendering/GpuTimer.h"
 
-extern bool thingy;
+extern SRWLOCK TaskListLock;
+extern std::map<class BSTask *, std::string> TaskMap;
+extern std::vector<std::string> TasksCurrentFrame;
 
 namespace ui::opt
 {
 	bool EnableCache = true;
 	bool LogHitches = true;
+	bool EnableNavmeshLog = false;
 	bool RealtimeOcclusionView = false;
 	bool EnableOcclusionTesting = true;
 	bool EnableOccluderRendering = true;
@@ -36,6 +40,7 @@ namespace ui
 	bool showScenegraphWorldWindow;
 	bool showSceneGraphMenuWindow;
 	bool showSceneGraphMenu3DWindow;
+	bool showTaskListWindow;
 
     void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext)
     {
@@ -95,6 +100,7 @@ namespace ui
             RenderMemory();
 			RenderShaderTweaks();
 			RenderINITweaks();
+			RenderTaskList();
 
 			if (showDemoWindow)
 				ImGui::ShowDemoWindow(&showDemoWindow);
@@ -161,6 +167,12 @@ namespace ui
 			ImGui::EndMenu();
         }
 
+		if (ImGui::BeginMenu("Navmesh"))
+		{
+			ImGui::MenuItem("Log To Console", nullptr, &opt::EnableNavmeshLog);
+			ImGui::EndMenu();
+		}
+
 		if (ImGui::BeginMenu("Statistics"))
 		{
 			ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
@@ -171,6 +183,7 @@ namespace ui
 
         if (ImGui::BeginMenu("Game"))
         {
+			ImGui::MenuItem("Task List", nullptr, &showTaskListWindow);
 			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
 			ImGui::MenuItem("INISetting Viewer", nullptr, &showIniListWindow);
 			ImGui::Separator();
@@ -416,6 +429,75 @@ namespace ui
 
 		ImGui::End();
 	}
+
+	void RenderTaskList()
+	{
+		if (!showTaskListWindow)
+			return;
+
+		if (ImGui::Begin("Task List", &showTaskListWindow))
+		{
+			static std::map<std::string, uint64_t> taskHistory;
+
+			AcquireSRWLockExclusive(&TaskListLock);
+			{
+				// Build global task history
+				for (std::string& entry : TasksCurrentFrame)
+				{
+					const char *c = entry.c_str();
+
+					if (strstr(c, "Queued"))
+					{
+						c += 6;
+
+						if (strstr(c, " animation"))
+							taskHistory["Queued animation"]++;
+						else if (strstr(c, " head"))
+							taskHistory["Queued head"]++;
+						else if (strstr(c, " ref"))
+							taskHistory["Queued ref"]++;
+						else if (strstr(c, "PromoteLargeReferencesTask"))
+							taskHistory["QueuedPromoteLargeReferencesTask"]++;
+						else
+							taskHistory[entry]++;
+					}
+					else if (strstr(c, "CellLoaderTask"))
+						taskHistory["CellLoaderTask"]++;
+					else
+						taskHistory[entry]++;
+				}
+
+				TasksCurrentFrame.clear();
+
+				// Show currently running tasks
+				char header[32];
+				sprintf_s(header, "Active Tasks (%lld)", TaskMap.size());
+
+				if (ImGui::BeginGroupSplitter(header))
+				{
+					ImGui::BeginChild("taskscrolling", ImVec2(0, 300), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+					for (auto& entry : TaskMap)
+						ImGui::TextUnformatted(entry.second.c_str());
+
+					ImGui::EndChild();
+					ImGui::EndGroupSplitter();
+				}
+			}
+			ReleaseSRWLockExclusive(&TaskListLock);
+
+			// Show history
+			if (ImGui::BeginGroupSplitter("Task Counters"))
+			{
+				for (auto& entry : taskHistory)
+					ImGui::Text("%s (%lld)", entry.first.c_str(), entry.second);
+
+				ImGui::EndGroupSplitter();
+			}
+		}
+
+		ImGui::End();
+	}
 }
 
 namespace ui::log
@@ -424,59 +506,56 @@ namespace ui::log
 	std::vector<char> Buf;
     ImGuiTextFilter Filter;
     ImVector<int> LineOffsets; // Index to lines offset
-    bool ScrollToBottom;
+    bool ScrollToBottom = true;
 
-    void Draw()
-    {
+	void Draw()
+	{
 		Mutex.lock();
+		{
+			ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+			ImGui::Begin("Debug Log", &ui::showLogWindow);
+			if (ImGui::Button("Clear"))
+				Clear();
+			ImGui::SameLine();
+			bool copy = ImGui::Button("Copy");
+			ImGui::SameLine();
+			Filter.Draw("Filter", -100.0f);
+			ImGui::Separator();
+			ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+			if (copy)
+				ImGui::LogToClipboard();
 
-        ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
-        ImGui::Begin("Debug Log", &ui::showLogWindow);
-        if (ImGui::Button("Clear"))
-            Clear();
-        ImGui::SameLine();
-        bool copy = ImGui::Button("Copy");
-        ImGui::SameLine();
-        Filter.Draw("Filter", -100.0f);
-        ImGui::Separator();
-        ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-        if (copy)
-            ImGui::LogToClipboard();
+			if (Filter.IsActive())
+			{
+				const char *buf_begin = Buf.data();
+				const char *line = buf_begin;
+				for (int line_no = 0; line != NULL; line_no++)
+				{
+					const char *line_end = (line_no < LineOffsets.Size) ? buf_begin + LineOffsets[line_no] : NULL;
+					if (Filter.PassFilter(line, line_end))
+						ImGui::TextUnformatted(line, line_end);
+					line = line_end && line_end[1] ? line_end + 1 : NULL;
+				}
+			}
+			else
+			{
+				ImGui::TextUnformatted(Buf.data(), Buf.data() + Buf.size() - 1);
+			}
 
-        if (Filter.IsActive())
-        {
-			const char *buf_begin = Buf.data();
-            const char *line      = buf_begin;
-            for (int line_no = 0; line != NULL; line_no++)
-            {
-                const char *line_end = (line_no < LineOffsets.Size) ? buf_begin + LineOffsets[line_no] : NULL;
-                if (Filter.PassFilter(line, line_end))
-                    ImGui::TextUnformatted(line, line_end);
-                line = line_end && line_end[1] ? line_end + 1 : NULL;
-            }
-        }
-        else
-        {
-            ImGui::TextUnformatted(Buf.data());
-        }
+			if (ScrollToBottom)
+				ImGui::SetScrollHere(1.0f);
 
-        if (ScrollToBottom)
-            ImGui::SetScrollHere(1.0f);
-        ScrollToBottom = false;
-        ImGui::EndChild();
-        ImGui::End();
-
+			ScrollToBottom = false;
+			ImGui::EndChild();
+			ImGui::End();
+		}
 		Mutex.unlock();
     }
 
-    void Add(const char *Format, ...)
-    {
-		va_list args;
+	void Add(const char *Format, va_list Args)
+	{
 		char tempBuffer[4096];
-
-		va_start(args, Format);
-		size_t len = _vsnprintf_s(tempBuffer, _TRUNCATE, Format, args);
-		va_end(args);
+		size_t len = _vsnprintf_s(tempBuffer, _TRUNCATE, Format, Args);
 
 		Mutex.lock();
 		{
@@ -490,7 +569,10 @@ namespace ui::log
 				oldSize = 0;
 			}
 
+			// Also guarantee a null terminator to fool any string functions
+			if (oldSize > 0) Buf.pop_back();
 			Buf.insert(Buf.end(), tempBuffer, &tempBuffer[len]);
+			Buf.push_back('\0');
 
 			for (size_t newSize = Buf.size(); oldSize < newSize; oldSize++)
 			{
@@ -501,6 +583,14 @@ namespace ui::log
 			ScrollToBottom = true;
 		}
 		Mutex.unlock();
+	}
+
+    void Add(const char *Format, ...)
+    {
+		va_list args;
+		va_start(args, Format);
+		Add(Format, args);
+		va_end(args);
     }
 
     void Clear()
