@@ -76,6 +76,11 @@ public:
 		return (m_uFlags & (1 << 20)) != 0;
 	}
 
+	bool QAccumulated() const
+	{
+		return (m_uFlags & (1 << 26)) != 0;
+	}
+
 	void SetAppCulled(bool Culled)
 	{
 		if (Culled)
@@ -87,9 +92,9 @@ public:
 	void SetAccumulated(bool Accumulated)
 	{
 		if (Accumulated)
-			m_uFlags |= 0x4000000;
+			m_uFlags |= (1 << 26);
 		else
-			m_uFlags &= ~0x4000000;
+			m_uFlags &= ~(1 << 26);
 	}
 
 	int IsVisualObjectI() const
@@ -102,9 +107,11 @@ public:
 		if (Recursive)
 			__super::GetViewerStrings(Callback, Recursive);
 
+		char flagString[1024];
+		GetFlagString(flagString, ARRAYSIZE(flagString));
+
 		Callback("-- NiAVObject --\n");
-		Callback("Flags = 0x%X\n", m_uFlags);
-		Callback("App Culled = %s\n", QAppCulled() ? "true" : "false");
+		Callback("Flags = 0x%X (%s)\n", m_uFlags, flagString);
 		Callback("World Translate = (%g, %g, %g)\n",
 			m_kWorld.m_Translate.x,
 			m_kWorld.m_Translate.y,
@@ -114,6 +121,24 @@ public:
 			m_kWorldBound.m_kCenter.y,
 			m_kWorldBound.m_kCenter.z,
 			m_kWorldBound.m_fRadius);
+	}
+
+	void GetFlagString(char *Buffer, size_t BufferSize) const
+	{
+		memset(Buffer, 0, BufferSize * sizeof(char));
+
+		if (QAppCulled())
+			strcat_s(Buffer, BufferSize, "AppCulled ");
+		if (QAlwaysDraw())
+			strcat_s(Buffer, BufferSize, "AlwaysDraw ");
+		if (QPreProcessedNode())
+			strcat_s(Buffer, BufferSize, "PreProcessed ");
+		if (QNotVisible())
+			strcat_s(Buffer, BufferSize, "NotVisible ");
+		if (QAccumulated())
+			strcat_s(Buffer, BufferSize, "Accumulated ");
+
+		Trim(Buffer, ' ');
 	}
 };
 static_assert(sizeof(NiAVObject) == 0x110);
