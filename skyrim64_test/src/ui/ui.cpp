@@ -41,6 +41,7 @@ namespace ui
 	bool showScenegraphWorldWindow;
 	bool showSceneGraphMenuWindow;
 	bool showSceneGraphMenu3DWindow;
+	bool showSceneGraphShadowNodesWindow;
 	bool showTaskListWindow;
 
     void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext)
@@ -156,6 +157,7 @@ namespace ui
 			ImGui::MenuItem("World Tree", nullptr, &showScenegraphWorldWindow);
 			ImGui::MenuItem("Menu Tree", nullptr, &showSceneGraphMenuWindow);
 			ImGui::MenuItem("Menu3D Tree", nullptr, &showSceneGraphMenu3DWindow);
+			ImGui::MenuItem("ShadowSceneNode Trees", nullptr, &showSceneGraphShadowNodesWindow);
 			ImGui::EndMenu();
 		}
 

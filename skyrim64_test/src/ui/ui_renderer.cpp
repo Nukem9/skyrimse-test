@@ -254,11 +254,14 @@ namespace ui
 	//
 	// Scene graphs
 	//
+	typedef NiNode *ShadowSceneNodeArray[4];
+
 	AutoPtr(NiNode *, WorldScenegraph, 0x2F4CE30);
 	AutoPtr(NiNode *, MenuScenegraph, 0x2F4CE38);
 	AutoPtr(NiNode *, Menu3DScenegraph, 0x2F4CE40);
+	AutoPtr(ShadowSceneNodeArray, ShadowNodeScenegraphs, 0x1E32F20);
 
-	void EnumerateSceneTree(NiAVObject *Object, bool Tree, bool ForceEnable, bool ForceDisable)
+	void TraverseSceneGraph(NiAVObject *Object, bool Tree, bool ForceEnable, bool ForceDisable)
 	{
 		if (!Object)
 			return;
@@ -357,7 +360,7 @@ namespace ui
 		if (node)
 		{
 			for (uint32_t i = 0; i < node->GetArrayCount(); i++)
-				EnumerateSceneTree(node->GetAt(i), treeIsOpen, forceEnableCull, forceDisableCull);
+				TraverseSceneGraph(node->GetAt(i), treeIsOpen, forceEnableCull, forceDisableCull);
 		}
 
 		if (treeIsOpen)
@@ -372,7 +375,7 @@ namespace ui
 		if (showScenegraphWorldWindow)
 		{
 			if (ImGui::Begin("World Scene Graph", &showScenegraphWorldWindow))
-				EnumerateSceneTree(WorldScenegraph, true, false, false);
+				TraverseSceneGraph(WorldScenegraph, true, false, false);
 
 			ImGui::End();
 		}
@@ -380,7 +383,7 @@ namespace ui
 		if (showSceneGraphMenuWindow)
 		{
 			if (ImGui::Begin("Menu Scene Graph", &showSceneGraphMenuWindow))
-				EnumerateSceneTree(MenuScenegraph, true, false, false);
+				TraverseSceneGraph(MenuScenegraph, true, false, false);
 
 			ImGui::End();
 		}
@@ -388,7 +391,18 @@ namespace ui
 		if (showSceneGraphMenu3DWindow)
 		{
 			if (ImGui::Begin("Menu3D Scene Graph", &showSceneGraphMenu3DWindow))
-				EnumerateSceneTree(Menu3DScenegraph, true, false, false);
+				TraverseSceneGraph(Menu3DScenegraph, true, false, false);
+
+			ImGui::End();
+		}
+
+		if (showSceneGraphShadowNodesWindow)
+		{
+			if (ImGui::Begin("ShadowSceneNode Scene Graphs", &showSceneGraphShadowNodesWindow))
+			{
+				for (int i = 0; i < 4; i++)
+					TraverseSceneGraph(ShadowNodeScenegraphs[i], true, false, false);
+			}
 
 			ImGui::End();
 		}

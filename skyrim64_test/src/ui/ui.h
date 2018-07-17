@@ -29,6 +29,7 @@ namespace ui
 	extern bool showScenegraphWorldWindow;
 	extern bool showSceneGraphMenuWindow;
 	extern bool showSceneGraphMenu3DWindow;
+	extern bool showSceneGraphShadowNodesWindow;
 	extern bool showTaskListWindow;
 
 	void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext);
