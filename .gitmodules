@@ -1,0 +1,4 @@
+[submodule "skyrim64_test/imgui"]
+	path = skyrim64_test/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = viewport
