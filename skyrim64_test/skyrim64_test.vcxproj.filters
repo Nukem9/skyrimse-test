@@ -313,6 +313,9 @@
     <ClInclude Include="src\patches\TES\BSCullingProcess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\MOC_ThreadedMerger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -631,6 +634,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\MOC_ThreadedMerger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

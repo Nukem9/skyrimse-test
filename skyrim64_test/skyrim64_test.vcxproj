@@ -149,6 +149,7 @@
     <ClInclude Include="src\patches\TES\BSTList.h" />
     <ClInclude Include="src\patches\TES\BSTLocklessQueue.h" />
     <ClInclude Include="src\patches\TES\MOC.h" />
+    <ClInclude Include="src\patches\TES\MOC_ThreadedMerger.h" />
     <ClInclude Include="src\patches\TES\MTRenderer.h" />
     <ClInclude Include="src\patches\TES\BSCullingProcess.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSDynamicTriShape.h" />
@@ -302,6 +303,7 @@
     <ClCompile Include="src\patches\TES\BSSpinLock.cpp" />
     <ClCompile Include="src\patches\TES\BSThread_Win32.cpp" />
     <ClCompile Include="src\patches\TES\MOC.cpp" />
+    <ClCompile Include="src\patches\TES\MOC_ThreadedMerger.cpp" />
     <ClCompile Include="src\patches\TES\MTRenderer.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiMain.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp" />
