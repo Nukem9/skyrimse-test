@@ -94,7 +94,7 @@ public:
 				bool primaryVisCheck = (pCompoundFrustum->byteC4 || TestBaseVisibility3(Object->m_kWorldBound)) && pCompoundFrustum->Process(Object);
 
 				if (primaryVisCheck && doCullTest)
-					primaryVisCheck = MOC::TestSphere(Object);
+					primaryVisCheck = MOC::TestObject(Object);
 
 				if (primaryVisCheck)
 				{
@@ -115,7 +115,7 @@ public:
 				// Frustum culling only
 				if (bRecurseToGeometry)
 				{
-					if (doCullTest && !MOC::TestSphere(Object))
+					if (doCullTest && !MOC::TestObject(Object))
 						return;
 
 					if (!Object->QAlwaysDraw() && m_kPlanes.IsAnyPlaneActive())
@@ -132,7 +132,7 @@ public:
 
 				if (Object->QAlwaysDraw() || !m_kPlanes.IsAnyPlaneActive() || TestBaseVisibility3(Object->m_kWorldBound))
 				{
-					if (doCullTest && !MOC::TestSphere(Object))
+					if (doCullTest && !MOC::TestObject(Object))
 						return;
 
 					AppendVirtual(static_cast<BSGeometry *>(Object), Unknown);

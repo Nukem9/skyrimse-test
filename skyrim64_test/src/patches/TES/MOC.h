@@ -5,15 +5,14 @@
 namespace MOC
 {
 	void Init();
-	void UpdateDepthViewTexture();
 	bool RegisterGeo(BSGeometry *Geometry, bool Test, bool Draw);
-	void SendTraverseCommand();
-	void TraverseSceneGraph();
-	void SetDoHack(bool Value);
+	void SendTraverseCommand(NiCamera *Camera);
+	void TraverseSceneGraph(NiCamera *Camera);
 	void RemoveCachedVerticesAndIndices(void *RendererData);
-
+	void UpdateDepthViewTexture();
 	void ForceFlush();
-	bool TestSphere(NiAVObject *Object);
+
+	bool TestObject(NiAVObject *Object);
 
 	using namespace DirectX;
 

@@ -1,7 +1,7 @@
 #pragma once
 
+#include <atomic>
 #include "../../common.h"
-#include "../../../MaskedOcclusionCulling/CullingThreadpool.h"
 #include "../../../MaskedOcclusionCulling/MaskedOcclusionCulling.h"
 #include "../../../tbb2018/concurrent_queue.h"
 

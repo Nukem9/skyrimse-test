@@ -10,16 +10,11 @@
 
 #include "NiMain/NiNode.h"
 #include "NiMain/NiCamera.h"
-#include <DirectXCollision.h>
 #include <smmintrin.h>
 using namespace DirectX;
 
-#include "../../../MaskedOcclusionCulling/CullingThreadpool.h"
-#include "../../../MaskedOcclusionCulling/MaskedOcclusionCulling.h"
-
+#include "MOC_ThreadedMerger.h"
 #include "../../../meshoptimizer/src/meshoptimizer.h"
-
-#include "../../../tbb2018/concurrent_queue.h"
 
 const int MOC_WIDTH = 1280;
 const int MOC_HEIGHT = 720;
@@ -27,10 +22,10 @@ const int MOC_HEIGHT = 720;
 extern ID3D11Texture2D *g_OcclusionTexture;
 extern ID3D11ShaderResourceView *g_OcclusionTextureSRV;
 
-static uint8_t *mpGPUDepthBuf = (uint8_t *)_aligned_malloc(sizeof(char) * ((MOC_WIDTH * MOC_HEIGHT * 4 + 31) & 0xFFFFFFE0), 32);
-
 namespace MOC
 {
+	MOC_ThreadedMerger *ThreadedMOC;
+
 	struct IndexPair
 	{
 		uint32_t *Data;
@@ -68,22 +63,16 @@ namespace MOC
 		for (uint32_t i = 0; i < Count; i++)
 		{
 			//
-			// 16+X bytes    16 bytes
-			// XYZW[DATA] -> XY-W
+			// X -> X
+			// Y -> Y
+			// Z -> 1.0f
+			// W -> Z
+			// Remaining data discarded
 			//
 			*(float *)(data + 0) = *(float *)(in + 0);
 			*(float *)(data + 4) = *(float *)(in + 4);
 			*(float *)(data + 8) = 1.0f;
 			*(float *)(data + 12) = *(float *)(in + 8);
-
-			for (int j = 0; j < 4; j++)
-			{
-				if (std::isnan(*(float *)(data + 4 * j)) ||
-					!std::isfinite(*(float *)(data + 4 * j)) ||
-					*(float *)(data + 4 * j) > 50000.0f ||
-					*(float *)(data + 4 * j) < -50000.0f)
-					__debugbreak();
-			}
 
 			data += 4 * sizeof(float);
 			in += ByteStride;
@@ -112,16 +101,16 @@ namespace MOC
 			auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
 			dataPtr = rendererData;
 
-			auto itr = m_IndexMap.find(rendererData);
-			auto itr2 = m_VertMap.find(rendererData);
+			auto itrI = m_IndexMap.find(rendererData);
+			auto itrV = m_VertMap.find(rendererData);
 
-			if (itr != m_IndexMap.end())
-				*Indices = itr->second;
+			if (itrI != m_IndexMap.end())
+				*Indices = itrI->second;
 			else
 				Indices->Data = nullptr;
 
-			if (itr2 != m_VertMap.end())
-				*Vertices = itr2->second;
+			if (itrV != m_VertMap.end())
+				*Vertices = itrV->second;
 			else
 				*Vertices = nullptr;
 
@@ -138,7 +127,7 @@ namespace MOC
 		}
 		else
 		{
-			__debugbreak();
+			Assert(false);
 		}
 
 		// If one wasn't found, it needs conversion
@@ -149,7 +138,7 @@ namespace MOC
 			p.Count = indexCount;
 
 			if (indexCount > 300)
-				p.Count = meshopt_simplify(p.Data, p.Data, indexCount, (const float *)vertexData, vertexCount, vertexStride, 297);// Target 99 triangles
+				p.Count = meshopt_simplify(p.Data, p.Data, indexCount, (const float *)vertexData, vertexCount, vertexStride, (size_t)(indexCount * .33f));// Target 33% of original triangles
 
 			m_IndexMap.insert_or_assign(dataPtr, p);
 			*Indices = p;
@@ -166,244 +155,137 @@ namespace MOC
 
 	void RemoveCachedVerticesAndIndices(void *RendererData)
 	{
+		uint32_t *indices = nullptr;
+		float *verts = nullptr;
+
 		AcquireSRWLockExclusive(&vertLock);
 
-		auto indItr = m_IndexMap.find(RendererData);
-		auto vertItr = m_VertMap.find(RendererData);
-
-		if (indItr != m_IndexMap.end())
+		if (auto itr = m_IndexMap.find(RendererData); itr != m_IndexMap.end())
 		{
-			delete[] indItr->second.Data;
-			m_IndexMap.erase(indItr);
+			indices = itr->second.Data;
+			m_IndexMap.erase(itr);
 		}
 
-		if (vertItr != m_VertMap.end())
+		if (auto itr = m_VertMap.find(RendererData); itr != m_VertMap.end())
 		{
-			delete[] vertItr->second;
-			m_VertMap.erase(vertItr);
+			verts = itr->second;
+			m_VertMap.erase(itr);
 		}
 
 		ReleaseSRWLockExclusive(&vertLock);
+
+		// Both buffers might be used outside the lock - I don't care right now (cell_unload() + moc_render() => BOOM)
+		if (indices)
+			delete[] indices;
+
+		if (verts)
+			delete[] verts;
 	}
 
-	void DepthColorize(const float *FloatData, uint8_t *OutColorArray)
+	void UpdateDepthViewTexture()
 	{
-		int w = MOC_WIDTH;
-		int h = MOC_HEIGHT;
-
-		// Find min/max w coordinate (discard cleared pixels)
-		float minW = FLT_MAX, maxW = 0.0f;
-		for (int i = 0; i < w * h; i++)
-		{
-			if (FloatData[i] > 0.0f)
-			{
-				minW = min(minW, FloatData[i]);
-				maxW = max(maxW, FloatData[i]);
-			}
-		}
-
-		// Tone map depth values
-		for (int i = 0; i < w * h; i++)
-		{
-			int intensity = 0;
-
-			if (FloatData[i] > 0)
-				intensity = (unsigned char)(223.0*(FloatData[i] - minW) / (maxW - minW) + 32.0);
-
-			OutColorArray[i * 4 + 0] = intensity;
-			OutColorArray[i * 4 + 1] = intensity;
-			OutColorArray[i * 4 + 2] = intensity;
-			OutColorArray[i * 4 + 3] = intensity;
-		}
+		ThreadedMOC->UpdateDepthViewTexture(BSGraphics::Renderer::GetGlobals()->m_DeviceContext, g_OcclusionTexture);
 	}
 
-	bool dohack = false;
+	void ForceFlush()
+	{
+		ProfileTimer("MOC WaitForRender");
+		ThreadedMOC->Flush();
+	}
 
 	XMMATRIX MyView;
 	XMMATRIX MyProj;
 	XMMATRIX MyViewProj;
 	NiPoint3 MyPosAdjust;
 
-	const int AABB_VERTICES = 8;
-	static const UINT sBBxInd[AABB_VERTICES] = { 1, 0, 0, 1, 1, 1, 0, 0 };
-	static const UINT sBByInd[AABB_VERTICES] = { 1, 1, 1, 1, 0, 0, 0, 0 };
-	static const UINT sBBzInd[AABB_VERTICES] = { 1, 1, 0, 0, 0, 1, 1, 0 };
 
-	const NiCamera *testCam = nullptr;
-
-	enum CullType
-	{
-		CULL_COLLECT,
-		CULL_RENDER_GEOMETRY,
-		CULL_FLUSH,
-	};
-
-	struct CullPacket
-	{
-		BSGeometry *Geometry;
-		CullType Type;
-	};
-
-	std::array<MaskedOcclusionCulling *, 2> MocList;
-	std::atomic_bool ThreadWorking[2];
-	std::atomic<MaskedOcclusionCulling *> FinalBuffer;
-
-	tbb::concurrent_queue<CullPacket> PendingPackets;
-	void TraverseSceneGraph();
-
-	DWORD WINAPI CullThread(LPVOID Arg)
-	{
-		uint32_t threadIndex = (uint32_t)Arg;
-
-		MaskedOcclusionCulling *moc = MaskedOcclusionCulling::Create();
-		moc->SetResolution(MOC_WIDTH, MOC_HEIGHT);
-		moc->ClearBuffer();
-
-		MocList[threadIndex] = moc;
-		ThreadWorking[threadIndex].store(false);
-
-		CullPacket p;
-		int idleCount = 0;
-
-		while (true)
-		{
-			if (!PendingPackets.try_pop(p))
-			{
-				if (++idleCount <= 3)
-					_mm_pause();
-				else
-					std::this_thread::yield();
-
-				continue;
-			}
-
-			// Now doing some kind of operation
-			ThreadWorking[threadIndex].store(true);
-			idleCount = 0;
-
-		__fastloop:
-			switch (p.Type)
-			{
-			case CULL_COLLECT:
-				TraverseSceneGraph();
-				break;
-
-			case CULL_RENDER_GEOMETRY:
-			{
-				ProfileTimer("MOC RenderGeometry");
-
-				IndexPair indexRawData;
-				float *vertexRawData;
-
-				GetCachedVerticesAndIndices(p.Geometry, &indexRawData, &vertexRawData);
-
-				XMMATRIX worldProj = BSShaderUtil::GetXMFromNiPosAdjust(p.Geometry->GetWorldTransform(), MyPosAdjust);
-				XMMATRIX worldViewProj = XMMatrixMultiply(worldProj, MyViewProj);
-
-				moc->RenderTriangles(
-					vertexRawData,
-					indexRawData.Data,
-					indexRawData.Count / 3,
-					(float *)&worldViewProj,
-					MaskedOcclusionCulling::BACKFACE_CW,
-					MaskedOcclusionCulling::CLIP_PLANE_SIDES);
-
-				ProfileCounterInc("MOC ObjectsRendered");
-				ProfileCounterAdd("MOC TrianglesRendered", indexRawData.Count / 3);
-			}
-			break;
-
-			case CULL_FLUSH:
-			{
-				// Merge the buffer from every other thread into this one
-				while (true)
-				{
-					int threadsMerged = 1;
-
-					for (uint32_t i = 0; i < 2; i++)
-					{
-						if (i == threadIndex)
-							continue;
-
-						if (ThreadWorking[i].load())
-							continue;
-
-						moc->MergeBuffer(MocList[i]);
-						threadsMerged++;
-					}
-
-					if (threadsMerged == 2)
-						break;
-				}
-
-				// Notify whoever was waiting for this
-				FinalBuffer.store(moc);
-			}
-			break;
-			}
-
-			if (PendingPackets.try_pop(p))
-				goto __fastloop;
-
-			ThreadWorking[threadIndex].store(false);
-		}
-
-		return 0;
-	}
-
-	void ForceFlush()
-	{
-		CullPacket p;
-		p.Geometry = nullptr;
-		p.Type = CULL_FLUSH;
-
-		FinalBuffer.store(nullptr);
-		PendingPackets.push(p);
-
-		ProfileTimer("MOC WaitForRender");
-		while (!FinalBuffer.load())
-		{
-			_mm_pause();
-			continue;
-		}
-	}
-
-	void ForceClear()
-	{
-		for (uint32_t i = 0; i < 2; i++)
-			MocList[i]->ClearBuffer();
-	}
-
-	void UpdateDepthViewTexture()
-	{
-		if (ui::opt::RealtimeOcclusionView)
-		{
-			float *pixels = new float[MOC_WIDTH * MOC_HEIGHT];
-			FinalBuffer.load()->ComputePixelDepthBuffer(pixels, false);
-			DepthColorize(pixels, mpGPUDepthBuf);
-			BSGraphics::Renderer::GetGlobals()->m_DeviceContext->UpdateSubresource(g_OcclusionTexture, 0, nullptr, mpGPUDepthBuf, MOC_WIDTH * 4, 0);
-			delete[] pixels;
-		}
-	}
 
 	bool mocInit = false;
 
+	void TraverseSceneGraphCallback(MaskedOcclusionCulling *MOC, void *UserData)
+	{
+		NiCamera *camera = (NiCamera *)UserData;
+		TraverseSceneGraph(camera);
+	}
+
+	void RenderGeoCallback(MaskedOcclusionCulling *MOC, void *UserData)
+	{
+		BSGeometry *geometry = (BSGeometry *)UserData;
+
+		ProfileTimer("MOC RenderGeometry");
+
+		IndexPair indexRawData;
+		float *vertexRawData;
+
+		GetCachedVerticesAndIndices(geometry, &indexRawData, &vertexRawData);
+
+		XMMATRIX worldProj = BSShaderUtil::GetXMFromNiPosAdjust(geometry->GetWorldTransform(), MyPosAdjust);
+		XMMATRIX worldViewProj = XMMatrixMultiply(worldProj, MyViewProj);
+
+		MOC->RenderTriangles(
+			vertexRawData,
+			indexRawData.Data,
+			indexRawData.Count / 3,
+			(float *)&worldViewProj,
+			MaskedOcclusionCulling::BACKFACE_CW,
+			MaskedOcclusionCulling::CLIP_PLANE_SIDES);
+
+		ProfileCounterInc("MOC ObjectsRendered");
+		ProfileCounterAdd("MOC TrianglesRendered", indexRawData.Count / 3);
+	}
+
 	void Init()
 	{
-		CreateThread(nullptr, 0, CullThread, (LPVOID)0, 0, nullptr);
-		CreateThread(nullptr, 0, CullThread, (LPVOID)1, 0, nullptr);
+		ThreadedMOC = new MOC_ThreadedMerger(MOC_WIDTH, MOC_HEIGHT, 2, true);
+
+		ThreadedMOC->SetTraverseSceneCallback(TraverseSceneGraphCallback);
+		ThreadedMOC->SetRenderGeometryCallback(RenderGeoCallback);
 
 		mocInit = true;
 	}
 
-	bool TestSphere(NiAVObject *Object)
+	BSMultiBoundAABB *GetAABBNode(const NiAVObject *Object)
 	{
-		if (!mocInit || !ui::opt::EnableOcclusionTesting || !testCam)
+		if (BSMultiBoundNode *multiBoundNode = Object->IsMultiBoundNode())
+		{
+			if (multiBoundNode->spMultiBound && multiBoundNode->spMultiBound->spShape)
+			{
+				auto shape = multiBoundNode->spMultiBound->spShape;
+
+				if (shape->IsExactKindOf(NiRTTI::ms_BSMultiBoundAABB))
+				{
+					auto aabb = static_cast<BSMultiBoundAABB *>(shape);
+
+					if (aabb->m_kHalfExtents.x > 1.0f)
+						return aabb;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	bool TestSphere(NiAVObject *Object);
+	bool TestAABB(BSMultiBoundAABB *Object);
+
+	bool TestObject(NiAVObject *Object)
+	{
+		if (!mocInit || !ui::opt::EnableOcclusionTesting)
 			return true;
 
 		if (Object->QAppCulled())
 			return true;
 
+		BSMultiBoundAABB *aabb = GetAABBNode(Object);
+
+		if (aabb)
+			return TestAABB(aabb);
+
+		return TestSphere(Object);
+	}
+
+	bool TestSphere(NiAVObject *Object)
+	{
 		if (Object->m_kWorldBound.m_fRadius <= 5.0f)
 			return true;
 
@@ -481,13 +363,13 @@ namespace MOC
 		XMVECTOR xy_mins = _mm_min_ps(vCorner0NDC, _mm_min_ps(vCorner1NDC, _mm_min_ps(vCorner2NDC, vCorner3NDC)));// zw discarded
 		XMVECTOR xy_maxs = _mm_max_ps(vCorner0NDC, _mm_max_ps(vCorner1NDC, _mm_max_ps(vCorner2NDC, vCorner3NDC)));// zw discarded
 
-		auto r = FinalBuffer.load()->TestRect(xy_mins.m128_f32[0], xy_mins.m128_f32[1], xy_maxs.m128_f32[0], xy_maxs.m128_f32[1], closestSpherePointW);
+		auto r = ThreadedMOC->GetMOC()->TestRect(xy_mins.m128_f32[0], xy_mins.m128_f32[1], xy_maxs.m128_f32[0], xy_maxs.m128_f32[1], closestSpherePointW);
 
 		if (r != MaskedOcclusionCulling::VISIBLE)
 		{
 #define CONVERT_X(x) ((x) + 1.0) * 2560 * 0.5 + 0
 #define CONVERT_Y(y) (1.0 - (y)) * 1440 * 0.5 + 0
-
+			/*
 			static SRWLOCK lock = SRWLOCK_INIT;
 
 			AcquireSRWLockExclusive(&lock);
@@ -495,7 +377,7 @@ namespace MOC
 			ImGui::GetWindowDrawList()->AddRect(ImVec2(CONVERT_X(xy_mins.m128_f32[0]), CONVERT_Y(xy_mins.m128_f32[1])), ImVec2(CONVERT_X(xy_maxs.m128_f32[0]), CONVERT_Y(xy_maxs.m128_f32[1])), IM_COL32(255, 0, 0, 255));
 
 			ReleaseSRWLockExclusive(&lock);
-
+			*/
 			return false;
 		}
 
@@ -503,200 +385,76 @@ namespace MOC
 		return true;
 	}
 
-	bool TestBoundingSphere(BSGeometry *Geometry, bool Test, bool Draw)
+	bool TestAABB(BSMultiBoundAABB *Object)
 	{
-		if (!mocInit || !ui::opt::EnableOcclusionTesting || !testCam)
+		const static int AABB_VERTICES = 8;
+		const static UINT sBBxInd[AABB_VERTICES] = { 1, 0, 0, 1, 1, 1, 0, 0 };
+		const static UINT sBByInd[AABB_VERTICES] = { 1, 1, 1, 1, 0, 0, 0, 0 };
+		const static UINT sBBzInd[AABB_VERTICES] = { 1, 1, 0, 0, 0, 1, 1, 0 };
+
+		// w ends up being garbage, but it doesn't matter - we ignore it anyway.
+		__m128 vCenter = _mm_sub_ps(Object->m_kCenter.AsXmm(), MyPosAdjust.AsXmm());
+		__m128 vHalf = Object->m_kHalfExtents.AsXmm();
+
+		__m128 vMin = _mm_sub_ps(vCenter, vHalf);
+		__m128 vMax = _mm_add_ps(vCenter, vHalf);
+
+		// transforms
+		__m128 xRow[2], yRow[2], zRow[2];
+		xRow[0] = _mm_shuffle_ps(vMin, vMin, 0x00) * MyViewProj.r[0];
+		xRow[1] = _mm_shuffle_ps(vMax, vMax, 0x00) * MyViewProj.r[0];
+		yRow[0] = _mm_shuffle_ps(vMin, vMin, 0x55) * MyViewProj.r[1];
+		yRow[1] = _mm_shuffle_ps(vMax, vMax, 0x55) * MyViewProj.r[1];
+		zRow[0] = _mm_shuffle_ps(vMin, vMin, 0xaa) * MyViewProj.r[2];
+		zRow[1] = _mm_shuffle_ps(vMax, vMax, 0xaa) * MyViewProj.r[2];
+
+		__m128 zAllIn = _mm_castsi128_ps(_mm_set1_epi32(~0));
+		__m128 screenMin = _mm_set1_ps(FLT_MAX);
+		__m128 screenMax = _mm_set1_ps(-FLT_MAX);
+
+		// Find the minimum of each component
+		__m128 minvert = _mm_add_ps(MyViewProj.r[3], _mm_add_ps(_mm_add_ps(_mm_min_ps(xRow[0], xRow[1]), _mm_min_ps(yRow[0], yRow[1])), _mm_min_ps(zRow[0], zRow[1])));
+		float minW = minvert.m128_f32[3];
+
+		if (minW < 0.00000001f)
 			return true;
 
-		BSShaderProperty *shaderProperty = Geometry->QShaderProperty();
-
-		if (!shaderProperty)
-			return false;
-
-		if (Geometry->QType() == GEOMETRY_TYPE_TRISHAPE && shaderProperty->IsExactKindOf(NiRTTI::ms_BSLightingShaderProperty) && Geometry->m_kWorldBound.m_fRadius > 10)
+		for (UINT i = 0; i < AABB_VERTICES; i++)
 		{
-			auto triShape = static_cast<BSTriShape *>(Geometry);
-			auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
+			// Transform the vertex
+			__m128 vert = MyViewProj.r[3];
+			vert += xRow[sBBxInd[i]];
+			vert += yRow[sBByInd[i]];
+			vert += zRow[sBBzInd[i]];
 
-			XMMATRIX worldProj = BSShaderUtil::GetXMFromNiPosAdjust(triShape->GetWorldTransform(), MyPosAdjust);
-			XMMATRIX worldViewProj = XMMatrixMultiply(worldProj, MyViewProj);
+			// We have inverted z; z is in front of near plane iff z <= w.
+			__m128 vertZ = _mm_shuffle_ps(vert, vert, 0xaa); // vert.zzzz
+			__m128 vertW = _mm_shuffle_ps(vert, vert, 0xff); // vert.wwww
 
-			XMVECTOR bounds = _mm_sub_ps(_mm_setr_ps(
-				Geometry->m_kWorldBound.m_kCenter.x,
-				Geometry->m_kWorldBound.m_kCenter.y,
-				Geometry->m_kWorldBound.m_kCenter.z,
-				0.0f),
-				MyPosAdjust.AsXmm());
-			/*
-			// w ends up being garbage, but it doesn't matter - we ignore it anyway.
-			__m128 vCenter = bounds;//Geometry->m_kWorldBound.m_kCenter.AsXmm();//_mm_loadu_ps(&mBBCenter.x);
-			__m128 vHalf = _mm_load1_ps((float *)&Geometry->m_kWorldBound.m_fRadius);//_mm_loadu_ps(&mBBHalf.x);
+			// project
+			__m128 xformedPos = _mm_div_ps(vert, vertW);
 
-			__m128 vMin = _mm_sub_ps(vCenter, vHalf);
-			__m128 vMax = _mm_add_ps(vCenter, vHalf);
+			// update bounds
+			screenMin = _mm_min_ps(screenMin, xformedPos);
+			screenMax = _mm_max_ps(screenMax, xformedPos);
+		}
 
-			// transforms
-			__m128 xRow[2], yRow[2], zRow[2];
-			xRow[0] = _mm_shuffle_ps(vMin, vMin, 0x00) * worldViewProj.r[0];
-			xRow[1] = _mm_shuffle_ps(vMax, vMax, 0x00) * worldViewProj.r[0];
-			yRow[0] = _mm_shuffle_ps(vMin, vMin, 0x55) * worldViewProj.r[1];
-			yRow[1] = _mm_shuffle_ps(vMax, vMax, 0x55) * worldViewProj.r[1];
-			zRow[0] = _mm_shuffle_ps(vMin, vMin, 0xaa) * worldViewProj.r[2];
-			zRow[1] = _mm_shuffle_ps(vMax, vMax, 0xaa) * worldViewProj.r[2];
+		MaskedOcclusionCulling::CullingResult r = ThreadedMOC->GetMOC()->TestRect(screenMin.m128_f32[0], screenMin.m128_f32[1], screenMax.m128_f32[0], screenMax.m128_f32[1], minW);
 
-			__m128 zAllIn = _mm_castsi128_ps(_mm_set1_epi32(~0));
-			__m128 screenMin = _mm_set1_ps(FLT_MAX);
-			__m128 screenMax = _mm_set1_ps(-FLT_MAX);
-
-			// Find the minimum of each component
-			__m128 minvert = _mm_add_ps(worldViewProj.r[3], _mm_add_ps(_mm_add_ps(_mm_min_ps(xRow[0], xRow[1]), _mm_min_ps(yRow[0], yRow[1])), _mm_min_ps(zRow[0], zRow[1])));
-			float minW = minvert.m128_f32[3];
-			if (minW < 0.00000001f)
-				return true;
-
-			for (UINT i = 0; i < AABB_VERTICES; i++)
-			{
-				// Transform the vertex
-				__m128 vert = worldViewProj.r[3];
-				vert += xRow[sBBxInd[i]];
-				vert += yRow[sBByInd[i]];
-				vert += zRow[sBBzInd[i]];
-
-				// We have inverted z; z is in front of near plane iff z <= w.
-				__m128 vertZ = _mm_shuffle_ps(vert, vert, 0xaa); // vert.zzzz
-				__m128 vertW = _mm_shuffle_ps(vert, vert, 0xff); // vert.wwww
-
-																 // project
-				__m128 xformedPos = _mm_div_ps(vert, vertW);
-
-				// update bounds
-				screenMin = _mm_min_ps(screenMin, xformedPos);
-				screenMax = _mm_max_ps(screenMax, xformedPos);
-			}
-
-			MaskedOcclusionCulling::CullingResult r = moc1->TestRect(screenMin.m128_f32[0], screenMin.m128_f32[1], screenMax.m128_f32[0], screenMax.m128_f32[1], minW);
-			*/
-			//if (r != MaskedOcclusionCulling::VISIBLE)
-			//	return false;
-			{
-				float sphereRadius = Geometry->m_kWorldBound.m_fRadius;
-
-				XMMATRIX view = MyView;
-				XMMATRIX projection = MyProj;
-
-				// w as 1.0f
-				XMVECTOR bounds = _mm_sub_ps(_mm_setr_ps(
-					Geometry->m_kWorldBound.m_kCenter.x,
-					Geometry->m_kWorldBound.m_kCenter.y,
-					Geometry->m_kWorldBound.m_kCenter.z,
-					1.0f),
-					MyPosAdjust.AsXmm());
-
-				// ------ Early depth rejection test
-
-				XMVECTOR v = XMVectorSubtract(_mm_setzero_ps(), bounds);
-				XMVECTOR closestPoint = XMVectorAdd(bounds, XMVectorScale(XMVector3Normalize(v), sphereRadius));
-				closestPoint = XMVector4Transform(XMVectorSetW(closestPoint, 1.0f), MyViewProj);// Project to clip space
-
-				float closestSpherePointW = closestPoint.m128_f32[3];
-
-				if (closestSpherePointW < 0.000001f)
-					return true;
-
-				/*
-				// Compute the center of the bounding sphere in screen space
-				XMVECTOR Cv = XMVector4Transform(bounds, MyView);
-
-				// compute nearest point to camera on sphere, and project it
-				XMVECTOR Pv = XMVectorSubtract(Cv, XMVectorScale(XMVector3Normalize(Cv), sphereRadius));
-				float closestSpherePointW = XMVector4Transform(XMVectorSetW(Pv, 1.0f), MyProj).m128_f32[3];
-
-				if (closestSpherePointW < 0.000001f)
-					return true;
-					*/
-				// ------
-
-				XMVECTOR viewEye = { view.r[0].m128_f32[3], view.r[1].m128_f32[3], view.r[2].m128_f32[3], 0.0f };
-				viewEye = XMVectorNegate(viewEye);
-
-				XMVECTOR viewEyeSphereDirection = XMVectorSubtract(viewEye, bounds);
-				float cameraSphereDistance = XMVector3Length(viewEyeSphereDirection).m128_f32[0];// distance()
-
-				XMVECTOR viewUp = { view.r[0].m128_f32[1], view.r[1].m128_f32[1], view.r[2].m128_f32[1], 0.0f };
-				XMVECTOR viewDirection = { view.r[0].m128_f32[2], view.r[1].m128_f32[2], view.r[2].m128_f32[2], 0.0f };
-				XMVECTOR viewRight = XMVector3Normalize(XMVector3Cross(viewEyeSphereDirection, viewUp));
-
-				// Help handle perspective distortion.
-				// http://article.gmane.org/gmane.games.devel.algorithms/21697/
-				float fRadius = cameraSphereDistance * tan(asin(sphereRadius / cameraSphereDistance));
-
-				// Compute the offsets for the points around the sphere
-				XMVECTOR vUpRadius = XMVectorScale(viewUp, fRadius);
-				XMVECTOR vRightRadius = XMVectorScale(viewRight, fRadius);
-
-				// Generate the 4 corners of the sphere in world space
-				XMVECTOR vCorner0WS = XMVectorSubtract(XMVectorAdd(bounds, vUpRadius), vRightRadius);		// Top-Left
-				XMVECTOR vCorner1WS = XMVectorAdd(XMVectorAdd(bounds, vUpRadius), vRightRadius);			// Top-Right
-				XMVECTOR vCorner2WS = XMVectorSubtract(XMVectorSubtract(bounds, vUpRadius), vRightRadius);  // Bottom-Left
-				XMVECTOR vCorner3WS = XMVectorAdd(XMVectorSubtract(bounds, vUpRadius), vRightRadius);		// Bottom-Right
-
-				// Project the 4 corners of the sphere into clip space, then convert to normalized device coordinates
-				XMVECTOR vCorner0CS = XMVector4Transform(vCorner0WS, MyViewProj);
-				XMVECTOR vCorner1CS = XMVector4Transform(vCorner1WS, MyViewProj);
-				XMVECTOR vCorner2CS = XMVector4Transform(vCorner2WS, MyViewProj);
-				XMVECTOR vCorner3CS = XMVector4Transform(vCorner3WS, MyViewProj);
-
-				XMVECTOR vCorner0NDC = XMVectorDivide(vCorner0CS, XMVectorSplatW(vCorner0CS));
-				XMVECTOR vCorner1NDC = XMVectorDivide(vCorner1CS, XMVectorSplatW(vCorner1CS));
-				XMVECTOR vCorner2NDC = XMVectorDivide(vCorner2CS, XMVectorSplatW(vCorner2CS));
-				XMVECTOR vCorner3NDC = XMVectorDivide(vCorner3CS, XMVectorSplatW(vCorner3CS));
-
-				// Bounding rect mins and maxs
-				XMVECTOR xy_mins = _mm_min_ps(vCorner0NDC, _mm_min_ps(vCorner1NDC, _mm_min_ps(vCorner2NDC, vCorner3NDC)));// zw discarded
-				XMVECTOR xy_maxs = _mm_max_ps(vCorner0NDC, _mm_max_ps(vCorner1NDC, _mm_max_ps(vCorner2NDC, vCorner3NDC)));// zw discarded
-
-				auto r = FinalBuffer.load()->TestRect(xy_mins.m128_f32[0], xy_mins.m128_f32[1], xy_maxs.m128_f32[0], xy_maxs.m128_f32[1], closestSpherePointW);
-				/*
+		if (r != MaskedOcclusionCulling::VISIBLE)
+		{
 #define CONVERT_X(x) ((x) + 1.0) * 2560 * 0.5 + 0
 #define CONVERT_Y(y) (1.0 - (y)) * 1440 * 0.5 + 0
+			/*
+			static SRWLOCK lock = SRWLOCK_INIT;
 
-				static SRWLOCK lock = SRWLOCK_INIT;
+			AcquireSRWLockExclusive(&lock);
 
-				AcquireSRWLockExclusive(&lock);
-				float d1 = Geometry->GetWorldTranslate().x - MyPosAdjust.x;
-				float d2 = Geometry->GetWorldTranslate().y - MyPosAdjust.y;
+			ImGui::GetWindowDrawList()->AddRect(ImVec2(CONVERT_X(screenMin.m128_f32[0]), CONVERT_Y(screenMin.m128_f32[1])), ImVec2(CONVERT_X(screenMax.m128_f32[0]), CONVERT_Y(screenMax.m128_f32[1])), IM_COL32(255, 0, 0, 255));
 
-				// Distance2DSqaured
-				if (((d1 * d1) + (d2 * d2)) < (1000 * 1000) && ((d1 * d1) + (d2 * d2)) > (50 * 50))
-				{
-					ImGui::GetWindowDrawList()->AddRect(ImVec2(CONVERT_X(vCorner0NDC.m128_f32[0]), CONVERT_Y(vCorner0NDC.m128_f32[1])), ImVec2(CONVERT_X(vCorner3NDC.m128_f32[0]), CONVERT_Y(vCorner3NDC.m128_f32[1])), IM_COL32(255, 0, 0, 255));
-					//ImGui::GetWindowDrawList()->AddText(ImVec2(CONVERT_X(vCorner0NDC.m128_f32[0]), CONVERT_Y(vCorner0NDC.m128_f32[1])), IM_COL32(255, 255, 255, 255), "corner0");
-					//ImGui::GetWindowDrawList()->AddText(ImVec2(x, y), IM_COL32(255, 255, 255, 255), "Test Origin");
-
-
-					float realX;
-					float realY;
-					if (testCam->WorldToScreen(Geometry->m_kWorldBound.m_kCenter, realX, realY))
-					{
-						ImVec2 xy = ImVec2(realX * 2560, (1 - realY) * 1440);
-
-						NiPoint3 outBounds;
-						testCam->ScreenSpaceBoundSize(Geometry->m_kWorldBound, outBounds, 1e-5);
-						outBounds.x = CONVERT_X(outBounds.x);
-						outBounds.y = CONVERT_Y(outBounds.y);
-						
-						//ImGui::GetWindowDrawList()->AddRect(ImVec2(xy.x - (outBounds.x / 2), xy.y - (outBounds.y / 2)), ImVec2(xy.x + (outBounds.x / 2), xy.y + (outBounds.y / 2)), IM_COL32(255, 255, 255, 255));
-
-						char buf[128];
-						sprintf_s(buf, "W: %g", closestSpherePointW);
-						ImGui::GetWindowDrawList()->AddText(xy, IM_COL32(255, 255, 255, 255), buf);
-					}
-				}
-				ReleaseSRWLockExclusive(&lock);
-				*/
-				if (r == MaskedOcclusionCulling::OCCLUDED)
-					return false;
-			}
+			ReleaseSRWLockExclusive(&lock);
+			*/
+			return false;
 		}
 
 		return true;
@@ -720,48 +478,33 @@ namespace MOC
 		if (!shaderProperty)
 			return false;
 
-		if (Geometry->QType() == GEOMETRY_TYPE_TRISHAPE && shaderProperty->IsExactKindOf(NiRTTI::ms_BSLightingShaderProperty))
+		if ((Geometry->QType() == GEOMETRY_TYPE_TRISHAPE || Geometry->QType() == GEOMETRY_TYPE_DYNAMIC_TRISHAPE) && shaderProperty->IsExactKindOf(NiRTTI::ms_BSLightingShaderProperty))
 		{
-			auto triShape = static_cast<BSTriShape *>(Geometry);
-			auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
-
-			if (rendererData && rendererData->m_RawIndexData && triShape->m_TriangleCount > 1)
+			if (Geometry->QType() == GEOMETRY_TYPE_DYNAMIC_TRISHAPE)
 			{
-				GeometryDistEntry entry;
-				entry.Geometry = Geometry;
-				entry.Distance = XMVector3Length(_mm_sub_ps(Geometry->m_kWorldBound.m_kCenter.AsXmm(), MyPosAdjust.AsXmm())).m128_f32[0];
+				auto dynTriShape = static_cast<BSDynamicTriShape *>(Geometry);
+				auto rendererData = reinterpret_cast<BSGraphics::DynamicTriShape *>(dynTriShape->QRendererData());
 
-				GeoList.push_back(entry);
+				if (rendererData)
+					Assert(rendererData->m_Unknown4 != nullptr);
 			}
-		}
-
-		return true;
-	}
-
-	void SetDoHack(bool Value)
-	{
-		dohack = Value;
-	}
-
-	BSMultiBoundAABB *GetAABBNode(const NiAVObject *Object)
-	{
-		if (BSMultiBoundNode *multiBoundNode = Object->IsMultiBoundNode())
-		{
-			if (multiBoundNode->spMultiBound && multiBoundNode->spMultiBound->spShape)
+			else
 			{
-				auto shape = multiBoundNode->spMultiBound->spShape;
+				auto triShape = static_cast<BSTriShape *>(Geometry);
+				auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
 
-				if (shape->IsExactKindOf(NiRTTI::ms_BSMultiBoundAABB))
+				if (rendererData && rendererData->m_RawIndexData && triShape->m_TriangleCount > 1)
 				{
-					auto aabb = static_cast<BSMultiBoundAABB *>(shape);
+					GeometryDistEntry entry;
+					entry.Geometry = Geometry;
+					entry.Distance = XMVector3Length(_mm_sub_ps(Geometry->m_kWorldBound.m_kCenter.AsXmm(), MyPosAdjust.AsXmm())).m128_f32[0];
 
-					if (aabb->m_kHalfExtents.x > 1.0f)
-						return aabb;
+					GeoList.push_back(entry);
 				}
 			}
 		}
 
-		return nullptr;
+		return true;
 	}
 
 	bool ShouldCullLite(const NiAVObject *Object)
@@ -769,11 +512,11 @@ namespace MOC
 		if (!Object)
 			return true;
 
-		if (Object->QAppCulled() && !Object->QAlwaysDraw())
-			return true;
+//		if (Object->QAppCulled() && !Object->QAlwaysDraw())
+//			return true;
 
-		if (!Object->IsVisualObjectI() && !Object->QAlwaysDraw())
-			return true;
+//		if (!Object->IsVisualObjectI() && !Object->QAlwaysDraw())
+//			return true;
 
 		return false;
 	}
@@ -795,6 +538,7 @@ namespace MOC
 
 		const char *name = Object->GetName()->c_str();
 
+		// TODO: remove this awful hack
 		if (name && name[0] == 'L' && name[1] == '2' && name[2] == '_')
 			cull = true;
 
@@ -802,15 +546,15 @@ namespace MOC
 		{
 			DirectX::XMVECTOR center;
 			
-			if (auto aabbNode = GetAABBNode(Object))
+			/*if (auto aabbNode = GetAABBNode(Object))
 			{
 				center = _mm_sub_ps(aabbNode->m_kCenter.AsXmm(), BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust.AsXmm());
 				DirectX::XMVECTOR halfExtents = aabbNode->m_kHalfExtents.AsXmm();
 
 				if (f.TestAABB(center, _mm_add_ps(halfExtents, halfExtents)))
 					cull = true;
-			}
-			else if (Object->m_kWorldBound.m_fRadius > 10.0f)
+			}*/
+			if (Object->m_kWorldBound.m_fRadius > 10.0f)
 			{
 				center = _mm_sub_ps(_mm_setr_ps(
 					Object->m_kWorldBound.m_kCenter.x,
@@ -861,19 +605,16 @@ namespace MOC
 			RenderRecursive(f, Node->GetAt(i), true);
 	}
 
-	AutoPtr(BSShaderAccumulator *, MainPassAccumulatora, 0x3257A70);
 	AutoPtr(NiNode *, WorldScenegraph, 0x2F4CE30);
 
-	void SendTraverseCommand()
+	void SendTraverseCommand(NiCamera *Camera)
 	{
-		CullPacket p;
-		p.Geometry = nullptr;
-		p.Type = CULL_COLLECT;
-
-		PendingPackets.push(p);
+		ThreadedMOC->NotifyPreWork();
+		ThreadedMOC->SubmitSceneRender(Camera);
+		ThreadedMOC->ClearPreWorkNotify();
 	}
 
-	void TraverseSceneGraph()
+	void TraverseSceneGraph(NiCamera *Camera)
 	{
 		ProfileTimer("MOC TraverseSceneGraph");
 
@@ -908,20 +649,15 @@ namespace MOC
 		// -- "Collision Node"        NiNode
 		//
 		GeoList.clear();
-		ForceClear();
 
-		if (!MainPassAccumulatora->m_pkCamera)
-			return;
+		ThreadedMOC->Clear();
+		ThreadedMOC->NotifyPreWork();
+
+		MyPosAdjust = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
+		Camera->CalculateViewProjection(MyView, MyProj, MyViewProj);
 
 		fplanes p;
-		XMMATRIX testViewProj;
-
-		testCam = MainPassAccumulatora->m_pkCamera;
-		MainPassAccumulatora->m_pkCamera->CalculateViewProjection(MyView, MyProj, testViewProj);
-		p.CreateFromViewProjMatrix(testViewProj);
-
-		MyViewProj = testViewProj;
-		MyPosAdjust = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
+		p.CreateFromViewProjMatrix(MyViewProj);
 
 		const NiNode *node = WorldScenegraph;	// SceneGraph
 		node = node->GetAt(1)->IsNode();		// ShadowSceneNode
@@ -954,12 +690,8 @@ namespace MOC
 		});
 
 		for (GeometryDistEntry& entry : GeoList)
-		{
-			CullPacket p;
-			p.Geometry = entry.Geometry;
-			p.Type = CULL_RENDER_GEOMETRY;
+			ThreadedMOC->SubmitGeometry(entry.Geometry);
 
-			PendingPackets.push(p);
-		}
+		ThreadedMOC->ClearPreWorkNotify();
 	}
 }
