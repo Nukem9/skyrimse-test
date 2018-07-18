@@ -17,6 +17,8 @@ std::atomic<uint64_t> g_OpenDialogCount;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	ui::HandleInput(hwnd, uMsg, wParam, lParam);
+
 	// Always-forwarded game wndproc commands
 	switch (uMsg)
 	{
@@ -30,39 +32,29 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return CallWindowProc(g_OriginalWndProc, hwnd, uMsg, wParam, lParam);
 	}
 
-	// Hack/fix for mouse cursor not staying within fullscreen area
+	// Fix for mouse cursor not staying within fullscreen area
 	if (uMsg == WM_APP_UPDATE_CURSOR)
 	{
-		RECT rcClip;
-		GetWindowRect(hwnd, &rcClip);
-
-		POINT p;
-		GetCursorPos(&p);
-
-		int midX = (rcClip.left + rcClip.right) / 2;
-		int midY = (rcClip.top + rcClip.bottom) / 2;
-
-		if (abs(p.x - midX) > 200 || abs(p.y - midY) > 200)
-			SetCursorPos(midX, midY);
-
-		return 0;
-	}
-
-	// Keyboard input
-	if (uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_CHAR)
-	{
-		switch (wParam)
+		if (ui::IsMouseDragging())
 		{
-		case VK_LWIN:		// Left windows key
-		case VK_RWIN:		// Right windows key
-		case VK_LSHIFT:		// Left shift
-		case VK_RSHIFT:		// Right shift
-		case VK_CAPITAL:	// Caps lock
-		case VK_CONTROL:	// Control
-			return DefWindowProc(hwnd, uMsg, wParam, lParam);
+			// Free roam
+			ClipCursor(nullptr);
+		}
+		else
+		{
+			RECT rcClip;
+			GetWindowRect(hwnd, &rcClip);
+
+			// 1 pixel of padding
+			rcClip.left += 1;
+			rcClip.top += 1;
+
+			rcClip.right -= 1;
+			rcClip.bottom -= 1;
+
+			ClipCursor(&rcClip);
 		}
 
-		ui::HandleInput(hwnd, uMsg, wParam, lParam);
 		return 0;
 	}
 
@@ -74,23 +66,18 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			(uMsg == WM_ACTIVATE && wParam != WA_INACTIVE) ||
 			(uMsg == WM_SETFOCUS))
 		{
-			if (g_SwapChain)
-				g_SwapChain->SetFullscreenState(TRUE, nullptr);
-
-			ShowWindow(hwnd, SW_RESTORE);
 			while (ShowCursor(FALSE) >= 0) {}
-			ProxyIDirectInputDevice8A::ToggleGlobalInput(true);
+
+			if (GetForegroundWindow() == g_SkyrimWindow)
+				ProxyIDirectInputDevice8A::ToggleGlobalInput(true);
 		}
 
 		// Lost focus
 		if ((uMsg == WM_ACTIVATEAPP && wParam == FALSE) ||
 			(uMsg == WM_ACTIVATE && wParam == WA_INACTIVE))
 		{
-			if (g_SwapChain)
-				g_SwapChain->SetFullscreenState(FALSE, nullptr);
-
-			ShowWindow(hwnd, SW_MINIMIZE);
 			while (ShowCursor(TRUE) < 0) {}
+
 			ProxyIDirectInputDevice8A::ToggleGlobalInput(false);
 		}
 
@@ -110,7 +97,7 @@ DWORD WINAPI MessageThread(LPVOID)
 		if (msg.message == WM_APP_THREAD_TASK)
 		{
 			// Check for hk_CreateWindowExA wanting to execute here
-			(* (std::packaged_task<HWND()> *)msg.wParam)();
+			(* reinterpret_cast<std::packaged_task<HWND()> *>(msg.wParam))();
 		}
 		else
 		{
@@ -118,12 +105,9 @@ DWORD WINAPI MessageThread(LPVOID)
 			DispatchMessage(&msg);
 		}
 
-		if (msg.message == WM_MOUSEMOVE && msg.hwnd == g_SkyrimWindow)
-		{
-			// GFW hack since alt+tab or windows key don't always play nice
-			if (msg.hwnd == GetForegroundWindow())
-				WindowProc(msg.hwnd, WM_APP_UPDATE_CURSOR, 0, 0);
-		}
+		// GetForegroundWindow hack since alt+tab or windows key don't always play nice
+		if (msg.message == WM_MOUSEMOVE && msg.hwnd == g_SkyrimWindow && msg.hwnd == GetForegroundWindow())
+			WindowProc(msg.hwnd, WM_APP_UPDATE_CURSOR, 0, 0);
 	}
 
 	// Message loop exited (WM_QUIT) or there was an error
@@ -137,12 +121,12 @@ HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWin
 	{
 		HWND wnd = CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 
-		if (wnd)
+		if (wnd && !g_SkyrimWindow && !strcmp(lpClassName, "Skyrim Special Edition"))
 		{
-			g_SkyrimWindow = wnd;
-
 			// The original pointer must be saved BEFORE swapping it out
+			g_SkyrimWindow = wnd;
 			g_OriginalWndProc = (WNDPROC)GetWindowLongPtr(wnd, GWLP_WNDPROC);
+
 			SetWindowLongPtr(wnd, GWLP_WNDPROC, (LONG_PTR)&WindowProc);
 		}
 

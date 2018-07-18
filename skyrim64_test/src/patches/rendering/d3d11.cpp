@@ -50,10 +50,19 @@ void UpdateHavokTimer(int FPS)
 LARGE_INTEGER g_FrameStart;
 LARGE_INTEGER g_FrameEnd;
 LARGE_INTEGER g_FrameDelta;
+extern HWND g_SkyrimWindow;
 
 bool init = false;
 HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval, UINT Flags)
 {
+	DXGI_SWAP_CHAIN_DESC desc;
+	This->GetDesc(&desc);
+
+	if (desc.OutputWindow != g_SkyrimWindow)
+	{
+		return (This->*ptrPresent)(SyncInterval, Flags);
+	}
+
 	if (init)
 	{
 		g_GPUTimers.StopTimer(g_DeviceContext, 0);
@@ -481,6 +490,10 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 		ExitProcess(0);
 	}
 
+	// Create ImGui globals BEFORE the device is proxied
+	ui::Initialize(pSwapChainDesc->OutputWindow, *ppDevice, *ppImmediateContext);
+	ui::log::Add("Created D3D11 device with feature level %X...\n", level);
+
 	// Force DirectX11.2 in case we use features later (11.3+ requires Win10 or higher)
 	ID3D11Device2 *proxyDevice = new D3D11DeviceProxy(*ppDevice);
 	ID3D11DeviceContext2 *proxyContext = new D3D11DeviceContextProxy(*ppImmediateContext);
@@ -495,10 +508,6 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 
 	g_SwapChain = *ppSwapChain;
 
-    // Create ImGui globals
-    ui::Initialize(pSwapChainDesc->OutputWindow, g_Device, g_DeviceContext);
-    ui::log::Add("Created D3D11 device with feature level %X...\n", level);
-
 	BSGraphics::Renderer::FlushThreadedVars();
 	BSGraphics::Renderer::Initialize(g_Device);
 
@@ -511,7 +520,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	*(PBYTE *)&RenderSceneNormal = Detours::X64::DetourFunctionClass((PBYTE)g_ModuleBase + 0x12E1960, &BSShaderAccumulator::RenderSceneNormal);
 
 	g_GPUTimers.Create(g_Device, 1);
-	DC_Init(g_Device, 0);
+	//DC_Init(g_Device, 0);
 
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1F70, (PBYTE)&hk_sub_1412E1C10);
 

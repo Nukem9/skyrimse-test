@@ -40,8 +40,9 @@ ProxyIDirectInputDevice8A::ProxyIDirectInputDevice8A(IDirectInputDevice8A *Devic
 	m_IsMouse = (Guid == GUID_SysMouse);
 	m_IsKeyboard = (Guid == GUID_SysKeyboard);
 
-	std::unique_lock<std::shared_mutex> lock(m_Mutex);
+	m_Mutex.lock();
 	m_Devices.push_back(m_Device);
+	m_Mutex.unlock();
 }
 
 HRESULT APIENTRY ProxyIDirectInputDevice8A::QueryInterface(REFIID iid, LPVOID * ppvObject)
@@ -109,25 +110,6 @@ HRESULT APIENTRY ProxyIDirectInputDevice8A::Unacquire()
 HRESULT APIENTRY ProxyIDirectInputDevice8A::GetDeviceState(DWORD cbData, LPVOID lpvData)
 {
 	HRESULT result = m_Device->GetDeviceState(cbData, lpvData);
-
-	if (SUCCEEDED(result))
-	{
-		// Mouse only
-		if (m_IsMouse && cbData == sizeof(DIMOUSESTATE2))
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			auto ptr = (DIMOUSESTATE2 *)lpvData;
-
-			io.MouseDown[0] = (ptr->rgbButtons[0] & 0x80) != 0;
-			io.MouseDown[1] = (ptr->rgbButtons[1] & 0x80) != 0;
-			io.MousePos.x += ptr->lX;
-			io.MousePos.y += ptr->lY;
-
-			io.MousePos.x = max(io.MousePos.x, 0);
-			io.MousePos.y = max(io.MousePos.y, 0);
-			io.MouseWheel = max(min((float)ptr->lZ, 1), -1);
-		}
-	}
 
 	// if (don't forward input to game)
 	if (lpvData && !m_EnableInput)

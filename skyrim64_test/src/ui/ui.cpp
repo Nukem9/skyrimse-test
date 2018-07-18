@@ -3,6 +3,7 @@
 #include "../patches/dinput8.h"
 #include "imgui_ext.h"
 #include "imgui_impl_dx11.h"
+#include "imgui_impl_win32.h"
 #include "ui_renderer.h"
 #include "../patches/TES/BSShader/BSShader.h"
 #include "../patches/TES/Setting.h"
@@ -27,6 +28,9 @@ namespace ui::opt
 
 namespace ui
 {
+	bool Initialized = false;
+	bool InFrame = false;
+
 	bool showDemoWindow;
     bool showTESFormWindow;
     bool showLockWindow;
@@ -47,7 +51,16 @@ namespace ui
     void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext)
     {
 		ImGui::CreateContext();
-        ImGui_ImplDX11_Init(Wnd, Device, DeviceContext);
+
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		//io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
+		//io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		io.MouseDrawCursor = true;
+
+		ImGui_ImplWin32_Init(Wnd);
+        ImGui_ImplDX11_Init(Device, DeviceContext);
 
 		ImGui::StyleColorsDark();
 		ImGui::GetStyle().ChildRounding = 0.0f;
@@ -56,7 +69,8 @@ namespace ui
 		ImGui::GetStyle().PopupRounding = 0.0f;
 		ImGui::GetStyle().ScrollbarRounding = 0.0f;
 		ImGui::GetStyle().WindowRounding = 0.0f;
-		ImGui::GetIO().MouseDrawCursor = true;
+
+		Initialized = true;
     }
 
     void HandleInput(HWND Wnd, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -64,12 +78,20 @@ namespace ui
 		ImGui_ImplWin32_WndProcHandler(Wnd, Msg, wParam, lParam);
     }
 
-	bool inFrame = false;
+	bool IsMouseDragging()
+	{
+		if (!Initialized)
+			return false;
+
+		return ImGui::IsMouseDragging();
+	}
 
 	void BeginFrame()
 	{
-		inFrame = true;
+		InFrame = true;
 		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
 
 		// Draw a fullscreen overlay that renders over the game but not other menus
 		ImGui::SetNextWindowPos(ImVec2(-1000.0f, -1000.0f));
@@ -80,7 +102,7 @@ namespace ui
 
     void EndFrame()
     {
-		if (!inFrame)
+		if (!InFrame)
 			return;
 
 		// ##InvisiblePreOverlay
@@ -114,6 +136,9 @@ namespace ui
 		// Finally present everything to the screen
         ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
     }
 
     void RenderMenubar()
