@@ -30,6 +30,7 @@ namespace ui
 {
 	bool Initialized = false;
 	bool InFrame = false;
+	extern float LastFpsCount;
 
 	bool showDemoWindow;
     bool showTESFormWindow;
@@ -250,6 +251,26 @@ namespace ui
 				TerminateProcess(GetCurrentProcess(), 0x13371337);
 			ImGui::EndMenu();
 		}
+
+		// Display FPS and mouse X, Y in the top right corner
+		char stats[256];
+		float len1 = ImGui::CalcTextSize("1000.1 FPS ").x;
+		float len2 = ImGui::CalcTextSize("(-1000, -1000)").x;
+
+		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() - (len1 + len2));
+		sprintf_s(stats, "%.1f FPS", LastFpsCount);
+
+		if (ImGui::BeginMenu(stats, false))
+			ImGui::EndMenu();
+
+		POINT p;
+		GetCursorPos(&p);
+
+		ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() - len2);
+		sprintf_s(stats, "(%04d, %04d)", p.x, p.y);
+
+		if (ImGui::BeginMenu(stats, false))
+			ImGui::EndMenu();
 
         ImGui::EndMainMenuBar();
     }

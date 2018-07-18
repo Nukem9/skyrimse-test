@@ -22,8 +22,9 @@ namespace ui
 	int64_t TickSum;
 	int64_t TickDeltas[32];
 	int TickDeltaIndex;
+	float LastFpsCount;
 
-	double CalculateTrueAverageFPS()
+	float CalculateTrueAverageFPS()
 	{
 		// This includes the overhead from calling Present() (backbuffer flip)
 		LARGE_INTEGER ticksPerSecond;
@@ -46,7 +47,7 @@ namespace ui
 			TickDeltaIndex = 0;
 
 		double averageFrametime = (TickSum / 32.0) / (double)ticksPerSecond.QuadPart;
-		return 1.0 / averageFrametime;
+		return (float)(1.0 / averageFrametime);
 	}
 
 	//
@@ -71,6 +72,8 @@ namespace ui
 
 		if (ui::opt::LogHitches && frameTimeMs >= 50.0)
 			ui::log::Add("FRAME HITCH WARNING (%g ms)\n", frameTimeMs);
+
+		LastFpsCount = CalculateTrueAverageFPS();
 
 		if (!showFrameStatsWindow)
 			return;
@@ -128,7 +131,7 @@ namespace ui
 				ProfileGetValue("Dispatch Calls");
 			}
 
-			ImGui::Text("FPS: %.2f", CalculateTrueAverageFPS());
+			ImGui::Text("FPS: %.2f", LastFpsCount);
 			ImGui::Spacing();
 			ImGui::Text("CB Bytes Requested: %s", ImGui::CommaFormat(ProfileGetDeltaValue("CB Bytes Requested")));
 			ImGui::Text("CB Bytes Wasted: %s", ImGui::CommaFormat(ProfileGetDeltaValue("CB Bytes Wasted")));
