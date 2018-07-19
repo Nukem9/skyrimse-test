@@ -10,6 +10,12 @@ void LogVa(const char *Format, va_list va)
 	ui::log::Add("%s\n", buffer);
 }
 
+bool LogBNet(const char *String)
+{
+	ui::log::Add("%s\n", String);
+	return true;
+}
+
 void NavmeshBuilderLog(__int64 a1, const char *Format, ...)
 {
 	if (!ui::opt::EnableNavmeshLog)
@@ -92,7 +98,8 @@ int hk_sprintf_s(char *DstBuf, size_t SizeInBytes, const char *Format, ...)
 		STARTS_WITH(Format, "Queued ") ||
 		STARTS_WITH(Format, "%s (%08X)[%d]/%s") ||
 		STARTS_WITH(Format, "alias %s on") ||
-		STARTS_WITH(Format, "%d/%d/%02d"))
+		STARTS_WITH(Format, "%d/%d/%02d") ||
+		STARTS_WITH(Format, "%u.%u.%I64i.%u.%"))
 		return len;
 
 	ui::log::Add("%s\n", DstBuf);
@@ -107,5 +114,6 @@ void PatchLogging()
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x179C40), (PBYTE)&LogFunc3);
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x5844F0), (PBYTE)&LogFunc4);
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x10EF900), (PBYTE)&NavmeshBuilderLog);
+	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x116C9E0), (PBYTE)&LogBNet);
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x142550), (PBYTE)&hk_sprintf_s);
 }
