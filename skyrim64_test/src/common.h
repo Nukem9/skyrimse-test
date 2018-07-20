@@ -4,6 +4,7 @@
 #define SKYRIM64_USE_VTUNE			1
 #define SKYRIM64_USE_VFS			0
 #define SKYRIM64_USE_PROFILER		1
+#define SKYRIM64_USE_TRACY			1
 
 #include <windows.h>
 #include <stdio.h>
@@ -26,6 +27,11 @@
 extern __itt_heap_function ITT_AllocateCallback;
 extern __itt_heap_function ITT_ReallocateCallback;
 extern __itt_heap_function ITT_FreeCallback;
+#endif
+
+// Tracy
+#if SKYRIM64_USE_TRACY
+#pragma comment(lib, "tracy_lib.lib")
 #endif
 
 // Jemalloc

@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="tracy\client\concurrentqueue.h" />
+    <ClInclude Include="tracy\client\tracy_rpmalloc.hpp" />
+    <ClInclude Include="tracy\client\TracyCallstack.hpp" />
+    <ClInclude Include="tracy\client\TracyFastVector.hpp" />
+    <ClInclude Include="tracy\client\TracyLock.hpp" />
+    <ClInclude Include="tracy\client\TracyProfiler.hpp" />
+    <ClInclude Include="tracy\client\TracyScoped.hpp" />
+    <ClInclude Include="tracy\client\TracyThread.hpp" />
+    <ClInclude Include="tracy\common\tracy_benaphore.h" />
+    <ClInclude Include="tracy\common\tracy_lz4.hpp" />
+    <ClInclude Include="tracy\common\tracy_sema.h" />
+    <ClInclude Include="tracy\common\TracyAlign.hpp" />
+    <ClInclude Include="tracy\common\TracyAlloc.hpp" />
+    <ClInclude Include="tracy\common\TracyColor.hpp" />
+    <ClInclude Include="tracy\common\TracyForceInline.hpp" />
+    <ClInclude Include="tracy\common\TracyMutex.hpp" />
+    <ClInclude Include="tracy\common\TracyProtocol.hpp" />
+    <ClInclude Include="tracy\common\TracyQueue.hpp" />
+    <ClInclude Include="tracy\common\TracySocket.hpp" />
+    <ClInclude Include="tracy\common\TracySystem.hpp" />
+    <ClInclude Include="tracy\Tracy.hpp" />
+    <ClInclude Include="tracy\server\tracy_flat_hash_map.hpp" />
+    <ClInclude Include="tracy\server\tracy_pdqsort.h" />
+    <ClInclude Include="tracy\server\TracyBadVersion.hpp" />
+    <ClInclude Include="tracy\server\TracyCharUtil.hpp" />
+    <ClInclude Include="tracy\server\TracyEvent.hpp" />
+    <ClInclude Include="tracy\server\TracyFileHeader.hpp" />
+    <ClInclude Include="tracy\server\TracyFileRead.hpp" />
+    <ClInclude Include="tracy\server\TracyFileWrite.hpp" />
+    <ClInclude Include="tracy\server\TracyImGui.hpp" />
+    <ClInclude Include="tracy\server\TracyMemory.hpp" />
+    <ClInclude Include="tracy\server\TracyPopcnt.hpp" />
+    <ClInclude Include="tracy\server\TracySlab.hpp" />
+    <ClInclude Include="tracy\server\TracyVarArray.hpp" />
+    <ClInclude Include="tracy\server\TracyVector.hpp" />
+    <ClInclude Include="tracy\server\TracyView.hpp" />
+    <ClInclude Include="tracy\server\TracyWorker.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tracy\client\tracy_rpmalloc.cpp" />
+    <ClCompile Include="tracy\client\TracyCallstack.cpp" />
+    <ClCompile Include="tracy\client\TracyProfiler.cpp" />
+    <ClCompile Include="tracy\common\tracy_lz4.cpp" />
+    <ClCompile Include="tracy\common\TracySocket.cpp" />
+    <ClCompile Include="tracy\common\TracySystem.cpp" />
+    <ClCompile Include="tracy\TracyClient.cpp" />
+    <ClCompile Include="tracy\server\TracyBadVersion.cpp" />
+    <ClCompile Include="tracy\server\TracyMemory.cpp" />
+    <ClCompile Include="tracy\server\TracyView.cpp" />
+    <ClCompile Include="tracy\server\TracyWorker.cpp" />
+  </ItemGroup>
+</Project>

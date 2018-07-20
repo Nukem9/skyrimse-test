@@ -2,3 +2,7 @@
 	path = skyrim64_test/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = viewport
+[submodule "tracy_lib/tracy"]
+	path = tracy_lib/tracy
+	url = https://bitbucket.org/wolfpld/tracy.git
+	branch = master
