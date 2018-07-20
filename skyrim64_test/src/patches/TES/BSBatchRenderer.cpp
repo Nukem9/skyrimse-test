@@ -597,7 +597,7 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 		// NiParticles::GetActiveVertexCount
 		//int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
 
-		particleCount = min(particleCount, 2048);
+		particleCount = std::min(particleCount, 2048);
 
 		//AssertMsg(particleCount <= MAX_SHARED_PARTICLES_SIZE,
 		//	"This emitter emits more particles than allowed in our rendering buffers. "

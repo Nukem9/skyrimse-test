@@ -215,7 +215,7 @@ namespace ui
 			ImGui::Text("Triangle Count:"); ImGui::NextColumn();
 			ImGui::Text("%s", ImGui::CommaFormat(ProfileGetDeltaValue("MOC TrianglesRendered"))); ImGui::NextColumn();
 
-			float culledPercent = 100.0f * (float)ProfileGetDeltaValue("MOC CullObjectPassed") / (float)max(ProfileGetDeltaValue("MOC CullObjectCount"), 1);
+			float culledPercent = 100.0f * (float)ProfileGetDeltaValue("MOC CullObjectPassed") / (float)std::max<uint64_t>(ProfileGetDeltaValue("MOC CullObjectCount"), 1);
 
 			ImGui::Text("Passed Objects:"); ImGui::NextColumn();
 			ImGui::Text("%s (%.1f%%)", ImGui::CommaFormat(ProfileGetDeltaValue("MOC CullObjectPassed")), culledPercent); ImGui::NextColumn();

@@ -130,7 +130,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 		{
 			// Base + Index * Scale + Displacement
 			auto& index = ZydisToXbyak(Patch->Index);
-			uint32_t scale = max(Patch->Scale, 1);
+			uint32_t scale = std::max<uint32_t>(Patch->Scale, 1);
 
 			if (Patch->ExeOffset == 0xD6BF7E || Patch->ExeOffset == 0xD6BF98 || Patch->ExeOffset == 0xD6C003)
 				memop = mem[s + rbx * 1 + structMemberOffset];

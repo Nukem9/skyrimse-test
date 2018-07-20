@@ -107,7 +107,7 @@ public:
 	bool WorldToScreen(const NiPoint3& WorldPoint, float& X, float& Y, float fZeroTolerance = 1e-5) const
 	{
 		// Returns X and Y as a percentage of the viewport width and height
-		fZeroTolerance = max(fZeroTolerance, 0.0f);
+		fZeroTolerance = std::max(fZeroTolerance, 0.0f);
 
 		// Project a world space point to screen space
 		float fW =

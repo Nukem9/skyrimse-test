@@ -5,7 +5,7 @@
 BOOL WINAPI hk_SetThreadPriority(HANDLE hThread, int nPriority)
 {
 	// Don't allow a priority below normal - Skyrim doesn't have many "idle" threads
-	return SetThreadPriority(hThread, max(THREAD_PRIORITY_NORMAL, nPriority));
+	return SetThreadPriority(hThread, std::max(THREAD_PRIORITY_NORMAL, nPriority));
 }
 
 DWORD_PTR WINAPI hk_SetThreadAffinityMask(HANDLE hThread, DWORD_PTR dwThreadAffinityMask)

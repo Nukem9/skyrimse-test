@@ -31,7 +31,7 @@ void UpdateHavokTimer(int FPS)
     static int oldFps;
 
     // Limit Havok FPS between 30 and 150
-    FPS = min(max(FPS, 30), 150);
+    FPS = std::min(std::max(FPS, 30), 150);
 
     // Allow up to 5fps difference
     if (abs(oldFps - FPS) >= 5)

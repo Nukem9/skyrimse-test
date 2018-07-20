@@ -154,7 +154,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	data->AlphaParam2 = flt_1431F619C;
 
 	float windTimer = ((flt_141E32F50 / 600.0f) * DirectX::XM_2PI) * *(float *)(property + 388);
-	float windDirZ = min(60.0f, flt_1431F63E8);
+	float windDirZ = std::min(60.0f, flt_1431F63E8);
 
 	// NiTransform::XMLoad()?
 	alignas(16) float v25[4][4];

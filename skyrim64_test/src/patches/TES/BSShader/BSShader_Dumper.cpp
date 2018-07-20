@@ -160,13 +160,13 @@ void ShaderDecoder::DumpCBuffer(FILE *File, BSGraphics::Buffer *Buffer, std::vec
 		fprintf(File, "\t%s", varName);
 
 		// Add space alignment
-		for (size_t i = 45 - max(0, strlen(varName)); i > 0; i--)
+		for (size_t i = 45 - std::max<size_t>(0, strlen(varName)); i > 0; i--)
 			fprintf(File, " ");
 
 		fprintf(File, ": %s;", packOffset);
 
 		// Add space alignment
-		for (size_t i = 20 - max(0, strlen(packOffset)); i > 0; i--)
+		for (size_t i = 20 - std::max<size_t>(0, strlen(packOffset)); i > 0; i--)
 			fprintf(File, " ");
 
 		fprintf(File, "// @ %d - 0x%04X\n", cbOffset, cbOffset * 4);

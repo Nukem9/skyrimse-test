@@ -109,8 +109,8 @@ void MOC_ThreadedMerger::DepthColorize(const float *FloatData, uint8_t *OutColor
 	{
 		if (FloatData[i] > 0.0f)
 		{
-			minW = min(minW, FloatData[i]);
-			maxW = max(maxW, FloatData[i]);
+			minW = std::min(minW, FloatData[i]);
+			maxW = std::max(maxW, FloatData[i]);
 		}
 	}
 
