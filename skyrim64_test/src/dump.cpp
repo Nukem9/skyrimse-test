@@ -7,10 +7,16 @@ BOOL WINAPI hk_QueryPerformanceCounter(LARGE_INTEGER *lpPerformanceCount)
 	DisableDumpBreakpoint();
 
 	// Notify debuggers
-	BOOL debugged;
+	__try
+	{
+		BOOL debugged;
 
-	if (CheckRemoteDebuggerPresent(GetCurrentProcess(), &debugged) && debugged)
-		__debugbreak();
+		if (CheckRemoteDebuggerPresent(GetCurrentProcess(), &debugged) && debugged)
+			__debugbreak();
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+	}
 
 	ApplyPatches();
 	return QueryPerformanceCounter(lpPerformanceCount);
