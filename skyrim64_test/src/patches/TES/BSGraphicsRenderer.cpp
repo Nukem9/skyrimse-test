@@ -44,7 +44,7 @@ namespace BSGraphics
 
 	int CurrentFrameIndex;
 
-	const uint32_t VertexIndexRingBufferSize = 32 * 1024 * 1024;
+	const uint32_t VertexIndexRingBufferSize = 128 * 1024 * 1024;
 	const uint32_t ShaderConstantRingBufferSize = 32 * 1024 * 1024;
 	const uint32_t RingBufferMaxFrames = 8;
 
@@ -974,7 +974,7 @@ namespace BSGraphics
 		// each allocation after a draw call, this is generally OK.
 		//
 		DWORD logIndex = 0;
-		_BitScanReverse(&logIndex, max(AllocationSize, 256));
+		_BitScanReverse(&logIndex, std::max<uint32_t>(AllocationSize, 256));
 
 		if ((1u << logIndex) < AllocationSize)
 			logIndex += 1;
