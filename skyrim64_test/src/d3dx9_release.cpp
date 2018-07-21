@@ -1,7 +1,7 @@
+#include "common.h"
 #include "d3dconv.h"
-#include "xutil.h"
 
-#ifndef _DEBUG
+#if !SKYRIM64_D3DX9_DEBUG
 
 #pragma comment(linker, "/export:D3DXSaveSurfaceToFileA=C:\\Windows\\System32\\d3dx9_42.D3DXSaveSurfaceToFileA")
 #pragma comment(linker, "/export:D3DXSaveTextureToFileA=C:\\Windows\\System32\\d3dx9_42.D3DXSaveTextureToFileA")
@@ -18,7 +18,7 @@
 D3D_EXPORT
 void D3DAPI D3DXMatrixInverse(
 	_Inout_       DirectX::XMMATRIX *pOut,
-	_Inout_       FLOAT				*pDeterminant,
+	_Inout_       float				*pDeterminant,
 	_In_    const DirectX::XMMATRIX *pM
 )
 {
@@ -28,9 +28,9 @@ void D3DAPI D3DXMatrixInverse(
 D3D_EXPORT
 void D3DAPI D3DXMatrixTranslation(
 	_Inout_ DirectX::XMMATRIX	*pOut,
-	_In_    FLOAT				x,
-	_In_    FLOAT				y,
-	_In_    FLOAT				z
+	_In_    float				x,
+	_In_    float				y,
+	_In_    float				z
 )
 {
 	*pOut = DirectX::XMMatrixTranslation(x, y, z);
@@ -137,4 +137,4 @@ STATIC_CONSTRUCTOR(__D3DX9Validate,
 	static_assert(sizeof(D3DXPLANE) == sizeof(DirectX::XMVECTOR), "Plane size");
 });
 
-#endif // ndef _DEBUG
+#endif // !SKYRIM64_D3DX9_DEBUG

@@ -1,7 +1,7 @@
+#include "common.h"
 #include "d3dconv.h"
-#include "xutil.h"
 
-#ifdef _DEBUG
+#if SKYRIM64_D3DX9_DEBUG
 
 #pragma comment(linker, "/export:D3DXSaveSurfaceToFileA=C:\\Windows\\System32\\d3dx9_42.D3DXSaveSurfaceToFileA")
 #pragma comment(linker, "/export:D3DXSaveTextureToFileA=C:\\Windows\\System32\\d3dx9_42.D3DXSaveTextureToFileA")
@@ -27,7 +27,7 @@
 D3D_EXPORT
 D3DXMATRIX* D3DAPI D3DXMatrixInverse(
 	_Inout_       D3DXMATRIX *pOut,
-	_Inout_       FLOAT      *pDeterminant,
+	_Inout_       float      *pDeterminant,
 	_In_    const D3DXMATRIX *pM
 )
 {
@@ -41,9 +41,9 @@ D3DXMATRIX* D3DAPI D3DXMatrixInverse(
 D3D_EXPORT
 D3DXMATRIX* D3DAPI D3DXMatrixTranslation(
 	_Inout_ DirectX::XMMATRIX	*pOut,
-	_In_    FLOAT				x,
-	_In_    FLOAT				y,
-	_In_    FLOAT				z
+	_In_    float				x,
+	_In_    float				y,
+	_In_    float				z
 )
 {
 	AS_XMM(pOut) = DirectX::XMMatrixTranslation(x, y, z);
@@ -173,17 +173,10 @@ STATIC_CONSTRUCTOR(__D3DX9Validate,
 	D3DXMATRIX *matrix = nullptr;
 	DirectX::XMMATRIX *xmMatrix = nullptr;
 
-	if ((size_t)&matrix->m[0][0] != (size_t)&xmMatrix->r[0])
-		assert(false && "Matrix 0");
-
-	if ((size_t)&matrix->m[1][0] != (size_t)&xmMatrix->r[1])
-		assert(false && "Matrix 1");
-
-	if ((size_t)&matrix->m[2][0] != (size_t)&xmMatrix->r[2])
-		assert(false && "Matrix 2");
-
-	if ((size_t)&matrix->m[3][0] != (size_t)&xmMatrix->r[3])
-		assert(false && "Matrix 3");
+	Assert((size_t)&matrix->m[0][0] == (size_t)&xmMatrix->r[0]);
+	Assert((size_t)&matrix->m[1][0] == (size_t)&xmMatrix->r[1]);
+	Assert((size_t)&matrix->m[2][0] == (size_t)&xmMatrix->r[2]);
+	Assert((size_t)&matrix->m[3][0] == (size_t)&xmMatrix->r[3]);
 
 	// Planes (Vector4)
 	static_assert(sizeof(D3DXPLANE) == sizeof(DirectX::XMVECTOR), "Plane size");
@@ -191,17 +184,10 @@ STATIC_CONSTRUCTOR(__D3DX9Validate,
 	D3DXPLANE *plane = nullptr;
 	DirectX::XMVECTOR *xmPlane = nullptr;
 
-	if ((size_t)&plane->a != (size_t)&xmPlane->m128_f32[0])
-		assert(false && "Plane 0");
-
-	if ((size_t)&plane->b != (size_t)&xmPlane->m128_f32[1])
-		assert(false && "Plane 1");
-
-	if ((size_t)&plane->c != (size_t)&xmPlane->m128_f32[2])
-		assert(false && "Plane 2");
-
-	if ((size_t)&plane->d != (size_t)&xmPlane->m128_f32[3])
-		assert(false && "Plane 3");
+	Assert((size_t)&plane->a == (size_t)&xmPlane->m128_f32[0]);
+	Assert((size_t)&plane->b == (size_t)&xmPlane->m128_f32[1]);
+	Assert((size_t)&plane->c == (size_t)&xmPlane->m128_f32[2]);
+	Assert((size_t)&plane->d == (size_t)&xmPlane->m128_f32[3]);
 });
 
-#endif // _DEBUG
+#endif // SKYRIM64_D3DX9_DEBUG

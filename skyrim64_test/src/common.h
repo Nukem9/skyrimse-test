@@ -1,10 +1,6 @@
 #pragma once
 
-#define SKYRIM64_GENERATE_OFFSETS	1
-#define SKYRIM64_USE_VTUNE			1
-#define SKYRIM64_USE_VFS			0
-#define SKYRIM64_USE_PROFILER		1
-#define SKYRIM64_USE_TRACY			1
+#include "config.h"
 
 #include <windows.h>
 #include <stdio.h>

@@ -1,10 +1,9 @@
 #pragma once
 
-#include <Windows.h>
 #include <DirectXMath.h>
 
 #define D3D_EXPORT	extern "C" __declspec(dllexport)
-#define D3DAPI		WINAPI
+#define D3DAPI		__stdcall
 
 typedef struct _D3DMATRIX
 {
@@ -28,15 +27,15 @@ typedef struct _D3DXMATRIX : public D3DMATRIX
 
 typedef struct _D3DXPLANE
 {
-	FLOAT a;
-	FLOAT b;
-	FLOAT c;
-	FLOAT d;
+	float a;
+	float b;
+	float c;
+	float d;
 } D3DXPLANE, *LPD3DXPLANE;
 
 typedef struct _D3DXVECTOR3
 {
-	FLOAT x;
-	FLOAT y;
-	FLOAT z;
+	float x;
+	float y;
+	float z;
 } D3DXVECTOR3, *LPD3DXVECTOR3;
