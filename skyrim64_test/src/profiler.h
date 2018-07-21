@@ -17,9 +17,9 @@
 #define EXPAND_MACRO(x) x
 #define LINEID EXPAND_MACRO(__z)__COUNTER__
 
-#define ProfileCounterInc(Name)			Profiler::ScopedCounter<COMPILE_TIME_CRC32_INDEX(Name)> LINEID(__FILE__, __FUNCTION__, Name);
-#define ProfileCounterAdd(Name, Add)	Profiler::ScopedCounter<COMPILE_TIME_CRC32_INDEX(Name)> LINEID(__FILE__, __FUNCTION__, Name, Add);
-#define ProfileTimer(Name)				Profiler::ScopedTimer<COMPILE_TIME_CRC32_INDEX(Name)> LINEID(__FILE__, __FUNCTION__, Name);
+#define ProfileCounterInc(Name)			Profiler::ScopedCounter<COMPILE_TIME_CRC32_INDEX(Name)> LINEID(__FILE__, __FUNCTION__, Name)
+#define ProfileCounterAdd(Name, Add)	Profiler::ScopedCounter<COMPILE_TIME_CRC32_INDEX(Name)> LINEID(__FILE__, __FUNCTION__, Name, Add)
+#define ProfileTimer(Name)				Profiler::ScopedTimer<COMPILE_TIME_CRC32_INDEX(Name)> LINEID(__FILE__, __FUNCTION__, Name)
 
 #define ProfileGetValue(Name)			Profiler::GetValue<COMPILE_TIME_CRC32_STR(Name)>()
 #define ProfileGetDeltaValue(Name)		Profiler::GetDeltaValue<COMPILE_TIME_CRC32_STR(Name)>()

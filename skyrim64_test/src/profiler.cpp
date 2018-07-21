@@ -51,9 +51,6 @@ namespace Profiler
 			// Modified from: https://github.com/benvanik/xenia/issues/801#issuecomment-352202912
 			//
 
-			// Try to minimize timer update resolution
-			timeBeginPeriod(0);
-
 			// Try to compute the RDTSC update frequency with the highest thread priority on a single core
 			DWORD_PTR oldAffinity = SetThreadAffinityMask(GetCurrentThread(), 1ull << GetCurrentProcessorNumber());
 			int oldPriority = GetThreadPriority(GetCurrentThread());
@@ -65,30 +62,32 @@ namespace Profiler
 				double perfCounterFactor = 1000000.0 / (double)QpcFrequency;
 				double frequency = 0.0;
 
-				int times = 64;
-				int retries = 10;
+				int64_t tscA;
+				int64_t pcA;
+
+				int64_t tscB;
+				int64_t pcB;
+
 				double interval;
 
-				int64_t pca;
-				int64_t pcb;
-				int64_t tsca;
-				int64_t tscb;
+				int times = 64;
+				int retries = 10;
 
-				for (int j = 0; j < times; ++j)
+				for (int i = 0; i < times; i++)
 				{
-					for (int i = 0; i < retries; ++i)
+					for (int j = 0; j < retries; j++)
 					{
-						ReadCounters(tsca, pca);
+						ReadCounters(tscA, pcA);
 
 						do
 						{
-							ReadCounters(tscb, pcb);
-							interval = double(pcb - pca) * perfCounterFactor;
+							ReadCounters(tscB, pcB);
+							interval = double(pcB - pcA) * perfCounterFactor;
 						} while (interval < 1000.0);
 
 						if (interval < 1001.0)
 						{
-							frequency += double(tscb - tsca) / interval;
+							frequency += double(tscB - tscA) / interval;
 							break;
 						}
 					}
@@ -109,8 +108,7 @@ namespace Profiler
 			CalibrateRDTSC();
 
 			HMODULE hmod = LoadLibraryA("nvapi64.dll");
-			if (hmod == NULL)
-				__debugbreak();
+			Assert(hmod);
 
 			// nvapi_QueryInterface is a function used to retrieve other internal functions in nvapi.dll
 			NvAPI_QueryInterface = (NvAPI_QueryInterface_t)GetProcAddress(hmod, "nvapi_QueryInterface");
@@ -120,11 +118,7 @@ namespace Profiler
 			NvAPI_EnumPhysicalGPUs = (NvAPI_EnumPhysicalGPUs_t)(*NvAPI_QueryInterface)(0xE5AC921F);
 			NvAPI_GPU_GetUsages = (NvAPI_GPU_GetUsages_t)(*NvAPI_QueryInterface)(0x189A1FDF);
 
-			if (NvAPI_Initialize == NULL || NvAPI_EnumPhysicalGPUs == NULL ||
-				NvAPI_EnumPhysicalGPUs == NULL || NvAPI_GPU_GetUsages == NULL)
-			{
-				__debugbreak();
-			}
+			Assert(NvAPI_Initialize && NvAPI_EnumPhysicalGPUs && NvAPI_GPU_GetUsages);
 
 			// initialize NvAPI library, call it once before calling any other NvAPI functions
 			(*NvAPI_Initialize)();
