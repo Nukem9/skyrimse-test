@@ -48,6 +48,9 @@ void ExperimentalPatchEmptyFunctions()
 	{
 	}
 
+#if 0
+	//
+	// Disabled. The game compares certain function addresses against each other.
 	//
 	// Now patch all of the virtual tables. These can't be inline patched since they're function pointers.
 	// Instead, remap them all to 1 common function and maybe (????) help CPU cache.
@@ -124,6 +127,7 @@ void ExperimentalPatchEmptyFunctions()
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
 	}
+#endif
 
 	ui::log::Add("%s: %lld patches applied.\n", __FUNCTION__, patchCount);
 }
