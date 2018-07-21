@@ -1,3 +1,4 @@
+#include "../../xbyak/xbyak.h"
 #include "../common.h"
 #include "dinput8.h"
 #include "TES/TESForm.h"
@@ -5,6 +6,7 @@
 #include "TES/BGSDistantTreeBlock.h"
 #include "TES/BSGraphicsRenderer.h"
 #include "TES/BSCullingProcess.h"
+#include "TES/BSJobs.h"
 #include "TES/BSShader/BSShaderManager.h"
 #include "TES/BSShader/Shaders/BSBloodSplatterShader.h"
 #include "TES/BSShader/Shaders/BSDistantTreeShader.h"
@@ -88,6 +90,26 @@ void Patch_TESV()
 	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>((PBYTE)(g_ModuleBase + 0xD6B9B0), &BSGraphics::Renderer::DecRef);
 	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0x133ED50), &BSGraphics::Renderer::IncRef);
 	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0xD6C7D0), &BSGraphics::Renderer::DecRef);
+
+	//
+	// BSJobs
+	//
+	class jobhook : public Xbyak::CodeGenerator
+	{
+	public:
+		jobhook() : Xbyak::CodeGenerator()
+		{
+			mov(rcx, qword[rax + rdx * 8 + 8]);
+			mov(rdx, qword[rax + rdx * 8]);
+			mov(r8, (uintptr_t)&BSJobs::DispatchJobCallback);
+			call(r8);
+
+			jmp(ptr[rip]);
+			dq(g_ModuleBase + 0xC32111);
+		}
+	} static jobhookInstance;
+
+	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC32109), (PBYTE)jobhookInstance.getCode());
 
 	//
 	// DirectInput (mouse, keyboard)

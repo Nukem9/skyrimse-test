@@ -5,6 +5,7 @@
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 #include "ui_renderer.h"
+#include "../patches/TES/BSJobs.h"
 #include "../patches/TES/BSShader/BSShader.h"
 #include "../patches/TES/Setting.h"
 #include "../patches/rendering/GpuTimer.h"
@@ -48,6 +49,7 @@ namespace ui
 	bool showSceneGraphMenu3DWindow;
 	bool showSceneGraphShadowNodesWindow;
 	bool showTaskListWindow;
+	bool showJobListWindow;
 
     void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext)
     {
@@ -125,6 +127,7 @@ namespace ui
             RenderMemory();
 			RenderShaderTweaks();
 			RenderINITweaks();
+			RenderJobList();
 			RenderTaskList();
 
 			if (showDemoWindow)
@@ -204,6 +207,10 @@ namespace ui
 
 		if (ImGui::BeginMenu("Statistics"))
 		{
+			ImGui::Separator();
+			ImGui::MenuItem("Job List", nullptr, &showJobListWindow);
+			ImGui::MenuItem("Task List", nullptr, &showTaskListWindow);
+			ImGui::Separator();
 			ImGui::MenuItem("Synchronization", nullptr, &showLockWindow);
 			ImGui::MenuItem("Memory", nullptr, &showMemoryWindow);
 			ImGui::MenuItem("TESForm Cache", nullptr, &showTESFormWindow);
@@ -212,23 +219,26 @@ namespace ui
 
         if (ImGui::BeginMenu("Game"))
         {
-			ImGui::MenuItem("Task List", nullptr, &showTaskListWindow);
 			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
 			ImGui::MenuItem("INISetting Viewer", nullptr, &showIniListWindow);
 			ImGui::Separator();
-            bool blockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
-            if (ImGui::MenuItem("Block Input", nullptr, &blockInput))
-                ProxyIDirectInputDevice8A::ToggleGlobalInput(!blockInput);
 			ImGui::MenuItem("Log Quest/Scene Actions", nullptr, &opt::LogQuestSceneActions);
 			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
+			bool blockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
+			if (ImGui::MenuItem("Block Game Input", nullptr, &blockInput))
+				ProxyIDirectInputDevice8A::ToggleGlobalInput(!blockInput);
             ImGui::EndMenu();
         }
 
 		if (ImGui::BeginMenu("Miscellaneous"))
 		{
+			if (ImGui::MenuItem("Use Dark Theme"))
+				ImGui::StyleColorsDark();
+			if (ImGui::MenuItem("Use Light Theme"))
+				ImGui::StyleColorsLight();
 			ImGui::MenuItem("ImGui Debug", nullptr, &showDemoWindow);
 			ImGui::Separator();
-			if (ImGui::MenuItem("Dump NiRTTI"))
+			if (ImGui::MenuItem("Dump NiRTTI Script"))
 			{
 				FILE *f = fopen("C:\\nirtti.txt", "w");
 				log::Add("Dumping NiRTTI script to %s...\n", "C:\\nirtti.txt");
@@ -236,7 +246,7 @@ namespace ui
 				fclose(f);
 			}
 
-			if (ImGui::MenuItem("Dump INISetting"))
+			if (ImGui::MenuItem("Dump INISetting Script"))
 			{
 				FILE *f = fopen("C:\\inisetting.txt", "w");
 				log::Add("Dumping INISetting script to %s...\n", "C:\\inisetting.txt");
@@ -244,8 +254,6 @@ namespace ui
 				INIPrefSettingCollectionSingleton->DumpSettingIDAScript(f);
 				fclose(f);
 			}
-			ImGui::Separator();
-			ImGui::MenuItem("##somespacing");
 			ImGui::Separator();
 			if (ImGui::MenuItem("Terminate Process"))
 				TerminateProcess(GetCurrentProcess(), 0x13371337);
@@ -480,6 +488,67 @@ namespace ui
 		ImGui::End();
 	}
 
+	void RenderJobList()
+	{
+		if (!showJobListWindow)
+			return;
+
+		if (ImGui::Begin("Job List", &showJobListWindow))
+		{
+			// Easy way to sort by name. Pair<total count, current count>.
+			std::map<const std::string, std::pair<uint64_t, uint32_t>> sortedMap;
+			int activeJobs = 0;
+
+			for (auto& [k, v] : BSJobs::JobTracker)
+			{
+				uint32_t active = v.ActiveCount.load();
+
+				if (active > 0)
+					activeJobs++;
+
+				sortedMap[v.Name].first = v.TotalCount.load();
+				sortedMap[v.Name].second = active;
+
+				v.ActiveCount.store(0);
+			}
+
+			// Show currently running jobs
+			char header[64];
+			sprintf_s(header, "Active Jobs This Frame (%d)", activeJobs);
+
+			if (ImGui::BeginGroupSplitter(header))
+			{
+				ImGui::BeginChild("jobscrolling1", ImVec2(0, 300), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+				for (const auto& [k, v] : sortedMap)
+				{
+					if (v.second > 0)
+						ImGui::Text("%s (%d)", k.c_str(), v.second);
+				}
+
+				ImGui::EndChild();
+				ImGui::EndGroupSplitter();
+			}
+
+			// Show history
+			if (ImGui::BeginGroupSplitter("Job Counters"))
+			{
+				ImGui::BeginChild("jobscrolling2", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+				for (const auto& [k, v] : sortedMap)
+				{
+					if (v.first > 0)
+						ImGui::Text("%s (%lld)", k.c_str(), v.first);
+				}
+
+				ImGui::EndChild();
+				ImGui::EndGroupSplitter();
+			}
+		}
+
+		ImGui::End();
+	}
+
 	void RenderTaskList()
 	{
 		if (!showTaskListWindow)
@@ -520,12 +589,12 @@ namespace ui
 				TasksCurrentFrame.clear();
 
 				// Show currently running tasks
-				char header[32];
-				sprintf_s(header, "Active Tasks (%lld)", TaskMap.size());
+				char header[64];
+				sprintf_s(header, "Active Tasks This Frame (%lld)", TaskMap.size());
 
 				if (ImGui::BeginGroupSplitter(header))
 				{
-					ImGui::BeginChild("taskscrolling", ImVec2(0, 300), false, ImGuiWindowFlags_HorizontalScrollbar);
+					ImGui::BeginChild("taskscrolling1", ImVec2(0, 300), false, ImGuiWindowFlags_HorizontalScrollbar);
 
 					for (auto& entry : TaskMap)
 						ImGui::TextUnformatted(entry.second.c_str());
@@ -539,9 +608,12 @@ namespace ui
 			// Show history
 			if (ImGui::BeginGroupSplitter("Task Counters"))
 			{
+				ImGui::BeginChild("taskscrolling2", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+
 				for (auto& entry : taskHistory)
 					ImGui::Text("%s (%lld)", entry.first.c_str(), entry.second);
 
+				ImGui::EndChild();
 				ImGui::EndGroupSplitter();
 			}
 		}
