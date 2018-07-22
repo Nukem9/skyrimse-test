@@ -37,12 +37,15 @@
 
 # VS2017
 .vs/
+packages/
 */x64/Release/
 */x64/Debug/
 */x64/EditAndContinue/
 x64/Release/
 x64/Debug/
 x64/EditAndContinue/
+shader_analyzer/bin/
+shader_analyzer/obj/
 
 # VTune
 */*My Amplifier Results*/
