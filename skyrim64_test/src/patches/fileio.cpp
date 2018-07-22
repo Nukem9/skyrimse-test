@@ -32,12 +32,14 @@ struct MMapFileInfo
 
 	uint64_t Read(void *Buffer, size_t Size)
 	{
+		AssertDebug(Size < ULONG_MAX);
+
 		if (IsMMap())
 			return ReadMapped(Buffer, Size);
 
 		DWORD bytesRead = 0;
 
-		if (ReadFile(FileHandle, Buffer, Size, &bytesRead, nullptr))
+		if (ReadFile(FileHandle, Buffer, (DWORD)Size, &bytesRead, nullptr))
 			return bytesRead;
 
 		return UINT64_MAX;
@@ -45,9 +47,11 @@ struct MMapFileInfo
 
 	uint64_t Write(const void *Buffer, size_t Size)
 	{
+		AssertDebug(Size < ULONG_MAX);
+
 		DWORD bytesWritten = 0;
 
-		if (WriteFile(FileHandle, Buffer, Size, &bytesWritten, nullptr))
+		if (WriteFile(FileHandle, Buffer, (DWORD)Size, &bytesWritten, nullptr))
 			return bytesWritten;
 
 		return UINT64_MAX;
@@ -129,7 +133,7 @@ MMapFileInfo *GetFileMMap(HANDLE Input)
 				Assert(false);
 		}
 
-		g_FileMap.insert(std::pair(Input, info));
+		g_FileMap.emplace(Input, info);
 	}
 	else
 	{
@@ -146,8 +150,6 @@ MMapFileInfo *GetStdioFileMap(FILE *Input)
 {
 	if (!GET_HANDLE_OVERRIDE(Input))
 		return nullptr;
-
-	//AssertMsg(((uintptr_t)Input & 0b11) == 0b11, "Unexpected bits set");
 
 	HANDLE temp = (HANDLE)((uintptr_t)Input & ~0b11);
 	return GetFileMMap(temp);
@@ -169,7 +171,7 @@ BOOL WINAPI hk_ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRea
 
 	if (bytesRead != UINT64_MAX)
 	{
-		*lpNumberOfBytesRead = bytesRead;
+		*lpNumberOfBytesRead = (DWORD)bytesRead;
 		return TRUE;
 	}
 
@@ -183,7 +185,7 @@ BOOL WINAPI hk_ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToR
 	if (info->IsMMap())
 	{
 		uint64_t bytesRead = info->ReadMapped(lpBuffer, nNumberOfBytesToRead);
-		lpCompletionRoutine(0, bytesRead, lpOverlapped);
+		lpCompletionRoutine(0, (DWORD)bytesRead, lpOverlapped);
 		return TRUE;
 	}
 

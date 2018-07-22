@@ -1230,7 +1230,7 @@ namespace BSGraphics
 
 		// Final step: append raw bytecode to the end of the struct
 		memcpy(vs->m_RawBytecode, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
-		vs->m_ShaderLength = shaderBlob->GetBufferSize();
+		vs->m_ShaderLength = (uint32_t)shaderBlob->GetBufferSize();
 
 		RegisterShaderBytecode(vs->m_Shader, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
 		reflector->Release();

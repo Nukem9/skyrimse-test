@@ -68,9 +68,9 @@ namespace ui
 		LARGE_INTEGER ticksPerSecond;
 		QueryPerformanceFrequency(&ticksPerSecond);
 
-		double frameTimeMs = 1000.0 * (g_FrameDelta.QuadPart / (double)ticksPerSecond.QuadPart);
+		float frameTimeMs = 1000.0f * (float)(g_FrameDelta.QuadPart / (double)ticksPerSecond.QuadPart);
 
-		if (ui::opt::LogHitches && frameTimeMs >= 50.0)
+		if (ui::opt::LogHitches && frameTimeMs >= 50.0f)
 			ui::log::Add("FRAME HITCH WARNING (%g ms)\n", frameTimeMs);
 
 		LastFpsCount = CalculateTrueAverageFPS();
@@ -90,14 +90,21 @@ namespace ui
 
 		if (ImGui::Begin("Frame Statistics", &showFrameStatsWindow))
 		{
+			const static ImColor colors[4] =
+			{
+				ImColor(0.839f, 0.152f, 0.156f),
+				ImColor(0.172f, 0.627f, 0.172f),
+				ImColor(1.0f, 0.498f, 0.054f),
+				ImColor(0.121f, 0.466f, 0.705f)
+			};
+
 			// Draw frame time graph
 			{
 				DeltasFrameTime[239] = frameTimeMs;
 				DeltasFrameTimeGPU[239] = g_GPUTimers.GetGPUTimeInMS(0);
 
 				const char *names[2] = { "CPU", "GPU" };
-				ImColor colors[2] = { ImColor(0.839f, 0.152f, 0.156f), ImColor(0.172f, 0.627f, 0.172f) };
-				void *datas[2] = { (void *)DeltasFrameTime, (void *)DeltasFrameTimeGPU };
+				const void *datas[2] = { DeltasFrameTime, DeltasFrameTimeGPU };
 
 				ImGui::PlotMultiLines("Frame Time (ms)\n** Minus Present() flip", 2, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 32.0f, ImVec2(400, 100));
 			}
@@ -110,20 +117,18 @@ namespace ui
 				DeltasGPU1Percent[239] = Profiler::GetGpuUsagePercent(1);
 
 				const char *names[4] = { "CPU Total", "Main Thread", "GPU 0", "GPU 1" };
-				ImColor colors[4] = { ImColor(0.839f, 0.152f, 0.156f), ImColor(0.172f, 0.627f, 0.172f), ImColor(1.0f, 0.498f, 0.054f), ImColor(0.121f, 0.466f, 0.705f) };
-				void *datas[4] = { (void *)DeltasCPUPercent, (void *)DeltasThreadPercent, (void *)DeltasGPU0Percent, (void *)DeltasGPU1Percent };
+				const void *datas[4] = { DeltasCPUPercent, DeltasThreadPercent, DeltasGPU0Percent, DeltasGPU1Percent };
 
 				ImGui::PlotMultiLines("Processor Usage (%)", 4, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 100.0f, ImVec2(400, 100));
 			}
 
 			// Draw calls
 			{
-				DeltasGraphDrawCalls[239] = ProfileGetDeltaValue("Draw Calls");
-				DeltasGraphDispatchCalls[239] = ProfileGetDeltaValue("Dispatch Calls");
+				DeltasGraphDrawCalls[239] = (float)ProfileGetDeltaValue("Draw Calls");
+				DeltasGraphDispatchCalls[239] = (float)ProfileGetDeltaValue("Dispatch Calls");
 
 				const char *names[2] = { "Draws", "Dispatches" };
-				ImColor colors[2] = { ImColor(0.839f, 0.152f, 0.156f), ImColor(0.172f, 0.627f, 0.172f) };
-				void *datas[2] = { (void *)DeltasGraphDrawCalls, (void *)DeltasGraphDispatchCalls };
+				const void *datas[2] = { DeltasGraphDrawCalls, DeltasGraphDispatchCalls };
 
 				ImGui::PlotMultiLines("Draw Calls", 2, names, colors, [](const void *a, int idx) { return ((float *)a)[idx]; }, datas, 240, 0.0f, 10000.0f, ImVec2(400, 100));
 

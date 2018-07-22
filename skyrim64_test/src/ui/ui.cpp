@@ -251,19 +251,22 @@ namespace ui
 			ImGui::Separator();
 			if (ImGui::MenuItem("Dump NiRTTI Script"))
 			{
-				FILE *f = fopen("C:\\nirtti.txt", "w");
-				log::Add("Dumping NiRTTI script to %s...\n", "C:\\nirtti.txt");
-				NiRTTI::DumpRTTIListing(f, true);
-				fclose(f);
+				if (FILE *f; fopen_s(&f, "C:\\nirtti.txt", "w") == 0)
+				{
+					log::Add("Dumping NiRTTI script to %s...\n", "C:\\nirtti.txt");
+					NiRTTI::DumpRTTIListing(f, true);
+					fclose(f);
+				}
 			}
-
 			if (ImGui::MenuItem("Dump INISetting Script"))
 			{
-				FILE *f = fopen("C:\\inisetting.txt", "w");
-				log::Add("Dumping INISetting script to %s...\n", "C:\\inisetting.txt");
-				INISettingCollectionSingleton->DumpSettingIDAScript(f);
-				INIPrefSettingCollectionSingleton->DumpSettingIDAScript(f);
-				fclose(f);
+				if (FILE *f; fopen_s(&f, "C:\\inisetting.txt", "w") == 0)
+				{
+					log::Add("Dumping INISetting script to %s...\n", "C:\\inisetting.txt");
+					INISettingCollectionSingleton->DumpSettingIDAScript(f);
+					INIPrefSettingCollectionSingleton->DumpSettingIDAScript(f);
+					fclose(f);
+				}
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Terminate Process"))
