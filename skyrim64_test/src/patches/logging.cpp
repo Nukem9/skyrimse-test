@@ -60,7 +60,8 @@ void LogFunc2(const char *Format, ...)
 			STARTS_WITH(Format, " %s asking for random") ||
 			STARTS_WITH(Format, " %s got a quest back") ||
 			STARTS_WITH(Format, " %s did not get a quest") ||
-			STARTS_WITH(Format, " %s failed to get"))
+			STARTS_WITH(Format, " %s failed to get") ||
+			STARTS_WITH(Format, " %s is not being allowed to advance"))
 			return;
 	}
 
