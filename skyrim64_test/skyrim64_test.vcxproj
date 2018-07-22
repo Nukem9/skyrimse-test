@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClInclude Include="MaskedOcclusionCulling\CullingThreadpool.h" />
     <ClInclude Include="MaskedOcclusionCulling\MaskedOcclusionCulling.h" />
+    <ClInclude Include="meshoptimizer\src\meshoptimizer.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\patches\rendering\d3d11_proxy.h" />
     <ClInclude Include="src\patches\rendering\GpuCircularBuffer.h" />
@@ -270,6 +271,17 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="MaskedOcclusionCulling\MaskedOcclusionCullingAVX512.cpp" />
+    <ClCompile Include="meshoptimizer\src\indexcodec.cpp" />
+    <ClCompile Include="meshoptimizer\src\indexgenerator.cpp" />
+    <ClCompile Include="meshoptimizer\src\overdrawanalyzer.cpp" />
+    <ClCompile Include="meshoptimizer\src\overdrawoptimizer.cpp" />
+    <ClCompile Include="meshoptimizer\src\simplifier.cpp" />
+    <ClCompile Include="meshoptimizer\src\stripifier.cpp" />
+    <ClCompile Include="meshoptimizer\src\vcacheanalyzer.cpp" />
+    <ClCompile Include="meshoptimizer\src\vcacheoptimizer.cpp" />
+    <ClCompile Include="meshoptimizer\src\vertexcodec.cpp" />
+    <ClCompile Include="meshoptimizer\src\vfetchanalyzer.cpp" />
+    <ClCompile Include="meshoptimizer\src\vfetchoptimizer.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />
     <ClCompile Include="src\patches\fileio.cpp" />
     <ClCompile Include="src\patches\patches.cpp" />

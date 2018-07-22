@@ -6,3 +6,7 @@
 	path = tracy_lib/tracy
 	url = https://bitbucket.org/wolfpld/tracy.git
 	branch = master
+[submodule "skyrim64_test/meshoptimizer"]
+	path = skyrim64_test/meshoptimizer
+	url = https://github.com/zeux/meshoptimizer.git
+	branch = master

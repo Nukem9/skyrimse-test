@@ -299,6 +299,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="meshoptimizer\src\meshoptimizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\TES\NiMain\NiCullingProcess.h">
@@ -646,6 +647,39 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\indexcodec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\indexgenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\overdrawanalyzer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\overdrawoptimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\simplifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\stripifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\vcacheanalyzer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\vcacheoptimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\vertexcodec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\vfetchanalyzer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshoptimizer\src\vfetchoptimizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\MOC_ThreadedMerger.cpp">
