@@ -42,6 +42,10 @@ void SetThreadName(DWORD dwThreadID, const char *ThreadName)
 		__itt_thread_set_name(ThreadName);
 #endif
 
+#if SKYRIM64_USE_TRACY
+	tracy::SetThreadName(GetCurrentThread(), ThreadName);
+#endif
+
 #pragma pack(push, 8)  
 	const DWORD MS_VC_EXCEPTION = 0x406D1388;
 

@@ -14,6 +14,7 @@
 #pragma comment(lib, "D3DCompiler.lib")
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 // Intel VTune
 #if SKYRIM64_USE_VTUNE
@@ -27,7 +28,13 @@ extern __itt_heap_function ITT_FreeCallback;
 
 // Tracy
 #if SKYRIM64_USE_TRACY
+#define TRACY_ENABLE
+#define TRACY_ON_DEMAND
+#include "../../tracy_lib/tracy/Tracy.hpp"
 #pragma comment(lib, "tracy_lib.lib")
+#else
+#undef TRACY_ENABLE
+#include "../../tracy_lib/tracy/Tracy.hpp"
 #endif
 
 // Jemalloc

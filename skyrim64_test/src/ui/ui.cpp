@@ -5,6 +5,7 @@
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 #include "ui_renderer.h"
+#include "ui_tracy.h"
 #include "../patches/TES/BSJobs.h"
 #include "../patches/TES/BSShader/BSShader.h"
 #include "../patches/TES/Setting.h"
@@ -33,6 +34,7 @@ namespace ui
 	bool InFrame = false;
 	extern float LastFpsCount;
 
+	bool showTracyWindow;
 	bool showDemoWindow;
     bool showTESFormWindow;
     bool showLockWindow;
@@ -91,6 +93,8 @@ namespace ui
 
 	void BeginFrame()
 	{
+		ZoneScopedN("ui::BeginFrame");
+
 		InFrame = true;
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
@@ -105,6 +109,8 @@ namespace ui
 
     void EndFrame()
     {
+		ZoneScopedN("ui::EndFrame");
+
 		if (!InFrame)
 			return;
 
@@ -117,6 +123,7 @@ namespace ui
             RenderMenubar();
 			ImGui::PopStyleVar();
 
+			RenderTracyWindow();
 			RenderFrameStatistics();
 			RenderRenderTargetMenu();
 			RenderOcclusionCullingMenu();
@@ -207,6 +214,10 @@ namespace ui
 
 		if (ImGui::BeginMenu("Statistics"))
 		{
+			if (ImGui::MenuItem("Open Tracy", nullptr, nullptr, SKYRIM64_USE_TRACY ? true : false))
+				showTracyWindow = true;
+			if (ImGui::MenuItem("Close Tracy", nullptr, nullptr, SKYRIM64_USE_TRACY ? true : false))
+				showTracyWindow = false;
 			ImGui::Separator();
 			ImGui::MenuItem("Job List", nullptr, &showJobListWindow);
 			ImGui::MenuItem("Task List", nullptr, &showTaskListWindow);

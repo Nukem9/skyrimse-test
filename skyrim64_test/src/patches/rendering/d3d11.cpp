@@ -73,7 +73,12 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 	}
 
 	ui::EndFrame();
-    HRESULT hr = (This->*ptrPresent)(SyncInterval, Flags);
+	HRESULT hr;
+	{
+		ZoneScopedNC("Present", tracy::Color::Red);
+		hr = (This->*ptrPresent)(SyncInterval, Flags);
+	}
+	FrameMark;
 	ui::BeginFrame();
 	g_GPUTimers.BeginFrame(g_DeviceContext);
 

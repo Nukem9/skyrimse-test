@@ -16,6 +16,8 @@ void BGSDistantTreeBlock::InvalidateCachedForm(uint32_t FormId)
 
 void BGSDistantTreeBlock::UpdateLODAlphaFade(ResourceData *Data)
 {
+	ZoneScopedN("BGSDistantTreeBlock::UpdateLODAlphaFade");
+
 	for (uint32_t i = 0; i < Data->m_LODGroups.QSize(); i++)
 	{
 		LODGroup *group = Data->m_LODGroups[i];

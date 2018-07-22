@@ -159,6 +159,7 @@ void ResetSceneDepthShift()
 
 void BSShaderAccumulator::FinishAccumulating_Normal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
+	ZoneScopedN("FinishAccumulating_Normal");
 	BSGraphics::BeginEvent(L"FinishAccumulating_Normal");
 	RenderSceneNormal(Accumulator, RenderFlags);
 	RenderSceneNormalAlphaZ(Accumulator, RenderFlags);
@@ -183,6 +184,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	auto renderer = BSGraphics::Renderer::GetGlobals();
 
 	renderer->BeginEvent(L"BSShaderAccumulator: Draw1");
+	ZoneScopedN("RenderSceneNormal");
 
 	if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
 		renderer->DepthStencilStateSetDepthMode(BSGraphics::DEPTH_STENCIL_DEPTH_MODE_TESTEQUAL);
@@ -198,7 +200,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		if (ui::opt::RealtimeOcclusionView)
 			MOC::UpdateDepthViewTexture();
 
-		MOC::SendTraverseCommand();
+		MOC::SendTraverseCommand((NiCamera *)Accumulator->m_pkCamera);
 	}
 
 	//
@@ -381,6 +383,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 
 void BSShaderAccumulator::RenderSceneNormalAlphaZ(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
+	ZoneScopedN("RenderSceneNormalAlphaZ");
 	((FinishAccumFunc)(g_ModuleBase + 0x12E1F70))(Accumulator, RenderFlags);
 }
 
@@ -389,6 +392,7 @@ void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator
 	if (!Accumulator->m_pkCamera)
 		return;
 
+	ZoneScopedN("FinishAccumulating_ShadowMapOrMask");
 	BSGraphics::BeginEvent(L"FinishAccumulating_ShadowMapOrMask");
 
 	if ((RenderFlags & 0x22) == 0x20)
@@ -418,6 +422,7 @@ void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator
 
 void BSShaderAccumulator::FinishAccumulating_InterfaceElements(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
+	ZoneScopedN("FinishAccumulating_InterfaceElements");
 	BSGraphics::BeginEvent(L"FinishAccumulating_InterfaceElements");
 	((FinishAccumFunc)(g_ModuleBase + 0x12E2FE0))(Accumulator, RenderFlags);
 	BSGraphics::EndEvent();
@@ -425,6 +430,7 @@ void BSShaderAccumulator::FinishAccumulating_InterfaceElements(BSShaderAccumulat
 
 void BSShaderAccumulator::FinishAccumulating_FirstPerson(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
+	ZoneScopedN("FinishAccumulating_FirstPerson");
 	BSGraphics::BeginEvent(L"FinishAccumulating_FirstPerson");
 	((FinishAccumFunc)(g_ModuleBase + 0x12E2B20))(Accumulator, RenderFlags);
 	BSGraphics::EndEvent();
@@ -435,6 +441,7 @@ void BSShaderAccumulator::FinishAccumulating_LODOnly(BSShaderAccumulator *Accumu
 	if (!Accumulator->m_pkCamera)
 		return;
 
+	ZoneScopedN("FinishAccumulating_LODOnly");
 	BSGraphics::BeginEvent(L"FinishAccumulating_LODOnly");
 
 	BSShaderManager::bLODLandscapeNoise = false;
@@ -450,6 +457,7 @@ void BSShaderAccumulator::FinishAccumulating_Unknown1(BSShaderAccumulator *Accum
 	if (!Accumulator->m_pkCamera)
 		return;
 
+	ZoneScopedN("FinishAccumulating_Unknown1");
 	BSGraphics::BeginEvent(L"FinishAccumulating_Unknown1");
 
 	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 14);

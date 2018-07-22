@@ -15,6 +15,7 @@ namespace ui
 		extern float OccluderFirstLevelMinSize;
 	}
 
+	extern bool showTracyWindow;
 	extern bool showDemoWindow;
 	extern bool showTESFormWindow;
 	extern bool showLockWindow;
@@ -31,6 +32,7 @@ namespace ui
 	extern bool showSceneGraphMenu3DWindow;
 	extern bool showSceneGraphShadowNodesWindow;
 	extern bool showTaskListWindow;
+	extern bool showJobListWindow;
 
 	void Initialize(HWND Wnd, ID3D11Device *Device, ID3D11DeviceContext *DeviceContext);
 	void HandleInput(HWND Wnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -45,6 +47,7 @@ namespace ui
 	void RenderTESFormCache();
 	void RenderShaderTweaks();
 	void RenderINITweaks();
+	void RenderJobList();
 	void RenderTaskList();
 
 	namespace log

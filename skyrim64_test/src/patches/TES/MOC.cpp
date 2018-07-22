@@ -213,6 +213,7 @@ namespace MOC
 		BSGeometry *geometry = (BSGeometry *)UserData;
 
 		ProfileTimer("MOC RenderGeometry");
+		ZoneScopedN("MOC RenderGeometry");
 
 		IndexPair indexRawData;
 		float *vertexRawData;
@@ -617,6 +618,7 @@ namespace MOC
 	void TraverseSceneGraph(NiCamera *Camera)
 	{
 		ProfileTimer("MOC TraverseSceneGraph");
+		ZoneScopedN("MOC TraverseSceneGraph");
 
 		//
 		// Scene graph hierarchy:
