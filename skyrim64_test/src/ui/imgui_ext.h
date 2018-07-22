@@ -9,10 +9,11 @@ namespace ImGui
 	void PlotMultiHistograms(const char* label, int num_hists, const char** names, const ImColor* colors, float(*getter)(const void* data, int idx), const void * const * datas, int values_count, float scale_min, float scale_max, ImVec2 graph_size);
 
 	template<typename T>
-	bool ListBoxVector(const char *Label, const char *FilterLabel, ImGuiTextFilter *Filter, const T *List, int *CurrentItem, const char *(* Getter)(const T *List, size_t Index), int HeightInItems = -1)
+	int ListBoxVector(const char *Label, const char *FilterLabel, ImGuiTextFilter *Filter, const T *List, int *CurrentItem, const char *(*Getter)(const T *List, size_t Index), int HeightInItems = -1)
 	{
 		Filter->Draw(FilterLabel, -100.0f);
 
+		std::vector<int> indexMap;
 		const T *listCopy = List;
 		T tempList;
 
@@ -21,14 +22,17 @@ namespace ImGui
 			for (size_t i = 0; i < List->size(); i++)
 			{
 				if (Filter->PassFilter(Getter(List, i)))
+				{
+					indexMap.push_back((int)i);
 					tempList.push_back(List->at(i));
+				}
 			}
 
 			listCopy = &tempList;
 		}
 
 		if (!ListBoxHeader(Label, (int)listCopy->size(), HeightInItems))
-			return false;
+			return -1;
 
 		bool valueChanged = false;
 		ImGuiListClipper clipper((int)listCopy->size(), GetTextLineHeightWithSpacing());
@@ -52,10 +56,20 @@ namespace ImGui
 			}
 		}
 
+		ListBoxFooter();
+
+		// Prevent old selections from exceeding bounds
 		if (*CurrentItem > listCopy->size())
 			*CurrentItem = -1;
 
-		ListBoxFooter();
-		return valueChanged;
+		if (Filter->IsActive())
+		{
+			// Return the index for the input list, not the sorted list
+			if (*CurrentItem != -1)
+				return indexMap.at(*CurrentItem);
+		}
+
+		// Original index
+		return *CurrentItem;
 	}
 }

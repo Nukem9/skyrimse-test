@@ -20,7 +20,7 @@ namespace ui::opt
 	bool EnableCache = true;
 	bool LogHitches = true;
 	bool LogQuestSceneActions = false;
-	bool EnableNavmeshLog = false;
+	bool LogNavmeshProcessing = false;
 	bool RealtimeOcclusionView = false;
 	bool EnableOcclusionTesting = true;
 	bool EnableOccluderRendering = true;
@@ -206,12 +206,6 @@ namespace ui
 			ImGui::EndMenu();
         }
 
-		if (ImGui::BeginMenu("Navmesh"))
-		{
-			ImGui::MenuItem("Log To Console", nullptr, &opt::EnableNavmeshLog);
-			ImGui::EndMenu();
-		}
-
 		if (ImGui::BeginMenu("Statistics"))
 		{
 			if (ImGui::MenuItem("Open Tracy", nullptr, nullptr, SKYRIM64_USE_TRACY ? true : false))
@@ -233,6 +227,7 @@ namespace ui
 			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
 			ImGui::MenuItem("INISetting Viewer", nullptr, &showIniListWindow);
 			ImGui::Separator();
+			ImGui::MenuItem("Log Navmesh Processing", nullptr, &opt::LogNavmeshProcessing);
 			ImGui::MenuItem("Log Quest/Scene Actions", nullptr, &opt::LogQuestSceneActions);
 			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
 			bool blockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
@@ -305,11 +300,11 @@ namespace ui
 		if (ImGui::Begin("INISetting Viewer", &showIniListWindow))
 		{
 			static ImGuiTextFilter iniFilter;
-			static int selectedIndex;
+			static int indexHolder;
 
 			// Convert from the game's containers to a standard c++ vector
 			std::vector<Setting *> settingList;
-			settingList.reserve(1000);
+			settingList.reserve(1848);
 
 			for (auto *s = INISettingCollectionSingleton->SettingsA.QNext(); s; s = s->QNext())
 					settingList.push_back(s->QItem());
@@ -320,15 +315,15 @@ namespace ui
 			ImGui::PushItemWidth(-1);
 
 			// Draw the list itself
-			ImGui::ListBoxVector<decltype(settingList)>("##rtbox", "Filter", &iniFilter, &settingList, &selectedIndex, [](const decltype(settingList) *Vec, size_t Index)
+			int selection = ImGui::ListBoxVector<decltype(settingList)>("##rtbox", "Filter", &iniFilter, &settingList, &indexHolder, [](const decltype(settingList) *Vec, size_t Index)
 			{
 				return Vec->at(Index)->pKey;
 			}, 16);
 
 			// Now the editor inputs
-			if (ImGui::BeginGroupSplitter("Selection") && selectedIndex != -1)
+			if (ImGui::BeginGroupSplitter("Selection") && selection != -1)
 			{
-				Setting *s = settingList.at(selectedIndex);
+				Setting *s = settingList.at(selection);
 
 				ImGui::PushItemWidth(60);
 				ImGui::LabelText("##lblIniVar", "Variable:");

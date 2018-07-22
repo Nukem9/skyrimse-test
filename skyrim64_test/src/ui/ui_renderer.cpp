@@ -161,17 +161,17 @@ namespace ui
 		if (ImGui::Begin("Render Target Viewer", &showRTViewerWindow))
 		{
 			static ImGuiTextFilter rtFilter;
-			static int selectedIndex;
+			static int indexHolder;
 
 			ImGui::PushItemWidth(-1);
-			ImGui::ListBoxVector<decltype(g_ResourceViews)>("##rtbox", "Filter", &rtFilter, &g_ResourceViews, &selectedIndex, [](const decltype(g_ResourceViews) *Vec, size_t Index)
+			int selection = ImGui::ListBoxVector<decltype(g_ResourceViews)>("##rtbox", "Filter", &rtFilter, &g_ResourceViews, &indexHolder, [](const decltype(g_ResourceViews) *Vec, size_t Index)
 			{
 				return Vec->at(Index).second.c_str();
 			}, 10);
 			ImGui::PopItemWidth();
 
-			if (selectedIndex != -1 && g_ResourceViews[selectedIndex].first)
-				ImGui::Image((ImTextureID)g_ResourceViews[selectedIndex].first, ImVec2(1024, 768));
+			if (selection != -1 && g_ResourceViews[selection].first)
+				ImGui::Image((ImTextureID)g_ResourceViews[selection].first, ImVec2(1024, 768));
 		}
 		ImGui::End();
 		ImGui::PopStyleColor();

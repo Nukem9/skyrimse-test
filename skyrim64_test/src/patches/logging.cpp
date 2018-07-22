@@ -18,7 +18,7 @@ bool LogBNet(const char *String)
 
 void NavmeshBuilderLog(__int64 a1, const char *Format, ...)
 {
-	if (!ui::opt::EnableNavmeshLog)
+	if (!ui::opt::LogNavmeshProcessing)
 		return;
 
 	va_list va;
