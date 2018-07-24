@@ -86,8 +86,8 @@ public:
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 
 private:
-	static void TechUpdateAccelerationConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG);
-	static void TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG);
+	static void TechUpdateHighDetailRangeConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG);
+	static void TechUpdateFogConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG);
 
 	static void sub_14130C470(__int64 a1, __int64 a2);
 	static void sub_14130C4D0(__int64 a1, __int64 a2);

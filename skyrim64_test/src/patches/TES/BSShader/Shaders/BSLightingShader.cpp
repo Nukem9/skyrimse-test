@@ -10,6 +10,69 @@
 #include "BSLightingShader.h"
 #include "BSLightingShaderProperty.h"
 
+DEFINE_SHADER_DESCRIPTOR(
+	"Lighting",
+
+	// Vertex
+	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float3x4, World)
+	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float3x4, PreviousWorld)
+	CONFIG_ENTRY(VS, PER_GEO, 2, float3, EyePosition)
+	CONFIG_ENTRY(VS, PER_GEO, 3, float4, LandBlendParams)
+	CONFIG_ENTRY(VS, PER_GEO, 4, unknown, TreeParams)// TODO
+	CONFIG_ENTRY(VS, PER_GEO, 5, unknown, WindTimers)// TODO
+	CONFIG_ENTRY(VS, PER_GEO, 6, row_major float3x4, TextureProj)
+	CONFIG_ENTRY(VS, PER_GEO, 7, unknown, IndexScale)// TODO
+	CONFIG_ENTRY(VS, PER_GEO, 8, float4, WorldMapOverlayParameters)
+	CONFIG_ENTRY(VS, PER_MAT, 9, float3, LeftEyeCenter)
+	CONFIG_ENTRY(VS, PER_MAT, 10, float3, RightEyeCenter)
+	CONFIG_ENTRY(VS, PER_MAT, 11, float4, TexcoordOffset)
+	CONFIG_ENTRY(VS, PER_TEC, 12, float4, HighDetailRange)
+	CONFIG_ENTRY(VS, PER_TEC, 13, float4, FogParam)
+	CONFIG_ENTRY(VS, PER_TEC, 14, float4, FogNearColor)
+	CONFIG_ENTRY(VS, PER_TEC, 15, float4, FogFarColor)
+	CONFIG_ENTRY(VS, PER_GEO, 16, unknown, Bones)// TODO
+
+	/*
+	// Pixel TODO
+	CONFIG_ENTRY(PS, PER_GEO, 0, unknown, NumLightNumShadowLight)
+	CONFIG_ENTRY(PS, PER_GEO, 1, unknown, PointLightPosition)
+	CONFIG_ENTRY(PS, PER_GEO, 2, unknown, PointLightColor)
+	CONFIG_ENTRY(PS, PER_GEO, 3, unknown, DirLightDirection)
+	CONFIG_ENTRY(PS, PER_GEO, 4, unknown, DirLightColor)
+	CONFIG_ENTRY(PS, PER_GEO, 5, unknown, DirectionalAmbient)
+	CONFIG_ENTRY(PS, PER_GEO, 6, unknown, AmbientSpecularTintAndFresnelPower)
+	CONFIG_ENTRY(PS, PER_GEO, 7, unknown, MaterialData)
+	CONFIG_ENTRY(PS, PER_GEO, 8, unknown, EmitColor)
+	CONFIG_ENTRY(PS, PER_GEO, 9, unknown, AlphaTestRef)
+	CONFIG_ENTRY(PS, PER_GEO, 10, unknown, ShadowLightMaskSelect)
+	CONFIG_ENTRY(PS, PER_GEO, 11, unknown, VPOSOffset)
+	CONFIG_ENTRY(PS, PER_GEO, 12, unknown, ProjectedUVParams)
+	CONFIG_ENTRY(PS, PER_GEO, 13, unknown, ProjectedUVParams2)
+	CONFIG_ENTRY(PS, PER_GEO, 14, unknown, ProjectedUVParams3)
+	CONFIG_ENTRY(PS, PER_GEO, 15, unknown, SplitDistance)
+	CONFIG_ENTRY(PS, PER_GEO, 16, unknown, SSRParams)
+	CONFIG_ENTRY(PS, PER_GEO, 17, unknown, WorldMapOverlayParametersPS)
+	CONFIG_ENTRY(PS, PER_GEO, 18, unknown, AmbientColor)
+	CONFIG_ENTRY(PS, PER_GEO, 19, unknown, FogColor)
+	CONFIG_ENTRY(PS, PER_GEO, 20, unknown, ColourOutputClamp)
+	CONFIG_ENTRY(PS, PER_GEO, 21, unknown, EnvmapData)
+	CONFIG_ENTRY(PS, PER_GEO, 22, unknown, ParallaxOccData)
+	CONFIG_ENTRY(PS, PER_GEO, 23, unknown, TintColor)
+	CONFIG_ENTRY(PS, PER_GEO, 24, unknown, LODTexParams)
+	CONFIG_ENTRY(PS, PER_GEO, 25, unknown, SpecularColor)
+	CONFIG_ENTRY(PS, PER_GEO, 26, unknown, SparkleParams)
+	CONFIG_ENTRY(PS, PER_GEO, 27, unknown, MultiLayerParallaxData)
+	CONFIG_ENTRY(PS, PER_GEO, 28, unknown, LightingEffectParams)
+	CONFIG_ENTRY(PS, PER_GEO, 29, unknown, IBLParams)
+	CONFIG_ENTRY(PS, PER_GEO, 30, unknown, LandscapeTexture1to4IsSnow)
+	CONFIG_ENTRY(PS, PER_GEO, 31, unknown, LandscapeTexture5to6IsSnow)
+	CONFIG_ENTRY(PS, PER_GEO, 32, unknown, LandscapeTexture1to4IsSpecPower)
+	CONFIG_ENTRY(PS, PER_GEO, 33, unknown, LandscapeTexture5to6IsSpecPower)
+	CONFIG_ENTRY(PS, PER_GEO, 34, unknown, SnowRimLightParameters)
+	CONFIG_ENTRY(PS, PER_GEO, 35, unknown, CharacterLightParams)
+	*/
+);
+
 //
 // Shader notes:
 //
@@ -178,7 +241,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	case RAW_TECHNIQUE_LODLANDNOISE:
 		renderer->SetTextureMode(0, 3, 1);
 		renderer->SetTextureMode(1, 3, 1);
-		TechUpdateAccelerationConstants(vertexCG);
+		TechUpdateHighDetailRangeConstants(vertexCG);
 		break;
 
 	case RAW_TECHNIQUE_MULTILAYERPARALLAX:
@@ -193,7 +256,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		break;
 	}
 
-	TechUpdateFogWindConstants(vertexCG, pixelCG);
+	TechUpdateFogConstants(vertexCG, pixelCG);
 
 	// PS: p20 float4 ColourOutputClamp
 	{
@@ -461,22 +524,22 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		sub_14130C470(*(uintptr_t *)(v3 + 160), v3);
 		sub_14130C4D0(*(uintptr_t *)(v3 + 168), v3);
 
-		// VS: p9 float4 Color2
+		// VS: p9 float4 LeftEyeCenter
 		{
-			XMVECTORF32& color2 = vertexCG.ParamVS<XMVECTORF32, 9>();
+			XMVECTORF32& leftEyeCenter = vertexCG.ParamVS<XMVECTORF32, 9>();
 
-			color2.f[0] = *(float *)(v3 + 180);
-			color2.f[1] = *(float *)(v3 + 184);
-			color2.f[2] = *(float *)(v3 + 188);
+			leftEyeCenter.f[0] = *(float *)(v3 + 180);
+			leftEyeCenter.f[1] = *(float *)(v3 + 184);
+			leftEyeCenter.f[2] = *(float *)(v3 + 188);
 		}
 
-		// VS: p10 float4 Color3
+		// VS: p10 float4 RightEyeCenter
 		{
-			XMVECTORF32& color3 = vertexCG.ParamVS<XMVECTORF32, 10>();
+			XMVECTORF32& rightEyeCenter = vertexCG.ParamVS<XMVECTORF32, 10>();
 
-			color3.f[0] = *(float *)(v3 + 192);
-			color3.f[1] = *(float *)(v3 + 196);
-			color3.f[2] = *(float *)(v3 + 200);
+			rightEyeCenter.f[0] = *(float *)(v3 + 192);
+			rightEyeCenter.f[1] = *(float *)(v3 + 196);
+			rightEyeCenter.f[2] = *(float *)(v3 + 200);
 		}
 
 		// PS: p21 float4 EnvmapData
@@ -490,14 +553,14 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	break;
 	}
 
-	// VS: p11 float4 Velocity
+	// VS: p11 float4 TexcoordOffset
 	{
-		XMVECTORF32& velocity = vertexCG.ParamVS<XMVECTORF32, 11>();
+		XMVECTORF32& texcoordOffset = vertexCG.ParamVS<XMVECTORF32, 11>();
 
-		velocity.f[0] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 12);
-		velocity.f[1] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 16);
-		velocity.f[2] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 28);
-		velocity.f[3] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 32);
+		texcoordOffset.f[0] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 12);
+		texcoordOffset.f[1] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 16);
+		texcoordOffset.f[2] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 28);
+		texcoordOffset.f[3] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 32);
 	}
 
 	if (rawTechnique & RAW_FLAG_SPECULAR)
@@ -576,7 +639,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		snowRimLightParameters.f[0] = fSnowRimLightIntensity->uValue.f;
 		snowRimLightParameters.f[1] = fSnowGeometrySpecPower->uValue.f;
 		snowRimLightParameters.f[2] = fSnowNormalSpecPower->uValue.f;
-		snowRimLightParameters.f[3] = (bEnableSnowRimLighting->uValue.b) ? 1.0f : 0.0f;
+		snowRimLightParameters.f[3] = bEnableSnowRimLighting->uValue.b ? 1.0f : 0.0f;
 	}
 
 	if (setDiffuseNormalSamplers)
@@ -650,10 +713,10 @@ void BSLightingShader::RestoreMaterial(BSShaderMaterial const *Material)
 // BSUtilities::GetInverseWorldMatrix(const NiTransform& Transform, bool UseInputTransform, D3DMATRIX& Matrix)
 void GetInverseWorldMatrix(const NiTransform& Transform, bool UseWorldPosition, XMMATRIX& OutMatrix)
 {
-	const NiPoint3& posAdjust = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
-
 	if (UseWorldPosition)
 	{
+		const NiPoint3 posAdjust = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
+
 		// XMMatrixIdentity(), row[3] = { world.x, world.y, world.z, 1.0f }, XMMatrixInverse()
 		OutMatrix = XMMatrixInverse(nullptr, XMMatrixTranslation(posAdjust.x, posAdjust.y, posAdjust.z));
 	}
@@ -679,7 +742,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
 
 	bool drawInWorldSpace = (rawTechnique & RAW_FLAG_SKINNED) == 0;
-	bool doPrecipitationOcclusion = false;
+	bool updateEyePosition = false;
 	bool isLOD = false;
 
 	uint8_t v12 = Pass->Byte1C;
@@ -702,7 +765,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			GeometrySetupViewProjection(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
 
 		drawInWorldSpace = false;
-		doPrecipitationOcclusion = true;
+		updateEyePosition = true;
 
 		// PS: p7 float4 MaterialData (NOTE: This is written AGAIN)
 		auto& var = pixelCG.ParamPS<XMVECTORF32, 7>();
@@ -803,11 +866,11 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		auto& var = pixelCG.ParamPS<XMVECTORF32, 7>();
 		var.f[1] = property->fSpecularLODFade;
 
-		doPrecipitationOcclusion = true;
+		updateEyePosition = true;
 	}
 
 	if (rawTechnique & (RAW_FLAG_SOFT_LIGHTING | RAW_FLAG_RIM_LIGHTING | RAW_FLAG_BACK_LIGHTING | RAW_FLAG_AMBIENT_SPECULAR))
-		doPrecipitationOcclusion = true;
+		updateEyePosition = true;
 
 	if ((rawTechnique & RAW_FLAG_PROJECTED_UV) && (baseTechniqueID != RAW_TECHNIQUE_HAIR))
 	{
@@ -833,23 +896,23 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		{
 			float *v60 = (float *)Pass->m_Geometry;
 
-			// VS: p6 float3x4 fVars3
-			float *fVars3 = &vertexCG.ParamVS<float, 6>();
+			// VS: p6 float3x4 TextureProj
+			float *textureProj = &vertexCG.ParamVS<float, 6>();
 
-			fVars3[0] = v60[91];
-			fVars3[1] = v60[95];
-			fVars3[2] = v60[99];
-			fVars3[3] = v60[103];
+			textureProj[0] = v60[91];
+			textureProj[1] = v60[95];
+			textureProj[2] = v60[99];
+			textureProj[3] = v60[103];
 
-			fVars3[4] = v60[92];
-			fVars3[5] = v60[96];
-			fVars3[6] = v60[100];
-			fVars3[7] = v60[104];
+			textureProj[4] = v60[92];
+			textureProj[5] = v60[96];
+			textureProj[6] = v60[100];
+			textureProj[7] = v60[104];
 
-			fVars3[8] = v60[93];
-			fVars3[9] = v60[97];
-			fVars3[10] = v60[101];
-			fVars3[11] = v60[105];
+			textureProj[8] = v60[93];
+			textureProj[9] = v60[97];
+			textureProj[10] = v60[101];
+			textureProj[11] = v60[105];
 
 			GeometrySetupProjectedUv(pixelCG, Pass->m_Geometry, property, enableProjectedUvNormals);
 		}
@@ -858,7 +921,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			XMMATRIX outputTemp;
 			sub_14130C8A0(Pass->m_Geometry->GetWorldTransform(), outputTemp, baseTechniqueID == RAW_TECHNIQUE_ENVMAP);
 
-			// VS: p6 float3x4 fVars3
+			// VS: p6 float3x4 textureProj
 			BSShaderUtil::TransposeStoreMatrix3x4(&vertexCG.ParamVS<float, 6>(), outputTemp);
 
 			GeometrySetupProjectedUv(pixelCG, nullptr, property, enableProjectedUvNormals);
@@ -873,33 +936,32 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		renderer->SetTexture(13, WorldMapOverlayNormalSnowTexture->QRendererTexture());
 		renderer->SetTextureAddressMode(13, 3);
 
-		// VS: p8 float4 Color1
+		// VS: p8 float4 WorldMapOverlayParameters
 		BSGraphics::Utility::CopyNiColorAToFloat(&vertexCG.ParamVS<XMVECTOR, 8>(), dword_1431F5540);
 
 		// PS: p17 float4 WorldMapOverlayParametersPS
 		BSGraphics::Utility::CopyNiColorAToFloat(&pixelCG.ParamPS<XMVECTOR, 17>(), dword_1431F5550);
 	}
 
-	// VS: p2 float3 PrecipitationOcclusionWorldViewProj
-	if (doPrecipitationOcclusion)
+	// VS: p2 float3 EyePosition
+	if (updateEyePosition)
 	{
-		XMFLOAT3& precipitationOcclusionWorldViewProj = vertexCG.ParamVS<XMFLOAT3, 2>();
+		XMFLOAT3& eyePosition = vertexCG.ParamVS<XMFLOAT3, 2>();
 
 		if (drawInWorldSpace)
 		{
 			float *v83 = (float *)BSShaderManager::GetCurrentAccumulator();
 			XMVECTOR coord = XMVectorSet(v83[91], v83[92], v83[93], 0.0f);
 
-			XMStoreFloat3(&precipitationOcclusionWorldViewProj, XMVector3TransformCoord(coord, inverseWorldMatrix));
+			XMStoreFloat3(&eyePosition, XMVector3TransformCoord(coord, inverseWorldMatrix));
 		}
 		else
 		{
 			float *v86 = (float *)BSShaderManager::GetCurrentAccumulator();
 
-			// Equivalent to XMMatrixTranslation(x, y, z) -- missing rows/cols are multiplied in shader code
-			precipitationOcclusionWorldViewProj.x = v86[91] - renderer->m_CurrentPosAdjust.x;
-			precipitationOcclusionWorldViewProj.y = v86[92] - renderer->m_CurrentPosAdjust.y;
-			precipitationOcclusionWorldViewProj.z = v86[93] - renderer->m_CurrentPosAdjust.z;
+			eyePosition.x = v86[91] - renderer->m_CurrentPosAdjust.x;
+			eyePosition.y = v86[92] - renderer->m_CurrentPosAdjust.y;
+			eyePosition.z = v86[93] - renderer->m_CurrentPosAdjust.z;
 		}
 	}
 
@@ -1027,11 +1089,11 @@ uint32_t BSLightingShader::GetPixelTechnique(uint32_t RawTechnique)
 	return flags | RAW_FLAG_VC;
 }
 
-void BSLightingShader::TechUpdateAccelerationConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG)
+void BSLightingShader::TechUpdateHighDetailRangeConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
-	// VS: p12 float4 Acceleration
+	// VS: p12 float4 HighDetailRange
 	BSGraphics::Utility::CopyNiColorAToFloat(&VertexCG.ParamVS<XMVECTOR, 12>(),
 		NiColorA(
 			flt_141E32F54 - renderer->m_CurrentPosAdjust.x,
@@ -1040,37 +1102,37 @@ void BSLightingShader::TechUpdateAccelerationConstants(BSGraphics::ConstantGroup
 			flt_141E32F60 - 15.0f));
 }
 
-void BSLightingShader::TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG)
+void BSLightingShader::TechUpdateFogConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG)
 {
 	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(byte_141E32FE0);
 
 	if (!fogParams)
 		return;
 
-	// Set both vertex & pixel here (incorrect names?)
+	// Set both vertex & pixel here
 	{
-		XMVECTORF32 wind;
-		wind.f[0] = *(float *)(fogParams + 56);
-		wind.f[1] = *(float *)(fogParams + 60);
-		wind.f[2] = *(float *)(fogParams + 64);
-		wind.f[3] = flt_141E32FBC;
+		XMVECTORF32 fogColor;
+		fogColor.f[0] = *(float *)(fogParams + 56);
+		fogColor.f[1] = *(float *)(fogParams + 60);
+		fogColor.f[2] = *(float *)(fogParams + 64);
+		fogColor.f[3] = flt_141E32FBC;
 
-		// VS: p14 float4 Wind
-		VertexCG.ParamVS<XMVECTORF32, 14>() = wind;
+		// VS: p14 float4 FogNearColor
+		VertexCG.ParamVS<XMVECTORF32, 14>() = fogColor;
 
 		// PS: p19 float4 FogColor
-		PixelCG.ParamPS<XMVECTORF32, 19>() = wind;
+		PixelCG.ParamPS<XMVECTORF32, 19>() = fogColor;
 	}
 
-	// VS: p15 float4 UNKNOWN_NAME
-	XMVECTORF32& UNKNOWN_PARAM = VertexCG.ParamVS<XMVECTORF32, 15>();
-	UNKNOWN_PARAM.f[0] = *(float *)(fogParams + 68);
-	UNKNOWN_PARAM.f[1] = *(float *)(fogParams + 72);
-	UNKNOWN_PARAM.f[2] = *(float *)(fogParams + 76);
-	UNKNOWN_PARAM.f[3] = 0.0f;
+	// VS: p15 float4 FogFarColor
+	XMVECTORF32& fogFarColor = VertexCG.ParamVS<XMVECTORF32, 15>();
+	fogFarColor.f[0] = *(float *)(fogParams + 68);
+	fogFarColor.f[1] = *(float *)(fogParams + 72);
+	fogFarColor.f[2] = *(float *)(fogParams + 76);
+	fogFarColor.f[3] = 0.0f;
 
-	// VS: p13 float4 ScaleAdjust
-	XMVECTORF32& scaleAdjust = VertexCG.ParamVS<XMVECTORF32, 13>();
+	// VS: p13 float4 FogParam
+	XMVECTORF32& fogParam = VertexCG.ParamVS<XMVECTORF32, 13>();
 
 	float v5 = *(float *)(fogParams + 84);
 	float v6 = *(float *)(fogParams + 80);
@@ -1079,14 +1141,14 @@ void BSLightingShader::TechUpdateFogWindConstants(BSGraphics::ConstantGroup<BSGr
 	{
 		float fogMultiplier = 1.0f / (v5 - v6);
 
-		scaleAdjust.f[0] = fogMultiplier * v6;
-		scaleAdjust.f[1] = fogMultiplier;
-		scaleAdjust.f[2] = *(float *)(fogParams + 132);
-		scaleAdjust.f[3] = *(float *)(fogParams + 136);
+		fogParam.f[0] = fogMultiplier * v6;
+		fogParam.f[1] = fogMultiplier;
+		fogParam.f[2] = *(float *)(fogParams + 132);
+		fogParam.f[3] = *(float *)(fogParams + 136);
 	}
 	else
 	{
-		scaleAdjust = xmmword_14187D940;
+		fogParam = xmmword_14187D940;
 	}
 }
 
@@ -1185,9 +1247,9 @@ void BSLightingShader::GeometrySetupViewProjection(BSGraphics::ConstantGroup<BSG
 		projMatrix = BSShaderUtil::GetXMFromNi(Transform);
 
 	//
-	// VS: p0 float3x4 WorldViewProj
+	// VS: p0 float3x4 World
 	// -- or --
-	// VS: p1 float3x4 PrevWorldViewProj
+	// VS: p1 float3x4 PreviousWorld
 	//
 	if (!IsPreviousWorld)
 		BSShaderUtil::TransposeStoreMatrix3x4(&VertexCG.ParamVS<float, 0>(), projMatrix);
@@ -1231,13 +1293,13 @@ void BSLightingShader::GeometrySetupMTLandExtraConstants(const BSGraphics::Const
 	if (v4 == 1.0f)
 		byte_1431F547C = 0;
 
-	// VS: p3 float4 fVars0
-	XMVECTORF32& fVars0 = VertexCG.ParamVS<XMVECTORF32, 3>();
+	// VS: p3 float4 LandBlendParams
+	XMVECTORF32& landBlendParams = VertexCG.ParamVS<XMVECTORF32, 3>();
 
-	fVars0.f[0] = a3;
-	fVars0.f[1] = a4;
-	fVars0.f[2] = v11.x - Translate.x;
-	fVars0.f[3] = v11.y - Translate.y;
+	landBlendParams.f[0] = a3;
+	landBlendParams.f[1] = a4;
+	landBlendParams.f[2] = v11.x - Translate.x;
+	landBlendParams.f[3] = v11.y - Translate.y;
 }
 
 void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSLightingShaderProperty *Property)
