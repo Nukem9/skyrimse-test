@@ -59,7 +59,7 @@ namespace ImGui
 		ListBoxFooter();
 
 		// Prevent old selections from exceeding bounds
-		if (*CurrentItem > listCopy->size())
+		if (*CurrentItem >= listCopy->size())
 			*CurrentItem = -1;
 
 		if (Filter->IsActive())
