@@ -18,10 +18,10 @@ DEFINE_SHADER_DESCRIPTOR(
 	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float3x4, PreviousWorld)
 	CONFIG_ENTRY(VS, PER_GEO, 2, float3, EyePosition)
 	CONFIG_ENTRY(VS, PER_GEO, 3, float4, LandBlendParams)
-	CONFIG_ENTRY(VS, PER_GEO, 4, unknown, TreeParams)// TODO
-	CONFIG_ENTRY(VS, PER_GEO, 5, unknown, WindTimers)// TODO
+	CONFIG_ENTRY(VS, PER_GEO, 4, float4, TreeParams)
+	CONFIG_ENTRY(VS, PER_GEO, 5, float2, WindTimers)
 	CONFIG_ENTRY(VS, PER_GEO, 6, row_major float3x4, TextureProj)
-	CONFIG_ENTRY(VS, PER_GEO, 7, unknown, IndexScale)// TODO
+	CONFIG_ENTRY(VS, PER_GEO, 7, float, IndexScale)
 	CONFIG_ENTRY(VS, PER_GEO, 8, float4, WorldMapOverlayParameters)
 	CONFIG_ENTRY(VS, PER_MAT, 9, float3, LeftEyeCenter)
 	CONFIG_ENTRY(VS, PER_MAT, 10, float3, RightEyeCenter)
@@ -30,7 +30,7 @@ DEFINE_SHADER_DESCRIPTOR(
 	CONFIG_ENTRY(VS, PER_TEC, 13, float4, FogParam)
 	CONFIG_ENTRY(VS, PER_TEC, 14, float4, FogNearColor)
 	CONFIG_ENTRY(VS, PER_TEC, 15, float4, FogFarColor)
-	CONFIG_ENTRY(VS, PER_GEO, 16, unknown, Bones)// TODO
+	CONFIG_ENTRY(VS, PER_GEO, 16, unknown, Bones)
 
 	/*
 	// Pixel TODO
@@ -81,6 +81,7 @@ DEFINE_SHADER_DESCRIPTOR(
 // - Vanilla bug fix for SetupMaterial() case RAW_TECHNIQUE_MULTIINDEXTRISHAPESNOW
 // - Global variables eliminated in each Setup/Restore function
 // - A lock is held in GeometrySetupMTLandExtraConstants()
+// - "Bones" and "IndexScale" vertex constants are not used in the game (undefined types)
 //
 using namespace DirectX;
 using namespace BSGraphics;
@@ -154,7 +155,7 @@ void TestHook5()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1307BD0), &BSLightingShader::__ctor__);
 }
 
-BSLightingShader::BSLightingShader() : BSShader("Lighting")
+BSLightingShader::BSLightingShader() : BSShader(ShaderConfig.Type)
 {
 	uintptr_t v1 = *(uintptr_t *)((uintptr_t)this + 0x0);
 	uintptr_t v2 = *(uintptr_t *)((uintptr_t)this + 0x10);
@@ -791,7 +792,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		break;
 
 	case RAW_TECHNIQUE_TREE:
-		sub_14130BC60(vertexCG, property);
+		GeometrySetupTreeAnimConstants(vertexCG, property);
 		break;
 	}
 
@@ -811,7 +812,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	GeometrySetupDirectionalLights(pixelCG, Pass, inverseWorldMatrix, drawInWorldSpace);
 	GeometrySetupAmbientLights(pixelCG, Pass->m_Geometry->GetWorldTransform(), drawInWorldSpace);
 
-	// PS: p7 float4 MaterialData
+	// PS: p7 float4 MaterialData (Write #1)
 	{
 		XMVECTORF32& materialData = pixelCG.ParamPS<XMVECTORF32, 7>();
 
@@ -862,10 +863,10 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (rawTechnique & RAW_FLAG_SPECULAR)
 	{
-		// PS: p7 float4 MaterialData (NOTE: This is written TWICE)
-		auto& var = pixelCG.ParamPS<XMVECTORF32, 7>();
-		var.f[1] = property->fSpecularLODFade;
+		// PS: p7 float4 MaterialData (Write #2)
+		XMVECTORF32& materialData = pixelCG.ParamPS<XMVECTORF32, 7>();
 
+		materialData.f[1] = property->fSpecularLODFade;
 		updateEyePosition = true;
 	}
 
@@ -1302,7 +1303,7 @@ void BSLightingShader::GeometrySetupMTLandExtraConstants(const BSGraphics::Const
 	landBlendParams.f[3] = v11.y - Translate.y;
 }
 
-void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSLightingShaderProperty *Property)
+void BSLightingShader::GeometrySetupTreeAnimConstants(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSLightingShaderProperty *Property)
 {
 	// Tree leaf animations
 	// __int64 __fastcall sub_14130BC60(__int64 a1, __int64 a2)
@@ -1315,8 +1316,8 @@ void BSLightingShader::sub_14130BC60(const BSGraphics::ConstantGroup<BSGraphics:
 
 	temp.ptr = VertexCG.RawData();
 
-	auto sub_14130BC60 = (void(__fastcall *)(tempbufdata *, BSLightingShaderProperty *))(g_ModuleBase + 0x130BC60);
-	sub_14130BC60(&temp, Property);
+	auto GeometrySetupTreeAnimConstants = (void(__fastcall *)(tempbufdata *, BSLightingShaderProperty *))(g_ModuleBase + 0x130BC60);
+	GeometrySetupTreeAnimConstants(&temp, Property);
 }
 
 void BSLightingShader::GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const BSRenderPass *Pass, XMMATRIX& World, bool WorldSpace)
