@@ -1,9 +1,4 @@
-//
-// NOTE: "common.h" can't be included due to tracy server/client structure conflicts. Remove
-// this once it's resolved.
-//
-#include <windows.h>
-#include "../config.h"
+#include "../common.h"
 #include "../../../imgui/imgui.h"
 #if SKYRIM64_USE_TRACY
 #include "../../../tracy_lib/tracy/server/TracyBadVersion.hpp"

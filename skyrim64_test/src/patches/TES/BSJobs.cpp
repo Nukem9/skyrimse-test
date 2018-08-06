@@ -122,7 +122,7 @@ const std::unordered_map<uintptr_t, std::string> BSJobs::JobNameMap =
 
 std::unordered_map<uintptr_t, BSJobs::TrackingInfo> BSJobs::JobTracker;
 #if SKYRIM64_USE_TRACY
-std::unordered_map<uintptr_t, tracy::SourceLocation> TracySourceMap;
+std::unordered_map<uintptr_t, tracy::SourceLocationData> TracySourceMap;
 #endif
 
 void BSJobs::DispatchJobCallback(void *Parameter, void(*Function)(void *))
@@ -133,7 +133,7 @@ void BSJobs::DispatchJobCallback(void *Parameter, void(*Function)(void *))
 		for (auto& nameEntry : BSJobs::JobNameMap)
 		{
 #if SKYRIM64_USE_TRACY
-			tracy::SourceLocation srcLocation{ nameEntry.second.c_str(), nameEntry.second.c_str(), "<unknown>", 0, 0 };
+			tracy::SourceLocationData srcLocation{ nameEntry.second.c_str(), nameEntry.second.c_str(), "<unknown>", 0, 0 };
 			TracySourceMap.insert_or_assign(nameEntry.first, srcLocation);
 #endif
 
