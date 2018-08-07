@@ -81,11 +81,9 @@ public:
 				default: Assert(false); break;
 				}
 			}
-
-			if (e.m_DeclType == SAMPLER)
+			else if (e.m_DeclType == SAMPLER)
 				BySamplerIndex[e.Index] = &e;
-
-			if (e.m_DeclType == TEXTURE)
+			else if (e.m_DeclType == TEXTURE)
 				ByTextureIndex[e.Index] = &e;
 		}
 
@@ -96,36 +94,13 @@ public:
 class NiBoneMatrixSetterI
 {
 public:
-#pragma pack(push, 1)
-	struct Data
-	{
-		char _pad0[0x3C];
-		uint16_t m_Flags;
-		char _pad1[0x12];
-
-		Data()
-		{
-			auto sub_140C7B160 = (void(__fastcall *)(Data *))(g_ModuleBase + 0xC7B160);
-			sub_140C7B160(this);
-		}
-
-		~Data()
-		{
-			auto sub_140C7B1A0 = (void(__fastcall *)(Data *))(g_ModuleBase + 0xC7B1A0);
-			sub_140C7B1A0(this);
-		}
-	};
-#pragma pack(pop)
-
 	virtual ~NiBoneMatrixSetterI()
 	{
 	}
 
-	virtual void SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform) = 0;
+	virtual void SetBoneMatrix(NiSkinInstance *SkinInstance, NiSkinPartition::Partition *Partition, const NiTransform *Transform) = 0;
 };
 static_assert(sizeof(NiBoneMatrixSetterI) == 0x8);
-static_assert(sizeof(NiBoneMatrixSetterI::Data) == 0x50);
-static_assert_offset(NiBoneMatrixSetterI::Data, m_Flags, 0x3C);
 
 class BSReloadShaderI
 {
@@ -174,7 +149,7 @@ public:
 	virtual void ReloadShaders(bool Unknown);
 
 	virtual void ReloadShaders(BSIStream *Stream) override;
-	virtual void SetBoneMatrix(NiSkinInstance *SkinInstance, Data *Parameters, const NiTransform *Transform) override;
+	virtual void SetBoneMatrix(NiSkinInstance *SkinInstance, NiSkinPartition::Partition *Partition, const NiTransform *Transform) override;
 
 	// Both of these functions are virtual, but removed from SkyrimSE.exe itself
 	void CreateVertexShader(

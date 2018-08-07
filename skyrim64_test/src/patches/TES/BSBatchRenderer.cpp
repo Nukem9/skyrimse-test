@@ -531,10 +531,10 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	{
 		SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
 
-		NiBoneMatrixSetterI::Data params;
-		params.m_Flags = 1;
+		NiSkinPartition::Partition partition;
+		partition.m_usBones = 1;
 
-		Pass->m_Shader->SetBoneMatrix(Pass->m_Geometry->QSkinInstance(), &params, &Pass->m_Geometry->GetWorldTransform());
+		Pass->m_Shader->SetBoneMatrix(Pass->m_Geometry->QSkinInstance(), &partition, &Pass->m_Geometry->GetWorldTransform());
 		DrawGeometry(Pass);
 	}
 	else
@@ -559,7 +559,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 		}
 
 		// Renders multiple skinned instances (SetupTechnique, SetBoneMatrix)
-		Pass->m_Geometry->QSkinInstance()->VFunc37(&skinData);
+		Pass->m_Geometry->QSkinInstance()->Render(&skinData);
 	}
 
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
@@ -588,6 +588,8 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 	{
 	case GEOMETRY_TYPE_PARTICLES:
 	{
+		AssertDebug(geometry->IsParticlesGeom());
+
 		int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
 
 		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
@@ -687,6 +689,8 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 
 	case GEOMETRY_TYPE_SUBINDEX_TRISHAPE:
 	{
+		AssertDebug(geometry->IsSubIndexTriShape());
+
 		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
 		sub_14131DDF0(Pass);
 	}
