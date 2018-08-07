@@ -58,7 +58,7 @@ void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, NiSkinPartition::Part
 	auto sub_140D74600 = (void(__fastcall *)(NiSkinInstance *, const NiTransform *))(g_ModuleBase + 0x0D74600);
 	sub_140D74600(SkinInstance, Transform);
 
-	uint32_t v11 = (unsigned int)(3 * *(uint32_t *)(*(uintptr_t *)((uintptr_t)SkinInstance->m_spSkinData) + 88i64)) * 16;
+	uint32_t v11 = (unsigned int)(3 * *(uint32_t *)((uintptr_t)SkinInstance->m_spSkinData + 88i64)) * 16;
 
 	auto boneDataConstants = renderer->GetShaderConstantGroup(v11, BSGraphics::CONSTANT_GROUP_LEVEL_BONES);
 	auto prevBoneDataConstants = renderer->GetShaderConstantGroup(v11, BSGraphics::CONSTANT_GROUP_LEVEL_PREVIOUS_BONES);
