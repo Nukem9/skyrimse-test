@@ -11,8 +11,7 @@ class NiObjectGroup;
 class NiObject : public NiRefObject
 {
 public:
-	virtual const NiRTTI *GetRTTI() const;
-
+	virtual const NiRTTI						*GetRTTI() const;
 	virtual const NiNode						*IsNode() const;
 	virtual class NiSwitchNode					*IsSwitchNode() const;
 	virtual class BSFadeNode					*IsFadeNode() const;
@@ -27,10 +26,10 @@ public:
 	virtual class NiTriBasedGeom				*IsNiTriBasedGeom() const;
 	virtual class NiTriShape					*IsNiTriShape() const;
 	virtual class NiParticles					*IsParticlesGeom() const;
-	virtual void								*IsLinesGeom() const;
+	virtual class BSLines						*IsLinesGeom() const;
 	virtual class bhkNiCollisionObject			*IsBhkNiCollisionObject() const;
 	virtual class bhkBlendCollisionObject		*IsBhkBlendCollisionObject() const;
-	virtual void								*IsUnknown1() const;
+	virtual class bhkAttachmentCollisionObject	*IsBhkAttachmentCollisionObject() const;
 	virtual class bhkRigidBody					*IsBhkRigidBody() const;
 	virtual class bhkLimitedHingeConstraint		*IsBhkLimitedHingeConstraint() const;
 
@@ -47,7 +46,7 @@ public:
 	virtual unsigned int GetBlockAllocationSize();
 	virtual NiObjectGroup *GetGroup();
 	virtual void *SetGroup(NiObjectGroup *);
-	virtual class NiControllerManager *IsNiControllerManager();
+	virtual class NiControllerManager *IsNiControllerManager() const;
 
 	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
 	{
