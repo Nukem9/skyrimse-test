@@ -5,7 +5,7 @@
 namespace MOC
 {
 	void Init();
-	bool RegisterGeo(BSGeometry *Geometry, bool Test, bool Draw);
+	void RegisterGeo(BSGeometry *Geometry);
 	void SendTraverseCommand(NiCamera *Camera);
 	void TraverseSceneGraph(NiCamera *Camera);
 	void RemoveCachedVerticesAndIndices(void *RendererData);

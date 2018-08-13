@@ -198,8 +198,6 @@ namespace MOC
 	XMMATRIX MyViewProj;
 	NiPoint3 MyPosAdjust;
 
-
-
 	bool mocInit = false;
 
 	void TraverseSceneGraphCallback(MaskedOcclusionCulling *MOC, void *UserData)
@@ -210,11 +208,10 @@ namespace MOC
 
 	void RenderGeoCallback(MaskedOcclusionCulling *MOC, void *UserData)
 	{
-		BSGeometry *geometry = (BSGeometry *)UserData;
-
 		ProfileTimer("MOC RenderGeometry");
 		ZoneScopedN("MOC RenderGeometry");
 
+		BSGeometry *geometry = (BSGeometry *)UserData;
 		IndexPair indexRawData;
 		float *vertexRawData;
 
@@ -361,10 +358,10 @@ namespace MOC
 		XMVECTOR vCorner3NDC = XMVectorDivide(vCorner3CS, XMVectorSplatW(vCorner3CS));
 
 		// Bounding rect mins and maxs
-		XMVECTOR xy_mins = _mm_min_ps(vCorner0NDC, _mm_min_ps(vCorner1NDC, _mm_min_ps(vCorner2NDC, vCorner3NDC)));// zw discarded
-		XMVECTOR xy_maxs = _mm_max_ps(vCorner0NDC, _mm_max_ps(vCorner1NDC, _mm_max_ps(vCorner2NDC, vCorner3NDC)));// zw discarded
+		XMVECTOR xyMins = _mm_min_ps(vCorner0NDC, _mm_min_ps(vCorner1NDC, _mm_min_ps(vCorner2NDC, vCorner3NDC)));// zw discarded
+		XMVECTOR xyMaxs = _mm_max_ps(vCorner0NDC, _mm_max_ps(vCorner1NDC, _mm_max_ps(vCorner2NDC, vCorner3NDC)));// zw discarded
 
-		auto r = ThreadedMOC->GetMOC()->TestRect(xy_mins.m128_f32[0], xy_mins.m128_f32[1], xy_maxs.m128_f32[0], xy_maxs.m128_f32[1], closestSpherePointW);
+		auto r = ThreadedMOC->GetMOC()->TestRect(xyMins.m128_f32[0], xyMins.m128_f32[1], xyMaxs.m128_f32[0], xyMaxs.m128_f32[1], closestSpherePointW);
 
 		if (r != MaskedOcclusionCulling::VISIBLE)
 		{
@@ -375,7 +372,7 @@ namespace MOC
 
 			AcquireSRWLockExclusive(&lock);
 
-			ImGui::GetWindowDrawList()->AddRect(ImVec2(CONVERT_X(xy_mins.m128_f32[0]), CONVERT_Y(xy_mins.m128_f32[1])), ImVec2(CONVERT_X(xy_maxs.m128_f32[0]), CONVERT_Y(xy_maxs.m128_f32[1])), IM_COL32(255, 0, 0, 255));
+			ImGui::GetWindowDrawList()->AddRect(ImVec2(CONVERT_X(xyMins.m128_f32[0]), CONVERT_Y(xyMins.m128_f32[1])), ImVec2(CONVERT_X(xyMaxs.m128_f32[0]), CONVERT_Y(xyMaxs.m128_f32[1])), IM_COL32(255, 0, 0, 255));
 
 			ReleaseSRWLockExclusive(&lock);
 			*/
@@ -469,43 +466,40 @@ namespace MOC
 
 	std::vector<GeometryDistEntry> GeoList;
 
-	bool RegisterGeo(BSGeometry *Geometry, bool Test, bool Draw)
+	void RegisterGeo(BSGeometry *Geometry)
 	{
-		if (!mocInit || !ui::opt::EnableOccluderRendering)
-			return true;
-
+		// Strictly check for BSLightingShaderProperty
 		BSShaderProperty *shaderProperty = Geometry->QShaderProperty();
 
 		if (!shaderProperty)
-			return false;
+			return;
 
-		if ((Geometry->QType() == GEOMETRY_TYPE_TRISHAPE || Geometry->QType() == GEOMETRY_TYPE_DYNAMIC_TRISHAPE) && shaderProperty->IsExactKindOf(NiRTTI::ms_BSLightingShaderProperty))
+		if (!shaderProperty->IsExactKindOf(NiRTTI::ms_BSLightingShaderProperty))
+			return;
+
+		// TriShape or dynamic TriShape only
+		if (Geometry->QType() == GEOMETRY_TYPE_DYNAMIC_TRISHAPE)
 		{
-			if (Geometry->QType() == GEOMETRY_TYPE_DYNAMIC_TRISHAPE)
+			auto dynTriShape = static_cast<BSDynamicTriShape *>(Geometry);
+			auto rendererData = reinterpret_cast<BSGraphics::DynamicTriShape *>(dynTriShape->QRendererData());
+
+			if (rendererData)
+				Assert(rendererData->m_Unknown4 != nullptr);
+		}
+		else if (Geometry->QType() == GEOMETRY_TYPE_TRISHAPE)
+		{
+			auto triShape = static_cast<BSTriShape *>(Geometry);
+			auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
+
+			if (rendererData && rendererData->m_RawIndexData && triShape->m_TriangleCount > 1)
 			{
-				auto dynTriShape = static_cast<BSDynamicTriShape *>(Geometry);
-				auto rendererData = reinterpret_cast<BSGraphics::DynamicTriShape *>(dynTriShape->QRendererData());
+				GeometryDistEntry entry;
+				entry.Geometry = Geometry;
+				entry.Distance = XMVector3Length(_mm_sub_ps(Geometry->m_kWorldBound.m_kCenter.AsXmm(), MyPosAdjust.AsXmm())).m128_f32[0];
 
-				if (rendererData)
-					Assert(rendererData->m_Unknown4 != nullptr);
-			}
-			else
-			{
-				auto triShape = static_cast<BSTriShape *>(Geometry);
-				auto rendererData = reinterpret_cast<BSGraphics::TriShape *>(triShape->QRendererData());
-
-				if (rendererData && rendererData->m_RawIndexData && triShape->m_TriangleCount > 1)
-				{
-					GeometryDistEntry entry;
-					entry.Geometry = Geometry;
-					entry.Distance = XMVector3Length(_mm_sub_ps(Geometry->m_kWorldBound.m_kCenter.AsXmm(), MyPosAdjust.AsXmm())).m128_f32[0];
-
-					GeoList.push_back(entry);
-				}
+				GeoList.push_back(entry);
 			}
 		}
-
-		return true;
 	}
 
 	bool ShouldCullLite(const NiAVObject *Object)
@@ -591,7 +585,7 @@ namespace MOC
 
 				// Distance2DSqaured
 				if (((d1 * d1) + (d2 * d2)) < (ui::opt::OccluderMaxDistance * ui::opt::OccluderMaxDistance))
-					RegisterGeo(Object->IsGeometry(), false, true);
+					RegisterGeo(Object->IsGeometry());
 			}
 		}
 	}
@@ -602,7 +596,7 @@ namespace MOC
 			return;
 
 		// Everything in this loop will be some kind of node
-		for (int i = 0; i < Node->GetArrayCount(); i++)
+		for (uint32_t i = 0; i < Node->GetArrayCount(); i++)
 			RenderRecursive(f, Node->GetAt(i), true);
 	}
 
@@ -610,6 +604,9 @@ namespace MOC
 
 	void SendTraverseCommand(NiCamera *Camera)
 	{
+		if (!mocInit || !ui::opt::EnableOccluderRendering)
+			return;
+
 		ThreadedMOC->NotifyPreWork();
 		ThreadedMOC->SubmitSceneRender(Camera);
 		ThreadedMOC->ClearPreWorkNotify();
@@ -666,7 +663,7 @@ namespace MOC
 		node = node->GetAt(3)->IsNode();		// NiNode (ObjectLODRoot)
 
 		// Skip the first 2 child nodes
-		for (int i = 2; i < node->GetArrayCount(); i++)
+		for (uint32_t i = 2; i < node->GetArrayCount(); i++)
 		{
 			if (!node->GetAt(i))
 				continue;
