@@ -263,9 +263,9 @@ void Patch_TESV()
 	// Bug fix for when TAA/FXAA/DOF are disabled and quicksave doesn't work without
 	// opening a menu
 	//
-	PatchMemory(g_ModuleBase + 0x12AE2DD, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);	// Kill jnz
-	PatchMemory(g_ModuleBase + 0x12AE2E8, (PBYTE)"\x80\xBD\x11\x02\x00\x00\x00", 7);// Rewrite to 'cmp byte ptr [rbp+211h], 0'
-	PatchMemory(g_ModuleBase + 0x12AE2EF, (PBYTE)"\x90\x90\x90\x90", 4);			// Extra rewrite padding
+	//PatchMemory(g_ModuleBase + 0x12AE2DD, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);	// Kill jnz
+	//PatchMemory(g_ModuleBase + 0x12AE2E8, (PBYTE)"\x80\xBD\x11\x02\x00\x00\x00", 7);// Rewrite to 'cmp byte ptr [rbp+211h], 0'
+	//PatchMemory(g_ModuleBase + 0x12AE2EF, (PBYTE)"\x90\x90\x90\x90", 4);			// Extra rewrite padding
 
 	*(PBYTE *)&TESObjectCell::CreateRootMultiBoundNode = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x264230), &TESObjectCell::hk_CreateRootMultiBoundNode);
 
