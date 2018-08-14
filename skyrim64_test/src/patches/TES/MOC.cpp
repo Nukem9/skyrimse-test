@@ -2,6 +2,7 @@
 #include "../rendering/common.h"
 #include "../../common.h"
 #include "BSShader/BSShaderUtil.h"
+#include "BSShader/BSShaderProperty.h"
 #include "BSGraphicsRenderer.h"
 #include "BSBatchRenderer.h"
 #include "MOC.h"
@@ -41,15 +42,7 @@ namespace MOC
 		uint32_t *out = new uint32_t[Count];
 
 		for (uint32_t i = 0; i < Count; i++)
-		{
 			out[i] = in[i];
-
-			if (MaxVertexCount != 0)
-			{
-				if (out[i] >= MaxVertexCount)
-					__debugbreak();
-			}
-		}
 
 		return out;
 	}
@@ -212,9 +205,16 @@ namespace MOC
 		ZoneScopedN("MOC RenderGeometry");
 
 		BSGeometry *geometry = (BSGeometry *)UserData;
+
+		// If double sided geometry, avoid culling back faces
+		MaskedOcclusionCulling::BackfaceWinding winding = MaskedOcclusionCulling::BACKFACE_CW;
+
+		if (geometry->QShaderProperty()->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
+			winding = MaskedOcclusionCulling::BACKFACE_NONE;
+
+		// Grab LOD-ified mesh data
 		IndexPair indexRawData;
 		float *vertexRawData;
-
 		GetCachedVerticesAndIndices(geometry, &indexRawData, &vertexRawData);
 
 		XMMATRIX worldProj = BSShaderUtil::GetXMFromNiPosAdjust(geometry->GetWorldTransform(), MyPosAdjust);
@@ -225,7 +225,7 @@ namespace MOC
 			indexRawData.Data,
 			indexRawData.Count / 3,
 			(float *)&worldViewProj,
-			MaskedOcclusionCulling::BACKFACE_CW,
+			winding,
 			MaskedOcclusionCulling::CLIP_PLANE_SIDES);
 
 		ProfileCounterInc("MOC ObjectsRendered");
@@ -386,9 +386,9 @@ namespace MOC
 	bool TestAABB(BSMultiBoundAABB *Object)
 	{
 		const static int AABB_VERTICES = 8;
-		const static UINT sBBxInd[AABB_VERTICES] = { 1, 0, 0, 1, 1, 1, 0, 0 };
-		const static UINT sBByInd[AABB_VERTICES] = { 1, 1, 1, 1, 0, 0, 0, 0 };
-		const static UINT sBBzInd[AABB_VERTICES] = { 1, 1, 0, 0, 0, 1, 1, 0 };
+		const static uint32_t sBBxInd[AABB_VERTICES] = { 1, 0, 0, 1, 1, 1, 0, 0 };
+		const static uint32_t sBByInd[AABB_VERTICES] = { 1, 1, 1, 1, 0, 0, 0, 0 };
+		const static uint32_t sBBzInd[AABB_VERTICES] = { 1, 1, 0, 0, 0, 1, 1, 0 };
 
 		// w ends up being garbage, but it doesn't matter - we ignore it anyway.
 		__m128 vCenter = _mm_sub_ps(Object->m_kCenter.AsXmm(), MyPosAdjust.AsXmm());
@@ -417,7 +417,7 @@ namespace MOC
 		if (minW < 0.00000001f)
 			return true;
 
-		for (UINT i = 0; i < AABB_VERTICES; i++)
+		for (uint32_t i = 0; i < AABB_VERTICES; i++)
 		{
 			// Transform the vertex
 			__m128 vert = MyViewProj.r[3];
@@ -461,7 +461,7 @@ namespace MOC
 	struct GeometryDistEntry
 	{
 		BSGeometry *Geometry;
-		float Distance;
+		float DistanceSquared;
 	};
 
 	std::vector<GeometryDistEntry> GeoList;
@@ -495,7 +495,7 @@ namespace MOC
 			{
 				GeometryDistEntry entry;
 				entry.Geometry = Geometry;
-				entry.Distance = XMVector3Length(_mm_sub_ps(Geometry->m_kWorldBound.m_kCenter.AsXmm(), MyPosAdjust.AsXmm())).m128_f32[0];
+				entry.DistanceSquared = XMVector3LengthSq(_mm_sub_ps(Geometry->m_kWorldBound.m_kCenter.AsXmm(), MyPosAdjust.AsXmm())).m128_f32[0];
 
 				GeoList.push_back(entry);
 			}
@@ -685,7 +685,7 @@ namespace MOC
 		std::sort(GeoList.begin(), GeoList.end(),
 		[](GeometryDistEntry& a, GeometryDistEntry& b) -> bool
 		{
-			return a.Distance < b.Distance;
+			return a.DistanceSquared < b.DistanceSquared;
 		});
 
 		for (GeometryDistEntry& entry : GeoList)
