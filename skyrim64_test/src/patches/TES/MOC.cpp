@@ -25,6 +25,8 @@ extern ID3D11ShaderResourceView *g_OcclusionTextureSRV;
 
 namespace MOC
 {
+	AutoPtr(NiNode *, WorldScenegraph, 0x2F4CE30);
+
 	MOC_ThreadedMerger *ThreadedMOC;
 
 	struct IndexPair
@@ -130,8 +132,8 @@ namespace MOC
 			p.Data = ConvertIndices(indexData, indexCount, vertexCount);
 			p.Count = indexCount;
 
-			if (indexCount > 300)
-				p.Count = meshopt_simplify(p.Data, p.Data, indexCount, (const float *)vertexData, vertexCount, vertexStride, (size_t)(indexCount * .33f));// Target 33% of original triangles
+			//if (indexCount > 300)
+			//	p.Count = meshopt_simplify(p.Data, p.Data, indexCount, (const float *)vertexData, vertexCount, vertexStride, (size_t)(indexCount * .33f));// Target 33% of original triangles
 
 			m_IndexMap.insert_or_assign(dataPtr, p);
 			*Indices = p;
@@ -177,6 +179,7 @@ namespace MOC
 
 	void UpdateDepthViewTexture()
 	{
+		ZoneScopedN("MOC UpdateDepthView");
 		ThreadedMOC->UpdateDepthViewTexture(BSGraphics::Renderer::GetGlobals()->m_DeviceContext, g_OcclusionTexture);
 	}
 
@@ -193,51 +196,12 @@ namespace MOC
 
 	bool mocInit = false;
 
-	void TraverseSceneGraphCallback(MaskedOcclusionCulling *MOC, void *UserData)
-	{
-		NiCamera *camera = (NiCamera *)UserData;
-		TraverseSceneGraph(camera);
-	}
-
-	void RenderGeoCallback(MaskedOcclusionCulling *MOC, void *UserData)
-	{
-		ProfileTimer("MOC RenderGeometry");
-		ZoneScopedN("MOC RenderGeometry");
-
-		BSGeometry *geometry = (BSGeometry *)UserData;
-
-		// If double sided geometry, avoid culling back faces
-		MaskedOcclusionCulling::BackfaceWinding winding = MaskedOcclusionCulling::BACKFACE_CW;
-
-		if (geometry->QShaderProperty()->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
-			winding = MaskedOcclusionCulling::BACKFACE_NONE;
-
-		// Grab LOD-ified mesh data
-		IndexPair indexRawData;
-		float *vertexRawData;
-		GetCachedVerticesAndIndices(geometry, &indexRawData, &vertexRawData);
-
-		XMMATRIX worldProj = BSShaderUtil::GetXMFromNiPosAdjust(geometry->GetWorldTransform(), MyPosAdjust);
-		XMMATRIX worldViewProj = XMMatrixMultiply(worldProj, MyViewProj);
-
-		MOC->RenderTriangles(
-			vertexRawData,
-			indexRawData.Data,
-			indexRawData.Count / 3,
-			(float *)&worldViewProj,
-			winding,
-			MaskedOcclusionCulling::CLIP_PLANE_SIDES);
-
-		ProfileCounterInc("MOC ObjectsRendered");
-		ProfileCounterAdd("MOC TrianglesRendered", indexRawData.Count / 3);
-	}
-
 	void Init()
 	{
-		ThreadedMOC = new MOC_ThreadedMerger(MOC_WIDTH, MOC_HEIGHT, 2, true);
+		ThreadedMOC = new MOC_ThreadedMerger(MOC_WIDTH, MOC_HEIGHT, 4, true);
 
 		ThreadedMOC->SetTraverseSceneCallback(TraverseSceneGraphCallback);
-		ThreadedMOC->SetRenderGeometryCallback(RenderGeoCallback);
+		ThreadedMOC->SetRenderGeometryCallback(RenderGeometryCallback);
 
 		mocInit = true;
 	}
@@ -274,21 +238,29 @@ namespace MOC
 		if (Object->QAppCulled())
 			return true;
 
+		ProfileCounterInc("MOC CullObjectCount");
+		ProfileTimer("MOC CullTest");
+
 		BSMultiBoundAABB *aabb = GetAABBNode(Object);
+		bool visible = false;
 
 		if (aabb)
-			return TestAABB(aabb);
+			visible = TestAABB(aabb);
+		else
+			visible = TestSphere(Object);
 
-		return TestSphere(Object);
+		if (visible)
+		{
+			ProfileCounterInc("MOC CullObjectPassed");
+		}
+
+		return visible;
 	}
 
 	bool TestSphere(NiAVObject *Object)
 	{
 		if (Object->m_kWorldBound.m_fRadius <= 5.0f)
 			return true;
-
-		ProfileCounterInc("MOC CullObjectCount");
-		ProfileTimer("MOC CullTest");
 
 		//if (Object->IsTriShape() && Object->IsGeometry()->QType() != GEOMETRY_TYPE_TRISHAPE)
 		//	return true;
@@ -379,7 +351,6 @@ namespace MOC
 			return false;
 		}
 
-		ProfileCounterInc("MOC CullObjectPassed");
 		return true;
 	}
 
@@ -399,28 +370,28 @@ namespace MOC
 
 		// transforms
 		__m128 xRow[2], yRow[2], zRow[2];
-		xRow[0] = _mm_shuffle_ps(vMin, vMin, 0x00) * MyViewProj.r[0];
-		xRow[1] = _mm_shuffle_ps(vMax, vMax, 0x00) * MyViewProj.r[0];
-		yRow[0] = _mm_shuffle_ps(vMin, vMin, 0x55) * MyViewProj.r[1];
-		yRow[1] = _mm_shuffle_ps(vMax, vMax, 0x55) * MyViewProj.r[1];
-		zRow[0] = _mm_shuffle_ps(vMin, vMin, 0xaa) * MyViewProj.r[2];
-		zRow[1] = _mm_shuffle_ps(vMax, vMax, 0xaa) * MyViewProj.r[2];
-
-		__m128 zAllIn = _mm_castsi128_ps(_mm_set1_epi32(~0));
-		__m128 screenMin = _mm_set1_ps(FLT_MAX);
-		__m128 screenMax = _mm_set1_ps(-FLT_MAX);
+		xRow[0] = _mm_mul_ps(_mm_shuffle_ps(vMin, vMin, 0x00), MyViewProj.r[0]);
+		xRow[1] = _mm_mul_ps(_mm_shuffle_ps(vMax, vMax, 0x00), MyViewProj.r[0]);
+		yRow[0] = _mm_mul_ps(_mm_shuffle_ps(vMin, vMin, 0x55), MyViewProj.r[1]);
+		yRow[1] = _mm_mul_ps(_mm_shuffle_ps(vMax, vMax, 0x55), MyViewProj.r[1]);
+		zRow[0] = _mm_mul_ps(_mm_shuffle_ps(vMin, vMin, 0xaa), MyViewProj.r[2]);
+		zRow[1] = _mm_mul_ps(_mm_shuffle_ps(vMax, vMax, 0xaa), MyViewProj.r[2]);
 
 		// Find the minimum of each component
-		__m128 minvert = _mm_add_ps(MyViewProj.r[3], _mm_add_ps(_mm_add_ps(_mm_min_ps(xRow[0], xRow[1]), _mm_min_ps(yRow[0], yRow[1])), _mm_min_ps(zRow[0], zRow[1])));
-		float minW = minvert.m128_f32[3];
+		__m128 minVert = _mm_add_ps(MyViewProj.r[3], _mm_add_ps(_mm_add_ps(_mm_min_ps(xRow[0], xRow[1]), _mm_min_ps(yRow[0], yRow[1])), _mm_min_ps(zRow[0], zRow[1])));
+		float minW = minVert.m128_f32[3];
 
 		if (minW < 0.00000001f)
 			return true;
 
+		__m128 screenMin = _mm_set1_ps(FLT_MAX);
+		__m128 screenMax = _mm_set1_ps(-FLT_MAX);
+		__m128 baseVert = MyViewProj.r[3];
+
 		for (uint32_t i = 0; i < AABB_VERTICES; i++)
 		{
 			// Transform the vertex
-			__m128 vert = MyViewProj.r[3];
+			__m128 vert = baseVert;
 			vert += xRow[sBBxInd[i]];
 			vert += yRow[sBByInd[i]];
 			vert += zRow[sBBzInd[i]];
@@ -466,7 +437,7 @@ namespace MOC
 
 	std::vector<GeometryDistEntry> GeoList;
 
-	void RegisterGeo(BSGeometry *Geometry)
+	void RegisterGeometry(BSGeometry *Geometry)
 	{
 		// Strictly check for BSLightingShaderProperty
 		BSShaderProperty *shaderProperty = Geometry->QShaderProperty();
@@ -500,6 +471,39 @@ namespace MOC
 				GeoList.push_back(entry);
 			}
 		}
+	}
+
+	void RenderGeometryCallback(MaskedOcclusionCulling *MOC, void *UserData)
+	{
+		ProfileTimer("MOC RenderGeometry");
+		ZoneScopedN("MOC RenderGeometry");
+
+		BSGeometry *geometry = (BSGeometry *)UserData;
+
+		// If double sided geometry, avoid culling back faces
+		MaskedOcclusionCulling::BackfaceWinding winding = MaskedOcclusionCulling::BACKFACE_CW;
+
+		if (geometry->QShaderProperty()->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
+			winding = MaskedOcclusionCulling::BACKFACE_NONE;
+
+		// Grab LOD-ified mesh data
+		IndexPair indexRawData;
+		float *vertexRawData;
+		GetCachedVerticesAndIndices(geometry, &indexRawData, &vertexRawData);
+
+		XMMATRIX worldProj = BSShaderUtil::GetXMFromNiPosAdjust(geometry->GetWorldTransform(), MyPosAdjust);
+		XMMATRIX worldViewProj = XMMatrixMultiply(worldProj, MyViewProj);
+
+		MOC->RenderTriangles(
+			vertexRawData,
+			indexRawData.Data,
+			indexRawData.Count / 3,
+			(float *)&worldViewProj,
+			winding,
+			MaskedOcclusionCulling::CLIP_PLANE_SIDES);
+
+		ProfileCounterInc("MOC ObjectsRendered");
+		ProfileCounterAdd("MOC TrianglesRendered", indexRawData.Count / 3);
 	}
 
 	bool ShouldCullLite(const NiAVObject *Object)
@@ -541,22 +545,22 @@ namespace MOC
 		{
 			DirectX::XMVECTOR center;
 			
-			/*if (auto aabbNode = GetAABBNode(Object))
+			if (auto aabbNode = GetAABBNode(Object))
 			{
-				center = _mm_sub_ps(aabbNode->m_kCenter.AsXmm(), BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust.AsXmm());
+				center = _mm_sub_ps(aabbNode->m_kCenter.AsXmm(), MyPosAdjust.AsXmm());
 				DirectX::XMVECTOR halfExtents = aabbNode->m_kHalfExtents.AsXmm();
 
-				if (f.TestAABB(center, _mm_add_ps(halfExtents, halfExtents)))
+				if (f.TestAABB(center, halfExtents))
 					cull = true;
-			}*/
-			if (Object->m_kWorldBound.m_fRadius > 10.0f)
+			}
+			else if (Object->m_kWorldBound.m_fRadius > 10.0f)
 			{
 				center = _mm_sub_ps(_mm_setr_ps(
 					Object->m_kWorldBound.m_kCenter.x,
 					Object->m_kWorldBound.m_kCenter.y,
 					Object->m_kWorldBound.m_kCenter.z,
 					Object->m_kWorldBound.m_fRadius),
-					BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust.AsXmm());
+					MyPosAdjust.AsXmm());
 
 				if (f.TestSphere(center))
 					cull = true;
@@ -580,27 +584,15 @@ namespace MOC
 		{
 			if (Object->IsGeometry() && Object->m_kWorldBound.m_fRadius > 100.0f)
 			{
-				float d1 = Object->GetWorldTranslate().x - BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust.x;
-				float d2 = Object->GetWorldTranslate().y - BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust.y;
+				float d1 = Object->GetWorldTranslate().x - MyPosAdjust.x;
+				float d2 = Object->GetWorldTranslate().y - MyPosAdjust.y;
 
 				// Distance2DSqaured
 				if (((d1 * d1) + (d2 * d2)) < (ui::opt::OccluderMaxDistance * ui::opt::OccluderMaxDistance))
-					RegisterGeo(Object->IsGeometry());
+					RegisterGeometry(Object->IsGeometry());
 			}
 		}
 	}
-
-	void RenderTopLevelNode(fplanes& f, const NiNode *Node)
-	{
-		if (ShouldCullLite(Node))
-			return;
-
-		// Everything in this loop will be some kind of node
-		for (uint32_t i = 0; i < Node->GetArrayCount(); i++)
-			RenderRecursive(f, Node->GetAt(i), true);
-	}
-
-	AutoPtr(NiNode *, WorldScenegraph, 0x2F4CE30);
 
 	void SendTraverseCommand(NiCamera *Camera)
 	{
@@ -622,6 +614,7 @@ namespace MOC
 		//
 		// "WorldRoot Node"            SceneGraph
 		// -- "CameraRoot Node"        NiNode
+		// ---- "WorldRoot Camera"     NiCamera
 		// -- "shadow scene node"      ShadowSceneNode
 		// ---- "Sky"                  BSMultiBoundNode
 		// ---- "Weather"              NiNode
@@ -647,12 +640,15 @@ namespace MOC
 		// -- "MultiBoundNode Node"   NiNode
 		// -- "Collision Node"        NiNode
 		//
+		if (!Camera)
+			Camera = static_cast<NiCamera *>(WorldScenegraph->GetAt(0)->IsNode()->GetAt(0));
+
 		GeoList.clear();
 
 		ThreadedMOC->Clear();
 		ThreadedMOC->NotifyPreWork();
 
-		MyPosAdjust = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
+		MyPosAdjust = Camera->GetWorldTranslate();
 		Camera->CalculateViewProjection(MyView, MyProj, MyViewProj);
 
 		fplanes p;
@@ -677,8 +673,18 @@ namespace MOC
 			const NiNode *landNode = cellNode->GetAt(2)->IsNode();
 			const NiNode *staticNode = cellNode->GetAt(3)->IsNode();
 
-			RenderTopLevelNode(p, landNode);
-			RenderTopLevelNode(p, staticNode);
+			// Everything in these loops will be some kind of node
+			if (!ShouldCullLite(landNode))
+			{
+				for (uint32_t i = 0; i < landNode->GetArrayCount(); i++)
+					RenderRecursive(p, landNode->GetAt(i), true);
+			}
+
+			if (!ShouldCullLite(staticNode))
+			{
+				for (uint32_t i = 0; i < staticNode->GetArrayCount(); i++)
+					RenderRecursive(p, staticNode->GetAt(i), true);
+			}
 		}
 
 		// Sort front to back (approx)
@@ -692,5 +698,11 @@ namespace MOC
 			ThreadedMOC->SubmitGeometry(entry.Geometry);
 
 		ThreadedMOC->ClearPreWorkNotify();
+	}
+
+	void TraverseSceneGraphCallback(MaskedOcclusionCulling *MOC, void *UserData)
+	{
+		NiCamera *camera = (NiCamera *)UserData;
+		TraverseSceneGraph(camera);
 	}
 }

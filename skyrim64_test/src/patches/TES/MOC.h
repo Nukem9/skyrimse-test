@@ -2,57 +2,66 @@
 
 #include <DirectXMath.h>
 
+class MaskedOcclusionCulling;
+
 namespace MOC
 {
 	void Init();
-	void RegisterGeo(BSGeometry *Geometry);
+	void RegisterGeometry(BSGeometry *Geometry);
 	void SendTraverseCommand(NiCamera *Camera);
 	void TraverseSceneGraph(NiCamera *Camera);
 	void RemoveCachedVerticesAndIndices(void *RendererData);
 	void UpdateDepthViewTexture();
 	void ForceFlush();
 
+	void RenderGeometryCallback(MaskedOcclusionCulling *MOC, void *UserData);
+	void TraverseSceneGraphCallback(MaskedOcclusionCulling *MOC, void *UserData);
+
 	bool TestObject(NiAVObject *Object);
 
 	using namespace DirectX;
 
-	struct alignas(16) fplanes
+	struct fplanes
 	{
-		union
-		{
-			float Planes[6][4];
-			XMVECTOR XMPlanes[6];
-		};
-
-		__m128 PlaneComponents[8];
+		alignas(64) XMVECTOR	Planes[6];
+		bool					Side[6][4];
+		alignas(64) __m128		PlaneComponents[8];
 
 		void CreateFromViewProjMatrix(XMMATRIX M)
 		{
-			XMVECTOR col1 = XMVectorSet(M.r[0].m128_f32[0], M.r[1].m128_f32[0], M.r[2].m128_f32[0], M.r[3].m128_f32[0]);// { _11, _21, _31, _41 }
-			XMVECTOR col2 = XMVectorSet(M.r[0].m128_f32[1], M.r[1].m128_f32[1], M.r[2].m128_f32[1], M.r[3].m128_f32[1]);// { _12, _22, _32, _42 }
-			XMVECTOR col3 = XMVectorSet(M.r[0].m128_f32[2], M.r[1].m128_f32[2], M.r[2].m128_f32[2], M.r[3].m128_f32[2]);// { _13, _23, _33, _43 }
-			XMVECTOR col4 = XMVectorSet(M.r[0].m128_f32[3], M.r[1].m128_f32[3], M.r[2].m128_f32[3], M.r[3].m128_f32[3]);// { _14, _24, _34, _44 }
+			M = XMMatrixTranspose(M);
+			XMVECTOR col1 = M.r[0];// { _11, _21, _31, _41 }
+			XMVECTOR col2 = M.r[1];// { _12, _22, _32, _42 }
+			XMVECTOR col3 = M.r[2];// { _13, _23, _33, _43 }
+			XMVECTOR col4 = M.r[3];// { _14, _24, _34, _44 }
 
-			XMPlanes[0] = XMPlaneNormalize(XMVectorAdd(col4, col1));		// [c4 + c1] Left
-			XMPlanes[1] = XMPlaneNormalize(XMVectorSubtract(col4, col1));	// [c4 - c1] Right
-			XMPlanes[2] = XMPlaneNormalize(XMVectorSubtract(col4, col2));	// [c4 - c2] Top
-			XMPlanes[3] = XMPlaneNormalize(XMVectorAdd(col4, col2));		// [c4 + c2] Bottom
-			XMPlanes[4] = XMPlaneNormalize(XMVectorAdd(col4, col3));		// [c4 + c3] Near
-			XMPlanes[5] = XMPlaneNormalize(XMVectorSubtract(col4, col3));	// [c4 - c3] Far
+			Planes[0] = XMPlaneNormalize(XMVectorAdd(col4, col1));		// [c4 + c1] Left
+			Planes[1] = XMPlaneNormalize(XMVectorSubtract(col4, col1));	// [c4 - c1] Right
+			Planes[2] = XMPlaneNormalize(XMVectorSubtract(col4, col2));	// [c4 - c2] Top
+			Planes[3] = XMPlaneNormalize(XMVectorAdd(col4, col2));		// [c4 + c2] Bottom
+			Planes[4] = XMPlaneNormalize(XMVectorAdd(col4, col3));		// [c4 + c3] Near
+			Planes[5] = XMPlaneNormalize(XMVectorSubtract(col4, col3));	// [c4 - c3] Far
 
-			UpdateSphereOptimization();
-		}
+			// AABB signed-ness
+			for (int i = 0; i < 6; i++)
+			{
+				Side[i][0] = Planes[i].m128_f32[0] > 0.0f;
+				Side[i][1] = Planes[i].m128_f32[1] > 0.0f;
+				Side[i][2] = Planes[i].m128_f32[2] > 0.0f;
+				Side[i][3] = Planes[i].m128_f32[3] > 0.0f;
+			}
 
-		void UpdateSphereOptimization()
-		{
-			PlaneComponents[0] = _mm_setr_ps(-Planes[0][0], -Planes[1][0], -Planes[2][0], -Planes[3][0]);
-			PlaneComponents[1] = _mm_setr_ps(-Planes[0][1], -Planes[1][1], -Planes[2][1], -Planes[3][1]);
-			PlaneComponents[2] = _mm_setr_ps(-Planes[0][2], -Planes[1][2], -Planes[2][2], -Planes[3][2]);
-			PlaneComponents[3] = _mm_setr_ps(-Planes[0][3], -Planes[1][3], -Planes[2][3], -Planes[3][3]);
-			PlaneComponents[4] = _mm_setr_ps(-Planes[4][0], -Planes[5][0], -Planes[4][0], -Planes[5][0]);
-			PlaneComponents[5] = _mm_setr_ps(-Planes[4][1], -Planes[5][1], -Planes[4][1], -Planes[5][1]);
-			PlaneComponents[6] = _mm_setr_ps(-Planes[4][2], -Planes[5][2], -Planes[4][2], -Planes[5][2]);
-			PlaneComponents[7] = _mm_setr_ps(-Planes[4][3], -Planes[5][3], -Planes[4][3], -Planes[5][3]);
+			// Sphere test optimization
+			auto planes = (float(*)[4])&Planes;
+
+			PlaneComponents[0] = _mm_setr_ps(-planes[0][0], -planes[1][0], -planes[2][0], -planes[3][0]);
+			PlaneComponents[1] = _mm_setr_ps(-planes[0][1], -planes[1][1], -planes[2][1], -planes[3][1]);
+			PlaneComponents[2] = _mm_setr_ps(-planes[0][2], -planes[1][2], -planes[2][2], -planes[3][2]);
+			PlaneComponents[3] = _mm_setr_ps(-planes[0][3], -planes[1][3], -planes[2][3], -planes[3][3]);
+			PlaneComponents[4] = _mm_setr_ps(-planes[4][0], -planes[5][0], -planes[4][0], -planes[5][0]);
+			PlaneComponents[5] = _mm_setr_ps(-planes[4][1], -planes[5][1], -planes[4][1], -planes[5][1]);
+			PlaneComponents[6] = _mm_setr_ps(-planes[4][2], -planes[5][2], -planes[4][2], -planes[5][2]);
+			PlaneComponents[7] = _mm_setr_ps(-planes[4][3], -planes[5][3], -planes[4][3], -planes[5][3]);
 		}
 
 		bool TestSphere(float Center[3], float Radius)
@@ -113,64 +122,86 @@ namespace MOC
 			return _mm_test_all_ones(*reinterpret_cast<__m128i *>(&r)) != 0;
 		}
 
-		bool TestAABB(XMVECTOR AABBCenter, XMVECTOR AABBExtents)
+		bool TestAABB(XMVECTOR Center, XMVECTOR HalfExtents)
 		{
-			__declspec(align(16)) const static uint32_t absPlaneMask[4] = { 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF };
-
-			const __m128 xmm_absPlaneMask = _mm_load_ps((float *)&absPlaneMask);
-			const __m128 aabbCenter = AABBCenter;
-			const __m128 aabbExtent = AABBExtents;
-
-			// Assume that the aabb will be inside the frustum
-			bool visible = true;
+			__m128 box[2];
+			box[0] = _mm_sub_ps(Center, HalfExtents);// Min
+			box[1] = _mm_add_ps(Center, HalfExtents);// Max
 
 			for (int i = 0; i < 6; i++)
 			{
-				//
-				// p_ = plane
-				// a_ = abs(plane)
-				// c_ = AABB center
-				// e_ = AABB extent
-				//
-				const __m128 plane = XMPlanes[i];
-				__m128 d;
-				__m128 r;
+				__m128 a = Planes[i];
+				__m128 b = _mm_setr_ps(box[Side[i][0]].m128_f32[0], box[Side[i][1]].m128_f32[1], box[Side[i][2]].m128_f32[2], 0.0f);
 
-				// d = { p_x, p_y, p_z, p_d } * { c_x, c_y, c_z, 0 }
-				// d = sum(d);
-				d = _mm_mul_ps(plane, aabbCenter);
-				d = _mm_hadd_ps(d, d);
-				d = _mm_hadd_ps(d, d);
+				// Compute dot and do a horizontal sum
+				__m128 dp;
+				dp = _mm_mul_ps(a, b);
+				dp = _mm_hadd_ps(dp, dp);
+				dp = _mm_hadd_ps(dp, dp);
 
-				// r = { a_x, a_y, a_z, a_d } * { e_x, e_y, e_z, 0 }
-				// r = sum(r);
-				r = _mm_mul_ps(_mm_and_ps(plane, xmm_absPlaneMask), aabbExtent);
-				r = _mm_hadd_ps(r, r);
-				r = _mm_hadd_ps(r, r);
-
-				__m128 plane_d = XMVectorSplatW(plane);
-				__m128 xmm_d_p_r = _mm_add_ss(_mm_add_ss(d, r), plane_d);
-				__m128 xmm_d_m_r = _mm_add_ss(_mm_sub_ss(d, r), plane_d);
-
-				// Shuffle d_p_r and d_m_r in order to perform only one _mm_movmask_ps
-				__m128 xmm_d_p_r__d_m_r = _mm_shuffle_ps(xmm_d_p_r, xmm_d_m_r, _MM_SHUFFLE(0, 0, 0, 0));
-				int negativeMask = _mm_movemask_ps(xmm_d_p_r__d_m_r);
-
-				// Bit 0 holds the sign of d + r and bit 2 holds the sign of d - r
-				if (negativeMask & 0x1)
-				{
-					// Completely out of frustum
-					visible = false;
-					break;
-				}
-				else if (negativeMask & 0x4)
-				{
-					// Intersection
-					visible = true;
-				}
+				// if (dot prod < -plane.w)
+				if (dp.m128_f32[0] < -a.m128_f32[3])
+					return false;
 			}
 
-			return !visible;
+			return true;
+
+			/*
+			Still broken...sigh
+
+			alignas(16) const static uint32_t signMask[4] = { 0x80000000, 0x80000000, 0x80000000, 0x80000000 };
+			const __m128 xmm_signMask = _mm_load_ps((float *)&signMask);
+
+			__m128 plane_x0 = _mm_setr_ps(Planes[0][0], Planes[1][0], Planes[2][0], Planes[3][0]);	// planes[0..3].x
+			__m128 plane_x1 = _mm_setr_ps(Planes[4][0], Planes[5][0], 0.0f, 0.0f);					// planes[4..5].x
+
+			__m128 plane_y0 = _mm_setr_ps(Planes[0][1], Planes[1][1], Planes[2][1], Planes[3][1]);	// planes[0..3].y
+			__m128 plane_y1 = _mm_setr_ps(Planes[4][1], Planes[5][1], 0.0f, 0.0f);					// planes[4..5].y
+
+			__m128 plane_z0 = _mm_setr_ps(Planes[0][2], Planes[1][2], Planes[2][2], Planes[3][2]);	// planes[0..3].z
+			__m128 plane_z1 = _mm_setr_ps(Planes[4][2], Planes[5][2], 0.0f, 0.0f);					// planes[4..5].z
+
+			__m128 plane_w0 = _mm_setr_ps(Planes[0][3], Planes[1][3], Planes[2][3], Planes[3][3]);	// planes[0..3].w
+			__m128 plane_w1 = _mm_setr_ps(Planes[4][3], Planes[5][3], 0.0f, 0.0f);					// planes[4..5].w
+
+			//plane_w0 = _mm_add_ps(plane_w0, plane_w0);// Multiplied by 2
+			//plane_w1 = _mm_add_ps(plane_w1, plane_w1);// Multiplied by 2
+
+			__m128 t0 = _mm_add_ps(XMVectorSplatZ(AABBCenter), _mm_xor_ps(XMVectorSplatZ(AABBExtents), _mm_and_ps(plane_z0, xmm_signMask)));
+			__m128 t1 = _mm_add_ps(XMVectorSplatZ(AABBCenter), _mm_xor_ps(XMVectorSplatZ(AABBExtents), _mm_and_ps(plane_z1, xmm_signMask)));
+
+			__m128 dot0 = simd_madd(t0, plane_z0, plane_w0);
+			__m128 dot1 = simd_madd(t1, plane_z1, plane_w1);
+
+			t0 = _mm_add_ps(XMVectorSplatY(AABBCenter), _mm_xor_ps(XMVectorSplatY(AABBExtents), _mm_and_ps(plane_y0, xmm_signMask)));
+			t1 = _mm_add_ps(XMVectorSplatY(AABBCenter), _mm_xor_ps(XMVectorSplatY(AABBExtents), _mm_and_ps(plane_y1, xmm_signMask)));
+
+			dot0 = simd_madd(t0, plane_y0, dot0);
+			dot1 = simd_madd(t1, plane_y1, dot1);
+
+			t0 = _mm_add_ps(XMVectorSplatX(AABBCenter), _mm_xor_ps(XMVectorSplatX(AABBExtents), _mm_and_ps(plane_x0, xmm_signMask)));
+			t1 = _mm_add_ps(XMVectorSplatX(AABBCenter), _mm_xor_ps(XMVectorSplatX(AABBExtents), _mm_and_ps(plane_x1, xmm_signMask)));
+
+			dot0 = simd_madd(t0, plane_x0, dot0);
+			dot1 = simd_madd(t1, plane_x1, dot1);
+
+			// si_nand(dot0, dot1)
+			//__m128i nand;
+			//nand = _mm_and_si128(*reinterpret_cast<__m128i *>(&dot0), *reinterpret_cast<__m128i *>(&dot1));
+			//nand = _mm_cmpeq_epi32(nand, nand);
+			//nand = _mm_xor_si128(nand, nand);
+
+			__m128i ret;
+			ret.m128i_u32[0] = ~(dot0.m128_u32[0] & dot1.m128_u32[0]);
+			ret.m128i_u32[1] = ~(dot0.m128_u32[1] & dot1.m128_u32[1]);
+			ret.m128i_u32[2] = ~(dot0.m128_u32[2] & dot1.m128_u32[2]);
+			ret.m128i_u32[3] = ~(dot0.m128_u32[3] & dot1.m128_u32[3]);
+
+			//__m128 test = si_orx(si_nand(dot0, dot1)); // all dots >= 0
+			uint32_t test = ret.m128i_u32[0] | ret.m128i_u32[1] | ret.m128i_u32[2] | ret.m128i_u32[3];
+			//return si_to_int(test) >> 31;
+			return test >> 31;
+			*/
 		}
 
 		__forceinline __m128 simd_madd(__m128 a, __m128 b, __m128 c)
