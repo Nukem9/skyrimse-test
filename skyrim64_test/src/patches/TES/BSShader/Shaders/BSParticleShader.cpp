@@ -46,6 +46,7 @@ DEFINE_SHADER_DESCRIPTOR(
 //
 // Shader notes:
 //
+// - SetupGeometry is unimplemented
 //
 AutoPtr(float, flt_141E357A0, 0x1E357A0);
 AutoPtr(uint32_t, dword_143051B3C, 0x3051B3C);

@@ -14,7 +14,7 @@ namespace vfs::str
 		std::wstring ret;
 		ret.resize(srcLen);
 
-		if (!MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)srcLen, ret.data(), (int)ret.size()))
+		if (!MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)srcLen, (wchar_t *)ret.data(), (int)ret.size()))
 			throw "Error converting UTF8 to UTF16";
 
 		return ret;
@@ -36,7 +36,7 @@ namespace vfs::str
 		std::string ret;
 		ret.resize(len);
 
-		if (WideCharToMultiByte(CP_UTF8, 0, s, (int)srcLen, ret.data(), (int)ret.size(), nullptr, nullptr) != len)
+		if (WideCharToMultiByte(CP_UTF8, 0, s, (int)srcLen, (char *)ret.data(), (int)ret.size(), nullptr, nullptr) != len)
 			throw "Error converting UTF16 to UTF8";
 
 		return ret;
@@ -71,7 +71,7 @@ namespace vfs::util
 	void NormalizePath(std::string &Path)
 	{
 		// '/' => '\'
-		char *rawStr = Path.data();
+		char *rawStr = (char *)Path.data();
 
 		for (char *ptr = rawStr; *ptr; ptr++)
 		{

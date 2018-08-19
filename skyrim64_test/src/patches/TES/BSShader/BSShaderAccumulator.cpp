@@ -367,7 +367,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 		sub_140D69990((__int64)flt_14304E490, 1);
-		sub_1412FADA0();
+		sub_1412FADA0();// SSR + downsample imagespace shaders
 		sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 0, 1, 3, 1);
 		int v21 = sub_140D744B0();
 		sub_140D74370((__int64)(g_ModuleBase + 0x3051B20), v21, 3, 0);

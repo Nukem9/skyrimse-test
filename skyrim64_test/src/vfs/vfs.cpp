@@ -83,7 +83,7 @@ namespace vfs
         };
 
         // Now split the string based on each '\'
-        char *pathPtr  = VirtPath.data();
+        char *pathPtr  = (char *)VirtPath.data();
         char *ptrStart = pathPtr;
         bool resolved  = false;
 
@@ -188,7 +188,7 @@ namespace vfs
         };
 
         // Now split the string based on each '\'
-        char *pathPtr = VirtPath.data();
+        char *pathPtr = (char *)VirtPath.data();
 
         for (char *ptrStart = pathPtr;; pathPtr++)
         {
