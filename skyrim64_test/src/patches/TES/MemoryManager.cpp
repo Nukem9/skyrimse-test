@@ -1,3 +1,4 @@
+#include "../../../tbb2018/scalable_allocator.h"
 #include "../../common.h"
 #include "MemoryManager.h"
 
@@ -10,6 +11,9 @@ void *Jemalloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 #if SKYRIM64_USE_VTUNE
 	__itt_heap_allocate_begin(ITT_AllocateCallback, Size, Zeroed ? 1 : 0);
 #endif
+
+	if (Size == 0)
+		Size = 1;
 
 	void *ptr = nullptr;
 
@@ -34,12 +38,20 @@ void *Jemalloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 		if ((Size % Alignment) != 0)
 			Size = ((Size + Alignment - 1) / Alignment) * Alignment;
 
+#if SKYRIM64_USE_TBBMALLOC
+		ptr = scalable_aligned_malloc(Size, Alignment);
+#else
 		ptr = je_aligned_alloc(Alignment, Size);
+#endif
 	}
 	else
 	{
 		// Normal allocation
+#if SKYRIM64_USE_TBBMALLOC
+		ptr = scalable_malloc(Size);
+#else
 		ptr = je_malloc(Size);
+#endif
 	}
 
 	if (ptr && Zeroed)
@@ -52,7 +64,7 @@ void *Jemalloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 	return ptr;
 }
 
-void Jefree(void *Memory)
+void Jefree(void *Memory, bool Aligned = false)
 {
 	ProfileCounterInc("Free Count");
 	ProfileTimer("Time Spent Freeing");
@@ -64,7 +76,14 @@ void Jefree(void *Memory)
 	__itt_heap_free_begin(ITT_FreeCallback, Memory);
 #endif
 
+#if SKYRIM64_USE_TBBMALLOC
+	if (Aligned)
+		scalable_aligned_free(Memory);
+	else
+		scalable_free(Memory);
+#else
 	je_free(Memory);
+#endif
 
 #if SKYRIM64_USE_VTUNE
 	__itt_heap_free_end(ITT_FreeCallback, Memory);
@@ -97,19 +116,25 @@ void __fastcall hk_free(void *Block)
 
 void __fastcall hk_aligned_free(void *Block)
 {
-	Jefree(Block);
+	Jefree(Block, true);
 }
 
 size_t __fastcall hk_msize(void *Block)
 {
 #if SKYRIM64_USE_VTUNE
 	__itt_heap_internal_access_begin();
-	size_t result = je_malloc_usable_size(Block);
-	__itt_heap_internal_access_end();
-	return result;
-#else
-	return je_malloc_usable_size(Block);
 #endif
+
+#if SKYRIM64_USE_TBBMALLOC
+	size_t result = scalable_msize(Block);
+#else
+	size_t result = je_malloc_usable_size(Block);
+#endif
+
+#if SKYRIM64_USE_VTUNE
+	__itt_heap_internal_access_end();
+#endif
+	return result;
 }
 
 //
@@ -122,7 +147,7 @@ void *MemoryManager::Alloc(size_t Size, uint32_t Alignment, bool Aligned)
 
 void MemoryManager::Free(void *Memory, bool Aligned)
 {
-	Jefree(Memory);
+	Jefree(Memory, Aligned);
 }
 
 void *ScrapHeap::Alloc(size_t Size, uint32_t Alignment)
@@ -140,6 +165,11 @@ void ScrapHeap::Free(void *Memory)
 
 void PatchMemory()
 {
+#if SKYRIM64_USE_TBBMALLOC
+	bool useLargePages = scalable_allocation_mode(TBBMALLOC_USE_HUGE_PAGES, 1) == TBBMALLOC_OK;
+	ui::log::Add("TBBMalloc: Large pages are %s\n", useLargePages ? "enabled" : "disabled");
+#endif
+
 	PatchIAT(hk_calloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc");
 	PatchIAT(hk_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc");
 	PatchIAT(hk_aligned_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc");
