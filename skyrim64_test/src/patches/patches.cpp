@@ -1,4 +1,5 @@
 #include "../../xbyak/xbyak.h"
+#include "../typeinfo/msrtti.h"
 #include "../common.h"
 #include "dinput8.h"
 #include "TES/TESForm.h"
@@ -139,6 +140,7 @@ void test2()
 
 void Patch_TESV()
 {
+	MSRTTI::Initialize();
 	PatchThreading();
 	PatchWindow();
 	PatchD3D11();
@@ -269,16 +271,16 @@ void Patch_TESV()
 
 	*(PBYTE *)&TESObjectCell::CreateRootMultiBoundNode = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x264230), &TESObjectCell::hk_CreateRootMultiBoundNode);
 
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x154EB40), &BSTask::GetName_Override<BSTask_AddCellGrassTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x154A448), &BSTask::GetName_Override<BSTask_AttachDistant3DTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x1773738), &BSTask::GetName_Override<BSTask_AudioLoadForPlaybackTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x17737A0), &BSTask::GetName_Override<BSTask_AudioLoadToCacheTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x1631E20), &BSTask::GetName_Override<BSTask_BGSParticleObjectCloneTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x17D9B30), &BSTask::GetName_Override<BSTask_BSScaleformMovieLoadTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x157EFD8), &BSTask::GetName_Override<BSTask_CheckWithinMultiBoundTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x179ED68), &BSTask::GetName_Override<BSTask_QueuedFile>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x15785D8), &BSTask::GetName_Override<BSTask_QueuedPromoteLocationReferencesTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)(g_ModuleBase + 0x1559E90), &BSTask::GetName_Override<BSTask_QueuedPromoteReferencesTask>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AddCellGrassTask")->VTableAddress, &BSTask::GetName_Override<BSTask_AddCellGrassTask>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AttachDistant3DTask")->VTableAddress, &BSTask::GetName_Override<BSTask_AttachDistant3DTask>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AudioLoadForPlaybackTask")->VTableAddress, &BSTask::GetName_Override<BSTask_AudioLoadForPlaybackTask>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AudioLoadToCacheTask")->VTableAddress, &BSTask::GetName_Override<BSTask_AudioLoadToCacheTask>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class BGSParticleObjectCloneTask")->VTableAddress, &BSTask::GetName_Override<BSTask_BGSParticleObjectCloneTask>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class BSScaleformMovieLoadTask")->VTableAddress, &BSTask::GetName_Override<BSTask_BSScaleformMovieLoadTask>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class CheckWithinMultiBoundTask")->VTableAddress, &BSTask::GetName_Override<BSTask_CheckWithinMultiBoundTask>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedFile")->VTableAddress, &BSTask::GetName_Override<BSTask_QueuedFile>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedPromoteLocationReferencesTask")->VTableAddress, &BSTask::GetName_Override<BSTask_QueuedPromoteLocationReferencesTask>, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedPromoteReferencesTask")->VTableAddress, &BSTask::GetName_Override<BSTask_QueuedPromoteReferencesTask>, 4);
 
 	uintptr_t addr = (uintptr_t)&IOManagerQueueTask;
 	//PatchMemory(g_ModuleBase + 0x179EB58, (PBYTE)&addr, sizeof(uintptr_t));

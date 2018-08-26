@@ -215,6 +215,7 @@
     <ClInclude Include="imgui\stb_rect_pack.h" />
     <ClInclude Include="imgui\stb_textedit.h" />
     <ClInclude Include="imgui\stb_truetype.h" />
+    <ClInclude Include="src\typeinfo\msrtti.h" />
     <ClInclude Include="src\ui\imgui_ext.h" />
     <ClInclude Include="src\ui\imgui_impl_dx11.h" />
     <ClInclude Include="src\patches\TES\MemoryManager.h" />
