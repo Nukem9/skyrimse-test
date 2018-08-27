@@ -10,28 +10,30 @@ void CreateXbyakPatches()
 	// Initialize disassembler
 	Assert(ZYDIS_SUCCESS(ZydisDecoderInit(&g_Decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64)));
 
-#if SKYRIM64_GENERATE_OFFSETS
-	// Offset dump file
-	freopen("C:\\out.txt", "w", stdout);
+	if constexpr (SKYRIM64_GENERATE_OFFSETS)
+	{
+		// Offset dump file
+		freopen("C:\\out.txt", "w", stdout);
 
-#if TLS_DEBUG_MEMORY_ACCESS
-	PageGuard_Monitor(g_ModuleBase + BSGRAPHICS_BASE_OFFSET, BSGRAPHICS_PATCH_SIZE);
+		if constexpr (TLS_DEBUG_MEMORY_ACCESS)
+		{
+			PageGuard_Monitor(g_ModuleBase + BSGRAPHICS_BASE_OFFSET, BSGRAPHICS_PATCH_SIZE);
 
-	char buffer[512];
-	sprintf_s(buffer, "tlsGlob is at 0x%llX", (uintptr_t)&tlsGlob);
-	OutputDebugStringA(buffer);
-#endif
+			//char buffer[512];
+			//sprintf_s(buffer, "tlsGlob is at 0x%llX", (uintptr_t)&tlsGlob);
+			//OutputDebugStringA(buffer);
+		}
 
-	// Generate the instruction patch table (d3d11_patchlist.inl) to a file. 0x140000000
-	// is the exe base address without ASLR.
-	for (uintptr_t xref : XrefList)
-		GenerateInstruction(xref - 0x140000000 + g_ModuleBase);
+		// Generate the instruction patch table (d3d11_patchlist.inl) to a file. 0x140000000
+		// is the exe base address without ASLR.
+		for (uintptr_t xref : XrefList)
+			GenerateInstruction(xref - 0x140000000 + g_ModuleBase);
 
-	printf("-- SECONDARY LIST --\n");
+		printf("-- SECONDARY LIST --\n");
 
-	for (uintptr_t xref : XrefList2)
-		GenerateInstruction(xref - 0x140000000 + g_ModuleBase);
-#endif
+		for (uintptr_t xref : XrefList2)
+			GenerateInstruction(xref - 0x140000000 + g_ModuleBase);
+	}
 
 	// Do the actual code modifications
 	std::unordered_map<uint32_t, void *> codeCache;
@@ -101,25 +103,27 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 
 	if (Patch->Base != ZYDIS_REGISTER_RIP)
 	{
-#if TLS_DEBUG_ENABLE
-		// Sanity check the base register, which **must** be the exe base address
-		if (Patch->ExeOffset != 0xD6BF7E && Patch->ExeOffset != 0xD6BF98 && Patch->ExeOffset != 0xD6C003)
+		if constexpr (TLS_DEBUG_ENABLE)
 		{
-			Xbyak::Label label1;
-			Xbyak::Label label2;
+			// Sanity check the base register, which **must** be the exe base address
+			if (Patch->ExeOffset != 0xD6BF7E && Patch->ExeOffset != 0xD6BF98 && Patch->ExeOffset != 0xD6C003)
+			{
+				Xbyak::Label label1;
+				Xbyak::Label label2;
 
-			db(0x9C);// pushfq
-			cmp(ZydisToXbyak64(Patch->Base), qword[rip + label1]);
-			je(label2);
-			db(0xCC);
+				db(0x9C);// pushfq
+				cmp(ZydisToXbyak64(Patch->Base), qword[rip + label1]);
+				je(label2);
+				db(0xCC);
 
-			L(label1);
-			dq(g_ModuleBase);
+				L(label1);
+				dq(g_ModuleBase);
 
-			L(label2);
-			db(0x9D);// popfq
+				L(label2);
+				db(0x9D);// popfq
+			}
 		}
-#endif
+
 		//
 		// We need to override displacement so it's structMemberOffset instead. There's
 		// a catch: we need to steal another register for the TLS address (base).
@@ -253,22 +257,26 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 
 void PatchCodeGen::SetTlsBase(const Xbyak::Reg64& Register)
 {
-#if TLS_DEBUG_ENABLE
-	mov(Register, (uintptr_t)(g_ModuleBase + BSGRAPHICS_BASE_OFFSET));
-#else
-	//
-	// In C++: *(uintptr_t *)(__readgsqword(0x58) + _tls_index * sizeof(void *));
-	//
-	// ((BYTE *)TEB->Tls + tlsBaseOffset) which is really TEB->Tls[tls_index]
-	//
-	const uint32_t tlsBaseOffset = g_TlsIndex * sizeof(void *);
+	if constexpr (TLS_DEBUG_ENABLE)
+	{
+		// Read old game data as if the hook didn't exist
+		mov(Register, (uintptr_t)(g_ModuleBase + BSGRAPHICS_BASE_OFFSET));
+	}
+	else
+	{
+		//
+		// In C++: *(uintptr_t *)(__readgsqword(0x58) + _tls_index * sizeof(void *));
+		//
+		// ((BYTE *)TEB->Tls + tlsBaseOffset) which is really TEB->Tls[tls_index]
+		//
+		const uint32_t tlsBaseOffset = g_TlsIndex * sizeof(void *);
 
-	// mov rax, qword ptr GS:[0x58]
-	// mov rax, qword ptr DS:[rax + tlsBaseOffset]
-	putSeg(gs);
-	mov(Register, Xbyak::Address(32, false, 0x58));
-	mov(Register, ptr[Register + tlsBaseOffset]);
-#endif
+		// mov rax, qword ptr GS:[0x58]
+		// mov rax, qword ptr DS:[rax + tlsBaseOffset]
+		putSeg(gs);
+		mov(Register, Xbyak::Address(32, false, 0x58));
+		mov(Register, ptr[Register + tlsBaseOffset]);
+	}
 }
 
 const Xbyak::Reg64& PatchCodeGen::GetFreeScratch(ZydisRegister Operand, ZydisRegister Base, ZydisRegister Index)

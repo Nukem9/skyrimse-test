@@ -51,9 +51,9 @@ namespace MOC
 
 	float *ConvertVerts(const void *Input, uint32_t Count, uint32_t ByteStride)
 	{
-		uintptr_t data = (uintptr_t)(new float[Count * 4]);
-		uintptr_t base = data;
-		uintptr_t in = (uintptr_t)Input;
+		float *in = (float *)Input;
+		float *out = new float[Count * 4];
+		float *base = out;
 
 		for (uint32_t i = 0; i < Count; i++)
 		{
@@ -64,16 +64,16 @@ namespace MOC
 			// W -> Z
 			// Remaining data discarded
 			//
-			*(float *)(data + 0) = *(float *)(in + 0);
-			*(float *)(data + 4) = *(float *)(in + 4);
-			*(float *)(data + 8) = 1.0f;
-			*(float *)(data + 12) = *(float *)(in + 8);
+			out[0] = in[0];
+			out[1] = in[1];
+			out[2] = 1.0f;
+			out[3] = in[2];
 
-			data += 4 * sizeof(float);
-			in += ByteStride;
+			in = (float *)((uintptr_t)in + ByteStride);
+			out += 4;
 		}
 
-		return (float *)base;
+		return base;
 	}
 
 	SRWLOCK vertLock = SRWLOCK_INIT;
@@ -132,8 +132,8 @@ namespace MOC
 			p.Data = ConvertIndices(indexData, indexCount, vertexCount);
 			p.Count = indexCount;
 
-			//if (indexCount > 300)
-			//	p.Count = meshopt_simplify(p.Data, p.Data, indexCount, (const float *)vertexData, vertexCount, vertexStride, (size_t)(indexCount * .33f));// Target 33% of original triangles
+			if (indexCount > 300)
+				p.Count = meshopt_simplify(p.Data, p.Data, indexCount, (const float *)vertexData, vertexCount, vertexStride, (size_t)(indexCount * .50f));// Target 33% of original triangles
 
 			m_IndexMap.insert_or_assign(dataPtr, p);
 			*Indices = p;
@@ -215,12 +215,7 @@ namespace MOC
 				auto shape = multiBoundNode->spMultiBound->spShape;
 
 				if (shape->IsExactKindOf(NiRTTI::ms_BSMultiBoundAABB))
-				{
-					auto aabb = static_cast<BSMultiBoundAABB *>(shape);
-
-					if (aabb->m_kHalfExtents.x > 1.0f)
-						return aabb;
-				}
+					return static_cast<BSMultiBoundAABB *>(shape);
 			}
 		}
 
@@ -486,7 +481,7 @@ namespace MOC
 		if (geometry->QShaderProperty()->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
 			winding = MaskedOcclusionCulling::BACKFACE_NONE;
 
-		// Grab LOD-ified mesh data
+		// Grab LOD-ified mesh out
 		IndexPair indexRawData;
 		float *vertexRawData;
 		GetCachedVerticesAndIndices(geometry, &indexRawData, &vertexRawData);
@@ -506,23 +501,62 @@ namespace MOC
 		ProfileCounterAdd("MOC TrianglesRendered", indexRawData.Count / 3);
 	}
 
-	bool ShouldCullLite(const NiAVObject *Object)
+	bool CullObject(const NiAVObject *Object, fplanes& Frustum)
 	{
 		if (!Object)
 			return true;
 
-//		if (Object->QAppCulled() && !Object->QAlwaysDraw())
-//			return true;
+		//
+		// Flags
+		//
+		if (Object->QAppCulled() && !Object->QAlwaysDraw())
+			return true;
 
 //		if (!Object->IsVisualObjectI() && !Object->QAlwaysDraw())
 //			return true;
+
+		//
+		// Names (TODO: remove this awful hack)
+		//
+		const char *name = Object->GetName()->c_str();
+
+		if (name && name[0] == 'L' && name[1] == '2' && name[2] == '_')
+			return true;
+
+		//
+		// Frustum tests
+		//
+		if (auto aabbNode = GetAABBNode(Object))
+		{
+			// Not all objects have valid boundaries (certain global cells)
+			if (aabbNode->m_kHalfExtents.z > 1.0f)
+			{
+				__m128 center = _mm_sub_ps(aabbNode->m_kCenter.AsXmm(), MyPosAdjust.AsXmm());
+				__m128 halfExtents = aabbNode->m_kHalfExtents.AsXmm();
+
+				if (!Frustum.AABBInFrustum(center, halfExtents))
+					return true;
+			}
+		}
+		else if (Object->m_kWorldBound.m_fRadius > 10.0f)
+		{
+			__m128 center = _mm_sub_ps(_mm_setr_ps(
+				Object->m_kWorldBound.m_kCenter.x,
+				Object->m_kWorldBound.m_kCenter.y,
+				Object->m_kWorldBound.m_kCenter.z,
+				Object->m_kWorldBound.m_fRadius),
+				MyPosAdjust.AsXmm());
+
+			if (!Frustum.SphereInFrustum(center))
+				return true;
+		}
 
 		return false;
 	}
 
 	void RenderRecursive(fplanes& f, const NiAVObject *Object, bool FirstLevel)
 	{
-		if (ShouldCullLite(Object))
+		if (CullObject(Object, f))
 			return;
 
 		bool validBounds = Object->m_kWorldBound.m_fRadius > 1.0f;
@@ -533,63 +567,29 @@ namespace MOC
 				return;
 		}
 
-		bool cull = false;
+		const NiNode *node = Object->IsNode();
+		BSGeometry *geometry = Object->IsGeometry();
 
-		const char *name = Object->GetName()->c_str();
-
-		// TODO: remove this awful hack
-		if (name && name[0] == 'L' && name[1] == '2' && name[2] == '_')
-			cull = true;
-
-		if (!cull)
-		{
-			DirectX::XMVECTOR center;
-			
-			if (auto aabbNode = GetAABBNode(Object))
-			{
-				center = _mm_sub_ps(aabbNode->m_kCenter.AsXmm(), MyPosAdjust.AsXmm());
-				DirectX::XMVECTOR halfExtents = aabbNode->m_kHalfExtents.AsXmm();
-
-				if (f.TestAABB(center, halfExtents))
-					cull = true;
-			}
-			else if (Object->m_kWorldBound.m_fRadius > 10.0f)
-			{
-				center = _mm_sub_ps(_mm_setr_ps(
-					Object->m_kWorldBound.m_kCenter.x,
-					Object->m_kWorldBound.m_kCenter.y,
-					Object->m_kWorldBound.m_kCenter.z,
-					Object->m_kWorldBound.m_fRadius),
-					MyPosAdjust.AsXmm());
-
-				if (f.TestSphere(center))
-					cull = true;
-			}
-		}
-
-		if (cull)
-			return;
-
-		if (auto node = Object->IsNode())
+		if (node)
 		{
 			// Don't care about leaf anim nodes (trees, bushes, plants [alpha])
 			if (!node->IsExactKindOf(NiRTTI::ms_BSLeafAnimNode))
 			{
 				// Enumerate children, but don't render this node specifically
-				for (int i = 0; i < node->GetArrayCount(); i++)
+				for (uint32_t i = 0; i < node->GetArrayCount(); i++)
 					RenderRecursive(f, node->GetAt(i), false);
 			}
 		}
-		else
+		else if (geometry)
 		{
-			if (Object->IsGeometry() && Object->m_kWorldBound.m_fRadius > 100.0f)
+			if (geometry->m_kWorldBound.m_fRadius > 100.0f)
 			{
-				float d1 = Object->GetWorldTranslate().x - MyPosAdjust.x;
-				float d2 = Object->GetWorldTranslate().y - MyPosAdjust.y;
+				float d1 = geometry->GetWorldTranslate().x - MyPosAdjust.x;
+				float d2 = geometry->GetWorldTranslate().y - MyPosAdjust.y;
 
 				// Distance2DSqaured
 				if (((d1 * d1) + (d2 * d2)) < (ui::opt::OccluderMaxDistance * ui::opt::OccluderMaxDistance))
-					RegisterGeometry(Object->IsGeometry());
+					RegisterGeometry(geometry);
 			}
 		}
 	}
@@ -664,23 +664,23 @@ namespace MOC
 			if (!node->GetAt(i))
 				continue;
 
-			// Recursively render everything in the CELL
+			// Recursively render everything in the cell
 			const NiNode *cellNode = node->GetAt(i)->IsNode();
 
-			if (!cellNode)
+			if (CullObject(cellNode, p))
 				continue;
 
 			const NiNode *landNode = cellNode->GetAt(2)->IsNode();
 			const NiNode *staticNode = cellNode->GetAt(3)->IsNode();
 
 			// Everything in these loops will be some kind of node
-			if (!ShouldCullLite(landNode))
+			if (!CullObject(landNode, p))
 			{
 				for (uint32_t i = 0; i < landNode->GetArrayCount(); i++)
 					RenderRecursive(p, landNode->GetAt(i), true);
 			}
 
-			if (!ShouldCullLite(staticNode))
+			if (!CullObject(staticNode, p))
 			{
 				for (uint32_t i = 0; i < staticNode->GetArrayCount(); i++)
 					RenderRecursive(p, staticNode->GetAt(i), true);

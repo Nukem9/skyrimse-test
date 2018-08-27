@@ -322,39 +322,39 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	bool setDiffuseNormalSamplers = true;
 
 	const uintptr_t v5 = (uintptr_t)this;
-	const uintptr_t v3 = (uintptr_t)Material;
+	const uintptr_t material = (uintptr_t)Material;
 
 	switch (baseTechniqueID)
 	{
 	// BSLightingShaderMaterialEnvmap
 	case RAW_TECHNIQUE_ENVMAP:
 	{
-		sub_14130C470(*(uintptr_t *)(v3 + 160), v3);
-		sub_14130C4D0(*(uintptr_t *)(v3 + 168), v3);
+		sub_14130C470(*(uintptr_t *)(material + 160), material);
+		sub_14130C4D0(*(uintptr_t *)(material + 168), material);
 
 		// PS: p21 float4 EnvmapData
 		XMVECTORF32& envmapData = pixelCG.ParamPS<XMVECTORF32, 21>();
 
-		envmapData.f[0] = *(float *)(v3 + 176);
-		envmapData.f[1] = (*(uintptr_t *)(v3 + 168)) ? 1.0f : 0.0f;
+		envmapData.f[0] = *(float *)(material + 176);
+		envmapData.f[1] = (*(uintptr_t *)(material + 168)) ? 1.0f : 0.0f;
 	}
 	break;
 
 	// BSLightingShaderMaterialGlowmap
 	case RAW_TECHNIQUE_GLOWMAP:
-		sub_14130C220(6, *(uintptr_t *)(v3 + 160), v3);
+		sub_14130C220(6, *(uintptr_t *)(material + 160), material);
 		break;
 
 	// BSLightingShaderMaterialParallax
 	case RAW_TECHNIQUE_PARALLAX:
-		sub_14130C220(3, *(uintptr_t *)(v3 + 160), v3);
+		sub_14130C220(3, *(uintptr_t *)(material + 160), material);
 		break;
 
 	// BSLightingShaderMaterialFacegen
 	case RAW_TECHNIQUE_FACEGEN:
-		sub_14130C220(3, *(uintptr_t *)(v3 + 160), v3);
-		sub_14130C220(4, *(uintptr_t *)(v3 + 168), v3);
-		sub_14130C220(12, *(uintptr_t *)(v3 + 176), v3);
+		sub_14130C220(3, *(uintptr_t *)(material + 160), material);
+		sub_14130C220(4, *(uintptr_t *)(material + 168), material);
+		sub_14130C220(12, *(uintptr_t *)(material + 176), material);
 		break;
 
 	// BSLightingShaderMaterialFacegenTint
@@ -365,9 +365,9 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		// PS: p23 float4 TintColor
 		XMVECTORF32& tintColor = pixelCG.ParamPS<XMVECTORF32, 23>();
 
-		tintColor.f[0] = *(float *)(v3 + 160);
-		tintColor.f[1] = *(float *)(v3 + 164);
-		tintColor.f[2] = *(float *)(v3 + 168);
+		tintColor.f[0] = *(float *)(material + 160);
+		tintColor.f[1] = *(float *)(material + 164);
+		tintColor.f[2] = *(float *)(material + 168);
 	}
 	break;
 
@@ -377,10 +377,10 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		// PS: p22 float4 ParallaxOccData
 		XMVECTORF32& parallaxOccData = pixelCG.ParamPS<XMVECTORF32, 22>();
 
-		sub_14130C220(3, *(uintptr_t *)(v3 + 160), v3);
+		sub_14130C220(3, *(uintptr_t *)(material + 160), material);
 
-		parallaxOccData.f[0] = *(float *)(v3 + 172);// Reversed on purpose?
-		parallaxOccData.f[1] = *(float *)(v3 + 168);// Reversed on purpose?
+		parallaxOccData.f[0] = *(float *)(material + 172);// Reversed on purpose?
+		parallaxOccData.f[1] = *(float *)(material + 168);// Reversed on purpose?
 	}
 	break;
 
@@ -391,16 +391,16 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		{
 			XMVECTORF32& lodTexParams = pixelCG.ParamPS<XMVECTORF32, 24>();
 
-			lodTexParams.f[0] = *(float *)(v3 + 328);
-			lodTexParams.f[1] = *(float *)(v3 + 332);
+			lodTexParams.f[0] = *(float *)(material + 328);
+			lodTexParams.f[1] = *(float *)(material + 332);
 			lodTexParams.f[2] = (byte_141E32E88) ? 1.0f : 0.0f;
-			lodTexParams.f[3] = *(float *)(v3 + 336);
+			lodTexParams.f[3] = *(float *)(material + 336);
 		}
 
-		MatSetMultiTextureLandOverrides(v3);
+		MatSetMultiTextureLandOverrides(material);
 
-		if (*(uintptr_t *)(v3 + 0x100))
-			sub_14130C220(15, *(uintptr_t *)(v3 + 0x100), v3);
+		if (*(uintptr_t *)(material + 0x100))
+			sub_14130C220(15, *(uintptr_t *)(material + 0x100), material);
 
 		setDiffuseNormalSamplers = false;
 
@@ -408,18 +408,18 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		{
 			XMVECTORF32& landscapeTexture1to4IsSpecPower = pixelCG.ParamPS<XMVECTORF32, 32>();
 
-			landscapeTexture1to4IsSpecPower.f[0] = *(float *)(v3 + 304);
-			landscapeTexture1to4IsSpecPower.f[1] = *(float *)(v3 + 308);
-			landscapeTexture1to4IsSpecPower.f[2] = *(float *)(v3 + 312);
-			landscapeTexture1to4IsSpecPower.f[3] = *(float *)(v3 + 316);
+			landscapeTexture1to4IsSpecPower.f[0] = *(float *)(material + 304);
+			landscapeTexture1to4IsSpecPower.f[1] = *(float *)(material + 308);
+			landscapeTexture1to4IsSpecPower.f[2] = *(float *)(material + 312);
+			landscapeTexture1to4IsSpecPower.f[3] = *(float *)(material + 316);
 		}
 
 		// PS: p33 float4 LandscapeTexture5to6IsSpecPower
 		{
 			XMVECTORF32& landscapeTexture5to6IsSpecPower = pixelCG.ParamPS<XMVECTORF32, 33>();
 
-			landscapeTexture5to6IsSpecPower.f[0] = *(float *)(v3 + 320);
-			landscapeTexture5to6IsSpecPower.f[1] = *(float *)(v3 + 324);
+			landscapeTexture5to6IsSpecPower.f[0] = *(float *)(material + 320);
+			landscapeTexture5to6IsSpecPower.f[1] = *(float *)(material + 324);
 			landscapeTexture5to6IsSpecPower.f[2] = 0.0f;
 			landscapeTexture5to6IsSpecPower.f[3] = 0.0f;
 		}
@@ -429,16 +429,16 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 			// PS: p30 float4 LandscapeTexture1to4IsSnow
 			XMVECTORF32& landscapeTexture1to4IsSnow = pixelCG.ParamPS<XMVECTORF32, 30>();
 
-			landscapeTexture1to4IsSnow.f[0] = *(float *)(v3 + 280);
-			landscapeTexture1to4IsSnow.f[1] = *(float *)(v3 + 284);
-			landscapeTexture1to4IsSnow.f[2] = *(float *)(v3 + 288);
-			landscapeTexture1to4IsSnow.f[3] = *(float *)(v3 + 292);
+			landscapeTexture1to4IsSnow.f[0] = *(float *)(material + 280);
+			landscapeTexture1to4IsSnow.f[1] = *(float *)(material + 284);
+			landscapeTexture1to4IsSnow.f[2] = *(float *)(material + 288);
+			landscapeTexture1to4IsSnow.f[3] = *(float *)(material + 292);
 
 			// PS: p31 float4 LandscapeTexture5to6IsSnow
 			XMVECTORF32& LandscapeTexture5to6IsSnow = pixelCG.ParamPS<XMVECTORF32, 31>();
 
-			LandscapeTexture5to6IsSnow.f[0] = *(float *)(v3 + 296);
-			LandscapeTexture5to6IsSnow.f[1] = *(float *)(v3 + 300);
+			LandscapeTexture5to6IsSnow.f[0] = *(float *)(material + 296);
+			LandscapeTexture5to6IsSnow.f[1] = *(float *)(material + 300);
 			LandscapeTexture5to6IsSnow.f[2] = (bEnableSnowMask->uValue.b) ? 1.0f : 0.0f;
 			LandscapeTexture5to6IsSnow.f[3] = 1.0f / iLandscapeMultiNormalTilingFactor->uValue.i;
 		}
@@ -453,16 +453,16 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		{
 			XMVECTORF32& lodTexParams = pixelCG.ParamPS<XMVECTORF32, 24>();
 
-			lodTexParams.f[0] = *(float *)(v3 + 184);
-			lodTexParams.f[1] = *(float *)(v3 + 188);
+			lodTexParams.f[0] = *(float *)(material + 184);
+			lodTexParams.f[1] = *(float *)(material + 188);
 			lodTexParams.f[2] = (byte_141E32E88) ? 1.0f : 0.0f;
-			lodTexParams.f[3] = *(float *)(v3 + 192);
+			lodTexParams.f[3] = *(float *)(material + 192);
 		}
 
 		if (baseTechniqueID == RAW_TECHNIQUE_LODLANDNOISE)
 		{
-			if (*(uintptr_t *)(v3 + 176))
-				sub_14130C220(15, *(uintptr_t *)(v3 + 176), v3);
+			if (*(uintptr_t *)(material + 176))
+				sub_14130C220(15, *(uintptr_t *)(material + 176), material);
 
 			renderer->SetTextureMode(15, 3, 1);
 		}
@@ -472,27 +472,27 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	// BSLightingShaderMaterialMultiLayerParallax
 	case RAW_TECHNIQUE_MULTILAYERPARALLAX:
 	{
-		sub_14130C220(8, *(uintptr_t *)(v3 + 160), v3);
+		sub_14130C220(8, *(uintptr_t *)(material + 160), material);
 
 		// PS: p27 float4 MultiLayerParallaxData
 		{
 			XMVECTORF32& multiLayerParallaxData = pixelCG.ParamPS<XMVECTORF32, 27>();
 
-			multiLayerParallaxData.f[0] = *(float *)(v3 + 184);
-			multiLayerParallaxData.f[1] = *(float *)(v3 + 188);
-			multiLayerParallaxData.f[2] = *(float *)(v3 + 192);
-			multiLayerParallaxData.f[3] = *(float *)(v3 + 196);
+			multiLayerParallaxData.f[0] = *(float *)(material + 184);
+			multiLayerParallaxData.f[1] = *(float *)(material + 188);
+			multiLayerParallaxData.f[2] = *(float *)(material + 192);
+			multiLayerParallaxData.f[3] = *(float *)(material + 196);
 		}
 
-		sub_14130C470(*(uintptr_t *)(v3 + 168), v3);
-		sub_14130C4D0(*(uintptr_t *)(v3 + 176), v3);
+		sub_14130C470(*(uintptr_t *)(material + 168), material);
+		sub_14130C4D0(*(uintptr_t *)(material + 176), material);
 
 		// PS: p21 float4 EnvmapData
 		{
 			XMVECTORF32& envmapData = pixelCG.ParamPS<XMVECTORF32, 21>();
 
-			envmapData.f[0] = *(float *)(v3 + 200);
-			envmapData.f[1] = (*(uintptr_t *)(v3 + 176)) ? 1.0f : 0.0f;
+			envmapData.f[0] = *(float *)(material + 200);
+			envmapData.f[1] = (*(uintptr_t *)(material + 176)) ? 1.0f : 0.0f;
 		}
 	}
 	break;
@@ -503,18 +503,18 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		XMVECTORF32& sparkleParams = pixelCG.ParamPS<XMVECTORF32, 26>();
 
 		// if (is BSLightingShaderMaterialSnow RTTI instance)
-		if (*(uintptr_t *)(*(uintptr_t *)(v3) - 8) == (g_ModuleBase + 0x19AA838))
+		if (*(uintptr_t *)(*(uintptr_t *)(material) - 8) == (g_ModuleBase + 0x19AA838))
 		{
-			sparkleParams.f[0] = *(float *)(v3 + 160);
-			sparkleParams.f[1] = *(float *)(v3 + 164);
-			sparkleParams.f[2] = *(float *)(v3 + 168);
-			sparkleParams.f[3] = *(float *)(v3 + 172);
+			sparkleParams.f[0] = *(float *)(material + 160);
+			sparkleParams.f[1] = *(float *)(material + 164);
+			sparkleParams.f[2] = *(float *)(material + 168);
+			sparkleParams.f[3] = *(float *)(material + 172);
 		}
 		else
 		{
 			// Bug fix: Without the RTTI check, this would read out-of-bounds data causing a crash or
 			// simply invalid values
-			sparkleParams.v = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
+			sparkleParams.v = _mm_set1_ps(1.0f);
 		}
 	}
 	break;
@@ -522,33 +522,33 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	// BSLightingShaderMaterialEye
 	case RAW_TECHNIQUE_EYE:
 	{
-		sub_14130C470(*(uintptr_t *)(v3 + 160), v3);
-		sub_14130C4D0(*(uintptr_t *)(v3 + 168), v3);
+		sub_14130C470(*(uintptr_t *)(material + 160), material);
+		sub_14130C4D0(*(uintptr_t *)(material + 168), material);
 
 		// VS: p9 float4 LeftEyeCenter
 		{
 			XMVECTORF32& leftEyeCenter = vertexCG.ParamVS<XMVECTORF32, 9>();
 
-			leftEyeCenter.f[0] = *(float *)(v3 + 180);
-			leftEyeCenter.f[1] = *(float *)(v3 + 184);
-			leftEyeCenter.f[2] = *(float *)(v3 + 188);
+			leftEyeCenter.f[0] = *(float *)(material + 180);
+			leftEyeCenter.f[1] = *(float *)(material + 184);
+			leftEyeCenter.f[2] = *(float *)(material + 188);
 		}
 
 		// VS: p10 float4 RightEyeCenter
 		{
 			XMVECTORF32& rightEyeCenter = vertexCG.ParamVS<XMVECTORF32, 10>();
 
-			rightEyeCenter.f[0] = *(float *)(v3 + 192);
-			rightEyeCenter.f[1] = *(float *)(v3 + 196);
-			rightEyeCenter.f[2] = *(float *)(v3 + 200);
+			rightEyeCenter.f[0] = *(float *)(material + 192);
+			rightEyeCenter.f[1] = *(float *)(material + 196);
+			rightEyeCenter.f[2] = *(float *)(material + 200);
 		}
 
 		// PS: p21 float4 EnvmapData
 		{
 			XMVECTORF32& envmapData = pixelCG.ParamPS<XMVECTORF32, 21>();
 
-			envmapData.f[0] = *(float *)(v3 + 176);
-			envmapData.f[1] = (*(uintptr_t *)(v3 + 168)) ? 1.0f : 0.0f;
+			envmapData.f[0] = *(float *)(material + 176);
+			envmapData.f[1] = (*(uintptr_t *)(material + 168)) ? 1.0f : 0.0f;
 		}
 	}
 	break;
@@ -558,10 +558,10 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	{
 		XMVECTORF32& texcoordOffset = vertexCG.ParamVS<XMVECTORF32, 11>();
 
-		texcoordOffset.f[0] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 12);
-		texcoordOffset.f[1] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 16);
-		texcoordOffset.f[2] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 28);
-		texcoordOffset.f[3] = *(float *)(v3 + 8i64 * (unsigned int)dword_141E33040 + 32);
+		texcoordOffset.f[0] = *(float *)(material + 8i64 * (unsigned int)dword_141E33040 + 12);
+		texcoordOffset.f[1] = *(float *)(material + 8i64 * (unsigned int)dword_141E33040 + 16);
+		texcoordOffset.f[2] = *(float *)(material + 8i64 * (unsigned int)dword_141E33040 + 28);
+		texcoordOffset.f[3] = *(float *)(material + 8i64 * (unsigned int)dword_141E33040 + 32);
 	}
 
 	if (rawTechnique & RAW_FLAG_SPECULAR)
@@ -569,17 +569,17 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		// PS: p25 float4 SpecularColor
 		XMVECTORF32& specularColor = pixelCG.ParamPS<XMVECTORF32, 25>();
 
-		specularColor.f[0] = *(float *)(v3 + 56) * *(float *)(v3 + 0x8C);
-		specularColor.f[1] = *(float *)(v3 + 60) * *(float *)(v3 + 0x8C);
-		specularColor.f[2] = *(float *)(v3 + 64) * *(float *)(v3 + 0x8C);
-		specularColor.f[3] = *(float *)(v3 + 136);
+		specularColor.f[0] = *(float *)(material + 56) * *(float *)(material + 0x8C);
+		specularColor.f[1] = *(float *)(material + 60) * *(float *)(material + 0x8C);
+		specularColor.f[2] = *(float *)(material + 64) * *(float *)(material + 0x8C);
+		specularColor.f[3] = *(float *)(material + 136);
 
 		if (rawTechnique & RAW_FLAG_MODELSPACENORMALS)
 		{
-			sub_14130C220(2, *(uintptr_t *)(v3 + 104), v3);
+			sub_14130C220(2, *(uintptr_t *)(material + 104), material);
 
-			uint32_t v68 = *(uint32_t *)(v3 + 112);
-			NiSourceTexture *v69 = *(NiSourceTexture **)(v3 + 104);
+			uint32_t v68 = *(uint32_t *)(material + 112);
+			NiSourceTexture *v69 = *(NiSourceTexture **)(material + 104);
 
 			renderer->SetTexture(2, v69->QRendererTexture());
 			renderer->SetTextureMode(2, v68, 3);
@@ -594,8 +594,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 	if (rawTechnique & RAW_FLAG_SOFT_LIGHTING)
 	{
-		uint32_t v71 = *(uint32_t *)(v3 + 112);
-		NiSourceTexture *v72 = *(NiSourceTexture **)(v3 + 96);
+		uint32_t v71 = *(uint32_t *)(material + 112);
+		NiSourceTexture *v72 = *(NiSourceTexture **)(material + 96);
 
 		renderer->SetTexture(12, v72->QRendererTexture());
 		renderer->SetTextureAddressMode(12, v71);
@@ -603,15 +603,15 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		// PS: p28 float4 LightingEffectParams
 		XMVECTORF32& lightingEffectParams = pixelCG.ParamPS<XMVECTORF32, 28>();
 
-		lightingEffectParams.f[0] = *(float *)(v3 + 144);
-		lightingEffectParams.f[1] = *(float *)(v3 + 148);
+		lightingEffectParams.f[0] = *(float *)(material + 144);
+		lightingEffectParams.f[1] = *(float *)(material + 148);
 	}
 
 	if (rawTechnique & RAW_FLAG_RIM_LIGHTING)
 	{
 		// I guess this is identical to RAW_FLAG_SOFT_LIGHTING above
-		uint32_t v76 = *(uint32_t *)(v3 + 112);
-		NiSourceTexture *v77 = *(NiSourceTexture **)(v3 + 96);
+		uint32_t v76 = *(uint32_t *)(material + 112);
+		NiSourceTexture *v77 = *(NiSourceTexture **)(material + 96);
 
 		renderer->SetTexture(12, v77->QRendererTexture());
 		renderer->SetTextureAddressMode(12, v76);
@@ -619,14 +619,14 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		// PS: p28 float4 LightingEffectParams
 		XMVECTORF32& lightingEffectParams = pixelCG.ParamPS<XMVECTORF32, 28>();
 
-		lightingEffectParams.f[0] = *(float *)(v3 + 144);
-		lightingEffectParams.f[1] = *(float *)(v3 + 148);
+		lightingEffectParams.f[0] = *(float *)(material + 144);
+		lightingEffectParams.f[1] = *(float *)(material + 148);
 	}
 
 	if (rawTechnique & RAW_FLAG_BACK_LIGHTING)
 	{
-		uint32_t v81 = *(uint32_t *)(v3 + 112);
-		NiSourceTexture *v82 = *(NiSourceTexture **)(v3 + 104);
+		uint32_t v81 = *(uint32_t *)(material + 112);
+		NiSourceTexture *v82 = *(NiSourceTexture **)(material + 104);
 
 		renderer->SetTexture(9, v82->QRendererTexture());
 		renderer->SetTextureAddressMode(9, v81);
@@ -645,23 +645,23 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 	if (setDiffuseNormalSamplers)
 	{
-		int v88 = *(int *)(v3 + 80);
+		int v88 = *(int *)(material + 80);
 
 		if (v88 == -1)
 		{
-			sub_14130C220(0, *(uintptr_t *)(v3 + 72), v3);
+			sub_14130C220(0, *(uintptr_t *)(material + 72), material);
 		}
 		else
 		{
-			uint32_t v89 = *(uint32_t *)(v3 + 112);
+			uint32_t v89 = *(uint32_t *)(material + 112);
 			auto v90 = (ID3D11ShaderResourceView *)*(&qword_14304EF00 + 6 * v88);
 
 			renderer->SetShaderResource(0, v90);
 			renderer->SetTextureAddressMode(0, v89);
 		}
 
-		uint32_t v91 = *(uint32_t *)(v3 + 112);
-		NiSourceTexture *v92 = *(NiSourceTexture **)(v3 + 88);
+		uint32_t v91 = *(uint32_t *)(material + 112);
+		NiSourceTexture *v92 = *(NiSourceTexture **)(material + 88);
 
 		renderer->SetTexture(1, v92->QRendererTexture());
 		renderer->SetTextureAddressMode(1, v91);
