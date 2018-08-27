@@ -61,7 +61,7 @@ namespace ui
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		//io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
 		//io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.MouseDrawCursor = true;
 
 		ImGui_ImplWin32_Init(Wnd);
