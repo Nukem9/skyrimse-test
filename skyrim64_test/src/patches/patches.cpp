@@ -8,6 +8,7 @@
 #include "TES/BSGraphicsRenderer.h"
 #include "TES/BSCullingProcess.h"
 #include "TES/BSJobs.h"
+#include "TES/BSTaskManager.h"
 #include "TES/BSShader/BSShaderManager.h"
 #include "TES/BSShader/Shaders/BSBloodSplatterShader.h"
 #include "TES/BSShader/Shaders/BSDistantTreeShader.h"
@@ -33,91 +34,6 @@ void PatchTESForm();
 void TestHook5();
 
 bool doCullTest = false;
-
-extern const char BSTask_AddCellGrassTask[] = "AddCellGrassTask";
-extern const char BSTask_AttachDistant3DTask[] = "AttachDistant3DTask";
-extern const char BSTask_AudioLoadForPlaybackTask[] = "AudioLoadForPlaybackTask";
-extern const char BSTask_AudioLoadToCacheTask[] = "AudioLoadToCacheTask";
-extern const char BSTask_BGSParticleObjectCloneTask[] = "BGSParticleObjectCloneTask";
-extern const char BSTask_BSScaleformMovieLoadTask[] = "BSScaleformMovieLoadTask";
-extern const char BSTask_CheckWithinMultiBoundTask[] = "CheckWithinMultiBoundTask";
-extern const char BSTask_QueuedFile[] = "QueuedFile";
-extern const char BSTask_QueuedPromoteLocationReferencesTask[] = "QueuedPromoteLocationReferencesTask";
-extern const char BSTask_QueuedPromoteReferencesTask[] = "QueuedPromoteReferencesTask";
-
-class BSTask
-{
-	const static uint32_t MAX_REF_COUNT = 100000;
-
-
-public:
-	volatile int iRefCount;
-	int eState;
-
-	virtual ~BSTask();
-	virtual void VFunc0() = 0;
-	virtual void VFunc1() = 0;
-	virtual void VFunc2();
-	virtual bool GetName(char *Buffer, uint32_t BufferSize);
-
-	void AddRef()
-	{
-		InterlockedIncrement((volatile long *)&iRefCount);
-	}
-
-	void DecRef()
-	{
-		if (InterlockedDecrement((volatile long *)&iRefCount) == 0)
-			this->~BSTask();
-	}
-
-	template<const char *Name>
-	bool GetName_Override(char *Buffer, size_t BufferSize)
-	{
-		strncpy_s(Buffer, BufferSize + 1, Name, BufferSize);
-		return false;
-	}
-};
-
-SRWLOCK TaskListLock = SRWLOCK_INIT;
-std::map<BSTask *, std::string> TaskMap;
-std::vector<std::string> TasksCurrentFrame;
-
-bool IOManagerQueueTask(__int64 a1, BSTask *Task)
-{
-	AcquireSRWLockExclusive(&TaskListLock);
-
-	// Loop through the current list and check if any were finished or canceled
-	for (auto itr = TaskMap.begin(); itr != TaskMap.end();)
-	{
-		// Release our reference
-		if (itr->first->eState == 5 || itr->first->eState == 6)
-		{
-			itr->first->DecRef();
-			itr = TaskMap.erase(itr);
-		}
-		else
-		{
-			itr++;
-		}
-	}
-
-	// Is this a new task entry?
-	if (TaskMap.count(Task) <= 0)
-	{
-		std::string s(128, '\0');
-
-		Task->AddRef();
-		Task->GetName(s.data(), s.size());
-
-		TasksCurrentFrame.push_back(s);
-		TaskMap.emplace(Task, std::move(s));
-	}
-
-	ReleaseSRWLockExclusive(&TaskListLock);
-
-	return ((bool(*)(__int64, BSTask *))(g_ModuleBase + 0xD2C550))(a1, Task);
-}
 
 char __fastcall test1(__int64 a1, __int64(__fastcall ***a2)(__int64, __int64, __int64), unsigned int a3, unsigned int a4)
 {
@@ -199,6 +115,21 @@ void Patch_TESV()
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC32109), (PBYTE)jobhookInstance.getCode());
 
 	//
+	// BSTaskManager
+	//
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class IOManager")->VTableAddress, &IOManager::QueueTask, 17);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AddCellGrassTask")->VTableAddress, &BSTask::GetName_AddCellGrassTask, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AttachDistant3DTask")->VTableAddress, &BSTask::GetName_AttachDistant3DTask, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AudioLoadForPlaybackTask")->VTableAddress, &BSTask::GetName_AudioLoadForPlaybackTask, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AudioLoadToCacheTask")->VTableAddress, &BSTask::GetName_AudioLoadToCacheTask, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class BGSParticleObjectCloneTask")->VTableAddress, &BSTask::GetName_BGSParticleObjectCloneTask, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class BSScaleformMovieLoadTask")->VTableAddress, &BSTask::GetName_BSScaleformMovieLoadTask, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class CheckWithinMultiBoundTask")->VTableAddress, &BSTask::GetName_CheckWithinMultiBoundTask, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedFile")->VTableAddress, &BSTask::GetName_QueuedFile, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedPromoteLocationReferencesTask")->VTableAddress, &BSTask::GetName_QueuedPromoteLocationReferencesTask, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedPromoteReferencesTask")->VTableAddress, &BSTask::GetName_QueuedPromoteReferencesTask, 4);
+
+	//
 	// DirectInput (mouse, keyboard)
 	//
 	Detours::IATHook((PBYTE)g_ModuleBase, "dinput8.dll", "DirectInput8Create", (PBYTE)hk_DirectInput8Create);
@@ -271,19 +202,6 @@ void Patch_TESV()
 
 	*(PBYTE *)&TESObjectCell::CreateRootMultiBoundNode = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x264230), &TESObjectCell::hk_CreateRootMultiBoundNode);
 
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AddCellGrassTask")->VTableAddress, &BSTask::GetName_Override<BSTask_AddCellGrassTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AttachDistant3DTask")->VTableAddress, &BSTask::GetName_Override<BSTask_AttachDistant3DTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AudioLoadForPlaybackTask")->VTableAddress, &BSTask::GetName_Override<BSTask_AudioLoadForPlaybackTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AudioLoadToCacheTask")->VTableAddress, &BSTask::GetName_Override<BSTask_AudioLoadToCacheTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class BGSParticleObjectCloneTask")->VTableAddress, &BSTask::GetName_Override<BSTask_BGSParticleObjectCloneTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class BSScaleformMovieLoadTask")->VTableAddress, &BSTask::GetName_Override<BSTask_BSScaleformMovieLoadTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class CheckWithinMultiBoundTask")->VTableAddress, &BSTask::GetName_Override<BSTask_CheckWithinMultiBoundTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedFile")->VTableAddress, &BSTask::GetName_Override<BSTask_QueuedFile>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedPromoteLocationReferencesTask")->VTableAddress, &BSTask::GetName_Override<BSTask_QueuedPromoteLocationReferencesTask>, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedPromoteReferencesTask")->VTableAddress, &BSTask::GetName_Override<BSTask_QueuedPromoteReferencesTask>, 4);
-
-	uintptr_t addr = (uintptr_t)&IOManagerQueueTask;
-	//PatchMemory(g_ModuleBase + 0x179EB58, (PBYTE)&addr, sizeof(uintptr_t));
 }
 
 void Patch_TESVCreationKit()

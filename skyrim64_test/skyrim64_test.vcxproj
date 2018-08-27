@@ -150,6 +150,7 @@
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSParticleShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShaderProperty.h" />
+    <ClInclude Include="src\patches\TES\BSTaskManager.h" />
     <ClInclude Include="src\patches\TES\BSTList.h" />
     <ClInclude Include="src\patches\TES\BSTLocklessQueue.h" />
     <ClInclude Include="src\patches\TES\MOC.h" />
@@ -320,6 +321,7 @@
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSParticleShader.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSSkyShader.cpp" />
     <ClCompile Include="src\patches\TES\BSSpinLock.cpp" />
+    <ClCompile Include="src\patches\TES\BSTaskManager.cpp" />
     <ClCompile Include="src\patches\TES\BSThread_Win32.cpp" />
     <ClCompile Include="src\patches\TES\MOC.cpp" />
     <ClCompile Include="src\patches\TES\MOC_ThreadedMerger.cpp" />

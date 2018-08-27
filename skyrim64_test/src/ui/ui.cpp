@@ -7,13 +7,10 @@
 #include "ui_renderer.h"
 #include "ui_tracy.h"
 #include "../patches/TES/BSJobs.h"
+#include "../patches/TES/BSTaskManager.h"
 #include "../patches/TES/BSShader/BSShader.h"
 #include "../patches/TES/Setting.h"
 #include "../patches/rendering/GpuTimer.h"
-
-extern SRWLOCK TaskListLock;
-extern std::map<class BSTask *, std::string> TaskMap;
-extern std::vector<std::string> TasksCurrentFrame;
 
 namespace ui::opt
 {
@@ -515,9 +512,7 @@ namespace ui
 				if (active > 0)
 					activeJobs++;
 
-				sortedMap[v.Name].first = v.TotalCount.load();
-				sortedMap[v.Name].second = active;
-
+				sortedMap.insert_or_assign(v.Name, std::pair(v.TotalCount.load(), active));
 				v.ActiveCount.store(0);
 			}
 
@@ -567,10 +562,10 @@ namespace ui
 		{
 			static std::map<std::string, uint64_t> taskHistory;
 
-			AcquireSRWLockExclusive(&TaskListLock);
+			AcquireSRWLockExclusive(&BSTask::TaskListLock);
 			{
 				// Build global task history
-				for (std::string& entry : TasksCurrentFrame)
+				for (std::string& entry : BSTask::TasksCurrentFrame)
 				{
 					const char *c = entry.c_str();
 
@@ -595,24 +590,24 @@ namespace ui
 						taskHistory[entry]++;
 				}
 
-				TasksCurrentFrame.clear();
+				BSTask::TasksCurrentFrame.clear();
 
 				// Show currently running tasks
 				char header[64];
-				sprintf_s(header, "Active Tasks This Frame (%lld)", TaskMap.size());
+				sprintf_s(header, "Active Tasks This Frame (%lld)", BSTask::TaskMap.size());
 
 				if (ImGui::BeginGroupSplitter(header))
 				{
 					ImGui::BeginChild("taskscrolling1", ImVec2(0, 300), false, ImGuiWindowFlags_HorizontalScrollbar);
 
-					for (auto& entry : TaskMap)
+					for (auto& entry : BSTask::TaskMap)
 						ImGui::TextUnformatted(entry.second.c_str());
 
 					ImGui::EndChild();
 					ImGui::EndGroupSplitter();
 				}
 			}
-			ReleaseSRWLockExclusive(&TaskListLock);
+			ReleaseSRWLockExclusive(&BSTask::TaskListLock);
 
 			// Show history
 			if (ImGui::BeginGroupSplitter("Task Counters"))
