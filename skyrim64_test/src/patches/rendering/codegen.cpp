@@ -37,10 +37,11 @@ void CreateXbyakPatches()
 
 	// Do the actual code modifications
 	std::unordered_map<uint32_t, void *> codeCache;
+	uintptr_t codeBlockBase = g_CodeRegion;
 
 	for (auto& patch : XrefGeneratedPatches)
 	{
-		PatchCodeGen gen(&patch, g_CodeRegion, TLS_INSTRUCTION_BLOCK_SIZE);
+		PatchCodeGen gen(&patch, codeBlockBase, TLS_INSTRUCTION_BLOCK_SIZE);
 		uint8_t *rawCode = (uint8_t *)gen.getCode();
 		uint32_t codeCRC = crc32c(rawCode, gen.getSize());
 
@@ -48,10 +49,13 @@ void CreateXbyakPatches()
 		if (codeCache.find(codeCRC) == codeCache.end())
 		{
 			codeCache.insert_or_assign(codeCRC, rawCode);
-			g_CodeRegion += TLS_INSTRUCTION_BLOCK_SIZE;
+			codeBlockBase += TLS_INSTRUCTION_BLOCK_SIZE;
 		}
 
 		WriteCodeHook(g_ModuleBase + patch.ExeOffset, codeCache[codeCRC]);
+
+		// Don't exceed the region bounds
+		Assert(codeBlockBase < g_CodeRegion + TLS_INSTRUCTION_MEMORY_REGION_SIZE)
 	}
 
 	DWORD old;
@@ -76,7 +80,7 @@ void CreateXbyakCodeBlock()
 
 		if (memInfo.State == MEM_FREE && memInfo.RegionSize >= TLS_INSTRUCTION_MEMORY_REGION_SIZE)
 		{
-			g_CodeRegion = (uintptr_t)VirtualAlloc(memInfo.BaseAddress, TLS_INSTRUCTION_MEMORY_REGION_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+			g_CodeRegion = (uintptr_t)VirtualAlloc(memInfo.BaseAddress, TLS_INSTRUCTION_MEMORY_REGION_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
 			if (g_CodeRegion)
 				break;
@@ -114,7 +118,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 				db(0x9C);// pushfq
 				cmp(ZydisToXbyak64(Patch->Base), qword[rip + label1]);
 				je(label2);
-				db(0xCC);
+				db(0xCC);// int3
 
 				L(label1);
 				dq(g_ModuleBase);
