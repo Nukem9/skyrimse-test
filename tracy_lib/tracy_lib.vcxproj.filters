@@ -38,6 +38,14 @@
     <ClInclude Include="tracy\server\TracyVector.hpp" />
     <ClInclude Include="tracy\server\TracyView.hpp" />
     <ClInclude Include="tracy\server\TracyWorker.hpp" />
+    <ClInclude Include="tracy\server\TracyDecayValue.hpp" />
+    <ClInclude Include="tracy\server\TracyStringDiscovery.hpp" />
+    <ClInclude Include="tracy\server\TracyVersion.hpp" />
+    <ClInclude Include="tracy\server\TracyFilesystem.hpp" />
+    <ClInclude Include="tracy\server\TracyBuzzAnim.hpp" />
+    <ClInclude Include="tracy\common\tracy_lz4hc.hpp" />
+    <ClInclude Include="tracy\imguicolortextedit\texteditor.h" />
+    <ClInclude Include="tracy\server\IconsFontAwesome5.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tracy\client\tracy_rpmalloc.cpp" />
@@ -51,5 +59,7 @@
     <ClCompile Include="tracy\server\TracyMemory.cpp" />
     <ClCompile Include="tracy\server\TracyView.cpp" />
     <ClCompile Include="tracy\server\TracyWorker.cpp" />
+    <ClCompile Include="tracy\common\tracy_lz4hc.cpp" />
+    <ClCompile Include="tracy\imguicolortextedit\TextEditor.cpp" />
   </ItemGroup>
 </Project>
