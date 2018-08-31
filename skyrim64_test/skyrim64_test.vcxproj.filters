@@ -517,9 +517,6 @@
     <ClCompile Include="src\patches\rendering\d3d11.cpp">
       <Filter>Source Files\patches</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\rendering\d3d11_dc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\rendering\codegen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -701,6 +698,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSTaskManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\d3d9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\rendering\d3d11_dc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

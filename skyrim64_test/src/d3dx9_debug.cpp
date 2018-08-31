@@ -1,7 +1,7 @@
 #include "common.h"
 #include "d3dconv.h"
 
-#if SKYRIM64_D3DX9_DEBUG
+#if SKYRIM64_D3DX9_DEBUG && !SKYRIM64_CREATIONKIT_DLL
 
 #pragma comment(linker, "/export:D3DXSaveSurfaceToFileA=C:\\Windows\\System32\\d3dx9_42.D3DXSaveSurfaceToFileA")
 #pragma comment(linker, "/export:D3DXSaveTextureToFileA=C:\\Windows\\System32\\d3dx9_42.D3DXSaveTextureToFileA")

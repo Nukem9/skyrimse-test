@@ -93,9 +93,11 @@ void ApplyPatches()
 	}
 	else
 	{
+#if !SKYRIM64_CREATIONKIT_DLL
 		InitializeTLSMain();
 		LoadModules();
 		Patch_TESV();
+#endif
 	}
 }
 
