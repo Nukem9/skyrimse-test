@@ -137,6 +137,12 @@ size_t __fastcall hk_msize(void *Block)
 	return result;
 }
 
+char *__fastcall hk_strdup(const char *str1)
+{
+	size_t len = (strlen(str1) + 1) * sizeof(char);
+	return (char *)memcpy(hk_malloc(len), str1, len);
+}
+
 //
 // Internal engine heap allocators backed by VirtualAlloc()
 //
@@ -188,4 +194,5 @@ void PatchMemory()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC020A0), &MemoryManager::Free);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC02FE0), &ScrapHeap::Alloc);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC03600), &ScrapHeap::Free);
+	PatchIAT(hk_strdup, "API-MS-WIN-CRT-STRING-L1-1-0.DLL", "_strdup");
 }
