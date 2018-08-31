@@ -248,6 +248,7 @@ void Patch_TESVCreationKit()
 	// Misc
 	//
 	ExperimentalPatchEditAndContinue();
+	ExperimentalPatchMemInit();
 
 	//
 	// Allow saving ESM's directly. "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
