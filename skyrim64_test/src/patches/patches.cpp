@@ -242,4 +242,17 @@ void Patch_TESVCreationKit()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24407A0), &MemoryManager::Free);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2447FA0), &ScrapHeap::Alloc);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24485F0), &ScrapHeap::Free);
+
+	//
+	// Allow saving ESM's directly. "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
+	//
+	const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
+
+	PatchMemory(g_ModuleBase + 0x164020A, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
+	PatchMemory(g_ModuleBase + 0x30B9090, (PBYTE)newFormat, strlen(newFormat) + 1);
+
+	//
+	// Allow ESP files to act as master files while saving
+	//
+	PatchMemory(g_ModuleBase + 0x1657279, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
 }
