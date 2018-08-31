@@ -27,6 +27,7 @@ void PatchWindow();
 void PatchFileIO();
 void ExperimentalPatchEmptyFunctions();
 void ExperimentalPatchMemInit();
+void ExperimentalPatchEditAndContinue();
 
 void PatchBSGraphicsRenderTargetManager();
 void PatchBSThread();
@@ -242,6 +243,11 @@ void Patch_TESVCreationKit()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24407A0), &MemoryManager::Free);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2447FA0), &ScrapHeap::Alloc);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24485F0), &ScrapHeap::Free);
+
+	//
+	// Misc
+	//
+	ExperimentalPatchEditAndContinue();
 
 	//
 	// Allow saving ESM's directly. "File '%s' is a master file or is in use.\n\nPlease select another file to save to."

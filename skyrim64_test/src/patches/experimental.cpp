@@ -6,6 +6,68 @@
 #define IS_RETURN_LONG(x)  (*(BYTE *)(x + 0) == 0xC2 && *(BYTE *)(x + 1) == 0x00 && *(BYTE *)(x + 2) == 0x00) // retn 0
 #define IS_RETURN(x)       (*(BYTE *)(x + 0) == 0xC3)                                                         // retn
 
+bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extended)
+{
+	bool isJump = (*(BYTE *)SourceAddress == 0xE9);
+	void *dest = (void *)TargetFunction;
+
+	//
+	// Check if the given function is "unoptimized" and remove the branch completely. Extended
+	// nullsub checking is riskier because of potential false positives.
+	//
+	const uint8_t signature1[] = { 0xC2, 0x00, 0x00 };// Real nullsub
+
+	if (!memcmp(dest, signature1, sizeof(signature1)))
+	{
+		if (isJump)
+			PatchMemory(SourceAddress, (PBYTE)"\xC3\xCC\xCC\xCC\xCC", 5);// retn; int3; int3; int3; int3;
+		else
+			PatchMemory(SourceAddress, (PBYTE)"\x0F\x1F\x44\x00\x00", 5);// nop;
+
+		return true;
+	}
+	else if (Extended)
+	{
+		const uint8_t signature2[] = { 0xC3 };// Real nullsub
+		const uint8_t signature3[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0xC3 };// Effectively a nullsub
+		const uint8_t signature4[] = { 0x48, 0x89, 0x54, 0x24, 0x10, 0x48, 0x89, 0x4C, 0x24, 0x08, 0xC3 };// Effectively a nullsub
+		const uint8_t signature5[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0x48, 0x8B, 0x00, 0xC3 };// return *(QWORD *)this;
+		const uint8_t signature6[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0xC3 };// return this;
+
+		if (!memcmp(dest, signature2, sizeof(signature2)) ||
+			!memcmp(dest, signature3, sizeof(signature3)) ||
+			!memcmp(dest, signature4, sizeof(signature4)))
+		{
+			if (isJump)
+				PatchMemory(SourceAddress, (PBYTE)"\xC3\xCC\xCC\xCC\xCC", 5);// retn; int3; int3; int3; int3;
+			else
+				PatchMemory(SourceAddress, (PBYTE)"\x0F\x1F\x44\x00\x00", 5);// nop;
+
+			return true;
+		}
+		else if (!memcmp(dest, signature5, sizeof(signature5)))
+		{
+			if (isJump)
+				PatchMemory(SourceAddress, (PBYTE)"\x48\x8B\x01\xC3\xCC", 5);// mov rax, [rcx]; retn; int3;
+			else
+				PatchMemory(SourceAddress, (PBYTE)"\x48\x8B\x01\x66\x90", 5);// mov rax, [rcx]; nop;
+
+			return true;
+		}
+		else if (!memcmp(dest, signature6, sizeof(signature6)))
+		{
+			if (isJump)
+				PatchMemory(SourceAddress, (PBYTE)"\x48\x89\xC8\xC3\xCC", 5);// mov rax, rcx; retn; int3;
+			else
+				PatchMemory(SourceAddress, (PBYTE)"\x48\x89\xC8\x66\x90", 5);// mov rax, rcx; nop;
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void ExperimentalPatchEmptyFunctions()
 {
 	uintptr_t codeStart = g_CodeBase;
@@ -32,16 +94,8 @@ void ExperimentalPatchEmptyFunctions()
 			if (destination % 16 != 0)
 				continue;
 
-			if (!IS_RETURN_LONG(destination))
-				continue;
-
-			// Patch the jump/call out (retn/5 byte nop)
-			if (*(BYTE *)i == 0xE9)
-				PatchMemory(i, (PBYTE)"\xC3\xCC\xCC\xCC\xCC", 5);
-			else
-				PatchMemory(i, (PBYTE)"\x0F\x1F\x44\x00\x00", 5);
-
-			patchCount++;
+			if (PatchNullsub(i, destination, false))
+				patchCount++;
 		}
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
@@ -163,6 +217,58 @@ void ExperimentalPatchMemInit()
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
+	}
+
+	ui::log::Add("%s: %lld patches applied.\n", __FUNCTION__, patchCount);
+}
+
+void ExperimentalPatchEditAndContinue()
+{
+	uint64_t patchCount = 0;
+	uintptr_t codeStart = g_ModuleBase + 0xFB4000;
+	uintptr_t codeEnd = g_ModuleBase + 0x3020F30;
+
+	//
+	// Remove any references to the giant trampoline table generated for edit & continue
+	//
+	// Before: [Function call] -> [E&C stub] -> [Function]
+	// After:  [Function call] -> [Function]
+	//
+	auto isWithinECTable = [](uintptr_t Address)
+	{
+		uintptr_t start = g_ModuleBase + 0xFB4000;
+		uintptr_t end = g_ModuleBase + 0x104C50D;
+
+		// Must be a jump
+		if (Address >= start && Address < end && *(uint8_t *)Address == 0xE9)
+			return true;
+
+		return false;
+	};
+
+	for (uintptr_t i = codeStart; i < codeEnd; i++)
+	{
+		// Must be a call or a jump
+		if (*(BYTE *)i != 0xE9 && *(BYTE *)i != 0xE8)
+			continue;
+
+		uintptr_t destination = i + *(int32_t *)(i + 1) + 5;
+
+		if (isWithinECTable(destination))
+		{
+			// Find where the trampoline actually points to, then remove it
+			uintptr_t real = destination + *(int32_t *)(destination + 1) + 5;
+
+			BYTE data[5];
+			data[0] = *(BYTE *)i;
+			*(int32_t *)&data[1] = (int32_t)(real - i) - 5;
+
+			PatchMemory(i, data, sizeof(data));
+			patchCount++;
+
+			if (PatchNullsub(i, real, true))
+				patchCount++;
+		}
 	}
 
 	ui::log::Add("%s: %lld patches applied.\n", __FUNCTION__, patchCount);
