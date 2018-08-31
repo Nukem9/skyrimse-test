@@ -183,7 +183,6 @@ BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult)
 			return FALSE;
 		}
 
-		AssertMsg(g_ParentDialogHwnds.count(parent) > 0, "Still calling EndDialog on a non-dialog window?");
 		g_ParentDialogHwnds.erase(parent);
 	}
 	dialogMutex.unlock();
