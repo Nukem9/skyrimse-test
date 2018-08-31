@@ -27,12 +27,12 @@ void CreateXbyakPatches()
 		// Generate the instruction patch table (d3d11_patchlist.inl) to a file. 0x140000000
 		// is the exe base address without ASLR.
 		for (uintptr_t xref : XrefList)
-			GenerateInstruction(xref - 0x140000000 + g_ModuleBase);
+			GenerateInstruction(xref + g_ModuleBase - 0x140000000);
 
 		printf("-- SECONDARY LIST --\n");
 
 		for (uintptr_t xref : XrefList2)
-			GenerateInstruction(xref - 0x140000000 + g_ModuleBase);
+			GenerateInstruction(xref + g_ModuleBase - 0x140000000);
 	}
 
 	// Do the actual code modifications
@@ -67,10 +67,11 @@ void CreateXbyakPatches()
 void CreateXbyakCodeBlock()
 {
 	// Find a region within +/-2GB (minus some for tolerance)
-	uintptr_t maxDelta = (1ull * 1024 * 1024 * 1024) - 4096;
+	const uintptr_t maxDelta = (1ull * 1024 * 1024 * 1024) - 4096;
+	const uintptr_t modBase = (uintptr_t)g_ModuleBase;
 
-	uintptr_t start = g_ModuleBase - maxDelta;
-	uintptr_t end = g_ModuleBase + maxDelta;
+	uintptr_t start = modBase - std::min(modBase, maxDelta);
+	uintptr_t end = modBase + maxDelta;
 
 	while (start < end)
 	{
@@ -724,7 +725,7 @@ void WriteCodeHook(uintptr_t TargetAddress, void *Code)
 
 	// Relative CALL
 	data[0] = 0xE8;
-	*(uint32_t *)&data[1] = (uint32_t)((uintptr_t)Code - TargetAddress - 5);
+	*(int32_t *)&data[1] = (int32_t)((uintptr_t)Code - TargetAddress) - 5;
 
 	// Pad with nops so it shows up nicely in the debugger
 	switch (instruction.length - 5)
