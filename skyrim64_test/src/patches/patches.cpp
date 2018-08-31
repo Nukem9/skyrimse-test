@@ -15,6 +15,7 @@
 #include "TES/BSShader/Shaders/BSSkyShader.h"
 #include "TES/BSShader/Shaders/BSGrassShader.h"
 #include "TES/BSShader/Shaders/BSParticleShader.h"
+#include "TES/MemoryManager.h"
 
 void PatchAchievements();
 void PatchD3D11();
@@ -135,6 +136,21 @@ void Patch_TESV()
 	Detours::IATHook((PBYTE)g_ModuleBase, "dinput8.dll", "DirectInput8Create", (PBYTE)hk_DirectInput8Create);
 
 	//
+	// MemoryManager
+	//
+	PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);// [3GB  ] MemoryManager - Default/Static/File heaps
+	PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);// [1GB  ] BSSmallBlockAllocator
+														   // [512MB] hkMemoryAllocator is untouched due to complexity
+														   // [128MB] BSScaleformSysMemMapper is untouched due to complexity
+	PatchMemory(g_ModuleBase + 0xC02E60, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap init
+	PatchMemory(g_ModuleBase + 0xC037C0, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap deinit
+
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC01DA0), &MemoryManager::Alloc);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC020A0), &MemoryManager::Free);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC02FE0), &ScrapHeap::Alloc);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC03600), &ScrapHeap::Free);
+
+	//
 	// Locking
 	//
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06DF0), &BSReadWriteLock::__ctor__);
@@ -206,8 +222,24 @@ void Patch_TESV()
 
 void Patch_TESVCreationKit()
 {
+	PatchMemory();
 	PatchThreading();
 	PatchWindow();
 	PatchSteam();
 	PatchFileIO();
+
+	//
+	// MemoryManager
+	//
+	PatchMemory(g_ModuleBase + 0x1223160, (PBYTE)"\xC3", 1);// [3GB  ] MemoryManager - Default/Static/File heaps
+	PatchMemory(g_ModuleBase + 0x24400E0, (PBYTE)"\xC3", 1);// [1GB  ] BSSmallBlockAllocator
+															// [512MB] hkMemoryAllocator is untouched due to complexity
+															// [128MB] BSScaleformSysMemMapper is untouched due to complexity
+	PatchMemory(g_ModuleBase + 0x2447D90, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap init
+	PatchMemory(g_ModuleBase + 0x24488C0, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap deinit
+
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2440380), &MemoryManager::Alloc);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24407A0), &MemoryManager::Free);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2447FA0), &ScrapHeap::Alloc);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24485F0), &ScrapHeap::Free);
 }
