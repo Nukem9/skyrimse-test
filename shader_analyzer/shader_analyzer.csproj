@@ -125,6 +125,8 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ShaderAnalyzer.cs" />
+    <Compile Include="ShaderDecompiler.cs" />
+    <Compile Include="ShaderVariableMetadata.cs" />
     <Compile Include="ShaderMetadata.cs" />
     <EmbeddedResource Include="FormDiff.resx">
       <DependentUpon>FormDiff.cs</DependentUpon>

@@ -1,11 +1,10 @@
-﻿using System;
+﻿using SharpDX.D3DCompiler;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
-using SharpDX.D3DCompiler;
 
 namespace shader_analyzer
 {
@@ -49,13 +48,15 @@ namespace shader_analyzer
                     //"Effect",
                     //"Lighting",
                     //"Particle",
-                    //"RunGrass",
-                    "Sky",
+                    "RunGrass",
+                    //"Sky",
                     //"Utility",
-                    "Water",
+                    //"Water",
                 };
 
-                Parallel.ForEach(types, i => ValidateAllShadersOfType(i));
+                foreach (string type in types)
+                    ValidateAllShadersOfType(type);
+
                 OnFinish();
             }).Start();
         }
@@ -94,7 +95,7 @@ namespace shader_analyzer
 
             System.Threading.Tasks.Parallel.For(0, vsFiles.Length, i =>
             {
-                if (ValidateShaderOfType(Type, "vs_5_0", vsFiles[i]))
+                if (ValidateShaderOfType(Type, "vs_5_0", vsFiles[i], hlslSourcePath))
                     Interlocked.Increment(ref succeses);
                 else
                     Interlocked.Increment(ref fails);
@@ -102,7 +103,7 @@ namespace shader_analyzer
 
             System.Threading.Tasks.Parallel.For(0, psFiles.Length, i =>
             {
-                if (ValidateShaderOfType(Type, "ps_5_0", psFiles[i]))
+                if (ValidateShaderOfType(Type, "ps_5_0", psFiles[i], hlslSourcePath))
                     Interlocked.Increment(ref succeses);
                 else
                     Interlocked.Increment(ref fails);
@@ -110,7 +111,7 @@ namespace shader_analyzer
 
             System.Threading.Tasks.Parallel.For(0, csFiles.Length, i =>
             {
-                if (ValidateShaderOfType(Type, "cs_5_0", csFiles[i]))
+                if (ValidateShaderOfType(Type, "cs_5_0", csFiles[i], hlslSourcePath))
                     Interlocked.Increment(ref succeses);
                 else
                     Interlocked.Increment(ref fails);
@@ -119,7 +120,7 @@ namespace shader_analyzer
             Program.LogLine($"ValidateAllShadersOfType({Type}): {succeses} shaders matched, {fails} failed.");
         }
 
-        public static bool ValidateShaderOfType(string Type, string HlslType, string OriginalFile)
+        public static bool ValidateShaderOfType(string Type, string HlslType, string OriginalFile, string SourcePath)
         {
             var metadata = new ShaderMetadata(OriginalFile.Replace(".hlsl", ".txt"));
 
@@ -135,8 +136,10 @@ namespace shader_analyzer
 
             try
             {
+                //originalBytecode = RecompileShader3DMigoto(OriginalFile, HlslType).Strip(m_StripFlags);
+
                 originalBytecode = ShaderBytecode.FromFile(OriginalFile).Strip(m_StripFlags);
-                newBytecode = CompileShaderOfType(Type, HlslType, macros).Strip(m_StripFlags);
+                newBytecode = CompileShaderOfType(SourcePath, HlslType, macros).Strip(m_StripFlags);
             }
             catch(InvalidProgramException e)
             {
@@ -196,6 +199,15 @@ namespace shader_analyzer
             return true;
         }
 
+        public static ShaderBytecode RecompileShader3DMigoto(string OriginalFile, string HlslType)
+        {
+            // Create a copy of the file since it will be trashed
+            string copyPath = OriginalFile.Replace(".hlsl", ".3dm.hlsl");
+            ShaderDecompiler.DecompileShader(OriginalFile, copyPath);
+
+            return CompileShaderOfType(copyPath, HlslType, null);
+        }
+
         public static void ValidateShaderHeader(string[] OldData, string[] NewData)
         {
             //
@@ -229,15 +241,24 @@ namespace shader_analyzer
                 if (OldData[i].StartsWith("dcl_constant") && NewData[i].StartsWith("dcl_constant"))
                     continue;
 
+                // Stupid hacks for reordered operands (functionally equivalent)
+                if (OldData[i].Equals("ne r1.z, cb2[12].x, l(0.000000)") &&
+                    NewData[i].Equals("ne r1.z, l(0.000000), cb2[12].x"))
+                    continue;
+
+                if (OldData[i].Equals("mul r2.xyz, cb1[5].xyzx, l(0.001000, 0.001000, 0.001000, 0.000000)") &&
+                    NewData[i].Equals("mul r2.xyz, l(0.001000, 0.001000, 0.001000, 0.000000), cb1[5].xyzx"))
+                    continue;
+
                 if (!OldData[i].Equals(NewData[i], StringComparison.InvariantCultureIgnoreCase))
                     throw new FormatException();
             }
         }
 
-        public static ShaderBytecode CompileShaderOfType(string Type, string HlslType, SharpDX.Direct3D.ShaderMacro[] Macros = null)
+        public static ShaderBytecode CompileShaderOfType(string Path, string HlslType, SharpDX.Direct3D.ShaderMacro[] Macros = null)
         {
             var result = ShaderBytecode.CompileFromFile(
-                Path.Combine(Program.ShaderSourceDirectory, Type) + ".hlsl",
+                Path,
                 "main",
                 HlslType,
                 ShaderFlags.EnableStrictness | ShaderFlags.OptimizationLevel3,

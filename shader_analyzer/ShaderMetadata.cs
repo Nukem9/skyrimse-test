@@ -4,10 +4,13 @@ using System.Text.RegularExpressions;
 
 namespace shader_analyzer
 {
+    //
+    // Extracts the technique, defines, and samplers from the shader runtime dump
+    //
     class ShaderMetadata
     {
-        private string[] m_FileLines;
-        private uint m_TechniqueId;
+        private readonly string[] m_FileLines;
+        private readonly uint m_TechniqueId;
 
         public ShaderMetadata(string FilePath)
         {
@@ -30,15 +33,26 @@ namespace shader_analyzer
             m_TechniqueId = Convert.ToUInt32(FilePath.Substring(idStart + 1, idEnd - idStart - 1), 16);
         }
 
+        public string[] GetTextData()
+        {
+            return m_FileLines;
+        }
+
         public uint GetTechnique()
         {
+            // Technique is part of the file name itself
             return m_TechniqueId;
         }
 
         public IEnumerable<Tuple<string, string>> GetDefines()
         {
-            // Capture each piece with regex:
-            // #define X Y
+            //
+            // Example layout for defines:
+            //
+            // #define MODELSPACENORMALS 
+            // #define WORLD_MAP 
+            // #define LODLANDSCAPE SNOW
+            //
             Regex defineValueExpr = new Regex(@"\#define\s+(.*?)(\s+(.*?))?$", RegexOptions.Compiled);
 
             foreach (string line in m_FileLines)
@@ -57,7 +71,7 @@ namespace shader_analyzer
             }
         }
 
-        public IEnumerable<string> GetSamplers()
+        public IEnumerable<Tuple<int, string>> GetSamplers()
         {
             //
             // Example layout for samplers:
@@ -71,7 +85,7 @@ namespace shader_analyzer
 
             foreach (string line in m_FileLines)
             {
-                if (!line.StartsWith("Sampler["))
+                if (!line.StartsWith("// Sampler["))
                     continue;
 
                 var matches = defineSamplerExpr.Match(line);
@@ -79,8 +93,9 @@ namespace shader_analyzer
                 if (!matches.Success || matches.Groups.Count < 3)
                     throw new Exception("Unexpected format in shader metadata sampler");
 
-                // Just return the name for now
-                yield return matches.Groups[2].Value.Trim();
+                yield return new Tuple<int, string>(
+                    int.Parse(matches.Groups[1].Value.Trim()),  // Index
+                    matches.Groups[2].Value.Trim());            // Name
             }
         }
     }
