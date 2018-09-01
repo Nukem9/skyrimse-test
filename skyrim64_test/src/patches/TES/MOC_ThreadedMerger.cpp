@@ -98,34 +98,47 @@ void MOC_ThreadedMerger::UpdateDepthViewTexture(ID3D11DeviceContext *Context, ID
 
 void MOC_ThreadedMerger::DepthColorize(const float *FloatData, uint8_t *OutColorArray)
 {
-	int w = m_RenderWidth;
-	int h = m_RenderHeight;
+	int floatCount = m_RenderWidth * m_RenderHeight;
 
 	// Find min/max w coordinate (discard cleared pixels)
-	float minW = FLT_MAX;
-	float maxW = 0.0f;
+	__m128 minsW = _mm_set1_ps(FLT_MAX);
+	__m128 maxsW = _mm_setzero_ps();
 
-	for (int i = 0; i < w * h; i++)
+	for (int i = 0; i < floatCount; i += 4)
 	{
-		if (FloatData[i] > 0.0f)
-		{
-			minW = std::min(minW, FloatData[i]);
-			maxW = std::max(maxW, FloatData[i]);
-		}
+		__m128 data = _mm_loadu_ps(&FloatData[i]);
+
+		// Maximum is unconditionally calculated (always > 0.0f)
+		maxsW = _mm_max_ps(maxsW, data);
+
+		// if (FloatData[] > 0.0f) minW = min(minW, FloatData[]);
+		minsW = _mm_min_ps(minsW, _mm_blendv_ps(minsW, data, _mm_cmpgt_ps(data, _mm_setzero_ps())));
 	}
 
+	float tempMinW = std::min(minsW.m128_f32[0], std::min(minsW.m128_f32[1], std::min(minsW.m128_f32[2], minsW.m128_f32[3])));
+	float tempMaxW = std::max(maxsW.m128_f32[0], std::max(maxsW.m128_f32[1], std::max(maxsW.m128_f32[2], maxsW.m128_f32[3])));
+
+	minsW = _mm_set1_ps(tempMinW);
+	maxsW = _mm_set1_ps(tempMaxW);
+
+	const __m128 maxMinDifference = _mm_sub_ps(maxsW, minsW);
+	const __m128 multModifier = _mm_set1_ps(223.0f);
+	const __m128 addModifier = _mm_set1_ps(32.0f);
+	const __m128i intsToBytesMask = _mm_setr_epi8(0, 0, 0, 0, 4, 4, 4, 4, 8, 8, 8, 8, 12, 12, 12, 12);
+
 	// Tone map depth values
-	for (int i = 0; i < w * h; i++)
+	for (int i = 0; i < floatCount; i += 4)
 	{
-		int intensity = 0;
+		// if (FloatData[] > 0.0f) intensity = (unsigned char)(223.0 * (FloatData[] - minW) / (maxW - minW) + 32.0);
+		__m128 data = _mm_loadu_ps(&FloatData[i]);
 
-		if (FloatData[i] > 0)
-			intensity = (unsigned char)(223.0 * (FloatData[i] - minW) / (maxW - minW) + 32.0);
+		__m128 x;
+		x = _mm_mul_ps(_mm_sub_ps(data, minsW), multModifier);			// 223.0 * (FloatData[] - minW)
+		x = _mm_add_ps(_mm_div_ps(x, maxMinDifference), addModifier);	// 223.0 * (FloatData[] - minW) / (maxW - minW) + 32.0
+		x = _mm_blendv_ps(_mm_setzero_ps(), x, _mm_cmpgt_ps(data, _mm_setzero_ps()));
 
-		OutColorArray[i * 4 + 0] = intensity;
-		OutColorArray[i * 4 + 1] = intensity;
-		OutColorArray[i * 4 + 2] = intensity;
-		OutColorArray[i * 4 + 3] = intensity;
+		// Convert 4 RGB integers to 16 RGB bytes: 4 equal values each (x, y, z, w) -> (x, x, x, x, y, y, y, y, z, z, z, z, w, w, w, w)
+		_mm_storeu_si128((__m128i *)&OutColorArray[i * 4], _mm_shuffle_epi8(_mm_cvttps_epi32(x), intsToBytesMask));
 	}
 }
 
