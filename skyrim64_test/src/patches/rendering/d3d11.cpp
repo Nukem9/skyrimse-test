@@ -538,8 +538,8 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 		1, // Array Size
 		1, // MIP Levels
 		D3D11_BIND_SHADER_RESOURCE,
-		D3D11_USAGE_DEFAULT,
-		0
+		D3D11_USAGE_DYNAMIC,
+		D3D11_CPU_ACCESS_WRITE
 	);
 	Assert(SUCCEEDED(g_Device->CreateTexture2D(&cpuRenderTargetDescAVX, nullptr, &g_OcclusionTexture)));
 	Assert(SUCCEEDED(g_Device->CreateShaderResourceView(g_OcclusionTexture, nullptr, &g_OcclusionTextureSRV)));

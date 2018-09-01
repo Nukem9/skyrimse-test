@@ -88,12 +88,16 @@ void MOC_ThreadedMerger::UpdateDepthViewTexture(ID3D11DeviceContext *Context, ID
 {
 	// Only allocate the buffer on demand
 	static float *rawDepthPixels = new float[m_RenderWidth * m_RenderHeight];
-	static uint8_t *gpuTextureData = (uint8_t *)_aligned_malloc(sizeof(char) * ((m_RenderWidth * m_RenderHeight * 4 + 31) & 0xFFFFFFE0), 32);
 
 	GetMOC()->ComputePixelDepthBuffer(rawDepthPixels, false);
-	DepthColorize(rawDepthPixels, gpuTextureData);
 
-	Context->UpdateSubresource(Texture, 0, nullptr, gpuTextureData, m_RenderWidth * 4, 0);
+	D3D11_MAPPED_SUBRESOURCE resource;
+	if (SUCCEEDED(Context->Map(Texture, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource)))
+	{
+		// Write directly to D3D11-allocated memory
+		DepthColorize(rawDepthPixels, (uint8_t *)resource.pData);
+		Context->Unmap(Texture, 0);
+	}
 }
 
 void MOC_ThreadedMerger::DepthColorize(const float *FloatData, uint8_t *OutColorArray)
