@@ -94,7 +94,10 @@ public:
 
 	static bool IsGrassShadowBlacklist(uint32_t Technique);
 
-	static void FinishAccumulating_Normal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
+	static bool RegisterObject_Default(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown);
+	static bool RegisterObject_ShadowMapOrMask(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown);
+
+	static void FinishAccumulating_Default(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
 	static void RenderSceneNormal(BSShaderAccumulator * Accumulator, uint32_t RenderFlags);
 	static void RenderSceneNormalAlphaZ(BSShaderAccumulator * Accumulator, uint32_t RenderFlags);
 

@@ -16,68 +16,68 @@ AutoPtr(BSShaderAccumulator *, MainPassAccumulator, 0x3257A70);
 void BSShaderAccumulator::InitCallbackTable()
 {
 	// If the pointer is null, it defaults to the function at index 0
-	RegisterObjectArray[0] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 00 RegisterObject_Normal
-	RegisterObjectArray[1] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 01 RegisterObject_Normal
-	RegisterObjectArray[2] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 02 RegisterObject_Normal
-	RegisterObjectArray[3] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 03 RegisterObject_Normal
-	RegisterObjectArray[4] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 04 RegisterObject_Normal
-	RegisterObjectArray[5] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 05 RegisterObject_Normal
-	RegisterObjectArray[6] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 06 RegisterObject_Normal
-	RegisterObjectArray[7] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 07 RegisterObject_Normal
-	RegisterObjectArray[8] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 08 RegisterObject_Normal
-	RegisterObjectArray[9] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 09 RegisterObject_Normal
-	RegisterObjectArray[10] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 10 RegisterObject_Normal
-	RegisterObjectArray[11] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 11 RegisterObject_Normal
-	RegisterObjectArray[12] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 12 RegisterObject_ShadowMapOrMask
-	RegisterObjectArray[13] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 13 RegisterObject_ShadowMapOrMask
-	RegisterObjectArray[14] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 14 RegisterObject_ShadowMapOrMask
-	RegisterObjectArray[15] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 15 RegisterObject_ShadowMapOrMask
-	RegisterObjectArray[16] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 16 RegisterObject_ShadowMapOrMask
-	RegisterObjectArray[17] = (RegisterObjFunc)(g_ModuleBase + 0x12E1650);	// 17 RegisterObject_ShadowMapOrMask
-	RegisterObjectArray[18] = (RegisterObjFunc)(g_ModuleBase + 0x12E1400);	// 18 ?
-	RegisterObjectArray[19] = (RegisterObjFunc)(g_ModuleBase + 0x12E1400);	// 19 ?
-	RegisterObjectArray[20] = (RegisterObjFunc)(g_ModuleBase + 0x12E1340);	// 20 RegisterObject_Interface
-	RegisterObjectArray[21] = (RegisterObjFunc)(g_ModuleBase + 0x12E1370);	// 21 ?
-	RegisterObjectArray[22] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 22 RegisterObject_Normal
-	RegisterObjectArray[23] = (RegisterObjFunc)(g_ModuleBase + 0x12E1380);	// 23 ?
-	RegisterObjectArray[24] = (RegisterObjFunc)(g_ModuleBase + 0x12E15E0);	// 24 ?
-	RegisterObjectArray[25] = (RegisterObjFunc)(g_ModuleBase + 0x12E1780);	// 25 RegisterObject_LOD
-	RegisterObjectArray[26] = (RegisterObjFunc)(g_ModuleBase + 0x12E1780);	// 26 RegisterObject_LOD
-	RegisterObjectArray[27] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 27 RegisterObject_Normal
-	RegisterObjectArray[28] = (RegisterObjFunc)(g_ModuleBase + 0x12E1800);	// 28 ?
-	RegisterObjectArray[29] = (RegisterObjFunc)(g_ModuleBase + 0x12E0F90);	// 29 RegisterObject_Normal
+	RegisterObjectArray[0] = RegisterObject_Default;							// 00 RegisterObject_Default
+	RegisterObjectArray[1] = RegisterObject_Default;							// 01 ^
+	RegisterObjectArray[2] = RegisterObject_Default;							// 02 ^
+	RegisterObjectArray[3] = RegisterObject_Default;							// 03 ^
+	RegisterObjectArray[4] = RegisterObject_Default;							// 04 ^
+	RegisterObjectArray[5] = RegisterObject_Default;							// 05 ^
+	RegisterObjectArray[6] = RegisterObject_Default;							// 06 ^
+	RegisterObjectArray[7] = RegisterObject_Default;							// 07 ^
+	RegisterObjectArray[8] = RegisterObject_Default;							// 08 ^
+	RegisterObjectArray[9] = RegisterObject_Default;							// 09 ^
+	RegisterObjectArray[10] = RegisterObject_Default;							// 10 ^
+	RegisterObjectArray[11] = RegisterObject_Default;							// 11 ^
+	RegisterObjectArray[12] = RegisterObject_ShadowMapOrMask;					// 12 RegisterObject_ShadowMapOrMask
+	RegisterObjectArray[13] = RegisterObject_ShadowMapOrMask;					// 13 ^
+	RegisterObjectArray[14] = RegisterObject_ShadowMapOrMask;					// 14 ^
+	RegisterObjectArray[15] = RegisterObject_ShadowMapOrMask;					// 15 ^
+	RegisterObjectArray[16] = RegisterObject_ShadowMapOrMask;					// 16 ^
+	RegisterObjectArray[17] = RegisterObject_ShadowMapOrMask;					// 17 ^
+	RegisterObjectArray[18] = (RegisterObjFunc)(g_ModuleBase + 0x12E1400);		// 18 ?
+	RegisterObjectArray[19] = (RegisterObjFunc)(g_ModuleBase + 0x12E1400);		// 19 ?
+	RegisterObjectArray[20] = (RegisterObjFunc)(g_ModuleBase + 0x12E1340);		// 20 RegisterObject_Interface
+	RegisterObjectArray[21] = (RegisterObjFunc)(g_ModuleBase + 0x12E1370);		// 21 ?
+	RegisterObjectArray[22] = RegisterObject_Default;							// 22 RegisterObject_Default
+	RegisterObjectArray[23] = (RegisterObjFunc)(g_ModuleBase + 0x12E1380);		// 23 ?
+	RegisterObjectArray[24] = (RegisterObjFunc)(g_ModuleBase + 0x12E15E0);		// 24 ?
+	RegisterObjectArray[25] = (RegisterObjFunc)(g_ModuleBase + 0x12E1780);		// 25 RegisterObject_LOD
+	RegisterObjectArray[26] = (RegisterObjFunc)(g_ModuleBase + 0x12E1780);		// 26 RegisterObject_LOD
+	RegisterObjectArray[27] = RegisterObject_Default;							// 27 RegisterObject_Default
+	RegisterObjectArray[28] = (RegisterObjFunc)(g_ModuleBase + 0x12E1800);		// 28 ?
+	RegisterObjectArray[29] = RegisterObject_Default;							// 29 RegisterObject_Default
 
 	// If the pointer is null, it defaults to the function at index 0
-	FinishAccumulatingArray[0] = FinishAccumulating_Normal;						// 00 FinishAccumulating_Normal
-	FinishAccumulatingArray[1] = nullptr;										// 01
-	FinishAccumulatingArray[2] = nullptr;										// 02
-	FinishAccumulatingArray[3] = nullptr;										// 03
-	FinishAccumulatingArray[4] = nullptr;										// 04
-	FinishAccumulatingArray[5] = nullptr;										// 05
-	FinishAccumulatingArray[6] = nullptr;										// 06
-	FinishAccumulatingArray[7] = nullptr;										// 07
-	FinishAccumulatingArray[8] = nullptr;										// 08
-	FinishAccumulatingArray[9] = nullptr;										// 09
-	FinishAccumulatingArray[10] = nullptr;										// 10
-	FinishAccumulatingArray[11] = nullptr;										// 11
+	FinishAccumulatingArray[0] = FinishAccumulating_Default;					// 00 FinishAccumulating_Default
+	FinishAccumulatingArray[1] = nullptr;										// 01 ^
+	FinishAccumulatingArray[2] = nullptr;										// 02 ^
+	FinishAccumulatingArray[3] = nullptr;										// 03 ^
+	FinishAccumulatingArray[4] = nullptr;										// 04 ^
+	FinishAccumulatingArray[5] = nullptr;										// 05 ^
+	FinishAccumulatingArray[6] = nullptr;										// 06 ^
+	FinishAccumulatingArray[7] = nullptr;										// 07 ^
+	FinishAccumulatingArray[8] = nullptr;										// 08 ^
+	FinishAccumulatingArray[9] = nullptr;										// 09 ^
+	FinishAccumulatingArray[10] = nullptr;										// 10 ^
+	FinishAccumulatingArray[11] = nullptr;										// 11 ^
 	FinishAccumulatingArray[12] = FinishAccumulating_ShadowMapOrMask;			// 12 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[13] = FinishAccumulating_ShadowMapOrMask;			// 13 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[14] = FinishAccumulating_ShadowMapOrMask;			// 14 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[15] = FinishAccumulating_ShadowMapOrMask;			// 15 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[16] = FinishAccumulating_ShadowMapOrMask;			// 16 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[17] = FinishAccumulating_ShadowMapOrMask;			// 17 FinishAccumulating_ShadowMapOrMask
-	FinishAccumulatingArray[18] = nullptr;										// 18
-	FinishAccumulatingArray[19] = nullptr;										// 19
+	FinishAccumulatingArray[13] = FinishAccumulating_ShadowMapOrMask;			// 13 ^
+	FinishAccumulatingArray[14] = FinishAccumulating_ShadowMapOrMask;			// 14 ^
+	FinishAccumulatingArray[15] = FinishAccumulating_ShadowMapOrMask;			// 15 ^
+	FinishAccumulatingArray[16] = FinishAccumulating_ShadowMapOrMask;			// 16 ^
+	FinishAccumulatingArray[17] = FinishAccumulating_ShadowMapOrMask;			// 17 ^
+	FinishAccumulatingArray[18] = nullptr;										// 18 FinishAccumulating_Default
+	FinishAccumulatingArray[19] = nullptr;										// 19 ^
 	FinishAccumulatingArray[20] = FinishAccumulating_InterfaceElements;			// 20 FinishAccumulating_InterfaceElements
-	FinishAccumulatingArray[21] = nullptr;										// 21
+	FinishAccumulatingArray[21] = nullptr;										// 21 FinishAccumulating_Default
 	FinishAccumulatingArray[22] = FinishAccumulating_FirstPerson;				// 22 FinishAccumulating_FirstPerson
 	FinishAccumulatingArray[23] = (FinishAccumFunc)(g_ModuleBase + 0x12E3020);	// 23 ?
 	FinishAccumulatingArray[24] = (FinishAccumFunc)(g_ModuleBase + 0x12E3030);	// 24 ?
 	FinishAccumulatingArray[25] = FinishAccumulating_LODOnly;					// 25 FinishAccumulating_LODOnly
 	FinishAccumulatingArray[26] = FinishAccumulating_LODOnly;					// 26 FinishAccumulating_LODOnly
-	FinishAccumulatingArray[27] = nullptr;										// 27
+	FinishAccumulatingArray[27] = nullptr;										// 27 FinishAccumulating_Default
 	FinishAccumulatingArray[28] = FinishAccumulating_Unknown1;					// 28 Never used? BSSM_RENDER_PRECIPITATION_OCCLUSION_MAP?
-	FinishAccumulatingArray[29] = nullptr;										// 29
+	FinishAccumulatingArray[29] = nullptr;										// 29 FinishAccumulating_Default
 
 	SetRenderMode(0);
 }
@@ -157,20 +157,29 @@ void ResetSceneDepthShift()
 	((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
 }
 
-void BSShaderAccumulator::FinishAccumulating_Normal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+bool BSShaderAccumulator::RegisterObject_Default(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown)
 {
-	ZoneScopedN("FinishAccumulating_Normal");
-	BSGraphics::BeginEvent(L"FinishAccumulating_Normal");
+	return ((RegisterObjFunc)(g_ModuleBase + 0x12E0F90))(Accumulator, Geometry, Property, Unknown);
+}
+
+bool BSShaderAccumulator::RegisterObject_ShadowMapOrMask(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown)
+{
+	return ((RegisterObjFunc)(g_ModuleBase + 0x12E1650))(Accumulator, Geometry, Property, Unknown);
+}
+
+void BSShaderAccumulator::FinishAccumulating_Default(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+{
+	ZoneScopedN("FinishAccumulating_Default");
+	BSGraphics::BeginEvent(L"FinishAccumulating_Default");
 	RenderSceneNormal(Accumulator, RenderFlags);
 	RenderSceneNormalAlphaZ(Accumulator, RenderFlags);
 	BSGraphics::EndEvent();
 }
-BSShaderAccumulator *currentAccum = nullptr;
-
-bool once = false;
 
 void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
+	static bool once = false;
+
 	if (!once)
 	{
 		once = true;
@@ -200,7 +209,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		if (ui::opt::RealtimeOcclusionView)
 			MOC::UpdateDepthViewTexture();
 
-		MOC::SendTraverseCommand((NiCamera *)Accumulator->m_pkCamera);
+		//MOC::SendTraverseCommand((NiCamera *)Accumulator->m_pkCamera);
 	}
 
 	//
@@ -268,9 +277,6 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 				ResetSceneDepthShift();
 		}
 		renderer->EndEvent();
-
-		//if (Accumulator == MainPassAccumulator)
-		//	MOC::SetDoHack(false);
 	}
 
 	// RenderSky
@@ -400,18 +406,29 @@ void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator
 
 	if (RenderFlags & 0x100)
 	{
+		//AssertMsgDebug(iEnableShadowCastingFlag->Value == 2, "Volumetric lighting shadow map render was called whereas it should have been disabled.");
+		//AssertMsgDebug(Accumulator->m_RenderMode == ?, "Volumetric lighting shadow map render was called for a non directional light.");
+
+		BSGraphics::BeginEvent(L"Volumetric lighting specific shadow map");
 		BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(0);
 		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 15);
+		BSGraphics::EndEvent();
 	}
 	else
 	{
+		BSGraphics::BeginEvent(L"RenderBatches");
 		Accumulator->RenderFromMainGroup(0x2B, 0x4000002B, RenderFlags, -1);
 		Accumulator->RenderFromMainGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
-
 		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
-		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
+		BSGraphics::EndEvent();
 
+		BSGraphics::BeginEvent(L"LowAniso");
+		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
+		BSGraphics::EndEvent();
+
+		BSGraphics::BeginEvent(L"Decals");
 		((void(__fastcall *)(BSShaderAccumulator *, uint32_t))(g_ModuleBase + 0x12E2950))(Accumulator, RenderFlags);
+		BSGraphics::EndEvent();
 	}
 
 	if ((RenderFlags & 0x22) == 0x20)
@@ -441,15 +458,23 @@ void BSShaderAccumulator::FinishAccumulating_LODOnly(BSShaderAccumulator *Accumu
 	if (!Accumulator->m_pkCamera)
 		return;
 
-	ZoneScopedN("FinishAccumulating_LODOnly");
-	BSGraphics::BeginEvent(L"FinishAccumulating_LODOnly");
-
 	BSShaderManager::bLODLandscapeNoise = false;
-	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
-	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
-	BSShaderManager::bLODLandscapeNoise = true;
 
+	BSGraphics::BeginEvent(L"FinishAccumulating_LODOnly");
+	{
+		ZoneScopedN("FinishAccumulating_LODOnly");
+
+		BSGraphics::BeginEvent(L"RenderLODLand");
+		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
+		BSGraphics::EndEvent();
+
+		BSGraphics::BeginEvent(L"RenderLODObjects");
+		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
+		BSGraphics::EndEvent();
+	}
 	BSGraphics::EndEvent();
+
+	BSShaderManager::bLODLandscapeNoise = true;
 }
 
 void BSShaderAccumulator::FinishAccumulating_Unknown1(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
