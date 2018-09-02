@@ -31,12 +31,14 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 		const uint8_t signature2[] = { 0xC3 };// Real nullsub
 		const uint8_t signature3[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0xC3 };// Effectively a nullsub
 		const uint8_t signature4[] = { 0x48, 0x89, 0x54, 0x24, 0x10, 0x48, 0x89, 0x4C, 0x24, 0x08, 0xC3 };// Effectively a nullsub
-		const uint8_t signature5[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0x48, 0x8B, 0x00, 0xC3 };// return *(QWORD *)this;
-		const uint8_t signature6[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0xC3 };// return this;
+		const uint8_t signature5[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x83, 0xEC, 0x28, 0x48, 0x8B, 0x4C, 0x24, 0x30, 0x0F, 0x1F, 0x44, 0x00, 0x00, 0x48, 0x83, 0xC4, 0x28, 0xC3 };// Effectively a nullsub
+		const uint8_t signature6[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0x48, 0x8B, 0x00, 0xC3 };// return *(QWORD *)this;
+		const uint8_t signature7[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0xC3 };// return this;
 
 		if (!memcmp(dest, signature2, sizeof(signature2)) ||
 			!memcmp(dest, signature3, sizeof(signature3)) ||
-			!memcmp(dest, signature4, sizeof(signature4)))
+			!memcmp(dest, signature4, sizeof(signature4)) ||
+			!memcmp(dest, signature5, sizeof(signature5)))
 		{
 			if (isJump)
 				PatchMemory(SourceAddress, (PBYTE)"\xC3\xCC\xCC\xCC\xCC", 5);// retn; int3; int3; int3; int3;
@@ -45,7 +47,7 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 
 			return true;
 		}
-		else if (!memcmp(dest, signature5, sizeof(signature5)))
+		else if (!memcmp(dest, signature6, sizeof(signature6)))
 		{
 			if (isJump)
 				PatchMemory(SourceAddress, (PBYTE)"\x48\x8B\x01\xC3\xCC", 5);// mov rax, [rcx]; retn; int3;
@@ -54,7 +56,7 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 
 			return true;
 		}
-		else if (!memcmp(dest, signature6, sizeof(signature6)))
+		else if (!memcmp(dest, signature7, sizeof(signature7)))
 		{
 			if (isJump)
 				PatchMemory(SourceAddress, (PBYTE)"\x48\x89\xC8\xC3\xCC", 5);// mov rax, rcx; retn; int3;
@@ -234,6 +236,9 @@ void ExperimentalPatchEditAndContinue()
 	// Before: [Function call] -> [E&C stub] -> [Function]
 	// After:  [Function call] -> [Function]
 	//
+	std::vector<uintptr_t> branchTargets;
+	branchTargets.reserve(10000);
+
 	auto isWithinECTable = [](uintptr_t Address)
 	{
 		uintptr_t start = g_ModuleBase + 0xFB4000;
@@ -268,7 +273,18 @@ void ExperimentalPatchEditAndContinue()
 
 			if (PatchNullsub(i, real, true))
 				patchCount++;
+			else
+				branchTargets.push_back(i);
 		}
+	}
+
+	// Secondary pass to remove nullsubs missed or created above
+	for (uintptr_t target : branchTargets)
+	{
+		uintptr_t destination = target + *(int32_t *)(target + 1) + 5;
+
+		if (PatchNullsub(target, destination, true))
+			patchCount++;
 	}
 
 	ui::log::Add("%s: %lld patches applied.\n", __FUNCTION__, patchCount);
