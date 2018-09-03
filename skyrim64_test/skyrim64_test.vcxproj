@@ -209,7 +209,7 @@
     <ClInclude Include="src\patches\dinput8.h" />
     <ClInclude Include="src\dump.h" />
     <ClInclude Include="src\profiler.h" />
-    <ClInclude Include="src\typeinfo\hk_typeinfo.h" />
+    <ClInclude Include="src\typeinfo\hkreflection.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui.h" />
     <ClInclude Include="imgui\imgui_internal.h" />
@@ -331,7 +331,7 @@
     <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp" />
     <ClCompile Include="src\patches\TES\Setting.cpp" />
     <ClCompile Include="src\profiler.cpp" />
-    <ClCompile Include="src\typeinfo\hk_typeinfo.cpp" />
+    <ClCompile Include="src\typeinfo\hkreflection.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />

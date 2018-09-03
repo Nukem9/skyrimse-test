@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../common.h"
+
 namespace MSRTTI
 {
 	namespace detail { struct CompleteObjectLocator; }
