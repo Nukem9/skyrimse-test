@@ -42,7 +42,7 @@ void BSShader::ReloadShaders(BSIStream *Stream)
 
 void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, NiSkinPartition::Partition *Partition, const NiTransform *Transform)
 {
-	MemoryContextTracker tracker(26, "BSShader.cpp");
+	MemoryContextTracker tracker(MemoryContextTracker::RENDER_SYSTEM, "BSShader.cpp");
 
 	if (!Partition || Partition->m_usBones == 0)
 		return;

@@ -51,7 +51,7 @@ void BSBatchRenderer::ClearShaderAndTechnique()
 
 void sub_14131F910(BSSimpleList<uint32_t> *Node, void *UserData)
 {
-	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
+	MemoryContextTracker tracker(MemoryContextTracker::RENDER_ACCUMULATOR, "BSBatchRenderer.cpp");
 
 	if (UserData)
 	{
@@ -147,7 +147,7 @@ void BSBatchRenderer::RenderGroup::Render(uint32_t RenderFlags)
 
 void BSBatchRenderer::RenderGroup::Unregister()
 {
-	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
+	MemoryContextTracker tracker(MemoryContextTracker::RENDER_ACCUMULATOR, "BSBatchRenderer.cpp");
 
 	m_UnkPtrs[0] = nullptr;
 	m_UnkPtrs[1] = nullptr;
@@ -419,7 +419,7 @@ bool BSBatchRenderer::RenderNextGroup(uint32_t& Technique, uint32_t& GroupIndex,
 
 void BSBatchRenderer::sub_14131D6E0()
 {
-	MemoryContextTracker tracker(32, "BSBatchRenderer.cpp");
+	MemoryContextTracker tracker(MemoryContextTracker::RENDER_ACCUMULATOR, "BSBatchRenderer.cpp");
 
 	for (auto itr = m_TechToArrayMap.begin(); itr != m_TechToArrayMap.end(); itr++)
 	{
@@ -501,7 +501,7 @@ void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader
 
 void BSBatchRenderer::DrawPass(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
 {
-	MemoryContextTracker tracker(26, "BSBatchRenderer.cpp");
+	MemoryContextTracker tracker(MemoryContextTracker::RENDER_ACCUMULATOR, "BSBatchRenderer.cpp");
 
 	AssertMsgDebug(Pass, "Render Error: Render pass is nullptr");
 	AssertMsgDebug(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
