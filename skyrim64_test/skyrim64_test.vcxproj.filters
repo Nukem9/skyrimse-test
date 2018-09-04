@@ -736,5 +736,8 @@
     <None Include="src\patches\TES\NiMain\NiRTTI.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="src\typeinfo\ni_rtti.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

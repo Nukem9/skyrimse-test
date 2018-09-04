@@ -374,6 +374,7 @@
     <None Include="src\patches\TES\BSShader\BSShaderConstants.inl" />
     <None Include="src\patches\TES\BSShader\BSShaderManagerInfo.inl" />
     <None Include="src\patches\TES\NiMain\NiRTTI.inl" />
+    <None Include="src\typeinfo\ni_rtti.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

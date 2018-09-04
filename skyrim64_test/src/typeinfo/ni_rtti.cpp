@@ -3,131 +3,15 @@
 #include "../patches/TES/NiMain/NiRTTI.h"
 #include "ms_rtti.h"
 
-// NiRefObject
-const char *NiRefObjectFunctions[] =
-{
-	"void *{{__vecDelDtor}}({{TYPE}} *this, unsigned int)",
-	"void {{DeleteThis}}({{TYPE}} *this)",
-	nullptr,
-};
+#define NI_START_LIST(x) const char *x##Functions[] = {
+#define NI_LIST_ENTRY(x, ...) #x #__VA_ARGS__,
+#define NI_END_LIST() nullptr };
 
-const int NiRefObjectCK[] =
-{
-	-1,
-};
+#define NI_START_LIST_CK(x) const int x##CK[] = {
+#define NI_LIST_ENTRY_CK(x) x,
+#define NI_END_LIST_CK() -1 };
 
-// NiObject
-const char *NiObjectFunctions[] =
-{
-	"NiRTTI *{{GetRTTI}}({{TYPE}} *this)",
-	"NiNode *{{IsNode}}({{TYPE}} *this)",
-	"NiSwitchNode *{{IsSwitchNode}}({{TYPE}} *this)",
-	"BSFadeNode *{{IsFadeNode}}({{TYPE}} *this)",
-	"BSMultiBoundNode *{{IsMultiBoundNode}}({{TYPE}} *this)",
-	"BSGeometry *{{IsGeometry}}({{TYPE}} *this)",
-	"NiTriStrips *{{IsTriStrips}}({{TYPE}} *this)",
-	"BSTriShape *{{IsTriShape}}({{TYPE}} *this)",
-	"BSSegmentedTriShape *{{IsSegmentedTriShape}}({{TYPE}} *this)",
-	"BSSubIndexTriShape *{{IsSubIndexTriShape}}({{TYPE}} *this)",
-	"BSDynamicTriShape *{{IsDynamicTriShape}}({{TYPE}} *this)",
-	"NiGeometry *{{IsNiGeometry}}({{TYPE}} *this)",
-	"NiTriBasedGeom *{{IsNiTriBasedGeom}}({{TYPE}} *this)",
-	"NiTriShape *{{IsNiTriShape}}({{TYPE}} *this)",
-	"NiParticles *{{IsParticlesGeom}}({{TYPE}} *this)",
-	"BSLines *{{IsLinesGeom}}({{TYPE}} *this)",
-	"bhkNiCollisionObject *{{IsBhkNiCollisionObject}}({{TYPE}} *this)",
-	"bhkBlendCollisionObject *{{IsBhkBlendCollisionObject}}({{TYPE}} *this)",
-	"bhkAttachmentCollisionObject *{{IsBhkAttachmentCollisionObject}}({{TYPE}} *this)",
-	"bhkRigidBody *{{IsBhkRigidBody}}({{TYPE}} *this)",
-	"bhkLimitedHingeConstraint *{{IsBhkLimitedHingeConstraint}}({{TYPE}} *this)",
-
-	"NiObject *{{CreateClone}}({{TYPE}} *this, NiCloningProcess *Process)",
-	"void {{LoadBinary}}({{TYPE}} *this, NiStream *)",
-	"void {{LinkObject}}({{TYPE}} *this, NiStream *)",
-	"bool {{RegisterStreamables}}({{TYPE}} *this, NiStream *Stream)",
-	"void {{SaveBinary}}({{TYPE}} *this, NiStream *Stream)",
-	"bool {{IsEqual}}({{TYPE}} *this, NiObject *Other)",
-	"void {{GetViewerStrings}}({{TYPE}} *this, NiTPrimitiveArray<char const *> *Strings)", // CREATION KIT ONLY
-	"void {{ProcessClone}}({{TYPE}} *this, NiCloningProcess *Process)",
-	"void {{PostLinkObject}}({{TYPE}} *this, NiStream *Stream)",
-	"bool {{StreamCanSkip}}({{TYPE}} *this)",
-	"const NiRTTI *{{GetStreamableRTTI}}({{TYPE}} *this)",
-	"unsigned int {{GetBlockAllocationSize}}({{TYPE}} *this)",
-	"NiObjectGroup *{{GetGroup}}({{TYPE}} *this)",
-	"void *{{SetGroup}}({{TYPE}} *this, NiObjectGroup *Group)",
-	"NiControllerManager *{{IsNiControllerManager}}({{TYPE}} *this)",
-	"void {{AddViewerStrings}}({{TYPE}} *this, NiTPrimitiveArray<char const *> *Strings)", // CREATION KIT ONLY
-	nullptr,
-};
-
-const int NiObjectCK[] =
-{
-	27,
-	36,
-	-1,
-};
-
-// NiObjectNET
-const char *NiObjectNETFunctions[] =
-{
-	nullptr,
-};
-
-const int NiObjectNETCK[] =
-{
-	-1,
-};
-
-// NiAVObject
-const char *NiAVObjectFunctions[] =
-{
-	"void {{UpdateControllers}}({{TYPE}} *this)",
-	"void {{PerformOp}}({{TYPE}} *this)",
-	"void {{Unk0}}({{TYPE}} *this)",
-	"void {{Unk1}}({{TYPE}} *this)",
-	"void {{Unk2}}({{TYPE}} *this)",
-	"void {{Unk3}}({{TYPE}} *this)",
-	"void {{SetSelectiveUpdateFlags}}({{TYPE}} *this)",
-	"void {{UpdateDownwardPass}}({{TYPE}} *this)",
-	"void {{UpdateSelectedDownwardPass}}({{TYPE}} *this)",
-	"void {{UpdateRigidDownwardPass}}({{TYPE}} *this)",
-	"void {{UpdateWorldBound}}({{TYPE}} *this)",
-	"void {{UpdateWorldData}}({{TYPE}} *this)",
-	"void {{Unk4}}({{TYPE}} *this)",
-	"void {{Unk5}}({{TYPE}} *this)",
-	"void {{Unk6}}({{TYPE}} *this)",
-	"void {{OnVisible}}({{TYPE}} *this, NiCullingProcess *Process, uint32_t Unknown)",
-	nullptr,
-};
-
-const int NiAVObjectCK[] =
-{
-	-1,
-};
-
-// bhkSerializable
-const char *bhkSerializableFunctions[] =
-{
-	"void {{Unk7}}({{TYPE}} *this)",
-	"void {{Unk8}}({{TYPE}} *this)",
-	"void {{Unk9}}({{TYPE}} *this)",
-	"void {{Unk10}}({{TYPE}} *this)",
-	"void {{Unk11}}({{TYPE}} *this)",
-	"void {{Unk12}}({{TYPE}} *this)",
-	"void {{KillCinfo}}({{TYPE}} *this, bool Created)",
-	"unsigned int {{QCinfoSize}}({{TYPE}} *this)",
-	"int {{LoadCInfo}}({{TYPE}} *this, NiStream *Stream)",
-	"void {{Init}}({{TYPE}} *this, const hkSerializableCinfo *Info)",
-	"hkSerializableCinfo *{{CreateCinfo}}({{TYPE}} *this, bool *Created)",
-	"void {{PostInit1}}({{TYPE}} *this)",
-	"void {{PostInit2}}({{TYPE}} *this)",
-	nullptr,
-};
-
-const int bhkSerializableCK[] =
-{
-	-1,
-};
+#include "ni_rtti.inl"
 
 void AddTypes(std::vector<const char *>& Vector, const char **Functions, const int *CKFunctions)
 {
@@ -192,6 +76,13 @@ void ExportTest(FILE *File)
 
 			if (niRTTI->Inherits(NiRTTI::ms_bhkSerializable))
 				AddTypes(vtableLayout, bhkSerializableFunctions, bhkSerializableCK);
+		}
+		else if (niRTTI->Inherits(NiRTTI::ms_NiCullingProcess))
+		{
+			AddTypes(vtableLayout, NiCullingProcessFunctions, NiCullingProcessCK);
+
+			if (niRTTI->Inherits(NiRTTI::ms_BSCullingProcess))
+				AddTypes(vtableLayout, BSCullingProcessFunctions, BSCullingProcessCK);
 		}
 		else
 		{
