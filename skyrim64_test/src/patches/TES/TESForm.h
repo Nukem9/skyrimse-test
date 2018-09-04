@@ -41,7 +41,7 @@ public:
 	virtual void VFunc19();
 	virtual void VFunc20();
 	virtual void VFunc21();
-	virtual void VFunc22();
+	virtual void GetFullTypeName(char *Buffer, uint32_t BufferSize);
 	virtual void VFunc23();
 	virtual void VFunc24();
 	virtual void VFunc25();
@@ -69,9 +69,8 @@ public:
 	virtual void VFunc47();
 	virtual void VFunc48();
 	virtual void VFunc49();
-	//virtual void VFunc50();
-	virtual const char *GetFormName();
-	virtual void VFunc51();
+	virtual const char *GetName();
+	virtual void SetEditorId(const char *Name);
 	virtual void VFunc52();
 	virtual void VFunc53();
 	virtual void VFunc54();
@@ -210,9 +209,9 @@ public:
 			char cellName[256];
 
 			if (IsInterior())
-				sprintf_s(cellName, "Cell \"%s\" (Interior)", GetFormName());
+				sprintf_s(cellName, "Cell \"%s\" (Interior)", GetName());
 			else
-				sprintf_s(cellName, "Cell \"%s\" (%d, %d)", GetFormName(), GetGridX(), GetGridY());
+				sprintf_s(cellName, "Cell \"%s\" (%d, %d)", GetName(), GetGridX(), GetGridY());
 
 			node->SetName(BSFixedString(cellName));
 			node->GetAt(0)->SetName(bsActorNode);
@@ -245,7 +244,10 @@ STATIC_CONSTRUCTOR(CheckTESForm, []
 
 	//assert_vtable_index(&TESForm::~TESForm, 0);
 	assert_vtable_index(&TESForm::VFunc04, 4);
+	assert_vtable_index(&TESForm::GetFullTypeName, 22);
 	assert_vtable_index(&TESForm::IsREFR, 44);
+	assert_vtable_index(&TESForm::GetName, 50);
+	assert_vtable_index(&TESForm::SetEditorId, 51);
 	assert_vtable_index(&TESForm::VFunc59, 59);
 
 	//assert_vtable_index(&TESObjectREFR::~TESObjectREFR, 0);

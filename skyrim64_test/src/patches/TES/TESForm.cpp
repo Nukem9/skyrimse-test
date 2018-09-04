@@ -59,25 +59,6 @@ void CRC32_Lazy(int *out, int idIn)
     ((void (*)(int *, int))(g_ModuleBase + 0xC06030))(out, idIn);
 }
 
-TESForm *GetFormById(unsigned int FormId)
-{
-	TESForm *formPointer;
-
-	if (GetFormCache(FormId, formPointer))
-        return formPointer;
-
-    // Try to use Bethesda's scatter table which is considerably slower
-	GlobalFormLock.LockForRead();
-
-	if (!GlobalFormList || !GlobalFormList->get(FormId, formPointer))
-		formPointer = nullptr;
-
-	GlobalFormLock.UnlockRead();
-
-    UpdateFormCache(FormId, formPointer, false);
-    return formPointer;
-}
-
 uint8_t *origFunc3 = nullptr;
 __int64 UnknownFormFunction3(__int64 a1, __int64 a2, int a3, __int64 a4)
 {
@@ -112,7 +93,21 @@ void UnknownFormFunction0(__int64 form, bool a2)
 
 TESForm *TESForm::LookupFormById(uint32_t FormId)
 {
-	return GetFormById(FormId);
+	TESForm *formPointer;
+
+	if (GetFormCache(FormId, formPointer))
+		return formPointer;
+
+	// Try to use Bethesda's scatter table which is considerably slower
+	GlobalFormLock.LockForRead();
+
+	if (!GlobalFormList || !GlobalFormList->get(FormId, formPointer))
+		formPointer = nullptr;
+
+	GlobalFormLock.UnlockRead();
+
+	UpdateFormCache(FormId, formPointer, false);
+	return formPointer;
 }
 
 void PatchTESForm()
@@ -121,5 +116,5 @@ void PatchTESForm()
 	origFunc1 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196070), &UnknownFormFunction1);
 	origFunc2 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x195DA0), &UnknownFormFunction2);
 	origFunc3 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196960), &UnknownFormFunction3);
-    Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1943B0), &GetFormById);
+    Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1943B0), &TESForm::LookupFormById);
 }
