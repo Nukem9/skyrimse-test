@@ -1,6 +1,6 @@
 #include <map>
 #include "../common.h"
-#include "hkreflection.h"
+#include "hk_rtti.h"
 
 namespace HKRTTI
 {

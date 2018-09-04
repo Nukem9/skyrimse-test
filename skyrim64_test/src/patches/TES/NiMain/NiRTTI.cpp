@@ -1,4 +1,3 @@
-#include <map>
 #include "../../../common.h"
 #include "NiRTTI.h"
 
@@ -9,11 +8,8 @@ NiRTTI *NiRTTI::__ctor__(void *Instance, const char *Name, const NiRTTI *BaseTyp
 	return new (Instance) NiRTTI(Name, BaseType);
 }
 
-NiRTTI::NiRTTI(const char *Name, const NiRTTI *BaseType)
+NiRTTI::NiRTTI(const char *Name, const NiRTTI *BaseType) : m_pcName(Name), m_pkBaseRTTI(BaseType)
 {
-	m_pcName = Name;
-	m_pkBaseRTTI = BaseType;
-
 	NiRTTIMap[Name] = this;
 
 	switch (Profiler::Internal::CRC32(Name))
@@ -24,6 +20,30 @@ NiRTTI::NiRTTI(const char *Name, const NiRTTI *BaseType)
 	}
 }
 
+bool NiRTTI::CopyName(char* NameBuffer, uint32_t MaxSize) const
+{
+	const char* pcName = GetName();
+
+	if (!pcName || !NameBuffer)
+	{
+		strcpy_s(NameBuffer, MaxSize, "\0");
+		return false;
+	}
+
+	strcpy_s(NameBuffer, MaxSize, pcName);
+	return true;
+}
+
+bool NiRTTI::Inherits(const NiRTTI *Other) const
+{
+	const NiRTTI *rtti = this;
+
+	while (rtti != Other && rtti)
+		rtti = rtti->GetBaseRTTI();
+
+	return (rtti == Other);
+}
+
 const char *NiRTTI::GetName() const
 {
 	return m_pcName;
@@ -32,6 +52,11 @@ const char *NiRTTI::GetName() const
 const NiRTTI *NiRTTI::GetBaseRTTI() const
 {
 	return m_pkBaseRTTI;
+}
+
+const std::map<std::string, const NiRTTI *>& NiRTTI::GetAllTypes()
+{
+	return NiRTTIMap;
 }
 
 void NiRTTI::DumpRTTIListing(FILE *File, bool IDAScript)

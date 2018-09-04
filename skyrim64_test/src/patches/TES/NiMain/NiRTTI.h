@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 class NiRTTI
 {
 private:
@@ -10,9 +12,14 @@ public:
 	static NiRTTI *__ctor__(void *Instance, const char *Name, const NiRTTI *BaseType);
 	NiRTTI(const char *Name, const NiRTTI *BaseType);
 
+	bool CopyName(char* NameBuffer, uint32_t MaxSize) const;
+	bool Inherits(const NiRTTI *Other) const;
+
 	const char *GetName() const;
 	const NiRTTI *GetBaseRTTI() const;
 
+
+	static const std::map<std::string, const NiRTTI *>& GetAllTypes();
 	static void DumpRTTIListing(FILE *File, bool IDAScript);
 
 #define DefineNiRTTI(x) static NiRTTI *ms_##x;

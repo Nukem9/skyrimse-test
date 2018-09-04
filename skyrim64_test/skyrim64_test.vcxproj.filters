@@ -326,13 +326,13 @@
     <ClInclude Include="src\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\typeinfo\msrtti.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\BSTaskManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\typeinfo\hkreflection.h">
+    <ClInclude Include="src\typeinfo\hk_rtti.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\typeinfo\ms_rtti.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -375,9 +375,6 @@
     </ClCompile>
     <ClCompile Include="src\patches\TES\TESForm.cpp">
       <Filter>Source Files\patches</Filter>
-    </ClCompile>
-    <ClCompile Include="src\typeinfo\msrtti.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\profiler.cpp">
       <Filter>Source Files</Filter>
@@ -703,7 +700,13 @@
     <ClCompile Include="src\patches\rendering\d3d11_dc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\typeinfo\hkreflection.cpp">
+    <ClCompile Include="src\typeinfo\hk_rtti.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\typeinfo\ms_rtti.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\typeinfo\ni_rtti.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

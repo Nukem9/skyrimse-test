@@ -1,5 +1,5 @@
 #include "../common.h"
-#include "msrtti.h"
+#include "ms_rtti.h"
 
 extern "C"
 {
@@ -23,11 +23,17 @@ namespace MSRTTI
 
 	void Initialize()
 	{
-		g_RdataStart = ::g_ModuleBase + 0x15231F0;
-		g_RdataEnd = ::g_ModuleBase + 0x1DD4448;
+		//g_RdataStart = ::g_ModuleBase + 0x15231F0;
+		//g_RdataEnd = ::g_ModuleBase + 0x1DD4448;
 
-		g_DataStart = ::g_ModuleBase + 0x1DD5000;
-		g_DataEnd = g_DataStart + 0x16E8000;
+		//g_DataStart = ::g_ModuleBase + 0x1DD5000;
+		//g_DataEnd = g_DataStart + 0x16E8000;
+
+		g_RdataStart = ::g_ModuleBase + 0x3021000;
+		g_RdataEnd = ::g_ModuleBase + 0x38EAFFF;
+
+		g_DataStart = ::g_ModuleBase + 0x38EB000;
+		g_DataEnd = ::g_ModuleBase + 0x5A13FFF;
 
 		g_CodeStart = ::g_CodeBase;
 		g_CodeEnd = g_CodeStart + ::g_CodeSize;
