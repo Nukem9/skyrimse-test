@@ -11,6 +11,7 @@
 #include "../patches/TES/BSShader/BSShader.h"
 #include "../patches/TES/Setting.h"
 #include "../patches/rendering/GpuTimer.h"
+#include "../patches/TES/TESForm.h"
 
 namespace ui::opt
 {
@@ -232,6 +233,21 @@ namespace ui
 				ProxyIDirectInputDevice8A::ToggleGlobalInput(!blockInput);
             ImGui::EndMenu();
         }
+
+		if (ImGui::BeginMenu("Weather"))
+		{
+			auto weatherTypes = TESForm::LookupFormsByType(54);
+
+			for (TESForm *form : weatherTypes)
+			{
+				char name[256];
+				sprintf_s(name, "%s", form->GetName());
+				//form->GetFullTypeName(name, 256);
+
+				ImGui::MenuItem(name, nullptr, false);
+			}
+			ImGui::EndMenu();
+		}
 
 		if (ImGui::BeginMenu("Miscellaneous"))
 		{

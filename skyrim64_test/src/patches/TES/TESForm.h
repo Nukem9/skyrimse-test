@@ -85,10 +85,16 @@ public:
 		return *(uint32_t *)((uintptr_t)this + 0x14);
 	}
 
+	uint8_t GetType() const
+	{
+		return *(uint8_t *)((uintptr_t)this + 0x1A);
+	}
+
 	const char *hk_GetName();
 	bool hk_SetEditorId(const char *Name);
 
 	static TESForm *LookupFormById(uint32_t FormId);
+	static std::vector<TESForm *> LookupFormsByType(uint32_t Type);
 };
 
 class NiNode;

@@ -96,6 +96,24 @@ TESForm *TESForm::LookupFormById(uint32_t FormId)
 	return formPointer;
 }
 
+std::vector<TESForm *> TESForm::LookupFormsByType(uint32_t Type)
+{
+	std::vector<TESForm *> data;
+	GlobalFormLock.LockForRead();
+
+	if (GlobalFormList)
+	{
+		for (auto itr = GlobalFormList->begin(); itr != GlobalFormList->end(); itr++)
+		{
+			if (itr->GetType() == Type)
+				data.push_back(*itr);
+		}
+	}
+
+	GlobalFormLock.UnlockRead();
+	return data;
+}
+
 void CRC32_Lazy(int *out, int idIn)
 {
 	((void(*)(int *, int))(g_ModuleBase + 0xC06030))(out, idIn);
