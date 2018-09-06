@@ -10,4 +10,4 @@
 #define SKYRIM64_USE_VFS			0	// Enable virtual file system
 #define SKYRIM64_USE_PROFILER		1	// Enable built-in profiler macros / "profiler.h"
 #define SKYRIM64_USE_TRACY			1	// Enable tracy client + server / https://bitbucket.org/wolfpld/tracy/overview
-#define SKYRIM64_USE_TBBMALLOC		0	// Use Intel's TBB allocator instead of jemalloc
+#define SKYRIM64_USE_TBBMALLOC		1	// Use Intel's TBB allocator instead of jemalloc
