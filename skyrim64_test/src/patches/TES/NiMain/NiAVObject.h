@@ -16,6 +16,15 @@ struct NiBound
 class NiAVObject : public NiObjectNET
 {
 public:
+	enum : uint32_t
+	{
+		APP_CULLED = 1 << 0,
+		ALWAYS_DRAW = 1 << 11,
+		PREPROCESSED = 1 << 12,
+		NOT_VISIBLE = 1 << 20,
+		ACCUMULATED = 1 << 26,
+	};
+
 	virtual ~NiAVObject();
 	virtual void UpdateControllers();
 	virtual void PerformOp();
@@ -58,43 +67,43 @@ public:
 
 	bool QAppCulled() const
 	{
-		return (m_uFlags & 1) != 0;
+		return (m_uFlags & APP_CULLED) != 0;
 	}
 
 	bool QAlwaysDraw() const
 	{
-		return (m_uFlags & (1 << 11)) != 0;
+		return (m_uFlags & ALWAYS_DRAW) != 0;
 	}
 
 	bool QPreProcessedNode() const
 	{
-		return (m_uFlags & (1 << 12)) != 0;
+		return (m_uFlags & PREPROCESSED) != 0;
 	}
 
 	bool QNotVisible() const
 	{
-		return (m_uFlags & (1 << 20)) != 0;
+		return (m_uFlags & NOT_VISIBLE) != 0;
 	}
 
 	bool QAccumulated() const
 	{
-		return (m_uFlags & (1 << 26)) != 0;
+		return (m_uFlags & ACCUMULATED) != 0;
 	}
 
 	void SetAppCulled(bool Culled)
 	{
 		if (Culled)
-			m_uFlags |= 1;
+			m_uFlags |= APP_CULLED;
 		else
-			m_uFlags &= ~1;
+			m_uFlags &= ~APP_CULLED;
 	}
 
 	void SetAccumulated(bool Accumulated)
 	{
 		if (Accumulated)
-			m_uFlags |= (1 << 26);
+			m_uFlags |= ACCUMULATED;
 		else
-			m_uFlags &= ~(1 << 26);
+			m_uFlags &= ~ACCUMULATED;
 	}
 
 	int IsVisualObjectI() const
