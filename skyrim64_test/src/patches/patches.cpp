@@ -217,6 +217,21 @@ void Patch_TESV()
 	//PatchMemory(g_ModuleBase + 0x12AE2E8, (PBYTE)"\x80\xBD\x11\x02\x00\x00\x00", 7);// Rewrite to 'cmp byte ptr [rbp+211h], 0'
 	//PatchMemory(g_ModuleBase + 0x12AE2EF, (PBYTE)"\x90\x90\x90\x90", 4);			// Extra rewrite padding
 
+	//
+	// Memory bug fix during BSShadowDirectionalLight calculations:
+	//
+	// void *data1 = ScrapHeap::Alloc(32, 8);
+	// MessWithData(v40, 8u, v41, &v217, data1);
+	// sub_14133E730(..., data1, ...); <- OK
+	// ScrapHeap::Free(data1);
+	// ....
+	// void *data2 = ScrapHeap::Alloc(32, 8);
+	// MessWithData(v40, 8u, v41, &v217, data2);
+	// sub_14133E730(..., data1, ...); <- USE-AFTER-FREE!! data1 SHOULD BE data2
+	// ScrapHeap::Free(data2);
+	//
+	PatchMemory(g_ModuleBase + 0x133D94D, (PBYTE)"\x4D\x8B\xCF\x90\x90\x90\x90", 7);
+
 	*(PBYTE *)&TESObjectCell::CreateRootMultiBoundNode = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x264230), &TESObjectCell::hk_CreateRootMultiBoundNode);
 
 }
