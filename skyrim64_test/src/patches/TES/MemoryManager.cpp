@@ -146,17 +146,17 @@ char *__fastcall hk_strdup(const char *str1)
 //
 // Internal engine heap allocators backed by VirtualAlloc()
 //
-void *MemoryManager::Alloc(size_t Size, uint32_t Alignment, bool Aligned)
+void *MemoryManager::Alloc(MemoryManager *Manager, size_t Size, uint32_t Alignment, bool Aligned)
 {
 	return Jemalloc(Size, Alignment, Aligned, true);
 }
 
-void MemoryManager::Free(void *Memory, bool Aligned)
+void MemoryManager::Free(MemoryManager *Manager, void *Memory, bool Aligned)
 {
 	Jefree(Memory, Aligned);
 }
 
-void *ScrapHeap::Alloc(size_t Size, uint32_t Alignment)
+void *ScrapHeap::Alloc(ScrapHeap *Heap, size_t Size, uint32_t Alignment)
 {
 	if (Size > MAX_ALLOC_SIZE)
 		return nullptr;
@@ -164,7 +164,7 @@ void *ScrapHeap::Alloc(size_t Size, uint32_t Alignment)
 	return Jemalloc(Size, Alignment, Alignment != 0);
 }
 
-void ScrapHeap::Free(void *Memory)
+void ScrapHeap::Free(ScrapHeap *Heap, void *Memory)
 {
 	Jefree(Memory);
 }
