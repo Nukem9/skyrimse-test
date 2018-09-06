@@ -70,7 +70,7 @@ public:
 	virtual void VFunc48();
 	virtual void VFunc49();
 	virtual const char *GetName();
-	virtual void SetEditorId(const char *Name);
+	virtual bool SetEditorId(const char *Name);
 	virtual void VFunc52();
 	virtual void VFunc53();
 	virtual void VFunc54();
@@ -79,6 +79,14 @@ public:
 	virtual void VFunc57();
 	virtual void VFunc58();
 	virtual void VFunc59();
+
+	uint32_t GetId() const
+	{
+		return *(uint32_t *)((uintptr_t)this + 0x14);
+	}
+
+	const char *hk_GetName();
+	bool hk_SetEditorId(const char *Name);
 
 	static TESForm *LookupFormById(uint32_t FormId);
 };
