@@ -12,33 +12,11 @@ namespace MSRTTI
 {
 	using namespace detail;
 
-	uintptr_t g_RdataStart;	// .rdata
-	uintptr_t g_RdataEnd;
-	uintptr_t g_DataStart;	// .data
-	uintptr_t g_DataEnd;
-	uintptr_t g_CodeStart;	// .text
-	uintptr_t g_CodeEnd;
-
 	std::vector<Info> Tables;
 
 	void Initialize()
 	{
-		//g_RdataStart = ::g_ModuleBase + 0x15231F0;
-		//g_RdataEnd = ::g_ModuleBase + 0x1DD4448;
-
-		//g_DataStart = ::g_ModuleBase + 0x1DD5000;
-		//g_DataEnd = g_DataStart + 0x16E8000;
-
-		g_RdataStart = ::g_ModuleBase + 0x3021000;
-		g_RdataEnd = ::g_ModuleBase + 0x38EAFFF;
-
-		g_DataStart = ::g_ModuleBase + 0x38EB000;
-		g_DataEnd = ::g_ModuleBase + 0x5A13FFF;
-
-		g_CodeStart = ::g_CodeBase;
-		g_CodeEnd = g_CodeStart + ::g_CodeSize;
-
-		for (uintptr_t i = g_RdataStart; i < (g_RdataEnd - sizeof(uintptr_t) - sizeof(uintptr_t)); i++)
+		for (uintptr_t i = g_RdataBase; i < (g_RdataEnd - sizeof(uintptr_t) - sizeof(uintptr_t)); i++)
 		{
 			// Skip all non-2-aligned addresses. Not sure if this is OK or it skips tables.
 			if (i % 2 != 0)
@@ -126,13 +104,13 @@ namespace MSRTTI
 	{
 		bool IsWithinRDATA(uintptr_t Address)
 		{
-			return (Address >= g_RdataStart && Address <= g_RdataEnd) ||
-				(Address >= g_DataStart && Address <= g_DataEnd);
+			return (Address >= g_RdataBase && Address <= g_RdataEnd) ||
+				(Address >= g_DataBase && Address <= g_DataEnd);
 		}
 
 		bool IsWithinCODE(uintptr_t Address)
 		{
-			return Address >= g_CodeStart && Address <= g_CodeEnd;
+			return Address >= g_CodeBase && Address <= g_CodeEnd;
 		}
 
 		bool IsValidCOL(CompleteObjectLocator *Locator)

@@ -72,25 +72,23 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 
 void ExperimentalPatchEmptyFunctions()
 {
-	uintptr_t codeStart = g_CodeBase;
-	uintptr_t codeEnd = codeStart + g_CodeSize;
-	uint64_t patchCount = 0;
-
 	//
 	// Patch the EXE text section calls/jumps to nullsubs
 	//
 	// NOTE: All of these nullsubs use a long ret instruction (0xC2 0x00 0x00)
 	//
+	uint64_t patchCount = 0;
+
 	__try
 	{
-		for (uintptr_t i = codeStart; i < codeEnd; i++)
+		for (uintptr_t i = g_CodeBase; i < g_CodeEnd; i++)
 		{
 			if (*(BYTE *)i != 0xE9 && *(BYTE *)i != 0xE8)
 				continue;
 
 			uintptr_t destination = i + *(uint32_t *)(i + 1) + 5;
 
-			if (destination < codeStart || destination >= codeEnd)
+			if (destination < g_CodeBase || destination >= g_CodeEnd)
 				continue;
 
 			if (destination % 16 != 0)
@@ -199,15 +197,13 @@ void ExperimentalPatchMemInit()
 	const char *patternStr = "\x83\x3D\x00\x00\x00\x00\x02\x74\x13\x48\x8D\x15\x00\x00\x00\x00\x48\x8D\x0D\x00\x00\x00\x00\xE8\x00\x00\x00\x00";
 	const char *maskStr = "xx????xxxxxx????xxx????x????";
 
-	uintptr_t codeStart = g_CodeBase;
-	uintptr_t codeEnd = codeStart + g_CodeSize;
 	uint64_t patchCount = 0;
 
 	__try
 	{
-		for (uintptr_t i = codeStart; i < codeEnd;)
+		for (uintptr_t i = g_CodeBase; i < g_CodeEnd;)
 		{
-			uintptr_t addr = FindPatternSimple(i, codeEnd - i, (BYTE *)patternStr, maskStr);
+			uintptr_t addr = FindPatternSimple(i, g_CodeEnd - i, (BYTE *)patternStr, maskStr);
 
 			if (!addr)
 				break;
@@ -226,16 +222,14 @@ void ExperimentalPatchMemInit()
 
 void ExperimentalPatchEditAndContinue()
 {
-	uint64_t patchCount = 0;
-	uintptr_t codeStart = g_ModuleBase + 0xFB4000;
-	uintptr_t codeEnd = g_ModuleBase + 0x3020F30;
-
 	//
 	// Remove any references to the giant trampoline table generated for edit & continue
 	//
 	// Before: [Function call] -> [E&C stub] -> [Function]
 	// After:  [Function call] -> [Function]
 	//
+	uint64_t patchCount = 0;
+
 	std::vector<uintptr_t> branchTargets;
 	branchTargets.reserve(10000);
 
@@ -251,7 +245,7 @@ void ExperimentalPatchEditAndContinue()
 		return false;
 	};
 
-	for (uintptr_t i = codeStart; i < codeEnd; i++)
+	for (uintptr_t i = g_CodeBase; i < g_CodeEnd; i++)
 	{
 		// Must be a call or a jump
 		if (*(BYTE *)i != 0xE9 && *(BYTE *)i != 0xE8)

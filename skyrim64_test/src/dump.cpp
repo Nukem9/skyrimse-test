@@ -42,12 +42,44 @@ void EnableCookieHack()
 	Assert(sectionRVA > 0 && sectionSize > 0);
 	AssertMsg(loadConfig->SecurityCookie, "SecurityCookie is a null pointer!");
 
-	// Determine the module/code section address and size
+	// Determine the module/code section addresses and sizes
 	g_ModuleBase = moduleBase;
 	g_ModuleSize = ntHeaders->OptionalHeader.SizeOfImage;
 
-	g_CodeBase = moduleBase + ntHeaders->OptionalHeader.BaseOfCode;
-	g_CodeSize = ntHeaders->OptionalHeader.SizeOfCode;
+	g_CodeBase = std::numeric_limits<uintptr_t>::max();
+	g_RdataBase = std::numeric_limits<uintptr_t>::max();
+	g_DataBase = std::numeric_limits<uintptr_t>::max();
+
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(ntHeaders);
+
+	for (int i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++, section++)
+	{
+		// Name might not be null-terminated
+		char sectionName[sizeof(IMAGE_SECTION_HEADER::Name) + 1];
+		memset(sectionName, 0, sizeof(sectionName));
+		memcpy(sectionName, section->Name, sizeof(IMAGE_SECTION_HEADER::Name));
+
+		uintptr_t end = g_ModuleBase + section->VirtualAddress + section->Misc.VirtualSize;
+
+		if (!_stricmp(sectionName, ".text") || !_stricmp(sectionName, ".textbss"))
+		{
+			if (section->Misc.VirtualSize > 0x10000)
+			{
+				g_CodeBase = std::min(g_CodeBase, g_ModuleBase + section->VirtualAddress);
+				g_CodeEnd = std::max(g_CodeEnd, g_ModuleBase + section->VirtualAddress + section->Misc.VirtualSize);
+			}
+		}
+		else if (!_stricmp(sectionName, ".rdata"))
+		{
+			g_RdataBase = std::min(g_RdataBase, g_ModuleBase + section->VirtualAddress);
+			g_RdataEnd = std::max(g_RdataEnd, g_ModuleBase + section->VirtualAddress + section->Misc.VirtualSize);
+		}
+		else if (!_stricmp(sectionName, ".data"))
+		{
+			g_DataBase = std::min(g_DataBase, g_ModuleBase + section->VirtualAddress);
+			g_DataEnd = std::max(g_DataEnd, g_ModuleBase + section->VirtualAddress + section->Misc.VirtualSize);
+		}
+	}
 
 	// Set the magic value which triggers an early QueryPerformanceCounter call
 	*(ULONGLONG *)loadConfig->SecurityCookie = 0x2B992DDFA232;

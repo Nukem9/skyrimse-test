@@ -7,18 +7,21 @@ __itt_heap_function ITT_ReallocateCallback;
 __itt_heap_function ITT_FreeCallback;
 #endif
 
-ULONG_PTR g_ModuleBase;
-ULONG_PTR g_ModuleSize;
+uintptr_t g_ModuleBase;
+uintptr_t g_ModuleSize;
 
-ULONG_PTR g_CodeBase;
-ULONG_PTR g_CodeSize;
+uintptr_t g_CodeBase;	// .text or .textbss
+uintptr_t g_CodeEnd;
+uintptr_t g_RdataBase;	// .rdata
+uintptr_t g_RdataEnd;
+uintptr_t g_DataBase;	// .data
+uintptr_t g_DataEnd;
 
 HMODULE g_Dll3DAudio;
 HMODULE g_DllReshade;
 HMODULE g_DllEnb;
 HMODULE g_DllSKSE;
 HMODULE g_DllVTune;
-
 HMODULE g_DllDXGI;
 HMODULE g_DllD3D11;
 

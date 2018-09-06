@@ -57,18 +57,21 @@ extern __itt_heap_function ITT_FreeCallback;
 #include "dump.h"
 #include "profiler.h"
 
-extern ULONG_PTR g_ModuleBase;
-extern ULONG_PTR g_ModuleSize;
+extern uintptr_t g_ModuleBase;
+extern uintptr_t g_ModuleSize;
 
-extern ULONG_PTR g_CodeBase;
-extern ULONG_PTR g_CodeSize;
+extern uintptr_t g_CodeBase;	// .text or .textbss
+extern uintptr_t g_CodeEnd;
+extern uintptr_t g_RdataBase;	// .rdata
+extern uintptr_t g_RdataEnd;
+extern uintptr_t g_DataBase;	// .data
+extern uintptr_t g_DataEnd;
 
 extern HMODULE g_Dll3DAudio;
 extern HMODULE g_DllReshade;
 extern HMODULE g_DllEnb;
 extern HMODULE g_DllSKSE;
 extern HMODULE g_DllVTune;
-
 extern HMODULE g_DllDXGI;
 extern HMODULE g_DllD3D11;
 
