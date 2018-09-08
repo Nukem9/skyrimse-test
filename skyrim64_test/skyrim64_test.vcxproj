@@ -204,6 +204,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiTexture.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiTransform.h" />
     <ClInclude Include="src\patches\TES\Setting.h" />
+    <ClInclude Include="src\patches\TES\Console.h" />
     <ClInclude Include="src\profiler_internal.h" />
     <ClInclude Include="src\d3dconv.h" />
     <ClInclude Include="src\patches\dinput8.h" />
@@ -330,6 +331,7 @@
     <ClCompile Include="src\patches\TES\NiMain\NiMain.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp" />
     <ClCompile Include="src\patches\TES\Setting.cpp" />
+    <ClCompile Include="src\patches\TES\Console.cpp" />
     <ClCompile Include="src\profiler.cpp" />
     <ClCompile Include="src\typeinfo\hk_rtti.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />

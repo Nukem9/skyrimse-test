@@ -12,6 +12,7 @@
 #include "../patches/TES/Setting.h"
 #include "../patches/rendering/GpuTimer.h"
 #include "../patches/TES/TESForm.h"
+#include "../patches/TES/Console.h"
 
 namespace ui::opt
 {
@@ -236,16 +237,64 @@ namespace ui
 
 		if (ImGui::BeginMenu("Weather"))
 		{
-			auto weatherTypes = TESForm::LookupFormsByType(54);
+			if (ImGui::MenuItem("Set time to 12AM"))
+				Console::ExecuteCommand("Set Gamehour to 0");
 
-			for (TESForm *form : weatherTypes)
+			if (ImGui::MenuItem("Set time to 12PM"))
+				Console::ExecuteCommand("Set Gamehour to 12");
+
+			if (ImGui::BeginMenu("Set time to ..."))
 			{
-				char name[256];
-				sprintf_s(name, "%s", form->GetName());
-				//form->GetFullTypeName(name, 256);
+				for (int i = 0; i < 24; i++)
+				{
+					char buffer[128];
+					sprintf_s(buffer, "Set time to %d:00", i);
 
-				ImGui::MenuItem(name, nullptr, false);
+					if (ImGui::MenuItem(buffer))
+						Console::ExecuteCommand("Set Gamehour to %d", i);
+				}
+
+				ImGui::EndMenu();
 			}
+
+			ImGui::Separator();
+
+			auto weatherTypes = TESForm::LookupFormsByType(54);
+			auto enumWeathers = [&weatherTypes](bool Aurora)
+			{
+				for (TESForm *form : weatherTypes)
+				{
+					bool a = strstr(form->GetName(), "_A") == form->GetName() + strlen(form->GetName()) - 2;
+					bool b = strstr(form->GetName(), "Aurora");
+
+					if (Aurora && (!a && !b))
+						continue;
+					else if (!Aurora && (a || b))
+						continue;
+
+					if (ImGui::MenuItem(form->GetName()))
+						Console::ExecuteCommand("ForceWeather %X", form->GetId());
+				}
+			};
+
+			std::sort(weatherTypes.begin(), weatherTypes.end(),
+				[](TESForm *& a, TESForm *& b) -> bool
+			{
+				return strcmp(a->GetName(), b->GetName()) < 0;
+			});
+
+			if (ImGui::BeginMenu("Normal"))
+			{
+				enumWeathers(false);
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Aurora"))
+			{
+				enumWeathers(true);
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenu();
 		}
 

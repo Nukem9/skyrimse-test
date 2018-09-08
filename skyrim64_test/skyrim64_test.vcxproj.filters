@@ -335,6 +335,9 @@
     <ClInclude Include="src\typeinfo\ms_rtti.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\Console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -707,6 +710,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\typeinfo\ni_rtti.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
