@@ -94,7 +94,7 @@ public:
 	bool hk_SetEditorId(const char *Name);
 
 	static TESForm *LookupFormById(uint32_t FormId);
-	static std::vector<TESForm *> LookupFormsByType(uint32_t Type);
+	static std::vector<TESForm *> LookupFormsByType(uint32_t Type, bool SortById = false, bool SortByName = false);
 };
 
 class NiNode;

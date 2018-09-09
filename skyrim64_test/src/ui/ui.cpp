@@ -223,20 +223,41 @@ namespace ui
 
         if (ImGui::BeginMenu("Game"))
         {
-			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
-			ImGui::MenuItem("INISetting Viewer", nullptr, &showIniListWindow);
-			ImGui::Separator();
-			ImGui::MenuItem("Log Navmesh Processing", nullptr, &opt::LogNavmeshProcessing);
-			ImGui::MenuItem("Log Quest/Scene Actions", nullptr, &opt::LogQuestSceneActions);
-			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
-			bool blockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
-			if (ImGui::MenuItem("Block Game Input", nullptr, &blockInput))
-				ProxyIDirectInputDevice8A::ToggleGlobalInput(!blockInput);
-            ImGui::EndMenu();
-        }
+			//
+			// Center on cell
+			//
+			auto cellTypes = TESForm::LookupFormsByType(60, false, true);
+			auto enumCells = [&cellTypes](bool Interior)
+			{
+				for (TESForm *form : cellTypes)
+				{
+					if (Interior && !static_cast<TESObjectCell *>(form)->IsInterior())
+						continue;
+					else if (!Interior && static_cast<TESObjectCell *>(form)->IsInterior())
+						continue;
 
-		if (ImGui::BeginMenu("Weather"))
-		{
+					if (ImGui::MenuItem(form->GetName()))
+						Console::ExecuteCommand("CenterOnCell %s", form->GetName());
+				}
+			};
+
+			if (ImGui::BeginMenu("Center On Cell (Exterior)"))
+			{
+				enumCells(false);
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Center On Cell (Interior)"))
+			{
+				enumCells(true);
+				ImGui::EndMenu();
+			}
+
+			ImGui::Separator();
+			
+			//
+			// Game time
+			//
 			if (ImGui::MenuItem("Set time to 12AM"))
 				Console::ExecuteCommand("Set Gamehour to 0");
 
@@ -259,7 +280,10 @@ namespace ui
 
 			ImGui::Separator();
 
-			auto weatherTypes = TESForm::LookupFormsByType(54);
+			//
+			// Weather
+			//
+			auto weatherTypes = TESForm::LookupFormsByType(54, false, true);
 			auto enumWeathers = [&weatherTypes](bool Aurora)
 			{
 				for (TESForm *form : weatherTypes)
@@ -277,26 +301,31 @@ namespace ui
 				}
 			};
 
-			std::sort(weatherTypes.begin(), weatherTypes.end(),
-				[](TESForm *& a, TESForm *& b) -> bool
-			{
-				return strcmp(a->GetName(), b->GetName()) < 0;
-			});
-
-			if (ImGui::BeginMenu("Normal"))
+			if (ImGui::BeginMenu("Set weather to (Normal)"))
 			{
 				enumWeathers(false);
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Aurora"))
+			if (ImGui::BeginMenu("Set weather to (Aurora)"))
 			{
 				enumWeathers(true);
 				ImGui::EndMenu();
 			}
 
-			ImGui::EndMenu();
-		}
+			ImGui::Separator();
+
+			ImGui::MenuItem("Debug Log", nullptr, &showLogWindow);
+			ImGui::MenuItem("INISetting Viewer", nullptr, &showIniListWindow);
+			ImGui::Separator();
+			ImGui::MenuItem("Log Navmesh Processing", nullptr, &opt::LogNavmeshProcessing);
+			ImGui::MenuItem("Log Quest/Scene Actions", nullptr, &opt::LogQuestSceneActions);
+			ImGui::MenuItem("Log Frame Hitches", nullptr, &opt::LogHitches);
+			bool blockInput = !ProxyIDirectInputDevice8A::GlobalInputAllowed();
+			if (ImGui::MenuItem("Block Game Input", nullptr, &blockInput))
+				ProxyIDirectInputDevice8A::ToggleGlobalInput(!blockInput);
+            ImGui::EndMenu();
+        }
 
 		if (ImGui::BeginMenu("Miscellaneous"))
 		{

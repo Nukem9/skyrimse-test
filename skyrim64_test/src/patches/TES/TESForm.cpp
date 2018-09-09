@@ -96,21 +96,40 @@ TESForm *TESForm::LookupFormById(uint32_t FormId)
 	return formPointer;
 }
 
-std::vector<TESForm *> TESForm::LookupFormsByType(uint32_t Type)
+std::vector<TESForm *> TESForm::LookupFormsByType(uint32_t Type, bool SortById, bool SortByName)
 {
 	std::vector<TESForm *> data;
-	GlobalFormLock.LockForRead();
 
-	if (GlobalFormList)
+	GlobalFormLock.LockForRead();
 	{
-		for (auto itr = GlobalFormList->begin(); itr != GlobalFormList->end(); itr++)
+		if (GlobalFormList)
 		{
-			if (itr->GetType() == Type)
-				data.push_back(*itr);
+			for (auto itr = GlobalFormList->begin(); itr != GlobalFormList->end(); itr++)
+			{
+				if (itr->GetType() == Type)
+					data.push_back(*itr);
+			}
 		}
 	}
-
 	GlobalFormLock.UnlockRead();
+
+	if (SortById)
+	{
+		std::sort(data.begin(), data.end(),
+			[](TESForm *& a, TESForm *& b) -> bool
+		{
+			return a->GetId() < b->GetId();
+		});
+	}
+	else if (SortByName)
+	{
+		std::sort(data.begin(), data.end(),
+			[](TESForm *& a, TESForm *& b) -> bool
+		{
+			return strcmp(a->GetName(), b->GetName()) < 0;
+		});
+	}
+
 	return data;
 }
 
