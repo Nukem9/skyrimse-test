@@ -74,6 +74,7 @@ void LoadModules()
 
 void ApplyPatches()
 {
+	// The EXE has been unpacked at this point
 	SetThreadName(GetCurrentThreadId(), "Main Thread");
 
 #if SKYRIM64_USE_VFS
@@ -81,15 +82,6 @@ void ApplyPatches()
 	DoHook();
 #endif
 
-	char filePath[MAX_PATH];
-	GetModuleFileNameA(GetModuleHandleA(nullptr), filePath, MAX_PATH);
-
-	if (strstr(filePath, "SkyrimSE"))
-		g_IsCreationKit = false;
-	else if (strstr(filePath, "CreationKit"))
-		g_IsCreationKit = true;
-
-	// The EXE has been unpacked at this point
 	if (g_IsCreationKit)
 	{
 		Patch_TESVCreationKit();
@@ -104,13 +96,26 @@ void ApplyPatches()
 	}
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 {
-    if (ul_reason_for_call == DLL_PROCESS_ATTACH)
+    if (fdwReason == DLL_PROCESS_ATTACH)
     {
-        EnableDumpBreakpoint();
-        return TRUE;
+		char filePath[MAX_PATH];
+		GetModuleFileNameA(GetModuleHandle(nullptr), filePath, MAX_PATH);
+
+		if (strstr(filePath, "SkyrimSE") || strstr(filePath, "SkyrimSELauncher"))
+			g_IsCreationKit = false;
+		else if (strstr(filePath, "CreationKit"))
+			g_IsCreationKit = true;
+
+		// Force this dll to be loaded permanently
+		HMODULE temp;
+		GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)hModule, &temp);
+
+		// Skip all patching if process is the launcher
+		if (!strstr(filePath, "SkyrimSELauncher"))
+			EnableDumpBreakpoint();
     }
 
-    return FALSE;
+    return TRUE;
 }

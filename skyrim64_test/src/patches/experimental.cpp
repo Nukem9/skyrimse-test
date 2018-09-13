@@ -229,9 +229,7 @@ void ExperimentalPatchEditAndContinue()
 	// After:  [Function call] -> [Function]
 	//
 	uint64_t patchCount = 0;
-
 	std::vector<uintptr_t> branchTargets;
-	branchTargets.reserve(10000);
 
 	auto isWithinECTable = [](uintptr_t Address)
 	{
