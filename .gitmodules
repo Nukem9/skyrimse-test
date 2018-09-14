@@ -1,12 +1,12 @@
-[submodule "skyrim64_test/imgui"]
-	path = skyrim64_test/imgui
+[submodule "Dependencies/imgui"]
+	path = Dependencies/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = viewport
-[submodule "tracy_lib/tracy"]
-	path = tracy_lib/tracy
+[submodule "Dependencies/tracy"]
+	path = Dependencies/tracy
 	url = https://bitbucket.org/wolfpld/tracy.git
 	branch = master
-[submodule "skyrim64_test/meshoptimizer"]
-	path = skyrim64_test/meshoptimizer
+[submodule "Dependencies/meshoptimizer"]
+	path = Dependencies/meshoptimizer
 	url = https://github.com/zeux/meshoptimizer.git
 	branch = master
