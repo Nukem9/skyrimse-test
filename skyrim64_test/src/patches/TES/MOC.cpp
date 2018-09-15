@@ -15,7 +15,7 @@
 using namespace DirectX;
 
 #include "MOC_ThreadedMerger.h"
-#include "../../../meshoptimizer/src/meshoptimizer.h"
+#include <meshoptimizer/src/meshoptimizer.h>
 
 const int MOC_WIDTH = 1280;
 const int MOC_HEIGHT = 720;
@@ -133,7 +133,7 @@ namespace MOC
 			p.Count = indexCount;
 
 			if (indexCount > 300)
-				p.Count = meshopt_simplify(p.Data, p.Data, indexCount, (const float *)vertexData, vertexCount, vertexStride, (size_t)(indexCount * .50f));// Target 33% of original triangles
+				p.Count = meshopt_simplify(p.Data, p.Data, indexCount, (const float *)vertexData, vertexCount, vertexStride, (size_t)(indexCount * .50f), 1e-3f);// Target 33% of original triangles
 
 			m_IndexMap.insert_or_assign(dataPtr, p);
 			*Indices = p;

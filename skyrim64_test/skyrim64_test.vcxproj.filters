@@ -9,35 +9,11 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="imgui">
-      <UniqueIdentifier>{4dd652e7-20e4-4995-b630-c7b5e961b211}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\patches">
       <UniqueIdentifier>{6ecca651-f6ac-4430-b4b5-a9d5fb31e2fc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\remotery">
-      <UniqueIdentifier>{4109e39f-28cf-4410-8dc9-45715b0a0cf4}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="imgui\imconfig.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imgui.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\imgui_internal.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\stb_rect_pack.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\stb_textedit.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\stb_truetype.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
     <ClInclude Include="src\d3dconv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -93,18 +69,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="xbyak\xbyak_util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="xbyak\xbyak_mnemonic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="xbyak\xbyak_bin2hex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="xbyak\xbyak.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\rendering\codegen.h">
@@ -269,12 +233,6 @@
     <ClInclude Include="src\patches\rendering\d3d11_proxy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MaskedOcclusionCulling\CullingThreadpool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MaskedOcclusionCulling\MaskedOcclusionCulling.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSParticleShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -294,9 +252,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\TES\NiMain\NiCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="meshoptimizer\src\meshoptimizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\TES\NiMain\NiCullingProcess.h">
@@ -340,15 +295,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="imgui\imgui.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_demo.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_draw.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
     <ClCompile Include="src\d3dx9_debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -383,63 +329,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\achievements.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\arena.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\base.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\bitmap.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\ckh.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\ctl.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\extent.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\hash.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\jemalloc.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\mutex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\nstime.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\pages.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\prng.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\prof.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\rtree.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\stats.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\tcache.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\ticker.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\tsd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\witness.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\xutil.cpp">
@@ -479,36 +368,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\logging.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\Decoder.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\DecoderData.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\FormatHelper.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\Formatter.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\MetaInfo.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\Mnemonic.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\Register.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\SharedData.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\Utils.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zydis\src\Zydis.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\rendering\d3d11.cpp">
@@ -586,51 +445,6 @@
     <ClCompile Include="src\patches\rendering\d3d11_proxy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MaskedOcclusionCulling\CullingThreadpool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MaskedOcclusionCulling\MaskedOcclusionCulling.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MaskedOcclusionCulling\MaskedOcclusionCullingAVX2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MaskedOcclusionCulling\MaskedOcclusionCullingAVX512.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\bin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\background_thread.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\div.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\extent_dss.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\extent_mmap.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\hooks.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\large.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\log.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\malloc_io.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\mutex_pool.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="jemalloc\sz.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSParticleShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -647,39 +461,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\indexcodec.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\indexgenerator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\overdrawanalyzer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\overdrawoptimizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\simplifier.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\stripifier.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\vcacheanalyzer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\vcacheoptimizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\vertexcodec.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\vfetchanalyzer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="meshoptimizer\src\vfetchoptimizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\MOC_ThreadedMerger.cpp">
@@ -715,9 +496,11 @@
     <ClCompile Include="src\patches\TES\Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="My Amplifier Results - skyrim64_test\My Amplifier Results - skyrim64_test.amplxeproj" />
     <None Include="src\patches\rendering\d3d11_tls_patchlist.inl">
       <Filter>Header Files</Filter>
     </None>
@@ -731,12 +514,6 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="src\patches\rendering\d3d11_codegen_tables.inl">
-      <Filter>Header Files</Filter>
-    </None>
-    <None Include="MaskedOcclusionCulling\CompilerSpecific.inl">
-      <Filter>Header Files</Filter>
-    </None>
-    <None Include="MaskedOcclusionCulling\MaskedOcclusionCullingCommon.inl">
       <Filter>Header Files</Filter>
     </None>
     <None Include="src\patches\TES\NiMain\NiRTTI.inl">

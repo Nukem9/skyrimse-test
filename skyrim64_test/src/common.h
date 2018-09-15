@@ -8,18 +8,9 @@
 #include <d3d11.h>
 #include <d3d11_2.h>
 
-#pragma comment(lib, "winmm.lib")
-#pragma comment(lib, "d3d11.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "D3DCompiler.lib")
-#pragma comment(lib, "dinput8.lib")
-#pragma comment(lib, "dxguid.lib")
-#pragma comment(lib, "ws2_32.lib")
-
 // Intel VTune
 #if SKYRIM64_USE_VTUNE
 #include <ittnotify.h>
-#pragma comment(lib, "libittnotify.lib")
 
 extern __itt_heap_function ITT_AllocateCallback;
 extern __itt_heap_function ITT_ReallocateCallback;
@@ -29,28 +20,29 @@ extern __itt_heap_function ITT_FreeCallback;
 // Tracy
 #if SKYRIM64_USE_TRACY
 #define TRACY_ENABLE
-#define TRACY_ON_DEMAND
-#include "../../tracy_lib/tracy/Tracy.hpp"
-#pragma comment(lib, "tracy_lib.lib")
+#include <tracy/Tracy.hpp>
+//#include "../../tracy_lib/tracy/TracyD3D11.hpp"
 #else
 #undef TRACY_ENABLE
-#include "../../tracy_lib/tracy/Tracy.hpp"
+#include <tracy/Tracy.hpp>
 #endif
 
-// Jemalloc
+// TBBMalloc/Jemalloc
+#if SKYRIM64_USE_TBBMALLOC
+#include <tbb/scalable_allocator.h>
+#else
 #include <jemalloc/jemalloc.h>
+#endif
 
 // Detours
 #ifdef _DEBUG
 #include "../detours/Detours.h"
-#pragma comment(lib, "detours/detours_debug.lib")
 #else
 #include "../detours/Detours.h"
-#pragma comment(lib, "detours/detours.lib")
 #endif
 
 // ImGui
-#include "../imgui/imgui.h"
+#include <imgui/imgui.h>
 #include "ui/ui.h"
 
 #include "xutil.h"

@@ -7,7 +7,7 @@
 //  [X] Platform: Keyboard arrays indexed using VK_* Virtual Key Codes, e.g. ImGui::IsKeyPressed(VK_SPACE).
 //  [X] Platform: Multi-viewport support (multiple windows). Enable with 'io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable'.
 
-#include "../../imgui/imgui.h"
+#include <imgui/imgui.h>
 #include "imgui_impl_win32.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

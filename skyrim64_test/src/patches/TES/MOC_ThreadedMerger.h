@@ -1,9 +1,9 @@
 #pragma once
 
 #include <atomic>
+#include <tbb/concurrent_queue.h>
+#include <MaskedOcclusionCulling/MaskedOcclusionCulling.h>
 #include "../../common.h"
-#include "../../../MaskedOcclusionCulling/MaskedOcclusionCulling.h"
-#include "../../../tbb2018/concurrent_queue.h"
 
 class MOC_ThreadedMerger
 {

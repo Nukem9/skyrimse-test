@@ -10,3 +10,7 @@
 	path = Dependencies/meshoptimizer
 	url = https://github.com/zeux/meshoptimizer.git
 	branch = master
+[submodule "Dependencies/tbb"]
+	path = Dependencies/tbb
+	url = https://github.com/01org/tbb.git
+	branch = tbb_2019

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../xbyak/xbyak.h"
-#include "../../zydis/include/Zydis/Zydis.h"
+#include <xbyak/xbyak.h>
+#include <zydis/include/Zydis/Zydis.h>
 #include "common.h"
 
 enum class PatchType

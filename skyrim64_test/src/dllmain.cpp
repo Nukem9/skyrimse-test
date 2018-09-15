@@ -1,32 +1,6 @@
 #include "common.h"
 #include "patches/rendering/d3d11_tls.h"
 
-#if SKYRIM64_USE_VTUNE
-__itt_heap_function ITT_AllocateCallback;
-__itt_heap_function ITT_ReallocateCallback;
-__itt_heap_function ITT_FreeCallback;
-#endif
-
-uintptr_t g_ModuleBase;
-uintptr_t g_ModuleSize;
-
-uintptr_t g_CodeBase;	// .text or .textbss
-uintptr_t g_CodeEnd;
-uintptr_t g_RdataBase;	// .rdata
-uintptr_t g_RdataEnd;
-uintptr_t g_DataBase;	// .data
-uintptr_t g_DataEnd;
-
-HMODULE g_Dll3DAudio;
-HMODULE g_DllReshade;
-HMODULE g_DllEnb;
-HMODULE g_DllSKSE;
-HMODULE g_DllVTune;
-HMODULE g_DllDXGI;
-HMODULE g_DllD3D11;
-
-bool g_IsCreationKit;
-
 void once();
 void DoHook();
 void Patch_TESV();

@@ -1,5 +1,5 @@
+#include <tbb/concurrent_queue.h>
 #include <atomic>
-#include "../../../tbb2018/concurrent_queue.h"
 #include "common.h"
 #include "../TES/BSGraphicsRenderer.h"
 

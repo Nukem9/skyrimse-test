@@ -1,4 +1,4 @@
-#include "../../../tbb2018/concurrent_hash_map.h"
+#include <tbb/concurrent_hash_map.h>
 #include "../common.h"
 
 struct MMapFileInfo

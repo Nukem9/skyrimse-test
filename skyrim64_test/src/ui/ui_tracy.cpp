@@ -1,9 +1,9 @@
 #include "../common.h"
-#include "../../../imgui/imgui.h"
+#include <imgui/imgui.h>
 #if SKYRIM64_USE_TRACY
-#include "../../../tracy_lib/tracy/server/TracyBadVersion.hpp"
-#include "../../../tracy_lib/tracy/server/TracyFileRead.hpp"
-#include "../../../tracy_lib/tracy/server/TracyView.hpp"
+#include <tracy/server/TracyBadVersion.hpp>
+#include <tracy/server/TracyFileRead.hpp>
+#include <tracy/server/TracyView.hpp>
 #endif
 
 namespace ui
