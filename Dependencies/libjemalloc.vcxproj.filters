@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="jemalloc\arena.c" />
+    <ClCompile Include="jemalloc\background_thread.c" />
+    <ClCompile Include="jemalloc\base.c" />
+    <ClCompile Include="jemalloc\bin.c" />
+    <ClCompile Include="jemalloc\bitmap.c" />
+    <ClCompile Include="jemalloc\ckh.c" />
+    <ClCompile Include="jemalloc\ctl.c" />
+    <ClCompile Include="jemalloc\div.c" />
+    <ClCompile Include="jemalloc\extent.c" />
+    <ClCompile Include="jemalloc\extent_dss.c" />
+    <ClCompile Include="jemalloc\extent_mmap.c" />
+    <ClCompile Include="jemalloc\hash.c" />
+    <ClCompile Include="jemalloc\hooks.c" />
+    <ClCompile Include="jemalloc\jemalloc.c" />
+    <ClCompile Include="jemalloc\large.c" />
+    <ClCompile Include="jemalloc\log.c" />
+    <ClCompile Include="jemalloc\malloc_io.c" />
+    <ClCompile Include="jemalloc\mutex.c" />
+    <ClCompile Include="jemalloc\mutex_pool.c" />
+    <ClCompile Include="jemalloc\nstime.c" />
+    <ClCompile Include="jemalloc\pages.c" />
+    <ClCompile Include="jemalloc\prng.c" />
+    <ClCompile Include="jemalloc\prof.c" />
+    <ClCompile Include="jemalloc\rtree.c" />
+    <ClCompile Include="jemalloc\stats.c" />
+    <ClCompile Include="jemalloc\sz.c" />
+    <ClCompile Include="jemalloc\tcache.c" />
+    <ClCompile Include="jemalloc\ticker.c" />
+    <ClCompile Include="jemalloc\tsd.c" />
+    <ClCompile Include="jemalloc\witness.c" />
+  </ItemGroup>
+</Project>

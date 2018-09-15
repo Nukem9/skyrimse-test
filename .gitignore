@@ -38,12 +38,7 @@
 # VS2017
 .vs/
 packages/
-*/x64/Release/
-*/x64/Debug/
-*/x64/EditAndContinue/
-x64/Release/
-x64/Debug/
-x64/EditAndContinue/
+x64/
 shader_analyzer/bin/
 shader_analyzer/obj/
 
@@ -53,8 +48,5 @@ shader_analyzer/obj/
 
 # Nsight
 *.nvuser
-
-# Intel Threading Building Blocks
-*/tbb2018/
 
 !detours.lib
