@@ -89,19 +89,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\src;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\msvc;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\zydis\msvc;$(SolutionDir)Dependencies\zydis\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\src;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\msvc;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\zydis\msvc;$(SolutionDir)Dependencies\zydis\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\src;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\msvc;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\zydis\msvc;$(SolutionDir)Dependencies\zydis\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\src;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\msvc;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\zydis\msvc;$(SolutionDir)Dependencies\zydis\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

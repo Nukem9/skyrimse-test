@@ -58,19 +58,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\msvc\zydis;E:\Projects\Skyrim\SkyrimSETest\Dependencies\tbb\include;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\include;E:\Projects\Skyrim\SkyrimSETest\Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Projects\Skyrim\SkyrimSETest\x64\Release;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)Dependencies\jemalloc\include;$(SolutionDir)Dependencies\jemalloc\include\msvc_compat;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
     <TargetName>d3dx9_42</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\msvc\zydis;E:\Projects\Skyrim\SkyrimSETest\Dependencies\tbb\include;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\include;E:\Projects\Skyrim\SkyrimSETest\Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Projects\Skyrim\SkyrimSETest\x64\Release;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)Dependencies\jemalloc\include;$(SolutionDir)Dependencies\jemalloc\include\msvc_compat;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
     <TargetName>d3dx9_42</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'">
-    <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\msvc\zydis;E:\Projects\Skyrim\SkyrimSETest\Dependencies\tbb\include;E:\Projects\Skyrim\SkyrimSETest\Dependencies\zydis\include;E:\Projects\Skyrim\SkyrimSETest\Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Projects\Skyrim\SkyrimSETest\x64\Release;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)Dependencies\jemalloc\include;$(SolutionDir)Dependencies\jemalloc\include\msvc_compat;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
     <TargetName>d3dx9_42</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -80,7 +80,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NOMINMAX;_REENTRANT;JEMALLOC_EXPORT=;_DEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "xxxTRACY_ENABLE" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "xxxTRACY_ENABLE" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -102,7 +102,7 @@
       <Mtune>Broadwell</Mtune>
       <CCppSupport>Cpp17Support</CCppSupport>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "xxxTRACY_ENABLE" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "xxxTRACY_ENABLE" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -125,7 +125,7 @@
       <Mtune>Broadwell</Mtune>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "xxxTRACY_ENABLE" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "xxxTRACY_ENABLE" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
