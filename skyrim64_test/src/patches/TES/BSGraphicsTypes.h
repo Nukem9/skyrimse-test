@@ -56,6 +56,26 @@ namespace BSGraphics
 		RASTER_STATE_CULL_MODE_DEFAULT = RASTER_STATE_CULL_MODE_BACK,				// Used for BSShader::RestoreX
 	};
 
+	struct RenderTargetProperties
+	{
+		uint32_t uiWidth;
+		uint32_t uiHeight;
+		uint32_t eFormat;
+		bool bCopyable;
+		bool bSupportUnorderedAccess;
+		bool bAllowMipGeneration;
+		int iMipLevel;
+		uint32_t uiTextureTarget;
+	};
+	static_assert_offset(RenderTargetProperties, uiWidth, 0x0);
+	static_assert_offset(RenderTargetProperties, uiHeight, 0x4);
+	static_assert_offset(RenderTargetProperties, eFormat, 0x8);
+	static_assert_offset(RenderTargetProperties, bCopyable, 0xC);
+	static_assert_offset(RenderTargetProperties, bSupportUnorderedAccess, 0xD);
+	static_assert_offset(RenderTargetProperties, bAllowMipGeneration, 0xE);
+	static_assert_offset(RenderTargetProperties, iMipLevel, 0x10);
+	static_assert_offset(RenderTargetProperties, uiTextureTarget, 0x14);
+
 	//
 	// General resources
 	//
