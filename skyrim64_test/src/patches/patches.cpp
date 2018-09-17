@@ -189,6 +189,13 @@ void Patch_TESV()
 	TestHook5();// BSLightingShader
 
 	//
+	// TESForm (Note: The function itself needs to be hooked, not the vtable)
+	//
+	Detours::X64::DetourFunctionClass(*(uint8_t **)(MSRTTI::Find("class TESForm")->VTableAddress + 0xB0), &TESForm::hk_GetFullTypeName);
+	Detours::X64::DetourFunctionClass(*(uint8_t **)(MSRTTI::Find("class TESForm")->VTableAddress + 0x190), &TESForm::hk_GetName);
+	Detours::X64::DetourFunctionClass(*(uint8_t **)(MSRTTI::Find("class TESForm")->VTableAddress + 0x198), &TESForm::hk_SetEditorId);
+
+	//
 	// Temporary hack to fix array overflow in BSParticleShader::SetupGeometry
 	//
 	uint32_t test = 0x2000;

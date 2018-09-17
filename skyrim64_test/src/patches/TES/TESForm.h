@@ -90,6 +90,7 @@ public:
 		return *(uint8_t *)((uintptr_t)this + 0x1A);
 	}
 
+	void hk_GetFullTypeName(char *Buffer, uint32_t BufferSize);
 	const char *hk_GetName();
 	bool hk_SetEditorId(const char *Name);
 
