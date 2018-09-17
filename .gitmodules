@@ -4,7 +4,7 @@
 	branch = viewport
 [submodule "Dependencies/tracy"]
 	path = Dependencies/tracy
-	url = https://bitbucket.org/wolfpld/tracy.git
+	url=https://github.com/Nukem9/tracy-skyrim64-custom.git
 	branch = master
 [submodule "Dependencies/meshoptimizer"]
 	path = Dependencies/meshoptimizer
