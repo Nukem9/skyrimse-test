@@ -195,6 +195,13 @@ void Patch_TESV()
 	Detours::X64::DetourFunctionClass(*(uint8_t **)(MSRTTI::Find("class TESForm")->VTableAddress + 0x190), &TESForm::hk_GetName);
 	Detours::X64::DetourFunctionClass(*(uint8_t **)(MSRTTI::Find("class TESForm")->VTableAddress + 0x198), &TESForm::hk_SetEditorId);
 
+	for (auto ref : MSRTTI::FindAll("class TESObjectREFR"))
+	{
+		// TESObjectREFR has multiple virtual tables
+		if (ref->VFunctionCount == 162)
+			Detours::X64::DetourFunctionClass(*(uint8_t **)(ref->VTableAddress + 0x190), &TESObjectREFR::hk_GetName);
+	}
+
 	//
 	// Temporary hack to fix array overflow in BSParticleShader::SetupGeometry
 	//

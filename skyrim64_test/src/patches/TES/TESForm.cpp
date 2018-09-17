@@ -6,6 +6,8 @@
 #include "BGSDistantTreeBlock.h"
 #include "MemoryManager.h"
 
+AutoPtr(bool, byte_141EE9B98, 0x1EE9B98);
+
 AutoPtr(BSReadWriteLock, GlobalFormLock, 0x1EEA0D0);
 AutoPtr(templated(BSTCRCScatterTable<uint32_t, TESForm *> *), GlobalFormList, 0x1EE9C38);
 
@@ -111,6 +113,33 @@ TESForm *TESForm::LookupFormById(uint32_t FormId)
 
 	UpdateFormCache(FormId, formPointer, false);
 	return formPointer;
+}
+
+const char *TESObjectREFR::hk_GetName()
+{
+	if (!byte_141EE9B98)
+	{
+		byte_141EE9B98 = true;
+		const char *name = GetName();
+		byte_141EE9B98 = false;
+
+		if (name && strlen(name) > 0)
+			return name;
+	}
+
+	TESForm *base = GetBaseObject();
+
+	// This checks some unknown form manager instance
+	if (!base /* || !qword_141EE43A8 || *(_BYTE *)(qword_141EE43A8 + 0xDA5) */)
+		return "";
+
+	const char *name = base->GetName();
+
+	if (name && strlen(name) > 0)
+		return name;
+
+	// Now it tries fetching any ExtraData, but I don't care right now
+	return "";
 }
 
 std::vector<TESForm *> TESForm::LookupFormsByType(uint32_t Type, bool SortById, bool SortByName)

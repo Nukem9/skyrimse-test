@@ -51,23 +51,27 @@ __int64 LogFunc3(__int64 a1, const char *Format, ...)
 
 void LogFunc2(const char *Format, ...)
 {
-	if (!ui::opt::LogQuestSceneActions)
-	{
-		if (STARTS_WITH(Format, " %s is now starting a") ||
-			STARTS_WITH(Format, " %s is trying to start a") ||
-			STARTS_WITH(Format, " %s  walkaway topic") ||
-			STARTS_WITH(Format, " %s advancing the script") ||
-			STARTS_WITH(Format, " %s asking for random") ||
-			STARTS_WITH(Format, " %s got a quest back") ||
-			STARTS_WITH(Format, " %s did not get a quest") ||
-			STARTS_WITH(Format, " %s failed to get") ||
-			STARTS_WITH(Format, " %s is not being allowed to advance"))
-			return;
-	}
+	bool isQuest =
+		STARTS_WITH(Format, " %s is now starting a") ||
+		STARTS_WITH(Format, " %s is trying to start a") ||
+		STARTS_WITH(Format, " %s  walkaway topic") ||
+		STARTS_WITH(Format, " %s advancing the script") ||
+		STARTS_WITH(Format, " %s asking for random") ||
+		STARTS_WITH(Format, " %s got a quest back") ||
+		STARTS_WITH(Format, " %s did not get a quest") ||
+		STARTS_WITH(Format, " %s failed to get") ||
+		STARTS_WITH(Format, " %s is not being allowed to advance");
+
+	if (!ui::opt::LogQuestSceneActions && isQuest)
+		return;
 
 	va_list va;
 	va_start(va, Format);
-	LogVa(Format, va);
+
+	char buffer[2048];
+	vsnprintf_s(buffer, _TRUNCATE, Format, va);
+
+	ui::log::Add(isQuest ? "[QST]%s\n" : "%s\n", buffer);
 	va_end(va);
 }
 

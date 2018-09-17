@@ -167,6 +167,8 @@ public:
 	{
 		return *(TESObjectCell **)((__int64)this + 0x60);
 	}
+
+	const char *hk_GetName();
 };
 
 class TESObjectCell : public TESForm/*, public TESFullName */
