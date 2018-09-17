@@ -1,6 +1,6 @@
 #include "../../../rendering/common.h"
 #include "../../../../common.h"
-#include "../../NiMain/NiSourceTexture.h"
+#include "../../BSGraphicsState.h"
 #include "../../NiMain/NiNode.h"
 #include "../../NiMain/NiCamera.h"
 #include "../BSShaderManager.h"
@@ -40,9 +40,6 @@ DEFINE_SHADER_DESCRIPTOR(
 using namespace DirectX;
 using namespace BSGraphics;
 
-AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
-AutoPtr(NiSourceTexture *, BSShader_DefNormalMap, 0x3052920);
-AutoPtr(NiSourceTexture *, BSShader_DitheringNoise, 0x3052928);
 AutoPtr(__int64, qword_1431F5810, 0x31F5810);
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(NiNode *, qword_1431F55F8, 0x31F55F8);// Points to "World" node in main SceneGraph
@@ -114,7 +111,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 		break;
 	}
 
-	renderer->SetTexture(2, BSShader_DitheringNoise->QRendererTexture());// NoiseGradSampler
+	renderer->SetTexture(2, BSGraphics::gState.pDefaultTextureDitherNoiseMap->QRendererTexture());// NoiseGradSampler
 	renderer->SetTextureMode(2, 3, 0);
 	return true;
 }
@@ -254,7 +251,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		NiSourceTexture *baseSamplerTex = property->pBaseTexture;
 
 		if (!baseSamplerTex)
-			baseSamplerTex = BSShader_DefHeightMap;
+			baseSamplerTex = BSGraphics::gState.pDefaultHeightMap;
 
 		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		renderer->SetTextureMode(0, 3, 1);
@@ -270,7 +267,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		NiSourceTexture *baseSamplerTex = property->pBaseTexture;
 
 		if (!baseSamplerTex)
-			baseSamplerTex = BSShader_DefNormalMap;
+			baseSamplerTex = BSGraphics::gState.pDefaultTextureNormalMap;
 
 		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		renderer->SetTextureMode(0, 3, 1);
@@ -301,7 +298,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			baseSamplerTex = property->pBlendTexture;
 
 		if (!baseSamplerTex)
-			baseSamplerTex = BSShader_DefNormalMap;
+			baseSamplerTex = BSGraphics::gState.pDefaultTextureNormalMap;
 
 		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
 		renderer->SetTextureMode(0, 3, 1);

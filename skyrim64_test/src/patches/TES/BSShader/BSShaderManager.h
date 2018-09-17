@@ -90,7 +90,6 @@ private:
 	const char *DefaultNormalMapID = "\bNOR";
 
 public:
-	inline AutoPtr(bool, bUseEarlyZ, 0x30528E5);
 	inline AutoPtr(bool, bLODLandscapeNoise, 0x1E32E89);
 	// inline static NiCamera *spCamera;
 

@@ -1,6 +1,7 @@
 #include "../../rendering/common.h"
 #include "../../../common.h"
 #include "../BSGraphicsRenderer.h"
+#include "../BSGraphicsState.h"
 #include "../BSGraphicsRenderTargetManager.h"
 #include "BSShaderRenderTargets.h"
 #include "../BSBatchRenderer.h"
@@ -195,7 +196,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	renderer->BeginEvent(L"BSShaderAccumulator: Draw1");
 	ZoneScopedN("RenderSceneNormal");
 
-	if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
+	if (*(BYTE *)(a1 + 92) && !BSGraphics::gState.bUseEarlyZ)
 		renderer->DepthStencilStateSetDepthMode(BSGraphics::DEPTH_STENCIL_DEPTH_MODE_TESTEQUAL);
 
 	// v7 = RenderDepthOnly()? RenderAlphaOnly()? BSShaderManager::BSS_SHADOWS?
@@ -263,7 +264,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		{
 			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 
-			if (*(BYTE *)(a1 + 92) && !*(BYTE*)(g_ModuleBase + 0x30528E5))
+			if (*(BYTE *)(a1 + 92) && !BSGraphics::gState.bUseEarlyZ)
 				renderer->DepthStencilStateSetDepthMode(BSGraphics::DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
 		}
 		renderer->EndEvent();

@@ -1,4 +1,5 @@
 #include "../../../../common.h"
+#include "../../BSGraphicsState.h"
 #include "../../NiMain/NiSourceTexture.h"
 #include "../../NiMain/NiDirectionalLight.h"
 #include "../BSLight.h"
@@ -214,7 +215,7 @@ uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)
 	default:AssertMsg(false, "BSDistantTreeShader: bad technique ID"); break;
 	}
 
-	if (BSShaderManager::bUseEarlyZ)
+	if (BSGraphics::gState.bUseEarlyZ)
 		outputTech |= RAW_FLAG_DO_ALPHA;
 	
 	return outputTech;

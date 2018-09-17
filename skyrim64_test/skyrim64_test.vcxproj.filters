@@ -293,6 +293,12 @@
     <ClInclude Include="src\patches\TES\Console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphicsState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiPointer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\d3dx9_debug.cpp">
@@ -497,6 +503,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphicsState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

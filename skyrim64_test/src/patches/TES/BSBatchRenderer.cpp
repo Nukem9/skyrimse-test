@@ -1,5 +1,6 @@
 #include "../rendering/common.h"
 #include "../../common.h"
+#include "BSGraphicsState.h"
 #include "BSGraphicsRenderer.h"
 #include "MemoryContextTracker.h"
 #include "BSSpinLock.h"
@@ -507,7 +508,7 @@ void BSBatchRenderer::DrawPass(BSRenderPass *Pass, bool AlphaTest, uint32_t Rend
 	AssertMsgDebug(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
 	AssertMsgDebug(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
 
-	SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest || BSShaderManager::bUseEarlyZ, RenderFlags);
+	SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest || BSGraphics::gState.bUseEarlyZ, RenderFlags);
 	DrawGeometry(Pass);
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
@@ -577,8 +578,6 @@ void BSBatchRenderer::DrawPassCustom(BSRenderPass *Pass, bool AlphaTest, uint32_
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
-AutoPtr(uint32_t, dword_1430528DC, 0x30528DC);
-
 void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
@@ -614,7 +613,7 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 
 			if (map)
 			{
-				BSGraphics::Utility::PackDynamicParticleData(particleCount, (class BSGraphics::Utility::NiParticles *)geometry, map);
+				//BSGraphics::Utility::PackDynamicParticleData(particleCount, (class BSGraphics::Utility::NiParticles *)geometry, map);
 				renderer->UnmapDynamicTriShapeDynamicData(triShape, &drawData);
 			}
 
@@ -650,9 +649,9 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 		auto rendererData = reinterpret_cast<BSGraphics::DynamicTriShape *>(dynTriShape->QRendererData());
 
 		// Only upload data once per frame
-		if (dynTriShape->uiFrameCount != dword_1430528DC)
+		if (dynTriShape->uiFrameCount != BSGraphics::gState.uiFrameCount)
 		{
-			dynTriShape->uiFrameCount = dword_1430528DC;
+			dynTriShape->uiFrameCount = BSGraphics::gState.uiFrameCount;
 
 			void *gpuData = renderer->MapDynamicTriShapeDynamicData(dynTriShape, rendererData, &dynTriShape->DrawData, 0);
 

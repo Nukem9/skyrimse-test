@@ -1,6 +1,7 @@
 #include "../../../rendering/common.h"
 #include "../../../../common.h"
 #include "../../NiMain/NiSourceTexture.h"
+#include "../../BSGraphicsState.h"
 #include "../../Setting.h"
 #include "../../NiMain/NiDirectionalLight.h"
 #include "../BSShaderManager.h"
@@ -86,14 +87,8 @@ DEFINE_SHADER_DESCRIPTOR(
 using namespace DirectX;
 using namespace BSGraphics;
 
-AutoPtr(NiSourceTexture *, BSShader_DefNormalMap, 0x3052920);
-AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
 AutoPtr(NiSourceTexture *, WorldMapOverlayNormalTexture, 0x1E32F90);
 AutoPtr(NiSourceTexture *, WorldMapOverlayNormalSnowTexture, 0x1E32F98);
-AutoPtr(NiSourceTexture *, ProjectedNormalTexture, 0x30528A0);
-AutoPtr(NiSourceTexture *, ProjectedNoiseTexture, 0x3052890);
-AutoPtr(NiSourceTexture *, ProjectedDiffuseTexture, 0x3052898);
-AutoPtr(NiSourceTexture *, ProjectedNormalDetailTexture, 0x30528A8);
 AutoPtr(int, dword_143051B3C, 0x3051B3C);
 AutoPtr(int, dword_143051B40, 0x3051B40);
 AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
@@ -230,7 +225,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		// Override all 16 samplers
 		for (int i = 0; i < 16; i++)
 		{
-			renderer->SetTexture(i, BSShader_DefHeightMap->QRendererTexture());
+			renderer->SetTexture(i, BSGraphics::gState.pDefaultTextureBlack->QRendererTexture());
 			renderer->SetTextureMode(i, 3, 3);
 		}
 
@@ -252,7 +247,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		break;
 
 	case RAW_TECHNIQUE_MULTIINDEXTRISHAPESNOW:
-		renderer->SetTexture(10, ProjectedNormalTexture->QRendererTexture());
+		renderer->SetTexture(10, BSGraphics::gState.pDefaultTextureProjNormalMap->QRendererTexture());
 		renderer->SetTextureMode(10, 3, 0);
 		break;
 	}
@@ -877,18 +872,18 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		bool enableProjectedUvNormals = bEnableProjecteUVDiffuseNormals->uValue.b && (!(RenderFlags & 0x8) || !bEnableProjecteUVDiffuseNormalsOnCubemap->uValue.b);
 
-		renderer->SetTexture(11, ProjectedNoiseTexture->QRendererTexture());
+		renderer->SetTexture(11, BSGraphics::gState.pDefaultTextureProjNoiseMap->QRendererTexture());
 		renderer->SetTextureMode(11, 3, 1);
 
-		if (enableProjectedUvNormals && ProjectedDiffuseTexture)
+		if (enableProjectedUvNormals && BSGraphics::gState.pDefaultTextureProjDiffuseMap)
 		{
-			renderer->SetTexture(3, ProjectedDiffuseTexture->QRendererTexture());
+			renderer->SetTexture(3, BSGraphics::gState.pDefaultTextureProjDiffuseMap->QRendererTexture());
 			renderer->SetTextureMode(3, 3, 1);
 
-			renderer->SetTexture(8, ProjectedNormalTexture->QRendererTexture());
+			renderer->SetTexture(8, BSGraphics::gState.pDefaultTextureProjNormalMap->QRendererTexture());
 			renderer->SetTextureMode(8, 3, 1);
 
-			renderer->SetTexture(10, ProjectedNormalDetailTexture->QRendererTexture());
+			renderer->SetTexture(10, BSGraphics::gState.pDefaultTextureProjNormalDetailMap->QRendererTexture());
 			renderer->SetTextureMode(10, 3, 1);
 		}
 
@@ -1172,7 +1167,7 @@ void BSLightingShader::sub_14130C4D0(__int64 a1, __int64 a2)
 	if (a1)
 		v2 = (NiSourceTexture *)a1;
 	else
-		v2 = BSShader_DefNormalMap;
+		v2 = BSGraphics::gState.pDefaultTextureNormalMap;
 
 	renderer->SetTexture(5, v2->QRendererTexture());
 	renderer->SetTextureAddressMode(5, v3);

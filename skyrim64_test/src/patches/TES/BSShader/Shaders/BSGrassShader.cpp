@@ -1,6 +1,6 @@
 #include "../../../../common.h"
-#include "../../NiMain/NiSourceTexture.h"
 #include "../../NiMain/NiDirectionalLight.h"
+#include "../../BSGraphicsState.h"
 #include "../../BSTArray.h"
 #include "../../Setting.h"
 #include "../BSLight.h"
@@ -44,7 +44,6 @@ DEFINE_SHADER_DESCRIPTOR(
 //
 using namespace DirectX;
 
-AutoPtr(NiSourceTexture *, DefaultWhiteMap, 0x30528F0);
 AutoPtr(BYTE, byte_14304E4C5, 0x304E4C5);
 AutoPtr(BYTE, byte_141E32E9D, 0x1E32E9D);// bShadowsOnGrass_Display
 AutoPtr(BYTE, byte_141E32F65, 0x1E32F65);// BSShaderManager::bLiteBrite
@@ -99,7 +98,7 @@ bool BSGrassShader::SetupTechnique(uint32_t Technique)
 	}
 	else
 	{
-		renderer->SetTexture(1, DefaultWhiteMap->QRendererTexture());// ShadowMaskSampler
+		renderer->SetTexture(1, BSGraphics::gState.pDefaultTextureWhite->QRendererTexture());// ShadowMaskSampler
 		renderer->SetTextureMode(1, 0, 0);
 	}
 
@@ -355,7 +354,7 @@ uint32_t BSGrassShader::GetRawTechnique(uint32_t Technique)
 		break;
 	}
 
-	if (BSShaderManager::bUseEarlyZ)
+	if (BSGraphics::gState.bUseEarlyZ)
 		outputTech |= RAW_FLAG_DO_ALPHA;
 
 	return outputTech;

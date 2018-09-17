@@ -1,5 +1,5 @@
 #include "../../../../common.h"
-#include "../../NiMain/NiSourceTexture.h"
+#include "../../BSGraphicsState.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "BSBloodSplatterShaderProperty.h"
@@ -35,7 +35,6 @@ DEFINE_SHADER_DESCRIPTOR(
 using namespace DirectX;
 using namespace BSGraphics;
 
-AutoPtr(NiSourceTexture *, BSShader_DefHeightMap, 0x3052900);
 AutoPtr(__int64, qword_14304EF00, 0x304EF00);
 
 BSBloodSplatterShader::BSBloodSplatterShader() : BSShader(ShaderConfig.Type)
@@ -73,7 +72,7 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 		// Use the sun or nearest light source to draw a water-like reflection from blood
 		if (iAdaptedLightRenderTarget <= 0)
 		{
-			renderer->SetTexture(3, BSShader_DefHeightMap->QRendererTexture());// FlareHDR
+			renderer->SetTexture(3, BSGraphics::gState.pDefaultHeightMap->QRendererTexture());// FlareHDR
 		}
 		else
 		{
