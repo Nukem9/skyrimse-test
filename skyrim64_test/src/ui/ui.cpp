@@ -476,6 +476,7 @@ namespace ui
 
         if (ImGui::Begin("Memory", &showMemoryWindow))
         {
+#if !SKYRIM64_USE_TBBMALLOC
 			if (ImGui::Button("Dump jemalloc stats"))
 			{
 				// Explicitly omit arena information
@@ -484,7 +485,7 @@ namespace ui
 					ui::log::Add(text);
 				}, nullptr, "a");
 			}
-
+#endif
             if (ImGui::BeginGroupSplitter("Per Frame"))
             {
                 ImGui::Text("Allocs: %lld", ProfileGetDeltaValue("Alloc Count"));
