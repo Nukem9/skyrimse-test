@@ -22,12 +22,9 @@ extern __itt_heap_function ITT_FreeCallback;
 // Tracy
 #if SKYRIM64_USE_TRACY
 #define TRACY_ENABLE
-#include <tracy/Tracy.hpp>
-//#include "../../tracy_lib/tracy/TracyD3D11.hpp"
-#else
-#undef TRACY_ENABLE
-#include <tracy/Tracy.hpp>
 #endif
+#include <tracy/Tracy.hpp>
+#include <tracy/TracyD3D11.hpp>
 
 // TBBMalloc/Jemalloc
 #if SKYRIM64_USE_TBBMALLOC
@@ -45,8 +42,8 @@ extern __itt_heap_function ITT_FreeCallback;
 
 // ImGui
 #include <imgui/imgui.h>
-#include "ui/ui.h"
 
+#include "ui/ui.h"
 #include "xutil.h"
 #include "dump.h"
 #include "profiler.h"

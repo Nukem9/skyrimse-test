@@ -78,7 +78,10 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 		ZoneScopedNC("Present", tracy::Color::Red);
 		hr = (This->*ptrPresent)(SyncInterval, Flags);
 	}
+
+	TracyDx11Collect(g_DeviceContext);
 	FrameMark;
+
 	ui::BeginFrame();
 	g_GPUTimers.BeginFrame(g_DeviceContext);
 
@@ -525,6 +528,8 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	*(PBYTE *)&RenderSceneNormal = Detours::X64::DetourFunctionClass((PBYTE)g_ModuleBase + 0x12E1960, &BSShaderAccumulator::RenderSceneNormal);
 
 	g_GPUTimers.Create(g_Device, 1);
+	TracyDx11Context(g_Device, g_DeviceContext);
+
 	//DC_Init(g_Device, 0);
 
 	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1F70, (PBYTE)&hk_sub_1412E1C10);
