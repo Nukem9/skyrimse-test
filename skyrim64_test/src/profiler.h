@@ -1,9 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <array>
-#include <unordered_map>
-
 #if !SKYRIM64_USE_PROFILER
 #define ProfileCounterInc(Name)			((void)0)
 #define ProfileCounterAdd(Name, Add)	((void)0)
@@ -14,6 +10,10 @@
 #define ProfileGetTime(Name)			(0.0)
 #define ProfileGetDeltaTime(Name)		(0.0)
 #else
+#include <intrin.h>
+#include <array>
+#include <unordered_map>
+
 #define EXPAND_MACRO(x) x
 #define LINEID EXPAND_MACRO(__z)__COUNTER__
 
@@ -25,7 +25,6 @@
 #define ProfileGetDeltaValue(Name)		Profiler::GetDeltaValue<COMPILE_TIME_CRC32_STR(Name)>()
 #define ProfileGetTime(Name)			Profiler::GetTime<COMPILE_TIME_CRC32_STR(Name)>()
 #define ProfileGetDeltaTime(Name)		Profiler::GetDeltaTime<COMPILE_TIME_CRC32_STR(Name)>()
-#endif
 
 namespace Profiler
 {
@@ -138,3 +137,4 @@ namespace Profiler
 	float GetThreadUsagePercent();
 	float GetGpuUsagePercent(int GpuIndex = 0);
 }
+#endif // SKYRIM64_USE_PROFILER

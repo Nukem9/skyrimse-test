@@ -12,9 +12,28 @@ NiRTTI::NiRTTI(const char *Name, const NiRTTI *BaseType) : m_pcName(Name), m_pkB
 {
 	NiRTTIMap[Name] = this;
 
-	switch (Profiler::Internal::CRC32(Name))
+	//
+	// Avoid a huge array of if/else by using a compile-time switch.
+	// https://stackoverflow.com/a/43253227 (FNV32/64)
+	//
+	auto hashName = [](const char *Input) constexpr
 	{
-#define DefineNiRTTI(x) case Profiler::Internal::CRC32(#x): ms_##x = this; break;
+		size_t hash = sizeof(size_t) == 8 ? 0xcbf29ce484222325 : 0x811c9dc5;
+		const size_t prime = sizeof(size_t) == 8 ? 0x00000100000001b3 : 0x01000193;
+
+		while (*Input)
+		{
+			hash ^= static_cast<size_t>(*Input);
+			hash *= prime;
+			++Input;
+		}
+
+		return hash;
+	};
+
+	switch (hashName(Name))
+	{
+#define DefineNiRTTI(x) __pragma(warning(suppress:4307)) case hashName(#x): ms_##x = this; break;
 #include "NiRTTI.inl"
 #undef DefineNiRTTI
 	}

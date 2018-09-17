@@ -2,9 +2,11 @@
 
 #include "config.h"
 
-#include <windows.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <vector>
+#include <algorithm>
+#include <windows.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
 

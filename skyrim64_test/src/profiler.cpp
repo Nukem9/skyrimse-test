@@ -4,25 +4,9 @@
 #pragma message("Warning: Using the built-in profiler code with VTune may skew final results")
 #endif
 
+#if SKYRIM64_USE_PROFILER
 namespace Profiler
 {
-#define NVAPI_MAX_PHYSICAL_GPUS   64
-#define NVAPI_MAX_USAGES_PER_GPU  34
-
-	typedef int *(*NvAPI_QueryInterface_t)(unsigned int offset);
-	typedef int(*NvAPI_Initialize_t)();
-	typedef int(*NvAPI_EnumPhysicalGPUs_t)(int **handles, int *count);
-	typedef int(*NvAPI_GPU_GetUsages_t)(int *handle, unsigned int *usages);
-
-	NvAPI_QueryInterface_t      NvAPI_QueryInterface = NULL;
-	NvAPI_Initialize_t          NvAPI_Initialize = NULL;
-	NvAPI_EnumPhysicalGPUs_t    NvAPI_EnumPhysicalGPUs = NULL;
-	NvAPI_GPU_GetUsages_t       NvAPI_GPU_GetUsages = NULL;
-
-	int          gpuCount = 0;
-	int         *gpuHandles[NVAPI_MAX_PHYSICAL_GPUS] = { NULL };
-	unsigned int gpuUsages[NVAPI_MAX_USAGES_PER_GPU] = { 0 };
-
     namespace Internal
     {
         std::array<Entry, MaxEntries> GlobalCounters;
@@ -106,24 +90,6 @@ namespace Profiler
 		{
 			CalibrateQPC();
 			CalibrateRDTSC();
-
-			HMODULE hmod = LoadLibraryA("nvapi64.dll");
-			Assert(hmod);
-
-			// nvapi_QueryInterface is a function used to retrieve other internal functions in nvapi.dll
-			NvAPI_QueryInterface = (NvAPI_QueryInterface_t)GetProcAddress(hmod, "nvapi_QueryInterface");
-
-			// some useful internal functions that aren't exported by nvapi.dll
-			NvAPI_Initialize = (NvAPI_Initialize_t)(*NvAPI_QueryInterface)(0x0150E828);
-			NvAPI_EnumPhysicalGPUs = (NvAPI_EnumPhysicalGPUs_t)(*NvAPI_QueryInterface)(0xE5AC921F);
-			NvAPI_GPU_GetUsages = (NvAPI_GPU_GetUsages_t)(*NvAPI_QueryInterface)(0x189A1FDF);
-
-			Assert(NvAPI_Initialize && NvAPI_EnumPhysicalGPUs && NvAPI_GPU_GetUsages);
-
-			// initialize NvAPI library, call it once before calling any other NvAPI functions
-			(*NvAPI_Initialize)();
-
-			(*NvAPI_EnumPhysicalGPUs)(gpuHandles, &gpuCount);
 		});
 
         Entry *FindEntry(uint32_t CRC)
@@ -181,106 +147,5 @@ namespace Profiler
 	{
 		return ((double)GetDeltaValue(CRC) / (double)Internal::CpuFrequency) * 1000.0;
 	}
-
-	uint64_t GetSystemCpuTime()
-	{
-		FILETIME sysKernelTime;
-		FILETIME sysUserTime;
-		GetSystemTimes(nullptr, &sysKernelTime, &sysUserTime);
-
-		uint64_t sysTime =
-			(((uint64_t)sysKernelTime.dwHighDateTime << 32) | sysKernelTime.dwLowDateTime) +
-			(((uint64_t)sysUserTime.dwHighDateTime << 32) | sysUserTime.dwLowDateTime);
-
-		return sysTime;
-	}
-
-	float GetProcessorUsagePercent()
-	{
-		thread_local uint64_t previousProcessTime;
-		thread_local uint64_t previousSystemTime;
-		thread_local float previousPercentage;
-		
-		FILETIME unused;
-		FILETIME procKernelTime;
-		FILETIME procUserTime;
-		GetProcessTimes(GetCurrentProcess(), &unused, &unused, &procKernelTime, &procUserTime);
-
-		uint64_t procTime =
-			(((uint64_t)procKernelTime.dwHighDateTime << 32) | procKernelTime.dwLowDateTime) +
-			(((uint64_t)procUserTime.dwHighDateTime << 32) | procUserTime.dwLowDateTime);
-
-		uint64_t sysTime = GetSystemCpuTime();
-
-		uint64_t deltaProc = procTime - previousProcessTime;
-		uint64_t deltaSys = sysTime - previousSystemTime;
-
-		previousProcessTime = procTime;
-		previousSystemTime = sysTime;
-
-		// Temp (percentage) must be cached because the timers have a variable 1ms - 20ms resolution
-		float temp;
-
-		if (deltaProc == 0 || deltaSys == 0)
-			temp = 0.0;
-		else
-			temp = (float)deltaProc / (float)deltaSys;
-
-		if (temp <= 0.001f)
-			temp = previousPercentage;
-		else
-			previousPercentage = temp;
-
-		return temp * 100.0f;
-	}
-
-	float GetThreadUsagePercent()
-	{
-		thread_local uint64_t previousThreadTime;
-		thread_local uint64_t previousSystemTime;
-		thread_local float previousPercentage;
-
-		FILETIME unused;
-		FILETIME threadKernelTime;
-		FILETIME threadUserTime;
-		GetThreadTimes(GetCurrentThread(), &unused, &unused, &threadKernelTime, &threadUserTime);
-
-		uint64_t threadTime =
-			(((uint64_t)threadKernelTime.dwHighDateTime << 32) | threadKernelTime.dwLowDateTime) +
-			(((uint64_t)threadUserTime.dwHighDateTime << 32) | threadUserTime.dwLowDateTime);
-
-		uint64_t sysTime = GetSystemCpuTime();
-
-		uint64_t deltaThread = threadTime - previousThreadTime;
-		uint64_t deltaSys = sysTime - previousSystemTime;
-
-		previousThreadTime = threadTime;
-		previousSystemTime = sysTime;
-
-		// Temp (percentage) must be cached because the timers have a variable 1ms - 20ms resolution
-		float temp;
-
-		if (deltaThread == 0 || deltaSys == 0)
-			temp = 0.0;
-		else
-			temp = (float)deltaThread / (float)deltaSys;
-
-		if (temp <= 0.001f)
-			temp = previousPercentage;
-		else
-			previousPercentage = temp;
-
-		return temp * 100.0f;
-	}
-
-	float GetGpuUsagePercent(int GpuIndex)
-	{
-		// gpuUsages[0] must be this value, otherwise NvAPI_GPU_GetUsages won't work
-		gpuUsages[0] = (NVAPI_MAX_USAGES_PER_GPU * 4) | 0x10000;
-
-		(*NvAPI_GPU_GetUsages)(gpuHandles[GpuIndex], gpuUsages);
-		int usage = gpuUsages[3];
-
-		return (float)usage;
-	}
 }
+#endif // SKYRIM64_USE_PROFILER

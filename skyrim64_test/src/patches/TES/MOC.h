@@ -1,5 +1,7 @@
 #pragma once
 
+#include <immintrin.h>
+#include <smmintrin.h>
 #include <DirectXMath.h>
 
 class MaskedOcclusionCulling;
