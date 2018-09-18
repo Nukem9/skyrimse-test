@@ -2,7 +2,6 @@
 #include "../../../common.h"
 #include "../../rendering/common.h"
 #include "BSShaderManager.h"
-#include "BSShaderAccumulator.h"
 #include "BSShader_Dumper.h"
 #include "BSShader.h"
 
@@ -287,7 +286,7 @@ const char *ShaderDecoder::GetVariableType(int Index)
 	}
 
 	if (remapData)
-		return remapData->Type;
+		return remapData->ParamTypeOverride;
 
 	return nullptr;
 }
