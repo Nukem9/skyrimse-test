@@ -517,52 +517,6 @@ namespace BSXShader
 
 namespace BSLightingShader
 {
-	namespace VSConstants
-	{
-		static const char *GetString(int Index)
-		{
-			switch (Index)
-			{
-			case 0:return "WorldViewProj";
-			case 1:return "PrevWorldViewProj";
-			case 2:return "PrecipitationOcclusionWorldViewProj";
-			case 3:return "fVars0";
-			case 4:return "fVars1";
-			case 5:return "fVars2";
-			case 6:return "fVars3";
-			case 7:return "fVars4";
-			case 8:return "Color1";
-			case 9:return "Color2";
-			case 10:return "Color3";
-			case 11:return "Velocity";
-			case 12:return "Acceleration";
-			case 13:return "ScaleAdjust";
-			case 14:return "Wind";
-			case 15:return "UNKNOWN_NAME";
-			}
-
-			return BSSM_PLACEHOLDER;
-		}
-
-		static int GetSize(int Index, unsigned int Flags = 0)
-		{
-			switch (Index)
-			{
-			case 0:
-			case 1:
-			case 6:
-				return 3;
-			case 2:
-			case 3:
-			case 4:
-			case 5:
-				return 1;
-			}
-
-			return 0;
-		}
-	}
-
 	namespace PSConstants
 	{
 		static const char *GetString(int Index)

@@ -292,7 +292,7 @@ const char *BSShader::GetVSConstantName(uint32_t Type, uint32_t Index)
 	//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
 	//	break;
 	case BSShaderManager::BSSM_SHADER_LIGHTING:
-		return BSShaderInfo::BSLightingShader::VSConstants::GetString(Index);
+		break;
 	case BSShaderManager::BSSM_SHADER_EFFECT:
 		return BSShaderInfo::BSXShader::VSConstants::GetString(Index);
 	case BSShaderManager::BSSM_SHADER_UTILITY:

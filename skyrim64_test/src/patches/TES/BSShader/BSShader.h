@@ -34,19 +34,19 @@ public:
 	enum ShaderType
 	{
 		INVALID_SHADER_TYPE,
-		PS,			// Pixel shader
-		VS,			// Vertex shader
-		CS,			// Compute shader
+		PS,					// Pixel shader
+		VS,					// Vertex shader
+		CS,					// Compute shader
 	};
 
 	enum DeclType
 	{
 		INVALID_DECL_TYPE,
-		PER_TEC,	// Constants
-		PER_MAT,	// Constants
-		PER_GEO,	// Constants
-		SAMPLER,	// Samplers
-		TEXTURE,	// Textures
+		PER_TEC,			// Constants
+		PER_MAT,			// Constants
+		PER_GEO,			// Constants
+		SAMPLER,			// Samplers
+		TEXTURE,			// Textures
 	};
 
 	struct Entry
@@ -145,7 +145,7 @@ private:
 
 public:
 	static bool g_ShaderToggles[16][3];
-	static const ShaderDescriptor *ShaderMetadata[11];
+	static const ShaderDescriptor *ShaderMetadata[];
 
 	BSShader(const char *LoaderType);
 	virtual ~BSShader();
