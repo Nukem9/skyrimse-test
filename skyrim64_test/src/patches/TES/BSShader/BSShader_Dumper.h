@@ -10,13 +10,13 @@ protected:
 	{
 		int Index;
 		const char *Name;
-		const struct BSShaderMappings::Entry *Remap;
 	};
 
 	void *m_HlslData;
 	size_t m_HlslDataLen;
 
-	char m_Type[256];
+	BSShaderManager::ShaderEnum m_Type;
+	char m_LoaderType[256];
 	BSSM_SHADER_TYPE m_CodeType;
 
 public:
@@ -27,7 +27,6 @@ public:
 	void DumpShader();
 
 protected:
-	void DumpShaderInfo();
 	void DumpCBuffer(FILE *File, BSGraphics::Buffer *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex);
 
 	virtual uint32_t GetTechnique() = 0;
@@ -38,9 +37,9 @@ protected:
 	const char *GetGroupName(int Index);
 	const char *GetGroupRegister(int Index);
 	const char *GetConstantName(int Index);
+	ShaderDescriptor::DeclType GetVariableCategory(int Index);
+	const char *GetVariableType(int Index);
 	void GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t Technique);
-	const char *GetSamplerName(int Index, uint32_t Technique);
-	std::vector<std::pair<const char *, const char *>> GetDefineArray(uint32_t Technique);
 };
 
 class VertexShaderDecoder : public ShaderDecoder

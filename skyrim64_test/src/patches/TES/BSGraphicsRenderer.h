@@ -102,6 +102,7 @@ namespace BSGraphics
 		void ValidateShaderReplacement(ID3D11ComputeShader *Original, ID3D11ComputeShader *Replacement);
 		void ValidateShaderReplacement(void *Original, void *Replacement, const GUID& Guid);
 		void RegisterShaderBytecode(void *Shader, const void *Bytecode, size_t BytecodeLength);
+		const std::pair<void *, size_t>& GetShaderBytecode(void *Shader);
 
 		VertexShader *CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant);
 		PixelShader *CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant);

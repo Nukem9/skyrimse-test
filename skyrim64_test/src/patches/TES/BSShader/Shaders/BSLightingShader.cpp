@@ -161,6 +161,7 @@ BSLightingShader::BSLightingShader() : BSShader(ShaderConfig.Type)
 	auto sub_141307BD0 = (uintptr_t(__fastcall *)(BSLightingShader *))(g_ModuleBase + 0x1307BD0);
 	sub_141307BD0(this);
 
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_LIGHTING] = &ShaderConfig;
 	m_Type = BSShaderManager::BSSM_SHADER_LIGHTING;
 	pInstance = this;
 

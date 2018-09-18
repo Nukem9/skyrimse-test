@@ -212,125 +212,7 @@ HRESULT WINAPI hk_CreateDXGIFactory(REFIID riid, void **ppFactory)
     return ptrCreateDXGIFactory(__uuidof(IDXGIFactory), ppFactory);
 }
 
-#include <direct.h>
 const char *NextShaderType;
-
-uint8_t *BuildShaderBundle;
-
-std::vector<void *> Doneshaders;
-
-struct ShaderBufferData
-{
-	void *Buffer;
-	size_t BufferLength;
-};
-
-std::unordered_map<void *, ShaderBufferData> m_ShaderBuffers;
-
-void DumpVertexShader(BSGraphics::VertexShader *Shader, const char *Type);
-void DumpPixelShader(BSGraphics::PixelShader *Shader, const char *Type, void *Buffer, size_t BufferLen);
-void hk_BuildShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
-{
-	NextShaderType = (const char *)*(uintptr_t *)(shaderGroupObject + 136);
-	((decltype(&hk_BuildShaderBundle))BuildShaderBundle)(shaderGroupObject, fileStream);
-	
-	if (shaderGroupObject == (__int64)BSBloodSplatterShader::pInstance)
-		BSBloodSplatterShader::pInstance->CreateAllShaders();
-
-	if (shaderGroupObject == (__int64)BSDistantTreeShader::pInstance)
-		BSDistantTreeShader::pInstance->CreateAllShaders();
-
-	if (shaderGroupObject == (__int64)BSGrassShader::pInstance)
-		BSGrassShader::pInstance->CreateAllShaders();
-
-	if (shaderGroupObject == (__int64)BSSkyShader::pInstance)
-		BSSkyShader::pInstance->CreateAllShaders();
-
-	return;
-	uint32_t vsEntryCount = *(uint32_t *)(shaderGroupObject + 0x34);
-	uint32_t psEntryCount = *(uint32_t *)(shaderGroupObject + 0x64);
-
-	struct slink
-	{
-		__int64 shader;
-		slink *next;
-	};
-
-	slink *vsEntries = *(slink **)(shaderGroupObject + 0x50);
-	__int64 vsLastEntry = *(__int64 *)(shaderGroupObject + 0x40);
-
-	slink *psEntries = *(slink **)(shaderGroupObject + 0x80);
-	__int64 psLastEntry = *(__int64 *)(shaderGroupObject + 0x70);
-
-	if (vsEntries)
-	{
-		for (uint32_t i = 0; i < vsEntryCount; i++)
-		{
-			slink *first = &vsEntries[i];
-
-			if (!first)
-				continue;
-
-			while (true)
-			{
-				if (first->shader)
-				{
-					if (std::find(Doneshaders.begin(), Doneshaders.end(), (void *)first->shader) == Doneshaders.end())
-					{
-						DumpVertexShader((BSGraphics::VertexShader *)first->shader, NextShaderType);
-						Doneshaders.push_back((void *)first->shader);
-					}
-				}
-
-				if (!first->next || first->next == (slink *)vsLastEntry)
-					break;
-
-				first = first->next;
-			}
-		}
-	}
-
-	if (psEntries)
-	{
-		for (uint32_t i = 0; i < psEntryCount; i++)
-		{
-			slink *first = &psEntries[i];
-
-			if (!first)
-				continue;
-
-			while (true)
-			{
-				if (first->shader)
-				{
-					if (std::find(Doneshaders.begin(), Doneshaders.end(), (void *)first->shader) == Doneshaders.end())
-					{
-						auto p = (BSGraphics::PixelShader *)first->shader;
-						auto& data = m_ShaderBuffers[p->m_Shader];
-
-						DumpPixelShader(p, NextShaderType, data.Buffer, data.BufferLength);
-						Doneshaders.push_back((void *)p);
-					}
-				}
-
-				if (!first->next || first->next == (slink *)psLastEntry)
-					break;
-
-				first = first->next;
-			}
-		}
-	}
-
-	for (auto& pair : m_ShaderBuffers)
-	{
-		if (pair.second.Buffer)
-			free(pair.second.Buffer);
-
-		pair.second.Buffer = nullptr;
-	}
-
-	NextShaderType = nullptr;
-}
 
 uint8_t *BuildComputeShaderBundle;
 void hk_BuildComputeShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
@@ -338,29 +220,6 @@ void hk_BuildComputeShaderBundle(__int64 shaderGroupObject, __int64 fileStream)
 	NextShaderType = (const char *)*(uintptr_t *)(shaderGroupObject + 24);
 	((decltype(&hk_BuildComputeShaderBundle))BuildComputeShaderBundle)(shaderGroupObject, fileStream);
 	NextShaderType = nullptr;
-}
-
-void DumpShader(const char *Prefix, int Index, const void *Bytecode, size_t BytecodeLength, ID3D11DeviceChild *Resource)
-{
-	if (!Bytecode || !NextShaderType || !Resource)
-		return;
-
-	char buffer[2048];
-	int len = sprintf_s(buffer, "%s %s %d", Prefix, NextShaderType, Index);
-	Resource->SetPrivateData(WKPDID_D3DDebugObjectName, len, buffer);
-
-	sprintf_s(buffer, "C:\\Shaders\\%s\\", NextShaderType);
-	_mkdir(buffer);
-
-	sprintf_s(buffer, "C:\\Shaders\\%s\\%s_%d.hlsl", NextShaderType, Prefix, Index);
-
-	FILE *w = fopen(buffer, "wb");
-	if (w)
-	{
-		fwrite(Bytecode, 1, BytecodeLength, w);
-		fflush(w);
-		fclose(w);
-	}
 }
 
 HRESULT WINAPI NsightHack_D3D11CreateDeviceAndSwapChain(
@@ -623,10 +482,6 @@ void PatchD3D11()
 	*(PBYTE *)&sub_14131FF10 = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x131FF10), (PBYTE)&hk_sub_14131FF10);
 
 	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1318C10), (PBYTE)&sub_141318C10);
-
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1336860), &BSShader::BeginTechnique);
-
-	*(PBYTE *)&BuildShaderBundle = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x13364A0), (PBYTE)&hk_BuildShaderBundle);
 
     PatchIAT(hk_CreateDXGIFactory, "dxgi.dll", "CreateDXGIFactory");
     PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");

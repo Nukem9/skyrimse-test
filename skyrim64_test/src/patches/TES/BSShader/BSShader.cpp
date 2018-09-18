@@ -1,9 +1,20 @@
 #include "../../../common.h"
 #include "../MemoryContextTracker.h"
 #include "../BSGraphicsRenderer.h"
+#include "BSShaderManager.h"
 #include "BSShader.h"
 
+#include "BSShader_Dumper.h"
+
+#include "Shaders/BSBloodSplatterShader.h"
+#include "Shaders/BSDistantTreeShader.h"
+#include "Shaders/BSGrassShader.h"
+#include "Shaders/BSLightingShader.h"
+#include "Shaders/BSParticleShader.h"
+#include "Shaders/BSSkyShader.h"
+
 bool BSShader::g_ShaderToggles[16][3];
+const ShaderDescriptor *BSShader::ShaderMetadata[BSShaderManager::BSSM_SHADER_COUNT];
 
 BSShader::BSShader(const char *LoaderType)
 {
@@ -93,8 +104,8 @@ void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, co
 			if (vertexShader->m_ConstantOffsets[i] == BSGraphics::INVALID_CONSTANT_BUFFER_OFFSET)
 				continue;
 
-			if (vertexShader->m_ConstantOffsets[i] != e->m_ConstantOffsets[i])
-				Assert(false);
+			//if (vertexShader->m_ConstantOffsets[i] != e->m_ConstantOffsets[i])
+			//	Assert(false);
 		}
 	}
 
@@ -132,6 +143,44 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 	e.temphack(pixelShader);
 }
 
+void BSShader::hk_Load(BSIStream *Stream)
+{
+	// Load original shaders first
+	(this->*Load)(Stream);
+
+	// Dump everything for debugging
+	for (auto itr = m_VertexShaderTable.begin(); itr != m_VertexShaderTable.end(); itr++)
+	{
+		auto bytecode = BSGraphics::Renderer::GetGlobals()->GetShaderBytecode(itr->m_Shader);
+
+		VertexShaderDecoder d(m_LoaderType, *itr);
+		d.SetShaderData(bytecode.first, bytecode.second);
+		d.DumpShader();
+	}
+
+	for (auto itr = m_PixelShaderTable.begin(); itr != m_PixelShaderTable.end(); itr++)
+	{
+		auto bytecode = BSGraphics::Renderer::GetGlobals()->GetShaderBytecode(itr->m_Shader);
+
+		PixelShaderDecoder d(m_LoaderType, *itr);
+		d.SetShaderData(bytecode.first, bytecode.second);
+		d.DumpShader();
+	}
+
+	// ...and then replace with custom ones
+	if (this == BSBloodSplatterShader::pInstance)
+		BSBloodSplatterShader::pInstance->CreateAllShaders();
+
+	if (this == BSDistantTreeShader::pInstance)
+		BSDistantTreeShader::pInstance->CreateAllShaders();
+
+	if (this == BSGrassShader::pInstance)
+		BSGrassShader::pInstance->CreateAllShaders();
+
+	if (this == BSSkyShader::pInstance)
+		BSSkyShader::pInstance->CreateAllShaders();
+}
+
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
 {
 	BSGraphics::VertexShader *vertexShader = nullptr;
@@ -164,4 +213,174 @@ void BSShader::SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderP
 	int alphaRef = (int)((float)AlphaProperty->GetTestRef() * ShaderProperty->GetAlpha());
 
 	BSGraphics::Renderer::GetGlobals()->SetAlphaTestRef(alphaRef * (1.0f / 255.0f));
+}
+
+std::vector<std::pair<const char *, const char *>> BSShader::GetSourceDefines(uint32_t Type, uint32_t Technique)
+{
+	switch (Type)
+	{
+	case BSShaderManager::BSSM_SHADER_RUNGRASS:
+		return BSGrassShader::GetSourceDefines(Technique);
+	case BSShaderManager::BSSM_SHADER_SKY:
+		return BSSkyShader::GetSourceDefines(Technique);
+	case BSShaderManager::BSSM_SHADER_WATER:
+		return BSShaderInfo::BSWaterShader::Defines::GetArray(Technique);
+	case BSShaderManager::BSSM_SHADER_BLOODSPLATTER:
+		return BSBloodSplatterShader::GetSourceDefines(Technique);
+	//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
+	//	break;
+	case BSShaderManager::BSSM_SHADER_LIGHTING:
+		return BSShaderInfo::BSLightingShader::Defines::GetArray(Technique);
+	case BSShaderManager::BSSM_SHADER_EFFECT:
+		return BSShaderInfo::BSXShader::Defines::GetArray(Technique);
+	case BSShaderManager::BSSM_SHADER_UTILITY:
+		return BSShaderInfo::BSUtilityShader::Defines::GetArray(Technique);
+	case BSShaderManager::BSSM_SHADER_DISTANTTREE:
+		return BSDistantTreeShader::GetSourceDefines(Technique);
+	case BSShaderManager::BSSM_SHADER_PARTICLE:
+		return BSShaderInfo::BSParticleShader::Defines::GetArray(Technique);
+	}
+
+	// Return empty vector
+	return std::vector<std::pair<const char *, const char *>>();
+}
+
+const char *BSShader::GetVariableType(uint32_t Type, const char *Name)
+{
+	auto *descriptor = ShaderMetadata[Type];
+
+	if (descriptor)
+	{
+		for (const ShaderDescriptor::Entry& e : descriptor->AllEntries())
+		{
+			if (!strcmp(e.Name, Name))
+				return e.DataType;
+		}
+	}
+
+	return nullptr;
+}
+
+ShaderDescriptor::DeclType BSShader::GetVariableCategory(uint32_t Type, const char *Name)
+{
+	auto *descriptor = ShaderMetadata[Type];
+
+	if (descriptor)
+	{
+		for (const ShaderDescriptor::Entry& e : descriptor->AllEntries())
+		{
+			if (!strcmp(e.Name, Name))
+				return e.m_DeclType;
+		}
+	}
+
+	return ShaderDescriptor::INVALID_DECL_TYPE;
+}
+
+const char *BSShader::GetVSConstantName(uint32_t Type, uint32_t Index)
+{
+	switch (Type)
+	{
+	case BSShaderManager::BSSM_SHADER_RUNGRASS:
+		break;
+	case BSShaderManager::BSSM_SHADER_SKY:
+		break;
+	case BSShaderManager::BSSM_SHADER_WATER:
+		return BSShaderInfo::BSWaterShader::VSConstants::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_BLOODSPLATTER:
+		break;
+	//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
+	//	break;
+	case BSShaderManager::BSSM_SHADER_LIGHTING:
+		return BSShaderInfo::BSLightingShader::VSConstants::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_EFFECT:
+		return BSShaderInfo::BSXShader::VSConstants::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_UTILITY:
+		return BSShaderInfo::BSUtilityShader::VSConstants::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_DISTANTTREE:
+		break;
+	case BSShaderManager::BSSM_SHADER_PARTICLE:
+		return BSShaderInfo::BSParticleShader::VSConstants::GetString(Index);
+
+	default:
+		Assert(false);
+		return nullptr;
+	}
+
+	if (ShaderMetadata[Type]->ByConstantIndexVS.count(Index))
+		return ShaderMetadata[Type]->ByConstantIndexVS.at(Index)->Name;
+
+	return nullptr;
+}
+
+const char *BSShader::GetPSConstantName(uint32_t Type, uint32_t Index)
+{
+	switch (Type)
+	{
+	case BSShaderManager::BSSM_SHADER_RUNGRASS:
+		break;
+	case BSShaderManager::BSSM_SHADER_SKY:
+		break;
+	case BSShaderManager::BSSM_SHADER_WATER:
+		return BSShaderInfo::BSWaterShader::PSConstants::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_BLOODSPLATTER:
+		break;
+		//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
+		//	break;
+	case BSShaderManager::BSSM_SHADER_LIGHTING:
+		return BSShaderInfo::BSLightingShader::PSConstants::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_EFFECT:
+		return BSShaderInfo::BSXShader::PSConstants::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_UTILITY:
+		return BSShaderInfo::BSUtilityShader::PSConstants::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_DISTANTTREE:
+		break;
+	case BSShaderManager::BSSM_SHADER_PARTICLE:
+		return BSShaderInfo::BSParticleShader::PSConstants::GetString(Index);
+
+	default:
+		Assert(false);
+		return nullptr;
+	}
+
+	if (ShaderMetadata[Type]->ByConstantIndexPS.count(Index))
+		return ShaderMetadata[Type]->ByConstantIndexPS.at(Index)->Name;
+
+	return nullptr;
+}
+
+const char *BSShader::GetPSSamplerName(uint32_t Type, uint32_t Index)
+{
+	switch (Type)
+	{
+	case BSShaderManager::BSSM_SHADER_RUNGRASS:
+		break;
+	case BSShaderManager::BSSM_SHADER_SKY:
+		break;
+	case BSShaderManager::BSSM_SHADER_WATER:
+		return BSShaderInfo::BSWaterShader::Samplers::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_BLOODSPLATTER:
+		break;
+		//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
+		//	break;
+	case BSShaderManager::BSSM_SHADER_LIGHTING:
+		return BSShaderInfo::BSLightingShader::Samplers::GetString(Index, 0);
+	case BSShaderManager::BSSM_SHADER_EFFECT:
+		return BSShaderInfo::BSXShader::Samplers::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_UTILITY:
+		return BSShaderInfo::BSUtilityShader::Samplers::GetString(Index);
+	case BSShaderManager::BSSM_SHADER_DISTANTTREE:
+		break;
+	case BSShaderManager::BSSM_SHADER_PARTICLE:
+		return BSShaderInfo::BSParticleShader::Samplers::GetString(Index);
+
+	default:
+		Assert(false);
+		return nullptr;
+	}
+
+	if (ShaderMetadata[Type]->BySamplerIndex.count(Index))
+		return ShaderMetadata[Type]->BySamplerIndex.at(Index)->Name;
+
+	return nullptr;
 }

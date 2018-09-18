@@ -171,6 +171,11 @@ public:
 		m_Table			= nullptr;
 	}
 
+	~BSTScatterTableBase()
+	{
+		AssertMsg(false, "Destructor not implemented");
+	}
+
 	class const_iterator
 	{
 		friend class BSTScatterTableBase;

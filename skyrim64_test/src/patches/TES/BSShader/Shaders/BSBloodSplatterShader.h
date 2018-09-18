@@ -44,7 +44,9 @@ public:
 	static uint32_t GetVertexTechnique(uint32_t RawTechnique);
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 
+	static std::vector<std::pair<const char *, const char *>> GetSourceDefines(uint32_t Technique);
+
 	// float QGlobalAlpha(); fGlobalAlpha
 };
-static_assert(sizeof(BSBloodSplatterShader) == 0x98, "");
+static_assert(sizeof(BSBloodSplatterShader) == 0x98);
 //static_assert_offset(BSBloodSplatterShader, m_CurrentRawTechnique, 0x90);

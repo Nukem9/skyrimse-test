@@ -48,6 +48,7 @@ AutoPtr(__int64, qword_141E32F20, 0x1E32F20);
 
 BSDistantTreeShader::BSDistantTreeShader() : BSShader(ShaderConfig.Type)
 {
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_DISTANTTREE] = &ShaderConfig;
 	m_Type = BSShaderManager::BSSM_SHADER_DISTANTTREE;
 	pInstance = this;
 }
@@ -229,4 +230,10 @@ uint32_t BSDistantTreeShader::GetVertexTechnique(uint32_t RawTechnique)
 uint32_t BSDistantTreeShader::GetPixelTechnique(uint32_t RawTechnique)
 {
 	return RawTechnique;
+}
+
+std::vector<std::pair<const char *, const char *>> BSDistantTreeShader::GetSourceDefines(uint32_t Technique)
+{
+	// FIXME
+	return BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
 }

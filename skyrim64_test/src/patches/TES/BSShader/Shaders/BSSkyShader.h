@@ -44,5 +44,7 @@ public:
 	static uint32_t GetRawTechnique(uint32_t Technique);
 	static uint32_t GetVertexTechnique(uint32_t RawTechnique);
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
+
+	static std::vector<std::pair<const char *, const char *>> GetSourceDefines(uint32_t Technique);
 };
 static_assert(sizeof(BSSkyShader) == 0x90);

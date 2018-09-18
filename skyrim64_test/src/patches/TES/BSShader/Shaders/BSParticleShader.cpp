@@ -56,6 +56,7 @@ AutoPtr(uint32_t, dword_141E33048, 0x1E33048);
 
 BSParticleShader::BSParticleShader() : BSShader(ShaderConfig.Type)
 {
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_PARTICLE] = &ShaderConfig;
 	m_Type = BSShaderManager::BSSM_SHADER_PARTICLE;
 	pInstance = this;
 }

@@ -64,6 +64,7 @@ thread_local XMVECTOR TLS_FogNearColor;
 
 BSGrassShader::BSGrassShader() : BSShader(ShaderConfig.Type)
 {
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_RUNGRASS] = &ShaderConfig;
 	m_Type = BSShaderManager::BSSM_SHADER_RUNGRASS;
 	pInstance = this;
 }
@@ -368,4 +369,10 @@ uint32_t BSGrassShader::GetVertexTechnique(uint32_t RawTechnique)
 uint32_t BSGrassShader::GetPixelTechnique(uint32_t RawTechnique)
 {
 	return RawTechnique;
+}
+
+std::vector<std::pair<const char *, const char *>> BSGrassShader::GetSourceDefines(uint32_t Technique)
+{
+	// FIXME
+	return BSShaderInfo::BSGrassShader::Defines::GetArray(Technique);
 }

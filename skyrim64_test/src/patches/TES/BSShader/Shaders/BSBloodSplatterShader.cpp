@@ -39,6 +39,7 @@ AutoPtr(__int64, qword_14304EF00, 0x304EF00);
 
 BSBloodSplatterShader::BSBloodSplatterShader() : BSShader(ShaderConfig.Type)
 {
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_BLOODSPLATTER] = &ShaderConfig;
 	m_Type = BSShaderManager::BSSM_SHADER_BLOODSPLATTER;
 	pInstance = this;
 
@@ -206,4 +207,10 @@ uint32_t BSBloodSplatterShader::GetVertexTechnique(uint32_t RawTechnique)
 uint32_t BSBloodSplatterShader::GetPixelTechnique(uint32_t RawTechnique)
 {
 	return RawTechnique;
+}
+
+std::vector<std::pair<const char *, const char *>> BSBloodSplatterShader::GetSourceDefines(uint32_t Technique)
+{
+	// FIXME
+	return BSShaderInfo::BSBloodSplatterShader::Defines::GetArray(Technique);
 }

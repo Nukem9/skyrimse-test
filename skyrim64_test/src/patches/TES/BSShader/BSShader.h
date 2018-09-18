@@ -33,6 +33,7 @@ class ShaderDescriptor
 public:
 	enum ShaderType
 	{
+		INVALID_SHADER_TYPE,
 		PS,			// Pixel shader
 		VS,			// Vertex shader
 		CS,			// Compute shader
@@ -40,6 +41,7 @@ public:
 
 	enum DeclType
 	{
+		INVALID_DECL_TYPE,
 		PER_TEC,	// Constants
 		PER_MAT,	// Constants
 		PER_GEO,	// Constants
@@ -71,6 +73,9 @@ public:
 	{
 		for (Entry& e : m_Entries)
 		{
+			Assert(e.m_ShaderType != INVALID_SHADER_TYPE);
+			Assert(e.m_DeclType != INVALID_DECL_TYPE);
+
 			if (e.m_DeclType == PER_TEC || e.m_DeclType == PER_MAT || e.m_DeclType == PER_GEO)
 			{
 				switch (e.m_ShaderType)
@@ -88,6 +93,11 @@ public:
 		}
 
 		// m_Entries should never be modified after this point
+	}
+
+	const std::vector<Entry>& AllEntries() const
+	{
+		return m_Entries;
 	}
 };
 
@@ -135,6 +145,7 @@ private:
 
 public:
 	static bool g_ShaderToggles[16][3];
+	static const ShaderDescriptor *ShaderMetadata[11];
 
 	BSShader(const char *LoaderType);
 	virtual ~BSShader();
@@ -165,16 +176,27 @@ public:
 		std::function<const char *(int Index)> GetSampler,
 		std::function<const char *(int Index)> GetConstant);
 
+	void hk_Load(struct BSIStream *Stream);
+
 	bool BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader);
 	void EndTechnique();
 
 	void SetupGeometryAlphaBlending(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty, bool a4);
 	void SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty);
 
+	static std::vector<std::pair<const char *, const char *>> GetSourceDefines(uint32_t Type, uint32_t Technique);
+	static const char *GetVariableType(uint32_t Type, const char *Name);
+	static ShaderDescriptor::DeclType GetVariableCategory(uint32_t Type, const char *Name);
+	static const char *GetVSConstantName(uint32_t Type, uint32_t Index);
+	static const char *GetPSConstantName(uint32_t Type, uint32_t Index);
+	static const char *GetPSSamplerName(uint32_t Type, uint32_t Index);
+
 	uint32_t m_Type;
 	TechniqueIDMap<BSGraphics::VertexShader *> m_VertexShaderTable;
 	TechniqueIDMap<BSGraphics::PixelShader *> m_PixelShaderTable;
 	const char *m_LoaderType;
+
+	inline static decltype(&hk_Load) Load;
 };
 static_assert(sizeof(BSShader) == 0x90);
 static_assert_offset(BSShader, m_Type, 0x20);

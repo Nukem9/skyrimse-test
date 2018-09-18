@@ -47,6 +47,7 @@ AutoPtr(float, qword_143257D80, 0x3257D80);
 
 BSSkyShader::BSSkyShader() : BSShader(ShaderConfig.Type)
 {
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_SKY] = &ShaderConfig;
 	m_Type = BSShaderManager::BSSM_SHADER_SKY;
 	pInstance = this;
 
@@ -377,4 +378,10 @@ uint32_t BSSkyShader::GetVertexTechnique(uint32_t RawTechnique)
 uint32_t BSSkyShader::GetPixelTechnique(uint32_t RawTechnique)
 {
 	return RawTechnique;
+}
+
+std::vector<std::pair<const char *, const char *>> BSSkyShader::GetSourceDefines(uint32_t Technique)
+{
+	// FIXME
+	return BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
 }

@@ -1174,6 +1174,11 @@ namespace BSGraphics
 		m_ShaderBytecodeMap.emplace(Shader, std::make_pair(codeCopy, BytecodeLength));
 	}
 
+	const std::pair<void *, size_t>& Renderer::GetShaderBytecode(void *Shader)
+	{
+		return m_ShaderBytecodeMap.at(Shader);
+	}
+
 	VertexShader *Renderer::CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
 	{
 		// Build defines (aka convert vector->D3DCONSTANT array)
