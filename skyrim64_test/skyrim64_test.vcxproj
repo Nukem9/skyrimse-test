@@ -158,6 +158,7 @@
     <ClInclude Include="src\patches\TES\MOC_ThreadedMerger.h" />
     <ClInclude Include="src\patches\TES\MTRenderer.h" />
     <ClInclude Include="src\patches\TES\BSCullingProcess.h" />
+    <ClInclude Include="src\patches\TES\NavMesh.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSDynamicTriShape.h" />
     <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h" />
     <ClInclude Include="src\patches\rendering\codegen.h" />

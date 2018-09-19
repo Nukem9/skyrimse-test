@@ -16,6 +16,7 @@
 #include "TES/BSShader/Shaders/BSGrassShader.h"
 #include "TES/BSShader/Shaders/BSParticleShader.h"
 #include "TES/MemoryManager.h"
+#include "TES/NavMesh.h"
 
 void PatchAchievements();
 void PatchD3D11();
@@ -294,4 +295,6 @@ void Patch_TESVCreationKit()
 	// Allow ESP files to act as master files while saving
 	//
 	PatchMemory(g_ModuleBase + 0x1657279, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
+
+	*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
 }
