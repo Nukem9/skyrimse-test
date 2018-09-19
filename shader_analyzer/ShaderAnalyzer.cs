@@ -37,6 +37,61 @@ namespace shader_analyzer
             StripFlags.CompilerStripRootSignature |
             StripFlags.CompilerStripTestBlobs;
 
+        public static void DecompileShaders(Action OnFinish)
+        {
+            new Thread(() =>
+            {
+                List<string> types = new List<string>()
+                {
+                    "BloodSplatter",
+                    "DistantTree",
+                    "Effect",
+                    "Lighting",
+                    "Particle",
+                    "RunGrass",
+                    "Sky",
+                    "Utility",
+                    "Water",
+                };
+
+                foreach (string type in types)
+                    DecompileAllShadersOfType(type);
+
+                OnFinish();
+            }).Start();
+        }
+
+        public static void DecompileAllShadersOfType(string Type)
+        {
+            string inputDir = Path.Combine(Program.ShaderDumpDirectory, Type);
+
+            if (!Directory.Exists(inputDir))
+            {
+                Program.LogLine($"Unable to find input directory \"{inputDir}\", aborting...");
+                return;
+            }
+
+            string[] vsFiles = Directory.GetFiles(inputDir, "*.vs.bin");
+            string[] psFiles = Directory.GetFiles(inputDir, "*.ps.bin");
+            string[] csFiles = Directory.GetFiles(inputDir, "*.cs.bin");
+
+            List<string> allFiles = new List<string>();
+            allFiles.AddRange(vsFiles);
+            allFiles.AddRange(psFiles);
+            allFiles.AddRange(csFiles);
+
+            Program.LogLine(
+                $"DecompileAllShadersOfType({Type}): " +
+                $"{vsFiles.Length} vertex shaders, {psFiles.Length} pixel shaders, {csFiles.Length} compute shaders.");
+
+            System.Threading.Tasks.Parallel.For(0, allFiles.Count, i =>
+            {
+                ShaderDecompiler.DecompileShader(allFiles[i], allFiles[i].Replace(".bin", ".hlsl"), allFiles[i].Replace(".bin", ".txt"));
+            });
+
+            Program.LogLine($"DecompileAllShadersOfType({Type}): Done.");
+        }
+
         public static void DoStuff(Action OnFinish)
         {
             new Thread(() =>
@@ -82,9 +137,9 @@ namespace shader_analyzer
                 return;
             }
 
-            string[] vsFiles = Directory.GetFiles(inputDir, "*.vs.hlsl");
-            string[] psFiles = Directory.GetFiles(inputDir, "*.ps.hlsl");
-            string[] csFiles = Directory.GetFiles(inputDir, "*.cs.hlsl");
+            string[] vsFiles = Directory.GetFiles(inputDir, "*.vs.bin");
+            string[] psFiles = Directory.GetFiles(inputDir, "*.ps.bin");
+            string[] csFiles = Directory.GetFiles(inputDir, "*.cs.bin");
 
             Program.LogLine(
                 $"ValidateAllShadersOfType({Type}): " +
@@ -93,36 +148,45 @@ namespace shader_analyzer
             int succeses = 0;
             int fails = 0;
 
-            System.Threading.Tasks.Parallel.For(0, vsFiles.Length, i =>
+            //System.Threading.Tasks.Parallel.For(0, vsFiles.Length, i =>
+            //{
+            for (int i = 0; i < vsFiles.Length; i++)
             {
                 if (ValidateShaderOfType(Type, "vs_5_0", vsFiles[i], hlslSourcePath))
                     Interlocked.Increment(ref succeses);
                 else
                     Interlocked.Increment(ref fails);
-            });
+            }
+            //});
 
-            System.Threading.Tasks.Parallel.For(0, psFiles.Length, i =>
+            //System.Threading.Tasks.Parallel.For(0, psFiles.Length, i =>
+            //{
+            for (int i = 0; i < psFiles.Length; i++)
             {
                 if (ValidateShaderOfType(Type, "ps_5_0", psFiles[i], hlslSourcePath))
                     Interlocked.Increment(ref succeses);
                 else
                     Interlocked.Increment(ref fails);
-            });
+            }
+            //});
 
-            System.Threading.Tasks.Parallel.For(0, csFiles.Length, i =>
+            //System.Threading.Tasks.Parallel.For(0, csFiles.Length, i =>
+            //{
+            for (int i = 0; i < csFiles.Length; i++)
             {
                 if (ValidateShaderOfType(Type, "cs_5_0", csFiles[i], hlslSourcePath))
                     Interlocked.Increment(ref succeses);
                 else
                     Interlocked.Increment(ref fails);
-            });
+            }
+            //});
 
             Program.LogLine($"ValidateAllShadersOfType({Type}): {succeses} shaders matched, {fails} failed.");
         }
 
         public static bool ValidateShaderOfType(string Type, string HlslType, string OriginalFile, string SourcePath)
         {
-            var metadata = new ShaderMetadata(OriginalFile.Replace(".hlsl", ".txt"));
+            var metadata = new ShaderMetadata(OriginalFile.Replace(".bin", ".txt"));
 
             // Grab the technique along with each #define used
             var techniqueId = metadata.GetTechnique();
@@ -136,9 +200,9 @@ namespace shader_analyzer
 
             try
             {
-                //originalBytecode = RecompileShader3DMigoto(OriginalFile, HlslType).Strip(m_StripFlags);
+                originalBytecode = RecompileShader3DMigoto(OriginalFile, HlslType).Strip(m_StripFlags);
 
-                originalBytecode = ShaderBytecode.FromFile(OriginalFile).Strip(m_StripFlags);
+                //originalBytecode = ShaderBytecode.FromFile(OriginalFile).Strip(m_StripFlags);
                 newBytecode = CompileShaderOfType(SourcePath, HlslType, macros).Strip(m_StripFlags);
             }
             catch(InvalidProgramException e)
@@ -202,8 +266,8 @@ namespace shader_analyzer
         public static ShaderBytecode RecompileShader3DMigoto(string OriginalFile, string HlslType)
         {
             // Create a copy of the file since it will be trashed
-            string copyPath = OriginalFile.Replace(".hlsl", ".3dm.hlsl");
-            ShaderDecompiler.DecompileShader(OriginalFile, copyPath);
+            string copyPath = OriginalFile.Replace(".bin", ".hlsl");
+            ShaderDecompiler.DecompileShader(OriginalFile, copyPath, OriginalFile.Replace(".bin", ".txt"));
 
             return CompileShaderOfType(copyPath, HlslType, null);
         }

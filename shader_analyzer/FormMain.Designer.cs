@@ -46,9 +46,10 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.listViewShaders = new System.Windows.Forms.ListView();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.textBoxFilter = new System.Windows.Forms.TextBox();
             this.buttonClearList = new System.Windows.Forms.Button();
             this.buttonClearLog = new System.Windows.Forms.Button();
-            this.textBoxFilter = new System.Windows.Forms.TextBox();
+            this.buttonDecompile = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -268,6 +269,14 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Mismatched Shader List";
             // 
+            // textBoxFilter
+            // 
+            this.textBoxFilter.Location = new System.Drawing.Point(6, 16);
+            this.textBoxFilter.Name = "textBoxFilter";
+            this.textBoxFilter.Size = new System.Drawing.Size(558, 20);
+            this.textBoxFilter.TabIndex = 8;
+            this.textBoxFilter.TextChanged += new System.EventHandler(this.textBoxFilter_TextChanged);
+            // 
             // buttonClearList
             // 
             this.buttonClearList.Location = new System.Drawing.Point(93, 354);
@@ -288,19 +297,22 @@
             this.buttonClearLog.UseVisualStyleBackColor = true;
             this.buttonClearLog.Click += new System.EventHandler(this.buttonClearLog_Click);
             // 
-            // textBoxFilter
+            // buttonDecompile
             // 
-            this.textBoxFilter.Location = new System.Drawing.Point(6, 16);
-            this.textBoxFilter.Name = "textBoxFilter";
-            this.textBoxFilter.Size = new System.Drawing.Size(558, 20);
-            this.textBoxFilter.TabIndex = 8;
-            this.textBoxFilter.TextChanged += new System.EventHandler(this.textBoxFilter_TextChanged);
+            this.buttonDecompile.Location = new System.Drawing.Point(354, 354);
+            this.buttonDecompile.Name = "buttonDecompile";
+            this.buttonDecompile.Size = new System.Drawing.Size(81, 23);
+            this.buttonDecompile.TabIndex = 11;
+            this.buttonDecompile.Text = "Decompile All";
+            this.buttonDecompile.UseVisualStyleBackColor = true;
+            this.buttonDecompile.Click += new System.EventHandler(this.buttonDecompile_Click);
             // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1023, 599);
+            this.Controls.Add(this.buttonDecompile);
             this.Controls.Add(this.buttonClearLog);
             this.Controls.Add(this.buttonClearList);
             this.Controls.Add(this.groupBox3);
@@ -344,6 +356,7 @@
         private System.Windows.Forms.Button buttonClearList;
         private System.Windows.Forms.Button buttonClearLog;
         private System.Windows.Forms.TextBox textBoxFilter;
+        private System.Windows.Forms.Button buttonDecompile;
     }
 }
 

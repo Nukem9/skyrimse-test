@@ -45,8 +45,8 @@ namespace shader_analyzer
             //      float4 fVars3[3]: packoffset(c10);  // @ 40 - 0x00A0
             // }
             //
-            Regex bufferDeclExpr = new Regex(@"cbuffer\s+(.*?)\s+:\s+register\(b(.*?)\)", RegexOptions.Compiled);
-            Regex varDeclExpr = new Regex(@"^\s*(.*?)\s+(.*?)\s+:\s+packoffset\(c(.*?)\);.*?", RegexOptions.Compiled);
+            Regex bufferDeclExpr = new Regex(@"cbuffer\s+(.*?)\s*:\s+register\(b(.*?)\)", RegexOptions.Compiled);
+            Regex varDeclExpr = new Regex(@"^\s*(.*?)\s+(.*?)\s*:\s+packoffset\(c(.*?)\);.*?", RegexOptions.Compiled);
 
             CBuffer currentBuffer = null;
             bool needsBracket = false;
@@ -95,7 +95,7 @@ namespace shader_analyzer
                 }
 
                 // The only other option is a variable declaration
-                var variableMatch = varDeclExpr.Match(line);
+                var variableMatch = varDeclExpr.Match(line.Replace("row_major", "").Trim());
 
                 if (!variableMatch.Success || variableMatch.Groups.Count < 4)
                     throw new FormatException("Unknown variable declaration format");
@@ -149,7 +149,7 @@ namespace shader_analyzer
 
             if (Type.Equals("float4x4"))
                 baseSize = 4 * 4 * 4;// 4x4 * sizeof(float)
-            else if (Type.Equals("float4x3"))
+            else if (Type.Equals("float3x4"))
                 baseSize = 4 * 3 * 4;// 4x3 * sizeof(float)
             else if (Type.Equals("float4"))
                 baseSize = 4 * 4;// 4 * sizeof(float)
@@ -159,6 +159,8 @@ namespace shader_analyzer
                 baseSize = 4 * 2;// 2 * sizeof(float)
             else if (Type.Equals("float"))
                 baseSize = 4 * 1;// 1 * sizeof(float)
+            else if (Type.Equals("undefined") || Type.Equals("unknown"))
+                baseSize = 1;
             else
                 throw new FormatException($"Unhandled variable type '{Type}'");
 
@@ -168,7 +170,7 @@ namespace shader_analyzer
             int arrayModifier = 1;
 
             if (arrayOperatorIndex != -1)
-                arrayModifier = int.Parse(Name.Substring(arrayOperatorIndex, arrayOperatorEnd - arrayOperatorIndex));
+                arrayModifier = int.Parse(Name.Substring(arrayOperatorIndex + 1, arrayOperatorEnd - arrayOperatorIndex - 1));
 
             return baseSize * arrayModifier;
         }

@@ -21,15 +21,13 @@ namespace shader_analyzer
             Application.SetCompatibleTextRenderingDefault(false);
             m_MainForm = new FormMain();
 
-            ShaderDecompiler.DecompileShader(@"C:\myfolder_0\RunGrass\RunGrass_FlatL_1.ps.hlsl", "C:\\atest.txt", @"C:\myfolder_0\RunGrass\RunGrass_FlatL_1.ps.txt");
-
             //var test = new FXPPackageExtractor(@"E:\Projects\Skyrim\SkyrimSETest\Resources\SSE_PS4_Shaders011.fxp", FXPPackageExtractor.PackageType.SkyrimSpecialEditionPS4);
             //test.Extract();
 
             // Create the temporary folders to hold our garbage in the meantime
-            ShaderDumpDirectory = "C:\\ShaderDump";
-            ShaderSourceDirectory = "C:\\ShaderSource";
-            ShaderDiffDirectory = "C:\\ShaderDiff";
+            ShaderDumpDirectory = "C:\\SA\\ShaderDump";
+            ShaderSourceDirectory = "C:\\SA\\ShaderSource";
+            ShaderDiffDirectory = "C:\\SA\\ShaderDiff";
 
             Directory.CreateDirectory(ShaderDumpDirectory);
             Directory.CreateDirectory(ShaderSourceDirectory);

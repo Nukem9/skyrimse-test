@@ -76,6 +76,16 @@ namespace shader_analyzer
             PopulateListView();
         }
 
+        private void buttonDecompile_Click(object sender, EventArgs e)
+        {
+            buttonDecompile.Enabled = false;
+
+            ShaderAnalyzer.DecompileShaders(() =>
+            {
+                Invoke(new Action(() => { buttonDecompile.Enabled = true; }));
+            });
+        }
+
         private void PopulateListView()
         {
             m_FileList = Directory.GetFiles(Program.ShaderDiffDirectory, "*.*");

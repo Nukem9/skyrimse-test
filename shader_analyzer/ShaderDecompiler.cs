@@ -49,7 +49,7 @@ namespace shader_analyzer
                 // Rip out 3dmigoto's header - it ends right before the "void main()" line
                 List<string> fileLines = System.IO.File.ReadAllLines(OutputFile).ToList();
 
-                for (int i = 0; i < fileLines.Count(); i++)
+                for (int i = 0; i < fileLines.Count; i++)
                 {
                     if (fileLines[i].ToLower().Contains("void main"))
                         break;
@@ -71,8 +71,11 @@ namespace shader_analyzer
                     replacedLines.Add($"Texture2D<float4> Tex{sampler.Item2} : register(t{sampler.Item1});");
                 }
 
-                // Regenerate constant buffer variable accesses
-                // TODO
+                // Regenerate constant buffer variable accesses (TODO: inefficient as hell)
+                for (int i = 0; i < fileLines.Count; i++)
+                {
+
+                }
 
                 // Add back HLSL instructions
                 replacedLines.Add(Environment.NewLine);
