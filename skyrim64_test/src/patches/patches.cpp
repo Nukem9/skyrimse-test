@@ -296,5 +296,10 @@ void Patch_TESVCreationKit()
 	//
 	PatchMemory(g_ModuleBase + 0x1657279, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
 
+	//
+	// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
+	//
+	PatchMemory(g_ModuleBase + 0x2DC679D, (PBYTE)"\x4D\x89\xE1\x90\x90\x90\x90", 7);
+
 	*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
 }
