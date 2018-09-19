@@ -278,6 +278,16 @@ void Patch_TESVCreationKit()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24485F0), &ScrapHeap::Free);
 
 	//
+	// NiRTTI
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x269AD20), &NiRTTI::__ctor__);
+
+	//
+	// NavMesh
+	//
+	*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
+
+	//
 	// Misc
 	//
 	ExperimentalPatchEditAndContinue();
@@ -301,5 +311,8 @@ void Patch_TESVCreationKit()
 	//
 	PatchMemory(g_ModuleBase + 0x2DC679D, (PBYTE)"\x4D\x89\xE1\x90\x90\x90\x90", 7);
 
-	*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
+	//
+	// Skip 'Topic Info' validation during load
+	//
+	PatchMemory(g_ModuleBase + 0x19A83C0, (PBYTE)"\xC3", 1);
 }
