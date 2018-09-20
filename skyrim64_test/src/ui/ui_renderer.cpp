@@ -414,10 +414,12 @@ namespace ui
 		int64_t TickDeltas[32];
 		int TickDeltaIndex;
 
-		STATIC_CONSTRUCTOR(__ui, []
+		bool InitializeNVAPI()
 		{
 			HMODULE hmod = LoadLibraryA("nvapi64.dll");
-			Assert(hmod);
+
+			if (!hmod)
+				return false;
 
 			// nvapi_QueryInterface is a function used to retrieve other internal functions in nvapi.dll
 			NvAPI_QueryInterface = (NvAPI_QueryInterface_t)GetProcAddress(hmod, "nvapi_QueryInterface");
@@ -431,9 +433,10 @@ namespace ui
 
 			// initialize NvAPI library, call it once before calling any other NvAPI functions
 			(*NvAPI_Initialize)();
-
 			(*NvAPI_EnumPhysicalGPUs)(gpuHandles, &gpuCount);
-		});
+
+			return true;
+		};
 
 		float CalculateTrueAverageFPS()
 		{
@@ -554,13 +557,20 @@ namespace ui
 
 		float GetGpuUsagePercent(int GpuIndex)
 		{
-			// gpuUsages[0] must be this value, otherwise NvAPI_GPU_GetUsages won't work
-			gpuUsages[0] = (NVAPI_MAX_USAGES_PER_GPU * 4) | 0x10000;
+			static bool apiInit = InitializeNVAPI();
 
-			(*NvAPI_GPU_GetUsages)(gpuHandles[GpuIndex], gpuUsages);
-			int usage = gpuUsages[3];
+			if (apiInit)
+			{
+				// gpuUsages[0] must be this value, otherwise NvAPI_GPU_GetUsages won't work
+				gpuUsages[0] = (NVAPI_MAX_USAGES_PER_GPU * 4) | 0x10000;
 
-			return (float)usage;
+				(*NvAPI_GPU_GetUsages)(gpuHandles[GpuIndex], gpuUsages);
+				int usage = gpuUsages[3];
+
+				return (float)usage;
+			}
+
+			return 0.0f;
 		}
 	}
 }

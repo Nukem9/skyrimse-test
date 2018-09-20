@@ -9,6 +9,7 @@ namespace ui
 
 	namespace detail
 	{
+		bool InitializeNVAPI();
 		float CalculateTrueAverageFPS();
 		uint64_t GetSystemCpuTime();
 		float GetProcessorUsagePercent();
