@@ -313,7 +313,7 @@ void Patch_TESVCreationKit()
 	//
 	// NavMesh
 	//
-	if (INI.GetBoolean("CreationKit", "NavMeshPsuedoDelete", false))
+	if (INI.GetBoolean("CreationKit", "NavMeshPseudoDelete", false))
 	{
 		*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
 

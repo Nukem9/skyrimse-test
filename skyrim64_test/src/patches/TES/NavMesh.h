@@ -8,7 +8,7 @@ class NavMesh
 public:
 	constexpr static uint16_t BAD_NAVMESH_TRIANGLE = 0xFFFF;
 	constexpr static uint16_t BAD_NAVMESH_VERTEX = 0xFFFF;
-	constexpr static uint32_t CUSTOM_NAVMESH_PSUEDODELTE_FLAG = 0x8;
+	constexpr static uint32_t CUSTOM_NAVMESH_PSEUDODELTE_FLAG = 0x8;
 
 	class BSNavmeshTriangle
 	{
@@ -50,7 +50,7 @@ public:
 		uint16_t hk_GetVertexIndex_DegenerateCheck(uint32_t Vertex)
 		{
 			// If special flag is set: return an invalid value to make the == comparison fail
-			if (m_ExtraInfo & CUSTOM_NAVMESH_PSUEDODELTE_FLAG)
+			if (m_ExtraInfo & CUSTOM_NAVMESH_PSEUDODELTE_FLAG)
 				return BAD_NAVMESH_VERTEX;
 
 			return GetVertexIndex(Vertex);
@@ -71,7 +71,7 @@ public:
 		else
 		{
 			BSNavmeshTriangle& tri = m_Triangles.at(TriangleIndex);
-			tri.m_ExtraInfo |= CUSTOM_NAVMESH_PSUEDODELTE_FLAG;
+			tri.m_ExtraInfo |= CUSTOM_NAVMESH_PSEUDODELTE_FLAG;
 
 			// Kill all edges referencing the index
 			for (uint32_t i = 0; i < m_Triangles.QSize(); i++)
