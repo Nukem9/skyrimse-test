@@ -134,6 +134,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\config.h" />
+    <ClInclude Include="src\patches\INIReader.h" />
     <ClInclude Include="src\patches\rendering\d3d11_proxy.h" />
     <ClInclude Include="src\patches\rendering\GpuCircularBuffer.h" />
     <ClInclude Include="src\patches\rendering\GpuTimer.h" />

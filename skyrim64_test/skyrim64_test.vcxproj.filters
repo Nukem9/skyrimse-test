@@ -302,6 +302,9 @@
     <ClInclude Include="src\patches\TES\NavMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\INIReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\d3dx9_debug.cpp">
