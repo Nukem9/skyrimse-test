@@ -34,6 +34,7 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 		const uint8_t signature5[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x83, 0xEC, 0x28, 0x48, 0x8B, 0x4C, 0x24, 0x30, 0x0F, 0x1F, 0x44, 0x00, 0x00, 0x48, 0x83, 0xC4, 0x28, 0xC3 };// Effectively a nullsub
 		const uint8_t signature6[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0x48, 0x8B, 0x00, 0xC3 };// return *(QWORD *)this;
 		const uint8_t signature7[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0xC3 };// return this;
+		const uint8_t signature8[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0x8B, 0x00, 0xC3 };// return *(DWORD *)this;
 
 		if (!memcmp(dest, signature2, sizeof(signature2)) ||
 			!memcmp(dest, signature3, sizeof(signature3)) ||
@@ -62,6 +63,15 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 				PatchMemory(SourceAddress, (PBYTE)"\x48\x89\xC8\xC3\xCC", 5);// mov rax, rcx; retn; int3;
 			else
 				PatchMemory(SourceAddress, (PBYTE)"\x48\x89\xC8\x66\x90", 5);// mov rax, rcx; nop;
+
+			return true;
+		}
+		else if (!memcmp(dest, signature8, sizeof(signature8)))
+		{
+			if (isJump)
+				PatchMemory(SourceAddress, (PBYTE)"\x8B\x01\xC3\xCC\xCC", 5);// mov eax, [rcx]; retn; int3; int3;
+			else
+				PatchMemory(SourceAddress, (PBYTE)"\x8B\x01\x0F\x1F\x00", 5);// mov eax, [rcx]; nop;
 
 			return true;
 		}
