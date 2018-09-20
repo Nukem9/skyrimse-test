@@ -1,21 +1,12 @@
 #include "common.h"
 
-#pragma comment (linker, "/INCLUDE:_tls_used")
-#pragma comment (linker, "/INCLUDE:p_tls_callback1")
-#pragma const_seg(push)
-#pragma const_seg(".CRT$XLAAA")
-extern "C" const PIMAGE_TLS_CALLBACK p_tls_callback1 = TLSPatcherCallback;
-#pragma const_seg(pop)
-
 // Defined in CRT headers somewhere. Used purely for sanity checking.
 extern "C" unsigned int _tls_index;
 
 #define GET_TLS_BLOCK(Index) (__readgsqword(0x58) + (Index) * sizeof(void *))
 
-unsigned int g_TlsIndex;
-
-INIT_ONCE TLSPatcherInit = INIT_ONCE_STATIC_INIT;
-SRWLOCK g_TLSDataLock;
+SRWLOCK g_TLSDataLock = SRWLOCK_INIT;
+unsigned int g_TlsIndex = 0;
 
 uintptr_t g_MainTLSBlock;
 uint32_t g_MainThreadId;
@@ -45,29 +36,39 @@ uintptr_t AllocateGuardedBlock()
 	return memory + 4096;
 }
 
-void InitializeTLSMain()
+void TLSPatcherInitialize()
 {
-	InitOnceExecuteOnce(&TLSPatcherInit, [](PINIT_ONCE, PVOID, PVOID *)
-	{
-		InitializeSRWLock(&g_TLSDataLock);
-		return TRUE;
-	}, nullptr, nullptr);
+	void *(*GetStaticTlsData)();
+	size_t(*GetStaticTlsDataSize)();
+	uint32_t(*GetStaticTlsSlot)();
 
-	InitializeTLSDll();
+	AssertMsg(g_TlsIndex == 0, "TlsIndex would be initialized twice");
 
-	// WARNING: THIS FUNCTION NEEDS TO EXECUTE ON THE MAIN THREAD!!
-	uintptr_t *currentTlsBlock = (uintptr_t *)GET_TLS_BLOCK(g_TlsIndex);
+	HMODULE lib = LoadLibraryA("skyrim64_tls_mt.dll");
+	*(FARPROC *)&GetStaticTlsData = GetProcAddress(lib, "GetStaticTlsData");
+	*(FARPROC *)&GetStaticTlsDataSize = GetProcAddress(lib, "GetStaticTlsDataSize");
+	*(FARPROC *)&GetStaticTlsSlot = GetProcAddress(lib, "GetStaticTlsSlot");
 
-	void *block = (void *)AllocateGuardedBlock();
-	uint32_t threadId = GetCurrentThreadId();
+	Assert(GetStaticTlsData && GetStaticTlsDataSize && GetStaticTlsSlot);
+	Assert(GetStaticTlsDataSize() > 0);
+	Assert(GetStaticTlsSlot() != 0 && GetStaticTlsSlot() != _tls_index);
 
-	if (!block)
-		__debugbreak();
+	// g_TlsIndex is the implicit index for skyrim64_tls_mt.dll. More info: http://www.nynaeve.net/?p=185
+	InterlockedExchange((volatile LONG *)&g_TlsIndex, GetStaticTlsSlot());
 
 	AcquireSRWLockExclusive(&g_TLSDataLock);
 	{
-		InterlockedExchange(&g_MainThreadId, threadId);
+		// WARNING: THIS NEEDS TO EXECUTE ON THE MAIN THREAD ONLY
+		uintptr_t *currentTlsBlock = (uintptr_t *)GET_TLS_BLOCK(g_TlsIndex);
+
+		void *block = (void *)AllocateGuardedBlock();
+		uint32_t threadId = GetCurrentThreadId();
+
+		Assert(!g_MainTLSBlock);
+		Assert(block);
+
 		InterlockedExchangePointer((volatile PVOID *)&g_MainTLSBlock, block);
+		InterlockedExchange(&g_MainThreadId, threadId);
 
 		g_ThreadTLSMaps[g_MainThreadId] = *currentTlsBlock;
 		*currentTlsBlock = g_MainTLSBlock;
@@ -87,35 +88,8 @@ void InitializeTLSMain()
 	ReleaseSRWLockExclusive(&g_TLSDataLock);
 }
 
-void InitializeTLSDll()
-{
-	void *(*GetStaticTlsData)();
-	size_t(*GetStaticTlsDataSize)();
-	uint32_t(*GetStaticTlsSlot)();
-
-	AssertMsg(g_TlsIndex == 0, "TlsIndex would be initialized twice");
-
-	HMODULE lib = LoadLibraryA("skyrim64_tls_mt.dll");
-	*(FARPROC *)&GetStaticTlsData = GetProcAddress(lib, "GetStaticTlsData");
-	*(FARPROC *)&GetStaticTlsDataSize = GetProcAddress(lib, "GetStaticTlsDataSize");
-	*(FARPROC *)&GetStaticTlsSlot = GetProcAddress(lib, "GetStaticTlsSlot");
-
-	Assert(GetStaticTlsData && GetStaticTlsDataSize && GetStaticTlsSlot);
-	Assert(GetStaticTlsDataSize() > 0);
-	Assert(GetStaticTlsSlot() != 0 && GetStaticTlsSlot() != _tls_index);
-
-	// g_TlsIndex is the IMPLICIT index for skyrim64_tls_mt.dll. More info: http://www.nynaeve.net/?p=185
-	InterlockedExchange((volatile LONG *)&g_TlsIndex, GetStaticTlsSlot());
-}
-
 VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved)
 {
-	InitOnceExecuteOnce(&TLSPatcherInit, [](PINIT_ONCE, PVOID, PVOID *)
-	{
-		InitializeSRWLock(&g_TLSDataLock);
-		return TRUE;
-	}, nullptr, nullptr);
-
 	if (Reason != DLL_THREAD_ATTACH && Reason != DLL_THREAD_DETACH)
 		return;
 

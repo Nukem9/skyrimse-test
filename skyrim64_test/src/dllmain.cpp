@@ -63,7 +63,7 @@ void ApplyPatches()
 	else
 	{
 #if !SKYRIM64_CREATIONKIT_DLL
-		InitializeTLSMain();
+		TLSPatcherInitialize();
 		LoadModules();
 		Patch_TESV();
 #endif
@@ -90,6 +90,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		if (!strstr(filePath, "SkyrimSELauncher"))
 			EnableDumpBreakpoint();
     }
+
+	if (!g_IsCreationKit)
+		TLSPatcherCallback(hModule, fdwReason, lpReserved);
 
     return TRUE;
 }

@@ -15,8 +15,7 @@ extern unsigned int g_TlsIndex;
 void *HACK_GetThreadedGlobals();
 void *HACK_GetMainGlobals();
 
-void InitializeTLSMain();
-void InitializeTLSDll();
+void TLSPatcherInitialize();
 VOID WINAPI TLSPatcherCallback(PVOID DllHandle, DWORD Reason, PVOID Reserved);
 
 void PageGuard_Monitor(uintptr_t VirtualAddress, size_t Size);
