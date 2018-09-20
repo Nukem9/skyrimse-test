@@ -18,6 +18,13 @@
 #include "TES/MemoryManager.h"
 #include "TES/NavMesh.h"
 
+#define INI_ALLOW_MULTILINE 0
+#define INI_USE_STACK 0
+#define INI_MAX_LINE 4096
+#include "INIReader.h"
+
+INIReader INI("skyrim64_test.ini");
+
 void PatchAchievements();
 void PatchD3D11();
 void PatchLogging();
@@ -256,26 +263,47 @@ void Patch_TESV()
 
 void Patch_TESVCreationKit()
 {
-	PatchMemory();
-	PatchThreading();
-	PatchWindow();
-	PatchSteam();
-	PatchFileIO();
+	if (_stricmp((const char *)(g_ModuleBase + 0x3078988), "1.5.3.0") != 0)
+	{
+		MessageBoxA(nullptr, "Incorrect CreationKit version detected. Patches disabled.", "Version Check", MB_ICONERROR);
+		return;
+	}
+
+	MSRTTI::Initialize();
+
+	if (INI.GetBoolean("CreationKit", "ThreadingPatch", false))	PatchThreading();
+	if (INI.GetBoolean("CreationKit", "WindowPatch", false))	PatchWindow();
+	if (INI.GetBoolean("CreationKit", "IOPatch", false))		PatchFileIO();
+	if (INI.GetBoolean("CreationKit", "SteamPatch", false))		PatchSteam();
+
+	//
+	// Experimental
+	//
+	if (INI.GetBoolean("CreationKit", "ExperimentalOptimization", false))
+	{
+		ExperimentalPatchEditAndContinue();
+		ExperimentalPatchMemInit();
+	}
 
 	//
 	// MemoryManager
 	//
-	PatchMemory(g_ModuleBase + 0x1223160, (PBYTE)"\xC3", 1);// [3GB  ] MemoryManager - Default/Static/File heaps
-	PatchMemory(g_ModuleBase + 0x24400E0, (PBYTE)"\xC3", 1);// [1GB  ] BSSmallBlockAllocator
-															// [512MB] hkMemoryAllocator is untouched due to complexity
-															// [128MB] BSScaleformSysMemMapper is untouched due to complexity
-	PatchMemory(g_ModuleBase + 0x2447D90, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap init
-	PatchMemory(g_ModuleBase + 0x24488C0, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap deinit
+	if (INI.GetBoolean("CreationKit", "MemoryPatch", false))
+	{
+		PatchMemory();
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2440380), &MemoryManager::Alloc);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24407A0), &MemoryManager::Free);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2447FA0), &ScrapHeap::Alloc);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24485F0), &ScrapHeap::Free);
+		PatchMemory(g_ModuleBase + 0x1223160, (PBYTE)"\xC3", 1);// [3GB  ] MemoryManager - Default/Static/File heaps
+		PatchMemory(g_ModuleBase + 0x24400E0, (PBYTE)"\xC3", 1);// [1GB  ] BSSmallBlockAllocator
+																// [512MB] hkMemoryAllocator is untouched due to complexity
+																// [128MB] BSScaleformSysMemMapper is untouched due to complexity
+		PatchMemory(g_ModuleBase + 0x2447D90, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap init
+		PatchMemory(g_ModuleBase + 0x24488C0, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap deinit
+
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2440380), &MemoryManager::Alloc);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24407A0), &MemoryManager::Free);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2447FA0), &ScrapHeap::Alloc);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24485F0), &ScrapHeap::Free);
+	}
 
 	//
 	// NiRTTI
@@ -285,26 +313,29 @@ void Patch_TESVCreationKit()
 	//
 	// NavMesh
 	//
-	*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
-
-	//
-	// Misc
-	//
-	ExperimentalPatchEditAndContinue();
-	ExperimentalPatchMemInit();
+	if (INI.GetBoolean("CreationKit", "NavMeshPsuedoDelete", false))
+	{
+		*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
+	}
 
 	//
 	// Allow saving ESM's directly. "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
 	//
-	const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
+	if (INI.GetBoolean("CreationKit", "AllowSaveESM", false))
+	{
+		const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
 
-	PatchMemory(g_ModuleBase + 0x164020A, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
-	PatchMemory(g_ModuleBase + 0x30B9090, (PBYTE)newFormat, strlen(newFormat) + 1);
+		PatchMemory(g_ModuleBase + 0x164020A, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
+		PatchMemory(g_ModuleBase + 0x30B9090, (PBYTE)newFormat, strlen(newFormat) + 1);
+	}
 
 	//
 	// Allow ESP files to act as master files while saving
 	//
-	PatchMemory(g_ModuleBase + 0x1657279, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
+	if (INI.GetBoolean("CreationKit", "AllowMasterESP", false))
+	{
+		PatchMemory(g_ModuleBase + 0x1657279, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
+	}
 
 	//
 	// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
@@ -314,5 +345,16 @@ void Patch_TESVCreationKit()
 	//
 	// Skip 'Topic Info' validation during load
 	//
-	PatchMemory(g_ModuleBase + 0x19A83C0, (PBYTE)"\xC3", 1);
+	if (INI.GetBoolean("CreationKit", "SkipTopicInfoValidation", false))
+	{
+		PatchMemory(g_ModuleBase + 0x19A83C0, (PBYTE)"\xC3", 1);
+	}
+
+	//
+	// Remove assertion message boxes
+	//
+	if (INI.GetBoolean("CreationKit", "DisableAssertions", false))
+	{
+		PatchMemory(g_ModuleBase + 0x243D9FE, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+	}
 }
