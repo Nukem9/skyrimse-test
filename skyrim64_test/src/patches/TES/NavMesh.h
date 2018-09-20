@@ -17,7 +17,7 @@ public:
 		uint16_t m_Edges[3];	// Edges pointing to triangles in the mesh
 		uint32_t m_ExtraInfo;
 
-		uint16_t GetVerticeIndex(uint32_t Vertex) const
+		uint16_t GetVertexIndex(uint32_t Vertex) const
 		{
 			return m_Vertices[Vertex];
 		}
@@ -45,6 +45,15 @@ public:
 		{
 			m_ExtraInfo &= ~(1 << Edge);
 			m_Edges[Edge] = BAD_NAVMESH_TRIANGLE;
+		}
+
+		uint16_t hk_GetVertexIndex_DegenerateCheck(uint32_t Vertex)
+		{
+			// If special flag is set: return an invalid value to make the == comparison fail
+			if (m_ExtraInfo & CUSTOM_NAVMESH_PSUEDODELTE_FLAG)
+				return BAD_NAVMESH_VERTEX;
+
+			return GetVertexIndex(Vertex);
 		}
 	};
 
@@ -82,9 +91,9 @@ public:
 			// If possible, avoid orphaning vertices when making degenerate tris
 			std::unordered_map<uint16_t, bool> orphans
 			{
-				{ tri.GetVerticeIndex(0), true },
-				{ tri.GetVerticeIndex(1), true },
-				{ tri.GetVerticeIndex(2), true },
+				{ tri.GetVertexIndex(0), true },
+				{ tri.GetVertexIndex(1), true },
+				{ tri.GetVertexIndex(2), true },
 			};
 
 			for (uint32_t i = 0; i < m_Triangles.QSize(); i++)
@@ -92,12 +101,12 @@ public:
 				if (i == TriangleIndex)
 					continue;
 
-				orphans[m_Triangles[i].GetVerticeIndex(0)] = false;
-				orphans[m_Triangles[i].GetVerticeIndex(1)] = false;
-				orphans[m_Triangles[i].GetVerticeIndex(2)] = false;
+				orphans[m_Triangles[i].GetVertexIndex(0)] = false;
+				orphans[m_Triangles[i].GetVertexIndex(1)] = false;
+				orphans[m_Triangles[i].GetVertexIndex(2)] = false;
 			}
 
-			uint16_t vert = tri.GetVerticeIndex(0);
+			uint16_t vert = tri.GetVertexIndex(0);
 
 			for (auto[orphanVert, orphaned] : orphans)
 			{
