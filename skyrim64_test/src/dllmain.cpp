@@ -56,17 +56,17 @@ void ApplyPatches()
 	DoHook();
 #endif
 
-	if (g_IsCreationKit)
-	{
-		Patch_TESVCreationKit();
-	}
-	else
+	if (g_IsGame)
 	{
 #if !SKYRIM64_CREATIONKIT_DLL
 		TLSPatcherInitialize();
 		LoadModules();
 		Patch_TESV();
 #endif
+	}
+	else
+	{
+		Patch_TESVCreationKit();
 	}
 }
 
@@ -77,10 +77,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		char filePath[MAX_PATH];
 		GetModuleFileNameA(GetModuleHandle(nullptr), filePath, MAX_PATH);
 
-		if (strstr(filePath, "SkyrimSE") || strstr(filePath, "SkyrimSELauncher"))
-			g_IsCreationKit = false;
+		if (strstr(filePath, "SkyrimSELauncher"))
+			g_IsGame = false;
 		else if (strstr(filePath, "CreationKit"))
-			g_IsCreationKit = true;
+			g_IsGame = false;
+		else if (strstr(filePath, "SkyrimSE"))
+			g_IsGame = true;
 
 		// Force this dll to be loaded permanently
 		HMODULE temp;
@@ -91,7 +93,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			EnableDumpBreakpoint();
     }
 
-	if (!g_IsCreationKit)
+	if (g_IsGame)
 		TLSPatcherCallback(hModule, fdwReason, lpReserved);
 
     return TRUE;

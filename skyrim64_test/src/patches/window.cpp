@@ -214,7 +214,7 @@ LRESULT WINAPI hk_SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 void PatchWindow()
 {
-	if (g_IsCreationKit)
+	if (!g_IsGame)
 	{
 		PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
 		PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");

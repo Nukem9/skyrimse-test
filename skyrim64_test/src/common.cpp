@@ -56,4 +56,4 @@ HMODULE g_DllVTune;
 HMODULE g_DllDXGI;
 HMODULE g_DllD3D11;
 
-bool g_IsCreationKit;
+bool g_IsGame;
