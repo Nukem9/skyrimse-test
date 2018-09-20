@@ -64,11 +64,11 @@ void XutilAssert(const char *File, int Line, const char *Format, ...);
 #define templated(...) __VA_ARGS__
 #define AutoPtr(Type, Name, Offset) static Type& Name = (*(Type *)((uintptr_t)GetModuleHandle(nullptr) + Offset))
 
-#define static_assert_offset(Structure, Member, Offset) struct : CheckOffset<offsetof(Structure, Member), Offset> { }
+#define static_assert_offset(Structure, Member, Offset) struct __declspec(empty_bases) : CheckOffset<offsetof(Structure, Member), Offset> { }
 #define assert_vtable_index(Function, Index) AssertMsgVa(vtable_index_util::getIndexOf(Function) == Index, "VTable index does not match (%d != %d)", vtable_index_util::getIndexOf(Function), Index)
 
 template <size_t Offset, size_t RequiredOffset>
-struct CheckOffset
+struct __declspec(empty_bases) CheckOffset
 {
 	static_assert(Offset <= RequiredOffset, "Offset is larger than expected");
 	static_assert(Offset >= RequiredOffset, "Offset is smaller than expected");
