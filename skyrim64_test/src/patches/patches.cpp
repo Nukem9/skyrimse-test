@@ -357,4 +357,7 @@ void Patch_TESVCreationKit()
 	{
 		PatchMemory(g_ModuleBase + 0x243D9FE, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 	}
+
+	// TEMP: Kill broken destructor causing double free
+	PatchMemory(g_ModuleBase + 0x1392D90, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
 }
