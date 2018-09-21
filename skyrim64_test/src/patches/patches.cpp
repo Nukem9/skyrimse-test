@@ -317,9 +317,9 @@ void Patch_TESVCreationKit()
 	{
 		*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
 
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D6984F), &NavMesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D699E6), &NavMesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D69B80), &NavMesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D6984F), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D699E6), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D69B80), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
 
 		PatchMemory(g_ModuleBase + 0x1D6984F, (PBYTE)"\xE8", 1);
 		PatchMemory(g_ModuleBase + 0x1D699E6, (PBYTE)"\xE8", 1);

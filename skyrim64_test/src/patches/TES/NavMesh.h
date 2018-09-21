@@ -3,18 +3,20 @@
 #include <unordered_map>
 #include "BSTArray.h"
 
-class NavMesh
+class BSNavmesh
 {
 public:
 	constexpr static uint16_t BAD_NAVMESH_TRIANGLE = 0xFFFF;
 	constexpr static uint16_t BAD_NAVMESH_VERTEX = 0xFFFF;
+
 	constexpr static uint32_t CUSTOM_NAVMESH_PSEUDODELTE_FLAG = 0x8;
+	constexpr static uint32_t NAVMESH_FOUND_FLAG = 0x800;
 
 	class BSNavmeshTriangle
 	{
 	public:
 		uint16_t m_Vertices[3];	// Triangle vertices pointing into the mesh vertex array
-		uint16_t m_Edges[3];	// Edges pointing to triangles in the mesh
+		uint16_t m_Edges[3];	// Index into the triangle array of the navmesh OR an index into the edge links array
 		uint32_t m_ExtraInfo;
 
 		uint16_t GetVertexIndex(uint32_t Vertex) const
@@ -27,17 +29,19 @@ public:
 			return m_Edges[Edge];
 		}
 
-		uint16_t GetEdgeIndexChecked(uint32_t Edge) const
+		uint16_t GetEdgeLinkIndex(uint32_t Edge) const
 		{
-			if (IsEdgePresent(Edge))
+			if (HasExtraInfo(Edge))
 				return m_Edges[Edge];
 
 			Assert(false);
 			return BAD_NAVMESH_TRIANGLE;
 		}
 
-		bool IsEdgePresent(uint32_t Edge) const
+		bool HasExtraInfo(uint32_t Edge) const
 		{
+			// If set, m_Edge[Edge] points in to m_ExtraInfo[]
+			// If not set, triangle is in the same mesh
 			return (m_ExtraInfo & (1 << Edge)) != 0;
 		}
 
@@ -57,9 +61,49 @@ public:
 		}
 	};
 
-public:
-	char _pad[0x58];
+	class EdgeExtraInfo
+	{
+	public:
+		uint32_t m_Type;
+		uint32_t m_NavmeshID;
+		uint16_t m_TriangleIndex;
+	};
+
+	char _pad0[0x28];
 	BSTArray<BSNavmeshTriangle> m_Triangles;
+	BSTArray<EdgeExtraInfo> m_ExtraInfo;
+
+	EdgeExtraInfo *GetEdgeExtraInfo(uint16_t TriangleIndex, uint32_t EdgeIndex)
+	{
+		AssertMsg(TriangleIndex < m_Triangles.QSize(), "Invalid triangle index");
+		AssertMsg(EdgeIndex < 3, "Invalid edge index");
+
+		if (m_Triangles[TriangleIndex].HasExtraInfo(EdgeIndex))
+		{
+			uint16_t index = m_Triangles[TriangleIndex].GetEdgeLinkIndex(EdgeIndex);
+
+			if (index < m_ExtraInfo.QSize())
+				return &m_ExtraInfo.at(index);
+		}
+
+		return nullptr;
+	}
+};
+static_assert(sizeof(BSNavmesh::BSNavmeshTriangle) == 0x10);
+static_assert_offset(BSNavmesh::BSNavmeshTriangle, m_Vertices, 0x0);
+static_assert_offset(BSNavmesh::BSNavmeshTriangle, m_Edges, 0x6);
+static_assert_offset(BSNavmesh::BSNavmeshTriangle, m_ExtraInfo, 0xC);
+
+static_assert(sizeof(BSNavmesh::EdgeExtraInfo) == 0xC);
+
+static_assert_offset(BSNavmesh, m_Triangles, 0x28);
+static_assert_offset(BSNavmesh, m_ExtraInfo, 0x40);
+
+class NavMesh /*: TESForm, BSNavmesh */
+{
+public:
+	char _pad0[0x30];
+	BSNavmesh m_Data;
 
 	void hk_DeleteTriangle(uint16_t TriangleIndex)
 	{
@@ -70,25 +114,47 @@ public:
 		}
 		else
 		{
-			BSNavmeshTriangle& tri = m_Triangles.at(TriangleIndex);
-			tri.m_ExtraInfo |= CUSTOM_NAVMESH_PSEUDODELTE_FLAG;
+			auto PathingGetSingleton = (void *(__fastcall *)())(g_ModuleBase + 0x1354BC0);
+			auto PathingGetForm = (NavMesh *(__fastcall *)(void *, uint32_t))(g_ModuleBase + 0x1D9C8A0);
 
-			// Kill all edges referencing the index
-			for (uint32_t i = 0; i < m_Triangles.QSize(); i++)
+			BSNavmesh::BSNavmeshTriangle& tri = m_Data.m_Triangles.at(TriangleIndex);
+
+			// Kill all edges referencing this triangle & kill edges this triangle references
+			auto removeEdgeReferences = [TriangleIndex](BSNavmesh::BSNavmeshTriangle& Triangle)
 			{
-				for (uint32_t edge = 0; edge < 3; edge++)
+				for (uint32_t i = 0; i < 3; i++)
 				{
-					if (m_Triangles[i].GetEdgeIndex(edge) == TriangleIndex)
-						m_Triangles[i].ClearEdge(edge);
+					if (Triangle.GetEdgeIndex(i) == TriangleIndex)
+						Triangle.ClearEdge(i);
 				}
+			};
+
+			for (int edge = 0; edge < 3; edge++)
+			{
+				BSNavmesh::EdgeExtraInfo *extraInfo = m_Data.GetEdgeExtraInfo(TriangleIndex, edge);
+				uint16_t index = (extraInfo) ? extraInfo->m_TriangleIndex : tri.GetEdgeIndex(edge);
+
+				if (index != BSNavmesh::BAD_NAVMESH_TRIANGLE)
+				{
+					if (extraInfo)
+					{
+						// Separated mesh link
+						Assert(extraInfo->m_NavmeshID != 0);
+						NavMesh *externalMesh = PathingGetForm(PathingGetSingleton(), extraInfo->m_NavmeshID);
+
+						Assert(externalMesh);
+						removeEdgeReferences(externalMesh->m_Data.m_Triangles.at(index));
+					}
+					else
+					{
+						removeEdgeReferences(m_Data.m_Triangles.at(index));
+					}
+				}
+
+				tri.ClearEdge(edge);
 			}
 
-			// Kill edges of this triangle
-			tri.ClearEdge(0);
-			tri.ClearEdge(1);
-			tri.ClearEdge(2);
-
-			// If possible, avoid orphaning vertices when making degenerate tris
+			// If possible, avoid orphaning vertices when making it degenerate
 			std::unordered_map<uint16_t, bool> orphans
 			{
 				{ tri.GetVertexIndex(0), true },
@@ -96,14 +162,14 @@ public:
 				{ tri.GetVertexIndex(2), true },
 			};
 
-			for (uint32_t i = 0; i < m_Triangles.QSize(); i++)
+			for (uint32_t i = 0; i < m_Data.m_Triangles.QSize(); i++)
 			{
 				if (i == TriangleIndex)
 					continue;
 
-				orphans[m_Triangles[i].GetVertexIndex(0)] = false;
-				orphans[m_Triangles[i].GetVertexIndex(1)] = false;
-				orphans[m_Triangles[i].GetVertexIndex(2)] = false;
+				orphans[m_Data.m_Triangles[i].GetVertexIndex(0)] = false;
+				orphans[m_Data.m_Triangles[i].GetVertexIndex(1)] = false;
+				orphans[m_Data.m_Triangles[i].GetVertexIndex(2)] = false;
 			}
 
 			uint16_t vert = tri.GetVertexIndex(0);
@@ -120,14 +186,12 @@ public:
 			tri.m_Vertices[0] = vert;
 			tri.m_Vertices[1] = vert;
 			tri.m_Vertices[2] = vert;
+
+			// Finally remove all other flags except Found and Pseudo-delete
+			tri.m_ExtraInfo = (tri.m_ExtraInfo & BSNavmesh::NAVMESH_FOUND_FLAG) | BSNavmesh::CUSTOM_NAVMESH_PSEUDODELTE_FLAG;
 		}
 	}
 
 	static inline decltype(&hk_DeleteTriangle) DeleteTriangle;
 };
-static_assert(sizeof(NavMesh::BSNavmeshTriangle) == 0x10);
-static_assert_offset(NavMesh::BSNavmeshTriangle, m_Vertices, 0x0);
-static_assert_offset(NavMesh::BSNavmeshTriangle, m_Edges, 0x6);
-static_assert_offset(NavMesh::BSNavmeshTriangle, m_ExtraInfo, 0xC);
-
-static_assert_offset(NavMesh, m_Triangles, 0x58);
+static_assert_offset(NavMesh, m_Data, 0x30);
