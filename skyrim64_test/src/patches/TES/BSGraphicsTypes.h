@@ -66,7 +66,9 @@ namespace BSGraphics
 		bool bAllowMipGeneration;
 		int iMipLevel;
 		uint32_t uiTextureTarget;
+		uint32_t uiUnknown;
 	};
+	static_assert(sizeof(RenderTargetProperties) == 0x1C);
 	static_assert_offset(RenderTargetProperties, uiWidth, 0x0);
 	static_assert_offset(RenderTargetProperties, uiHeight, 0x4);
 	static_assert_offset(RenderTargetProperties, eFormat, 0x8);
