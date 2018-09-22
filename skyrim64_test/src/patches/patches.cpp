@@ -84,7 +84,7 @@ void Patch_TESV()
 	//
 	// BGSDistantTreeBlock
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x4A8360), &BGSDistantTreeBlock::UpdateLODAlphaFade);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x4A8360), &BGSDistantTreeBlock::UpdateBlockVisibility);
 
 	//
 	// BSCullingProcess

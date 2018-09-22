@@ -14,7 +14,7 @@ void BGSDistantTreeBlock::InvalidateCachedForm(uint32_t FormId)
 	InstanceFormCache.erase(FormId & 0x00FFFFFF);
 }
 
-void BGSDistantTreeBlock::UpdateLODAlphaFade(ResourceData *Data)
+void BGSDistantTreeBlock::UpdateBlockVisibility(ResourceData *Data)
 {
 	ZoneScopedN("BGSDistantTreeBlock::UpdateLODAlphaFade");
 

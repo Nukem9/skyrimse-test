@@ -30,7 +30,7 @@ public:
 	};
 
 	static void InvalidateCachedForm(uint32_t FormId);
-	static void UpdateLODAlphaFade(ResourceData *Data);
+	static void UpdateBlockVisibility(ResourceData *Data);
 
 	// struct ResourceData @ 0x28
 };
