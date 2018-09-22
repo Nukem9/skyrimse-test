@@ -246,9 +246,6 @@ decltype(&feof) VC140_feof;
 
 errno_t hk_fopen_s(FILE **File, const char *Filename, const char *Mode)
 {
-	if (strstr(Filename, "Plugins.txt"))
-		return VC140_fopen_s(File, Filename, Mode);
-
 	if (!Mode || strlen(Mode) <= 0)
 		return EINVAL;
 
