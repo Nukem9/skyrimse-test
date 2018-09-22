@@ -237,10 +237,12 @@ decltype(&fopen) VC140_fopen;
 decltype(&fclose) VC140_fclose;
 decltype(&fread) VC140_fread;
 decltype(&fwrite) VC140_fwrite;
+decltype(&fgets) VC140_fgets;
 decltype(&fflush) VC140_fflush;
 decltype(&fseek) VC140_fseek;
 decltype(&ftell) VC140_ftell;
 decltype(&rewind) VC140_rewind;
+decltype(&feof) VC140_feof;
 
 errno_t hk_fopen_s(FILE **File, const char *Filename, const char *Mode)
 {
@@ -402,6 +404,43 @@ size_t hk_fwrite(const void *ptr, size_t size, size_t count, FILE *stream)
 	return VC140_fwrite(ptr, size, count, stream);
 }
 
+char *hk_fgets(char *str, int count, FILE *stream)
+{
+	if (MMapFileInfo *info = GetStdioFileMap(stream))
+	{
+		if (info->FilePosition == info->FileMaxPosition)
+			return nullptr;
+
+		char *source = new char[count + 1];
+		for (char c; count > 0; count--)
+		{
+			if (hk_fread(&c, sizeof(char), 1, stream) != 1)
+				break;
+
+			// WARNING: By default MSVCRT skips carriage returns when not reading in binary format
+			if (c == '\r')
+			{
+				count--;
+				continue;
+			}
+
+			*source++ = c;
+
+			if (c == '\n')
+				break;
+		}
+
+		*source = '\0';
+
+		strncpy_s(str, count, source, _TRUNCATE);
+		delete[] source;
+
+		return str;
+	}
+
+	return VC140_fgets(str, count, stream);
+}
+
 int hk_fflush(FILE *stream)
 {
 	if (MMapFileInfo *info = GetStdioFileMap(stream))
@@ -461,25 +500,35 @@ void hk_rewind(FILE *stream)
 	VC140_rewind(stream);
 }
 
+int hk_feof(FILE *stream)
+{
+	if (MMapFileInfo *info = GetStdioFileMap(stream))
+	{
+		if (info->FilePosition == info->FileMaxPosition)
+			return 1;
+
+		return 0;
+	}
+
+	return VC140_feof(stream);
+}
+
 void PatchFileIO()
 {
-	if (g_IsGame)
-	{
-		*(uint8_t **)&VC140_fopen_s = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen_s", (PBYTE)hk_fopen_s);
-		*(uint8_t **)&VC140_wfopen_s = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "_wfopen_s", (PBYTE)hk_wfopen_s);
-		*(uint8_t **)&VC140_fopen = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen", (PBYTE)hk_fopen);
-		*(uint8_t **)&VC140_fclose = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fclose", (PBYTE)hk_fclose);
+	*(uint8_t **)&VC140_fopen_s = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen_s", (PBYTE)hk_fopen_s);
+	*(uint8_t **)&VC140_wfopen_s = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "_wfopen_s", (PBYTE)hk_wfopen_s);
+	*(uint8_t **)&VC140_fopen = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen", (PBYTE)hk_fopen);
+	*(uint8_t **)&VC140_fclose = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fclose", (PBYTE)hk_fclose);
 
-		*(uint8_t **)&VC140_fread = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fread", (PBYTE)hk_fread);
-		*(uint8_t **)&VC140_fwrite = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fwrite", (PBYTE)hk_fwrite);
-		// needs fgets
+	*(uint8_t **)&VC140_fread = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fread", (PBYTE)hk_fread);
+	*(uint8_t **)&VC140_fwrite = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fwrite", (PBYTE)hk_fwrite);
+	*(uint8_t **)&VC140_fgets = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fgets", (PBYTE)hk_fgets);
 
-		*(uint8_t **)&VC140_fflush = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fflush", (PBYTE)hk_fflush);
-		*(uint8_t **)&VC140_fseek = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fseek", (PBYTE)hk_fseek);
-		*(uint8_t **)&VC140_ftell = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "ftell", (PBYTE)hk_ftell);
-		*(uint8_t **)&VC140_rewind = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "rewind", (PBYTE)hk_rewind);
-		// needs feof
-	}
+	*(uint8_t **)&VC140_fflush = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fflush", (PBYTE)hk_fflush);
+	*(uint8_t **)&VC140_fseek = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fseek", (PBYTE)hk_fseek);
+	*(uint8_t **)&VC140_ftell = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "ftell", (PBYTE)hk_ftell);
+	*(uint8_t **)&VC140_rewind = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "rewind", (PBYTE)hk_rewind);
+	*(uint8_t **)&VC140_feof = Detours::IATHook((PBYTE)g_ModuleBase, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "feof", (PBYTE)hk_feof);
 
 	Detours::IATHook((PBYTE)g_ModuleBase, "KERNEL32.dll", "CloseHandle", (PBYTE)hk_CloseHandle);
 	Detours::IATHook((PBYTE)g_ModuleBase, "KERNEL32.dll", "ReadFile", (PBYTE)hk_ReadFile);
