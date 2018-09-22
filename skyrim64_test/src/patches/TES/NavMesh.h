@@ -12,6 +12,12 @@ public:
 	constexpr static uint32_t CUSTOM_NAVMESH_PSEUDODELTE_FLAG = 0x8;
 	constexpr static uint32_t NAVMESH_FOUND_FLAG = 0x800;
 
+	class VertexData
+	{
+	public:
+		float m_Values[3];
+	};
+
 	class BSNavmeshTriangle
 	{
 	public:
@@ -59,6 +65,20 @@ public:
 
 			return GetVertexIndex(Vertex);
 		}
+
+		uint16_t hk_GetVertexIndex_VertexCheck(uint32_t Vertex)
+		{
+			// Same as degenerate check, but can't return 2 identical values
+			static uint16_t fakeCounter = 0;
+
+			if (m_ExtraInfo & CUSTOM_NAVMESH_PSEUDODELTE_FLAG)
+			{
+				fakeCounter = (fakeCounter + 1) % 0xFFFF;
+				return fakeCounter;
+			}
+
+			return GetVertexIndex(Vertex);
+		}
 	};
 
 	class EdgeExtraInfo
@@ -69,7 +89,8 @@ public:
 		uint16_t m_TriangleIndex;
 	};
 
-	char _pad0[0x28];
+	char _pad0[0x10];
+	BSTArray<VertexData> m_Vertices;
 	BSTArray<BSNavmeshTriangle> m_Triangles;
 	BSTArray<EdgeExtraInfo> m_ExtraInfo;
 
@@ -89,6 +110,8 @@ public:
 		return nullptr;
 	}
 };
+static_assert(sizeof(BSNavmesh::VertexData) == 0xC);
+
 static_assert(sizeof(BSNavmesh::BSNavmeshTriangle) == 0x10);
 static_assert_offset(BSNavmesh::BSNavmeshTriangle, m_Vertices, 0x0);
 static_assert_offset(BSNavmesh::BSNavmeshTriangle, m_Edges, 0x6);
@@ -96,6 +119,7 @@ static_assert_offset(BSNavmesh::BSNavmeshTriangle, m_ExtraInfo, 0xC);
 
 static_assert(sizeof(BSNavmesh::EdgeExtraInfo) == 0xC);
 
+static_assert_offset(BSNavmesh, m_Vertices, 0x10);
 static_assert_offset(BSNavmesh, m_Triangles, 0x28);
 static_assert_offset(BSNavmesh, m_ExtraInfo, 0x40);
 
@@ -119,12 +143,15 @@ public:
 
 			BSNavmesh::BSNavmeshTriangle& tri = m_Data.m_Triangles.at(TriangleIndex);
 
+			// Mark with custom flag
+			tri.m_ExtraInfo |= BSNavmesh::CUSTOM_NAVMESH_PSEUDODELTE_FLAG;
+
 			// Kill all edges referencing this triangle & kill edges this triangle references
-			auto removeEdgeReferences = [TriangleIndex](BSNavmesh::BSNavmeshTriangle& Triangle)
+			auto removeEdgeReferences = [this, TriangleIndex](BSNavmesh::BSNavmeshTriangle& Triangle)
 			{
 				for (uint32_t i = 0; i < 3; i++)
 				{
-					if (Triangle.GetEdgeIndex(i) == TriangleIndex)
+					if (!Triangle.HasExtraInfo(i) && Triangle.GetEdgeIndex(i) == TriangleIndex)
 						Triangle.ClearEdge(i);
 				}
 			};
@@ -144,6 +171,9 @@ public:
 
 						Assert(externalMesh);
 						removeEdgeReferences(externalMesh->m_Data.m_Triangles.at(index));
+
+						extraInfo->m_NavmeshID = 0;
+						extraInfo->m_TriangleIndex = BSNavmesh::BAD_NAVMESH_TRIANGLE;
 					}
 					else
 					{
@@ -186,9 +216,6 @@ public:
 			tri.m_Vertices[0] = vert;
 			tri.m_Vertices[1] = vert;
 			tri.m_Vertices[2] = vert;
-
-			// Finally remove all other flags except Found and Pseudo-delete
-			tri.m_ExtraInfo = (tri.m_ExtraInfo & BSNavmesh::NAVMESH_FOUND_FLAG) | BSNavmesh::CUSTOM_NAVMESH_PSEUDODELTE_FLAG;
 		}
 	}
 

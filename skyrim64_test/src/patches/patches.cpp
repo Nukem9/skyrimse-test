@@ -321,9 +321,17 @@ void Patch_TESVCreationKit()
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D699E6), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D69B80), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
 
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D6A42B), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_VertexCheck);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D6A580), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_VertexCheck);
+
+		PatchMemory(g_ModuleBase + 0x1D6A42B, (PBYTE)"\xE8", 1);
+		PatchMemory(g_ModuleBase + 0x1D6A580, (PBYTE)"\xE8", 1);
+
 		PatchMemory(g_ModuleBase + 0x1D6984F, (PBYTE)"\xE8", 1);
 		PatchMemory(g_ModuleBase + 0x1D699E6, (PBYTE)"\xE8", 1);
 		PatchMemory(g_ModuleBase + 0x1D69B80, (PBYTE)"\xE8", 1);
+
+		PatchMemory(g_ModuleBase + 0x1FF9BAC, (PBYTE)"\xE9\xA1\x01\x00\x00", 5);// Prevent vertices from being deleted separately
 	}
 
 	//
