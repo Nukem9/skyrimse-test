@@ -1,20 +1,29 @@
 #include "../../common.h"
 #include "Setting.h"
 
-Setting::SETTING_TYPE Setting::TypeFromPrefix(const char *Prefix)
+#if 0
+#define INI_ALLOW_MULTILINE 0
+#define INI_USE_STACK 0
+#define INI_MAX_LINE 4096
+#include "../INIReader.h"
+#endif
+
+DefineIniSetting(sLanguage, General);
+
+Setting::SETTING_TYPE Setting::DataType(const char *Prefix)
 {
 	switch (Prefix[0])
 	{
-	case 'a': return ST_RGBA;
 	case 'b': return ST_BINARY;
 	case 'c': return ST_CHAR;
-	case 'f': return ST_FLOAT;
 	case 'h': return ST_UCHAR;
 	case 'i': return ST_INT;
-	case 'r': return ST_RGB;
+	case 'u': return ST_UINT;
+	case 'f': return ST_FLOAT;
 	case 'S': return ST_STRING;
 	case 's': return ST_STRING;
-	case 'u': return ST_UINT;
+	case 'r': return ST_RGB;
+	case 'a': return ST_RGBA;
 	}
 
 	return ST_NONE;
@@ -22,7 +31,7 @@ Setting::SETTING_TYPE Setting::TypeFromPrefix(const char *Prefix)
 
 void Setting::GetAsString(char *Buffer, size_t BufferLen)
 {
-	switch (TypeFromPrefix(pKey))
+	switch (DataType(pKey))
 	{
 	case ST_BINARY:
 		strncpy_s(Buffer, BufferLen, uValue.b ? "true" : "false", _TRUNCATE);
@@ -49,7 +58,7 @@ void Setting::GetAsString(char *Buffer, size_t BufferLen)
 		break;
 
 	case ST_STRING:
-		strncpy_s(Buffer, BufferLen, uValue.str, _TRUNCATE);
+		strncpy_s(Buffer, BufferLen, uValue.str ? uValue.str : "", _TRUNCATE);
 		break;
 
 	case ST_RGB:
@@ -70,7 +79,7 @@ bool Setting::SetFromString(const char *Input)
 {
 	SETTING_VALUE value;
 
-	switch (TypeFromPrefix(pKey))
+	switch (DataType(pKey))
 	{
 	case ST_BINARY:
 		if (!_stricmp(Input, "true") || !_stricmp(Input, "1"))
@@ -102,8 +111,8 @@ bool Setting::SetFromString(const char *Input)
 		break;
 
 	case ST_STRING:
-		// I don't know how to handle these as far as the engine is concerned
-		return false;
+		(*this) = Input;
+		return true;
 
 	case ST_RGB:
 		if (sscanf_s(Input, "%hhu %hhu %hhu", &value.rgba.r, &value.rgba.g, &value.rgba.b) != 3)
@@ -120,6 +129,147 @@ bool Setting::SetFromString(const char *Input)
 	}
 
 	uValue = value;
+	return true;
+}
+
+bool INISettingCollection::hk_ReadSetting(Setting *S)
+{
+	if (!S->pKey)
+		return false;
+
+	bool result = false;
+	bool openHandle = pHandle != nullptr;
+
+	if (!openHandle)
+		Open(true);
+
+	AssertMsg(false, "Code is experimental, may cause subtle errors");
+
+#if 0
+	const INIReader *reader = (const INIReader *)pHandle;
+
+	if (reader)
+	{
+		char mainKey[MAX_KEY_LENGTH];
+		MainKey(S, mainKey);
+
+		char subKey[MAX_SUBKEY_LENGTH];
+		SubKey(S, subKey);
+
+		switch (Setting::DataType(S->pKey))
+		{
+		case Setting::ST_BINARY:
+			S->uValue.b = reader->GetBoolean(mainKey, subKey, S->uValue.b) != false;
+			break;
+
+		case Setting::ST_CHAR:
+			S->uValue.c = (char)reader->GetInteger(mainKey, subKey, S->uValue.c);
+			break;
+
+		case Setting::ST_UCHAR:
+			S->uValue.h = (unsigned char)reader->GetInteger(mainKey, subKey, S->uValue.h);
+			break;
+
+		case Setting::ST_INT:
+		case Setting::ST_UINT:
+			S->uValue.u = reader->GetInteger(mainKey, subKey, S->uValue.u);
+			break;
+
+		case Setting::ST_FLOAT:
+			S->uValue.f = (float)reader->GetReal(mainKey, subKey, S->uValue.f);
+			break;
+
+		case Setting::ST_STRING:
+		{
+			if (!strcmp(mainKey, "LANGUAGE"))
+			{
+				// Remap the main key to language-specific sections
+				strcpy_s(mainKey, MAX_KEY_LENGTH, reader->Get("General", "sLanguage", sLanguage->uValue.str).c_str());
+			}
+
+			(*S) = reader->Get(mainKey, subKey, S->uValue.str).c_str();
+		}
+		break;
+
+		case Setting::ST_RGB:
+		{
+			std::string& value = reader->Get(mainKey, subKey, "");
+
+			if (value.length() > 0)
+			{
+				uint32_t rgb[3];
+				result = sscanf_s(value.c_str(), "%u,%u,%u", &rgb[0], &rgb[1], &rgb[2]) == 3;
+				S->uValue.rgba.r = rgb[0];
+				S->uValue.rgba.g = rgb[1];
+				S->uValue.rgba.b = rgb[2];
+				S->uValue.rgba.a = 255;
+			}
+		}
+		break;
+
+		case Setting::ST_RGBA:
+		{
+			std::string& value = reader->Get(mainKey, subKey, "");
+
+			if (value.length() > 0)
+			{
+				uint32_t rgba[4];
+				result = sscanf_s(value.c_str(), "%u,%u,%u,%u", &rgba[0], &rgba[1], &rgba[2], &rgba[3]) == 4;
+				S->uValue.rgba.r = rgba[0];
+				S->uValue.rgba.g = rgba[1];
+				S->uValue.rgba.b = rgba[2];
+				S->uValue.rgba.a = rgba[3];
+			}
+		}
+		break;
+
+		case Setting::ST_NONE:
+			AssertMsg(false, "Trying to get an INI value for an invalid key");
+			break;
+		}
+	}
+#endif
+
+	if (!openHandle)
+		Close();
+
+	return result;
+}
+
+bool INISettingCollection::hk_Open(bool OpenDuringRead)
+{
+#if 0
+	INIReader *reader = new INIReader(pSettingFile);
+
+	if (reader->ParseError() != 0)
+	{
+		delete reader;
+		reader = nullptr;
+	}
+
+	pHandle = reader;
+#endif
+
+	//
+	// Cut down the number of GetPrivateProfileX calls by an order of magnitude. Normally the game checks
+	// an INI for every ESP/ESM, which then loops over every single INI variable.
+	//
+	if (GetFileAttributes(pSettingFile) != INVALID_FILE_ATTRIBUTES)
+		pHandle = this;
+	else
+		pHandle = nullptr;
+
+	return true;
+}
+
+bool INISettingCollection::hk_Close()
+{
+#if 0
+	if (pHandle)
+		delete static_cast<INIReader *>(pHandle);
+#endif
+
+	pHandle = nullptr;
 	return true;
 }
 
@@ -140,7 +290,7 @@ void INISettingCollection::DumpSettingIDAScript(FILE *File)
 	{
 		void *addr = (void *)((uintptr_t)&s->QItem()->uValue - g_ModuleBase + 0x140000000);
 
-		switch (Setting::TypeFromPrefix(s->QItem()->pKey))
+		switch (Setting::DataType(s->QItem()->pKey))
 		{
 		case Setting::ST_BINARY: fprintf(File, "create_byte(0x%p);\n", addr); break;
 		case Setting::ST_CHAR: fprintf(File, "create_byte(0x%p);\n", addr); break;
@@ -158,13 +308,53 @@ void INISettingCollection::DumpSettingIDAScript(FILE *File)
 		char temp[1024];
 		strcpy_s(temp, s->QItem()->pKey);
 
-		while (strchr(temp, ':'))
-			*strchr(temp, ':') = '_';
-
-		while (strchr(temp, ' '))
-			*strchr(temp, ' ') = '_';
+		for (int i = 0; i < ARRAYSIZE(temp); i++)
+		{
+			if (temp[i] == ':' || temp[i] == ' ')
+				temp[i] = '_';
+		}
 
 		fprintf(File, "set_name(0x%p, \"%s\");\n", addr, temp);
+	}
+}
+
+void INISettingCollection::MainKey(const Setting *S, char *Buffer)
+{
+	if (Buffer)
+	{
+		const char *ptr = "MAIN";
+
+		if (S->pKey)
+		{
+			const char *v = strchr(S->pKey, ':');
+
+			if (v)
+				ptr = v + 1;
+		}
+
+		strcpy_s(Buffer, MAX_KEY_LENGTH, ptr);
+	}
+}
+
+void INISettingCollection::SubKey(const Setting *S, char *Buffer)
+{
+	if (Buffer)
+	{
+		Buffer[0] = '\0';
+
+		if (S->pKey)
+		{
+			const char *ptr = strchr(S->pKey, ':');
+			size_t len;
+
+			if (ptr)
+				len = (uintptr_t)ptr - (uintptr_t)S->pKey;
+			else
+				len = strlen(S->pKey);
+
+			strncpy_s(Buffer, len + 1, S->pKey, len);
+			Buffer[len] = '\0';
+		}
 	}
 }
 

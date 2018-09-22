@@ -17,6 +17,7 @@
 #include "TES/BSShader/Shaders/BSParticleShader.h"
 #include "TES/MemoryManager.h"
 #include "TES/NavMesh.h"
+#include "TES/Setting.h"
 
 #define INI_ALLOW_MULTILINE 0
 #define INI_USE_STACK 0
@@ -178,6 +179,17 @@ void Patch_TESV()
 	// NiRTTI
 	//
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC66F80), &NiRTTI::__ctor__);
+
+	//
+	// Setting
+	//
+	//Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INISettingCollection")->VTableAddress, &INISettingCollection::hk_ReadSetting, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INISettingCollection")->VTableAddress, &INISettingCollection::hk_Open, 5);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INISettingCollection")->VTableAddress, &INISettingCollection::hk_Close, 6);
+
+	//Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INIPrefSettingCollection")->VTableAddress, &INIPrefSettingCollection::hk_ReadSetting, 4);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INIPrefSettingCollection")->VTableAddress, &INIPrefSettingCollection::hk_Open, 5);
+	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INIPrefSettingCollection")->VTableAddress, &INIPrefSettingCollection::hk_Close, 6);
 
 	//
 	// Shaders
