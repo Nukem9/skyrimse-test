@@ -29,7 +29,7 @@ void *FormReferenceMap_FindOrCreate(uint64_t Key, bool Create)
 		if (ptr)
 			ptr = ((void *(__fastcall *)(void *))(g_ModuleBase + 0x1397CD0))(ptr);
 
-		m_Entries.insert_or_assign(Key >> 4, ptr);
+		m_Entries.insert_or_assign(FORM_REFERENCE_KEY(Key), ptr);
 		return ptr;
 	}
 
