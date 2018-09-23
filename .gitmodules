@@ -14,3 +14,6 @@
 	path = Dependencies/tbb
 	url = https://github.com/01org/tbb.git
 	branch = tbb_2019
+[submodule "Dependencies/libdeflate"]
+	path = Dependencies/libdeflate
+	url = https://github.com/ebiggers/libdeflate.git
