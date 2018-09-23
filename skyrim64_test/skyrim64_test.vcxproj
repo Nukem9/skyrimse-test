@@ -209,6 +209,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiTransform.h" />
     <ClInclude Include="src\patches\TES\Setting.h" />
     <ClInclude Include="src\patches\TES\Console.h" />
+    <ClInclude Include="src\patches\TES\TESForm_CK.h" />
     <ClInclude Include="src\profiler_internal.h" />
     <ClInclude Include="src\d3dconv.h" />
     <ClInclude Include="src\patches\dinput8.h" />

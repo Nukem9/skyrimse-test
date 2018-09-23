@@ -18,6 +18,7 @@
 #include "TES/MemoryManager.h"
 #include "TES/NavMesh.h"
 #include "TES/Setting.h"
+#include "TES/TESForm_CK.h"
 
 #define INI_ALLOW_MULTILINE 0
 #define INI_USE_STACK 0
@@ -345,6 +346,14 @@ void Patch_TESVCreationKit()
 
 		PatchMemory(g_ModuleBase + 0x1FF9BAC, (PBYTE)"\xE9\xA1\x01\x00\x00", 5);// Prevent vertices from being deleted separately
 	}
+
+	//
+	// TESForm
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x16C0650), &FormReferenceMap_RemoveAllEntries);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x16C0A90), &FormReferenceMap_FindOrCreate);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x16C0B50), &FormReferenceMap_RemoveEntry);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x146C130), &FormReferenceMap_Get);
 
 	//
 	// Allow saving ESM's directly. "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
