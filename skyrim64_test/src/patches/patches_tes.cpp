@@ -64,9 +64,24 @@ void test2()
 	doCullTest = false;
 }
 
+void(*test3_orig)();
+void test3()
+{
+	MOC::SendTraverseCommand(nullptr);
+	test3_orig();
+}
+
 void Patch_TESV()
 {
 	MSRTTI::Initialize();
+
+	/*
+	FILE *f = fopen("C:\\testout.txt", "w");
+	MSRTTI::Dump(f);
+	fclose(f);
+	//ExitProcess(0);
+	*/
+
 	PatchThreading();
 	PatchWindow();
 	PatchD3D11();
@@ -270,4 +285,5 @@ void Patch_TESV()
 
 	*(PBYTE *)&TESObjectCell::CreateRootMultiBoundNode = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x264230), &TESObjectCell::hk_CreateRootMultiBoundNode);
 
+	*(PBYTE *)&test3_orig = Detours::X64::DetourFunctionClass((uint8_t *)(g_ModuleBase + 0x5B7AD0), &test3);
 }

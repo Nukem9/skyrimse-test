@@ -1,12 +1,11 @@
 #include <xbyak/xbyak.h>
 #include "../typeinfo/ms_rtti.h"
 #include "../common.h"
+#include "TES/MemoryManager.h"
+#include "TES/NiMain/NiRTTI.h"
 #include "CKIT/Editor.h"
 #include "CKIT/TESForm_CK.h"
 #include "CKIT/NavMesh.h"
-
-#include "TES/MemoryManager.h"
-#include "TES/NiMain/NiRTTI.h"
 
 #define INI_ALLOW_MULTILINE 0
 #define INI_USE_STACK 0
@@ -15,35 +14,12 @@
 
 INIReader INI("skyrim64_test.ini");
 
-void DumpReflectionData();
-void ExportTest(FILE *File);
-
-void PatchAchievements();
-void PatchD3D11();
-void PatchLogging();
-void PatchSettings();
 void PatchSteam();
 void PatchThreading();
-//void PatchWindow();
 void PatchFileIO();
-void ExperimentalPatchEmptyFunctions();
 void ExperimentalPatchMemInit();
 void ExperimentalPatchEditAndContinue();
-
 void PatchMemory();
-
-void MyTest(uintptr_t a1)
-{
-	FILE *f = fopen("C:\\rttidata.txt", "w");
-	ExportTest(f);
-	fclose(f);
-
-	//DumpReflectionData();
-
-	//((void(__fastcall *)(__int64))(0x141A953D0))(*(__int64 *)(*(__int64 *)(a1 + 8) + 104));
-
-	//((void(__fastcall *)(void *))(0x1413670F0))(*(void **)0x143AFC260);
-}
 
 void Patch_TESVCreationKit()
 {
@@ -193,16 +169,9 @@ void Patch_TESVCreationKit()
 	// TEMP: Kill broken destructor causing double free
 	PatchMemory(g_ModuleBase + 0x1392D90, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
 
-	//PatchMemory(g_ModuleBase + 0x163CDF3, (PBYTE)"\xEB", 1);
-
-
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BB1E), &hk_inflateInit);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BBB9), &hk_inflate);
 
 	PatchMemory(g_ModuleBase + 0x166BB1E, (PBYTE)"\xE8", 1);
 	PatchMemory(g_ModuleBase + 0x166BBB9, (PBYTE)"\xE8", 1);
-
-	//Detours::X64::DetourFunctionClass((PBYTE)0x14135CCB6, &MyTest);
-	//PatchMemory(0x14135CCB6, (PBYTE)"\xE8", 1);
-	//PatchMemory(0x14135CCBB, (PBYTE)"\x90", 1);
 }

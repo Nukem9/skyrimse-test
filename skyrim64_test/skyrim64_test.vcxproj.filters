@@ -448,9 +448,6 @@
     <ClCompile Include="src\patches\TES\BSShader\BSShader_Dumper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\patches.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\TES\BGSDistantTreeBlock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -515,6 +512,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSGraphicsState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\patches_tes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

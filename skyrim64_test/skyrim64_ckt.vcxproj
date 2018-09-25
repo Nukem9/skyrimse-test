@@ -117,7 +117,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NOMINMAX;_REENTRANT;JEMALLOC_EXPORT=;_DEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" /D "SKYRIM64_CREATIONKIT_DLL=1" %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -139,7 +139,7 @@
       <Mtune>Broadwell</Mtune>
       <CCppSupport>Cpp17Support</CCppSupport>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" /D "SKYRIM64_CREATIONKIT_DLL=1" %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -162,7 +162,7 @@
       <Mtune>Broadwell</Mtune>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" /D "SKYRIM64_CREATIONKIT_DLL=1" %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

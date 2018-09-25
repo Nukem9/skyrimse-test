@@ -66,7 +66,9 @@ void ApplyPatches()
 	}
 	else
 	{
+#if SKYRIM64_CREATIONKIT_DLL
 		Patch_TESVCreationKit();
+#endif
 	}
 }
 
@@ -93,8 +95,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			EnableDumpBreakpoint();
     }
 
+#if !SKYRIM64_CREATIONKIT_DLL
 	if (g_IsGame)
 		TLSPatcherCallback(hModule, fdwReason, lpReserved);
+#endif
 
     return TRUE;
 }

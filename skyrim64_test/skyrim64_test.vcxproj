@@ -237,7 +237,7 @@
     <ClCompile Include="src\d3d9.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />
     <ClCompile Include="src\patches\fileio.cpp" />
-    <ClCompile Include="src\patches\patches.cpp" />
+    <ClCompile Include="src\patches\patches_tes.cpp" />
     <ClCompile Include="src\patches\rendering\codegen.cpp" />
     <ClCompile Include="src\patches\rendering\d3d11.cpp" />
     <ClCompile Include="src\d3dx9_debug.cpp" />
