@@ -92,10 +92,13 @@ namespace MSRTTI
 			RVA<BaseClassArray *> BaseClassArray;	// BaseClassArray
 		};
 
+#pragma warning(push)
+#pragma warning(disable: 4200) // nonstandard extension used: zero-sized array in struct/union
 		struct BaseClassArray
 		{
 			uint32_t ArrayOfBaseClassDescriptors[]; // BaseClassDescriptor *
 		};
+#pragma warning(pop)
 
 		struct BaseClassDescriptor
 		{
