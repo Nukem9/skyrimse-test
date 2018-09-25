@@ -1,7 +1,7 @@
 #pragma once
 
 #include <unordered_map>
-#include "BSTArray.h"
+#include "../TES/BSTArray.h"
 
 class BSNavmesh
 {

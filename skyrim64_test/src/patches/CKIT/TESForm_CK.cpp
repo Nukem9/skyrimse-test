@@ -1,4 +1,5 @@
-#pragma once
+#include "../../common.h"
+#include "TESForm_CK.h"
 
 #define FORM_REFERENCE_KEY(x) (((x & 3) == 0) ? (x >> 2) : x)
 

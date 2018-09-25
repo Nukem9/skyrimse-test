@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="EditAndContinue|x64">
+      <Configuration>EditAndContinue</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\common.cpp" />
+    <ClCompile Include="src\d3d9.cpp" />
+    <ClCompile Include="src\dllmain.cpp" />
+    <ClCompile Include="src\dump.cpp" />
+    <ClCompile Include="src\patches\CKIT\Editor.cpp" />
+    <ClCompile Include="src\patches\CKIT\TESForm_CK.cpp" />
+    <ClCompile Include="src\patches\patches_ckit.cpp" />
+    <ClCompile Include="src\patches\experimental.cpp" />
+    <ClCompile Include="src\patches\fileio.cpp" />
+    <ClCompile Include="src\patches\steam.cpp" />
+    <ClCompile Include="src\patches\TES\MemoryManager.cpp" />
+    <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp" />
+    <ClCompile Include="src\patches\threading.cpp" />
+    <ClCompile Include="src\typeinfo\hk_rtti.cpp" />
+    <ClCompile Include="src\typeinfo\ms_rtti.cpp" />
+    <ClCompile Include="src\typeinfo\ni_rtti.cpp" />
+    <ClCompile Include="src\xutil.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\common.h" />
+    <ClInclude Include="src\config.h" />
+    <ClInclude Include="src\dump.h" />
+    <ClInclude Include="src\patches\CKIT\Editor.h" />
+    <ClInclude Include="src\patches\CKIT\NavMesh.h" />
+    <ClInclude Include="src\patches\CKIT\TESForm_CK.h" />
+    <ClInclude Include="src\patches\INIReader.h" />
+    <ClInclude Include="src\patches\TES\MemoryManager.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiRTTI.h" />
+    <ClInclude Include="src\typeinfo\hk_rtti.h" />
+    <ClInclude Include="src\typeinfo\ms_rtti.h" />
+    <ClInclude Include="src\xutil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\patches\TES\NiMain\NiRTTI.inl" />
+    <None Include="src\typeinfo\ni_rtti.inl" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{87E6B6A2-89F5-43A4-B794-DF3B8CE7D68D}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>skyrim64_ckt</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <InterproceduralOptimization>true</InterproceduralOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <InterproceduralOptimization>true</InterproceduralOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)Dependencies\jemalloc\include;$(SolutionDir)Dependencies\jemalloc\include\msvc_compat;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
+    <TargetName>d3d9</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)Dependencies\jemalloc\include;$(SolutionDir)Dependencies\jemalloc\include\msvc_compat;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
+    <TargetName>d3d9</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'">
+    <IncludePath>$(SolutionDir)Dependencies\jemalloc\include;$(SolutionDir)Dependencies\jemalloc\include\msvc_compat;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
+    <TargetName>d3d9</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>NOMINMAX;_REENTRANT;JEMALLOC_EXPORT=;_DEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <UseMSVC>false</UseMSVC>
+      <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
+      <UseProcessorExtensions>HOST</UseProcessorExtensions>
+      <Mtune>Broadwell</Mtune>
+      <CCppSupport>Cpp17Support</CCppSupport>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>NOMINMAX;_REENTRANT;JEMALLOC_EXPORT=;NDEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <UseMSVC>false</UseMSVC>
+      <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
+      <UseProcessorExtensions>HOST</UseProcessorExtensions>
+      <Mtune>Broadwell</Mtune>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

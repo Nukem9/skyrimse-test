@@ -1,5 +1,4 @@
 #include <future>
-#include <set>
 #include "../common.h"
 #include "dinput8.h"
 
@@ -9,11 +8,6 @@
 HWND g_SkyrimWindow;
 WNDPROC g_OriginalWndProc;
 DWORD MessageThreadId;
-
-std::recursive_mutex dialogMutex;
-std::set<HWND> g_ParentCreateDialogHwnds;
-std::set<HWND> g_ParentDialogHwnds;
-std::atomic<uint64_t> g_OpenDialogCount;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -140,92 +134,10 @@ HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWin
 	return taskVar.get();
 }
 
-HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
-{
-	// NOTE: This is NOT an actual dialog. It uses CreateWindowExA internally.
-	dialogMutex.lock();
-	g_ParentCreateDialogHwnds.insert(hWndParent);
-	dialogMutex.unlock();
-
-	return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
-}
-
-INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
-{
-	dialogMutex.lock();
-	Assert(IsWindow(hWndParent));
-	Assert(g_ParentDialogHwnds.count(hWndParent) <= 0);
-
-	g_ParentDialogHwnds.insert(hWndParent);
-	dialogMutex.unlock();
-
-	g_OpenDialogCount++;
-	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
-}
-
-BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult)
-{
-	Assert(hDlg);
-	HWND parent = GetParent(hDlg);
-
-	dialogMutex.lock();
-	{
-		if (g_OpenDialogCount <= 0)
-		{
-			// Fix for the CK calling EndDialog on a CreateDialogParamA window
-			if (g_ParentCreateDialogHwnds.count(parent) > 0)
-			{
-				g_ParentCreateDialogHwnds.erase(parent);
-				DestroyWindow(hDlg);
-			}
-
-			dialogMutex.unlock();
-			return FALSE;
-		}
-
-		g_ParentDialogHwnds.erase(parent);
-	}
-	dialogMutex.unlock();
-
-	g_OpenDialogCount--;
-	return EndDialog(hDlg, nResult);
-}
-
-LRESULT WINAPI hk_SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	if (hWnd && Msg == WM_DESTROY)
-	{
-		dialogMutex.lock();
-		bool found = g_ParentDialogHwnds.count(GetParent(hWnd)) > 0;
-		dialogMutex.unlock();
-
-		if (found)
-		{
-			// This is a dialog, we can't call DestroyWindow on it
-			return 0;
-		}
-
-		DestroyWindow(hWnd);
-		return 0;
-	}
-
-	return SendMessageA(hWnd, Msg, wParam, lParam);
-}
-
 void PatchWindow()
 {
-	if (!g_IsGame)
-	{
-		PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
-		PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
-		PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
-		PatchIAT(hk_SendMessageA, "USER32.DLL", "SendMessageA");
-	}
-	else
-	{
-		PatchMemory(g_ModuleBase + 0x5AF310, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
-		CreateThread(nullptr, 0, MessageThread, nullptr, 0, &MessageThreadId);
+	PatchMemory(g_ModuleBase + 0x5AF310, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
+	CreateThread(nullptr, 0, MessageThread, nullptr, 0, &MessageThreadId);
 
-		PatchIAT(hk_CreateWindowExA, "USER32.DLL", "CreateWindowExA");
-	}
+	PatchIAT(hk_CreateWindowExA, "USER32.DLL", "CreateWindowExA");
 }
