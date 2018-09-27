@@ -38,11 +38,6 @@ void LoadModules()
         libttPath = "libittnotify.dll";
 
     g_DllVTune = LoadLibraryA(libttPath);
-
-	__itt_domain_create("MemoryManager");
-	ITT_AllocateCallback = __itt_heap_function_create("Allocate", "MemoryManager");
-	ITT_ReallocateCallback = __itt_heap_function_create("Reallocate", "MemoryManager");
-	ITT_FreeCallback = __itt_heap_function_create("Free", "MemoryManager");
 #endif
 }
 
@@ -50,6 +45,13 @@ void ApplyPatches()
 {
 	// The EXE has been unpacked at this point
 	SetThreadName(GetCurrentThreadId(), "Main Thread");
+
+#if SKYRIM64_USE_VTUNE
+	__itt_domain_create("MemoryManager");
+	ITT_AllocateCallback = __itt_heap_function_create("Allocate", "MemoryManager");
+	ITT_ReallocateCallback = __itt_heap_function_create("Reallocate", "MemoryManager");
+	ITT_FreeCallback = __itt_heap_function_create("Free", "MemoryManager");
+#endif
 
 #if SKYRIM64_USE_VFS
 	once();
