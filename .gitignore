@@ -39,6 +39,7 @@
 .vs/
 packages/
 x64/
+x86/
 shader_analyzer/bin/
 shader_analyzer/obj/
 

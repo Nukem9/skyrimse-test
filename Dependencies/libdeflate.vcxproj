@@ -87,18 +87,24 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\libdeflate;E:\Projects\Skyrim\SkyrimSETest\Dependencies\libdeflate\common;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)x64\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\libdeflate;E:\Projects\Skyrim\SkyrimSETest\Dependencies\libdeflate\common;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)x86\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)x86\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\libdeflate;E:\Projects\Skyrim\SkyrimSETest\Dependencies\libdeflate\common;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)x64\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>E:\Projects\Skyrim\SkyrimSETest\Dependencies\libdeflate;E:\Projects\Skyrim\SkyrimSETest\Dependencies\libdeflate\common;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)x86\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)x86\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
