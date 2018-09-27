@@ -57,6 +57,11 @@ public:
 		a = A;
 	}
 
+	inline const float *Data() const
+	{
+		return &r;
+	}
+
 	inline __m128 AsXmm() const
 	{
 		return _mm_load_ps(&r);

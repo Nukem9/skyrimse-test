@@ -187,12 +187,12 @@ namespace BSGraphics
 			//
 			// This is probably a separate structure...possibly the BSGraphics::RendererData class
 			//
-			uint32_t m_StateUpdateFlags;						// Flags; global state updates
-			uint32_t m_PSResourceModifiedBits;					// Flags
-			uint32_t m_PSSamplerModifiedBits;					// Flags
-			uint32_t m_CSResourceModifiedBits;					// Flags
-			uint32_t m_CSSamplerModifiedBits;					// Flags
-			uint32_t m_CSUAVModifiedBits;						// Flags
+			uint32_t m_StateUpdateFlags;						// Flags +0x0  0xFFFFFFFF; global state updates
+			uint32_t m_PSResourceModifiedBits;					// Flags +0x4  0xFFFF
+			uint32_t m_PSSamplerModifiedBits;					// Flags +0x8  0xFFFF
+			uint32_t m_CSResourceModifiedBits;					// Flags +0xC  0xFFFF
+			uint32_t m_CSSamplerModifiedBits;					// Flags +0x10 0xFFFF
+			uint32_t m_CSUAVModifiedBits;						// Flags +0x14 0xFF
 
 			uint32_t m_RenderTargetIndexes[8];					// enum <unnamed>: RENDER_TARGET_NONE...RENDER_TARGET_CUBEMAP_REFLECTIONS
 			uint32_t rshadowState_iDepthStencil;				// Index
