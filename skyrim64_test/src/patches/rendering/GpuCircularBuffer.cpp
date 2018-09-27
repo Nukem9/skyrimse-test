@@ -16,6 +16,8 @@ GpuCircularBuffer::GpuCircularBuffer(ID3D11Device *Device, uint32_t Type, uint32
 
 	FrameUtilizedAmounts = new uint32_t[MaxFrames];
 	CurrentAvailable = BufferSize;
+
+	D3DBuffer->SetPrivateData(WKPDID_D3DDebugObjectName, strlen("GpuCircularBuffer"), "GpuCircularBuffer");
 }
 
 GpuCircularBuffer::~GpuCircularBuffer()
