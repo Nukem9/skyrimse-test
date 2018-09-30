@@ -6,6 +6,7 @@
 #include "CKIT/Editor.h"
 #include "CKIT/TESForm_CK.h"
 #include "CKIT/NavMesh.h"
+#include "CKIT/EditorUI.h"
 
 #define INI_ALLOW_MULTILINE 0
 #define INI_USE_STACK 0
@@ -20,6 +21,8 @@ void PatchFileIO();
 void ExperimentalPatchMemInit();
 void ExperimentalPatchEditAndContinue();
 void PatchMemory();
+
+extern WNDPROC OldEditorUI_WndProc;
 
 void Patch_TESVCreationKit()
 {
@@ -100,6 +103,28 @@ void Patch_TESVCreationKit()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x16C0A90), &FormReferenceMap_FindOrCreate);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x16C0B50), &FormReferenceMap_RemoveEntry);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x146C130), &FormReferenceMap_Get);
+
+	//
+	// UI
+	//
+	if (INI.GetBoolean("CreationKit", "UI", false))
+	{
+		EditorUI_Initialize();
+		*(PBYTE *)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3770), &EditorUI_WndProc);
+
+		PatchMemory(g_ModuleBase + 0x1487B69, (PBYTE)"\x90\x90", 2);// Enable push to game button even if version control is disabled
+		PatchMemory(g_ModuleBase + 0x1487B7C, (PBYTE)"\xEB", 1);
+
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1256600), &EditorUI_Warning);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x243D610), &EditorUI_Warning);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1CD29E0), &EditorUI_Warning);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x122C5F0), &EditorUI_WarningUnknown1);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x137FC60), &EditorUI_WarningUnknown1);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1FCB030), &EditorUI_WarningUnknown1);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x27A6150), &EditorUI_WarningUnknown2);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x27A6270), &EditorUI_WarningUnknown2);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x243D260), &EditorUI_Assert);
+	}
 
 	//
 	// Windows

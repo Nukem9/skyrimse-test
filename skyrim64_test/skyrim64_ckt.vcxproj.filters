@@ -65,6 +65,9 @@
     <ClCompile Include="src\patches\CKIT\TESForm_CK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\patches\CKIT\EditorUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common.h">
@@ -101,6 +104,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\CKIT\Editor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKIT\EditorUI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
