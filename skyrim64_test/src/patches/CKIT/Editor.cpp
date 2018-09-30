@@ -1,7 +1,5 @@
 #include <libdeflate/libdeflate.h>
 #include <mutex>
-#include <set>
-#include <atomic>
 #include "../../common.h"
 
 #pragma comment(lib, "libdeflate.lib")
@@ -29,7 +27,7 @@ std::recursive_mutex g_DialogMutex;
 std::unordered_map<HWND, DialogOverrideData> g_DialogOverrides;
 thread_local DialogOverrideData *DlgData;
 
-INT_PTR DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	Assert(IsWindow(hwndDlg));
 

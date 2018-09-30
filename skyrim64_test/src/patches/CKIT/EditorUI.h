@@ -5,6 +5,7 @@
 void EditorUI_Initialize();
 bool EditorUI_CreateLogWindow();
 bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu);
+bool EditorUI_CreateStdoutListener();
 
 void EditorUI_LogVa(const char *Format, va_list Va);
 void EditorUI_Log(const char *Format, ...);

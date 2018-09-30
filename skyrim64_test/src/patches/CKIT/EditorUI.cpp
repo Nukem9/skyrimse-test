@@ -1,3 +1,4 @@
+#include <tbb/concurrent_vector.h>
 #include <regex>
 #include <Richedit.h>
 #include <CommCtrl.h>
@@ -29,6 +30,9 @@ void EditorUI_Initialize()
 
 	if (!EditorUI_CreateLogWindow())
 		MessageBoxA(nullptr, "Failed to create console log window", "Error", MB_ICONERROR);
+
+	if (!EditorUI_CreateStdoutListener())
+		MessageBoxA(nullptr, "Failed to create output listener for external processes", "Error", MB_ICONERROR);
 }
 
 bool EditorUI_CreateLogWindow()
@@ -88,6 +92,47 @@ bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu)
 	return result ? true : false;
 }
 
+bool EditorUI_CreateStdoutListener()
+{
+	SECURITY_ATTRIBUTES saAttr;
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = nullptr;
+
+	HANDLE pipeRead;
+	HANDLE pipeWrite;
+
+	if (!CreatePipe(&pipeRead, &pipeWrite, &saAttr, 0))
+		return false;
+
+	// Ensure the read handle to the pipe for STDOUT is not inherited
+	if (!SetHandleInformation(pipeRead, HANDLE_FLAG_INHERIT, 0))
+		return false;
+
+	std::thread pipeReader([pipeRead, pipeWrite]()
+	{
+		while (true)
+		{
+			char buffer[4096];
+			DWORD bytesRead;
+			bool succeeded = ReadFile(pipeRead, buffer, ARRAYSIZE(buffer), &bytesRead, nullptr) != 0;
+
+			// Bail if there's nothing left or the process exited
+			if (!succeeded || bytesRead <= 0)
+				break;
+
+			buffer[bytesRead - 1] = '\0';
+			EditorUI_Log("%s\n", buffer);
+		}
+
+		CloseHandle(pipeRead);
+		CloseHandle(pipeWrite);
+	});
+
+	pipeReader.detach();
+	return true;
+}
+
 void EditorUI_LogVa(const char *Format, va_list Va)
 {
 	char buffer[2048];
@@ -99,7 +144,21 @@ void EditorUI_LogVa(const char *Format, va_list Va)
 	if (len >= 2 && buffer[len - 1] != '\n')
 		strcat_s(buffer, "\n");
 
-	PostMessageA(g_ConsoleHwnd, UI_CMD_ADDLOGTEXT, 0, (LPARAM)_strdup(buffer));
+	// Buffer messages if the window hasn't been created yet
+	static tbb::concurrent_vector<const char *> pendingMessages;
+
+	if (g_ConsoleHwnd && pendingMessages.size() > 0)
+	{
+		for (size_t i = 0; i < pendingMessages.size(); i++)
+			PostMessageA(g_ConsoleHwnd, UI_CMD_ADDLOGTEXT, 0, (LPARAM)pendingMessages[i]);
+
+		pendingMessages.clear();
+	}
+
+	if (!g_ConsoleHwnd)
+		pendingMessages.push_back(_strdup(buffer));
+	else
+		PostMessageA(g_ConsoleHwnd, UI_CMD_ADDLOGTEXT, 0, (LPARAM)_strdup(buffer));
 }
 
 void EditorUI_Log(const char *Format, ...)
@@ -182,7 +241,7 @@ void EditorUI_Assert(const char *File, int Line, const char *Message)
 
 namespace ui::log
 {
-	// This is really a hack for the undefined symbol otherwise
+	// This is really a hack for the undefined symbol
 	void Add(const char *Format, ...)
 	{
 		va_list va;
