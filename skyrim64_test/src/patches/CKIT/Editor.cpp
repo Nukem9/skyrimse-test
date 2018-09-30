@@ -18,59 +18,95 @@ struct z_stream_s
 	struct internal_state *state;
 };
 
-std::recursive_mutex dialogMutex;
-std::set<HWND> g_ParentCreateDialogHwnds;
-std::set<HWND> g_ParentDialogHwnds;
-std::atomic<uint64_t> g_OpenDialogCount;
+struct DialogOverrideData
+{
+	DLGPROC DialogFunc;	// Original function pointer
+	LPARAM Param;		// Original parameter
+	bool IsDialog;		// True if it requires EndDialog()
+};
+
+std::recursive_mutex g_DialogMutex;
+std::unordered_map<HWND, DialogOverrideData> g_DialogOverrides;
+thread_local DialogOverrideData *DlgData;
+
+INT_PTR DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	Assert(IsWindow(hwndDlg));
+
+	DLGPROC proc = nullptr;
+
+	g_DialogMutex.lock();
+	{
+		if (auto itr = g_DialogOverrides.find(hwndDlg); itr != g_DialogOverrides.end())
+			proc = itr->second.DialogFunc;
+
+		// if (is new entry)
+		if (!proc)
+		{
+			g_DialogOverrides[hwndDlg] = *DlgData;
+			proc = DlgData->DialogFunc;
+
+			delete DlgData;
+			DlgData = nullptr;
+		}
+
+		// Purge old entries every now and then
+		if (g_DialogOverrides.size() >= 50)
+		{
+			for (auto itr = g_DialogOverrides.begin(); itr != g_DialogOverrides.end();)
+			{
+				if (itr->first == hwndDlg || IsWindow(itr->first))
+				{
+					itr++;
+					continue;
+				}
+
+				itr = g_DialogOverrides.erase(itr);
+			}
+		}
+	}
+	g_DialogMutex.unlock();
+
+	return proc(hwndDlg, uMsg, wParam, lParam);
+}
 
 HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
-	// NOTE: This is NOT an actual dialog. It uses CreateWindowExA internally.
-	dialogMutex.lock();
-	g_ParentCreateDialogHwnds.insert(hWndParent);
-	dialogMutex.unlock();
+	// EndDialog MUST NOT be used
+	DialogOverrideData *data = new DialogOverrideData;
+	data->DialogFunc = lpDialogFunc;
+	data->Param = dwInitParam;
+	data->IsDialog = false;
 
-	return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	DlgData = data;
+	return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
 }
 
 INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
-	dialogMutex.lock();
-	Assert(IsWindow(hWndParent));
-	Assert(g_ParentDialogHwnds.count(hWndParent) <= 0);
+	// EndDialog MUST be used
+	DialogOverrideData *data = new DialogOverrideData;
+	data->DialogFunc = lpDialogFunc;
+	data->Param = dwInitParam;
+	data->IsDialog = true;
 
-	g_ParentDialogHwnds.insert(hWndParent);
-	dialogMutex.unlock();
-
-	g_OpenDialogCount++;
-	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, lpDialogFunc, dwInitParam);
+	DlgData = data;
+	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
 }
 
 BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult)
 {
+	std::lock_guard<std::recursive_mutex> lock(g_DialogMutex);
+
 	Assert(hDlg);
-	HWND parent = GetParent(hDlg);
 
-	dialogMutex.lock();
+	// Fix for the CK calling EndDialog on a CreateDialogParamA window
+	if (auto itr = g_DialogOverrides.find(hDlg); itr != g_DialogOverrides.end() && !itr->second.IsDialog)
 	{
-		if (g_OpenDialogCount <= 0)
-		{
-			// Fix for the CK calling EndDialog on a CreateDialogParamA window
-			if (g_ParentCreateDialogHwnds.count(parent) > 0)
-			{
-				g_ParentCreateDialogHwnds.erase(parent);
-				DestroyWindow(hDlg);
-			}
-
-			dialogMutex.unlock();
-			return FALSE;
-		}
-
-		g_ParentDialogHwnds.erase(parent);
+		DestroyWindow(hDlg);
+		return TRUE;
 	}
-	dialogMutex.unlock();
 
-	g_OpenDialogCount--;
 	return EndDialog(hDlg, nResult);
 }
 
@@ -78,17 +114,15 @@ LRESULT WINAPI hk_SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 {
 	if (hWnd && Msg == WM_DESTROY)
 	{
-		dialogMutex.lock();
-		bool found = g_ParentDialogHwnds.count(GetParent(hWnd)) > 0;
-		dialogMutex.unlock();
+		std::lock_guard<std::recursive_mutex> lock(g_DialogMutex);
 
-		if (found)
+		// If this is a dialog, we can't call DestroyWindow on it
+		if (auto itr = g_DialogOverrides.find(hWnd); itr != g_DialogOverrides.end())
 		{
-			// This is a dialog, we can't call DestroyWindow on it
-			return 0;
+			if (!itr->second.IsDialog)
+				DestroyWindow(hWnd);
 		}
 
-		DestroyWindow(hWnd);
 		return 0;
 	}
 
