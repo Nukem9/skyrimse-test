@@ -48,6 +48,20 @@ void Patch_TESVCreationKit()
 	}
 
 	//
+	// FaceGen
+	//
+	if (INI.GetBoolean("CreationKit", "DisableAutoFacegen", false))
+	{
+		// Disable automatic FaceGen on save
+		PatchMemory(g_ModuleBase + 0x18DE530, (PBYTE)"\xC3", 1);
+	}
+
+	// Allow variable tint mask resolution
+	uint32_t tintResolution = INI.GetInteger("CreationKit", "TintMaskResolution", 512);
+	PatchMemory(g_ModuleBase + 0x2DA588C, (PBYTE)&tintResolution, sizeof(uint32_t));
+	PatchMemory(g_ModuleBase + 0x2DA5899, (PBYTE)&tintResolution, sizeof(uint32_t));
+
+	//
 	// MemoryManager
 	//
 	if (INI.GetBoolean("CreationKit", "MemoryPatch", false))
@@ -181,14 +195,6 @@ void Patch_TESVCreationKit()
 	if (INI.GetBoolean("CreationKit", "DisableAssertions", false))
 	{
 		PatchMemory(g_ModuleBase + 0x243D9FE, (PBYTE)"\x90\x90\x90\x90\x90", 5);
-	}
-
-	//
-	// Disable automatic FaceGen on save
-	//
-	if (INI.GetBoolean("CreationKit", "DisableAutoFacegen", false))
-	{
-		PatchMemory(g_ModuleBase + 0x18DE530, (PBYTE)"\xC3", 1);
 	}
 
 	// TEMP: Kill broken destructor causing double free
