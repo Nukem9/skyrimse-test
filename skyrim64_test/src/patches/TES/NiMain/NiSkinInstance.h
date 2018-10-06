@@ -48,13 +48,13 @@ public:
 
 		Partition()
 		{
-			auto sub_140C7B160 = (void(__fastcall *)(Partition *))(g_ModuleBase + 0xC7B160);
+			AutoFunc(void(__fastcall *)(Partition *), sub_140C7B160, 0xC7B160);
 			sub_140C7B160(this);
 		}
 
 		~Partition()
 		{
-			auto sub_140C7B1A0 = (void(__fastcall *)(Partition *))(g_ModuleBase + 0xC7B1A0);
+			AutoFunc(void(__fastcall *)(Partition *), sub_140C7B1A0, 0xC7B1A0);
 			sub_140C7B1A0(this);
 		}
 	};

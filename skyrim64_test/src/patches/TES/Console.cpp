@@ -27,6 +27,6 @@ void Console::ExecuteCommand(const char *Command, ...)
 
 void Console::UIExecuteCommand(UIData *Data)
 {
-	auto sub_14085A2E0 = (void(__fastcall *)(UIData *))(g_ModuleBase + 0x85A2E0);
+	AutoFunc(void(__fastcall *)(UIData *), sub_14085A2E0, 0x85A2E0);
 	sub_14085A2E0(Data);
 }

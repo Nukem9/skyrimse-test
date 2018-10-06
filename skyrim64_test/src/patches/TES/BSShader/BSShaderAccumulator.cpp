@@ -321,15 +321,15 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	renderer->AlphaBlendStateSetMode(0);
 	renderer->AlphaBlendStateSetUnknown2(1);
 
-	auto sub_140D744B0 = (int(__fastcall *)())(g_ModuleBase + 0xD744E0);
-	auto sub_140D69E70 = (__int64(__fastcall *)(__int64 a1, unsigned int a2))(g_ModuleBase + 0xD69EA0);
-	auto sub_140D69D30 = (__int64(__fastcall *)(float *a1, float a2, float a3, float a4, int a5))(g_ModuleBase + 0xD69D60);
-	auto sub_1412FD120 = (signed __int64(__fastcall *)())(g_ModuleBase + 0x12FD480);
-	auto sub_140D74350 = (__int64(__fastcall *)(__int64 a1, unsigned int a2, int a3, int a4, char a5))(g_ModuleBase + 0xD74380);
-	auto sub_140D74370 = (void(__fastcall *)(__int64 a1, uint32_t a2, int a3, uint32_t a4))(g_ModuleBase + 0xD743A0);
-	auto sub_140D69990 = (void(__fastcall *)(__int64 a1, char a2))(g_ModuleBase + 0xD699C0);
-	auto sub_1412FADA0 = (__int64(__fastcall *)())(g_ModuleBase + 0x12FB100);
-	auto sub_140D69DA0 = (void(__fastcall *)(DWORD *a1))(g_ModuleBase + 0xD69DD0);
+	AutoFunc(int(__fastcall *)(), sub_140D744B0, 0xD744E0);
+	AutoFunc(__int64(__fastcall *)(__int64 a1, unsigned int a2), sub_140D69E70, 0xD69EA0);
+	AutoFunc(__int64(__fastcall *)(float *a1, float a2, float a3, float a4, int a5), sub_140D69D30, 0xD69D60);
+	AutoFunc(signed __int64(__fastcall *)(), sub_1412FD120, 0x12FD480);
+	AutoFunc(__int64(__fastcall *)(__int64 a1, unsigned int a2, int a3, int a4, char a5), sub_140D74350, 0xD74380);
+	AutoFunc(void(__fastcall *)(__int64 a1, uint32_t a2, int a3, uint32_t a4), sub_140D74370, 0xD743A0);
+	AutoFunc(void(__fastcall *)(__int64 a1, char a2), sub_140D69990, 0xD699C0);
+	AutoFunc(__int64(__fastcall *)(), sub_1412FADA0, 0x12FB100);
+	AutoFunc(void(__fastcall *)(DWORD *a1), sub_140D69DA0, 0xD69DD0);
 
 	DWORD *flt_14304E490 = (DWORD *)(g_ModuleBase + 0x304E490);
 

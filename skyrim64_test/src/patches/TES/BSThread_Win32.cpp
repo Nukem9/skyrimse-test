@@ -27,7 +27,9 @@ DWORD WINAPI hk_BSThreadEntryFunc(LPVOID lpArg)
         SetThreadName(tid, name);
 
     ui::log::Add("Created thread \"%s\" (ID %d)\n", name, tid);
-    return ((LPTHREAD_START_ROUTINE)(g_ModuleBase + 0xC0D1C0))(lpArg);
+
+	AutoFunc(LPTHREAD_START_ROUTINE, sub_140C0D1C0, 0xC0D1C0);
+    return sub_140C0D1C0(lpArg);
 }
 
 LPTHREAD_START_ROUTINE TaskletEntryFunc;

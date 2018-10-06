@@ -25,7 +25,7 @@ namespace BSGraphics::Utility
 
 	void PackDynamicParticleData(uint32_t ParticleCount, class NiParticles *Particles, void *Buffer)
 	{
-		auto sub_140D75710 = (decltype(&PackDynamicParticleData))(g_ModuleBase + 0xD75710);
+		AutoFunc(decltype(&PackDynamicParticleData), sub_140D75710, 0xD75710);
 		sub_140D75710(ParticleCount, Particles, Buffer);
 	}
 }
@@ -577,7 +577,7 @@ namespace BSGraphics
 					else
 					{
 						// Create and insert
-						auto sub_140D705F0 = (__int64(__fastcall *)(unsigned __int64 a1))(g_ModuleBase + 0xD70620);
+						AutoFunc(__int64(__fastcall *)(unsigned __int64 a1), sub_140D705F0, 0xD70620);
 						ID3D11InputLayout *layout = (ID3D11InputLayout *)sub_140D705F0(desc);
 
 						if (layout || desc != 0x300000000407)
@@ -1456,13 +1456,16 @@ namespace BSGraphics
 			if (Shape->m_IndexBuffer)
 				Shape->m_IndexBuffer->Release();
 
+			AutoFunc(void(__fastcall *)(void *), sub_1400F7DC0, 0xF7DC0);
+			AutoFunc(void(__fastcall *)(void *, __int64), sub_140136112C, 0x136112C);
+
 			if (Shape->m_RawVertexData)
-				((void(__fastcall *)(void *))(g_ModuleBase + 0xF7DC0))(Shape->m_RawVertexData);
+				sub_1400F7DC0(Shape->m_RawVertexData);
 
 			if (Shape->m_RawIndexData)
-				((void(__fastcall *)(void *))(g_ModuleBase + 0xF7DC0))(Shape->m_RawIndexData);
+				sub_1400F7DC0(Shape->m_RawIndexData);
 
-			((void(__fastcall *)(void *, __int64))(g_ModuleBase + 0x136112C))(Shape, sizeof(TriShape));
+			sub_140136112C(Shape, sizeof(TriShape));
 		}
 	}
 
@@ -1482,8 +1485,11 @@ namespace BSGraphics
 
 			Shape->m_IndexBuffer->Release();
 
-			((void(__fastcall *)(void *))(g_ModuleBase + 0xF7DC0))(Shape->m_Unknown5);
-			((void(__fastcall *)(void *, __int64))(g_ModuleBase + 0x136112C))(Shape, sizeof(DynamicTriShape));
+			AutoFunc(void(__fastcall *)(void *), sub_1400F7DC0, 0xF7DC0);
+			AutoFunc(void(__fastcall *)(void *, __int64), sub_140136112C, 0x136112C);
+
+			sub_1400F7DC0(Shape->m_Unknown5);
+			sub_140136112C(Shape, sizeof(DynamicTriShape));
 		}
 	}
 }

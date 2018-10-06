@@ -115,5 +115,6 @@ bool IOManager::QueueTask(BSTask *Task)
 
 	ReleaseSRWLockExclusive(&BSTask::TaskListLock);
 
-	return ((bool(*)(IOManager *, BSTask *))(g_ModuleBase + 0xD2C550))(this, Task);
+	AutoFunc(bool(*)(IOManager *, BSTask *), sub_140D2C550, 0xD2C550);
+	return sub_140D2C550(this, Task);
 }

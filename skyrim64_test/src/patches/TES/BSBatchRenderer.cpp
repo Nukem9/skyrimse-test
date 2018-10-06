@@ -524,7 +524,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	// "Render Error : Skin partition array is nullptr"
 	AssertMsgDebug(Pass->m_Property, "Don't have a shader property when we expected one.");
 
-	auto sub_141336450 = (void(__fastcall *)())(g_ModuleBase + 0x1336450);
+	AutoFunc(void(__fastcall *)(), sub_141336450, 0x1336450);
 	sub_141336450();
 
 	// BSTriShape::IsBSSkinnedDecalTriShape?
@@ -591,7 +591,7 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 
 		int particleCount = (*(unsigned __int16(**)(void))(**(uintptr_t **)((uintptr_t)geometry + 344) + 304i64))();
 
-		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		AutoFunc(void(__fastcall *)(BSRenderPass *), sub_14131DDF0, 0x131DDF0);
 		sub_14131DDF0(Pass);
 		return;
 
@@ -681,7 +681,7 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 	case GEOMETRY_TYPE_MULTIINDEX_TRISHAPE:
 	{
 		// Winterhold
-		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		AutoFunc(void(__fastcall *)(BSRenderPass *), sub_14131DDF0, 0x131DDF0);
 		sub_14131DDF0(Pass);
 	}
 	break;
@@ -690,7 +690,7 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 	{
 		AssertDebug(geometry->IsSubIndexTriShape());
 
-		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		AutoFunc(void(__fastcall *)(BSRenderPass *), sub_14131DDF0, 0x131DDF0);
 		sub_14131DDF0(Pass);
 	}
 	break;
@@ -703,7 +703,7 @@ void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
 
 	case GEOMETRY_TYPE_MULTISTREAMINSTANCE_TRISHAPE:
 	{
-		auto sub_14131DDF0 = (void(__fastcall *)(BSRenderPass *))(g_ModuleBase + 0x131DDF0);
+		AutoFunc(void(__fastcall *)(BSRenderPass *), sub_14131DDF0, 0x131DDF0);
 		sub_14131DDF0(Pass);
 	}
 	break;

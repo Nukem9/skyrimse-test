@@ -43,17 +43,20 @@ public:
 
 	void GetActivePlaneState(int *__restrict States) const
 	{
-		((void(*)(const BSCompoundFrustum *, int *))(g_ModuleBase + 0xD5B110))(this, States);
+		AutoFunc(void(*)(const BSCompoundFrustum *, int *), sub_140D5B110, 0xD5B110);
+		sub_140D5B110(this, States);
 	}
 
 	void SetActivePlaneState(int *States)
 	{
-		((void(*)(BSCompoundFrustum *, int *))(g_ModuleBase + 0xD5B160))(this, States);
+		AutoFunc(void(*)(BSCompoundFrustum *, int *), sub_140D5B160, 0xD5B160);
+		sub_140D5B160(this, States);
 	}
 
 	bool Process(NiAVObject *Object)
 	{
-		return ((bool(*)(BSCompoundFrustum *, NiAVObject *))(g_ModuleBase + 0xD59940))(this, Object);
+		AutoFunc(bool(*)(BSCompoundFrustum *, NiAVObject *), sub_140D59940, 0xD59940);
+		return sub_140D59940(this, Object);
 	}
 };
 static_assert_offset(BSCompoundFrustum, dwordBC, 0xBC);
@@ -105,7 +108,8 @@ public:
 
 	void DoCulling(NiAVObject *Object, uint32_t Unknown)
 	{
-		((void(*)(NiCullingProcess *, NiAVObject *, uint32_t))(g_ModuleBase + 0xC78AA0))(this, Object, Unknown);
+		AutoFunc(void(*)(NiCullingProcess *, NiAVObject *, uint32_t), sub_140C78AA0, 0xC78AA0);
+		sub_140C78AA0(this, Object, Unknown);
 	}
 
 	void SetAccumulated(NiAVObject *Object, bool Accumulated)

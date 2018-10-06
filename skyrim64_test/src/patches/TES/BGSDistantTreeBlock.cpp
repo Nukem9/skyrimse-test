@@ -104,8 +104,8 @@ void BGSDistantTreeBlock::UpdateBlockVisibility(ResourceData *Data)
 					fullyHidden = true;
 			}
 
-			uint16_t halfFloat = ((uint16_t(__fastcall *)(float))(g_ModuleBase + 0xD41D80))(alpha);
-			//uint16_t halfFloat = Float2Half(alpha);
+			AutoFunc(uint16_t(__fastcall *)(float), Float2Half, 0xD41D80);
+			uint16_t halfFloat = Float2Half(alpha);
 
 			if (instance->Alpha != halfFloat)
 			{

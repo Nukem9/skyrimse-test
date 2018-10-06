@@ -8,7 +8,7 @@ typedef void *IDirect3D9;
 
 HMODULE GetD3D9()
 {
-	static HMODULE hD3D9 = []()
+	static HMODULE hD3D9 = []
 	{
 		char systemDir[1024];
 		uint32_t len = GetSystemDirectory(systemDir, ARRAYSIZE(systemDir));
@@ -26,7 +26,7 @@ HMODULE GetD3D9()
 D3D_EXPORT
 IDirect3D9 *D3DAPI Direct3DCreate9(UINT SDKVersion)
 {
-	static auto ptrDirect3DCreate9 = []()
+	static auto ptrDirect3DCreate9 = []
 	{
 		return (decltype(&Direct3DCreate9))GetProcAddress(GetD3D9(), "Direct3DCreate9");
 	}();
@@ -37,7 +37,7 @@ IDirect3D9 *D3DAPI Direct3DCreate9(UINT SDKVersion)
 D3D_EXPORT
 INT D3DAPI D3DPERF_BeginEvent(D3DCOLOR col, LPCWSTR wszName)
 {
-	static auto ptrD3DPERF_BeginEvent = []()
+	static auto ptrD3DPERF_BeginEvent = []
 	{
 		return (decltype(&D3DPERF_BeginEvent))GetProcAddress(GetD3D9(), "D3DPERF_BeginEvent");
 	}();
@@ -48,7 +48,7 @@ INT D3DAPI D3DPERF_BeginEvent(D3DCOLOR col, LPCWSTR wszName)
 D3D_EXPORT
 INT D3DAPI D3DPERF_EndEvent()
 {
-	static auto ptrD3DPERF_EndEvent = []()
+	static auto ptrD3DPERF_EndEvent = []
 	{
 		return (decltype(&D3DPERF_EndEvent))GetProcAddress(GetD3D9(), "D3DPERF_EndEvent");
 	}();

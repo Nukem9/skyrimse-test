@@ -158,7 +158,7 @@ BSLightingShader::BSLightingShader() : BSShader(ShaderConfig.Type)
 
 	PatchMemory((g_ModuleBase + 0x1307BD0), (PBYTE)&hookbuffer, 50);
 
-	auto sub_141307BD0 = (uintptr_t(__fastcall *)(BSLightingShader *))(g_ModuleBase + 0x1307BD0);
+	AutoFunc(uintptr_t(__fastcall *)(BSLightingShader *), sub_141307BD0, 0x1307BD0);
 	sub_141307BD0(this);
 
 	ShaderMetadata[BSShaderManager::BSSM_SHADER_LIGHTING] = &ShaderConfig;
@@ -1312,7 +1312,7 @@ void BSLightingShader::GeometrySetupTreeAnimConstants(const BSGraphics::Constant
 
 	temp.ptr = VertexCG.RawData();
 
-	auto GeometrySetupTreeAnimConstants = (void(__fastcall *)(tempbufdata *, BSLightingShaderProperty *))(g_ModuleBase + 0x130BC60);
+	AutoFunc(void(__fastcall *)(tempbufdata *, BSLightingShaderProperty *), GeometrySetupTreeAnimConstants, 0x130BC60);
 	GeometrySetupTreeAnimConstants(&temp, Property);
 }
 

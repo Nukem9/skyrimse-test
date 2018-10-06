@@ -41,13 +41,13 @@ void BSShader::GetTechniqueName(uint32_t Technique, char *Buffer, uint32_t Buffe
 void BSShader::ReloadShaders(bool Unknown)
 {
 	// Calls BSShader::DeleteShaders down the line, but it's not a virtual function
-	auto sub_141336480 = (void(__fastcall *)(bool))(g_ModuleBase + 0x1336490);
+	AutoFunc(void(__fastcall *)(bool), sub_141336480, 0x1336490);
 	sub_141336480(Unknown);
 }
 
 void BSShader::ReloadShaders(BSIStream *Stream)
 {
-	auto sub_141336490 = (void(__fastcall *)(BSIStream *))(g_ModuleBase + 0x1336490);
+	AutoFunc(void(__fastcall *)(BSIStream *), sub_141336490, 0x1336490);
 	sub_141336490(Stream);
 }
 
@@ -66,7 +66,7 @@ void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, NiSkinPartition::Part
 	GAME_TLS(NiSkinInstance *, 0x2A00) = SkinInstance;
 
 	// WARNING: Contains a global variable edit
-	auto sub_140D74600 = (void(__fastcall *)(NiSkinInstance *, const NiTransform *))(g_ModuleBase + 0x0D74600);
+	AutoFunc(void(__fastcall *)(NiSkinInstance *, const NiTransform *), sub_140D74600, 0x0D74600);
 	sub_140D74600(SkinInstance, Transform);
 
 	uint32_t v11 = (unsigned int)(3 * *(uint32_t *)((uintptr_t)SkinInstance->m_spSkinData + 88i64)) * 16;
@@ -204,7 +204,7 @@ void BSShader::EndTechnique()
 
 void BSShader::SetupGeometryAlphaBlending(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty, bool a4)
 {
-	auto sub_1413360D0 = (void(__fastcall *)(BSShader *, const NiAlphaProperty *, BSShaderProperty *, bool))(g_ModuleBase + 0x13360D0);
+	AutoFunc(void(__fastcall *)(BSShader *, const NiAlphaProperty *, BSShaderProperty *, bool), sub_1413360D0, 0x13360D0);
 	sub_1413360D0(this, AlphaProperty, ShaderProperty, a4);
 }
 

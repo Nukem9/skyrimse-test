@@ -181,7 +181,8 @@ std::vector<TESForm *> TESForm::LookupFormsByType(uint32_t Type, bool SortById, 
 
 void CRC32_Lazy(int *out, int idIn)
 {
-	((void(*)(int *, int))(g_ModuleBase + 0xC06030))(out, idIn);
+	AutoFunc(void(*)(int *, int), sub_140C06030, 0xC06030);
+	sub_140C06030(out, idIn);
 }
 
 uint8_t *origFunc3 = nullptr;

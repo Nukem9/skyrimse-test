@@ -51,7 +51,8 @@ public:
 
 	void operator=(const char *StringValue)
 	{
-		((void(__fastcall *)(Setting *, const char *))(g_ModuleBase + 0xD282D0))(this, StringValue);
+		AutoFunc(void(__fastcall *)(Setting *, const char *), sub_140D282D0, 0xD282D0);
+		sub_140D282D0(this, StringValue);
 	}
 };
 static_assert_offset(Setting, uValue, 0x8);

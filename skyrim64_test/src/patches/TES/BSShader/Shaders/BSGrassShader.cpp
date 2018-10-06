@@ -269,7 +269,7 @@ void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSSha
 	AssertMsg(instanceDataCount <= (3840 / 4), "Grass instance group count is too large. It does not fit in register size.");
 
 	// TODO/WARNING: There is another data race hazard in this function. Properties are supposed to be unique though?
-	auto sub_1412E0810 = (void(__fastcall *)(BSShaderProperty *, uint32_t))(g_ModuleBase + 0x12E0810);
+	AutoFunc(void(__fastcall *)(BSShaderProperty *, uint32_t), sub_1412E0810, 0x12E0810);
 	sub_1412E0810(Property, instanceDataCount);
 
 	uint32_t neededSize = instanceDataCount * sizeof(float);

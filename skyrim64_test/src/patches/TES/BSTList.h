@@ -20,7 +20,8 @@ public:
 
 	static void operator delete(void *Ptr, std::size_t Size)
 	{
-		((void(__fastcall *)(void *))(g_ModuleBase + 0x1026F0))((void *)Ptr);
+		AutoFunc(void(__fastcall *)(void *), sub_1401026F0, 0x1026F0);
+		sub_1401026F0((void *)Ptr);
 	}
 
 	void RemoveNode(void(*Callback)(BSSimpleList<T> *, void *) = nullptr, void *UserData = nullptr)
