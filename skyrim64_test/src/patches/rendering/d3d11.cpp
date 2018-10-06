@@ -26,27 +26,6 @@ decltype(&D3D11CreateDeviceAndSwapChain) ptrD3D11CreateDeviceAndSwapChain;
 
 void DC_Init(ID3D11Device2 *Device, int DeferredContextCount);
 
-void UpdateHavokTimer(int FPS)
-{
-    static int oldFps;
-
-    // Limit Havok FPS between 30 and 150
-    FPS = std::min(std::max(FPS, 30), 150);
-
-    // Allow up to 5fps difference
-    if (abs(oldFps - FPS) >= 5)
-    {
-        oldFps = FPS;
-
-        // Round up to nearest 5...and add 5
-        int newFPS     = ((FPS + 5 - 1) / 5) * 5;
-        float newRatio = 1.0f / (float)(newFPS + 5);
-
-        InterlockedExchange((volatile LONG *)(g_ModuleBase + 0x1DADCA0), *(LONG *)&newRatio); // fMaxTime
-        InterlockedExchange((volatile LONG *)(g_ModuleBase + 0x1DADE38), *(LONG *)&newRatio); // fMaxTimeComplex
-    }
-}
-
 LARGE_INTEGER g_FrameStart;
 LARGE_INTEGER g_FrameEnd;
 LARGE_INTEGER g_FrameDelta;
@@ -79,7 +58,7 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 		hr = (This->*ptrPresent)(SyncInterval, Flags);
 	}
 
-	TracyDx11Collect(g_DeviceContext);
+	//TracyDx11Collect(g_DeviceContext);
 	FrameMark;
 
 	ui::BeginFrame();
@@ -387,11 +366,8 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	*(PBYTE *)&RenderSceneNormal = Detours::X64::DetourFunctionClass((PBYTE)g_ModuleBase + 0x12E1960, &BSShaderAccumulator::RenderSceneNormal);
 
 	g_GPUTimers.Create(g_Device, 1);
-	TracyDx11Context(g_Device, g_DeviceContext);
-
+	//TracyDx11Context(g_Device, g_DeviceContext);
 	//DC_Init(g_Device, 0);
-
-	//*(PBYTE *)&sub_1412E1C10 = Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x12E1F70, (PBYTE)&hk_sub_1412E1C10);
 
 	// Culling test buffers
 	CD3D11_TEXTURE2D_DESC cpuRenderTargetDescAVX
@@ -414,52 +390,6 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 void CreateXbyakCodeBlock();
 void CreateXbyakPatches();
 
-__int64 __fastcall sub_141318C10(__int64 a1, int a2, char a3, char a4, char a5)
-{
-	g_DeviceContext->BeginEventInt(L"BSCubemapCamera: Draw", 0);
-
-	__int64 result = ((__int64(__fastcall *)(__int64 a1, int a2, char a3, char a4, char a5))(g_ModuleBase + 0x1319000))(a1, a2, a3, a4, a5);
-
-	g_DeviceContext->EndEvent();
-
-	return result;
-}
-
-PBYTE sub_1412E25C0;
-__int64 __fastcall hk_sub_1412E25C0(__int64 a1, unsigned int a2)
-{
-	g_DeviceContext->BeginEventInt(L"hk_sub_1412E25C0", 0);
-
-	__int64 ret = ((decltype(&hk_sub_1412E25C0))sub_1412E25C0)(a1, a2);
-
-	g_DeviceContext->EndEvent();
-
-	return ret;
-}
-
-PBYTE sub_14131FF10;
-float *__fastcall hk_sub_14131FF10(__int64 a1, float *a2, float *a3, char a4)
-{
-	g_DeviceContext->BeginEventInt(L"hk_sub_14131FF10", 0);
-
-	float *ret = ((decltype(&hk_sub_14131FF10))sub_14131FF10)(a1, a2, a3, a4);
-
-	g_DeviceContext->EndEvent();
-
-	return ret;
-}
-
-PBYTE SetRenderTarget;
-__int64 __fastcall hk_SetRenderTarget(__int64 a1, unsigned int a2, int a3, int a4, char a5)
-{
-	//if (a3 >= BSShaderRenderTargets::RENDER_TARGET_SAO && a3 <= BSShaderRenderTargets::RENDER_TARGET_SAO_TEMP_BLUR_DOWNSCALED)
-	//	__debugbreak();
-
-	__int64 ret = ((decltype(&hk_SetRenderTarget))SetRenderTarget)(a1, a2, a3, a4, a5);
-
-	return ret;
-}
-
 void PatchD3D11()
 {
     // Grab the original function pointers
@@ -476,17 +406,6 @@ void PatchD3D11()
 	CreateXbyakCodeBlock();
 	CreateXbyakPatches();
 
-	*(PBYTE *)&SetRenderTarget = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xD74550), (PBYTE)&hk_SetRenderTarget);
-
-	*(PBYTE *)&sub_1412E25C0 = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x12E25C0), (PBYTE)&hk_sub_1412E25C0);
-	*(PBYTE *)&sub_14131FF10 = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x131FF10), (PBYTE)&hk_sub_14131FF10);
-
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1318C10), (PBYTE)&sub_141318C10);
-
     PatchIAT(hk_CreateDXGIFactory, "dxgi.dll", "CreateDXGIFactory");
     PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");
-
-	// +0x1302B69 to +0x1303341
-	//for (uintptr_t i = 0; i < (0x1303341 - 0x1302B69); i++)
-	//	PatchMemory(g_ModuleBase + i + 0x1302B69, (PBYTE)"\x90", 1);
 }
