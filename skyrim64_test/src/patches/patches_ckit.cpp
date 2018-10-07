@@ -197,6 +197,12 @@ void Patch_TESVCreationKit()
 		PatchMemory(g_ModuleBase + 0x243D9FE, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 	}
 
+	// Force render window to draw at 60fps (SetTimer(1ms))
+	if (INI.GetBoolean("CreationKit", "RenderWindow60FPS", false))
+	{
+		PatchMemory(g_ModuleBase + 0x1306978, (PBYTE)"\x01", 1);
+	}
+
 	// TEMP: Kill broken destructor causing double free
 	PatchMemory(g_ModuleBase + 0x1392D90, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
 
