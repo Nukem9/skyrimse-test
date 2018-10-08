@@ -11,47 +11,39 @@ void *Jemalloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 	__itt_heap_allocate_begin(ITT_AllocateCallback, Size, Zeroed ? 1 : 0);
 #endif
 
-	if (Size == 0)
+	// If the caller doesn't care, force 4 byte aligns as a minimum
+	if (!Aligned)
+		Alignment = 4;
+
+	if (Size <= 0)
+	{
 		Size = 1;
+		Alignment = 2;
+	}
 
-	void *ptr = nullptr;
+	AssertMsg(Alignment != 0 && Alignment % 2 == 0, "Alignment is fucked");
 
-	// Does this need to be on a certain boundary?
-	if (Aligned)
+	// Must be a power of 2, round it up if needed
+	if ((Alignment & (Alignment - 1)) != 0)
 	{
-		AssertMsg(Alignment != 0 && Alignment % 2 == 0, "Alignment is fucked");
+		Alignment--;
+		Alignment |= Alignment >> 1;
+		Alignment |= Alignment >> 2;
+		Alignment |= Alignment >> 4;
+		Alignment |= Alignment >> 8;
+		Alignment |= Alignment >> 16;
+		Alignment++;
+	}
 
-		// Must be a power of 2, round it up if needed
-		if ((Alignment & (Alignment - 1)) != 0)
-		{
-			Alignment--;
-			Alignment |= Alignment >> 1;
-			Alignment |= Alignment >> 2;
-			Alignment |= Alignment >> 4;
-			Alignment |= Alignment >> 8;
-			Alignment |= Alignment >> 16;
-			Alignment++;
-		}
-
-		// Size must be a multiple of alignment, round up to nearest
-		if ((Size % Alignment) != 0)
-			Size = ((Size + Alignment - 1) / Alignment) * Alignment;
+	// Size must be a multiple of alignment, round up to nearest
+	if ((Size % Alignment) != 0)
+		Size = ((Size + Alignment - 1) / Alignment) * Alignment;
 
 #if SKYRIM64_USE_TBBMALLOC
-		ptr = scalable_aligned_malloc(Size, Alignment);
+	void *ptr = scalable_aligned_malloc(Size, Alignment);
 #else
-		ptr = je_aligned_alloc(Alignment, Size);
+	void *ptr = je_aligned_alloc(Alignment, Size);
 #endif
-	}
-	else
-	{
-		// Normal allocation
-#if SKYRIM64_USE_TBBMALLOC
-		ptr = scalable_malloc(Size);
-#else
-		ptr = je_malloc(Size);
-#endif
-	}
 
 	if (ptr && Zeroed)
 		memset(ptr, 0, Size);
@@ -70,16 +62,13 @@ void Jefree(void *Memory, bool Aligned = false)
 
 	if (!Memory)
 		return;
-
+	
 #if SKYRIM64_USE_VTUNE
 	__itt_heap_free_begin(ITT_FreeCallback, Memory);
 #endif
 
 #if SKYRIM64_USE_TBBMALLOC
-	if (Aligned)
-		scalable_aligned_free(Memory);
-	else
-		scalable_free(Memory);
+	scalable_aligned_free(Memory);
 #else
 	je_free(Memory);
 #endif
@@ -133,6 +122,7 @@ size_t __fastcall hk_msize(void *Block)
 #if SKYRIM64_USE_VTUNE
 	__itt_heap_internal_access_end();
 #endif
+
 	return result;
 }
 
