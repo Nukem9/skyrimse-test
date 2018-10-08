@@ -308,6 +308,9 @@
     <ClInclude Include="src\patches\TES\TESForm_CK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\bhkThreadMemorySource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\d3dx9_debug.cpp">
@@ -515,6 +518,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\patches_tes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\bhkThreadMemorySource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

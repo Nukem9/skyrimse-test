@@ -2,6 +2,7 @@
 #include "../typeinfo/ms_rtti.h"
 #include "../common.h"
 #include "TES/MemoryManager.h"
+#include "TES/bhkThreadMemorySource.h"
 #include "TES/NiMain/NiRTTI.h"
 #include "CKIT/Editor.h"
 #include "CKIT/TESForm_CK.h"
@@ -68,12 +69,12 @@ void Patch_TESVCreationKit()
 	{
 		PatchMemory();
 
-		PatchMemory(g_ModuleBase + 0x1223160, (PBYTE)"\xC3", 1);// [3GB  ] MemoryManager - Default/Static/File heaps
-		PatchMemory(g_ModuleBase + 0x24400E0, (PBYTE)"\xC3", 1);// [1GB  ] BSSmallBlockAllocator
-																// [512MB] hkMemoryAllocator is untouched due to complexity
-																// [128MB] BSScaleformSysMemMapper is untouched due to complexity
-		PatchMemory(g_ModuleBase + 0x2447D90, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap init
-		PatchMemory(g_ModuleBase + 0x24488C0, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap deinit
+		PatchMemory(g_ModuleBase + 0x1223160, (PBYTE)"\xC3", 1);												// [3GB  ] MemoryManager - Default/Static/File heaps
+		PatchMemory(g_ModuleBase + 0x24400E0, (PBYTE)"\xC3", 1);												// [1GB  ] BSSmallBlockAllocator
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x257D740), &bhkThreadMemorySource::__ctor__);	// [512MB] bhkThreadMemorySource
+		PatchMemory(g_ModuleBase + 0x2447D90, (PBYTE)"\xC3", 1);												// [64MB ] ScrapHeap init
+		PatchMemory(g_ModuleBase + 0x24488C0, (PBYTE)"\xC3", 1);												// [64MB ] ScrapHeap deinit
+																												// [128MB] BSScaleformSysMemMapper is untouched due to complexity
 
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2440380), &MemoryManager::Alloc);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24407A0), &MemoryManager::Free);

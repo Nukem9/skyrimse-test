@@ -142,6 +142,7 @@
     <ClInclude Include="src\patches\rendering\GpuCircularBuffer.h" />
     <ClInclude Include="src\patches\rendering\GpuTimer.h" />
     <ClInclude Include="src\patches\TES\BGSDistantTreeBlock.h" />
+    <ClInclude Include="src\patches\TES\bhkThreadMemorySource.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsState.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsTypes.h" />
     <ClInclude Include="src\patches\TES\BSJobs.h" />
@@ -257,6 +258,7 @@
     <ClCompile Include="src\patches\rendering\GpuTimer.cpp" />
     <ClCompile Include="src\patches\steam.cpp" />
     <ClCompile Include="src\patches\TES\BGSDistantTreeBlock.cpp" />
+    <ClCompile Include="src\patches\TES\bhkThreadMemorySource.cpp" />
     <ClCompile Include="src\patches\TES\BSBatchRenderer.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphicsRenderer.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphicsState.cpp" />

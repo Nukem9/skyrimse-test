@@ -16,6 +16,7 @@
 #include "TES/BSShader/Shaders/BSGrassShader.h"
 #include "TES/BSShader/Shaders/BSParticleShader.h"
 #include "TES/MemoryManager.h"
+#include "TES/bhkThreadMemorySource.h"
 #include "TES/Setting.h"
 
 #define INI_ALLOW_MULTILINE 0
@@ -74,13 +75,6 @@ void test3()
 void Patch_TESV()
 {
 	MSRTTI::Initialize();
-
-	/*
-	FILE *f = fopen("C:\\testout.txt", "w");
-	MSRTTI::Dump(f);
-	fclose(f);
-	//ExitProcess(0);
-	*/
 
 	PatchThreading();
 	PatchWindow();
@@ -162,12 +156,12 @@ void Patch_TESV()
 	//
 	// MemoryManager
 	//
-	PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);// [3GB  ] MemoryManager - Default/Static/File heaps
-	PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);// [1GB  ] BSSmallBlockAllocator
-														   // [512MB] hkMemoryAllocator is untouched due to complexity
-														   // [128MB] BSScaleformSysMemMapper is untouched due to complexity
-	PatchMemory(g_ModuleBase + 0xC02E60, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap init
-	PatchMemory(g_ModuleBase + 0xC037C0, (PBYTE)"\xC3", 1);// [64MB ] ScrapHeap deinit
+	PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);													// [3GB  ] MemoryManager - Default/Static/File heaps
+	PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);													// [1GB  ] BSSmallBlockAllocator
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x257D740), &bhkThreadMemorySource::__ctor__);	// [512MB] bhkThreadMemorySource
+	PatchMemory(g_ModuleBase + 0xC02E60, (PBYTE)"\xC3", 1);													// [64MB ] ScrapHeap init
+	PatchMemory(g_ModuleBase + 0xC037C0, (PBYTE)"\xC3", 1);													// [64MB ] ScrapHeap deinit
+																											// [128MB] BSScaleformSysMemMapper is untouched due to complexity
 
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC01DA0), &MemoryManager::Alloc);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC020A0), &MemoryManager::Free);
