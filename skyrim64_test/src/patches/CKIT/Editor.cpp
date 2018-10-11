@@ -209,3 +209,26 @@ bool IsBSAVersionCurrent(class BSFile *File)
 
 	return false;
 }
+
+bool IsLipDataPresent(void *Thisptr)
+{
+	char currentDir[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, currentDir);
+	strcat_s(currentDir, "\\Data\\Sound\\Voice\\Processing\\Temp.lip");
+
+	return GetFileAttributesA(currentDir) != INVALID_FILE_ATTRIBUTES;
+}
+
+bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, bool Unknown3)
+{
+	char srcDir[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, srcDir);
+	strcat_s(srcDir, "\\Data\\Sound\\Voice\\Processing\\Temp.lip");
+
+	char destDir[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, destDir);
+	strcat_s(destDir, "\\");
+	strcat_s(destDir, Path);
+
+	return MoveFile(srcDir, destDir) != FALSE;
+}

@@ -63,6 +63,12 @@ void Patch_TESVCreationKit()
 	PatchMemory(g_ModuleBase + 0x2DA5899, (PBYTE)&tintResolution, sizeof(uint32_t));
 
 	//
+	// LipGen
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13C4C80), &IsLipDataPresent);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1791240), &WriteLipData);
+
+	//
 	// MemoryManager
 	//
 	if (INI.GetBoolean("CreationKit", "MemoryPatch", false))

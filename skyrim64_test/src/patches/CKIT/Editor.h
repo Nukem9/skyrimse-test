@@ -13,3 +13,5 @@ int hk_inflateInit(z_stream_s *Stream, const char *Version, int Mode);
 int hk_inflate(z_stream_s *Stream, int Flush);
 bool OpenPluginSaveDialog(HWND ParentWindow, const char *BasePath, bool IsESM, char *Buffer, uint32_t BufferSize, const char *Directory);
 bool IsBSAVersionCurrent(class BSFile *File);
+bool IsLipDataPresent(void *Thisptr);
+bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, bool Unknown3);
