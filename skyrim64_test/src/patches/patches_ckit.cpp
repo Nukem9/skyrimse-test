@@ -204,6 +204,11 @@ void Patch_TESVCreationKit()
 		PatchMemory(g_ModuleBase + 0x1306978, (PBYTE)"\x01", 1);
 	}
 
+	//
+	// Fix crash while trying to upload BNet mods with existing archives
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12BE530), &IsBSAVersionCurrent);
+
 	// TEMP: Kill broken destructor causing double free
 	PatchMemory(g_ModuleBase + 0x1392D90, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
 

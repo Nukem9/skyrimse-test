@@ -178,3 +178,34 @@ bool OpenPluginSaveDialog(HWND ParentWindow, const char *BasePath, bool IsESM, c
 	return ((bool(__fastcall *)(HWND, const char *, const char *, const char *, const char *, void *, bool, bool, char *, uint32_t, const char *, void *))
 		(g_ModuleBase + 0x14824B0))(ParentWindow, BasePath, filter, title, extension, nullptr, false, true, Buffer, BufferSize, Directory, nullptr);
 }
+
+bool IsBSAVersionCurrent(class BSFile *File)
+{
+	char fullPath[MAX_PATH];
+	GetCurrentDirectory(ARRAYSIZE(fullPath), fullPath);
+
+	strcat_s(fullPath, "\\");
+	strcat_s(fullPath, (const char *)((__int64)File + 0x64));
+
+	HANDLE file = CreateFileA(fullPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+	if (file != INVALID_HANDLE_VALUE)
+	{
+		struct
+		{
+			uint32_t Marker = 0;
+			uint32_t Version = 0;
+		} header;
+
+		DWORD bytesRead;
+		ReadFile(file, &header, sizeof(header), &bytesRead, nullptr);
+		CloseHandle(file);
+
+		if (header.Marker != '\0ASB' || header.Version < 0x68)
+			return false;
+
+		return true;
+	}
+
+	return false;
+}

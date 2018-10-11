@@ -12,3 +12,4 @@ LRESULT WINAPI hk_SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 int hk_inflateInit(z_stream_s *Stream, const char *Version, int Mode);
 int hk_inflate(z_stream_s *Stream, int Flush);
 bool OpenPluginSaveDialog(HWND ParentWindow, const char *BasePath, bool IsESM, char *Buffer, uint32_t BufferSize, const char *Directory);
+bool IsBSAVersionCurrent(class BSFile *File);
