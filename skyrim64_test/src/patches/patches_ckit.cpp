@@ -215,8 +215,12 @@ void Patch_TESVCreationKit()
 	//
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12BE530), &IsBSAVersionCurrent);
 
-	// TEMP: Kill broken destructor causing double free
+	//
+	// Kill broken destructors causing crashes on exit
+	//
 	PatchMemory(g_ModuleBase + 0x1392D90, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
+	PatchMemory(g_ModuleBase + 0x13F344D, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+	PatchMemory(g_ModuleBase + 0x13F35E9, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BB1E), &hk_inflateInit);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BBB9), &hk_inflate);
