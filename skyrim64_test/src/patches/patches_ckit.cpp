@@ -222,9 +222,15 @@ void Patch_TESVCreationKit()
 	PatchMemory(g_ModuleBase + 0x13F344D, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 	PatchMemory(g_ModuleBase + 0x13F35E9, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
+	//
+	// Fix crash when loading new CC ESLs as master files
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2E44890), &GetESLMasterCount);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2E44920), &GetESLMasterName);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2E448A0), &IsESLMaster);
+
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BB1E), &hk_inflateInit);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BBB9), &hk_inflate);
-
 	PatchMemory(g_ModuleBase + 0x166BB1E, (PBYTE)"\xE8", 1);
 	PatchMemory(g_ModuleBase + 0x166BBB9, (PBYTE)"\xE8", 1);
 }

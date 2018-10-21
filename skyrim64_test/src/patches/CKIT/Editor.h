@@ -15,3 +15,7 @@ bool OpenPluginSaveDialog(HWND ParentWindow, const char *BasePath, bool IsESM, c
 bool IsBSAVersionCurrent(class BSFile *File);
 bool IsLipDataPresent(void *Thisptr);
 bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, bool Unknown3);
+
+uint32_t GetESLMasterCount();
+const char *GetESLMasterName(uint32_t Index);
+bool IsESLMaster(const char *Name);

@@ -232,3 +232,61 @@ bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, b
 
 	return MoveFile(srcDir, destDir) != FALSE;
 }
+
+std::vector<std::string> g_CCEslNames;
+
+void ParseCreationClubContentFile()
+{
+	static int unused = []
+	{
+		if (FILE *f; fopen_s(&f, "Skyrim.ccc", "r") == 0)
+		{
+			char name[MAX_PATH];
+
+			while (fgets(name, ARRAYSIZE(name), f))
+			{
+				if (strchr(name, '\n'))
+					*strchr(name, '\n') = '\0';
+
+				g_CCEslNames.push_back(name);
+			}
+
+			fclose(f);
+		}
+
+		return 0;
+	}();
+}
+
+uint32_t GetESLMasterCount()
+{
+	ParseCreationClubContentFile();
+
+	return (uint32_t)g_CCEslNames.size();
+}
+
+const char *GetESLMasterName(uint32_t Index)
+{
+	ParseCreationClubContentFile();
+
+	if (Index < g_CCEslNames.size())
+		return g_CCEslNames[Index].c_str();
+
+	return nullptr;
+}
+
+bool IsESLMaster(const char *Name)
+{
+	ParseCreationClubContentFile();
+
+	if (!Name || strlen(Name) <= 0)
+		return false;
+
+	for (std::string& s : g_CCEslNames)
+	{
+		if (!_stricmp(s.c_str(), Name))
+			return true;
+	}
+
+	return false;
+}
