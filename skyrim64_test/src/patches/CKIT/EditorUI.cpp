@@ -323,6 +323,14 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 		return 0;
 		}
 	}
+	else if (Message == WM_SETTEXT && Hwnd == g_MainHwnd)
+	{
+		// Continue normal execution but with a custom string
+		char customTitle[1024];
+		sprintf_s(customTitle, "%s (CK64 Fixes Rev. %s)", (const char *)lParam, g_GitVersion);
+
+		return CallWindowProc(OldEditorUI_WndProc, Hwnd, Message, wParam, (LPARAM)customTitle);
+	}
 
 	return CallWindowProc(OldEditorUI_WndProc, Hwnd, Message, wParam, lParam);
 }

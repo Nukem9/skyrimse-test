@@ -68,4 +68,6 @@ extern HMODULE g_DllD3D11;
 
 extern bool g_IsGame;
 
+extern char g_GitVersion[64];
+
 #define PatchIAT(detour, module, procname) Detours::IATHook((PBYTE)g_ModuleBase, (module), (procname), (PBYTE)(detour));

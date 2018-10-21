@@ -1,4 +1,11 @@
 # Requires .NET 4.5
+$MethodDefinition =
+@'
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern long WritePrivateProfileString(string Section, string Key, string Value, string FilePath);
+'@
+$WPPS = Add-Type -MemberDefinition $MethodDefinition -Name "Win32WPPS" -Namespace Win32Functions -PassThru
+
 [Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.FileSystem")
 $Compression = [System.IO.Compression.CompressionLevel]::Optimal
 
@@ -6,13 +13,19 @@ $Compression = [System.IO.Compression.CompressionLevel]::Optimal
 #
 # General release
 #
-mkdir "Build"
 
+mkdir "Build"
 copy "skyrim64_test.ini" "Build\skyrim64_test.ini"
+
+# Generate commit hash and shove it into the .ini
+$commitId = (git rev-parse --short HEAD)
+$WPPS::WritePrivateProfileString("Version", "CommitId", $commitId, $pwd.Path + "\Build\skyrim64_test.ini")
+
 cd "x64\Release"
 copy "d3d9.dll" "..\..\Build\d3d9.dll"
 copy "tbb.dll" "..\..\Build\tbb.dll"
 copy "tbbmalloc.dll" "..\..\Build\tbbmalloc.dll"
+
 cd ..
 cd ..
 [System.IO.Compression.ZipFile]::CreateFromDirectory("Build", "CK64Fixes Release X.zip", $Compression, $false) # Don't include base dir

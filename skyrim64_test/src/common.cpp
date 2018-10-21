@@ -57,3 +57,5 @@ HMODULE g_DllDXGI;
 HMODULE g_DllD3D11;
 
 bool g_IsGame;
+
+char g_GitVersion[64];
