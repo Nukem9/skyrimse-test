@@ -53,14 +53,21 @@ void Patch_TESVCreationKit()
 	//
 	// FaceGen
 	//
-	if (INI.GetBoolean("CreationKit", "DisableAutoFacegen", false))
-	{
-		// Disable automatic FaceGen on save
+
+	// Disable automatic FaceGen on save
+	if (INI.GetBoolean("CreationKit_FaceGen", "DisableAutoFaceGen", false))
 		PatchMemory(g_ModuleBase + 0x18DE530, (PBYTE)"\xC3", 1);
-	}
+
+	// Don't produce DDS files
+	if (INI.GetBoolean("CreationKit_FaceGen", "DisableExportDDS", false))
+		PatchMemory(g_ModuleBase + 0x1904318, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+
+	// Don't produce TGA files
+	if (INI.GetBoolean("CreationKit_FaceGen", "DisableExportTGA", false))
+		PatchMemory(g_ModuleBase + 0x190436B, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
 	// Allow variable tint mask resolution
-	uint32_t tintResolution = INI.GetInteger("CreationKit", "TintMaskResolution", 512);
+	uint32_t tintResolution = INI.GetInteger("CreationKit_FaceGen", "TintMaskResolution", 512);
 	PatchMemory(g_ModuleBase + 0x2DA588C, (PBYTE)&tintResolution, sizeof(uint32_t));
 	PatchMemory(g_ModuleBase + 0x2DA5899, (PBYTE)&tintResolution, sizeof(uint32_t));
 
