@@ -235,6 +235,11 @@ void Patch_TESVCreationKit()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2E44920), &GetESLMasterName);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2E448A0), &IsESLMaster);
 
+	//
+	// Fix for icons not appearing in the script properties dialog (list view) (LVIF_TEXT -> LVIF_IMAGE)
+	//
+	PatchMemory(g_ModuleBase + 0x20CD744, (PBYTE)"\x02", 1);
+
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BB1E), &hk_inflateInit);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BBB9), &hk_inflate);
 	PatchMemory(g_ModuleBase + 0x166BB1E, (PBYTE)"\xE8", 1);
