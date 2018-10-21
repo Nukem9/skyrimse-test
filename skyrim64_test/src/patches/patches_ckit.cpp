@@ -159,13 +159,10 @@ void Patch_TESVCreationKit()
 	//
 	// Windows
 	//
-	if (INI.GetBoolean("CreationKit", "WindowPatch", false))
-	{
-		PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
-		PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
-		PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
-		PatchIAT(hk_SendMessageA, "USER32.DLL", "SendMessageA");
-	}
+	PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
+	PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
+	PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
+	PatchIAT(hk_SendMessageA, "USER32.DLL", "SendMessageA");
 
 	//
 	// Allow saving ESM's directly
