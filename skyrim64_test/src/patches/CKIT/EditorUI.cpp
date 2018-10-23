@@ -51,7 +51,7 @@ bool EditorUI_CreateLogWindow()
 	wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
 	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.hInstance = instance;
-	wc.hIcon = LoadIcon(instance, IDI_APPLICATION);
+	wc.hIcon = LoadIconA(instance, MAKEINTRESOURCE(0x13E));
 	wc.hIconSm = wc.hIcon;
 	wc.lpfnWndProc = EditorUI_LogWndProc;
 	wc.lpszClassName = TEXT("RTEDITLOG");
@@ -377,6 +377,17 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 		if (!richEditHwnd)
 			return -1;
 
+		// Set a better font
+		CHARFORMAT2W format;
+		memset(&format, 0, sizeof(format));
+
+		format.cbSize = sizeof(format);
+		format.dwMask = CFM_FACE | CFM_SIZE | CFM_WEIGHT;
+		format.yHeight = 10 * 20;// Convert twips to points (1 point = 20 twips)
+		wcscpy_s(format.szFaceName, L"Consolas");
+		format.wWeight = FW_MEDIUM;
+		SendMessageW(richEditHwnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
+
 		// Subscribe to EN_MSGFILTER and EN_SELCHANGE
 		SendMessageW(richEditHwnd, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_SELCHANGE);
 	}
@@ -393,6 +404,13 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 		MoveWindow(richEditHwnd, 0, 0, w, h, TRUE);
 	}
 	break;
+
+	case WM_ACTIVATE:
+	{
+		if (wParam != WA_INACTIVE)
+			SetFocus(richEditHwnd);
+	}
+	return 0;
 
 	case WM_CLOSE:
 		ShowWindow(Hwnd, SW_HIDE);
