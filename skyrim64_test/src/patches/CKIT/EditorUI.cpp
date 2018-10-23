@@ -10,16 +10,19 @@
 
 #define UI_CMD_ADDLOGTEXT	(WM_APP + 1)
 #define UI_CMD_CLEARLOGTEXT (WM_APP + 2)
+#define UI_CMD_AUTOSCROLL	(WM_APP + 3)
 
 #define UI_EXTMENU_ID			51001
 #define UI_EXTMENU_SHOWLOG		51002
 #define UI_EXTMENU_CLEARLOG		51003
-#define UI_EXTMENU_SPACER		51004
-#define UI_EXTMENU_DUMPNIRTTI	51005
-#define UI_EXTMENU_DUMPRTTI		51006
+#define UI_EXTMENU_AUTOSCROLL	51004
+#define UI_EXTMENU_SPACER		51005
+#define UI_EXTMENU_DUMPNIRTTI	51006
+#define UI_EXTMENU_DUMPRTTI		51007
 
 HWND g_MainHwnd;
 HWND g_ConsoleHwnd;
+HMENU g_ExtensionMenu;
 WNDPROC OldEditorUI_WndProc;
 void ExportTest(FILE *File);
 
@@ -62,6 +65,7 @@ bool EditorUI_CreateLogWindow()
 	if (!g_ConsoleHwnd)
 		return false;
 
+	SendMessageA(g_ConsoleHwnd, UI_CMD_AUTOSCROLL, (WPARAM)true, 0);
 	ShowWindow(g_ConsoleHwnd, SW_SHOW);
 	return true;
 }
@@ -69,20 +73,21 @@ bool EditorUI_CreateLogWindow()
 bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu)
 {
 	// Create extended menu options
-	HMENU subMenu = CreateMenu();
+	g_ExtensionMenu = CreateMenu();
 
 	BOOL result = TRUE;
-	result = result && InsertMenu(subMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_SHOWLOG, "Show Log");
-	result = result && InsertMenu(subMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_CLEARLOG, "Clear Log");
-	result = result && InsertMenu(subMenu, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
-	result = result && InsertMenu(subMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI data");
-	result = result && InsertMenu(subMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPRTTI, "Dump RTTI data");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_SHOWLOG, "Show Log");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_CLEARLOG, "Clear Log");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING | MF_CHECKED, (UINT_PTR)UI_EXTMENU_AUTOSCROLL, "Autoscroll Log");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI data");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPRTTI, "Dump RTTI data");
 
 	MENUITEMINFO menuInfo;
 	memset(&menuInfo, 0, sizeof(MENUITEMINFO));
 	menuInfo.cbSize = sizeof(MENUITEMINFO);
 	menuInfo.fMask = MIIM_SUBMENU | MIIM_ID | MIIM_STRING;
-	menuInfo.hSubMenu = subMenu;
+	menuInfo.hSubMenu = g_ExtensionMenu;
 	menuInfo.wID = UI_EXTMENU_ID;
 	menuInfo.dwTypeData = "Extensions";
 	menuInfo.cch = (uint32_t)strlen(menuInfo.dwTypeData);
@@ -292,6 +297,25 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 		}
 		return 0;
 
+		case UI_EXTMENU_AUTOSCROLL:
+		{
+			MENUITEMINFO mii;
+			mii.cbSize = sizeof(MENUITEMINFO);
+			mii.fMask = MIIM_STATE;
+			GetMenuItemInfo(g_ExtensionMenu, param, FALSE, &mii);
+
+			bool check = !((mii.fState & MFS_CHECKED) == MFS_CHECKED);
+
+			if (!check)
+				mii.fState &= ~MFS_CHECKED;
+			else
+				mii.fState |= MFS_CHECKED;
+
+			PostMessageA(g_ConsoleHwnd, UI_CMD_AUTOSCROLL, (WPARAM)check, 0);
+			SetMenuItemInfo(g_ExtensionMenu, param, FALSE, &mii);
+		}
+		return 0;
+
 		case UI_EXTMENU_DUMPNIRTTI:
 		case UI_EXTMENU_DUMPRTTI:
 		{
@@ -338,6 +362,7 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	static HWND richEditHwnd;
+	static bool autoScroll;
 
 	switch (Message)
 	{
@@ -432,6 +457,15 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 	{
 		void *textData = (void *)lParam;
 
+		// Save old position if not scrolling
+		POINT scrollRange;
+
+		if (!autoScroll)
+		{
+			SendMessageA(richEditHwnd, WM_SETREDRAW, FALSE, 0);
+			SendMessageA(richEditHwnd, EM_GETSCROLLPOS, 0, (WPARAM)&scrollRange);
+		}
+
 		// Move caret to the end, then write
 		CHARRANGE range;
 		range.cpMin = LONG_MAX;
@@ -439,6 +473,13 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 
 		SendMessageA(richEditHwnd, EM_EXSETSEL, 0, (LPARAM)&range);
 		SendMessageA(richEditHwnd, EM_REPLACESEL, FALSE, (LPARAM)textData);
+
+		if (!autoScroll)
+		{
+			SendMessageA(richEditHwnd, EM_SETSCROLLPOS, 0, (WPARAM)&scrollRange);
+			SendMessageA(richEditHwnd, WM_SETREDRAW, TRUE, 0);
+			RedrawWindow(richEditHwnd, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
+		}
 
 		free(textData);
 	}
@@ -450,6 +491,12 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 		emptyString[0] = '\0';
 
 		SendMessageA(richEditHwnd, WM_SETTEXT, 0, (LPARAM)&emptyString);
+	}
+	return 0;
+
+	case UI_CMD_AUTOSCROLL:
+	{
+		autoScroll = (bool)wParam;
 	}
 	return 0;
 	}
