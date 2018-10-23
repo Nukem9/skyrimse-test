@@ -65,7 +65,6 @@ bool EditorUI_CreateLogWindow()
 	if (!g_ConsoleHwnd)
 		return false;
 
-	SendMessageA(g_ConsoleHwnd, UI_CMD_AUTOSCROLL, (WPARAM)true, 0);
 	ShowWindow(g_ConsoleHwnd, SW_SHOW);
 	return true;
 }
@@ -372,7 +371,9 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 
 		// Create the rich edit control (https://docs.microsoft.com/en-us/windows/desktop/Controls/rich-edit-controls)
 		uint32_t style = WS_VISIBLE | WS_CHILD | WS_VSCROLL | ES_MULTILINE | ES_LEFT | ES_NOHIDESEL | ES_AUTOVSCROLL | ES_READONLY;
+
 		richEditHwnd = CreateWindowW(MSFTEDIT_CLASS, L"", style, 0, 0, info->cx, info->cy, Hwnd, nullptr, info->hInstance, nullptr);
+		autoScroll = true;
 
 		if (!richEditHwnd)
 			return -1;
@@ -513,10 +514,8 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 	return 0;
 
 	case UI_CMD_AUTOSCROLL:
-	{
 		autoScroll = (bool)wParam;
-	}
-	return 0;
+		return 0;
 	}
 
 	return DefWindowProc(Hwnd, Message, wParam, lParam);
