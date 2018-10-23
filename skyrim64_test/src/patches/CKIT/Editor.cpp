@@ -19,13 +19,12 @@ struct z_stream_s
 struct DialogOverrideData
 {
 	DLGPROC DialogFunc;	// Original function pointer
-	LPARAM Param;		// Original parameter
 	bool IsDialog;		// True if it requires EndDialog()
 };
 
 std::recursive_mutex g_DialogMutex;
 std::unordered_map<HWND, DialogOverrideData> g_DialogOverrides;
-thread_local DialogOverrideData *DlgData;
+thread_local DialogOverrideData DlgData;
 
 INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -41,11 +40,11 @@ INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 		// if (is new entry)
 		if (!proc)
 		{
-			g_DialogOverrides[hwndDlg] = *DlgData;
-			proc = DlgData->DialogFunc;
+			g_DialogOverrides[hwndDlg] = DlgData;
+			proc = DlgData.DialogFunc;
 
-			delete DlgData;
-			DlgData = nullptr;
+			DlgData.DialogFunc = nullptr;
+			DlgData.IsDialog = false;
 		}
 
 		// Purge old entries every now and then
@@ -71,32 +70,25 @@ INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
 	// EndDialog MUST NOT be used
-	DialogOverrideData *data = new DialogOverrideData;
-	data->DialogFunc = lpDialogFunc;
-	data->Param = dwInitParam;
-	data->IsDialog = false;
+	DlgData.DialogFunc = lpDialogFunc;
+	DlgData.IsDialog = false;
 
-	DlgData = data;
 	return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
 }
 
 INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
 	// EndDialog MUST be used
-	DialogOverrideData *data = new DialogOverrideData;
-	data->DialogFunc = lpDialogFunc;
-	data->Param = dwInitParam;
-	data->IsDialog = true;
+	DlgData.DialogFunc = lpDialogFunc;
+	DlgData.IsDialog = true;
 
-	DlgData = data;
 	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
 }
 
 BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult)
 {
-	std::lock_guard<std::recursive_mutex> lock(g_DialogMutex);
-
 	Assert(hDlg);
+	std::lock_guard<std::recursive_mutex> lock(g_DialogMutex);
 
 	// Fix for the CK calling EndDialog on a CreateDialogParamA window
 	if (auto itr = g_DialogOverrides.find(hDlg); itr != g_DialogOverrides.end() && !itr->second.IsDialog)
@@ -201,7 +193,9 @@ bool IsBSAVersionCurrent(class BSFile *File)
 		ReadFile(file, &header, sizeof(header), &bytesRead, nullptr);
 		CloseHandle(file);
 
-		if (header.Marker != '\0ASB' || header.Version < 0x68)
+		// LE: Version 0x68
+		// SSE: Version 0x69
+		if (header.Marker != '\0ASB' || header.Version < 0x69)
 			return false;
 
 		return true;
