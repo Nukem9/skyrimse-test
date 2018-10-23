@@ -1,4 +1,5 @@
 #include <xbyak/xbyak.h>
+#include <intrin.h>
 #include "../typeinfo/ms_rtti.h"
 #include "../common.h"
 #include "TES/MemoryManager.h"
@@ -239,6 +240,27 @@ void Patch_TESVCreationKit()
 	// Fix for icons not appearing in the script properties dialog (list view) (LVIF_TEXT -> LVIF_IMAGE)
 	//
 	PatchMemory(g_ModuleBase + 0x20CD744, (PBYTE)"\x02", 1);
+
+	//
+	// Plugin loading optimizations:
+	//
+	// - TESForm reference map rewrite (above)
+	// - Fix an unoptimized function bottleneck (sub_141477DA0)
+	// - Eliminate millions of calls to update the progress dialog, instead only updating 400 times (0% -> 100%)
+	// - Replace old zlib decompression code with optimized libdeflate
+	//
+	int cpuinfo[4];
+	__cpuid(cpuinfo, 1);
+
+	// Fall back to non-SSE 4.1 code path when not available
+	if ((cpuinfo[2] & (1 << 19)) != 0)
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1477DA0), &sub_141477DA0_SSE41);
+	else
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1477DA0), &sub_141477DA0);
+
+	PatchMemory(g_ModuleBase + 0x163D56E, (PBYTE)"\xB9\x90\x01\x00\x00\x90", 6);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1640FF3), &UpdateLoadProgressBar);
+	PatchMemory(g_ModuleBase + 0x1640FF3, (PBYTE)"\xE8", 1);
 
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BB1E), &hk_inflateInit);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BBB9), &hk_inflate);

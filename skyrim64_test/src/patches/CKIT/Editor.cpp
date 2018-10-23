@@ -1,5 +1,7 @@
 #include <libdeflate/libdeflate.h>
 #include <mutex>
+#include <xmmintrin.h>
+#include <smmintrin.h>
 #include "../../common.h"
 
 #pragma comment(lib, "libdeflate.lib")
@@ -283,4 +285,30 @@ bool IsESLMaster(const char *Name)
 	}
 
 	return false;
+}
+
+bool sub_141477DA0_SSE41(__int64 a1)
+{
+	// Checks if the 16-byte structure is 0 (list->next pointer, list->data pointer)
+	return _mm_testz_si128(_mm_loadu_si128((__m128i *)a1), _mm_setzero_si128());
+}
+
+bool sub_141477DA0(__int64 a1)
+{
+	// Checks if the 16-byte structure is 0 (list->next pointer, list->data pointer)
+	return *(__int64 *)(a1 + 0) == 0 && *(__int64 *)(a1 + 8) == 0;
+}
+
+void UpdateLoadProgressBar()
+{
+	static float lastPercent = 0.0f;
+
+	// Only update every quarter percent, rather than every single form load
+	float newPercent = ((float)*(uint32_t *)0x143BBDA8C / (float)*(uint32_t *)0x143BBDA88) * 100.0f;
+
+	if (abs(lastPercent - newPercent) <= 0.25f)
+		return;
+
+	((void(__fastcall *)())(g_ModuleBase + 0x13A4640))();
+	lastPercent = newPercent;
 }

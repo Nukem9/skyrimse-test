@@ -19,3 +19,7 @@ bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, b
 uint32_t GetESLMasterCount();
 const char *GetESLMasterName(uint32_t Index);
 bool IsESLMaster(const char *Name);
+
+bool sub_141477DA0_SSE41(__int64 a1);
+bool sub_141477DA0(__int64 a1);
+void UpdateLoadProgressBar();
