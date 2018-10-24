@@ -289,8 +289,9 @@ bool IsESLMaster(const char *Name)
 
 bool sub_141477DA0_SSE41(__int64 a1)
 {
-	// Checks if the 16-byte structure is 0 (list->next pointer, list->data pointer)
-	return _mm_testz_si128(_mm_loadu_si128((__m128i *)a1), _mm_setzero_si128());
+	// Checks if the 16-byte structure is 0 (list->next pointer, list->data pointer) (Branchless)
+	__m128i data = _mm_loadu_si128((__m128i *)a1);
+	return _mm_testz_si128(data, data);
 }
 
 bool sub_141477DA0(__int64 a1)
