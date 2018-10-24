@@ -46,6 +46,7 @@ shader_analyzer/obj/
 # VTune
 */*My Amplifier Results*/
 */*My Inspector Results*/
+*/*My Advisor Results*/
 
 # Nsight
 *.nvuser
