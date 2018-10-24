@@ -40,8 +40,6 @@ void EditorUI_Initialize()
 
 bool EditorUI_CreateLogWindow()
 {
-	const uint32_t width = 1024;
-	const uint32_t height = 480;
 	HINSTANCE instance = (HINSTANCE)GetModuleHandle(nullptr);
 
 	WNDCLASSEX wc;
@@ -51,7 +49,7 @@ bool EditorUI_CreateLogWindow()
 	wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
 	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.hInstance = instance;
-	wc.hIcon = LoadIconA(instance, MAKEINTRESOURCE(0x13E));
+	wc.hIcon = LoadIcon(instance, MAKEINTRESOURCE(0x13E));
 	wc.hIconSm = wc.hIcon;
 	wc.lpfnWndProc = EditorUI_LogWndProc;
 	wc.lpszClassName = TEXT("RTEDITLOG");
@@ -60,7 +58,7 @@ bool EditorUI_CreateLogWindow()
 	if (!RegisterClassEx(&wc))
 		return false;
 
-	g_ConsoleHwnd = CreateWindowExA(0, "RTEDITLOG", "Log", WS_OVERLAPPEDWINDOW, 64, 64, width, height, nullptr, nullptr, instance, nullptr);
+	g_ConsoleHwnd = CreateWindowEx(0, TEXT("RTEDITLOG"), TEXT("Log"), WS_OVERLAPPEDWINDOW, 64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
 
 	if (!g_ConsoleHwnd)
 		return false;
@@ -298,20 +296,20 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 
 		case UI_EXTMENU_AUTOSCROLL:
 		{
-			MENUITEMINFO mii;
-			mii.cbSize = sizeof(MENUITEMINFO);
-			mii.fMask = MIIM_STATE;
-			GetMenuItemInfo(g_ExtensionMenu, param, FALSE, &mii);
+			MENUITEMINFO info;
+			info.cbSize = sizeof(MENUITEMINFO);
+			info.fMask = MIIM_STATE;
+			GetMenuItemInfo(g_ExtensionMenu, param, FALSE, &info);
 
-			bool check = !((mii.fState & MFS_CHECKED) == MFS_CHECKED);
+			bool check = !((info.fState & MFS_CHECKED) == MFS_CHECKED);
 
 			if (!check)
-				mii.fState &= ~MFS_CHECKED;
+				info.fState &= ~MFS_CHECKED;
 			else
-				mii.fState |= MFS_CHECKED;
+				info.fState |= MFS_CHECKED;
 
 			PostMessageA(g_ConsoleHwnd, UI_CMD_AUTOSCROLL, (WPARAM)check, 0);
-			SetMenuItemInfo(g_ExtensionMenu, param, FALSE, &mii);
+			SetMenuItemInfo(g_ExtensionMenu, param, FALSE, &info);
 		}
 		return 0;
 
@@ -378,16 +376,25 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 		if (!richEditHwnd)
 			return -1;
 
+		// Set default position
+		int winW = g_INI.GetInteger("CreationKit_Log", "Width", info->cx);
+		int winH = g_INI.GetInteger("CreationKit_Log", "Height", info->cy);
+
+		MoveWindow(Hwnd, info->x, info->y, winW, winH, FALSE);
+
 		// Set a better font
-		CHARFORMAT2W format;
+		CHARFORMAT2A format;
 		memset(&format, 0, sizeof(format));
+
+		// Convert Twips to points (1 point = 20 Twips)
+		int pointSize = g_INI.GetInteger("CreationKit_Log", "FontSize", 10) * 20;
 
 		format.cbSize = sizeof(format);
 		format.dwMask = CFM_FACE | CFM_SIZE | CFM_WEIGHT;
-		format.yHeight = 10 * 20;// Convert twips to points (1 point = 20 twips)
-		wcscpy_s(format.szFaceName, L"Consolas");
-		format.wWeight = FW_MEDIUM;
-		SendMessageW(richEditHwnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
+		format.yHeight = pointSize;
+		strcpy_s(format.szFaceName, g_INI.Get("CreationKit_Log", "Font", "Consolas").c_str());
+		format.wWeight = (WORD)g_INI.GetInteger("CreationKit_Log", "FontWeight", FW_NORMAL);
+		SendMessageA(richEditHwnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
 
 		// Subscribe to EN_MSGFILTER and EN_SELCHANGE
 		SendMessageW(richEditHwnd, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_SELCHANGE);
