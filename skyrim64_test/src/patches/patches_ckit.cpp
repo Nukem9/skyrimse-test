@@ -10,13 +10,6 @@
 #include "CKIT/NavMesh.h"
 #include "CKIT/EditorUI.h"
 
-#define INI_ALLOW_MULTILINE 0
-#define INI_USE_STACK 0
-#define INI_MAX_LINE 4096
-#include "INIReader.h"
-
-INIReader INI("skyrim64_test.ini");
-
 void PatchSteam();
 void PatchThreading();
 void PatchFileIO();
@@ -38,14 +31,14 @@ void Patch_TESVCreationKit()
 
 	MSRTTI::Initialize();
 
-	if (INI.GetBoolean("CreationKit", "ThreadingPatch", false))	PatchThreading();
-	if (INI.GetBoolean("CreationKit", "IOPatch", false))		PatchFileIO();
-	if (INI.GetBoolean("CreationKit", "SteamPatch", false))		PatchSteam();
+	if (g_INI.GetBoolean("CreationKit", "ThreadingPatch", false))	PatchThreading();
+	if (g_INI.GetBoolean("CreationKit", "IOPatch", false))			PatchFileIO();
+	if (g_INI.GetBoolean("CreationKit", "SteamPatch", false))		PatchSteam();
 
 	//
 	// Experimental
 	//
-	if (INI.GetBoolean("CreationKit", "ExperimentalOptimization", false))
+	if (g_INI.GetBoolean("CreationKit", "ExperimentalOptimization", false))
 	{
 		ExperimentalPatchEditAndContinue();
 		ExperimentalPatchMemInit();
@@ -56,19 +49,19 @@ void Patch_TESVCreationKit()
 	//
 
 	// Disable automatic FaceGen on save
-	if (INI.GetBoolean("CreationKit_FaceGen", "DisableAutoFaceGen", false))
+	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableAutoFaceGen", false))
 		PatchMemory(g_ModuleBase + 0x18DE530, (PBYTE)"\xC3", 1);
 
 	// Don't produce DDS files
-	if (INI.GetBoolean("CreationKit_FaceGen", "DisableExportDDS", false))
+	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportDDS", false))
 		PatchMemory(g_ModuleBase + 0x1904318, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
 	// Don't produce TGA files
-	if (INI.GetBoolean("CreationKit_FaceGen", "DisableExportTGA", false))
+	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportTGA", false))
 		PatchMemory(g_ModuleBase + 0x190436B, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
 	// Allow variable tint mask resolution
-	uint32_t tintResolution = INI.GetInteger("CreationKit_FaceGen", "TintMaskResolution", 512);
+	uint32_t tintResolution = g_INI.GetInteger("CreationKit_FaceGen", "TintMaskResolution", 512);
 	PatchMemory(g_ModuleBase + 0x2DA588C, (PBYTE)&tintResolution, sizeof(uint32_t));
 	PatchMemory(g_ModuleBase + 0x2DA5899, (PBYTE)&tintResolution, sizeof(uint32_t));
 
@@ -81,7 +74,7 @@ void Patch_TESVCreationKit()
 	//
 	// MemoryManager
 	//
-	if (INI.GetBoolean("CreationKit", "MemoryPatch", false))
+	if (g_INI.GetBoolean("CreationKit", "MemoryPatch", false))
 	{
 		PatchMemory();
 
@@ -106,7 +99,7 @@ void Patch_TESVCreationKit()
 	//
 	// NavMesh
 	//
-	if (INI.GetBoolean("CreationKit", "NavMeshPseudoDelete", false))
+	if (g_INI.GetBoolean("CreationKit", "NavMeshPseudoDelete", false))
 	{
 		*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
 
@@ -138,7 +131,7 @@ void Patch_TESVCreationKit()
 	//
 	// UI
 	//
-	if (INI.GetBoolean("CreationKit", "UI", false))
+	if (g_INI.GetBoolean("CreationKit", "UI", false))
 	{
 		EditorUI_Initialize();
 		*(PBYTE *)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3770), &EditorUI_WndProc);
@@ -168,7 +161,7 @@ void Patch_TESVCreationKit()
 	//
 	// Allow saving ESM's directly
 	//
-	if (INI.GetBoolean("CreationKit", "AllowSaveESM", false))
+	if (g_INI.GetBoolean("CreationKit", "AllowSaveESM", false))
 	{
 		// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
 		const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
@@ -185,7 +178,7 @@ void Patch_TESVCreationKit()
 	//
 	// Allow ESP files to act as master files while saving
 	//
-	if (INI.GetBoolean("CreationKit", "AllowMasterESP", false))
+	if (g_INI.GetBoolean("CreationKit", "AllowMasterESP", false))
 	{
 		PatchMemory(g_ModuleBase + 0x1657279, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
 	}
@@ -198,7 +191,7 @@ void Patch_TESVCreationKit()
 	//
 	// Skip 'Topic Info' validation during load
 	//
-	if (INI.GetBoolean("CreationKit", "SkipTopicInfoValidation", false))
+	if (g_INI.GetBoolean("CreationKit", "SkipTopicInfoValidation", false))
 	{
 		PatchMemory(g_ModuleBase + 0x19A83C0, (PBYTE)"\xC3", 1);
 	}
@@ -206,13 +199,13 @@ void Patch_TESVCreationKit()
 	//
 	// Remove assertion message boxes
 	//
-	if (INI.GetBoolean("CreationKit", "DisableAssertions", false))
+	if (g_INI.GetBoolean("CreationKit", "DisableAssertions", false))
 	{
 		PatchMemory(g_ModuleBase + 0x243D9FE, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 	}
 
 	// Force render window to draw at 60fps (SetTimer(1ms))
-	if (INI.GetBoolean("CreationKit", "RenderWindow60FPS", false))
+	if (g_INI.GetBoolean("CreationKit", "RenderWindow60FPS", false))
 	{
 		PatchMemory(g_ModuleBase + 0x1306978, (PBYTE)"\x01", 1);
 	}

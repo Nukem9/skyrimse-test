@@ -97,9 +97,6 @@
     <ClInclude Include="src\typeinfo\ms_rtti.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\INIReader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\CKIT\NavMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -113,6 +110,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\TES\bhkThreadMemorySource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\INIReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

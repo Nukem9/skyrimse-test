@@ -19,13 +19,6 @@
 #include "TES/bhkThreadMemorySource.h"
 #include "TES/Setting.h"
 
-#define INI_ALLOW_MULTILINE 0
-#define INI_USE_STACK 0
-#define INI_MAX_LINE 4096
-#include "INIReader.h"
-
-INIReader INI("skyrim64_test.ini");
-
 void PatchAchievements();
 void PatchD3D11();
 void PatchLogging();

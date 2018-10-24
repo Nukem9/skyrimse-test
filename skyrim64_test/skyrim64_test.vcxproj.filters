@@ -311,6 +311,9 @@
     <ClInclude Include="src\patches\TES\bhkThreadMemorySource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\INIReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\d3dx9_debug.cpp">

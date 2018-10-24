@@ -43,7 +43,7 @@
     <ClInclude Include="src\patches\CKIT\EditorUI.h" />
     <ClInclude Include="src\patches\CKIT\NavMesh.h" />
     <ClInclude Include="src\patches\CKIT\TESForm_CK.h" />
-    <ClInclude Include="src\patches\INIReader.h" />
+    <ClInclude Include="src\INIReader.h" />
     <ClInclude Include="src\patches\TES\bhkThreadMemorySource.h" />
     <ClInclude Include="src\patches\TES\MemoryManager.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiRTTI.h" />

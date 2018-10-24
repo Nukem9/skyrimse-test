@@ -58,6 +58,8 @@ void ApplyPatches()
 	DoHook();
 #endif
 
+	strcpy_s(g_GitVersion, g_INI.Get("Version", "CommitId", "UNSET").c_str());
+
 	if (g_IsGame)
 	{
 #if !SKYRIM64_CREATIONKIT_DLL

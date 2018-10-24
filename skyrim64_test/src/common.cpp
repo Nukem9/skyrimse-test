@@ -38,6 +38,8 @@ __itt_heap_function ITT_FreeCallback;
 #pragma comment(lib, "detours/detours.lib")
 #endif
 
+INIReader g_INI("skyrim64_test.ini");
+
 uintptr_t g_ModuleBase;
 uintptr_t g_ModuleSize;
 

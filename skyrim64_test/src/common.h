@@ -43,10 +43,18 @@ extern __itt_heap_function ITT_FreeCallback;
 // ImGui
 #include <imgui/imgui.h>
 
+// INIReader
+#define INI_ALLOW_MULTILINE 0
+#define INI_USE_STACK 0
+#define INI_MAX_LINE 4096
+#include "INIReader.h"
+
 #include "ui/ui.h"
 #include "xutil.h"
 #include "dump.h"
 #include "profiler.h"
+
+extern INIReader g_INI;
 
 extern uintptr_t g_ModuleBase;
 extern uintptr_t g_ModuleSize;
