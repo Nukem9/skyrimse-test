@@ -131,6 +131,11 @@ void Patch_TESVCreationKit()
 	//
 	// UI
 	//
+	PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
+	PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
+	PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
+	PatchIAT(hk_SendMessageA, "USER32.DLL", "SendMessageA");
+
 	if (g_INI.GetBoolean("CreationKit", "UI", false))
 	{
 		EditorUI_Initialize();
@@ -150,13 +155,11 @@ void Patch_TESVCreationKit()
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x243D260), &EditorUI_Assert);
 	}
 
-	//
-	// Windows
-	//
-	PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
-	PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
-	PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
-	PatchIAT(hk_SendMessageA, "USER32.DLL", "SendMessageA");
+	if (g_INI.GetBoolean("CreationKit", "DeferredDialogLoad", false))
+	{
+		PatchTemplatedFormIterator();
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13B9AD0), &InsertComboBoxItem);
+	}
 
 	//
 	// Allow saving ESM's directly

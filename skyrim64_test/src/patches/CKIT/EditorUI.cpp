@@ -348,7 +348,7 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 	{
 		// Continue normal execution but with a custom string
 		char customTitle[1024];
-		sprintf_s(customTitle, "%s (CK64 Fixes Rev. %s)", (const char *)lParam, g_GitVersion);
+		sprintf_s(customTitle, "%s (CK64Fixes Rev. %s)", (const char *)lParam, g_GitVersion);
 
 		return CallWindowProc(OldEditorUI_WndProc, Hwnd, Message, wParam, (LPARAM)customTitle);
 	}

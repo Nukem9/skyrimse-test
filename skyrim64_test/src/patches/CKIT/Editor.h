@@ -23,3 +23,6 @@ bool IsESLMaster(const char *Name);
 bool sub_141477DA0_SSE41(__int64 a1);
 bool sub_141477DA0(__int64 a1);
 void UpdateLoadProgressBar();
+
+void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, const char *Value, bool AllowResize);
+void PatchTemplatedFormIterator();
