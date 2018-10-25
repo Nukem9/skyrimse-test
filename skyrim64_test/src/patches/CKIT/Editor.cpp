@@ -506,3 +506,72 @@ void PatchTemplatedFormIterator()
 		PatchMemory(end, (PBYTE)"\xE8", 1);
 	}
 }
+
+LRESULT CSScript_PickScriptsToCompileDlg_WindowMessage(void *Thisptr, UINT Message, WPARAM WParam, LPARAM LParam)
+{
+	thread_local bool disableListViewUpdates;
+
+	auto updateListViewItems = [Thisptr]
+	{
+		if (!disableListViewUpdates)
+			((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9870))(Thisptr);
+	};
+
+	switch (Message)
+	{
+	case WM_SIZE:
+		((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9CF0))(Thisptr);
+		break;
+
+	case WM_NOTIFY:
+	{
+		LPNMHDR notification = (LPNMHDR)LParam;
+
+		// "SysListView32" control
+		if (notification->idFrom == 5401 && notification->code == LVN_ITEMCHANGED)
+		{
+			updateListViewItems();
+			return 1;
+		}
+	}
+	break;
+
+	case WM_INITDIALOG:
+		disableListViewUpdates = true;
+		((void(__fastcall *)(void *))(g_ModuleBase + 0x20A99C0))(Thisptr);
+		disableListViewUpdates = false;
+
+		// Update it ONCE after everything is inserted
+		updateListViewItems();
+		break;
+
+	case WM_COMMAND:
+	{
+		const uint32_t param = LOWORD(WParam);
+
+		// "Check All", "Uncheck All", "Check All Checked-Out"
+		if (param == 5474 || param == 5475 || param == 5602)
+		{
+			disableListViewUpdates = true;
+			if (param == 5474)
+				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA080))(Thisptr);
+			else if (param == 5475)
+				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA130))(Thisptr);
+			else if (param == 5602)
+				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA1E0))(Thisptr);
+			disableListViewUpdates = false;
+
+			updateListViewItems();
+			return 1;
+		}
+		else if (param == 1)
+		{
+			// "Compile" button
+			((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9F30))(Thisptr);
+		}
+	}
+	break;
+	}
+
+	return ((LRESULT(__fastcall *)(void *, UINT, WPARAM, LPARAM))(g_ModuleBase + 0x20ABD90))(Thisptr, Message, WParam, LParam);
+}
