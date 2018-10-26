@@ -163,6 +163,9 @@ void Patch_TESVCreationKit()
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x20A9710), &CSScript_PickScriptsToCompileDlg_WindowMessage);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1985F20), &DialogueInfoSort);
 
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12C8B63), &UpdateObjectWindowTreeView);
+		PatchMemory(g_ModuleBase + 0x12C8B63, (PBYTE)"\xE8", 1);
+
 		// Disable useless "Processing Topic X..." status bar update
 		PatchMemory(g_ModuleBase + 0x199DE29, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 	}
