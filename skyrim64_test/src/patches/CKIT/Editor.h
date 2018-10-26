@@ -26,5 +26,6 @@ void UpdateLoadProgressBar();
 
 void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, const char *Value, bool AllowResize);
 void PatchTemplatedFormIterator();
+void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex);
 
 LRESULT CSScript_PickScriptsToCompileDlg_WindowMessage(void *Thisptr, UINT Message, WPARAM WParam, LPARAM LParam);

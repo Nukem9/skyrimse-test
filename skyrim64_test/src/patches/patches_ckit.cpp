@@ -159,7 +159,7 @@ void Patch_TESVCreationKit()
 	{
 		PatchTemplatedFormIterator();
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13B9AD0), &InsertComboBoxItem);
-
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BA4D0), &InsertListViewItem);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x20A9710), &CSScript_PickScriptsToCompileDlg_WindowMessage);
 	}
 

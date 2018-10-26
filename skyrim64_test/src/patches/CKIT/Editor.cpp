@@ -316,7 +316,8 @@ void UpdateLoadProgressBar()
 	lastPercent = newPercent;
 }
 
-bool g_UseDeferredComboInsert;
+bool g_UseDeferredDialogInsert;
+HWND g_DeferredListView;
 HWND g_DeferredComboBox;
 uintptr_t g_DeferredStringLength;
 bool g_AllowResize;
@@ -324,7 +325,8 @@ std::vector<std::pair<const char *, const char *>> g_DeferredMenuItems;
 
 void ResetUIDefer()
 {
-	g_UseDeferredComboInsert = false;
+	g_UseDeferredDialogInsert = false;
+	g_DeferredListView = nullptr;
 	g_DeferredComboBox = nullptr;
 	g_DeferredStringLength = 0;
 	g_AllowResize = false;
@@ -334,18 +336,24 @@ void ResetUIDefer()
 void BeginUIDefer()
 {
 	ResetUIDefer();
-	g_UseDeferredComboInsert = true;
+	g_UseDeferredDialogInsert = true;
 }
 
 void EndUIDefer()
 {
-	if (!g_UseDeferredComboInsert)
+	if (!g_UseDeferredDialogInsert)
 		return;
 
-	const HWND control = g_DeferredComboBox;
+	if (g_DeferredListView)
+	{
+		SendMessage(g_DeferredListView, WM_SETREDRAW, TRUE, 0);
+		RedrawWindow(g_DeferredListView, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
+	}
 
 	if (g_DeferredMenuItems.size() > 0)
 	{
+		const HWND control = g_DeferredComboBox;
+
 		SendMessage(control, WM_SETREDRAW, FALSE, 0);// Prevent repainting until finished
 		SendMessage(control, CB_SETMINVISIBLE, 1, 0);// Possible optimization for older libraries (source: MSDN forums)
 
@@ -415,7 +423,7 @@ void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, const char
 	if (!DisplayText)
 		DisplayText = "NONE";
 
-	if (g_UseDeferredComboInsert)
+	if (g_UseDeferredDialogInsert)
 	{
 		AssertMsg(!g_DeferredComboBox || (g_DeferredComboBox == ComboBoxHandle), "Got handles to different combo boxes...? Reset probably wasn't called.");
 
@@ -446,6 +454,39 @@ void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, const char
 
 	if (index != CB_ERR && index != CB_ERRSPACE)
 		SendMessageA(ComboBoxHandle, CB_SETITEMDATA, index, (LPARAM)Value);
+}
+
+void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex)
+{
+	LVITEMA item;
+	memset(&item, 0, sizeof(item));
+
+	if (ItemIndex == -1)
+		ItemIndex = 0x7FFFFFFF;
+
+	item.mask = LVIF_PARAM | LVIF_TEXT;
+	item.iItem = ItemIndex;
+	item.lParam = (LPARAM)Parameter;
+	item.pszText = LPSTR_TEXTCALLBACK;
+
+	if (UseImage)
+	{
+		item.mask |= LVIF_IMAGE;
+		item.iImage = I_IMAGECALLBACK;
+	}
+
+	if (g_UseDeferredDialogInsert)
+	{
+		AssertMsg(!g_DeferredListView || (g_DeferredListView == ListViewHandle), "Got handles to different list views? Reset probably wasn't called.");
+
+		if (!g_DeferredListView)
+		{
+			g_DeferredListView = ListViewHandle;
+			SendMessage(ListViewHandle, WM_SETREDRAW, FALSE, 0);
+		}
+	}
+
+	SendMessageA(ListViewHandle, LVM_INSERTITEMA, 0, (LPARAM)&item);
 }
 
 void PatchTemplatedFormIterator()
