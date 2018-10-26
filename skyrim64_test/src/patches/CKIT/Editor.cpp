@@ -616,3 +616,24 @@ LRESULT CSScript_PickScriptsToCompileDlg_WindowMessage(void *Thisptr, UINT Messa
 
 	return ((LRESULT(__fastcall *)(void *, UINT, WPARAM, LPARAM))(g_ModuleBase + 0x20ABD90))(Thisptr, Message, WParam, LParam);
 }
+
+void DialogueInfoSort(__int64 TESDataHandler, uint32_t FormType, void *SortFunction)
+{
+	static std::unordered_map<uintptr_t, std::pair<uintptr_t, uint32_t>> arrayCache;
+
+	__int64 arrayInstance = TESDataHandler + 24i64 * FormType + 104;
+	__int64 arrayBase = *(__int64 *)(arrayInstance);
+	uint32_t count = *(uint32_t *)(arrayInstance + 0x10);
+
+	auto itr = arrayCache.find(arrayInstance);
+
+	// If not previously found or any counters changed...
+	if (itr == arrayCache.end() || itr->second.first != arrayBase || itr->second.second != count)
+	{
+		arrayCache.erase(itr);
+		arrayCache.emplace(arrayInstance, std::make_pair(arrayBase, count));
+
+		// Update and resort the array
+		((void(__fastcall *)(__int64, void *))(g_ModuleBase + 0x1651590))(arrayInstance, SortFunction);
+	}
+}
