@@ -31,3 +31,13 @@ void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int
 void PatchTemplatedFormIterator();
 LRESULT CSScript_PickScriptsToCompileDlg_WindowMessage(void *Thisptr, UINT Message, WPARAM WParam, LPARAM LParam);
 void DialogueInfoSort(__int64 TESDataHandler, uint32_t FormType, void *SortFunction);
+
+class IRendererResourceManager
+{
+};
+
+class BSShaderResourceManager : public IRendererResourceManager
+{
+public:
+	bool FindIntersectionsTriShapeFastPath(class NiPoint3 *P1, class NiPoint3 *P2, class NiPick *Pick, class BSTriShape *Shape);
+};

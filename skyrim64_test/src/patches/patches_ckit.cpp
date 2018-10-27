@@ -247,6 +247,11 @@ void Patch_TESVCreationKit()
 	PatchMemory(g_ModuleBase + 0x20CD744, (PBYTE)"\x02", 1);
 
 	//
+	// Fix for being unable to select certain objects in the render view window
+	//
+	Detours::X64::DetourClassVTable((PBYTE)(g_ModuleBase + 0x345ECD0), &BSShaderResourceManager::FindIntersectionsTriShapeFastPath, 34);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
