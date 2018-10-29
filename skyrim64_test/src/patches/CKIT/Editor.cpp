@@ -663,3 +663,8 @@ bool BSShaderResourceManager::FindIntersectionsTriShapeFastPath(class NiPoint3 *
 
 	return result;
 }
+
+void QuitHandler()
+{
+	ExitProcess(0);
+}

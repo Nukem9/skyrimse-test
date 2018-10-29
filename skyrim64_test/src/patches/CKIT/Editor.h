@@ -41,3 +41,5 @@ class BSShaderResourceManager : public IRendererResourceManager
 public:
 	bool FindIntersectionsTriShapeFastPath(class NiPoint3 *P1, class NiPoint3 *P2, class NiPick *Pick, class BSTriShape *Shape);
 };
+
+void QuitHandler();
