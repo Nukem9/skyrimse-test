@@ -39,6 +39,10 @@ namespace HKRTTI
 	class hkClassMember;
 	class hkCustomAttributes;
 
+	const char *MemberToString(const hkClassMember *Member);
+	void DumpClass(const char *BasePath, const hkClass *Class);
+	void DumpReflectionData(const char *BasePath);
+
 	class hkTypeInfo
 	{
 	public:

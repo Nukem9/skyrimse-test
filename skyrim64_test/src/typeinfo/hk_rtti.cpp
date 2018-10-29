@@ -171,14 +171,14 @@ namespace HKRTTI
 		return buf;
 	}
 
-	void DumpClass(hkClass *Class)
+	void DumpClass(const char *BasePath, const hkClass *Class)
 	{
 		const char *className = Class->m_name;
 		const hkClass *classParent = Class->GetParent();
 
 		// Create a specific header file for each class
 		char filePath[1024];
-		sprintf_s(filePath, "C:\\havok\\%s.h", Class->m_name);
+		sprintf_s(filePath, "%s\\%s.h", BasePath, Class->m_name);
 
 		FILE *f = nullptr;
 		if (fopen_s(&f, filePath, "w") != 0)
@@ -298,7 +298,7 @@ namespace HKRTTI
 		fclose(f);
 	}
 
-	void DumpReflectionData()
+	void DumpReflectionData(const char *BasePath)
 	{
 		auto typeinfo = hkTypeInfo::GetGlobalArray();
 		auto classes = hkClass::GetGlobalArray();
@@ -314,6 +314,6 @@ namespace HKRTTI
 
 		// Enumerate everything
 		for (const auto& item : classMap)
-			DumpClass((hkClass *)item.first);
+			DumpClass(BasePath, item.first);
 	}
 }

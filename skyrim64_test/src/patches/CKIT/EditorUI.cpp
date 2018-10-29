@@ -4,6 +4,7 @@
 #include <CommCtrl.h>
 #include "../../common.h"
 #include "../../typeinfo/ms_rtti.h"
+#include "../../typeinfo/hk_rtti.h"
 #include "EditorUI.h"
 
 #pragma comment(lib, "comctl32.lib")
@@ -12,13 +13,14 @@
 #define UI_CMD_CLEARLOGTEXT (WM_APP + 2)
 #define UI_CMD_AUTOSCROLL	(WM_APP + 3)
 
-#define UI_EXTMENU_ID			51001
-#define UI_EXTMENU_SHOWLOG		51002
-#define UI_EXTMENU_CLEARLOG		51003
-#define UI_EXTMENU_AUTOSCROLL	51004
-#define UI_EXTMENU_SPACER		51005
-#define UI_EXTMENU_DUMPNIRTTI	51006
-#define UI_EXTMENU_DUMPRTTI		51007
+#define UI_EXTMENU_ID				51001
+#define UI_EXTMENU_SHOWLOG			51002
+#define UI_EXTMENU_CLEARLOG			51003
+#define UI_EXTMENU_AUTOSCROLL		51004
+#define UI_EXTMENU_SPACER			51005
+#define UI_EXTMENU_DUMPRTTI			51006
+#define UI_EXTMENU_DUMPNIRTTI		51007
+#define UI_EXTMENU_DUMPHAVOKRTTI	51008
 
 HWND g_MainHwnd;
 HWND g_ConsoleHwnd;
@@ -77,8 +79,9 @@ bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu)
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_CLEARLOG, "Clear Log");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING | MF_CHECKED, (UINT_PTR)UI_EXTMENU_AUTOSCROLL, "Autoscroll Log");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
-	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI data");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPRTTI, "Dump RTTI data");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI data");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPHAVOKRTTI, "Dump Havok RTTI data");
 
 	MENUITEMINFO menuInfo;
 	memset(&menuInfo, 0, sizeof(MENUITEMINFO));
@@ -313,8 +316,9 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 		}
 		return 0;
 
-		case UI_EXTMENU_DUMPNIRTTI:
 		case UI_EXTMENU_DUMPRTTI:
+		case UI_EXTMENU_DUMPNIRTTI:
+		case UI_EXTMENU_DUMPHAVOKRTTI:
 		{
 			char filePath[MAX_PATH];
 			memset(filePath, 0, sizeof(filePath));
@@ -332,10 +336,16 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 			{
 				if (FILE *f; fopen_s(&f, filePath, "w") == 0)
 				{
-					if (param == UI_EXTMENU_DUMPNIRTTI)
-						ExportTest(f);
-					else if (param == UI_EXTMENU_DUMPRTTI)
+					if (param == UI_EXTMENU_DUMPRTTI)
 						MSRTTI::Dump(f);
+					else if (param == UI_EXTMENU_DUMPNIRTTI)
+						ExportTest(f);
+					else if (param == UI_EXTMENU_DUMPHAVOKRTTI)
+					{
+						// Convert path to directory
+						*strrchr(filePath, '\\') = '\0';
+						HKRTTI::DumpReflectionData(filePath);
+					}
 
 					fclose(f);
 				}
