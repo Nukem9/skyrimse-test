@@ -229,7 +229,12 @@ bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, b
 	strcat_s(destDir, "\\");
 	strcat_s(destDir, Path);
 
-	return MoveFile(srcDir, destDir) != FALSE;
+	return MoveFileEx(srcDir, destDir, MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != FALSE;
+}
+
+int IsWavDataPresent(const char *Path, __int64 a2, __int64 a3, __int64 a4)
+{
+	return ((int(__fastcall *)(const char *, __int64, __int64, __int64))(g_ModuleBase + 0x264D120))("Sound\\Voice\\Temp.wav", a2, a3, a4);
 }
 
 std::vector<std::string> g_CCEslNames;

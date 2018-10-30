@@ -70,6 +70,8 @@ void Patch_TESVCreationKit()
 	//
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13C4C80), &IsLipDataPresent);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1791240), &WriteLipData);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13D5443), &IsWavDataPresent);
+	PatchMemory(g_ModuleBase + 0x13D5443, (PBYTE)"\xE8", 1);
 
 	//
 	// MemoryManager
