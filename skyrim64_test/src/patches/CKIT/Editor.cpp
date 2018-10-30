@@ -237,6 +237,52 @@ int IsWavDataPresent(const char *Path, __int64 a2, __int64 a3, __int64 a4)
 	return ((int(__fastcall *)(const char *, __int64, __int64, __int64))(g_ModuleBase + 0x264D120))("Sound\\Voice\\Temp.wav", a2, a3, a4);
 }
 
+INT_PTR CALLBACK LipRecordDialogProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	// Id's for "Recording..." dialog window
+	switch (msg)
+	{
+	case WM_APP:
+		// Don't actually kill the dialog, just hide it. It gets destroyed later when the parent window closes.
+		SendMessageA(GetDlgItem(hDlg, 31007), PBM_SETPOS, 0, 0);
+		ShowWindow(hDlg, SW_HIDE);
+		PostQuitMessage(0);
+		return TRUE;
+
+	case 272:
+		// OnSaveSoundFile
+		SendMessageA(GetDlgItem(hDlg, 31007), PBM_SETRANGE, 0, 32768 * 1000);
+		SendMessageA(GetDlgItem(hDlg, 31007), PBM_SETSTEP, 1, 0);
+		return TRUE;
+
+	case 273:
+		// Stop recording
+		if (LOWORD(wParam) != 1)
+			return FALSE;
+
+		*(bool *)(g_ModuleBase + 0x3AFAE28) = false;
+
+		if (FAILED(((HRESULT(__fastcall *)(bool))(g_ModuleBase + 0x13D5310))(false)))
+			MessageBoxA(hDlg, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
+
+		return LipRecordDialogProc(hDlg, WM_APP, 0, 0);
+
+	case 1046:
+		// Start recording
+		ShowWindow(hDlg, SW_SHOW);
+		*(bool *)(g_ModuleBase + 0x3AFAE28) = true;
+
+		if (FAILED(((HRESULT(__fastcall *)(bool))(g_ModuleBase + 0x13D5310))(true)))
+		{
+			MessageBoxA(hDlg, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
+			return LipRecordDialogProc(hDlg, WM_APP, 0, 0);
+		}
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 std::vector<std::string> g_CCEslNames;
 
 void ParseCreationClubContentFile()

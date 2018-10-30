@@ -16,6 +16,7 @@ bool IsBSAVersionCurrent(class BSFile *File);
 bool IsLipDataPresent(void *Thisptr);
 bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, bool Unknown3);
 int IsWavDataPresent(const char *Path, __int64 a2, __int64 a3, __int64 a4);
+INT_PTR CALLBACK LipRecordDialogProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 uint32_t GetESLMasterCount();
 const char *GetESLMasterName(uint32_t Index);
