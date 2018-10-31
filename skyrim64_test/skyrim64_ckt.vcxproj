@@ -16,7 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common.cpp" />
-    <ClCompile Include="src\d3d9.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\dump.cpp" />
     <ClCompile Include="src\patches\CKIT\Editor.cpp" />
@@ -108,7 +107,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)Dependencies\jemalloc\include;$(SolutionDir)Dependencies\jemalloc\include\msvc_compat;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
-    <TargetName>d3d9</TargetName>
+    <TargetName>winhttp</TargetName>
     <IntDir>$(SolutionDir)x64\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'">

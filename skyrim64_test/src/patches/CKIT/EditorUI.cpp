@@ -244,19 +244,6 @@ void EditorUI_Assert(const char *File, int Line, const char *Message)
 	EditorUI_Log("ASSERTION: %s (%s line %d)", Message, File, Line);
 }
 
-namespace ui::log
-{
-	// This is really a hack for the undefined symbol
-	void Add(const char *Format, ...)
-	{
-		va_list va;
-
-		va_start(va, Format);
-		EditorUI_LogVa(Format, va);
-		va_end(va);
-	}
-}
-
 LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	if (Message == WM_CREATE)
