@@ -601,6 +601,10 @@ void PatchTemplatedFormIterator()
 		if (!end)
 			continue;
 
+		// Blacklisted: this is for the "Use Info" dialog which has more than one list view and causes problems
+		if (addr == 0x000000014148C1FF)
+			continue;
+
 		Detours::X64::DetourFunctionClass((PBYTE)addr, &BeginUIDefer);
 		PatchMemory(addr, (PBYTE)"\xE8", 1);
 		Detours::X64::DetourFunctionClass((PBYTE)end, &EndUIDefer);
