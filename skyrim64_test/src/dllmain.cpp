@@ -62,9 +62,11 @@ void ApplyPatches()
 
 	if (g_IsGame)
 	{
+#if !SKYRIM64_CREATIONKIT_ONLY
 		TLSPatcherInitialize();
 		LoadModules();
 		Patch_TESV();
+#endif
 	}
 	else
 	{
@@ -91,12 +93,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)hModule, &temp);
 
 		// Skip all patching if process is the launcher
+#if !SKYRIM64_CREATIONKIT_ONLY
+		if (g_IsGame)
+			return TRUE;
+#endif
+
 		if (!strstr(filePath, "SkyrimSELauncher"))
 			EnableDumpBreakpoint();
     }
 
+#if !SKYRIM64_CREATIONKIT_ONLY
 	if (g_IsGame)
 		TLSPatcherCallback(hModule, fdwReason, lpReserved);
+#endif
 
     return TRUE;
 }
