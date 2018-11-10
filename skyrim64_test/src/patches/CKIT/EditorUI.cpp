@@ -21,6 +21,7 @@
 #define UI_EXTMENU_DUMPRTTI			51006
 #define UI_EXTMENU_DUMPNIRTTI		51007
 #define UI_EXTMENU_DUMPHAVOKRTTI	51008
+#define UI_EXTMENU_HARDCODEDFORMS	51009
 
 HWND g_MainHwnd;
 HWND g_ConsoleHwnd;
@@ -82,6 +83,8 @@ bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu)
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPRTTI, "Dump RTTI data");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI data");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPHAVOKRTTI, "Dump Havok RTTI data");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_HARDCODEDFORMS, "Save Hardcoded Forms");
 
 	MENUITEMINFO menuInfo;
 	memset(&menuInfo, 0, sizeof(MENUITEMINFO));
@@ -337,6 +340,26 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 					fclose(f);
 				}
 			}
+		}
+		return 0;
+
+		case UI_EXTMENU_HARDCODEDFORMS:
+		{
+			auto GetFormById = (__int64(__fastcall *)(uint32_t))(g_ModuleBase + 0x16B8780);
+
+			for (int i = 0; i < 2048; i++)
+			{
+				__int64 form = GetFormById(i);
+
+				if (form)
+				{
+					(*(void(__fastcall **)(__int64, __int64))(*(__int64 *)form + 360))(form, 1);
+					EditorUI_Log("SetFormModified: %08X\n", i);
+				}
+			}
+
+			// Fake the click on "Save"
+			PostMessageA(Hwnd, WM_COMMAND, 40127, 0);
 		}
 		return 0;
 		}
