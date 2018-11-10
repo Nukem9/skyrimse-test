@@ -601,8 +601,9 @@ void PatchTemplatedFormIterator()
 		if (!end)
 			continue;
 
-		// Blacklisted: this is for the "Use Info" dialog which has more than one list view and causes problems
-		if (addr == 0x000000014148C1FF)
+		// Blacklisted (000000014148C1FF): The "Use Info" dialog which has more than one list view and causes problems
+		// Blacklisted (000000014169DFAD): Adding a new faction to an NPC has more than one list view
+		if (addr == 0x000000014148C1FF || addr == 0x000000014169DFAD)
 			continue;
 
 		Detours::X64::DetourFunctionClass((PBYTE)addr, &BeginUIDefer);
