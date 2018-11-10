@@ -485,7 +485,7 @@ void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, const char
 
 	if (g_UseDeferredDialogInsert)
 	{
-		AssertMsg(!g_DeferredComboBox || (g_DeferredComboBox == ComboBoxHandle), "Got handles to different combo boxes...? Reset probably wasn't called.");
+		AssertMsg(!g_DeferredComboBox || (g_DeferredComboBox == ComboBoxHandle), "Got handles to different combo boxes? Reset probably wasn't called.");
 
 		g_DeferredComboBox = ComboBoxHandle;
 		g_DeferredStringLength += strlen(DisplayText);
@@ -522,7 +522,7 @@ void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int
 	memset(&item, 0, sizeof(item));
 
 	if (ItemIndex == -1)
-		ItemIndex = 0x7FFFFFFF;
+		ItemIndex = INT_MAX;
 
 	item.mask = LVIF_PARAM | LVIF_TEXT;
 	item.iItem = ItemIndex;
