@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <CommCtrl.h>
 #include "../../common.h"
+#include "../TES/BSTArray.h"
 #include "Editor.h"
 
 #pragma comment(lib, "libdeflate.lib")
@@ -93,7 +94,7 @@ INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HW
 BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult)
 {
 	Assert(hDlg);
-	std::lock_guard<std::recursive_mutex> lock(g_DialogMutex);
+	std::lock_guard lock(g_DialogMutex);
 
 	// Fix for the CK calling EndDialog on a CreateDialogParamA window
 	if (auto itr = g_DialogOverrides.find(hDlg); itr != g_DialogOverrides.end() && !itr->second.IsDialog)
@@ -109,7 +110,7 @@ LRESULT WINAPI hk_SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 {
 	if (hWnd && Msg == WM_DESTROY)
 	{
-		std::lock_guard<std::recursive_mutex> lock(g_DialogMutex);
+		std::lock_guard lock(g_DialogMutex);
 
 		// If this is a dialog, we can't call DestroyWindow on it
 		if (auto itr = g_DialogOverrides.find(hWnd); itr != g_DialogOverrides.end())
@@ -359,7 +360,7 @@ void UpdateLoadProgressBar()
 	static float lastPercent = 0.0f;
 
 	// Only update every quarter percent, rather than every single form load
-	float newPercent = ((float)*(uint32_t *)0x143BBDA8C / (float)*(uint32_t *)0x143BBDA88) * 100.0f;
+	float newPercent = ((float)*(uint32_t *)(g_ModuleBase + 0x3BBDA8C) / (float)*(uint32_t *)(g_ModuleBase + 0x3BBDA88)) * 100.0f;
 
 	if (abs(lastPercent - newPercent) <= 0.25f)
 		return;
@@ -684,22 +685,19 @@ LRESULT CSScript_PickScriptsToCompileDlg_WindowMessage(void *Thisptr, UINT Messa
 
 void DialogueInfoSort(__int64 TESDataHandler, uint32_t FormType, void *SortFunction)
 {
-	static std::unordered_map<uintptr_t, std::pair<uintptr_t, uint32_t>> arrayCache;
+	static std::unordered_map<BSTArray<class TESForm *> *, std::pair<void *, uint32_t>> arrayCache;
 
-	__int64 arrayInstance = TESDataHandler + 24i64 * FormType + 104;
-	__int64 arrayBase = *(__int64 *)(arrayInstance);
-	uint32_t count = *(uint32_t *)(arrayInstance + 0x10);
-
-	auto itr = arrayCache.find(arrayInstance);
+	auto *formArray = &((BSTArray<class TESForm *> *)(TESDataHandler + 104))[FormType];
+	auto itr = arrayCache.find(formArray);
 
 	// If not previously found or any counters changed...
-	if (itr == arrayCache.end() || itr->second.first != arrayBase || itr->second.second != count)
+	if (itr == arrayCache.end() || itr->second.first != formArray->QBuffer() || itr->second.second != formArray->QSize())
 	{
 		arrayCache.erase(itr);
-		arrayCache.emplace(arrayInstance, std::make_pair(arrayBase, count));
+		arrayCache.emplace(formArray, std::make_pair(formArray->QBuffer(), formArray->QSize()));
 
 		// Update and resort the array
-		((void(__fastcall *)(__int64, void *))(g_ModuleBase + 0x1651590))(arrayInstance, SortFunction);
+		((void(__fastcall *)(void *, void *))(g_ModuleBase + 0x1651590))(formArray, SortFunction);
 	}
 }
 
