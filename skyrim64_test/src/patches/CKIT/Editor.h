@@ -45,3 +45,7 @@ public:
 };
 
 void QuitHandler();
+
+void ListViewUnselectItem(HWND ListViewHandle, void *Parameter);
+void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections);
+void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections);

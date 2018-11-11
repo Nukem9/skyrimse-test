@@ -254,6 +254,13 @@ void Patch_TESVCreationKit()
 	Detours::X64::DetourClassVTable((PBYTE)(g_ModuleBase + 0x345ECD0), &BSShaderResourceManager::FindIntersectionsTriShapeFastPath, 34);
 
 	//
+	// Fix the "Cell View" object list current selection not being synced with the render window
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BB720), &ListViewUnselectItem);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BB650), &ListViewSelectItem);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BB590), &ListViewFindAndSelectItem);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

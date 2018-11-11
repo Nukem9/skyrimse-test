@@ -518,11 +518,11 @@ void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, const char
 
 void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex)
 {
-	LVITEMA item;
-	memset(&item, 0, sizeof(item));
-
 	if (ItemIndex == -1)
 		ItemIndex = INT_MAX;
+
+	LVITEMA item;
+	memset(&item, 0, sizeof(item));
 
 	item.mask = LVIF_PARAM | LVIF_TEXT;
 	item.iItem = ItemIndex;
@@ -546,7 +546,7 @@ void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int
 		}
 	}
 
-	SendMessageA(ListViewHandle, LVM_INSERTITEMA, 0, (LPARAM)&item);
+	ListView_InsertItem(ListViewHandle, &item);
 }
 
 void PatchTemplatedFormIterator()
@@ -723,4 +723,58 @@ bool BSShaderResourceManager::FindIntersectionsTriShapeFastPath(class NiPoint3 *
 void QuitHandler()
 {
 	ExitProcess(0);
+}
+
+// Microsoft's implementation of this define is broken
+#define ListView_CustomSetItemState(hwndLV, i, _data, _mask) \
+{\
+	LV_ITEM _macro_lvi;\
+	memset(&_macro_lvi, 0, sizeof(_macro_lvi));\
+	_macro_lvi.mask = LVIF_STATE;\
+	_macro_lvi.stateMask = (_mask);\
+	_macro_lvi.state = (_data);\
+	SNDMSG((hwndLV), LVM_SETITEMSTATE, (WPARAM)(i), (LPARAM)(LV_ITEM *)&_macro_lvi);\
+}
+
+void ListViewUnselectItem(HWND ListViewHandle, void *Parameter)
+{
+	LVFINDINFOA findInfo;
+	memset(&findInfo, 0, sizeof(findInfo));
+
+	findInfo.flags = LVFI_PARAM;
+	findInfo.lParam = (LPARAM)Parameter;
+
+	int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
+
+	if (index != -1)
+		ListView_CustomSetItemState(ListViewHandle, index, 0, LVIS_SELECTED);
+}
+
+void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections)
+{
+	if (!KeepOtherSelections)
+		ListView_CustomSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
+
+	if (ItemIndex != -1)
+	{
+		ListView_EnsureVisible(ListViewHandle, ItemIndex, FALSE);
+		ListView_CustomSetItemState(ListViewHandle, ItemIndex, LVIS_SELECTED, LVIS_SELECTED);
+	}
+}
+
+void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections)
+{
+	if (!KeepOtherSelections)
+		ListView_CustomSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
+
+	LVFINDINFOA findInfo;
+	memset(&findInfo, 0, sizeof(findInfo));
+
+	findInfo.flags = LVFI_PARAM;
+	findInfo.lParam = (LPARAM)Parameter;
+
+	int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
+
+	if (index != -1)
+		ListViewSelectItem(ListViewHandle, index, KeepOtherSelections);
 }
