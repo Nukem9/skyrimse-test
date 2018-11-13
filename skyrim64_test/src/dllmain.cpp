@@ -93,7 +93,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)hModule, &temp);
 
 		// Skip all patching if process is the launcher
-#if !SKYRIM64_CREATIONKIT_ONLY
+#if SKYRIM64_CREATIONKIT_ONLY
 		if (g_IsGame)
 			return TRUE;
 #endif

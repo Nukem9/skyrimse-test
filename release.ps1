@@ -22,7 +22,7 @@ $commitId = (git rev-parse --short HEAD)
 $WPPS::WritePrivateProfileString("Version", "CommitId", $commitId, $pwd.Path + "\Build\skyrim64_test.ini")
 
 cd "x64\Release"
-copy "d3d9.dll" "..\..\Build\d3d9.dll"
+copy "winhttp.dll" "..\..\Build\winhttp.dll"
 copy "tbb.dll" "..\..\Build\tbb.dll"
 copy "tbbmalloc.dll" "..\..\Build\tbbmalloc.dll"
 
