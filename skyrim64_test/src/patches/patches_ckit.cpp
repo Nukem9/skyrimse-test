@@ -29,6 +29,28 @@ void Patch_TESVCreationKit()
 		return;
 	}
 
+	//
+	// Temporary: prevent loading if old dlls are detected
+	//
+	if (FILE *f; fopen_s(&f, "d3d9.dll", "rb") == 0)
+	{
+		fseek(f, 0, SEEK_END);
+		uint32_t len = ftell(f);
+		rewind(f);
+
+		uint8_t *data = new uint8_t[len];
+		fread(data, sizeof(uint8_t), len, f);
+
+		const char *pattern = "SkyrimSETest\\x64\\Release\\d3d9.pdb";
+		const char *mask = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+		uintptr_t found = FindPatternSimple((uintptr_t)data, len, (uint8_t *)pattern, mask);
+
+		AssertMsg(!found, "An old version of CKFixes has been detected in your Creation Kit directory. Please delete the old \"d3d9.dll\" before running with this version.");
+
+		delete data;
+		fclose(f);
+	}
+
 	MSRTTI::Initialize();
 
 	if (g_INI.GetBoolean("CreationKit", "ThreadingPatch", false))	PatchThreading();
