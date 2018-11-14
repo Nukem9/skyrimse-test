@@ -1,4 +1,4 @@
-echo Press any key to clean project directory
+echo "Press any key to clean project directory"
 pause
 
 Remove-Item -Path .\Build -Recurse
