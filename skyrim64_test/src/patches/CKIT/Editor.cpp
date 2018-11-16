@@ -382,7 +382,7 @@ HWND g_DeferredListView;
 HWND g_DeferredComboBox;
 uintptr_t g_DeferredStringLength;
 bool g_AllowResize;
-std::vector<std::pair<const char *, const char *>> g_DeferredMenuItems;
+std::vector<std::pair<const char *, void *>> g_DeferredMenuItems;
 
 void ResetUIDefer()
 {
@@ -427,7 +427,7 @@ void EndUIDefer()
 			Assert(newStyle != 0);
 
 			std::sort(g_DeferredMenuItems.begin(), g_DeferredMenuItems.end(),
-				[](const std::pair<const char *, const char *>& a, const std::pair<const char *, const char *>& b) -> bool
+				[](const std::pair<const char *, void *>& a, const std::pair<const char *, void *>& b) -> bool
 			{
 				return strcmp(a.first, b.first) < 0;
 			});
@@ -451,6 +451,8 @@ void EndUIDefer()
 
 				if (g_AllowResize && GetTextExtentPoint32A(hdc, display, (int)strlen(display), &size))
 					boxWidth = std::max<uint32_t>(boxWidth, size.cx);
+
+				free((void *)display);
 			}
 
 			// Resize to fit
@@ -476,7 +478,7 @@ void EndUIDefer()
 	ResetUIDefer();
 }
 
-void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, const char *Value, bool AllowResize)
+void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, void *Value, bool AllowResize)
 {
 	if (!ComboBoxHandle)
 		return;
@@ -491,30 +493,33 @@ void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, const char
 		g_DeferredComboBox = ComboBoxHandle;
 		g_DeferredStringLength += strlen(DisplayText);
 		g_AllowResize |= AllowResize;
-		g_DeferredMenuItems.emplace_back(DisplayText, Value);
-		return;
-	}
 
-	if (AllowResize)
+		// A copy must be created since lifetime isn't guaranteed after this function returns
+		g_DeferredMenuItems.emplace_back(_strdup(DisplayText), Value);
+	}
+	else
 	{
-		if (HDC hdc = GetDC(ComboBoxHandle); hdc)
+		if (AllowResize)
 		{
-			if (SIZE size; GetTextExtentPoint32A(hdc, DisplayText, (int)strlen(DisplayText), &size))
+			if (HDC hdc = GetDC(ComboBoxHandle); hdc)
 			{
-				LRESULT currentWidth = SendMessageA(ComboBoxHandle, CB_GETDROPPEDWIDTH, 0, 0);
+				if (SIZE size; GetTextExtentPoint32A(hdc, DisplayText, (int)strlen(DisplayText), &size))
+				{
+					LRESULT currentWidth = SendMessageA(ComboBoxHandle, CB_GETDROPPEDWIDTH, 0, 0);
 
-				if (size.cx > currentWidth)
-					SendMessageA(ComboBoxHandle, CB_SETDROPPEDWIDTH, size.cx, 0);
+					if (size.cx > currentWidth)
+						SendMessageA(ComboBoxHandle, CB_SETDROPPEDWIDTH, size.cx, 0);
+				}
+
+				ReleaseDC(ComboBoxHandle, hdc);
 			}
-
-			ReleaseDC(ComboBoxHandle, hdc);
 		}
+
+		LRESULT index = SendMessageA(ComboBoxHandle, CB_ADDSTRING, 0, (LPARAM)DisplayText);
+
+		if (index != CB_ERR && index != CB_ERRSPACE)
+			SendMessageA(ComboBoxHandle, CB_SETITEMDATA, index, (LPARAM)Value);
 	}
-
-	LRESULT index = SendMessageA(ComboBoxHandle, CB_ADDSTRING, 0, (LPARAM)DisplayText);
-
-	if (index != CB_ERR && index != CB_ERRSPACE)
-		SendMessageA(ComboBoxHandle, CB_SETITEMDATA, index, (LPARAM)Value);
 }
 
 void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex)
