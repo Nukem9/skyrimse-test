@@ -166,6 +166,7 @@ void Patch_TESVCreationKit()
 		EditorUI_Initialize();
 		*(PBYTE *)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3770), &EditorUI_WndProc);
 
+		PatchMemory(g_ModuleBase + 0x1434473, (PBYTE)"\x90\x90", 2);// Force bShowReloadShadersButton to always be enabled
 		PatchMemory(g_ModuleBase + 0x1487B69, (PBYTE)"\x90\x90", 2);// Enable push to game button even if version control is disabled
 		PatchMemory(g_ModuleBase + 0x1487B7C, (PBYTE)"\xEB", 1);
 
