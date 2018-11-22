@@ -3,6 +3,13 @@
 #include <xmmintrin.h>
 #include <math.h>
 
+class NiPoint2
+{
+public:
+	float x;
+	float y;
+};
+
 class NiPoint3
 {
 public:

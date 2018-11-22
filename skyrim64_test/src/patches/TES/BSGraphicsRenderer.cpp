@@ -833,7 +833,12 @@ namespace BSGraphics
 		m_DeviceContext->PSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
 	}
 
-	void Renderer::SetTexture(uint32_t Index, Texture *Resource)
+	void Renderer::SetTexture(uint32_t Index, const NiSourceTexture *Texture)
+	{
+		SetTexture(Index, Texture ? Texture->QRendererTexture() : nullptr);
+	}
+
+	void Renderer::SetTexture(uint32_t Index, const Texture *Resource)
 	{
 		SetShaderResource(Index, Resource ? Resource->m_ResourceView : nullptr);
 	}

@@ -2,7 +2,8 @@
 
 #include "../BSShader.h"
 
-class BSLightingShaderMaterial;
+class BSLightingShaderMaterialBase;
+class BSLightingShaderMaterialLandscape;
 class BSLightingShaderProperty;
 
 class BSLightingShader : public BSShader
@@ -89,14 +90,14 @@ private:
 	static void TechUpdateHighDetailRangeConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG);
 	static void TechUpdateFogConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG);
 
-	static void sub_14130C470(__int64 a1, __int64 a2);
-	static void sub_14130C4D0(__int64 a1, __int64 a2);
-	static void sub_14130C220(int a1, __int64 a2, __int64 a3);
-	static void MatSetMultiTextureLandOverrides(__int64 a1);
+	static void MatSetEnvTexture(const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material);
+	static void MatSetEnvMaskTexture(const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material);
+	static void MatSetTextureSlot(int Slot, const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material);
+	static void MatSetMultiTextureLandOverrides(const BSLightingShaderMaterialLandscape *Material);
 	static __int64 sub_141314170(__int64 a1);
 
 	static void GeometrySetupViewProjection(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust);
-	static void GeometrySetupMTLandExtraConstants(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, const NiPoint3& Translate, float a3, float a4);
+	static void GeometrySetupMTLandExtraConstants(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, const NiPoint3& Translate, float BlendParam1, float BlendParam2);
 	static void GeometrySetupTreeAnimConstants(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSLightingShaderProperty *Property);
 	static void GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const BSRenderPass *Pass, DirectX::XMMATRIX& World, bool WorldSpace);
 	static void GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const NiTransform& Transform, bool WorldSpace);

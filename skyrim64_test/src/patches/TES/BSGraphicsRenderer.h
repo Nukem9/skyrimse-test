@@ -8,6 +8,7 @@
 
 class BSTriShape;
 class BSDynamicTriShape;
+class NiSourceTexture;
 
 namespace BSGraphics::Utility
 {
@@ -80,7 +81,8 @@ namespace BSGraphics
 		void SetVertexShader(VertexShader *Shader);
 		void SetPixelShader(PixelShader *Shader);
 
-		void SetTexture(uint32_t Index, Texture *Resource);
+		void SetTexture(uint32_t Index, const NiSourceTexture *Texture);
+		void SetTexture(uint32_t Index, const Texture *Resource);
 		void SetTextureMode(uint32_t Index, uint32_t AddressMode, uint32_t FilterMode);
 		void SetTextureAddressMode(uint32_t Index, uint32_t Mode);
 		void SetTextureFilterMode(uint32_t Index, uint32_t Mode);
