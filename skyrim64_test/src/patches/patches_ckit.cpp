@@ -47,7 +47,7 @@ void Patch_TESVCreationKit()
 
 		AssertMsg(!found, "An old version of CKFixes has been detected in your Creation Kit directory. Please delete the old \"d3d9.dll\" before running with this version.");
 
-		delete data;
+		delete[] data;
 		fclose(f);
 	}
 
@@ -212,6 +212,7 @@ void Patch_TESVCreationKit()
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x122C5F0), &EditorUI_WarningUnknown1);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x137FC60), &EditorUI_WarningUnknown1);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1FCB030), &EditorUI_WarningUnknown1);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2452480), &EditorUI_WarningUnknown1);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x27A6150), &EditorUI_WarningUnknown2);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x27A6270), &EditorUI_WarningUnknown2);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x243D260), &EditorUI_Assert);
@@ -228,8 +229,10 @@ void Patch_TESVCreationKit()
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12C8B63), &UpdateObjectWindowTreeView);
 		PatchMemory(g_ModuleBase + 0x12C8B63, (PBYTE)"\xE8", 1);
 
-		// Disable useless "Processing Topic X..." status bar update
+		// Disable useless "Processing Topic X..." status bar updates
 		PatchMemory(g_ModuleBase + 0x199DE29, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		PatchMemory(g_ModuleBase + 0x199EA9E, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		PatchMemory(g_ModuleBase + 0x199DA62, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 	}
 
 	//
