@@ -205,6 +205,7 @@ void Patch_TESVCreationKit()
 		PatchMemory(g_ModuleBase + 0x1434473, (PBYTE)"\x90\x90", 2);// Force bShowReloadShadersButton to always be enabled
 		PatchMemory(g_ModuleBase + 0x1487B69, (PBYTE)"\x90\x90", 2);// Enable push to game button even if version control is disabled
 		PatchMemory(g_ModuleBase + 0x1487B7C, (PBYTE)"\xEB", 1);
+		PatchMemory(g_ModuleBase + 0x16179C0, (PBYTE)"\xC3", 1);	// Disable "MEM_CATEGORY_X" log spam
 
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1256600), &EditorUI_Warning);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x243D610), &EditorUI_Warning);
