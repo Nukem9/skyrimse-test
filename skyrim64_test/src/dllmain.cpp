@@ -99,7 +99,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 #endif
 
 		if (!strstr(filePath, "SkyrimSELauncher"))
-			EnableDumpBreakpoint();
+			DumpEnableBreakpoint();
     }
 
 #if !SKYRIM64_CREATIONKIT_ONLY
