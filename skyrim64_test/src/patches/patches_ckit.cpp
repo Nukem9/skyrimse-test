@@ -51,6 +51,42 @@ void Patch_TESVCreationKit()
 		fclose(f);
 	}
 
+	//
+	// Replace broken crash dump functionality
+	//
+	if (g_INI.GetBoolean("CreationKit", "GenerateCrashdumps", true))
+	{
+		SetUnhandledExceptionFilter(DumpExceptionHandler);
+
+		PatchMemory(g_ModuleBase + 0x247D650, (PBYTE)"\xC3", 1);					// StackTrace::MemoryTraceWrite
+		PatchMemory(g_ModuleBase + 0x24801FB, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
+		PatchMemory(g_ModuleBase + 0x24801DF, (PBYTE)"\xC3", 1);					// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
+		PatchMemory(g_ModuleBase + 0x2E558DB, (PBYTE)"\xC3", 1);					// SetUnhandledExceptionFilter, Unknown
+
+		_set_invalid_parameter_handler([](const wchar_t *, const wchar_t *, const wchar_t *, uint32_t, uintptr_t)
+		{
+			RaiseException('PARM', EXCEPTION_NONCONTINUABLE, 0, nullptr);
+		});
+
+		auto purecallHandler = []()
+		{
+			RaiseException('PURE', EXCEPTION_NONCONTINUABLE, 0, nullptr);
+		};
+
+		auto terminateHandler = []()
+		{
+			RaiseException('TERM', EXCEPTION_NONCONTINUABLE, 0, nullptr);
+		};
+
+		PatchIAT((void(*)())terminateHandler, "API-MS-WIN-CRT-RUNTIME-L1-1-0.DLL", "_cexit");
+		PatchIAT((void(*)())terminateHandler, "API-MS-WIN-CRT-RUNTIME-L1-1-0.DLL", "_exit");
+		PatchIAT((void(*)())terminateHandler, "API-MS-WIN-CRT-RUNTIME-L1-1-0.DLL", "_c_exit");
+		PatchIAT((void(*)())terminateHandler, "API-MS-WIN-CRT-RUNTIME-L1-1-0.DLL", "exit");
+		PatchIAT((void(*)())terminateHandler, "API-MS-WIN-CRT-RUNTIME-L1-1-0.DLL", "abort");
+		PatchIAT((void(*)())terminateHandler, "API-MS-WIN-CRT-RUNTIME-L1-1-0.DLL", "terminate");
+		PatchIAT((void(*)())purecallHandler, "VCRUNTIME140.DLL", "_purecall");
+	}
+
 	MSRTTI::Initialize();
 
 	if (g_INI.GetBoolean("CreationKit", "ThreadingPatch", false))	PatchThreading();
