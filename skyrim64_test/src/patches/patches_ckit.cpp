@@ -118,6 +118,10 @@ void Patch_TESVCreationKit()
 	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportTGA", false))
 		PatchMemory(g_ModuleBase + 0x190436B, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
+	// Don't produce NIF files
+	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportNIF", false))
+		PatchMemory(g_ModuleBase + 0x1904390, (PBYTE)"\xC3", 1);
+
 	// Allow variable tint mask resolution
 	uint32_t tintResolution = g_INI.GetInteger("CreationKit_FaceGen", "TintMaskResolution", 512);
 	PatchMemory(g_ModuleBase + 0x2DA588C, (PBYTE)&tintResolution, sizeof(uint32_t));
