@@ -96,11 +96,8 @@ void Patch_TESVCreationKit()
 	//
 	// Experimental
 	//
-	if (g_INI.GetBoolean("CreationKit", "ExperimentalOptimization", false))
-	{
-		ExperimentalPatchEditAndContinue();
-		ExperimentalPatchMemInit();
-	}
+	ExperimentalPatchEditAndContinue();
+	ExperimentalPatchMemInit();
 
 	//
 	// FaceGen
