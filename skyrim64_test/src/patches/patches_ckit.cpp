@@ -21,34 +21,10 @@ extern WNDPROC OldEditorUI_WndProc;
 
 void Patch_TESVCreationKit()
 {
-	strcpy_s(g_GitVersion, INI.Get("Version", "CommitId", "UNSET").c_str());
-
 	if (_stricmp((const char *)(g_ModuleBase + 0x3078988), "1.5.3.0") != 0)
 	{
 		MessageBoxA(nullptr, "Incorrect CreationKit version detected. Patches disabled.", "Version Check", MB_ICONERROR);
 		return;
-	}
-
-	//
-	// Temporary: prevent loading if old dlls are detected
-	//
-	if (FILE *f; fopen_s(&f, "d3d9.dll", "rb") == 0)
-	{
-		fseek(f, 0, SEEK_END);
-		uint32_t len = ftell(f);
-		rewind(f);
-
-		uint8_t *data = new uint8_t[len];
-		fread(data, sizeof(uint8_t), len, f);
-
-		const char *pattern = "SkyrimSETest\\x64\\Release\\d3d9.pdb";
-		const char *mask = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-		uintptr_t found = FindPatternSimple((uintptr_t)data, len, (uint8_t *)pattern, mask);
-
-		AssertMsg(!found, "An old version of CKFixes has been detected in your Creation Kit directory. Please delete the old \"d3d9.dll\" before running with this version.");
-
-		delete[] data;
-		fclose(f);
 	}
 
 	//
