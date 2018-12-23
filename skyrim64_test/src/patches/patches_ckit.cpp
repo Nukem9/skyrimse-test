@@ -305,6 +305,7 @@ void Patch_TESVCreationKit()
 	//
 	// - TESForm reference map rewrite (above)
 	// - Fix an unoptimized function bottleneck (sub_141477DA0)
+	// - Fix an unoptimized function bottleneck (sub_1414974E0) (Large ESP files only)
 	// - Eliminate millions of calls to update the progress dialog, instead only updating 400 times (0% -> 100%)
 	// - Replace old zlib decompression code with optimized libdeflate
 	//
@@ -316,6 +317,8 @@ void Patch_TESVCreationKit()
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1477DA0), &sub_141477DA0_SSE41);
 	else
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1477DA0), &sub_141477DA0);
+
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x14974E0), &sub_1414974E0);
 
 	PatchMemory(g_ModuleBase + 0x163D56E, (PBYTE)"\xB9\x90\x01\x00\x00\x90", 6);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1640FF3), &UpdateLoadProgressBar);
