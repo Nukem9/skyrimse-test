@@ -1,61 +1,28 @@
 #include "../../common.h"
 #include "BSPointerHandle.h"
 
-#define REFR_TO_REF(x) ((BSHandleRefObject *)((uintptr_t)(x) + 0x30))
-#define REF_TO_REFR(x) ((TESObjectREFR *)((uintptr_t)(x) - 0x30))
-
-class NiRefObjectA
+class TempTESForm
 {
 public:
-	virtual ~NiRefObjectA();
-	virtual void DeleteThis();
+	virtual ~TempTESForm();
+
+	char _data[0x20];
 };
 
-class BSHandleRefObject : public NiRefObjectA
+class TESChildCell
 {
 public:
-	virtual ~BSHandleRefObject();
-	virtual void DeleteThis();
-
-	uint32_t m_uiRefCount;
-
-	BSHandleRefObject() : NiRefObjectA()
-	{
-		Reset();
-	}
-
-	void Reset()
-	{
-		m_uiRefCount &= 0x3FF;
-	}
-
-	void AssignHandleIndex(uint32_t HandleIndex)
-	{
-		Reset();
-		m_uiRefCount |= ((HandleIndex << 11) | 0x400);
-	}
-
-	uint32_t GetIndex() const
-	{
-		return m_uiRefCount >> 11;
-	}
-
-	bool GetActive() const
-	{
-		return (m_uiRefCount & 0x400) != 0;
-	}
+	virtual ~TESChildCell();
 };
 
-class TESObjectREFR
+class TESObjectREFR : public TempTESForm, public TESChildCell, public BSHandleRefObject
 {
 public:
 	virtual ~TESObjectREFR();
-
-	char _pad[0x28];
-	BSHandleRefObject ref;
+	virtual void OtherTestFunction2();
 };
 
-static_assert(offsetof(TESObjectREFR, ref) == 0x30);
+static_assert_offset(TESObjectREFR, m_uiRefCount, 0x38);
 
 void BSPointerHandleManagerInterface::acquire_lock()
 {
@@ -85,10 +52,10 @@ BSUntypedPointerHandle<> BSPointerHandleManagerInterface::GetCurrentHandle(TESOb
 {
 	BSUntypedPointerHandle<> untypedHandle;
 
-	if (Refr && REFR_TO_REF(Refr)->GetActive())
+	if (Refr && Refr->IsHandleActive())
 	{
-		auto& handle = m_HandleTable[REFR_TO_REF(Refr)->GetIndex()];
-		untypedHandle.SetRaw(REFR_TO_REF(Refr)->GetIndex(), handle.GetRawAge());
+		auto& handle = m_HandleTable[Refr->GetHandleIndex()];
+		untypedHandle.Set(Refr->GetHandleIndex(), handle.GetRawAge());
 
 		AssertMsg(untypedHandle.GetRawAge() == handle.GetRawAge(), "BSPointerHandleManagerInterface::GetCurrentHandle - Handle already exists but has wrong age!");
 	}
@@ -127,11 +94,11 @@ BSUntypedPointerHandle<> BSPointerHandleManagerInterface::CreateHandle(TESObject
 				newHandle.ResetAge();
 				newHandle.SetActive();
 
-				untypedHandle.SetRaw(newHandle.GetIndex(), newHandle.GetRawAge());
-				newHandle.AssignObject(REFR_TO_REF(Refr));
+				untypedHandle.Set(newHandle.GetIndex(), newHandle.GetRawAge());
+				newHandle.SetPtr(Refr);
 
-				REFR_TO_REF(Refr)->AssignHandleIndex(g_NextPointerHandleIndex);
-				Assert(REFR_TO_REF(Refr)->GetIndex() == g_NextPointerHandleIndex);
+				Refr->AssignHandle(g_NextPointerHandleIndex);
+				Assert(Refr->GetHandleIndex() == g_NextPointerHandleIndex);
 
 				if (newHandle.GetIndex() == g_NextPointerHandleIndex)
 				{
@@ -167,8 +134,8 @@ void BSPointerHandleManagerInterface::ReleaseHandle(const BSUntypedPointerHandle
 		if (arrayHandle.AgeMatches(Handle.GetRawAge()))
 		{
 			arrayHandle.ClearActive();
-			arrayHandle.GetPtr()->Reset();
-			arrayHandle.AssignObject(nullptr);
+			arrayHandle.GetPtr()->ClearHandle();
+			arrayHandle.SetPtr(nullptr);
 
 			if (g_LastPointerHandleIndex == 0xFFFFFFFF)
 				g_NextPointerHandleIndex = handleIndex;
@@ -196,8 +163,8 @@ void BSPointerHandleManagerInterface::ReleaseHandleAndClear(BSUntypedPointerHand
 		if (arrayHandle.AgeMatches(Handle.GetRawAge()))
 		{
 			// I don't know why these functions are in a different order than ReleaseHandle()
-			arrayHandle.GetPtr()->Reset();
-			arrayHandle.AssignObject(nullptr);
+			arrayHandle.GetPtr()->ClearHandle();
+			arrayHandle.SetPtr(nullptr);
 			arrayHandle.ClearActive();
 
 			if (g_LastPointerHandleIndex == 0xFFFFFFFF)
@@ -228,8 +195,8 @@ void BSPointerHandleManagerInterface::ClearActiveHandles()
 		if (!arrayHandle.IsActive())
 			continue;
 
-		arrayHandle.GetPtr()->Reset();
-		arrayHandle.AssignObject(nullptr);
+		arrayHandle.GetPtr()->ClearHandle();
+		arrayHandle.SetPtr(nullptr);
 		arrayHandle.ClearActive();
 
 		if (g_LastPointerHandleIndex == 0xFFFFFFFF)
@@ -242,70 +209,50 @@ void BSPointerHandleManagerInterface::ClearActiveHandles()
 	}
 }
 
-bool BSPointerHandleManagerInterface::sub_141293870(BSUntypedPointerHandle<>& Handle, __int64 a2)
+bool BSPointerHandleManagerInterface::sub_141293870(const BSUntypedPointerHandle<>& Handle, NiPointer<TESObjectREFR>& Out)
 {
-	AutoFunc(void(*)(__int64, void *), sub_140FB461D, 0xFB461D);
-	AutoFunc(bool(*)(__int64, void *), sub_140FEEAB1, 0xFEEAB1);
-	AutoFunc(void *(*)(__int64), sub_140FFFBFE, 0xFFFBFE);
-
-	// a2 is possibly NiPointer<TESObjectREFR>?
 	if (Handle.IsEmpty())
 	{
-		sub_140FB461D(a2, nullptr);
-	}
-	else
-	{
-		const uint32_t handleIndex = Handle.GetIndex();
-		auto& arrayHandle = m_HandleTable[handleIndex];
-
-		if (arrayHandle.GetPtr())
-			sub_140FB461D(a2, REF_TO_REFR(arrayHandle.GetPtr()));
-		else
-			sub_140FB461D(a2, nullptr);
-
-		void *v2 = sub_140FFFBFE(a2);
-
-		if (!arrayHandle.AgeMatches(Handle.GetRawAge()) || REFR_TO_REF(v2)->GetIndex() != handleIndex)
-			sub_140FB461D(a2, nullptr);
+		Out = nullptr;
+		return false;
 	}
 
-	return sub_140FEEAB1(a2, nullptr);
+	const uint32_t handleIndex = Handle.GetIndex();
+	auto& arrayHandle = m_HandleTable[handleIndex];
+
+	// Possible nullptr deref hazard
+	Out = static_cast<TESObjectREFR *>(arrayHandle.GetPtr());
+
+	if (!arrayHandle.AgeMatches(Handle.GetRawAge()) || Out->GetHandleIndex() != handleIndex)
+		Out = nullptr;
+
+	return Out != nullptr;
 }
 
-bool BSPointerHandleManagerInterface::sub_1412E25B0(BSUntypedPointerHandle<>& Handle, __int64 a2)
+bool BSPointerHandleManagerInterface::sub_1412E25B0(BSUntypedPointerHandle<>& Handle, NiPointer<TESObjectREFR>& Out)
 {
-	AutoFunc(void(*)(__int64, void *), sub_140FB461D, 0xFB461D);
-	AutoFunc(bool(*)(__int64, void *), sub_140FEEAB1, 0xFEEAB1);
-	AutoFunc(void *(*)(__int64), sub_140FFFBFE, 0xFFFBFE);
-
-	// a2 is possibly NiPointer<TESObjectREFR>?
 	if (Handle.IsEmpty())
 	{
-		sub_140FB461D(a2, nullptr);
+		Out = nullptr;
+		return false;
 	}
-	else
+
+	const uint32_t handleIndex = Handle.GetIndex();
+	auto& arrayHandle = m_HandleTable[handleIndex];
+
+	// Possible nullptr deref hazard
+	Out = static_cast<TESObjectREFR *>(arrayHandle.GetPtr());
+
+	if (!arrayHandle.AgeMatches(Handle.GetRawAge()) || Out->GetHandleIndex() != handleIndex)
 	{
-		const uint32_t handleIndex = Handle.GetIndex();
-		auto& arrayHandle = m_HandleTable[handleIndex];
-
-		if (arrayHandle.GetPtr())
-			sub_140FB461D(a2, REF_TO_REFR(arrayHandle.GetPtr()));
-		else
-			sub_140FB461D(a2, nullptr);
-
-		void *v2 = sub_140FFFBFE(a2);
-
-		if (!arrayHandle.AgeMatches(Handle.GetRawAge()) || REFR_TO_REF(v2)->GetIndex() != handleIndex)
-		{
-			Handle.Clear();
-			sub_140FB461D(a2, nullptr);
-		}
+		Handle.Clear();
+		Out = nullptr;
 	}
 
-	return sub_140FEEAB1(a2, nullptr);
+	return Out != nullptr;
 }
 
-bool BSPointerHandleManagerInterface::sub_1414C52B0(BSUntypedPointerHandle<>& Handle)
+bool BSPointerHandleManagerInterface::sub_1414C52B0(const BSUntypedPointerHandle<>& Handle)
 {
 	const uint32_t handleIndex = Handle.GetIndex();
 	auto& arrayHandle = m_HandleTable[handleIndex];
@@ -313,7 +260,7 @@ bool BSPointerHandleManagerInterface::sub_1414C52B0(BSUntypedPointerHandle<>& Ha
 	Handle.IsEmpty();// This if() got optimized out or something?...
 
 	if (arrayHandle.AgeMatches(Handle.GetRawAge()))
-		return arrayHandle.GetPtr()->GetIndex() == handleIndex;
+		return arrayHandle.GetPtr()->GetHandleIndex() == handleIndex;
 
 	return false;
 }
