@@ -326,6 +326,9 @@
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderMaterial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\CKIT\BSPointerHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -542,6 +545,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\winhttp_exports.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKIT\BSPointerHandle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

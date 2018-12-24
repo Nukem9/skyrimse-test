@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\INIReader.h" />
+    <ClInclude Include="src\patches\CKIT\BSPointerHandle.h" />
     <ClInclude Include="src\patches\CKIT\Editor.h" />
     <ClInclude Include="src\patches\CKIT\EditorUI.h" />
     <ClInclude Include="src\patches\CKIT\NavMesh.h" />
@@ -246,6 +247,7 @@
     <ClInclude Include="src\xutil.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\patches\CKIT\BSPointerHandle.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />
     <ClCompile Include="src\common.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />
