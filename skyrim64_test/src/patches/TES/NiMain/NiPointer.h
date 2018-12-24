@@ -16,7 +16,7 @@ public:
 		m_pObject = Object;
 
 		if (m_pObject)
-			static_cast<NiRefObject *>(m_pObject)->IncRefCount();
+			m_pObject->IncRefCount();
 	}
 
 	inline NiPointer(const NiPointer<T>& Other)
@@ -24,13 +24,13 @@ public:
 		m_pObject = Other.m_pObject;
 
 		if (m_pObject)
-			static_cast<NiRefObject *>(m_pObject)->IncRefCount();
+			m_pObject->IncRefCount();
 	}
 
 	inline ~NiPointer()
 	{
 		if (m_pObject)
-			static_cast<NiRefObject *>(m_pObject)->DecRefCount();
+			m_pObject->DecRefCount();
 	}
 
 	inline operator T*() const
@@ -46,6 +46,27 @@ public:
 	inline T* operator->() const
 	{
 		return m_pObject;
+	}
+
+	inline NiPointer<T>& operator=(T *Other)
+	{
+		if (m_pObject != Other)
+		{
+			if (Other)
+				Other->IncRefCount();
+
+			if (m_pObject)
+				m_pObject->DecRefCount();
+
+			m_pObject = Other;
+		}
+
+		return *this;
+	}
+
+	inline bool operator!=(const T *Other) const
+	{
+		return m_pObject != Other;
 	}
 };
 static_assert(sizeof(NiPointer<NiRefObject>) == 0x8);
