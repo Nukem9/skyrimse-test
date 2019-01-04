@@ -1,6 +1,8 @@
 #pragma once
 
+#include "../TES/NiMain/NiRefObject.h"
 #include "../TES/NiMain/NiPointer.h"
+#include "../TES/BSReadWriteLock.h"
 
 class TESObjectREFR;
 
@@ -78,6 +80,8 @@ template<int IndexBits = 21, int AgeCountBits = 6>
 class BSUntypedPointerHandle
 {
 protected:
+	//
+	// NOTE: Handle index bits increased from 20 (vanilla) to 21 (limit doubled)
 	//
 	// 31       28       27    21             0
 	// |--------|--------|-----|--------------|
@@ -196,13 +200,14 @@ static_assert(sizeof(BSPointerHandle<TESObjectREFR>) == 0x10);
 class BSPointerHandleManagerInterface
 {
 public:
-	inline static BSPointerHandle<TESObjectREFR> m_HandleTable[2 * 1024 * 1024];
-	inline static BSUntypedPointerHandle<> EmptyHandle;
-	inline static uint32_t g_NextPointerHandleIndex;
-	inline static uint32_t g_LastPointerHandleIndex;
+	const static uint32_t MAX_HANDLE_COUNT = 1 << 21;
 
-	static void acquire_lock();
-	static void release_lock();
+	inline static BSReadWriteLock HandleTableLock;
+	inline static std::vector<BSPointerHandle<TESObjectREFR>> HandleTable;
+	inline const static BSUntypedPointerHandle<> EmptyHandle;
+
+	inline static uint32_t NextPointerHandleIndex;
+	inline static uint32_t LastPointerHandleIndex;
 
 	static void Initialize();
 	static BSUntypedPointerHandle<> GetCurrentHandle(TESObjectREFR *Refr);
@@ -211,9 +216,7 @@ public:
 	static void ReleaseHandleAndClear(BSUntypedPointerHandle<>& Handle);
 	static void CheckForLeaks();
 	static void ClearActiveHandles();
-
 	static bool sub_141293870(const BSUntypedPointerHandle<>& Handle, NiPointer<TESObjectREFR>& Out);
-	// Identical to above except for the Handle.Clear();
 	static bool sub_1412E25B0(BSUntypedPointerHandle<>& Handle, NiPointer<TESObjectREFR>& Out);
 	static bool sub_1414C52B0(const BSUntypedPointerHandle<>& Handle);
 };

@@ -24,28 +24,20 @@ public:
 
 static_assert_offset(TESObjectREFR, m_uiRefCount, 0x38);
 
-void BSPointerHandleManagerInterface::acquire_lock()
-{
-}
-
-void BSPointerHandleManagerInterface::release_lock()
-{
-}
-
 void BSPointerHandleManagerInterface::Initialize()
 {
-	g_NextPointerHandleIndex = 0;
-	memset(m_HandleTable, 0, sizeof(m_HandleTable));
+	NextPointerHandleIndex = 0;
+	HandleTable.resize(MAX_HANDLE_COUNT);
 
-	for (uint32_t i = 0; i < ARRAYSIZE(m_HandleTable); i++)
+	for (uint32_t i = 0; i < MAX_HANDLE_COUNT; i++)
 	{
-		if ((i + 1) >= ARRAYSIZE(m_HandleTable))
-			m_HandleTable[i].SetIndex(i);
+		if ((i + 1) >= MAX_HANDLE_COUNT)
+			HandleTable[i].SetIndex(i);
 		else
-			m_HandleTable[i].SetIndex(i + 1);
+			HandleTable[i].SetIndex(i + 1);
 	}
 
-	g_LastPointerHandleIndex = ARRAYSIZE(m_HandleTable) - 1;
+	LastPointerHandleIndex = MAX_HANDLE_COUNT - 1;
 }
 
 BSUntypedPointerHandle<> BSPointerHandleManagerInterface::GetCurrentHandle(TESObjectREFR *Refr)
@@ -54,7 +46,7 @@ BSUntypedPointerHandle<> BSPointerHandleManagerInterface::GetCurrentHandle(TESOb
 
 	if (Refr && Refr->IsHandleActive())
 	{
-		auto& handle = m_HandleTable[Refr->GetHandleIndex()];
+		auto& handle = HandleTable[Refr->GetHandleIndex()];
 		untypedHandle.Set(Refr->GetHandleIndex(), handle.GetRawAge());
 
 		AssertMsg(untypedHandle.GetRawAge() == handle.GetRawAge(), "BSPointerHandleManagerInterface::GetCurrentHandle - Handle already exists but has wrong age!");
@@ -77,46 +69,46 @@ BSUntypedPointerHandle<> BSPointerHandleManagerInterface::CreateHandle(TESObject
 		return untypedHandle;
 
 	// Wasn't present. Acquire lock and add it (unless someone else inserted it in the meantime)
-	acquire_lock();
+	HandleTableLock.LockForWrite();
 	{
 		untypedHandle = GetCurrentHandle(Refr);
 
 		if (untypedHandle == EmptyHandle)
 		{
-			if (g_NextPointerHandleIndex == 0xFFFFFFFF)
+			if (NextPointerHandleIndex == 0xFFFFFFFF)
 			{
 				untypedHandle.Clear();
 				AssertMsgVa(false, "OUT OF HANDLE ARRAY ENTRIES. Null handle created for pointer 0x%p.", Refr);
 			}
 			else
 			{
-				auto& newHandle = m_HandleTable[g_NextPointerHandleIndex];
+				auto& newHandle = HandleTable[NextPointerHandleIndex];
 				newHandle.ResetAge();
 				newHandle.SetActive();
 
 				untypedHandle.Set(newHandle.GetIndex(), newHandle.GetRawAge());
 				newHandle.SetPtr(Refr);
 
-				Refr->AssignHandle(g_NextPointerHandleIndex);
-				Assert(Refr->GetHandleIndex() == g_NextPointerHandleIndex);
+				Refr->AssignHandle(NextPointerHandleIndex);
+				Assert(Refr->GetHandleIndex() == NextPointerHandleIndex);
 
-				if (newHandle.GetIndex() == g_NextPointerHandleIndex)
+				if (newHandle.GetIndex() == NextPointerHandleIndex)
 				{
 					// Table reached the maximum count
-					Assert(g_NextPointerHandleIndex == g_LastPointerHandleIndex);
+					Assert(NextPointerHandleIndex == LastPointerHandleIndex);
 
-					g_NextPointerHandleIndex = 0xFFFFFFFF;
-					g_LastPointerHandleIndex = 0xFFFFFFFF;
+					NextPointerHandleIndex = 0xFFFFFFFF;
+					LastPointerHandleIndex = 0xFFFFFFFF;
 				}
 				else
 				{
-					Assert(g_NextPointerHandleIndex != g_LastPointerHandleIndex);
-					g_NextPointerHandleIndex = newHandle.GetIndex();
+					Assert(NextPointerHandleIndex != LastPointerHandleIndex);
+					NextPointerHandleIndex = newHandle.GetIndex();
 				}
 			}
 		}
 	}
-	release_lock();
+	HandleTableLock.UnlockWrite();
 
 	return untypedHandle;
 }
@@ -126,10 +118,10 @@ void BSPointerHandleManagerInterface::ReleaseHandle(const BSUntypedPointerHandle
 	if (Handle.IsEmpty())
 		return;
 
-	acquire_lock();
+	HandleTableLock.LockForWrite();
 	{
 		const uint32_t handleIndex = Handle.GetIndex();
-		auto& arrayHandle = m_HandleTable[handleIndex];
+		auto& arrayHandle = HandleTable[handleIndex];
 
 		if (arrayHandle.AgeMatches(Handle.GetRawAge()))
 		{
@@ -137,17 +129,17 @@ void BSPointerHandleManagerInterface::ReleaseHandle(const BSUntypedPointerHandle
 			arrayHandle.GetPtr()->ClearHandle();
 			arrayHandle.SetPtr(nullptr);
 
-			if (g_LastPointerHandleIndex == 0xFFFFFFFF)
-				g_NextPointerHandleIndex = handleIndex;
+			if (LastPointerHandleIndex == 0xFFFFFFFF)
+				NextPointerHandleIndex = handleIndex;
 			else
-				m_HandleTable[g_LastPointerHandleIndex].SetIndex(handleIndex);
+				HandleTable[LastPointerHandleIndex].SetIndex(handleIndex);
 
 			arrayHandle.SetIndex(handleIndex);
-			g_LastPointerHandleIndex = handleIndex;
+			LastPointerHandleIndex = handleIndex;
 		}
 
 	}
-	release_lock();
+	HandleTableLock.UnlockWrite();
 }
 
 void BSPointerHandleManagerInterface::ReleaseHandleAndClear(BSUntypedPointerHandle<>& Handle)
@@ -155,10 +147,10 @@ void BSPointerHandleManagerInterface::ReleaseHandleAndClear(BSUntypedPointerHand
 	if (Handle.IsEmpty())
 		return;
 
-	acquire_lock();
+	HandleTableLock.LockForWrite();
 	{
 		const uint32_t handleIndex = Handle.GetIndex();
-		auto& arrayHandle = m_HandleTable[handleIndex];
+		auto& arrayHandle = HandleTable[handleIndex];
 
 		if (arrayHandle.AgeMatches(Handle.GetRawAge()))
 		{
@@ -167,30 +159,30 @@ void BSPointerHandleManagerInterface::ReleaseHandleAndClear(BSUntypedPointerHand
 			arrayHandle.SetPtr(nullptr);
 			arrayHandle.ClearActive();
 
-			if (g_LastPointerHandleIndex == 0xFFFFFFFF)
-				g_NextPointerHandleIndex = handleIndex;
+			if (LastPointerHandleIndex == 0xFFFFFFFF)
+				NextPointerHandleIndex = handleIndex;
 			else
-				m_HandleTable[g_LastPointerHandleIndex].SetIndex(handleIndex);
+				HandleTable[LastPointerHandleIndex].SetIndex(handleIndex);
 
 			arrayHandle.SetIndex(handleIndex);
-			g_LastPointerHandleIndex = handleIndex;
+			LastPointerHandleIndex = handleIndex;
 		}
 
 		Handle.Clear();
 	}
-	release_lock();
+	HandleTableLock.UnlockWrite();
 }
 
 void BSPointerHandleManagerInterface::CheckForLeaks()
 {
-	AssertMsg(false, "Unimplemneted");
+	AssertMsg(false, "Unimplemented");
 }
 
 void BSPointerHandleManagerInterface::ClearActiveHandles()
 {
-	for (int i = 0; i < ARRAYSIZE(m_HandleTable); i++)
+	for (uint32_t i = 0; i < MAX_HANDLE_COUNT; i++)
 	{
-		auto& arrayHandle = m_HandleTable[i];
+		auto& arrayHandle = HandleTable[i];
 
 		if (!arrayHandle.IsActive())
 			continue;
@@ -199,13 +191,13 @@ void BSPointerHandleManagerInterface::ClearActiveHandles()
 		arrayHandle.SetPtr(nullptr);
 		arrayHandle.ClearActive();
 
-		if (g_LastPointerHandleIndex == 0xFFFFFFFF)
-			g_NextPointerHandleIndex = i;
+		if (LastPointerHandleIndex == 0xFFFFFFFF)
+			NextPointerHandleIndex = i;
 		else
-			m_HandleTable[g_LastPointerHandleIndex].SetIndex(i);
+			HandleTable[LastPointerHandleIndex].SetIndex(i);
 
 		arrayHandle.SetIndex(i);
-		g_LastPointerHandleIndex = i;
+		LastPointerHandleIndex = i;
 	}
 }
 
@@ -218,7 +210,7 @@ bool BSPointerHandleManagerInterface::sub_141293870(const BSUntypedPointerHandle
 	}
 
 	const uint32_t handleIndex = Handle.GetIndex();
-	auto& arrayHandle = m_HandleTable[handleIndex];
+	auto& arrayHandle = HandleTable[handleIndex];
 
 	// Possible nullptr deref hazard
 	Out = static_cast<TESObjectREFR *>(arrayHandle.GetPtr());
@@ -231,6 +223,7 @@ bool BSPointerHandleManagerInterface::sub_141293870(const BSUntypedPointerHandle
 
 bool BSPointerHandleManagerInterface::sub_1412E25B0(BSUntypedPointerHandle<>& Handle, NiPointer<TESObjectREFR>& Out)
 {
+	// Identical to sub_141293870 except for the Handle.Clear();
 	if (Handle.IsEmpty())
 	{
 		Out = nullptr;
@@ -238,7 +231,7 @@ bool BSPointerHandleManagerInterface::sub_1412E25B0(BSUntypedPointerHandle<>& Ha
 	}
 
 	const uint32_t handleIndex = Handle.GetIndex();
-	auto& arrayHandle = m_HandleTable[handleIndex];
+	auto& arrayHandle = HandleTable[handleIndex];
 
 	// Possible nullptr deref hazard
 	Out = static_cast<TESObjectREFR *>(arrayHandle.GetPtr());
@@ -255,7 +248,7 @@ bool BSPointerHandleManagerInterface::sub_1412E25B0(BSUntypedPointerHandle<>& Ha
 bool BSPointerHandleManagerInterface::sub_1414C52B0(const BSUntypedPointerHandle<>& Handle)
 {
 	const uint32_t handleIndex = Handle.GetIndex();
-	auto& arrayHandle = m_HandleTable[handleIndex];
+	auto& arrayHandle = HandleTable[handleIndex];
 
 	Handle.IsEmpty();// This if() got optimized out or something?...
 

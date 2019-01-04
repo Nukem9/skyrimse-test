@@ -76,6 +76,51 @@ void Patch_TESVCreationKit()
 	ExperimentalPatchMemInit();
 
 	//
+	// BSPointerHandle(Manager)
+	//
+	if (g_INI.GetBoolean("CreationKit", "RefrHandleLimitPatch", false))
+	{
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x141A5C0), &BSPointerHandleManagerInterface::Initialize);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E2260), &BSPointerHandleManagerInterface::GetCurrentHandle);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E1BE0), &BSPointerHandleManagerInterface::CreateHandle);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1291050), &BSPointerHandleManagerInterface::ReleaseHandle);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E1F70), &BSPointerHandleManagerInterface::ReleaseHandleAndClear);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1770560), &BSPointerHandleManagerInterface::CheckForLeaks);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1770910), &BSPointerHandleManagerInterface::ClearActiveHandles);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1293870), &BSPointerHandleManagerInterface::sub_141293870);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E25B0), &BSPointerHandleManagerInterface::sub_1412E25B0);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x14C52B0), &BSPointerHandleManagerInterface::sub_1414C52B0);
+
+		//
+		// Stub out the rest of the functions which shouldn't ever be called now
+		//
+		//PatchMemory(g_ModuleBase + 0x12E0DC0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::BSUntypedPointerHandle - 1412E0DC0
+		PatchMemory(g_ModuleBase + 0x12E38A0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::Clear - 1412E38A0
+		PatchMemory(g_ModuleBase + 0x12E2720, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetAge - 1412E2720
+		PatchMemory(g_ModuleBase + 0x12E3970, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetActive - 1412E3970
+		PatchMemory(g_ModuleBase + 0x1294740, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetAge_0 - 141294740
+		PatchMemory(g_ModuleBase + 0x12E3810, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::Set - 1412E3810
+		PatchMemory(g_ModuleBase + 0x12E2FF0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetIndex_0 - 1412E2FF0
+		PatchMemory(g_ModuleBase + 0x1294A30, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetIndex - 141294A30
+		PatchMemory(g_ModuleBase + 0x1294720, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetAge - 141294720
+		PatchMemory(g_ModuleBase + 0x1297430, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::ClearActive - 141297430
+		PatchMemory(g_ModuleBase + 0x12973F0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetIndex - 1412973F0
+		PatchMemory(g_ModuleBase + 0x12943B0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::IsEmpty - 1412943B0
+		// sub_14100B0A8 - Unknown operator
+		// sub_1412E1300 - Unknown operator
+		// sub_1412E1210 - Unknown operator
+
+		PatchMemory(g_ModuleBase + 0x1294590, (PBYTE)"\xCC", 1);// BSPointerHandle::AgeMatches - 141294590
+		PatchMemory(g_ModuleBase + 0x128D130, (PBYTE)"\xCC", 1);// BSPointerHandle::GetPtr - 14128D130
+		PatchMemory(g_ModuleBase + 0x128C8D0, (PBYTE)"\xCC", 1);// BSPointerHandle::AssignPtr - 14128C8D0
+		PatchMemory(g_ModuleBase + 0x1294570, (PBYTE)"\xCC", 1);// BSPointerHandle::IsActive - 141294570
+
+		PatchMemory(g_ModuleBase + 0x12E3900, (PBYTE)"\xCC", 1);// BSHandleRefObject::AssignHandleIndex - 1412E3900
+		PatchMemory(g_ModuleBase + 0x12949D0, (PBYTE)"\xCC", 1);// BSHandleRefObject::GetIndex - 1412949D0
+		// BSHandleRefObject::GetRefCount - 141294CB0
+	}
+
+	//
 	// FaceGen
 	//
 
