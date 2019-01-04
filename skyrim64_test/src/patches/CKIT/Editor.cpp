@@ -734,7 +734,7 @@ bool BSShaderResourceManager::FindIntersectionsTriShapeFastPath(class NiPoint3 *
 
 void QuitHandler()
 {
-	ExitProcess(0);
+	TerminateProcess(GetCurrentProcess(), 0);
 }
 
 // Microsoft's implementation of this define is broken
