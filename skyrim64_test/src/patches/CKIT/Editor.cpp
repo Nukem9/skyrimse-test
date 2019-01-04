@@ -708,11 +708,10 @@ void DialogueInfoSort(__int64 TESDataHandler, uint32_t FormType, void *SortFunct
 	// If not previously found or any counters changed...
 	if (itr == arrayCache.end() || itr->second.first != formArray->QBuffer() || itr->second.second != formArray->QSize())
 	{
-		arrayCache.erase(itr);
-		arrayCache.emplace(formArray, std::make_pair(formArray->QBuffer(), formArray->QSize()));
-
 		// Update and resort the array
 		((void(__fastcall *)(void *, void *))(g_ModuleBase + 0x1651590))(formArray, SortFunction);
+
+		arrayCache[formArray] = std::make_pair(formArray->QBuffer(), formArray->QSize());
 	}
 }
 
