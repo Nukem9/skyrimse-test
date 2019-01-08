@@ -346,6 +346,11 @@ void Patch_TESVCreationKit()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BB590), &ListViewFindAndSelectItem);
 
 	//
+	// Fix TESModelTextureSwap being incorrectly loaded (Record typo: 'MODS' -> 'MO5S')
+	//
+	PatchMemory(g_ModuleBase + 0x16E55A9, (PBYTE)"\x4D\x4F\x35\x53", 4);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
