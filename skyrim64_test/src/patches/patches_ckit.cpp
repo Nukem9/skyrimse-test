@@ -23,7 +23,7 @@ void Patch_TESVCreationKit()
 {
 	if (_stricmp((const char *)(g_ModuleBase + 0x3078988), "1.5.3.0") != 0)
 	{
-		MessageBoxA(nullptr, "Incorrect CreationKit version detected. Patches disabled.", "Version Check", MB_ICONERROR);
+		MessageBoxA(nullptr, "Incorrect CreationKit version detected. Patches disabled. Version 1.5.3.0 from 2018-04-13 is required.", "Version Check", MB_ICONERROR);
 		return;
 	}
 
