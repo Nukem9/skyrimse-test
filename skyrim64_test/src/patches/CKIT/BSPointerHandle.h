@@ -135,12 +135,12 @@ public:
 
 	bool AgeMatches(uint32_t RawAge) const
 	{
-		return IsActive() && GetRawAge() == RawAge;
+		return IsActive() && GetAge() == RawAge;
 	}
 
-	uint32_t GetRawAge() const
+	uint32_t GetAge() const
 	{
-		// Bits are not shifted here
+		// Bits are intentionally not shifted
 		return m_Bits & AGE_MASK;
 	}
 

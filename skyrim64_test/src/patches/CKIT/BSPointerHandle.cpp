@@ -21,8 +21,8 @@ public:
 	virtual ~TESObjectREFR();
 	virtual void OtherTestFunction2();
 };
-
-static_assert_offset(TESObjectREFR, m_uiRefCount, 0x38);
+//static_assert_offset(TESObjectREFR, m_uiRefCount, 0x38);
+static_assert(sizeof(TESObjectREFR) == 0x40);
 
 void BSPointerHandleManagerInterface::Initialize()
 {
@@ -47,9 +47,9 @@ BSUntypedPointerHandle<> BSPointerHandleManagerInterface::GetCurrentHandle(TESOb
 	if (Refr && Refr->IsHandleActive())
 	{
 		auto& handle = HandleTable[Refr->GetHandleIndex()];
-		untypedHandle.Set(Refr->GetHandleIndex(), handle.GetRawAge());
+		untypedHandle.Set(Refr->GetHandleIndex(), handle.GetAge());
 
-		AssertMsg(untypedHandle.GetRawAge() == handle.GetRawAge(), "BSPointerHandleManagerInterface::GetCurrentHandle - Handle already exists but has wrong age!");
+		AssertMsg(untypedHandle.GetAge() == handle.GetAge(), "BSPointerHandleManagerInterface::GetCurrentHandle - Handle already exists but has wrong age!");
 	}
 
 	return untypedHandle;
@@ -86,7 +86,7 @@ BSUntypedPointerHandle<> BSPointerHandleManagerInterface::CreateHandle(TESObject
 				newHandle.ResetAge();
 				newHandle.SetActive();
 
-				untypedHandle.Set(newHandle.GetIndex(), newHandle.GetRawAge());
+				untypedHandle.Set(newHandle.GetIndex(), newHandle.GetAge());
 				newHandle.SetPtr(Refr);
 
 				Refr->AssignHandle(NextPointerHandleIndex);
@@ -123,7 +123,7 @@ void BSPointerHandleManagerInterface::ReleaseHandle(const BSUntypedPointerHandle
 		const uint32_t handleIndex = Handle.GetIndex();
 		auto& arrayHandle = HandleTable[handleIndex];
 
-		if (arrayHandle.AgeMatches(Handle.GetRawAge()))
+		if (arrayHandle.AgeMatches(Handle.GetAge()))
 		{
 			arrayHandle.ClearActive();
 			arrayHandle.GetPtr()->ClearHandle();
@@ -152,7 +152,7 @@ void BSPointerHandleManagerInterface::ReleaseHandleAndClear(BSUntypedPointerHand
 		const uint32_t handleIndex = Handle.GetIndex();
 		auto& arrayHandle = HandleTable[handleIndex];
 
-		if (arrayHandle.AgeMatches(Handle.GetRawAge()))
+		if (arrayHandle.AgeMatches(Handle.GetAge()))
 		{
 			// I don't know why these functions are in a different order than ReleaseHandle()
 			arrayHandle.GetPtr()->ClearHandle();
@@ -215,7 +215,7 @@ bool BSPointerHandleManagerInterface::sub_141293870(const BSUntypedPointerHandle
 	// Possible nullptr deref hazard
 	Out = static_cast<TESObjectREFR *>(arrayHandle.GetPtr());
 
-	if (!arrayHandle.AgeMatches(Handle.GetRawAge()) || Out->GetHandleIndex() != handleIndex)
+	if (!arrayHandle.AgeMatches(Handle.GetAge()) || Out->GetHandleIndex() != handleIndex)
 		Out = nullptr;
 
 	return Out != nullptr;
@@ -236,7 +236,7 @@ bool BSPointerHandleManagerInterface::sub_1412E25B0(BSUntypedPointerHandle<>& Ha
 	// Possible nullptr deref hazard
 	Out = static_cast<TESObjectREFR *>(arrayHandle.GetPtr());
 
-	if (!arrayHandle.AgeMatches(Handle.GetRawAge()) || Out->GetHandleIndex() != handleIndex)
+	if (!arrayHandle.AgeMatches(Handle.GetAge()) || Out->GetHandleIndex() != handleIndex)
 	{
 		Handle.Clear();
 		Out = nullptr;
@@ -252,7 +252,7 @@ bool BSPointerHandleManagerInterface::sub_1414C52B0(const BSUntypedPointerHandle
 
 	Handle.IsEmpty();// This if() got optimized out or something?...
 
-	if (arrayHandle.AgeMatches(Handle.GetRawAge()))
+	if (arrayHandle.AgeMatches(Handle.GetAge()))
 		return arrayHandle.GetPtr()->GetHandleIndex() == handleIndex;
 
 	return false;
