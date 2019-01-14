@@ -14,29 +14,29 @@ bhkThreadMemorySource::~bhkThreadMemorySource()
 
 void *bhkThreadMemorySource::blockAlloc(int numBytes)
 {
-	return MemoryManager::Alloc(nullptr, numBytes, 0, false);
+	return MemoryManager::Alloc(nullptr, numBytes, 16, true);
 }
 
 void bhkThreadMemorySource::blockFree(void *p, int numBytes)
 {
-	MemoryManager::Free(nullptr, p, false);
+	MemoryManager::Free(nullptr, p, true);
 }
 
 void *bhkThreadMemorySource::bufAlloc(int& reqNumBytesInOut)
 {
-	return MemoryManager::Alloc(nullptr, reqNumBytesInOut, 0, false);
+	return blockAlloc(reqNumBytesInOut);
 }
 
 void bhkThreadMemorySource::bufFree(void *p, int numBytes)
 {
-	MemoryManager::Free(nullptr, p, false);
+	return blockFree(p, numBytes);
 }
 
 void *bhkThreadMemorySource::bufRealloc(void *pold, int oldNumBytes, int& reqNumBytesInOut)
 {
-	void *p = MemoryManager::Alloc(nullptr, reqNumBytesInOut, 0, false);
+	void *p = blockAlloc(reqNumBytesInOut);
 	memcpy(p, pold, oldNumBytes);
-	MemoryManager::Free(nullptr, pold, false);
+	blockFree(pold, oldNumBytes);
 
 	return p;
 }
@@ -44,13 +44,13 @@ void *bhkThreadMemorySource::bufRealloc(void *pold, int oldNumBytes, int& reqNum
 void bhkThreadMemorySource::blockAllocBatch(void **ptrsOut, int numPtrs, int blockSize)
 {
 	for (int i = 0; i < numPtrs; i++)
-		ptrsOut[i] = MemoryManager::Alloc(nullptr, blockSize, 0, false);
+		ptrsOut[i] = blockAlloc(blockSize);
 }
 
 void bhkThreadMemorySource::blockFreeBatch(void **ptrsIn, int numPtrs, int blockSize)
 {
 	for (int i = 0; i < numPtrs; i++)
-		MemoryManager::Free(nullptr, ptrsIn[i], false);
+		blockFree(ptrsIn[i], blockSize);
 }
 
 void bhkThreadMemorySource::getMemoryStatistics(class MemoryStatistics& u)
