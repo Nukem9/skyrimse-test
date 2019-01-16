@@ -351,6 +351,19 @@ void Patch_TESVCreationKit()
 	PatchMemory(g_ModuleBase + 0x16E55A9, (PBYTE)"\x4D\x4F\x35\x53", 4);
 
 	//
+	// Correct the "Push-to-game not supported" error when clicking the "UnEquip Sound" button on the weapon editor
+	// dialog. 3682 is reserved exclusively for the PTG functionality, so the button id must be changed. Remapped to
+	// 3683 instead.
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13B9900), &EditorUI_DialogTabProc);
+
+	uint32_t newId = 3683;
+	PatchMemory(g_ModuleBase + 0x1B0CBC4, (PBYTE)&newId, sizeof(uint32_t));// SetDlgItemTextA
+	PatchMemory(g_ModuleBase + 0x1B0DCE9, (PBYTE)&newId, sizeof(uint32_t));// GetDlgItemTextA
+	newId += 1;
+	PatchMemory(g_ModuleBase + 0x1B0AFAA, (PBYTE)&newId, sizeof(uint32_t));// Patch if() comparison
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
