@@ -7,6 +7,8 @@
 #include "../../common.h"
 #include "Editor.h"
 
+extern "C" IMAGE_DOS_HEADER __ImageBase;
+
 #pragma comment(lib, "libdeflate.lib")
 
 struct z_stream_s
@@ -86,6 +88,10 @@ INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HW
 	// EndDialog MUST be used
 	DlgData.DialogFunc = lpDialogFunc;
 	DlgData.IsDialog = true;
+
+	// Override the default "Data" dialog with a custom one in this dll
+	if (lpTemplateName == (LPCSTR)0xA2)
+		hInstance = (HINSTANCE)&__ImageBase;
 
 	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
 }

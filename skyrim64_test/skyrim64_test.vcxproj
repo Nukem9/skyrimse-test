@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\INIReader.h" />
     <ClInclude Include="src\patches\CKIT\BSPointerHandle.h" />
@@ -329,6 +330,9 @@
     <None Include="src\patches\TES\BSShader\BSShaderManagerInfo.inl" />
     <None Include="src\patches\TES\NiMain\NiRTTI.inl" />
     <None Include="src\typeinfo\ni_rtti.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
