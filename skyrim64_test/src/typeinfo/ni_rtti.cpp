@@ -20,7 +20,7 @@ void AddTypes(std::vector<const char *>& Vector, const char **Functions, const i
 		bool allowInclude = true;
 
 		// Skip any function indexes marked as CreationKit-only
-		if (g_IsGame)
+		if (g_LoadType != GAME_EXECUTABLE_TYPE::CREATIONKIT)
 		{
 			for (int j = 0; CKFunctions[j] != -1; j++)
 			{

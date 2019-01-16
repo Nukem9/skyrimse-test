@@ -9,6 +9,7 @@
 #include "CKIT/TESForm_CK.h"
 #include "CKIT/NavMesh.h"
 #include "CKIT/EditorUI.h"
+#include "CKIT/BSPointerHandle.h"
 
 void PatchSteam();
 void PatchThreading();
@@ -23,7 +24,13 @@ void Patch_TESVCreationKit()
 {
 	if (_stricmp((const char *)(g_ModuleBase + 0x3078988), "1.5.3.0") != 0)
 	{
-		MessageBoxA(nullptr, "Incorrect CreationKit version detected. Patches disabled. Version 1.5.3.0 from 2018-04-13 is required.", "Version Check", MB_ICONERROR);
+		char modulePath[MAX_PATH];
+		GetModuleFileNameA(GetModuleHandle(nullptr), modulePath, ARRAYSIZE(modulePath));
+
+		char message[1024];
+		sprintf_s(message, "Incorrect CreationKit version detected. Version 1.5.3.0 from 2018-04-13 is required. Patches are disabled.\n\nExecutable path: %s", modulePath);
+
+		MessageBoxA(nullptr, message, "Version Check", MB_ICONERROR);
 		return;
 	}
 

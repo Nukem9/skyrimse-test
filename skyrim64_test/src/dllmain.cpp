@@ -60,17 +60,19 @@ void ApplyPatches()
 
 	strcpy_s(g_GitVersion, g_INI.Get("Version", "CommitId", "UNSET").c_str());
 
-	if (g_IsGame)
+	switch (g_LoadType)
 	{
 #if !SKYRIM64_CREATIONKIT_ONLY
+	case GAME_EXECUTABLE_TYPE::GAME:
 		TLSPatcherInitialize();
 		LoadModules();
 		Patch_TESV();
+		break;
 #endif
-	}
-	else
-	{
+
+	case GAME_EXECUTABLE_TYPE::CREATIONKIT:
 		Patch_TESVCreationKit();
+		break;
 	}
 }
 
@@ -78,32 +80,40 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 {
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
-		char filePath[MAX_PATH];
-		GetModuleFileNameA(GetModuleHandle(nullptr), filePath, MAX_PATH);
-
-		if (strstr(filePath, "SkyrimSELauncher"))
-			g_IsGame = false;
-		else if (strstr(filePath, "CreationKit"))
-			g_IsGame = false;
-		else if (strstr(filePath, "SkyrimSE"))
-			g_IsGame = true;
-
 		// Force this dll to be loaded permanently
 		HMODULE temp;
 		GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)hModule, &temp);
 
-		// Skip all patching if process is the launcher
+		// Then determine which exe is being loaded
+		char modulePath[MAX_PATH];
+		GetModuleFileNameA(GetModuleHandle(nullptr), modulePath, MAX_PATH);
+
+		char executableName[MAX_PATH];
+		_splitpath_s(modulePath, nullptr, 0, nullptr, 0, executableName, ARRAYSIZE(executableName), nullptr, 0);
+
+		if (!_stricmp(executableName, "SkyrimSELauncher"))
+			g_LoadType = GAME_EXECUTABLE_TYPE::LAUNCHER;
+		else if (!_stricmp(executableName, "SkyrimSE") || !_stricmp(executableName, "SkyrimSE_dump"))
+			g_LoadType = GAME_EXECUTABLE_TYPE::GAME;
+		else if (!_stricmp(executableName, "CreationKit"))
+			g_LoadType = GAME_EXECUTABLE_TYPE::CREATIONKIT;
+		else
+			g_LoadType = GAME_EXECUTABLE_TYPE::UNKNOWN;
+
+		// For now, skip everything except the game and CK
+		if (g_LoadType == GAME_EXECUTABLE_TYPE::GAME || g_LoadType == GAME_EXECUTABLE_TYPE::CREATIONKIT)
+		{
 #if SKYRIM64_CREATIONKIT_ONLY
-		if (g_IsGame)
-			return TRUE;
+			if (g_LoadType != GAME_EXECUTABLE_TYPE::CREATIONKIT)
+				return TRUE;
 #endif
 
-		if (!strstr(filePath, "SkyrimSELauncher"))
 			DumpEnableBreakpoint();
+		}
     }
 
 #if !SKYRIM64_CREATIONKIT_ONLY
-	if (g_IsGame)
+	if (g_LoadType == GAME_EXECUTABLE_TYPE::GAME)
 		TLSPatcherCallback(hModule, fdwReason, lpReserved);
 #endif
 

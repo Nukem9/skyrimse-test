@@ -58,6 +58,6 @@ HMODULE g_DllVTune;
 HMODULE g_DllDXGI;
 HMODULE g_DllD3D11;
 
-bool g_IsGame;
+GAME_EXECUTABLE_TYPE g_LoadType;
 
 char g_GitVersion[64];

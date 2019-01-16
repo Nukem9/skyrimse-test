@@ -74,7 +74,15 @@ extern HMODULE g_DllVTune;
 extern HMODULE g_DllDXGI;
 extern HMODULE g_DllD3D11;
 
-extern bool g_IsGame;
+enum class GAME_EXECUTABLE_TYPE
+{
+	UNKNOWN,
+	LAUNCHER,
+	GAME,
+	CREATIONKIT,
+};
+
+extern GAME_EXECUTABLE_TYPE g_LoadType;
 
 extern char g_GitVersion[64];
 
