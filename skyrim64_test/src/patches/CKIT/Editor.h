@@ -35,7 +35,9 @@ void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int
 
 void PatchTemplatedFormIterator();
 LRESULT CSScript_PickScriptsToCompileDlg_WindowMessage(void *Thisptr, UINT Message, WPARAM WParam, LPARAM LParam);
-void DialogueInfoSort(__int64 TESDataHandler, uint32_t FormType, void *SortFunction);
+
+void SortFormArray(BSTArray<class TESForm *> *Array, int(*SortFunction)(const void *, const void *));
+void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *));
 
 class IRendererResourceManager
 {
@@ -52,3 +54,5 @@ void QuitHandler();
 void ListViewUnselectItem(HWND ListViewHandle, void *Parameter);
 void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections);
 void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections);
+
+void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value);

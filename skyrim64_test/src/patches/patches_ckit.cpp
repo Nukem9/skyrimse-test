@@ -247,7 +247,7 @@ void Patch_TESVCreationKit()
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13B9AD0), &InsertComboBoxItem);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BA4D0), &InsertListViewItem);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x20A9710), &CSScript_PickScriptsToCompileDlg_WindowMessage);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1985F20), &DialogueInfoSort);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1985F20), &SortDialogueInfo);
 
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12C8B63), &UpdateObjectWindowTreeView);
 		PatchMemory(g_ModuleBase + 0x12C8B63, (PBYTE)"\xE8", 1);
@@ -362,6 +362,17 @@ void Patch_TESVCreationKit()
 	PatchMemory(g_ModuleBase + 0x1B0DCE9, (PBYTE)&newId, sizeof(uint32_t));// GetDlgItemTextA
 	newId += 1;
 	PatchMemory(g_ModuleBase + 0x1B0AFAA, (PBYTE)&newId, sizeof(uint32_t));// Patch if() comparison
+
+	//
+	// Fix for crash when saving certain ESP files (i.e 3DNPC.esp)
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1651590), &SortFormArray);
+
+	//
+	// Fix for incorrect NavMesh assertion while saving certain ESP files (i.e 3DNPC.esp)
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x159EB48), &hk_sub_141047AB2);
+	PatchMemory(g_ModuleBase + 0x159EB48, (PBYTE)"\xE8", 1);
 
 	//
 	// Plugin loading optimizations:

@@ -698,7 +698,19 @@ LRESULT CSScript_PickScriptsToCompileDlg_WindowMessage(void *Thisptr, UINT Messa
 	return ((LRESULT(__fastcall *)(void *, UINT, WPARAM, LPARAM))(g_ModuleBase + 0x20ABD90))(Thisptr, Message, WParam, LParam);
 }
 
-void DialogueInfoSort(__int64 TESDataHandler, uint32_t FormType, void *SortFunction)
+void SortFormArray(BSTArray<class TESForm *> *Array, int(*SortFunction)(const void *, const void *))
+{
+	// NOTE: realSort must be updated on a separate line to avoid one-time initialization
+	thread_local int(__fastcall *realSort)(const void *, const void *);
+	realSort = SortFunction;
+
+	qsort(Array->QBuffer(), Array->QSize(), sizeof(class TESForm *), [](const void *a, const void *b)
+	{
+		return realSort(*(const void **)a, *(const void **)b);
+	});
+}
+
+void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *))
 {
 	static std::unordered_map<BSTArray<class TESForm *> *, std::pair<void *, uint32_t>> arrayCache;
 
@@ -709,7 +721,7 @@ void DialogueInfoSort(__int64 TESDataHandler, uint32_t FormType, void *SortFunct
 	if (itr == arrayCache.end() || itr->second.first != formArray->QBuffer() || itr->second.second != formArray->QSize())
 	{
 		// Update and resort the array
-		((void(__fastcall *)(void *, void *))(g_ModuleBase + 0x1651590))(formArray, SortFunction);
+		SortFormArray(formArray, SortFunction);
 
 		arrayCache[formArray] = std::make_pair(formArray->QBuffer(), formArray->QSize());
 	}
@@ -789,4 +801,12 @@ void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOt
 
 	if (index != -1)
 		ListViewSelectItem(ListViewHandle, index, KeepOtherSelections);
+}
+
+void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value)
+{
+	// The pointer is converted to a form id, but the top 32 bits are never cleared correctly (ui32/ui64 union)
+	*Value &= 0x00000000FFFFFFFF;
+
+	((void(__fastcall *)(__int64, __int64 *))(g_ModuleBase + 0x15C88D0))(FileHandle, Value);
 }
