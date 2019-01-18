@@ -6,6 +6,7 @@
 #include <CommCtrl.h>
 #include "../../common.h"
 #include "Editor.h"
+#include "EditorUI.h"
 
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 
@@ -815,4 +816,51 @@ void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value)
 	*Value &= 0x00000000FFFFFFFF;
 
 	((void(__fastcall *)(__int64, __int64 *))(g_ModuleBase + 0x15C88D0))(FileHandle, Value);
+}
+
+bool hk_BGSPerkRankArray_sub_14168DF70(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray)
+{
+	AutoFunc(__int64(*)(__int64, __int64), sub_1416B8A20, 0x16B8A20);
+	AutoFunc(__int64(*)(uint32_t *, __int64), sub_1416C05D0, 0x16C05D0);
+	AutoFunc(__int64(*)(void *, uint32_t *), sub_14168E790, 0x168E790);
+
+	AssertMsg(Entry->Rank == 0, "NPC perk loading code is still broken somewhere, rank shouldn't be set");
+
+	// Bugfix: Always zero the form pointer union, even if the form id was null
+	*FormId = Entry->FormId;
+	Entry->FormIdOrPointer = 0;
+
+	if (*FormId && UnknownArray)
+	{
+		sub_1416C05D0(FormId, sub_1416B8A20(UnknownArray, 0xFFFFFFFFi64));
+		Entry->FormIdOrPointer = sub_14168E790(nullptr, FormId);
+
+		if (Entry->FormIdOrPointer)
+		{
+			(*(void(__fastcall **)(__int64, __int64))(*(__int64 *)Entry->FormIdOrPointer + 520i64))(Entry->FormIdOrPointer, UnknownArray);
+			return true;
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entry)
+{
+	//
+	// This function does two things:
+	// - Correct the "rank" value which otherwise defaults to 1 and zero the remaining bits
+	// - Prevent insertion of the perk in the array if it's null
+	//
+	AssertMsg(Entry->NewRank == 1, "Unexpected default for new rank member conversion");
+
+	Entry->NewRank = Entry->Rank;
+	Entry->FormIdOrPointer &= 0x00000000FFFFFFFF;
+
+	if (Entry->FormId != 0)
+		((void(__fastcall *)(__int64, PerkRankEntry *&))(g_ModuleBase + 0x168EAE0))(ArrayHandle, Entry);
+	else
+		EditorUI_Warning(13, "Null perk found while loading a PerkRankArray. Entry will be discarded.");
 }

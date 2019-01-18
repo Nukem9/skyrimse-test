@@ -382,6 +382,13 @@ void Patch_TESVCreationKit()
 	PatchMemory(g_ModuleBase + 0x159EB48, (PBYTE)"\xE8", 1);
 
 	//
+	// Fix for crash on null BGSPerkRankArray form ids and perk ranks being reset to 1 on save
+	//
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x168DF70), &hk_BGSPerkRankArray_sub_14168DF70);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x168D1CA), &hk_BGSPerkRankArray_sub_14168EAE0);
+	PatchMemory(g_ModuleBase + 0x168D1CA, (PBYTE)"\xE8", 1);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

@@ -49,6 +49,25 @@ public:
 	bool FindIntersectionsTriShapeFastPath(class NiPoint3 *P1, class NiPoint3 *P2, class NiPick *Pick, class BSTriShape *Shape);
 };
 
+struct PerkRankEntry
+{
+	union
+	{
+		struct
+		{
+			uint32_t FormId;	// 0x0
+			uint8_t Rank;		// 0x4
+		};
+
+		struct
+		{
+			uint64_t FormIdOrPointer;	// 0x0
+			uint8_t NewRank;			// 0x8
+		};
+	};
+};
+static_assert(sizeof(PerkRankEntry) == 0x10);
+
 void QuitHandler();
 
 void ListViewUnselectItem(HWND ListViewHandle, void *Parameter);
@@ -56,3 +75,5 @@ void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelect
 void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections);
 
 void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value);
+bool hk_BGSPerkRankArray_sub_14168DF70(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray);
+void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entry);
