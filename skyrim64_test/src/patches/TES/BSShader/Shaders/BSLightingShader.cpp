@@ -586,14 +586,9 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		XMVECTORF32& texcoordOffset = vertexCG.ParamVS<XMVECTORF32, 11>();
 
 		texcoordOffset.f[0] = lightingMaterial->kTexCoordOffset[dword_141E33040].x;
-		texcoordOffset.f[0] = lightingMaterial->kTexCoordOffset[dword_141E33040].y;
-		texcoordOffset.f[0] = lightingMaterial->kTexCoordScale[dword_141E33040].x;
-		texcoordOffset.f[0] = lightingMaterial->kTexCoordScale[dword_141E33040].y;
-
-		//texcoordOffset.f[0] = *(float *)(material + 8i64 * (unsigned int)dword_141E33040 + 12);
-		//texcoordOffset.f[1] = *(float *)(material + 8i64 * (unsigned int)dword_141E33040 + 16);
-		//texcoordOffset.f[2] = *(float *)(material + 8i64 * (unsigned int)dword_141E33040 + 28);
-		//texcoordOffset.f[3] = *(float *)(material + 8i64 * (unsigned int)dword_141E33040 + 32);
+		texcoordOffset.f[1] = lightingMaterial->kTexCoordOffset[dword_141E33040].y;
+		texcoordOffset.f[2] = lightingMaterial->kTexCoordScale[dword_141E33040].x;
+		texcoordOffset.f[3] = lightingMaterial->kTexCoordScale[dword_141E33040].y;
 	}
 
 	if (rawTechnique & RAW_FLAG_SPECULAR)
@@ -1203,8 +1198,8 @@ void BSLightingShader::MatSetMultiTextureLandOverrides(const BSLightingShaderMat
 	renderer->SetTexture(0, Material->spDiffuseTexture);
 	renderer->SetTexture(7, Material->spNormalTexture);
 
-	Assert(Material->uiNumLandscapeTextures < ARRAYSIZE(BSLightingShaderMaterialLandscape::spLandscapeDiffuseTexture));
-	Assert(Material->uiNumLandscapeTextures < ARRAYSIZE(BSLightingShaderMaterialLandscape::spLandscapeNormalTexture));
+	Assert(Material->uiNumLandscapeTextures <= ARRAYSIZE(BSLightingShaderMaterialLandscape::spLandscapeDiffuseTexture));
+	Assert(Material->uiNumLandscapeTextures <= ARRAYSIZE(BSLightingShaderMaterialLandscape::spLandscapeNormalTexture));
 
 	for (uint32_t i = 0; i < Material->uiNumLandscapeTextures; i++)
 	{
