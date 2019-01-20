@@ -22,11 +22,7 @@ __itt_heap_function ITT_ReallocateCallback;
 __itt_heap_function ITT_FreeCallback;
 #endif
 
-#if SKYRIM64_USE_TBBMALLOC
 #pragma comment(lib, "tbbmalloc.lib")			// TBB Allocator
-#else
-#pragma comment(lib, "libjemalloc.lib")			// Jemalloc
-#endif
 
 #if SKYRIM64_USE_TRACY
 #pragma comment(lib, "libtracy.lib")			// Tracy

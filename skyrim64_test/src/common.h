@@ -26,12 +26,8 @@ extern __itt_heap_function ITT_FreeCallback;
 #include <tracy/Tracy.hpp>
 #include <tracy/TracyD3D11.hpp>
 
-// TBBMalloc/Jemalloc
-#if SKYRIM64_USE_TBBMALLOC
+// TBBMalloc
 #include <tbb/scalable_allocator.h>
-#else
-#include <jemalloc/jemalloc.h>
-#endif
 
 // Detours
 #ifdef _DEBUG
