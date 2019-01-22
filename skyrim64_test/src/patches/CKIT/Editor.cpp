@@ -81,6 +81,10 @@ HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HW
 	DlgData.DialogFunc = lpDialogFunc;
 	DlgData.IsDialog = false;
 
+	// Override the default "Use Report" window sizing
+	if (lpTemplateName == (LPCSTR)0xDC)
+		hInstance = (HINSTANCE)&__ImageBase;
+
 	return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
 }
 

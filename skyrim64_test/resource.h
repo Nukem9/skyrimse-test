@@ -3,6 +3,7 @@
 // Used by resource.rc
 //
 #define IDD_DATA_LOAD_DIALOG			162
+#define IDD_USE_REPORT_DIALOG			220
 
 // Next default values for new objects
 // 
