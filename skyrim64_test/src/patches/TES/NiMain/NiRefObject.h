@@ -4,6 +4,8 @@ class NiRefObject
 {
 private:
 	inline AutoPtr(uint32_t, ms_uiObjects, 0x3038520);
+
+protected:
 	uint32_t m_uiRefCount;
 
 public:
