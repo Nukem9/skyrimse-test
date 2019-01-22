@@ -313,7 +313,9 @@ void Patch_TESVCreationKit()
 		PatchMemory(g_ModuleBase + 0x243D9FE, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 	}
 
+	//
 	// Force render window to draw at 60fps (SetTimer(1ms))
+	//
 	if (g_INI.GetBoolean("CreationKit", "RenderWindow60FPS", false))
 	{
 		PatchMemory(g_ModuleBase + 0x1306978, (PBYTE)"\x01", 1);
@@ -384,11 +386,16 @@ void Patch_TESVCreationKit()
 	PatchMemory(g_ModuleBase + 0x159EB48, (PBYTE)"\xE8", 1);
 
 	//
-	// Fix for crash on null BGSPerkRankArray form ids and perk ranks being reset to 1 on save
+	// Fix for crash on null BGSPerkRankArray form ids and perk ranks being reset to 1 on save (i.e DianaVampire2017Asherz.esp)
 	//
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x168DF70), &hk_BGSPerkRankArray_sub_14168DF70);
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x168D1CA), &hk_BGSPerkRankArray_sub_14168EAE0);
 	PatchMemory(g_ModuleBase + 0x168D1CA, (PBYTE)"\xE8", 1);
+
+	//
+	// Fix use-after-free with a NavMeshInfoMap inserted in the altered forms list during a virtual destructor call
+	//
+	PatchMemory(g_ModuleBase + 0x1DD1D38, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
 
 	//
 	// Plugin loading optimizations:
