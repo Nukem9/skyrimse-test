@@ -361,7 +361,7 @@ bool sub_141477DA0(__int64 a1)
 	return *(__int64 *)(a1 + 0) == 0 && *(__int64 *)(a1 + 8) == 0;
 }
 
-__int64 sub_1414974E0(BSTArray<void *>& Array, void *Target, uint32_t StartIndex, __int64 Unused)
+uint32_t sub_1414974E0(BSTArray<void *>& Array, const void *&Target, uint32_t StartIndex, __int64 Unused)
 {
 	for (uint32_t i = StartIndex; i < Array.QSize(); i++)
 	{
