@@ -245,6 +245,8 @@ void Patch_TESVCreationKit()
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2452480), &EditorUI_WarningUnknown1);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x27A6150), &EditorUI_WarningUnknown2);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x27A6270), &EditorUI_WarningUnknown2);
+		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x163D3D1), &EditorUI_WarningUnknown2);
+		PatchMemory(g_ModuleBase + 0x163D3D1, (PBYTE)"\xE8", 1);
 		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x243D260), &EditorUI_Assert);
 	}
 
