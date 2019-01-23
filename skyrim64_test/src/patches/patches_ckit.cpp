@@ -398,6 +398,13 @@ void Patch_TESVCreationKit()
 	PatchMemory(g_ModuleBase + 0x1DD1D38, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
 
 	//
+	// Fix crash when using more than 16 NPC face tint masks during FaceGen
+	//
+	PatchMemory(g_ModuleBase + 0x1D3B350, (PBYTE)"\x48\x8B\x4C\x24\x68\xE8\xCB\xFF\xFF\xFF\xE9\x7D\x01\x00\x00", 15);
+	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D3B355), &hk_FaceGenOverflowWarning);
+	PatchMemory(g_ModuleBase + 0x1D3B355, (PBYTE)"\xE8", 1);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

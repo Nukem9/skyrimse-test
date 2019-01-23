@@ -868,3 +868,10 @@ void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entr
 	else
 		EditorUI_Warning(13, "Null perk found while loading a PerkRankArray. Entry will be discarded.");
 }
+
+void hk_FaceGenOverflowWarning(__int64 Texture)
+{
+	const char *texName = ((const char *(__fastcall *)(__int64))(g_ModuleBase + 0x14BE2E0))(*(__int64 *)Texture);
+
+	EditorUI_Warning(23, "Exceeded limit of 16 tint masks. Skipping texture: %s", texName);
+}
