@@ -592,7 +592,7 @@ void PatchTemplatedFormIterator()
 
 	for (uintptr_t i = g_CodeBase; i < g_CodeEnd;)
 	{
-		uintptr_t addr = FindPatternSimple(i, g_CodeEnd - i, (uint8_t *)patternStr, maskStr);
+		uintptr_t addr = XUtil::FindPattern(i, g_CodeEnd - i, (uint8_t *)patternStr, maskStr);
 
 		if (!addr)
 			break;
@@ -619,7 +619,7 @@ void PatchTemplatedFormIterator()
 			else
 				endPattern = "\x0F\x00\x00\x00\x00\x48\x81\xC4\x00\x00\x00\x00\xC3";// nopped version
 
-			end = FindPatternSimple(addr, std::min<uintptr_t>(g_CodeEnd - addr, 1000), (uint8_t *)endPattern, endMask);
+			end = XUtil::FindPattern(addr, std::min<uintptr_t>(g_CodeEnd - addr, 1000), (uint8_t *)endPattern, endMask);
 
 			if (end)
 				break;
@@ -634,9 +634,9 @@ void PatchTemplatedFormIterator()
 			continue;
 
 		Detours::X64::DetourFunctionClass((PBYTE)addr, &BeginUIDefer);
-		PatchMemory(addr, (PBYTE)"\xE8", 1);
+		XUtil::PatchMemory(addr, (PBYTE)"\xE8", 1);
 		Detours::X64::DetourFunctionClass((PBYTE)end, &EndUIDefer);
-		PatchMemory(end, (PBYTE)"\xE8", 1);
+		XUtil::PatchMemory(end, (PBYTE)"\xE8", 1);
 	}
 }
 
@@ -869,7 +869,7 @@ void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entr
 		EditorUI_Warning(13, "Null perk found while loading a PerkRankArray. Entry will be discarded.");
 }
 
-void hk_FaceGenOverflowWarning(__int64 Texture)
+void FaceGenOverflowWarning(__int64 Texture)
 {
 	const char *texName = ((const char *(__fastcall *)(__int64))(g_ModuleBase + 0x14BE2E0))(*(__int64 *)Texture);
 

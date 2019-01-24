@@ -2,46 +2,30 @@
 
 #pragma warning(disable:4094) // untagged 'struct' declared no symbols
 
-#define Assert(cond)					if(!(cond)) XutilAssert(__FILE__, __LINE__, #cond);
-#define AssertDebug(cond)				if(!(cond)) XutilAssert(__FILE__, __LINE__, #cond);
-#define AssertMsg(cond, msg)			AssertMsgVa(cond, msg);
-#define AssertMsgDebug(cond, msg)		AssertMsgVa(cond, msg);
-#define AssertMsgVa(cond, msg, ...)		if(!(cond)) XutilAssert(__FILE__, __LINE__, "%s\n\n" msg, #cond, ##__VA_ARGS__);
+#define Assert(Cond)					if(!(Cond)) XUtil::XAssert(__FILE__, __LINE__, #Cond);
+#define AssertDebug(Cond)				if(!(Cond)) XUtil::XAssert(__FILE__, __LINE__, #Cond);
+#define AssertMsg(Cond, Msg)			AssertMsgVa(Cond, Msg);
+#define AssertMsgDebug(Cond, Msg)		AssertMsgVa(Cond, Msg);
+#define AssertMsgVa(Cond, Msg, ...)		if(!(Cond)) XUtil::XAssert(__FILE__, __LINE__, "%s\n\n" Msg, #Cond, ##__VA_ARGS__);
 
-#define VTABLE_FUNCTION_INDEX(Function) vtable_index_util::getIndexOf(&Function)
+#define templated(...)					__VA_ARGS__
+#define AutoPtr(Type, Name, Offset)		static Type& Name = (*(Type *)((uintptr_t)GetModuleHandle(nullptr) + Offset))
+#define AutoFunc(Type, Name, Offset)	static auto Name = ((Type)((uintptr_t)GetModuleHandle(nullptr) + Offset))
+
+#define static_assert_offset(Structure, Member, Offset) struct __declspec(empty_bases) : CheckOffset<offsetof(Structure, Member), Offset> { }
+#define assert_vtable_index(Function, Index) AssertMsgVa(VtableIndexUtil::GetIndexOf(Function) == Index, "Virtual table index does not match (%d != %d)", VtableIndexUtil::GetIndexOf(Function), Index)
 
 #define GAME_TLS(Type, Offset) *(Type *)(*(uintptr_t *)(__readgsqword(0x58u) + 8i64 * (*(uint32_t *)(g_ModuleBase + 0x34BBA78))) + (Offset))
 
-class vtable_index_util
-{
-private:
-	typedef int(*VtableIndexFn)();
-	static vtable_index_util *GlobalInstance;
-
-public:
-	static vtable_index_util *Instance();
-
-	template<typename T>
-	static int getIndexOf(T ptr)
-	{
-		return (Instance()->**((decltype(&ForceVtableReference)*)(&ptr)))();
-	}
-
-private:
-	virtual int ForceVtableReference();
-};
-
-template<void(*ctor)()>
-struct static_constructor
-{
-	struct constructor { constructor() { ctor(); } };
-	static constructor c;
-};
-
-template<void(*ctor)()>
-typename static_constructor<ctor>::constructor static_constructor<ctor>::c;
-
-#define STATIC_CONSTRUCTOR(Id, Lambda) struct { static void Id(){ static_constructor<&Id>::c; Lambda(); } };
+#define STATIC_CONSTRUCTOR(Id, Lambda) \
+	struct \
+	{ \
+		static void Id() \
+		{ \
+			StaticConstructor<&Id>::c; \
+			Lambda(); \
+		} \
+	};
 
 #define DECLARE_CONSTRUCTOR_HOOK(Class) \
 	static Class *__ctor__(void *Instance) \
@@ -55,22 +39,73 @@ typename static_constructor<ctor>::constructor static_constructor<ctor>::c;
 		return Thisptr; \
 	}
 
-uintptr_t FindPatternSimple(uintptr_t StartAddress, uintptr_t MaxSize, const BYTE *ByteMask, const char *Mask);
-void PatchMemory(ULONG_PTR Address, PBYTE Data, SIZE_T Size);
-void SetThreadName(DWORD dwThreadID, const char *ThreadName);
-void Trim(char *Buffer, char C);
-void XutilAssert(const char *File, int Line, const char *Format, ...);
+class VtableIndexUtil
+{
+private:
+	typedef int(*VtableIndexFn)();
+	static VtableIndexUtil *GlobalInstance;
 
-#define templated(...) __VA_ARGS__
-#define AutoPtr(Type, Name, Offset) static Type& Name = (*(Type *)((uintptr_t)GetModuleHandle(nullptr) + Offset))
-#define AutoFunc(Type, Name, Offset) static auto Name = ((Type)((uintptr_t)GetModuleHandle(nullptr) + Offset))
+public:
+	static VtableIndexUtil *Instance();
 
-#define static_assert_offset(Structure, Member, Offset) struct __declspec(empty_bases) : CheckOffset<offsetof(Structure, Member), Offset> { }
-#define assert_vtable_index(Function, Index) AssertMsgVa(vtable_index_util::getIndexOf(Function) == Index, "VTable index does not match (%d != %d)", vtable_index_util::getIndexOf(Function), Index)
+	template<typename T>
+	static int GetIndexOf(T ptr)
+	{
+		return (Instance()->**((decltype(&ForceVtableReference)*)(&ptr)))();
+	}
+
+private:
+	virtual int ForceVtableReference();
+};
+
+template<void(*ctor)()>
+struct StaticConstructor
+{
+	struct Constructor
+	{
+		Constructor()
+		{
+			ctor();
+		}
+	};
+
+	static Constructor c;
+};
+
+template<void(*ctor)()>
+typename StaticConstructor<ctor>::Constructor StaticConstructor<ctor>::c;
 
 template <size_t Offset, size_t RequiredOffset>
-struct __declspec(empty_bases) CheckOffset
+struct __declspec(empty_bases)CheckOffset
 {
 	static_assert(Offset <= RequiredOffset, "Offset is larger than expected");
 	static_assert(Offset >= RequiredOffset, "Offset is smaller than expected");
 };
+
+namespace XUtil
+{
+	void SetThreadName(uint32_t ThreadID, const char *ThreadName);
+	void Trim(char *Buffer, char C);
+	void XAssert(const char *File, int Line, const char *Format, ...);
+
+	uintptr_t FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const uint8_t *Bytes, const char *Mask);
+	void PatchMemory(uintptr_t Address, uint8_t *Data, size_t Size);
+	void DetourJump(uintptr_t Target, uintptr_t Destination);
+	void DetourCall(uintptr_t Target, uintptr_t Destination);
+
+	template<typename T>
+	void DetourJump(uintptr_t Target, T Destination)
+	{
+		static_assert(std::is_member_function_pointer_v<T> || (std::is_pointer_v<T> && std::is_function_v<std::remove_pointer<T>::type>));
+
+		DetourJump(Target, *(uintptr_t *)&Destination);
+	}
+
+	template<typename T>
+	void DetourCall(uintptr_t Target, T Destination)
+	{
+		static_assert(std::is_member_function_pointer_v<T> || (std::is_pointer_v<T> && std::is_function_v<std::remove_pointer<T>::type>));
+
+		DetourCall(Target, *(uintptr_t *)&Destination);
+	}
+}

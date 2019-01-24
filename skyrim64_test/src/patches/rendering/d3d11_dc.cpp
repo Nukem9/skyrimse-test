@@ -64,7 +64,7 @@ DWORD WINAPI DC_Thread(LPVOID Arg)
 {
 	UNREFERENCED_PARAMETER(Arg);
 
-	SetThreadName(GetCurrentThreadId(), "DC_Thread");
+	XUtil::SetThreadName(GetCurrentThreadId(), "DC_Thread");
 	ReleaseSemaphore(ThreadInitSemaphore, 1, nullptr);
 
 	// Loop forever: whichever thread gets a job first executes it. Semaphores are NOT FIFO.

@@ -24,7 +24,7 @@ DWORD WINAPI hk_BSThreadEntryFunc(LPVOID lpArg)
     NextThreadName = nullptr;
 
     if (name)
-        SetThreadName(tid, name);
+        XUtil::SetThreadName(tid, name);
 
     ui::log::Add("Created thread \"%s\" (ID %d)\n", name, tid);
 
@@ -38,7 +38,7 @@ DWORD WINAPI hk_TaskletEntryFunc(LPVOID lpArg)
     char name[256];
     sprintf_s(name, "TaskletThread%d", NextTaskletIndex++);
 
-    SetThreadName(GetCurrentThreadId(), name);
+    XUtil::SetThreadName(GetCurrentThreadId(), name);
 	ui::log::Add("Created thread \"%s\" (ID %d)\n", name, GetCurrentThreadId());
 
     return TaskletEntryFunc(lpArg);

@@ -44,7 +44,7 @@ void LoadModules()
 void ApplyPatches()
 {
 	// The EXE has been unpacked at this point
-	SetThreadName(GetCurrentThreadId(), "Main Thread");
+	XUtil::SetThreadName(GetCurrentThreadId(), "Main Thread");
 
 #if SKYRIM64_USE_VTUNE
 	__itt_domain_create("MemoryManager");

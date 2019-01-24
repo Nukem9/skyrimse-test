@@ -46,12 +46,12 @@ void PatchAchievements()
     // Loop through each fix and exit on the first found
     for (auto &patch : Patches)
     {
-		uintptr_t addr = FindPatternSimple(g_CodeBase, g_CodeEnd - g_CodeBase, (uint8_t *)patch.BytesToFind, patch.FindMask);
+		uintptr_t addr = XUtil::FindPattern(g_CodeBase, g_CodeEnd - g_CodeBase, (uint8_t *)patch.BytesToFind, patch.FindMask);
 
         if (!addr)
             continue;
 
-        PatchMemory((addr + patch.AddressModifier), (PBYTE)patch.BytePatch, patch.PatchSize);
+        XUtil::PatchMemory((addr + patch.AddressModifier), (PBYTE)patch.BytePatch, patch.PatchSize);
         return;
     }
 

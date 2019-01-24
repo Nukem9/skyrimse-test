@@ -1,115 +1,12 @@
 #include "common.h"
 
-uintptr_t FindPatternSimple(uintptr_t StartAddress, uintptr_t MaxSize, const BYTE *ByteMask, const char *Mask)
-{
-	auto compare = [](const BYTE *pData, const BYTE *bMask, const char *szMask)
-	{
-		for (; *szMask; ++szMask, ++pData, ++bMask)
-		{
-			if (*szMask == 'x' && *pData != *bMask)
-				return false;
-		}
+VtableIndexUtil *VtableIndexUtil::GlobalInstance;
 
-		return *szMask == '\0';
-	};
-
-	const size_t maskLen = strlen(Mask);
-	for (uintptr_t i = 0; i < MaxSize - maskLen; i++)
-	{
-		if (compare((BYTE *)(StartAddress + i), ByteMask, Mask))
-			return StartAddress + i;
-	}
-
-	return 0;
-}
-
-void PatchMemory(ULONG_PTR Address, PBYTE Data, SIZE_T Size)
-{
-	DWORD d = 0;
-	VirtualProtect((LPVOID)Address, Size, PAGE_EXECUTE_READWRITE, &d);
-
-	for (SIZE_T i = Address; i < (Address + Size); i++)
-		*(volatile BYTE *)i = *Data++;
-
-	VirtualProtect((LPVOID)Address, Size, d, &d);
-	FlushInstructionCache(GetCurrentProcess(), (LPVOID)Address, Size);
-}
-
-void SetThreadName(DWORD dwThreadID, const char *ThreadName)
-{
-#if SKYRIM64_USE_VTUNE
-	if (dwThreadID == GetCurrentThreadId())
-		__itt_thread_set_name(ThreadName);
-#endif
-
-#if SKYRIM64_USE_TRACY
-	tracy::SetThreadName(GetCurrentThread(), ThreadName);
-#endif
-
-#pragma pack(push, 8)  
-	const DWORD MS_VC_EXCEPTION = 0x406D1388;
-
-	typedef struct tagTHREADNAME_INFO
-	{
-		DWORD dwType;		// Must be 0x1000.  
-		LPCSTR szName;		// Pointer to name (in user addr space).  
-		DWORD dwThreadID;	// Thread ID (-1=caller thread).  
-		DWORD dwFlags;		// Reserved for future use, must be zero.  
-	} THREADNAME_INFO;
-#pragma pack(pop)
-
-	THREADNAME_INFO info;
-	info.dwType = 0x1000;
-	info.szName = ThreadName;
-	info.dwThreadID = dwThreadID;
-	info.dwFlags = 0;
-
-	__try
-	{
-		RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR *)&info);
-	}
-	__except (EXCEPTION_EXECUTE_HANDLER)
-	{
-	}
-}
-
-void Trim(char *Buffer, char C)
-{
-	size_t len = strlen(Buffer);
-
-	if (len > 0 && Buffer[len - 1] == C)
-		Buffer[len - 1] = '\0';
-}
-
-void XutilAssert(const char *File, int Line, const char *Format, ...)
-{
-	char buffer[4096];
-	char message[4096];
-
-	va_list ap;
-	va_start(ap, Format);
-
-	_vsnprintf_s(buffer, _TRUNCATE, Format, ap);
-	sprintf_s(message, "%s(%d):\n\n%s", File, Line, buffer);
-
-	MessageBoxA(nullptr, message, "ASSERTION", MB_ICONERROR);
-
-	if (IsDebuggerPresent())
-	{
-		OutputDebugStringA(message);
-		__debugbreak();
-	}
-
-	ExitProcess(1);
-}
-
-vtable_index_util *vtable_index_util::GlobalInstance;
-
-vtable_index_util *vtable_index_util::Instance()
+VtableIndexUtil *VtableIndexUtil::Instance()
 {
 	if (!GlobalInstance)
 	{
-		GlobalInstance = new vtable_index_util;
+		GlobalInstance = new VtableIndexUtil();
 		GlobalInstance->ForceVtableReference();
 
 		// Overwrite this class's vtable pointers
@@ -166,7 +63,123 @@ vtable_index_util *vtable_index_util::Instance()
 	return GlobalInstance;
 }
 
-int vtable_index_util::ForceVtableReference()
+int VtableIndexUtil::ForceVtableReference()
 {
 	return 0;
+}
+
+void XUtil::SetThreadName(uint32_t ThreadID, const char *ThreadName)
+{
+	if (ThreadID == GetCurrentThreadId())
+	{
+#if SKYRIM64_USE_VTUNE
+		__itt_thread_set_name(ThreadName);
+#endif
+
+#if SKYRIM64_USE_TRACY
+		tracy::SetThreadName(GetCurrentThread(), ThreadName);
+#endif
+	}
+
+#pragma pack(push, 8)  
+	const DWORD MS_VC_EXCEPTION = 0x406D1388;
+
+	typedef struct tagTHREADNAME_INFO
+	{
+		DWORD dwType;		// Must be 0x1000.  
+		LPCSTR szName;		// Pointer to name (in user addr space).  
+		DWORD dwThreadID;	// Thread ID (-1=caller thread).  
+		DWORD dwFlags;		// Reserved for future use, must be zero.  
+	} THREADNAME_INFO;
+#pragma pack(pop)
+
+	THREADNAME_INFO info;
+	info.dwType = 0x1000;
+	info.szName = ThreadName;
+	info.dwThreadID = ThreadID;
+	info.dwFlags = 0;
+
+	__try
+	{
+		RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR *)&info);
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+	}
+}
+
+void XUtil::Trim(char *Buffer, char C)
+{
+	size_t len = strlen(Buffer);
+
+	if (len > 0 && Buffer[len - 1] == C)
+		Buffer[len - 1] = '\0';
+}
+
+void XUtil::XAssert(const char *File, int Line, const char *Format, ...)
+{
+	char buffer[4096];
+	char message[4096];
+
+	va_list ap;
+	va_start(ap, Format);
+
+	_vsnprintf_s(buffer, _TRUNCATE, Format, ap);
+	sprintf_s(message, "%s(%d):\n\n%s", File, Line, buffer);
+
+	MessageBoxA(nullptr, message, "ASSERTION", MB_ICONERROR);
+
+	if (IsDebuggerPresent())
+	{
+		OutputDebugStringA(message);
+		__debugbreak();
+	}
+
+	ExitProcess(1);
+}
+
+uintptr_t XUtil::FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const uint8_t *Bytes, const char *Mask)
+{
+	auto compare = [](const uint8_t *Data, const uint8_t *Bytes, const char *Mask)
+	{
+		for (; *Mask; ++Mask, ++Data, ++Bytes)
+		{
+			if (*Mask == 'x' && *Data != *Bytes)
+				return false;
+		}
+
+		return *Mask == '\0';
+	};
+
+	const size_t maskLen = strlen(Mask);
+	for (uintptr_t i = 0; i < MaxSize - maskLen; i++)
+	{
+		if (compare((uint8_t *)(StartAddress + i), Bytes, Mask))
+			return StartAddress + i;
+	}
+
+	return 0;
+}
+
+void XUtil::PatchMemory(uintptr_t Address, uint8_t *Data, size_t Size)
+{
+	DWORD d = 0;
+	VirtualProtect((LPVOID)Address, Size, PAGE_EXECUTE_READWRITE, &d);
+
+	for (uintptr_t i = Address; i < (Address + Size); i++)
+		*(volatile uint8_t *)i = *Data++;
+
+	VirtualProtect((LPVOID)Address, Size, d, &d);
+	FlushInstructionCache(GetCurrentProcess(), (LPVOID)Address, Size);
+}
+
+void XUtil::DetourJump(uintptr_t Target, uintptr_t Destination)
+{
+	Detours::X64::DetourFunction((uint8_t *)Target, (uint8_t *)Destination);
+}
+
+void XUtil::DetourCall(uintptr_t Target, uintptr_t Destination)
+{
+	Detours::X64::DetourFunction((uint8_t *)Target, (uint8_t *)Destination);
+	XUtil::PatchMemory(Target, (PBYTE)"\xE8", 1);
 }

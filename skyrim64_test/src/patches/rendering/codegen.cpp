@@ -737,7 +737,7 @@ void WriteCodeHook(uintptr_t TargetAddress, void *Code)
 	default: break;
 	}
 
-	PatchMemory(TargetAddress, data, instruction.length);
+	XUtil::PatchMemory(TargetAddress, data, instruction.length);
 }
 
 uint32_t crc32c(unsigned char *Data, size_t Len)

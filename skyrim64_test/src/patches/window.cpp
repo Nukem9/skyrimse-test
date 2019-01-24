@@ -83,7 +83,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 DWORD WINAPI MessageThread(LPVOID)
 {
-	SetThreadName(GetCurrentThreadId(), "Game Message Loop");
+	XUtil::SetThreadName(GetCurrentThreadId(), "Game Message Loop");
 
 	MSG msg;
 	while (GetMessage(&msg, nullptr, 0, 0) > 0)
@@ -136,7 +136,7 @@ HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWin
 
 void PatchWindow()
 {
-	PatchMemory(g_ModuleBase + 0x5AF310, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
+	XUtil::PatchMemory(g_ModuleBase + 0x5AF310, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
 	CreateThread(nullptr, 0, MessageThread, nullptr, 0, &MessageThreadId);
 
 	PatchIAT(hk_CreateWindowExA, "USER32.DLL", "CreateWindowExA");

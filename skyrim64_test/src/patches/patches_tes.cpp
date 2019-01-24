@@ -93,10 +93,10 @@ void Patch_TESV()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xD50310), &BSCullingProcess::hk_Process);
 
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12F93B1), &test1, Detours::X64Option::USE_REL32_JUMP);
-	PatchMemory(g_ModuleBase + 0x12F93B1, (PBYTE)"\xE8", 1);
+	XUtil::PatchMemory(g_ModuleBase + 0x12F93B1, (PBYTE)"\xE8", 1);
 
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12F96C9), &test2, Detours::X64Option::USE_REL32_JUMP);
-	PatchMemory(g_ModuleBase + 0x12F96C9, (PBYTE)"\xE8", 1);
+	XUtil::PatchMemory(g_ModuleBase + 0x12F96C9, (PBYTE)"\xE8", 1);
 
 	//
 	// BSGraphicsRenderer
@@ -149,11 +149,11 @@ void Patch_TESV()
 	//
 	// MemoryManager
 	//
-	PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);													// [3GB  ] MemoryManager - Default/Static/File heaps
-	PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);													// [1GB  ] BSSmallBlockAllocator
+	XUtil::PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);													// [3GB  ] MemoryManager - Default/Static/File heaps
+	XUtil::PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);													// [1GB  ] BSSmallBlockAllocator
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x257D740), &bhkThreadMemorySource::__ctor__);	// [512MB] bhkThreadMemorySource
-	PatchMemory(g_ModuleBase + 0xC02E60, (PBYTE)"\xC3", 1);													// [64MB ] ScrapHeap init
-	PatchMemory(g_ModuleBase + 0xC037C0, (PBYTE)"\xC3", 1);													// [64MB ] ScrapHeap deinit
+	XUtil::PatchMemory(g_ModuleBase + 0xC02E60, (PBYTE)"\xC3", 1);													// [64MB ] ScrapHeap init
+	XUtil::PatchMemory(g_ModuleBase + 0xC037C0, (PBYTE)"\xC3", 1);													// [64MB ] ScrapHeap deinit
 																											// [128MB] BSScaleformSysMemMapper is untouched due to complexity
 
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC01DA0), &MemoryManager::Alloc);
@@ -230,11 +230,11 @@ void Patch_TESV()
 	// Temporary hack to fix array overflow in BSParticleShader::SetupGeometry
 	//
 	uint32_t test = 0x2000;
-	PatchMemory(g_ModuleBase + 0x02493CC + 1, (PBYTE)&test, sizeof(uint32_t));
-	PatchMemory(g_ModuleBase + 0x0249374 + 1, (PBYTE)&test, sizeof(uint32_t));
+	XUtil::PatchMemory(g_ModuleBase + 0x02493CC + 1, (PBYTE)&test, sizeof(uint32_t));
+	XUtil::PatchMemory(g_ModuleBase + 0x0249374 + 1, (PBYTE)&test, sizeof(uint32_t));
 
 	test = 100;
-	PatchMemory(g_ModuleBase + 0x02494A8 + 2, (PBYTE)&test, sizeof(uint32_t));
+	XUtil::PatchMemory(g_ModuleBase + 0x02494A8 + 2, (PBYTE)&test, sizeof(uint32_t));
 
 	//
 	// Misc
@@ -245,15 +245,15 @@ void Patch_TESV()
 	// Broken printf statement that triggers invalid_parameter_handler(), "%08" should really be "%08X"
 	const char *newFormat = "World object count changed on object '%s' %08X from %i to %i";
 
-	PatchMemory(g_ModuleBase + 0x1696030, (PBYTE)newFormat, strlen(newFormat) + 1);
+	XUtil::PatchMemory(g_ModuleBase + 0x1696030, (PBYTE)newFormat, strlen(newFormat) + 1);
 
 	//
 	// Bug fix for when TAA/FXAA/DOF are disabled and quicksave doesn't work without
 	// opening a menu
 	//
-	//PatchMemory(g_ModuleBase + 0x12AE2DD, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);	// Kill jnz
-	//PatchMemory(g_ModuleBase + 0x12AE2E8, (PBYTE)"\x80\xBD\x11\x02\x00\x00\x00", 7);// Rewrite to 'cmp byte ptr [rbp+211h], 0'
-	//PatchMemory(g_ModuleBase + 0x12AE2EF, (PBYTE)"\x90\x90\x90\x90", 4);			// Extra rewrite padding
+	//XUtil::PatchMemory(g_ModuleBase + 0x12AE2DD, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);	// Kill jnz
+	//XUtil::PatchMemory(g_ModuleBase + 0x12AE2E8, (PBYTE)"\x80\xBD\x11\x02\x00\x00\x00", 7);// Rewrite to 'cmp byte ptr [rbp+211h], 0'
+	//XUtil::PatchMemory(g_ModuleBase + 0x12AE2EF, (PBYTE)"\x90\x90\x90\x90", 4);			// Extra rewrite padding
 
 	//
 	// Memory bug fix during BSShadowDirectionalLight calculations:
@@ -268,7 +268,7 @@ void Patch_TESV()
 	// sub_14133E730(..., data1, ...); <- USE-AFTER-FREE!! data1 SHOULD BE data2
 	// ScrapHeap::Free(data2);
 	//
-	PatchMemory(g_ModuleBase + 0x133D94D, (PBYTE)"\x4D\x8B\xCF\x90\x90\x90\x90", 7);
+	XUtil::PatchMemory(g_ModuleBase + 0x133D94D, (PBYTE)"\x4D\x8B\xCF\x90\x90\x90\x90", 7);
 
 	*(PBYTE *)&TESObjectCell::CreateRootMultiBoundNode = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x264230), &TESObjectCell::hk_CreateRootMultiBoundNode);
 

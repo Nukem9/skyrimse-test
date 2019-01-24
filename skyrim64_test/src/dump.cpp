@@ -110,7 +110,7 @@ void DumpDisableBreakpoint()
 	if (TempNTSITAddress)
 	{
 		// Restore the original NtSetInformationThread code
-		PatchMemory(TempNTSITAddress, (PBYTE)&TempNTSIT, sizeof(TempNTSIT));
+		XUtil::PatchMemory(TempNTSITAddress, (PBYTE)&TempNTSIT, sizeof(TempNTSIT));
 	}
 }
 
@@ -181,7 +181,7 @@ DWORD WINAPI DumpWriterThread(LPVOID Arg)
 		break;
 	}
 
-	XutilAssert("", 0, message, reason, exceptionInfo->ExceptionRecord->ExceptionCode, fileName);
+	XUtil::XAssert("", 0, message, reason, exceptionInfo->ExceptionRecord->ExceptionCode, fileName);
 	return 0;
 }
 

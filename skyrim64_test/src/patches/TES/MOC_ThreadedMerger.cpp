@@ -148,7 +148,7 @@ void MOC_ThreadedMerger::DepthColorize(const float *FloatData, uint8_t *OutColor
 
 void MOC_ThreadedMerger::CullThread(uint32_t ThreadIndex)
 {
-	SetThreadName(GetCurrentThreadId(), "MOC_ThreadedMerger Worker");
+	XUtil::SetThreadName(GetCurrentThreadId(), "MOC_ThreadedMerger Worker");
 
 	MaskedOcclusionCulling *moc = MaskedOcclusionCulling::Create();
 	moc->SetResolution(m_RenderWidth, m_RenderHeight);

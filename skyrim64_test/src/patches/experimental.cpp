@@ -20,9 +20,9 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 	if (!memcmp(dest, signature1, sizeof(signature1)))
 	{
 		if (isJump)
-			PatchMemory(SourceAddress, (PBYTE)"\xC3\xCC\xCC\xCC\xCC", 5);// retn; int3; int3; int3; int3;
+			XUtil::PatchMemory(SourceAddress, (PBYTE)"\xC3\xCC\xCC\xCC\xCC", 5);// retn; int3; int3; int3; int3;
 		else
-			PatchMemory(SourceAddress, (PBYTE)"\x0F\x1F\x44\x00\x00", 5);// nop;
+			XUtil::PatchMemory(SourceAddress, (PBYTE)"\x0F\x1F\x44\x00\x00", 5);// nop;
 
 		return true;
 	}
@@ -42,36 +42,36 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 			!memcmp(dest, signature5, sizeof(signature5)))
 		{
 			if (isJump)
-				PatchMemory(SourceAddress, (PBYTE)"\xC3\xCC\xCC\xCC\xCC", 5);// retn; int3; int3; int3; int3;
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\xC3\xCC\xCC\xCC\xCC", 5);// retn; int3; int3; int3; int3;
 			else
-				PatchMemory(SourceAddress, (PBYTE)"\x0F\x1F\x44\x00\x00", 5);// nop;
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x0F\x1F\x44\x00\x00", 5);// nop;
 
 			return true;
 		}
 		else if (!memcmp(dest, signature6, sizeof(signature6)))
 		{
 			if (isJump)
-				PatchMemory(SourceAddress, (PBYTE)"\x48\x8B\x01\xC3\xCC", 5);// mov rax, [rcx]; retn; int3;
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x48\x8B\x01\xC3\xCC", 5);// mov rax, [rcx]; retn; int3;
 			else
-				PatchMemory(SourceAddress, (PBYTE)"\x48\x8B\x01\x66\x90", 5);// mov rax, [rcx]; nop;
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x48\x8B\x01\x66\x90", 5);// mov rax, [rcx]; nop;
 
 			return true;
 		}
 		else if (!memcmp(dest, signature7, sizeof(signature7)))
 		{
 			if (isJump)
-				PatchMemory(SourceAddress, (PBYTE)"\x48\x89\xC8\xC3\xCC", 5);// mov rax, rcx; retn; int3;
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x48\x89\xC8\xC3\xCC", 5);// mov rax, rcx; retn; int3;
 			else
-				PatchMemory(SourceAddress, (PBYTE)"\x48\x89\xC8\x66\x90", 5);// mov rax, rcx; nop;
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x48\x89\xC8\x66\x90", 5);// mov rax, rcx; nop;
 
 			return true;
 		}
 		else if (!memcmp(dest, signature8, sizeof(signature8)))
 		{
 			if (isJump)
-				PatchMemory(SourceAddress, (PBYTE)"\x8B\x01\xC3\xCC\xCC", 5);// mov eax, [rcx]; retn; int3; int3;
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x8B\x01\xC3\xCC\xCC", 5);// mov eax, [rcx]; retn; int3; int3;
 			else
-				PatchMemory(SourceAddress, (PBYTE)"\x8B\x01\x0F\x1F\x00", 5);// mov eax, [rcx]; nop;
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x8B\x01\x0F\x1F\x00", 5);// mov eax, [rcx]; nop;
 
 			return true;
 		}
@@ -152,15 +152,15 @@ void ExperimentalPatchEmptyFunctions()
 	auto doPatch = [&](uintptr_t Src, uintptr_t Dest)
 	{
 		if (IS_RETURN_FALSE(Dest))
-			PatchMemory(Src, (PBYTE)&retFFunc, sizeof(uintptr_t));
+			XUtil::PatchMemory(Src, (PBYTE)&retFFunc, sizeof(uintptr_t));
 		else if (IS_RETURN_TRUE(Dest))
-			PatchMemory(Src, (PBYTE)&retTFunc, sizeof(uintptr_t));
+			XUtil::PatchMemory(Src, (PBYTE)&retTFunc, sizeof(uintptr_t));
 		else if (IS_RETURN_0(Dest))
-			PatchMemory(Src, (PBYTE)&ret0Func, sizeof(uintptr_t));
+			XUtil::PatchMemory(Src, (PBYTE)&ret0Func, sizeof(uintptr_t));
 		else if (IS_RETURN_LONG(Dest))
-			PatchMemory(Src, (PBYTE)&retLFunc, sizeof(uintptr_t));
+			XUtil::PatchMemory(Src, (PBYTE)&retLFunc, sizeof(uintptr_t));
 		else if (IS_RETURN(Dest))
-			PatchMemory(Src, (PBYTE)&retFunc, sizeof(uintptr_t));
+			XUtil::PatchMemory(Src, (PBYTE)&retFunc, sizeof(uintptr_t));
 		else
 			return;
 
@@ -213,12 +213,12 @@ void ExperimentalPatchMemInit()
 	{
 		for (uintptr_t i = g_CodeBase; i < g_CodeEnd;)
 		{
-			uintptr_t addr = FindPatternSimple(i, g_CodeEnd - i, (BYTE *)patternStr, maskStr);
+			uintptr_t addr = XUtil::FindPattern(i, g_CodeEnd - i, (BYTE *)patternStr, maskStr);
 
 			if (!addr)
 				break;
 
-			PatchMemory(addr, (PBYTE)"\xEB\x1A", 2);
+			XUtil::PatchMemory(addr, (PBYTE)"\xEB\x1A", 2);
 			i = addr + 1;
 			patchCount++;
 		}
@@ -270,7 +270,7 @@ void ExperimentalPatchEditAndContinue()
 			data[0] = *(BYTE *)i;
 			*(int32_t *)&data[1] = (int32_t)(real - i) - 5;
 
-			PatchMemory(i, data, sizeof(data));
+			XUtil::PatchMemory(i, data, sizeof(data));
 			patchCount++;
 
 			if (PatchNullsub(i, real, true))

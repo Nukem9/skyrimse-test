@@ -147,7 +147,7 @@ public:
 		if (QAccumulated())
 			strcat_s(Buffer, BufferSize, "Accumulated ");
 
-		Trim(Buffer, ' ');
+		XUtil::Trim(Buffer, ' ');
 	}
 };
 static_assert(sizeof(NiAVObject) == 0x110);

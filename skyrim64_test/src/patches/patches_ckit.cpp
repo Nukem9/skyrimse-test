@@ -41,10 +41,10 @@ void Patch_TESVCreationKit()
 	{
 		SetUnhandledExceptionFilter(DumpExceptionHandler);
 
-		PatchMemory(g_ModuleBase + 0x247D650, (PBYTE)"\xC3", 1);					// StackTrace::MemoryTraceWrite
-		PatchMemory(g_ModuleBase + 0x24801FB, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
-		PatchMemory(g_ModuleBase + 0x24801DF, (PBYTE)"\xC3", 1);					// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
-		PatchMemory(g_ModuleBase + 0x2E558DB, (PBYTE)"\xC3", 1);					// SetUnhandledExceptionFilter, Unknown
+		XUtil::PatchMemory(g_ModuleBase + 0x247D650, (PBYTE)"\xC3", 1);						// StackTrace::MemoryTraceWrite
+		XUtil::PatchMemory(g_ModuleBase + 0x24801FB, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);	// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
+		XUtil::PatchMemory(g_ModuleBase + 0x24801DF, (PBYTE)"\xC3", 1);						// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
+		XUtil::PatchMemory(g_ModuleBase + 0x2E558DB, (PBYTE)"\xC3", 1);						// SetUnhandledExceptionFilter, Unknown
 
 		_set_invalid_parameter_handler([](const wchar_t *, const wchar_t *, const wchar_t *, uint32_t, uintptr_t)
 		{
@@ -87,43 +87,43 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "RefrHandleLimitPatch", false))
 	{
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x141A5C0), &BSPointerHandleManagerInterface::Initialize);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E2260), &BSPointerHandleManagerInterface::GetCurrentHandle);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E1BE0), &BSPointerHandleManagerInterface::CreateHandle);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1291050), &BSPointerHandleManagerInterface::ReleaseHandle);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E1F70), &BSPointerHandleManagerInterface::ReleaseHandleAndClear);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1770560), &BSPointerHandleManagerInterface::CheckForLeaks);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1770910), &BSPointerHandleManagerInterface::ClearActiveHandles);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1293870), &BSPointerHandleManagerInterface::sub_141293870);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E25B0), &BSPointerHandleManagerInterface::sub_1412E25B0);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x14C52B0), &BSPointerHandleManagerInterface::sub_1414C52B0);
+		XUtil::DetourJump(g_ModuleBase + 0x141A5C0, &BSPointerHandleManagerInterface::Initialize);
+		XUtil::DetourJump(g_ModuleBase + 0x12E2260, &BSPointerHandleManagerInterface::GetCurrentHandle);
+		XUtil::DetourJump(g_ModuleBase + 0x12E1BE0, &BSPointerHandleManagerInterface::CreateHandle);
+		XUtil::DetourJump(g_ModuleBase + 0x1291050, &BSPointerHandleManagerInterface::ReleaseHandle);
+		XUtil::DetourJump(g_ModuleBase + 0x12E1F70, &BSPointerHandleManagerInterface::ReleaseHandleAndClear);
+		XUtil::DetourJump(g_ModuleBase + 0x1770560, &BSPointerHandleManagerInterface::CheckForLeaks);
+		XUtil::DetourJump(g_ModuleBase + 0x1770910, &BSPointerHandleManagerInterface::ClearActiveHandles);
+		XUtil::DetourJump(g_ModuleBase + 0x1293870, &BSPointerHandleManagerInterface::sub_141293870);
+		XUtil::DetourJump(g_ModuleBase + 0x12E25B0, &BSPointerHandleManagerInterface::sub_1412E25B0);
+		XUtil::DetourJump(g_ModuleBase + 0x14C52B0, &BSPointerHandleManagerInterface::sub_1414C52B0);
 
 		//
 		// Stub out the rest of the functions which shouldn't ever be called now
 		//
-		//PatchMemory(g_ModuleBase + 0x12E0DC0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::BSUntypedPointerHandle - 1412E0DC0
-		PatchMemory(g_ModuleBase + 0x12E38A0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::Clear - 1412E38A0
-		PatchMemory(g_ModuleBase + 0x12E2720, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetAge - 1412E2720
-		PatchMemory(g_ModuleBase + 0x12E3970, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetActive - 1412E3970
-		PatchMemory(g_ModuleBase + 0x1294740, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetAge_0 - 141294740
-		PatchMemory(g_ModuleBase + 0x12E3810, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::Set - 1412E3810
-		PatchMemory(g_ModuleBase + 0x12E2FF0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetIndex_0 - 1412E2FF0
-		PatchMemory(g_ModuleBase + 0x1294A30, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetIndex - 141294A30
-		PatchMemory(g_ModuleBase + 0x1294720, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetAge - 141294720
-		PatchMemory(g_ModuleBase + 0x1297430, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::ClearActive - 141297430
-		PatchMemory(g_ModuleBase + 0x12973F0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetIndex - 1412973F0
-		PatchMemory(g_ModuleBase + 0x12943B0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::IsEmpty - 1412943B0
+		//XUtil::PatchMemory(g_ModuleBase + 0x12E0DC0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::BSUntypedPointerHandle - 1412E0DC0
+		XUtil::PatchMemory(g_ModuleBase + 0x12E38A0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::Clear - 1412E38A0
+		XUtil::PatchMemory(g_ModuleBase + 0x12E2720, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetAge - 1412E2720
+		XUtil::PatchMemory(g_ModuleBase + 0x12E3970, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetActive - 1412E3970
+		XUtil::PatchMemory(g_ModuleBase + 0x1294740, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetAge_0 - 141294740
+		XUtil::PatchMemory(g_ModuleBase + 0x12E3810, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::Set - 1412E3810
+		XUtil::PatchMemory(g_ModuleBase + 0x12E2FF0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetIndex_0 - 1412E2FF0
+		XUtil::PatchMemory(g_ModuleBase + 0x1294A30, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetIndex - 141294A30
+		XUtil::PatchMemory(g_ModuleBase + 0x1294720, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetAge - 141294720
+		XUtil::PatchMemory(g_ModuleBase + 0x1297430, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::ClearActive - 141297430
+		XUtil::PatchMemory(g_ModuleBase + 0x12973F0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetIndex - 1412973F0
+		XUtil::PatchMemory(g_ModuleBase + 0x12943B0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::IsEmpty - 1412943B0
 		// sub_14100B0A8 - Unknown operator
 		// sub_1412E1300 - Unknown operator
 		// sub_1412E1210 - Unknown operator
 
-		PatchMemory(g_ModuleBase + 0x1294590, (PBYTE)"\xCC", 1);// BSPointerHandle::AgeMatches - 141294590
-		PatchMemory(g_ModuleBase + 0x128D130, (PBYTE)"\xCC", 1);// BSPointerHandle::GetPtr - 14128D130
-		PatchMemory(g_ModuleBase + 0x128C8D0, (PBYTE)"\xCC", 1);// BSPointerHandle::AssignPtr - 14128C8D0
-		PatchMemory(g_ModuleBase + 0x1294570, (PBYTE)"\xCC", 1);// BSPointerHandle::IsActive - 141294570
+		XUtil::PatchMemory(g_ModuleBase + 0x1294590, (PBYTE)"\xCC", 1);// BSPointerHandle::AgeMatches - 141294590
+		XUtil::PatchMemory(g_ModuleBase + 0x128D130, (PBYTE)"\xCC", 1);// BSPointerHandle::GetPtr - 14128D130
+		XUtil::PatchMemory(g_ModuleBase + 0x128C8D0, (PBYTE)"\xCC", 1);// BSPointerHandle::AssignPtr - 14128C8D0
+		XUtil::PatchMemory(g_ModuleBase + 0x1294570, (PBYTE)"\xCC", 1);// BSPointerHandle::IsActive - 141294570
 
-		PatchMemory(g_ModuleBase + 0x12E3900, (PBYTE)"\xCC", 1);// BSHandleRefObject::AssignHandleIndex - 1412E3900
-		PatchMemory(g_ModuleBase + 0x12949D0, (PBYTE)"\xCC", 1);// BSHandleRefObject::GetIndex - 1412949D0
+		XUtil::PatchMemory(g_ModuleBase + 0x12E3900, (PBYTE)"\xCC", 1);// BSHandleRefObject::AssignHandleIndex - 1412E3900
+		XUtil::PatchMemory(g_ModuleBase + 0x12949D0, (PBYTE)"\xCC", 1);// BSHandleRefObject::GetIndex - 1412949D0
 		// BSHandleRefObject::GetRefCount - 141294CB0
 	}
 
@@ -133,33 +133,32 @@ void Patch_TESVCreationKit()
 
 	// Disable automatic FaceGen on save
 	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableAutoFaceGen", false))
-		PatchMemory(g_ModuleBase + 0x18DE530, (PBYTE)"\xC3", 1);
+		XUtil::PatchMemory(g_ModuleBase + 0x18DE530, (PBYTE)"\xC3", 1);
 
 	// Don't produce DDS files
 	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportDDS", false))
-		PatchMemory(g_ModuleBase + 0x1904318, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemory(g_ModuleBase + 0x1904318, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
 	// Don't produce TGA files
 	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportTGA", false))
-		PatchMemory(g_ModuleBase + 0x190436B, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemory(g_ModuleBase + 0x190436B, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
 	// Don't produce NIF files
 	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportNIF", false))
-		PatchMemory(g_ModuleBase + 0x1904390, (PBYTE)"\xC3", 1);
+		XUtil::PatchMemory(g_ModuleBase + 0x1904390, (PBYTE)"\xC3", 1);
 
 	// Allow variable tint mask resolution
 	uint32_t tintResolution = g_INI.GetInteger("CreationKit_FaceGen", "TintMaskResolution", 512);
-	PatchMemory(g_ModuleBase + 0x2DA588C, (PBYTE)&tintResolution, sizeof(uint32_t));
-	PatchMemory(g_ModuleBase + 0x2DA5899, (PBYTE)&tintResolution, sizeof(uint32_t));
+	XUtil::PatchMemory(g_ModuleBase + 0x2DA588C, (PBYTE)&tintResolution, sizeof(uint32_t));
+	XUtil::PatchMemory(g_ModuleBase + 0x2DA5899, (PBYTE)&tintResolution, sizeof(uint32_t));
 
 	//
 	// LipGen
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13C4C80), &IsLipDataPresent);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1791240), &WriteLipData);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13D5443), &IsWavDataPresent);
-	PatchMemory(g_ModuleBase + 0x13D5443, (PBYTE)"\xE8", 1);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13D29B0), &LipRecordDialogProc);
+	XUtil::DetourJump(g_ModuleBase + 0x13C4C80, &IsLipDataPresent);
+	XUtil::DetourJump(g_ModuleBase + 0x1791240, &WriteLipData);
+	XUtil::DetourCall(g_ModuleBase + 0x13D5443, &IsWavDataPresent);
+	XUtil::DetourJump(g_ModuleBase + 0x13D29B0, &LipRecordDialogProc);
 
 	//
 	// MemoryManager
@@ -168,23 +167,23 @@ void Patch_TESVCreationKit()
 	{
 		PatchMemory();
 
-		PatchMemory(g_ModuleBase + 0x1223160, (PBYTE)"\xC3", 1);												// [3GB  ] MemoryManager - Default/Static/File heaps
-		PatchMemory(g_ModuleBase + 0x24400E0, (PBYTE)"\xC3", 1);												// [1GB  ] BSSmallBlockAllocator
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x257D740), &bhkThreadMemorySource::__ctor__);	// [512MB] bhkThreadMemorySource
-		PatchMemory(g_ModuleBase + 0x2447D90, (PBYTE)"\xC3", 1);												// [64MB ] ScrapHeap init
-		PatchMemory(g_ModuleBase + 0x24488C0, (PBYTE)"\xC3", 1);												// [64MB ] ScrapHeap deinit
-																												// [128MB] BSScaleformSysMemMapper is untouched due to complexity
+		XUtil::PatchMemory(g_ModuleBase + 0x1223160, (PBYTE)"\xC3", 1);					// [3GB  ] MemoryManager - Default/Static/File heaps
+		XUtil::PatchMemory(g_ModuleBase + 0x24400E0, (PBYTE)"\xC3", 1);					// [1GB  ] BSSmallBlockAllocator
+		XUtil::DetourJump(g_ModuleBase + 0x257D740, &bhkThreadMemorySource::__ctor__);	// [512MB] bhkThreadMemorySource
+		XUtil::PatchMemory(g_ModuleBase + 0x2447D90, (PBYTE)"\xC3", 1);					// [64MB ] ScrapHeap init
+		XUtil::PatchMemory(g_ModuleBase + 0x24488C0, (PBYTE)"\xC3", 1);					// [64MB ] ScrapHeap deinit
+																						// [128MB] BSScaleformSysMemMapper is untouched due to complexity
 
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2440380), &MemoryManager::Alloc);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24407A0), &MemoryManager::Free);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2447FA0), &ScrapHeap::Alloc);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x24485F0), &ScrapHeap::Free);
+		XUtil::DetourJump(g_ModuleBase + 0x2440380, &MemoryManager::Alloc);
+		XUtil::DetourJump(g_ModuleBase + 0x24407A0, &MemoryManager::Free);
+		XUtil::DetourJump(g_ModuleBase + 0x2447FA0, &ScrapHeap::Alloc);
+		XUtil::DetourJump(g_ModuleBase + 0x24485F0, &ScrapHeap::Free);
 	}
 
 	//
 	// NiRTTI
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x269AD20), &NiRTTI::__ctor__);
+	XUtil::DetourJump(g_ModuleBase + 0x269AD20, &NiRTTI::__ctor__);
 
 	//
 	// NavMesh
@@ -193,30 +192,23 @@ void Patch_TESVCreationKit()
 	{
 		*(uint8_t **)&NavMesh::DeleteTriangle = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D618E0), &NavMesh::hk_DeleteTriangle);
 
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D6984F), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D699E6), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D69B80), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
+		XUtil::DetourCall(g_ModuleBase + 0x1D6984F, &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
+		XUtil::DetourCall(g_ModuleBase + 0x1D699E6, &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
+		XUtil::DetourCall(g_ModuleBase + 0x1D69B80, &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_DegenerateCheck);
 
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D6A42B), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_VertexCheck);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D6A580), &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_VertexCheck);
+		XUtil::DetourCall(g_ModuleBase + 0x1D6A42B, &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_VertexCheck);
+		XUtil::DetourCall(g_ModuleBase + 0x1D6A580, &BSNavmesh::BSNavmeshTriangle::hk_GetVertexIndex_VertexCheck);
 
-		PatchMemory(g_ModuleBase + 0x1D6A42B, (PBYTE)"\xE8", 1);
-		PatchMemory(g_ModuleBase + 0x1D6A580, (PBYTE)"\xE8", 1);
-
-		PatchMemory(g_ModuleBase + 0x1D6984F, (PBYTE)"\xE8", 1);
-		PatchMemory(g_ModuleBase + 0x1D699E6, (PBYTE)"\xE8", 1);
-		PatchMemory(g_ModuleBase + 0x1D69B80, (PBYTE)"\xE8", 1);
-
-		PatchMemory(g_ModuleBase + 0x1FF9BAC, (PBYTE)"\xE9\xA1\x01\x00\x00", 5);// Prevent vertices from being deleted separately
+		XUtil::PatchMemory(g_ModuleBase + 0x1FF9BAC, (PBYTE)"\xE9\xA1\x01\x00\x00", 5);// Prevent vertices from being deleted separately
 	}
 
 	//
 	// TESForm
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x16C0650), &FormReferenceMap_RemoveAllEntries);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x16C0A90), &FormReferenceMap_FindOrCreate);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x16C0B50), &FormReferenceMap_RemoveEntry);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x146C130), &FormReferenceMap_Get);
+	XUtil::DetourJump(g_ModuleBase + 0x16C0650, &FormReferenceMap_RemoveAllEntries);
+	XUtil::DetourJump(g_ModuleBase + 0x16C0A90, &FormReferenceMap_FindOrCreate);
+	XUtil::DetourJump(g_ModuleBase + 0x16C0B50, &FormReferenceMap_RemoveEntry);
+	XUtil::DetourJump(g_ModuleBase + 0x146C130, &FormReferenceMap_Get);
 
 	//
 	// UI
@@ -231,40 +223,37 @@ void Patch_TESVCreationKit()
 		EditorUI_Initialize();
 		*(PBYTE *)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3770), &EditorUI_WndProc);
 
-		PatchMemory(g_ModuleBase + 0x1434473, (PBYTE)"\x90\x90", 2);// Force bShowReloadShadersButton to always be enabled
-		PatchMemory(g_ModuleBase + 0x1487B69, (PBYTE)"\x90\x90", 2);// Enable push to game button even if version control is disabled
-		PatchMemory(g_ModuleBase + 0x1487B7C, (PBYTE)"\xEB", 1);
-		PatchMemory(g_ModuleBase + 0x16179C0, (PBYTE)"\xC3", 1);	// Disable "MEM_CATEGORY_X" log spam
+		XUtil::PatchMemory(g_ModuleBase + 0x1434473, (PBYTE)"\x90\x90", 2);	// Force bShowReloadShadersButton to always be enabled
+		XUtil::PatchMemory(g_ModuleBase + 0x1487B69, (PBYTE)"\x90\x90", 2);	// Enable push to game button even if version control is disabled
+		XUtil::PatchMemory(g_ModuleBase + 0x1487B7C, (PBYTE)"\xEB", 1);
+		XUtil::PatchMemory(g_ModuleBase + 0x16179C0, (PBYTE)"\xC3", 1);		// Disable "MEM_CATEGORY_X" log spam
 
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1256600), &EditorUI_Warning);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x243D610), &EditorUI_Warning);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1CD29E0), &EditorUI_Warning);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x122C5F0), &EditorUI_WarningUnknown1);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x137FC60), &EditorUI_WarningUnknown1);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1FCB030), &EditorUI_WarningUnknown1);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2452480), &EditorUI_WarningUnknown1);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x27A6150), &EditorUI_WarningUnknown2);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x27A6270), &EditorUI_WarningUnknown2);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x163D3D1), &EditorUI_WarningUnknown2);
-		PatchMemory(g_ModuleBase + 0x163D3D1, (PBYTE)"\xE8", 1);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x243D260), &EditorUI_Assert);
+		XUtil::DetourJump(g_ModuleBase + 0x1256600, &EditorUI_Warning);
+		XUtil::DetourJump(g_ModuleBase + 0x243D610, &EditorUI_Warning);
+		XUtil::DetourJump(g_ModuleBase + 0x1CD29E0, &EditorUI_Warning);
+		XUtil::DetourJump(g_ModuleBase + 0x122C5F0, &EditorUI_WarningUnknown1);
+		XUtil::DetourJump(g_ModuleBase + 0x137FC60, &EditorUI_WarningUnknown1);
+		XUtil::DetourJump(g_ModuleBase + 0x1FCB030, &EditorUI_WarningUnknown1);
+		XUtil::DetourJump(g_ModuleBase + 0x2452480, &EditorUI_WarningUnknown1);
+		XUtil::DetourJump(g_ModuleBase + 0x27A6150, &EditorUI_WarningUnknown2);
+		XUtil::DetourJump(g_ModuleBase + 0x27A6270, &EditorUI_WarningUnknown2);
+		XUtil::DetourCall(g_ModuleBase + 0x163D3D1, &EditorUI_WarningUnknown2);
+		XUtil::DetourJump(g_ModuleBase + 0x243D260, &EditorUI_Assert);
 	}
 
 	if (g_INI.GetBoolean("CreationKit", "DeferredDialogLoad", false))
 	{
 		PatchTemplatedFormIterator();
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13B9AD0), &InsertComboBoxItem);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BA4D0), &InsertListViewItem);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x20A9710), &CSScript_PickScriptsToCompileDlg_WindowMessage);
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1985F20), &SortDialogueInfo);
-
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12C8B63), &UpdateObjectWindowTreeView);
-		PatchMemory(g_ModuleBase + 0x12C8B63, (PBYTE)"\xE8", 1);
+		XUtil::DetourJump(g_ModuleBase + 0x13B9AD0, &InsertComboBoxItem);
+		XUtil::DetourJump(g_ModuleBase + 0x13BA4D0, &InsertListViewItem);
+		XUtil::DetourJump(g_ModuleBase + 0x20A9710, &CSScript_PickScriptsToCompileDlg_WindowMessage);
+		XUtil::DetourJump(g_ModuleBase + 0x1985F20, &SortDialogueInfo);
+		XUtil::DetourCall(g_ModuleBase + 0x12C8B63, &UpdateObjectWindowTreeView);
 
 		// Disable useless "Processing Topic X..." status bar updates
-		PatchMemory(g_ModuleBase + 0x199DE29, (PBYTE)"\x90\x90\x90\x90\x90", 5);
-		PatchMemory(g_ModuleBase + 0x199EA9E, (PBYTE)"\x90\x90\x90\x90\x90", 5);
-		PatchMemory(g_ModuleBase + 0x199DA62, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemory(g_ModuleBase + 0x199DE29, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemory(g_ModuleBase + 0x199EA9E, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemory(g_ModuleBase + 0x199DA62, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 	}
 
 	//
@@ -275,13 +264,13 @@ void Patch_TESVCreationKit()
 		// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
 		const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
 
-		PatchMemory(g_ModuleBase + 0x164020A, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
-		PatchMemory(g_ModuleBase + 0x30B9090, (PBYTE)newFormat, strlen(newFormat) + 1);
+		XUtil::PatchMemory(g_ModuleBase + 0x164020A, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
+		XUtil::PatchMemory(g_ModuleBase + 0x30B9090, (PBYTE)newFormat, strlen(newFormat) + 1);
 
 		// Also allow ESM's to be set as "Active File"
-		PatchMemory(g_ModuleBase + 0x13E2D45, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemory(g_ModuleBase + 0x13E2D45, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1482DA0), &OpenPluginSaveDialog);
+		XUtil::DetourJump(g_ModuleBase + 0x1482DA0, &OpenPluginSaveDialog);
 	}
 
 	//
@@ -289,20 +278,20 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "AllowMasterESP", false))
 	{
-		PatchMemory(g_ModuleBase + 0x1657279, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
+		XUtil::PatchMemory(g_ModuleBase + 0x1657279, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
 	}
 
 	//
 	// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
 	//
-	PatchMemory(g_ModuleBase + 0x2DC679D, (PBYTE)"\x4D\x89\xE1\x90\x90\x90\x90", 7);
+	XUtil::PatchMemory(g_ModuleBase + 0x2DC679D, (PBYTE)"\x4D\x89\xE1\x90\x90\x90\x90", 7);
 
 	//
 	// Skip 'Topic Info' validation during load
 	//
 	if (g_INI.GetBoolean("CreationKit", "SkipTopicInfoValidation", false))
 	{
-		PatchMemory(g_ModuleBase + 0x19A83C0, (PBYTE)"\xC3", 1);
+		XUtil::PatchMemory(g_ModuleBase + 0x19A83C0, (PBYTE)"\xC3", 1);
 	}
 
 	//
@@ -310,7 +299,7 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "DisableAssertions", false))
 	{
-		PatchMemory(g_ModuleBase + 0x243D9FE, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemory(g_ModuleBase + 0x243D9FE, (PBYTE)"\x90\x90\x90\x90\x90", 5);
 	}
 
 	//
@@ -318,31 +307,30 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "RenderWindow60FPS", false))
 	{
-		PatchMemory(g_ModuleBase + 0x1306978, (PBYTE)"\x01", 1);
+		XUtil::PatchMemory(g_ModuleBase + 0x1306978, (PBYTE)"\x01", 1);
 	}
 
 	//
 	// Fix crash while trying to upload BNet mods with existing archives
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12BE530), &IsBSAVersionCurrent);
+	XUtil::DetourJump(g_ModuleBase + 0x12BE530, &IsBSAVersionCurrent);
 
 	//
 	// Kill broken destructors causing crashes on exit
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3370), &QuitHandler);
-	PatchMemory(g_ModuleBase + 0x13F3370, (PBYTE)"\xE8", 1);
+	XUtil::DetourCall(g_ModuleBase + 0x13F3370, &QuitHandler);
 
 	//
 	// Fix crash when loading new CC ESLs as master files
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2E44890), &GetESLMasterCount);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2E44920), &GetESLMasterName);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x2E448A0), &IsESLMaster);
+	XUtil::DetourJump(g_ModuleBase + 0x2E44890, &GetESLMasterCount);
+	XUtil::DetourJump(g_ModuleBase + 0x2E44920, &GetESLMasterName);
+	XUtil::DetourJump(g_ModuleBase + 0x2E448A0, &IsESLMaster);
 
 	//
 	// Fix for icons not appearing in the script properties dialog (list view) (LVIF_TEXT -> LVIF_IMAGE)
 	//
-	PatchMemory(g_ModuleBase + 0x20CD744, (PBYTE)"\x02", 1);
+	XUtil::PatchMemory(g_ModuleBase + 0x20CD744, (PBYTE)"\x02", 1);
 
 	//
 	// Fix for being unable to select certain objects in the render view window
@@ -352,57 +340,54 @@ void Patch_TESVCreationKit()
 	//
 	// Fix the "Cell View" object list current selection not being synced with the render window
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BB720), &ListViewUnselectItem);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BB650), &ListViewSelectItem);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13BB590), &ListViewFindAndSelectItem);
+	XUtil::DetourJump(g_ModuleBase + 0x13BB720, &ListViewUnselectItem);
+	XUtil::DetourJump(g_ModuleBase + 0x13BB650, &ListViewSelectItem);
+	XUtil::DetourJump(g_ModuleBase + 0x13BB590, &ListViewFindAndSelectItem);
 
 	//
 	// Fix TESModelTextureSwap being incorrectly loaded (Record typo: 'MODS' -> 'MO5S')
 	//
-	PatchMemory(g_ModuleBase + 0x16E55A9, (PBYTE)"\x4D\x4F\x35\x53", 4);
+	XUtil::PatchMemory(g_ModuleBase + 0x16E55A9, (PBYTE)"\x4D\x4F\x35\x53", 4);
 
 	//
 	// Correct the "Push-to-game not supported" error when clicking the "UnEquip Sound" button on the weapon editor
 	// dialog. 3682 is reserved exclusively for the PTG functionality, so the button id must be changed. Remapped to
 	// 3683 instead.
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13B9900), &EditorUI_DialogTabProc);
+	XUtil::DetourJump(g_ModuleBase + 0x13B9900, &EditorUI_DialogTabProc);
 
 	uint32_t newId = 3683;
-	PatchMemory(g_ModuleBase + 0x1B0CBC4, (PBYTE)&newId, sizeof(uint32_t));// SetDlgItemTextA
-	PatchMemory(g_ModuleBase + 0x1B0DCE9, (PBYTE)&newId, sizeof(uint32_t));// GetDlgItemTextA
+	XUtil::PatchMemory(g_ModuleBase + 0x1B0CBC4, (PBYTE)&newId, sizeof(uint32_t));// SetDlgItemTextA
+	XUtil::PatchMemory(g_ModuleBase + 0x1B0DCE9, (PBYTE)&newId, sizeof(uint32_t));// GetDlgItemTextA
 	newId += 1;
-	PatchMemory(g_ModuleBase + 0x1B0AFAA, (PBYTE)&newId, sizeof(uint32_t));// Patch if() comparison
+	XUtil::PatchMemory(g_ModuleBase + 0x1B0AFAA, (PBYTE)&newId, sizeof(uint32_t));// Patch if() comparison
 
 	//
 	// Fix for crash when saving certain ESP files (i.e 3DNPC.esp)
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1651590), &SortFormArray);
+	XUtil::DetourJump(g_ModuleBase + 0x1651590, &SortFormArray);
 
 	//
 	// Fix for incorrect NavMesh assertion while saving certain ESP files (i.e 3DNPC.esp)
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x159EB48), &hk_sub_141047AB2);
-	PatchMemory(g_ModuleBase + 0x159EB48, (PBYTE)"\xE8", 1);
+	XUtil::DetourCall(g_ModuleBase + 0x159EB48, &hk_sub_141047AB2);
 
 	//
 	// Fix for crash on null BGSPerkRankArray form ids and perk ranks being reset to 1 on save (i.e DianaVampire2017Asherz.esp)
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x168DF70), &hk_BGSPerkRankArray_sub_14168DF70);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x168D1CA), &hk_BGSPerkRankArray_sub_14168EAE0);
-	PatchMemory(g_ModuleBase + 0x168D1CA, (PBYTE)"\xE8", 1);
+	XUtil::DetourJump(g_ModuleBase + 0x168DF70, &hk_BGSPerkRankArray_sub_14168DF70);
+	XUtil::DetourCall(g_ModuleBase + 0x168D1CA, &hk_BGSPerkRankArray_sub_14168EAE0);
 
 	//
 	// Fix use-after-free with a NavMeshInfoMap inserted in the altered forms list during a virtual destructor call
 	//
-	PatchMemory(g_ModuleBase + 0x1DD1D38, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
+	XUtil::PatchMemory(g_ModuleBase + 0x1DD1D38, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
 
 	//
 	// Fix crash when using more than 16 NPC face tint masks during FaceGen
 	//
-	PatchMemory(g_ModuleBase + 0x1D3B350, (PBYTE)"\x48\x8B\x4C\x24\x68\xE8\xCB\xFF\xFF\xFF\xE9\x7D\x01\x00\x00", 15);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1D3B355), &hk_FaceGenOverflowWarning);
-	PatchMemory(g_ModuleBase + 0x1D3B355, (PBYTE)"\xE8", 1);
+	XUtil::PatchMemory(g_ModuleBase + 0x1D3B350, (PBYTE)"\x48\x8B\x4C\x24\x68\xE8\xCB\xFF\xFF\xFF\xE9\x7D\x01\x00\x00", 15);
+	XUtil::DetourCall(g_ModuleBase + 0x1D3B355, &FaceGenOverflowWarning);
 
 	//
 	// Plugin loading optimizations:
@@ -418,18 +403,14 @@ void Patch_TESVCreationKit()
 
 	// Fall back to non-SSE 4.1 code path when not available
 	if ((cpuinfo[2] & (1 << 19)) != 0)
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1477DA0), &sub_141477DA0_SSE41);
+		XUtil::DetourJump(g_ModuleBase + 0x1477DA0, &sub_141477DA0_SSE41);
 	else
-		Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1477DA0), &sub_141477DA0);
+		XUtil::DetourJump(g_ModuleBase + 0x1477DA0, &sub_141477DA0);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x14974E0), &sub_1414974E0);
+	XUtil::DetourJump(g_ModuleBase + 0x14974E0, &sub_1414974E0);
+	XUtil::PatchMemory(g_ModuleBase + 0x163D56E, (PBYTE)"\xB9\x90\x01\x00\x00\x90", 6);
+	XUtil::DetourCall(g_ModuleBase + 0x1640FF3, &UpdateLoadProgressBar);
+	XUtil::DetourCall(g_ModuleBase + 0x166BB1E, &hk_inflateInit);
+	XUtil::DetourCall(g_ModuleBase + 0x166BBB9, &hk_inflate);
 
-	PatchMemory(g_ModuleBase + 0x163D56E, (PBYTE)"\xB9\x90\x01\x00\x00\x90", 6);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1640FF3), &UpdateLoadProgressBar);
-	PatchMemory(g_ModuleBase + 0x1640FF3, (PBYTE)"\xE8", 1);
-
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BB1E), &hk_inflateInit);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x166BBB9), &hk_inflate);
-	PatchMemory(g_ModuleBase + 0x166BB1E, (PBYTE)"\xE8", 1);
-	PatchMemory(g_ModuleBase + 0x166BBB9, (PBYTE)"\xE8", 1);
 }

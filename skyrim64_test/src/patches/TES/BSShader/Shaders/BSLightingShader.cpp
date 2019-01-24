@@ -157,7 +157,7 @@ BSLightingShader::BSLightingShader() : BSShader(ShaderConfig.Type)
 	uintptr_t v2 = *(uintptr_t *)((uintptr_t)this + 0x10);
 	uintptr_t v3 = *(uintptr_t *)((uintptr_t)this + 0x18);
 
-	PatchMemory((g_ModuleBase + 0x1307BD0), (PBYTE)&hookbuffer, 50);
+	XUtil::PatchMemory((g_ModuleBase + 0x1307BD0), (PBYTE)&hookbuffer, 50);
 
 	AutoFunc(uintptr_t(__fastcall *)(BSLightingShader *), sub_141307BD0, 0x1307BD0);
 	sub_141307BD0(this);

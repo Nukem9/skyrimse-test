@@ -472,7 +472,7 @@ namespace BSXShader
 			if (_bittest(&bits, 26))
 				strcat_s(Buffer, BufferSize, "Opaque ");
 
-			Trim(Buffer, ' ');
+			XUtil::Trim(Buffer, ' ');
 		}
 	}
 
@@ -721,7 +721,7 @@ namespace BSLightingShader
 			default:strcat_s(Buffer, BufferSize, "? "); break;
 			}
 
-			Trim(Buffer, ' ');
+			XUtil::Trim(Buffer, ' ');
 		}
 	}
 
@@ -964,7 +964,7 @@ namespace BSUtilityShader
 			if ((Technique & 0x14000) == 0x10000)
 				strcat_s(Buffer, BufferSize, "Aam ");
 
-			Trim(Buffer, ' ');
+			XUtil::Trim(Buffer, ' ');
 		}
 	}
 
@@ -1266,7 +1266,7 @@ namespace BSWaterShader
 				break;
 			}
 
-			Trim(Buffer, ' ');
+			XUtil::Trim(Buffer, ' ');
 		}
 	}
 

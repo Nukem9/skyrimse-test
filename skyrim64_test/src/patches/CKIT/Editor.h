@@ -78,4 +78,4 @@ void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value);
 bool hk_BGSPerkRankArray_sub_14168DF70(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray);
 void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entry);
 
-void hk_FaceGenOverflowWarning(__int64 Texture);
+void FaceGenOverflowWarning(__int64 Texture);
