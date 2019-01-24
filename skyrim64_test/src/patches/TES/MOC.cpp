@@ -651,8 +651,18 @@ namespace MOC
 		MyPosAdjust = Camera->GetWorldTranslate();
 		Camera->CalculateViewProjection(MyView, MyProj, MyViewProj);
 
+		float fov = atan(1.0f / MyProj.r[0].m128_f32[0]) * 2.0f * (180.0f / 3.14159265359f);
+		float aspect = MyProj.r[1].m128_f32[1] / MyProj.r[0].m128_f32[0];
+
+		float mynear = MyProj.r[2].m128_f32[3] / (MyProj.r[2].m128_f32[2] - 1.0f);
+		float myfar = MyProj.r[2].m128_f32[3] / (MyProj.r[2].m128_f32[2] + 1.0f);
+
 		fplanes p;
+		p.InitializeFrustumAABB(myfar, mynear, aspect, fov, Camera->GetWorldTranslate().AsXmm(), Camera->GetWorldDirection().AsXmm(), Camera->GetWorldUpVector().AsXmm());
+
 		p.CreateFromViewProjMatrix(MyViewProj);
+
+
 
 		const NiNode *node = WorldScenegraph;	// SceneGraph
 		node = node->GetAt(1)->IsNode();		// ShadowSceneNode

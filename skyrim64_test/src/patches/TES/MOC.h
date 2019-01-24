@@ -25,9 +25,98 @@ namespace MOC
 
 	struct fplanes
 	{
-		alignas(64) XMVECTOR	Planes[6];
-		bool					Side[6][4];
-		alignas(64) __m128		PlaneComponents[8];
+		enum Plane
+		{
+			Near,
+			Left,
+			Top,
+			Bottom,
+			Right,
+			Far,
+		};
+
+		alignas(64) __m128 PlaneComponents[8];
+		alignas(64) float mPlanes[32];
+
+		void InitializeFrustumAABB(float nearClipDistance, float farClipDistance, float aspectRatio, float fov, XMVECTOR position, XMVECTOR look, XMVECTOR up)
+		{
+			position = _mm_setzero_ps();
+
+			// We have the camera's up and look, but we also need right.
+			XMVECTOR right = XMVector3Cross(up, look);
+
+			// Compute the position of the center of the near and far clip planes.
+			XMVECTOR nearCenter = position + look * nearClipDistance;
+			XMVECTOR farCenter = position + look * farClipDistance;
+
+			// Compute the width and height of the near and far clip planes
+			float tanHalfFov = tanf(0.5f * fov);
+			float halfNearWidth = nearClipDistance * tanHalfFov;
+			float halfNearHeight = halfNearWidth / aspectRatio;
+
+			float halfFarWidth = farClipDistance * tanHalfFov;
+			float halfFarHeight = halfFarWidth / aspectRatio;
+
+			// Create two vectors each for the near and far clip planes.
+			// These are the scaled up and right vectors.
+			XMVECTOR upNear = up * halfNearHeight;
+			XMVECTOR rightNear = right * halfNearWidth;
+			XMVECTOR upFar = up * halfFarHeight;
+			XMVECTOR rightFar = right * halfFarWidth;
+
+			// Use the center positions and the up and right vectors
+			// to compute the positions for the near and far clip plane vertices (four each)
+			XMVECTOR mpPosition[8];
+			mpPosition[0] = nearCenter + upNear - rightNear;// near top left
+			mpPosition[1] = nearCenter + upNear + rightNear;// near top right
+			mpPosition[2] = nearCenter - upNear + rightNear;// near bottom right
+			mpPosition[3] = nearCenter - upNear - rightNear;// near bottom left
+			mpPosition[4] = farCenter + upFar - rightFar;	// far top left
+			mpPosition[5] = farCenter + upFar + rightFar;	// far top right
+			mpPosition[6] = farCenter - upFar + rightFar;	// far bottom right
+			mpPosition[7] = farCenter - upFar - rightFar;	// far bottom left
+
+			// Compute some of the frustum's edge vectors.  We will cross these
+			// to get the normals for each of the six planes.
+			XMVECTOR nearTop = mpPosition[1] - mpPosition[0];
+			XMVECTOR nearLeft = mpPosition[3] - mpPosition[0];
+			XMVECTOR topLeft = mpPosition[4] - mpPosition[0];
+			XMVECTOR bottomRight = mpPosition[2] - mpPosition[6];
+			XMVECTOR farRight = mpPosition[5] - mpPosition[6];
+			XMVECTOR farBottom = mpPosition[7] - mpPosition[6];
+
+			// Clip plane normals
+			XMVECTOR mpNormal[6];
+			mpNormal[Plane::Near] = XMVector3Normalize(XMVector3Cross(nearTop, nearLeft));			// Near
+			mpNormal[Plane::Left] = XMVector3Normalize(XMVector3Cross(nearLeft, topLeft));			// Left
+			mpNormal[Plane::Top] = XMVector3Normalize(XMVector3Cross(topLeft, nearTop));			// Top
+			mpNormal[Plane::Bottom] = XMVector3Normalize(XMVector3Cross(farBottom, bottomRight));	// Bottom
+			mpNormal[Plane::Right] = XMVector3Normalize(XMVector3Cross(bottomRight, farRight));		// Right
+			mpNormal[Plane::Far] = XMVector3Normalize(XMVector3Cross(farRight, farBottom));			// Far
+
+			// For each (frustum vertex)
+			for (int i = 0; i < 8; i++)
+			{
+				if (i < 6)
+				{
+					mPlanes[0 * 8 + i] = mpNormal[i].m128_f32[0];
+					mPlanes[1 * 8 + i] = mpNormal[i].m128_f32[1];
+					mPlanes[2 * 8 + i] = mpNormal[i].m128_f32[2];
+					mPlanes[3 * 8 + i] = -XMVector3Dot(mpNormal[i], mpPosition[(i < 3) ? 0 : 6]).m128_f32[0];
+				}
+				else
+				{
+					mPlanes[0 * 8 + i] = 0;
+					mPlanes[1 * 8 + i] = 0;
+					mPlanes[2 * 8 + i] = 0;
+					mPlanes[3 * 8 + i] = -1.0f;
+				}
+			}
+		}
+
+		void InitializeFrustumSphere()
+		{
+		}
 
 		void CreateFromViewProjMatrix(XMMATRIX M)
 		{
@@ -37,6 +126,7 @@ namespace MOC
 			XMVECTOR col3 = M.r[2];// { _13, _23, _33, _43 }
 			XMVECTOR col4 = M.r[3];// { _14, _24, _34, _44 }
 
+			XMVECTOR Planes[6];
 			Planes[0] = XMPlaneNormalize(XMVectorAdd(col4, col1));		// [c4 + c1] Left
 			Planes[1] = XMPlaneNormalize(XMVectorSubtract(col4, col1));	// [c4 - c1] Right
 			Planes[2] = XMPlaneNormalize(XMVectorSubtract(col4, col2));	// [c4 - c2] Top
@@ -44,17 +134,8 @@ namespace MOC
 			Planes[4] = XMPlaneNormalize(XMVectorAdd(col4, col3));		// [c4 + c3] Near
 			Planes[5] = XMPlaneNormalize(XMVectorSubtract(col4, col3));	// [c4 - c3] Far
 
-			// AABB signed-ness
-			for (int i = 0; i < 6; i++)
-			{
-				Side[i][0] = Planes[i].m128_f32[0] > 0.0f;
-				Side[i][1] = Planes[i].m128_f32[1] > 0.0f;
-				Side[i][2] = Planes[i].m128_f32[2] > 0.0f;
-				Side[i][3] = Planes[i].m128_f32[3] > 0.0f;
-			}
-
 			// Sphere test optimization
-			auto planes = (float(*)[4])&Planes;
+			const auto planes = (float(*)[4])&Planes;
 
 			PlaneComponents[0] = _mm_setr_ps(-planes[0][0], -planes[1][0], -planes[2][0], -planes[3][0]);
 			PlaneComponents[1] = _mm_setr_ps(-planes[0][1], -planes[1][1], -planes[2][1], -planes[3][1]);
@@ -66,16 +147,16 @@ namespace MOC
 			PlaneComponents[7] = _mm_setr_ps(-planes[4][3], -planes[5][3], -planes[4][3], -planes[5][3]);
 		}
 
-		bool TestSphere(float Center[3], float Radius)
+		bool SphereInFrustum(float Center[3], float Radius)
 		{
-			return TestSphere(_mm_setr_ps(Center[0], Center[1], Center[2], Radius));
+			return SphereInFrustum(_mm_setr_ps(Center[0], Center[1], Center[2], Radius));
 		}
 
-		//
-		// https://github.com/nsf/sseculling/blob/master/Common.cpp#L71 by "nsf"
-		//
-		bool TestSphere(XMVECTOR Center_X_Y_Z_Radius)
+		bool SphereInFrustum(XMVECTOR Center_X_Y_Z_Radius)
 		{
+			//
+			// https://github.com/nsf/sseculling/blob/master/Common.cpp#L71 by "nsf"
+			//
 			// we negate everything because we use this formula to cull:
 			//   dot(-p.n, s.center) - p.d > s.radius
 			// it's equivalent to:
@@ -121,89 +202,52 @@ namespace MOC
 
 			// Culled  = 0xfff...fff
 			// Visible = 0x000...000
-			return _mm_test_all_ones(*reinterpret_cast<__m128i *>(&r)) != 0;
+			return _mm_test_all_ones(*reinterpret_cast<__m128i *>(&r)) == 0;
 		}
 
-		bool TestAABB(XMVECTOR Center, XMVECTOR HalfExtents)
+		bool AABBInFrustum(XMVECTOR Center, XMVECTOR HalfExtents)
 		{
-			__m128 box[2];
-			box[0] = _mm_sub_ps(Center, HalfExtents);// Min
-			box[1] = _mm_add_ps(Center, HalfExtents);// Max
+			const __m128 centerX = XMVectorSplatX(Center);
+			const __m128 centerY = XMVectorSplatY(Center);
+			const __m128 centerZ = XMVectorSplatZ(Center);
 
-			for (int i = 0; i < 6; i++)
+			const __m128 extents = _mm_add_ps(HalfExtents, HalfExtents);
+			const __m128 halfX = XMVectorSplatX(extents);
+			const __m128 halfY = XMVectorSplatY(extents);
+			const __m128 halfZ = XMVectorSplatZ(extents);
+
+			const __m128 signMask = _mm_castsi128_ps(_mm_set1_epi32(0x80000000));
+
+			// Test the bounding box against 4 planes at a time
+			for (int i = 0; i < 2; i++)
 			{
-				__m128 a = Planes[i];
-				__m128 b = _mm_setr_ps(box[Side[i][0]].m128_f32[0], box[Side[i][1]].m128_f32[1], box[Side[i][2]].m128_f32[2], 0.0f);
+				__m128 planesX = _mm_load_ps(&mPlanes[0 * 8 + i * 4]);
+				__m128 planesY = _mm_load_ps(&mPlanes[1 * 8 + i * 4]);
+				__m128 planesZ = _mm_load_ps(&mPlanes[2 * 8 + i * 4]);
+				__m128 planesW = _mm_load_ps(&mPlanes[3 * 8 + i * 4]);
 
-				// Compute dot and do a horizontal sum
-				__m128 dp;
-				dp = _mm_mul_ps(a, b);
-				dp = _mm_hadd_ps(dp, dp);
-				dp = _mm_hadd_ps(dp, dp);
+				// Sign for half[XYZ] so that dot product with plane normal would be maximal
+				__m128 halfXSgn = _mm_xor_ps(halfX, _mm_and_ps(planesX, signMask));
+				__m128 halfYSgn = _mm_xor_ps(halfY, _mm_and_ps(planesY, signMask));
+				__m128 halfZSgn = _mm_xor_ps(halfZ, _mm_and_ps(planesZ, signMask));
 
-				// if (dot prod < -plane.w)
-				if (dp.m128_f32[0] < -a.m128_f32[3])
+				// Bounding box corner to test (min corner)
+				__m128 cornerX = _mm_sub_ps(centerX, halfXSgn);
+				__m128 cornerY = _mm_sub_ps(centerY, halfYSgn);
+				__m128 cornerZ = _mm_sub_ps(centerZ, halfZSgn);
+
+				// Dot product
+				__m128 dot;
+				dot = simd_madd(cornerX, planesX, planesW);
+				dot = simd_madd(cornerY, planesY, dot);
+				dot = simd_madd(cornerZ, planesZ, dot);
+
+				// If not all negative, at least one plane rejected the box completely
+				if (!_mm_testc_si128(_mm_castps_si128(dot), _mm_castps_si128(signMask)))
 					return false;
 			}
 
 			return true;
-
-			/*
-			Still broken...sigh
-
-			alignas(16) const static uint32_t signMask[4] = { 0x80000000, 0x80000000, 0x80000000, 0x80000000 };
-			const __m128 xmm_signMask = _mm_load_ps((float *)&signMask);
-
-			__m128 plane_x0 = _mm_setr_ps(Planes[0][0], Planes[1][0], Planes[2][0], Planes[3][0]);	// planes[0..3].x
-			__m128 plane_x1 = _mm_setr_ps(Planes[4][0], Planes[5][0], 0.0f, 0.0f);					// planes[4..5].x
-
-			__m128 plane_y0 = _mm_setr_ps(Planes[0][1], Planes[1][1], Planes[2][1], Planes[3][1]);	// planes[0..3].y
-			__m128 plane_y1 = _mm_setr_ps(Planes[4][1], Planes[5][1], 0.0f, 0.0f);					// planes[4..5].y
-
-			__m128 plane_z0 = _mm_setr_ps(Planes[0][2], Planes[1][2], Planes[2][2], Planes[3][2]);	// planes[0..3].z
-			__m128 plane_z1 = _mm_setr_ps(Planes[4][2], Planes[5][2], 0.0f, 0.0f);					// planes[4..5].z
-
-			__m128 plane_w0 = _mm_setr_ps(Planes[0][3], Planes[1][3], Planes[2][3], Planes[3][3]);	// planes[0..3].w
-			__m128 plane_w1 = _mm_setr_ps(Planes[4][3], Planes[5][3], 0.0f, 0.0f);					// planes[4..5].w
-
-			//plane_w0 = _mm_add_ps(plane_w0, plane_w0);// Multiplied by 2
-			//plane_w1 = _mm_add_ps(plane_w1, plane_w1);// Multiplied by 2
-
-			__m128 t0 = _mm_add_ps(XMVectorSplatZ(AABBCenter), _mm_xor_ps(XMVectorSplatZ(AABBExtents), _mm_and_ps(plane_z0, xmm_signMask)));
-			__m128 t1 = _mm_add_ps(XMVectorSplatZ(AABBCenter), _mm_xor_ps(XMVectorSplatZ(AABBExtents), _mm_and_ps(plane_z1, xmm_signMask)));
-
-			__m128 dot0 = simd_madd(t0, plane_z0, plane_w0);
-			__m128 dot1 = simd_madd(t1, plane_z1, plane_w1);
-
-			t0 = _mm_add_ps(XMVectorSplatY(AABBCenter), _mm_xor_ps(XMVectorSplatY(AABBExtents), _mm_and_ps(plane_y0, xmm_signMask)));
-			t1 = _mm_add_ps(XMVectorSplatY(AABBCenter), _mm_xor_ps(XMVectorSplatY(AABBExtents), _mm_and_ps(plane_y1, xmm_signMask)));
-
-			dot0 = simd_madd(t0, plane_y0, dot0);
-			dot1 = simd_madd(t1, plane_y1, dot1);
-
-			t0 = _mm_add_ps(XMVectorSplatX(AABBCenter), _mm_xor_ps(XMVectorSplatX(AABBExtents), _mm_and_ps(plane_x0, xmm_signMask)));
-			t1 = _mm_add_ps(XMVectorSplatX(AABBCenter), _mm_xor_ps(XMVectorSplatX(AABBExtents), _mm_and_ps(plane_x1, xmm_signMask)));
-
-			dot0 = simd_madd(t0, plane_x0, dot0);
-			dot1 = simd_madd(t1, plane_x1, dot1);
-
-			// si_nand(dot0, dot1)
-			//__m128i nand;
-			//nand = _mm_and_si128(*reinterpret_cast<__m128i *>(&dot0), *reinterpret_cast<__m128i *>(&dot1));
-			//nand = _mm_cmpeq_epi32(nand, nand);
-			//nand = _mm_xor_si128(nand, nand);
-
-			__m128i ret;
-			ret.m128i_u32[0] = ~(dot0.m128_u32[0] & dot1.m128_u32[0]);
-			ret.m128i_u32[1] = ~(dot0.m128_u32[1] & dot1.m128_u32[1]);
-			ret.m128i_u32[2] = ~(dot0.m128_u32[2] & dot1.m128_u32[2]);
-			ret.m128i_u32[3] = ~(dot0.m128_u32[3] & dot1.m128_u32[3]);
-
-			//__m128 test = si_orx(si_nand(dot0, dot1)); // all dots >= 0
-			uint32_t test = ret.m128i_u32[0] | ret.m128i_u32[1] | ret.m128i_u32[2] | ret.m128i_u32[3];
-			//return si_to_int(test) >> 31;
-			return test >> 31;
-			*/
 		}
 
 		__forceinline __m128 simd_madd(__m128 a, __m128 b, __m128 c)
