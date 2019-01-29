@@ -238,6 +238,7 @@ void Patch_TESVCreationKit()
 		XUtil::DetourJump(g_ModuleBase + 0x137FC60, &EditorUI_WarningUnknown1);
 		XUtil::DetourJump(g_ModuleBase + 0x1FCB030, &EditorUI_WarningUnknown1);
 		XUtil::DetourJump(g_ModuleBase + 0x2452480, &EditorUI_WarningUnknown1);
+		XUtil::DetourJump(g_ModuleBase + 0x243D5A0, &EditorUI_WarningUnknown1);
 		XUtil::DetourJump(g_ModuleBase + 0x27A6150, &EditorUI_WarningUnknown2);
 		XUtil::DetourJump(g_ModuleBase + 0x27A6270, &EditorUI_WarningUnknown2);
 		XUtil::DetourCall(g_ModuleBase + 0x163D3D1, &EditorUI_WarningUnknown2);
