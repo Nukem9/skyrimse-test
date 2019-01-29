@@ -79,3 +79,4 @@ bool hk_BGSPerkRankArray_sub_14168DF70(PerkRankEntry *Entry, uint32_t *FormId, _
 void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entry);
 
 void FaceGenOverflowWarning(__int64 Texture);
+void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2);

@@ -875,3 +875,45 @@ void FaceGenOverflowWarning(__int64 Texture)
 
 	EditorUI_Warning(23, "Exceeded limit of 16 tint masks. Skipping texture: %s", texName);
 }
+
+void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
+{
+	AutoFunc(bool(*)(), sub_1418F5210, 0x18F5210);
+	AutoFunc(void(*)(), sub_1418F5320, 0x18F5320);
+	AutoFunc(__int64(*)(HWND, __int64), sub_1413BAAC0, 0x13BAAC0);
+	AutoFunc(bool(*)(__int64, __int64), sub_1418F5260, 0x18F5260);
+	AutoFunc(void(*)(__int64), sub_141617680, 0x1617680);
+
+	// Display confirmation message box first
+	if (!sub_1418F5210())
+		return;
+
+	// Nop the call to reload the loose file tables
+	XUtil::PatchMemory(g_ModuleBase + 0x18F4D4A, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+
+	HWND listHandle = *(HWND *)(a1 + 16);
+	int itemIndex = ListView_GetNextItem(listHandle, -1, LVNI_SELECTED);
+	int itemCount = 0;
+
+	for (bool flag = true; itemIndex >= 0 && flag; itemCount++)
+	{
+		flag = sub_1418F5260(a2, sub_1413BAAC0(listHandle, itemIndex));
+
+		if (flag)
+		{
+			int oldIndex = itemIndex;
+			itemIndex = ListView_GetNextItem(listHandle, itemIndex, LVNI_SELECTED);
+
+			if (itemIndex == oldIndex)
+				itemIndex = -1;
+		}
+	}
+
+	// Reload loose file paths manually
+	EditorUI_Log("Exported FaceGen for %d NPCs. Reloading loose file paths...", itemCount);
+	sub_141617680(*(__int64 *)(g_ModuleBase + 0x3AFB930));
+
+	// Done => unpatch it
+	XUtil::PatchMemory(g_ModuleBase + 0x18F4D4A, (PBYTE)"\xE8\x98\xDA\x6F\xFF", 5);
+	sub_1418F5320();
+}

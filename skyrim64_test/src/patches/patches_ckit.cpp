@@ -152,6 +152,9 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x2DA588C, (PBYTE)&tintResolution, sizeof(uint32_t));
 	XUtil::PatchMemory(g_ModuleBase + 0x2DA5899, (PBYTE)&tintResolution, sizeof(uint32_t));
 
+	if (g_INI.GetBoolean("CreationKit", "FaceGenBatchSpeedup", false))
+		XUtil::DetourJump(g_ModuleBase + 0x12D1AC0, &ExportFaceGenForSelectedNPCs);
+
 	//
 	// LipGen
 	//
