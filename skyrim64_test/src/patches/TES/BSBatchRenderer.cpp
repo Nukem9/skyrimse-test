@@ -430,8 +430,6 @@ void BSBatchRenderer::sub_14131D6E0()
 	m_UnknownList.RemoveAllNodes(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
 }
 
-void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset);
-
 void UnmapDynamicData()
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
@@ -548,13 +546,12 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 
 		if (dynamicTri)
 		{
-			uint32_t size = dynamicTri->QDynamicDataSize();
-			void *vertexBuffer = sub_140D6BF00(0, size, &skinData.m_VertexBufferOffset);
+			const uint32_t size = dynamicTri->QDynamicDataSize();
+			void *vertexBuffer = BSGraphics::Renderer::GetGlobals()->MapDynamicBuffer(size, &skinData.m_VertexBufferOffset);
 
-			const void *data = dynamicTri->LockDynamicDataForRead();
-			memcpy_s(vertexBuffer, size, data, size);
+			memcpy(vertexBuffer, dynamicTri->LockDynamicDataForRead(), size);
+
 			dynamicTri->UnlockDynamicData();
-
 			UnmapDynamicData();
 		}
 
