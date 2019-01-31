@@ -17,6 +17,7 @@ void PatchFileIO();
 void ExperimentalPatchMemInit();
 void ExperimentalPatchEditAndContinue();
 void PatchMemory();
+size_t BNetConvertUnicodeString(char *Destination, size_t DestSize, const wchar_t *Source, size_t SourceSize);
 
 extern WNDPROC OldEditorUI_WndProc;
 
@@ -392,6 +393,11 @@ void Patch_TESVCreationKit()
 	//
 	XUtil::PatchMemory(g_ModuleBase + 0x1D3B350, (PBYTE)"\x48\x8B\x4C\x24\x68\xE8\xCB\xFF\xFF\xFF\xE9\x7D\x01\x00\x00", 15);
 	XUtil::DetourCall(g_ModuleBase + 0x1D3B355, &FaceGenOverflowWarning);
+
+	//
+	// Fix crash when Unicode string conversion fails with bethesda.net http responses
+	//
+	XUtil::DetourJump(g_ModuleBase + 0x2B37750, &BNetConvertUnicodeString);
 
 	//
 	// Plugin loading optimizations:

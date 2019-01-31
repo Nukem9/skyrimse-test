@@ -248,6 +248,7 @@
     <ClInclude Include="src\xutil.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\patches\bnet.cpp" />
     <ClCompile Include="src\patches\CKIT\BSPointerHandle.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />
     <ClCompile Include="src\common.cpp" />

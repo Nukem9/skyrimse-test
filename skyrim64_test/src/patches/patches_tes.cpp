@@ -36,6 +36,7 @@ void PatchBSThread();
 void PatchMemory();
 void PatchTESForm();
 void TestHook5();
+size_t BNetConvertUnicodeString(char *Destination, size_t DestSize, const wchar_t *Source, size_t SourceSize);
 
 bool doCullTest = false;
 
@@ -246,6 +247,11 @@ void Patch_TESV()
 	const char *newFormat = "World object count changed on object '%s' %08X from %i to %i";
 
 	XUtil::PatchMemory(g_ModuleBase + 0x1696030, (PBYTE)newFormat, strlen(newFormat) + 1);
+
+	//
+	// Fix crash when Unicode string conversion fails with bethesda.net http responses
+	//
+	XUtil::DetourJump(g_ModuleBase + 0x1154B60, &BNetConvertUnicodeString);
 
 	//
 	// Bug fix for when TAA/FXAA/DOF are disabled and quicksave doesn't work without
