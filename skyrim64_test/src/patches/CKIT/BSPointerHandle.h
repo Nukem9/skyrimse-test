@@ -20,7 +20,7 @@ private:
 	const static uint32_t REF_COUNT_MASK	= (1u << 10) - 1u;
 
 public:
-	BSHandleRefObject() : NiRefObject()
+	BSHandleRefObject()
 	{
 		ClearHandle();
 	}
@@ -159,7 +159,7 @@ public:
 		return (m_Bits & ACTIVE_BIT_MASK) != 0;
 	}
 
-	BSUntypedPointerHandle<> operator=(const BSUntypedPointerHandle<>& Other)
+	BSUntypedPointerHandle& operator=(const BSUntypedPointerHandle<>& Other)
 	{
 		m_Bits = Other.m_Bits;
 		return *this;

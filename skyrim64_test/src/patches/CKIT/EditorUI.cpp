@@ -97,7 +97,7 @@ bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu)
 	result = result && InsertMenuItem(MainMenu, -1, TRUE, &menuInfo);
 
 	AssertMsg(result, "Failed to create extension submenu");
-	return result ? true : false;
+	return result != FALSE;
 }
 
 bool EditorUI_CreateStdoutListener()

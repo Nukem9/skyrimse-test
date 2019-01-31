@@ -1,4 +1,3 @@
-#include "../../rendering/common.h"
 #include "../../../common.h"
 #include "../BSGraphicsRenderer.h"
 #include "BSShaderUtil.h"

@@ -8,8 +8,8 @@
 
 bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extended)
 {
-	bool isJump = (*(BYTE *)SourceAddress == 0xE9);
-	void *dest = (void *)TargetFunction;
+	const bool isJump = (*(BYTE *)SourceAddress == 0xE9);
+	const void *dest = (void *)TargetFunction;
 
 	//
 	// Check if the given function is "unoptimized" and remove the branch completely. Extended

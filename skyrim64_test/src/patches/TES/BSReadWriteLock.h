@@ -23,7 +23,7 @@ private:
 public:
 	DECLARE_CONSTRUCTOR_HOOK(BSReadWriteLock);
 
-	BSReadWriteLock();
+	BSReadWriteLock() = default;
 	~BSReadWriteLock();
 
     void LockForRead();
@@ -34,9 +34,8 @@ public:
     void UnlockWrite();
     bool TryLockForWrite();
 
-	void LockForReadAndWrite();
-
-    bool IsWritingThread();
+	void LockForReadAndWrite() const;
+	bool IsWritingThread() const;
 };
 static_assert(sizeof(BSReadWriteLock) <= 0x8, "Lock must fit inside the original game structure");
 
@@ -52,6 +51,6 @@ public:
 	BSAutoReadAndWriteLock *Initialize(BSReadWriteLock *Child);
 
     // Destructor hook
-    void Deinitialize();
+	void Deinitialize() const;
 };
 static_assert(sizeof(BSAutoReadAndWriteLock) <= 0x8, "Lock must fit inside the original game structure");

@@ -12,12 +12,12 @@ private:
 	volatile uint32_t m_LockCount	= 0;
 
 public:
-	BSSpinLock();
+	BSSpinLock() = default;
 	~BSSpinLock();
 
-	void Acquire(int InitialAttemps = 0);
+	void Acquire(int InitialAttempts = 0);
 	void Release();
 
-	bool IsLocked();
-	bool ThreadOwnsLock();
+	bool IsLocked() const;
+	bool ThreadOwnsLock() const;
 };

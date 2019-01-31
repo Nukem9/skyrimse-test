@@ -11,7 +11,7 @@ protected:
 		const char *Name;
 	};
 
-	void *m_HlslData;
+	uint8_t *m_HlslData;
 	size_t m_HlslDataLen;
 
 	BSShaderManager::ShaderEnum m_Type;
@@ -20,7 +20,7 @@ protected:
 
 public:
 	ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType);
-	~ShaderDecoder();
+	virtual ~ShaderDecoder();
 
 	void SetShaderData(void *Buffer, size_t BufferSize);
 	void DumpShader();

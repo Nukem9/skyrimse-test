@@ -1,7 +1,11 @@
 #pragma once
 
 #include "NiTexture.h"
-#include "../BSGraphicsRenderer.h"
+
+namespace BSGraphics
+{
+	struct Texture;
+}
 
 class NiSourceTexture : public NiTexture
 {

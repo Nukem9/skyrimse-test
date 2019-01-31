@@ -1,5 +1,4 @@
 #include "../../../../common.h"
-#include "../../NiMain/NiSourceTexture.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "BSParticleShader.h"

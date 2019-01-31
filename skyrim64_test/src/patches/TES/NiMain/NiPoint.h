@@ -1,7 +1,7 @@
 #pragma once
 
 #include <xmmintrin.h>
-#include <math.h>
+#include <cmath>
 
 class NiPoint2
 {

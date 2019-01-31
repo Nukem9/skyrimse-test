@@ -1,6 +1,5 @@
 #include <direct.h>
 #include "../../../common.h"
-#include "../../rendering/common.h"
 #include "BSShaderManager.h"
 #include "BSShader_Dumper.h"
 #include "BSShader.h"
@@ -49,13 +48,12 @@ ShaderDecoder::ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType)
 
 ShaderDecoder::~ShaderDecoder()
 {
-	if (m_HlslData)
-		delete[] m_HlslData;
+	delete[] m_HlslData;
 }
 
 void ShaderDecoder::SetShaderData(void *Buffer, size_t BufferSize)
 {
-	m_HlslData = new char[BufferSize];
+	m_HlslData = new uint8_t[BufferSize];
 	m_HlslDataLen = BufferSize;
 
 	memcpy(m_HlslData, Buffer, BufferSize);

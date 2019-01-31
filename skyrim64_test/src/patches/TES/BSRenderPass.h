@@ -66,7 +66,7 @@ struct BSRenderPass
 
 	}
 
-	NiAlphaProperty *QAlphaProperty()
+	NiAlphaProperty *QAlphaProperty() const
 	{
 		return m_Geometry->QAlphaProperty();
 	}

@@ -203,7 +203,7 @@ void MOC_ThreadedMerger::CullThread(uint32_t ThreadIndex)
 			// Merge the buffer from every other thread into this one
 			while (true)
 			{
-				int threadsMerged = 1;
+				uint32_t threadsMerged = 1;
 
 				for (uint32_t i = 0; i < m_ThreadCount; i++)
 				{

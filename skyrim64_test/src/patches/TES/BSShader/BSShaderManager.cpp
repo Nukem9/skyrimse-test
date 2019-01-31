@@ -1,5 +1,4 @@
 #include "../../../common.h"
-#include "../../rendering/common.h"
 #include "BSShaderManager.h"
 #include "BSShaderAccumulator.h"
 

@@ -1,16 +1,12 @@
 #include "../../common.h"
 #include "BSSpinLock.h"
 
-BSSpinLock::BSSpinLock()
-{
-}
-
 BSSpinLock::~BSSpinLock()
 {
 	Assert(m_LockCount == 0);
 }
 
-void BSSpinLock::Acquire(int InitialAttemps)
+void BSSpinLock::Acquire(int InitialAttempts)
 {
 	// Check for recursive locking
 	if (ThreadOwnsLock())
@@ -22,7 +18,7 @@ void BSSpinLock::Acquire(int InitialAttemps)
 	// First test (no waits/pauses, fast path)
 	if (InterlockedCompareExchange(&m_LockCount, 1, 0) != 0)
 	{
-		int counter = 0;
+		uint32_t counter = 0;
 		bool locked = false;
 
 		// Slow path #1 (PAUSE instruction)
@@ -32,7 +28,7 @@ void BSSpinLock::Acquire(int InitialAttemps)
 			_mm_pause();
 
 			locked = InterlockedCompareExchange(&m_LockCount, 1, 0) == 0;
-		} while (!locked && counter < InitialAttemps);
+		} while (!locked && counter < InitialAttempts);
 
 		// Slower path #2 (Sleep(X))
 		for (counter = 0; !locked;)
@@ -81,12 +77,12 @@ void BSSpinLock::Release()
 	}
 }
 
-bool BSSpinLock::IsLocked()
+bool BSSpinLock::IsLocked() const
 {
 	return m_LockCount != 0;
 }
 
-bool BSSpinLock::ThreadOwnsLock()
+bool BSSpinLock::ThreadOwnsLock() const
 {
 	_mm_lfence();
 	return m_OwningThread == GetCurrentThreadId();

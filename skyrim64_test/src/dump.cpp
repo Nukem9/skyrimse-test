@@ -191,7 +191,10 @@ LONG WINAPI DumpExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 	HANDLE threadHandle = CreateThread(nullptr, 0, DumpWriterThread, ExceptionInfo, 0, nullptr);
 
 	if (threadHandle)
+	{
 		WaitForSingleObject(threadHandle, INFINITE);
+		CloseHandle(threadHandle);
+	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
 }

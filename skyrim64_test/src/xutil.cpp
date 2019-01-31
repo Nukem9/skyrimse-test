@@ -181,5 +181,5 @@ void XUtil::DetourJump(uintptr_t Target, uintptr_t Destination)
 void XUtil::DetourCall(uintptr_t Target, uintptr_t Destination)
 {
 	Detours::X64::DetourFunction((uint8_t *)Target, (uint8_t *)Destination);
-	XUtil::PatchMemory(Target, (PBYTE)"\xE8", 1);
+	PatchMemory(Target, (PBYTE)"\xE8", 1);
 }

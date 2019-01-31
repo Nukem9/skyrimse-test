@@ -64,7 +64,7 @@ public:
 
 	inline __m128 AsXmm() const
 	{
-		return _mm_load_ps(&r);
+		return _mm_load_ps(Data());
 	}
 };
 static_assert(sizeof(NiColorA) == 0x10);

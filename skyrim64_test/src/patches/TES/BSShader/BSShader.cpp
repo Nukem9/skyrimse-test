@@ -3,14 +3,10 @@
 #include "../BSGraphicsRenderer.h"
 #include "BSShaderManager.h"
 #include "BSShader.h"
-
 #include "BSShader_Dumper.h"
-
 #include "Shaders/BSBloodSplatterShader.h"
 #include "Shaders/BSDistantTreeShader.h"
 #include "Shaders/BSGrassShader.h"
-#include "Shaders/BSLightingShader.h"
-#include "Shaders/BSParticleShader.h"
 #include "Shaders/BSSkyShader.h"
 
 bool BSShader::g_ShaderToggles[16][3];

@@ -5,10 +5,10 @@
 #include "NiMain/NiColor.h"
 #include "NiMain/NiTransform.h"
 #include "BSGraphicsTypes.h"
+#include "NiMain/NiSourceTexture.h"
 
 class BSTriShape;
 class BSDynamicTriShape;
-class NiSourceTexture;
 
 namespace BSGraphics::Utility
 {

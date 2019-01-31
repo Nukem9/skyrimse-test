@@ -27,16 +27,16 @@ public:
 	void AddRef();
 	void DecRef();
 
-	bool GetName_AddCellGrassTask(char *Buffer, size_t BufferSize);
-	bool GetName_AttachDistant3DTask(char *Buffer, size_t BufferSize);
-	bool GetName_AudioLoadForPlaybackTask(char *Buffer, size_t BufferSize);
-	bool GetName_AudioLoadToCacheTask(char *Buffer, size_t BufferSize);
-	bool GetName_BGSParticleObjectCloneTask(char *Buffer, size_t BufferSize);
-	bool GetName_BSScaleformMovieLoadTask(char *Buffer, size_t BufferSize);
-	bool GetName_CheckWithinMultiBoundTask(char *Buffer, size_t BufferSize);
-	bool GetName_QueuedFile(char *Buffer, size_t BufferSize);
-	bool GetName_QueuedPromoteLocationReferencesTask(char *Buffer, size_t BufferSize);
-	bool GetName_QueuedPromoteReferencesTask(char *Buffer, size_t BufferSize);
+	bool GetName_AddCellGrassTask(char *Buffer, size_t BufferSize) const;
+	bool GetName_AttachDistant3DTask(char *Buffer, size_t BufferSize) const;
+	bool GetName_AudioLoadForPlaybackTask(char *Buffer, size_t BufferSize) const;
+	bool GetName_AudioLoadToCacheTask(char *Buffer, size_t BufferSize) const;
+	bool GetName_BGSParticleObjectCloneTask(char *Buffer, size_t BufferSize) const;
+	bool GetName_BSScaleformMovieLoadTask(char *Buffer, size_t BufferSize) const;
+	bool GetName_CheckWithinMultiBoundTask(char *Buffer, size_t BufferSize) const;
+	bool GetName_QueuedFile(char *Buffer, size_t BufferSize) const;
+	bool GetName_QueuedPromoteLocationReferencesTask(char *Buffer, size_t BufferSize) const;
+	bool GetName_QueuedPromoteReferencesTask(char *Buffer, size_t BufferSize) const;
 };
 //static_assert_offset(BSTask, iRefCount, 0x8);
 //static_assert_offset(BSTask, eState, 0xC);

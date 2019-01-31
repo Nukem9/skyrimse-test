@@ -3,8 +3,8 @@
 class MemoryManager
 {
 private:
-	MemoryManager() {}
-	~MemoryManager() {}
+	MemoryManager() = default;
+	~MemoryManager() = default;
 
 public:
 	static void *Alloc(MemoryManager *Manager, size_t Size, uint32_t Alignment, bool Aligned);
@@ -14,8 +14,8 @@ public:
 class ScrapHeap
 {
 private:
-	ScrapHeap() {}
-	~ScrapHeap() {}
+	ScrapHeap() = default;
+	~ScrapHeap() = default;
 
 public:
 	const static uint32_t MAX_ALLOC_SIZE = 0x4000000;

@@ -22,7 +22,7 @@
 	{ \
 		static void Id() \
 		{ \
-			StaticConstructor<&Id>::c; \
+			StaticConstructor<&Id>::C; \
 			Lambda(); \
 		} \
 	};
@@ -69,11 +69,11 @@ struct StaticConstructor
 		}
 	};
 
-	static Constructor c;
+	static Constructor C;
 };
 
 template<void(*ctor)()>
-typename StaticConstructor<ctor>::Constructor StaticConstructor<ctor>::c;
+typename StaticConstructor<ctor>::Constructor StaticConstructor<ctor>::C;
 
 template <size_t Offset, size_t RequiredOffset>
 struct __declspec(empty_bases)CheckOffset
@@ -96,7 +96,7 @@ namespace XUtil
 	template<typename T>
 	void DetourJump(uintptr_t Target, T Destination)
 	{
-		static_assert(std::is_member_function_pointer_v<T> || (std::is_pointer_v<T> && std::is_function_v<std::remove_pointer<T>::type>));
+		static_assert(std::is_member_function_pointer_v<T> || (std::is_pointer_v<T> && std::is_function_v<typename std::remove_pointer<T>::type>));
 
 		DetourJump(Target, *(uintptr_t *)&Destination);
 	}
@@ -104,7 +104,7 @@ namespace XUtil
 	template<typename T>
 	void DetourCall(uintptr_t Target, T Destination)
 	{
-		static_assert(std::is_member_function_pointer_v<T> || (std::is_pointer_v<T> && std::is_function_v<std::remove_pointer<T>::type>));
+		static_assert(std::is_member_function_pointer_v<T> || (std::is_pointer_v<T> && std::is_function_v<typename std::remove_pointer<T>::type>));
 
 		DetourCall(Target, *(uintptr_t *)&Destination);
 	}

@@ -18,7 +18,7 @@ public:
 		return fLODDimmer;
 	}
 
-	NiLight *GetLight()
+	NiLight *GetLight() const
 	{
 		return spLight;
 	}

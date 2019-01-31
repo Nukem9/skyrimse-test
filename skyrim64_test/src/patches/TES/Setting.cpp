@@ -273,7 +273,7 @@ bool INISettingCollection::hk_Close()
 	return true;
 }
 
-Setting *INISettingCollection::FindSetting(const char *Key)
+Setting *INISettingCollection::FindSetting(const char *Key) const
 {
 	for (auto *s = SettingsA.QNext(); s; s = s->QNext())
 	{
@@ -284,7 +284,7 @@ Setting *INISettingCollection::FindSetting(const char *Key)
 	return nullptr;
 }
 
-void INISettingCollection::DumpSettingIDAScript(FILE *File)
+void INISettingCollection::DumpSettingIDAScript(FILE *File) const
 {
 	for (auto *s = SettingsA.QNext(); s; s = s->QNext())
 	{
@@ -318,7 +318,7 @@ void INISettingCollection::DumpSettingIDAScript(FILE *File)
 	}
 }
 
-void INISettingCollection::MainKey(const Setting *S, char *Buffer)
+void INISettingCollection::MainKey(const Setting *S, char *Buffer) const
 {
 	if (Buffer)
 	{
@@ -336,7 +336,7 @@ void INISettingCollection::MainKey(const Setting *S, char *Buffer)
 	}
 }
 
-void INISettingCollection::SubKey(const Setting *S, char *Buffer)
+void INISettingCollection::SubKey(const Setting *S, char *Buffer) const
 {
 	if (Buffer)
 	{

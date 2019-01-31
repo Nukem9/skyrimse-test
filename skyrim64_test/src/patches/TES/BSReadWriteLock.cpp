@@ -1,10 +1,6 @@
 #include "../../common.h"
 #include "BSReadWriteLock.h"
 
-BSReadWriteLock::BSReadWriteLock()
-{
-}
-
 BSReadWriteLock::~BSReadWriteLock()
 {
 	AssertMsg(m_Bits == 0 && m_WriteCount == 0, "Destructing a lock that is still in use");
@@ -86,12 +82,12 @@ bool BSReadWriteLock::TryLockForWrite()
 	return false;
 }
 
-void BSReadWriteLock::LockForReadAndWrite()
+void BSReadWriteLock::LockForReadAndWrite() const
 {
 	// This is only called from BSAutoReadAndWriteLock (no-op, it's always a write lock now)
 }
 
-bool BSReadWriteLock::IsWritingThread()
+bool BSReadWriteLock::IsWritingThread() const
 {
 	return m_ThreadId == GetCurrentThreadId();
 }
@@ -104,7 +100,7 @@ BSAutoReadAndWriteLock *BSAutoReadAndWriteLock::Initialize(BSReadWriteLock *Chil
 	return this;
 }
 
-void BSAutoReadAndWriteLock::Deinitialize()
+void BSAutoReadAndWriteLock::Deinitialize() const
 {
 	m_Lock->UnlockWrite();
 }

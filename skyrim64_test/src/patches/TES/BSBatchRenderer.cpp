@@ -6,7 +6,6 @@
 #include "BSSpinLock.h"
 #include "BSBatchRenderer.h"
 #include "BSShader/Shaders/BSSkyShader.h"
-#include "BSShader/Shaders/BSLightingShader.h"
 #include "MTRenderer.h"
 
 AutoPtr(BYTE, byte_1431F54CD, 0x31F54CD);
@@ -63,7 +62,7 @@ void sub_14131F910(BSSimpleList<uint32_t> *Node, void *UserData)
 		*(uintptr_t *)UserData = (uintptr_t)Node;
 		lock.Release();
 	}
-	else if (Node)
+	else
 	{
 		delete Node;
 	}

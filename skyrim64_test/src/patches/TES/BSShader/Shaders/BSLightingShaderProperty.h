@@ -16,7 +16,7 @@ public:
 	NiColorA kProjectedUVColor;
 	char _pad3[0x34];
 
-	const NiColorA& QProjectedUVColor()
+	const NiColorA& QProjectedUVColor() const
 	{
 		return kProjectedUVColor;
 	}

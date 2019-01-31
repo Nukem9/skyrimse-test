@@ -85,11 +85,10 @@ public:
 				if (Object->QAlwaysDraw())
 					return appendOrAccumulate();
 
-				int compoundPlanes[256];// Array size might not be accurate (STACK SMASH WARNING)
-				uint32_t frustumPlanes;
+				int compoundPlanes[256];
+				uint32_t frustumPlanes = m_kPlanes.GetActivePlaneState();
 
 				pCompoundFrustum->GetActivePlaneState(compoundPlanes);
-				frustumPlanes = m_kPlanes.GetActivePlaneState();
 
 				bool primaryVisCheck = (pCompoundFrustum->byteC4 || TestBaseVisibility3(Object->m_kWorldBound)) && pCompoundFrustum->Process(Object);
 

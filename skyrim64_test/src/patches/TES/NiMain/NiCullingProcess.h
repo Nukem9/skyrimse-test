@@ -112,7 +112,7 @@ public:
 		sub_140C78AA0(this, Object, Unknown);
 	}
 
-	void SetAccumulated(NiAVObject *Object, bool Accumulated)
+	void SetAccumulated(NiAVObject *Object, bool Accumulated) const
 	{
 		if (bUpdateAccumulateFlag)
 			Object->SetAccumulated(Accumulated);

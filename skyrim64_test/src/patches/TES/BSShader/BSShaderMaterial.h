@@ -1,9 +1,6 @@
 #pragma once
 
-#include "../NiMain/NiPointer.h"
 #include "../NiMain/NiPoint.h"
-#include "../NiMain/NiColor.h"
-#include "../NiMain/NiSourceTexture.h"
 
 class BSIntrusiveRefCounted
 {

@@ -18,61 +18,61 @@ void BSTask::DecRef()
 		this->~BSTask();
 }
 
-bool BSTask::GetName_AddCellGrassTask(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_AddCellGrassTask(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "AddCellGrassTask");
 	return false;
 }
 
-bool BSTask::GetName_AttachDistant3DTask(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_AttachDistant3DTask(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "AttachDistant3DTask");
 	return false;
 }
 
-bool BSTask::GetName_AudioLoadForPlaybackTask(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_AudioLoadForPlaybackTask(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "AudioLoadForPlaybackTask");
 	return false;
 }
 
-bool BSTask::GetName_AudioLoadToCacheTask(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_AudioLoadToCacheTask(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "AudioLoadToCacheTask");
 	return false;
 }
 
-bool BSTask::GetName_BGSParticleObjectCloneTask(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_BGSParticleObjectCloneTask(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "BGSParticleObjectCloneTask");
 	return false;
 }
 
-bool BSTask::GetName_BSScaleformMovieLoadTask(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_BSScaleformMovieLoadTask(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "BSScaleformMovieLoadTask");
 	return false;
 }
 
-bool BSTask::GetName_CheckWithinMultiBoundTask(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_CheckWithinMultiBoundTask(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "CheckWithinMultiBoundTask");
 	return false;
 }
 
-bool BSTask::GetName_QueuedFile(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_QueuedFile(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "QueuedFile");
 	return false;
 }
 
-bool BSTask::GetName_QueuedPromoteLocationReferencesTask(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_QueuedPromoteLocationReferencesTask(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "QueuedPromoteLocationReferencesTask");
 	return false;
 }
 
-bool BSTask::GetName_QueuedPromoteReferencesTask(char *Buffer, size_t BufferSize)
+bool BSTask::GetName_QueuedPromoteReferencesTask(char *Buffer, size_t BufferSize) const
 {
 	strcpy_s(Buffer, BufferSize, "QueuedPromoteReferencesTask");
 	return false;

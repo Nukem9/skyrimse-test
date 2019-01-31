@@ -101,11 +101,11 @@ public:
 	bool hk_Open(bool OpenDuringRead);
 	bool hk_Close();
 
-	Setting *FindSetting(const char *Key);
-	void DumpSettingIDAScript(FILE *File);
+	Setting *FindSetting(const char *Key) const;
+	void DumpSettingIDAScript(FILE *File) const;
 
-	void MainKey(const Setting *S, char *Buffer);
-	void SubKey(const Setting *S, char *Buffer);
+	void MainKey(const Setting *S, char *Buffer) const;
+	void SubKey(const Setting *S, char *Buffer) const;
 };
 
 class INIPrefSettingCollection : public INISettingCollection

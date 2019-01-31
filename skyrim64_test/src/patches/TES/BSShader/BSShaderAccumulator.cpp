@@ -3,7 +3,6 @@
 #include "../BSGraphicsRenderer.h"
 #include "../BSGraphicsState.h"
 #include "../BSGraphicsRenderTargetManager.h"
-#include "BSShaderRenderTargets.h"
 #include "../BSBatchRenderer.h"
 #include "BSShaderManager.h"
 #include "BSShaderAccumulator.h"
