@@ -31,6 +31,7 @@ static_assert_offset(BSLightingShaderMaterialBase, spNormalTexture, 0x58);
 static_assert_offset(BSLightingShaderMaterialBase, spRimSoftLightingTexture, 0x60);
 static_assert_offset(BSLightingShaderMaterialBase, spSpecularBackLightingTexture, 0x68);
 static_assert_offset(BSLightingShaderMaterialBase, eTextureClampMode, 0x70);
+static_assert_offset(BSLightingShaderMaterialBase, TextureSet, 0x78);
 static_assert_offset(BSLightingShaderMaterialBase, fMaterialAlpha, 0x80);
 static_assert_offset(BSLightingShaderMaterialBase, fRefractionPower, 0x84);
 static_assert_offset(BSLightingShaderMaterialBase, fSpecularPower, 0x88);

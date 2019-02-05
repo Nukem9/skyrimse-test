@@ -34,45 +34,43 @@ DEFINE_SHADER_DESCRIPTOR(
 	CONFIG_ENTRY(VS, PER_TEC, 15, float4, FogFarColor)
 	CONFIG_ENTRY(VS, PER_GEO, 16, unknown, Bones)
 
-	/*
-	// Pixel TODO
-	CONFIG_ENTRY(PS, PER_GEO, 0, unknown, NumLightNumShadowLight)
-	CONFIG_ENTRY(PS, PER_GEO, 1, unknown, PointLightPosition)
-	CONFIG_ENTRY(PS, PER_GEO, 2, unknown, PointLightColor)
-	CONFIG_ENTRY(PS, PER_GEO, 3, unknown, DirLightDirection)
-	CONFIG_ENTRY(PS, PER_GEO, 4, unknown, DirLightColor)
-	CONFIG_ENTRY(PS, PER_GEO, 5, unknown, DirectionalAmbient)
-	CONFIG_ENTRY(PS, PER_GEO, 6, unknown, AmbientSpecularTintAndFresnelPower)
-	CONFIG_ENTRY(PS, PER_GEO, 7, unknown, MaterialData)
-	CONFIG_ENTRY(PS, PER_GEO, 8, unknown, EmitColor)
+	// Pixel
+	CONFIG_ENTRY(PS, PER_GEO, 0, float2, NumLightNumShadowLight)
+	CONFIG_ENTRY(PS, PER_GEO, 1, float4[7], PointLightPosition)
+	CONFIG_ENTRY(PS, PER_GEO, 2, float4[7], PointLightColor)
+	CONFIG_ENTRY(PS, PER_GEO, 3, float3, DirLightDirection)
+	CONFIG_ENTRY(PS, PER_GEO, 4, float3, DirLightColor)
+	CONFIG_ENTRY(PS, PER_GEO, 5, float3x4, DirectionalAmbient)
+	CONFIG_ENTRY(PS, PER_MAT, 6, float4, AmbientSpecularTintAndFresnelPower)
+	CONFIG_ENTRY(PS, PER_GEO, 7, float4, MaterialData)
+	CONFIG_ENTRY(PS, PER_GEO, 8, float4, EmitColor)
 	CONFIG_ENTRY(PS, PER_GEO, 9, unknown, AlphaTestRef)
-	CONFIG_ENTRY(PS, PER_GEO, 10, unknown, ShadowLightMaskSelect)
-	CONFIG_ENTRY(PS, PER_GEO, 11, unknown, VPOSOffset)
-	CONFIG_ENTRY(PS, PER_GEO, 12, unknown, ProjectedUVParams)
-	CONFIG_ENTRY(PS, PER_GEO, 13, unknown, ProjectedUVParams2)
-	CONFIG_ENTRY(PS, PER_GEO, 14, unknown, ProjectedUVParams3)
+	CONFIG_ENTRY(PS, PER_GEO, 10, float4, ShadowLightMaskSelect)
+	CONFIG_ENTRY(PS, PER_TEC, 11, float4, VPOSOffset)
+	CONFIG_ENTRY(PS, PER_GEO, 12, float4, ProjectedUVParams)
+	CONFIG_ENTRY(PS, PER_GEO, 13, float4, ProjectedUVParams2)
+	CONFIG_ENTRY(PS, PER_GEO, 14, float4, ProjectedUVParams3)
 	CONFIG_ENTRY(PS, PER_GEO, 15, unknown, SplitDistance)
-	CONFIG_ENTRY(PS, PER_GEO, 16, unknown, SSRParams)
-	CONFIG_ENTRY(PS, PER_GEO, 17, unknown, WorldMapOverlayParametersPS)
+	CONFIG_ENTRY(PS, PER_GEO, 16, float4, SSRParams)
+	CONFIG_ENTRY(PS, PER_GEO, 17, float4, WorldMapOverlayParametersPS)
 	CONFIG_ENTRY(PS, PER_GEO, 18, unknown, AmbientColor)
-	CONFIG_ENTRY(PS, PER_GEO, 19, unknown, FogColor)
-	CONFIG_ENTRY(PS, PER_GEO, 20, unknown, ColourOutputClamp)
-	CONFIG_ENTRY(PS, PER_GEO, 21, unknown, EnvmapData)
-	CONFIG_ENTRY(PS, PER_GEO, 22, unknown, ParallaxOccData)
-	CONFIG_ENTRY(PS, PER_GEO, 23, unknown, TintColor)
-	CONFIG_ENTRY(PS, PER_GEO, 24, unknown, LODTexParams)
-	CONFIG_ENTRY(PS, PER_GEO, 25, unknown, SpecularColor)
-	CONFIG_ENTRY(PS, PER_GEO, 26, unknown, SparkleParams)
-	CONFIG_ENTRY(PS, PER_GEO, 27, unknown, MultiLayerParallaxData)
-	CONFIG_ENTRY(PS, PER_GEO, 28, unknown, LightingEffectParams)
-	CONFIG_ENTRY(PS, PER_GEO, 29, unknown, IBLParams)
-	CONFIG_ENTRY(PS, PER_GEO, 30, unknown, LandscapeTexture1to4IsSnow)
-	CONFIG_ENTRY(PS, PER_GEO, 31, unknown, LandscapeTexture5to6IsSnow)
-	CONFIG_ENTRY(PS, PER_GEO, 32, unknown, LandscapeTexture1to4IsSpecPower)
-	CONFIG_ENTRY(PS, PER_GEO, 33, unknown, LandscapeTexture5to6IsSpecPower)
-	CONFIG_ENTRY(PS, PER_GEO, 34, unknown, SnowRimLightParameters)
-	CONFIG_ENTRY(PS, PER_GEO, 35, unknown, CharacterLightParams)
-	*/
+	CONFIG_ENTRY(PS, PER_TEC, 19, float4, FogColor)
+	CONFIG_ENTRY(PS, PER_TEC, 20, float4, ColourOutputClamp)
+	CONFIG_ENTRY(PS, PER_MAT, 21, float4, EnvmapData)
+	CONFIG_ENTRY(PS, PER_MAT, 22, float4, ParallaxOccData)
+	CONFIG_ENTRY(PS, PER_MAT, 23, float4, TintColor)
+	CONFIG_ENTRY(PS, PER_MAT, 24, float4, LODTexParams)
+	CONFIG_ENTRY(PS, PER_MAT, 25, float4, SpecularColor)
+	CONFIG_ENTRY(PS, PER_MAT, 26, float4, SparkleParams)
+	CONFIG_ENTRY(PS, PER_MAT, 27, float4, MultiLayerParallaxData)
+	CONFIG_ENTRY(PS, PER_MAT, 28, float4, LightingEffectParams)
+	CONFIG_ENTRY(PS, PER_MAT, 29, float4, IBLParams)
+	CONFIG_ENTRY(PS, PER_MAT, 30, float4, LandscapeTexture1to4IsSnow)
+	CONFIG_ENTRY(PS, PER_MAT, 31, float4, LandscapeTexture5to6IsSnow)
+	CONFIG_ENTRY(PS, PER_MAT, 32, float4, LandscapeTexture1to4IsSpecPower)
+	CONFIG_ENTRY(PS, PER_MAT, 33, float4, LandscapeTexture5to6IsSpecPower)
+	CONFIG_ENTRY(PS, PER_MAT, 34, float4, SnowRimLightParameters)
+	CONFIG_ENTRY(PS, PER_MAT, 35, float4, CharacterLightParams)
 );
 
 //
@@ -112,11 +110,11 @@ AutoPtr(XMVECTORF32, xmmword_14187D940, 0x187D940);
 AutoPtr(BYTE, byte_141E32E88, 0x1E32E88);
 AutoPtr(uintptr_t, qword_14304EF00, 0x304EF00);
 AutoPtr(float, flt_143257C40, 0x3257C40);
-AutoPtr(uint32_t, dword_141E3527C, 0x1E3527C);// Replaced by TLS
-AutoPtr(uint32_t, dword_141E35280, 0x1E35280);// Replaced by TLS
+//AutoPtr(uint32_t, dword_141E3527C, 0x1E3527C);// Replaced by TLS
+//AutoPtr(uint32_t, dword_141E35280, 0x1E35280);// Replaced by TLS
 AutoPtr(NiColorA, dword_1431F5540, 0x31F5540);// Unknown setting from SceneGraph
 AutoPtr(NiColorA, dword_1431F5550, 0x31F5550);// 4x fMapMenuOverlayScale settings
-AutoPtr(float, xmmword_141880020, 0x1880020);
+//AutoPtr(float, xmmword_141880020, 0x1880020);
 AutoPtr(float, flt_141E32F40, 0x1E32F40);// Part of BSShaderManager timer array
 AutoPtr(float, flt_141E32FD8, 0x1E32FD8);
 AutoPtr(float, flt_141E32FB8, 0x1E32FB8);
