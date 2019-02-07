@@ -324,7 +324,7 @@ const char *BSShader::GetPSConstantName(uint32_t Type, uint32_t Index)
 		//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
 		//	break;
 	case BSShaderManager::BSSM_SHADER_LIGHTING:
-		return BSShaderInfo::BSLightingShader::PSConstants::GetString(Index);
+		break;
 	case BSShaderManager::BSSM_SHADER_EFFECT:
 		return BSShaderInfo::BSXShader::PSConstants::GetString(Index);
 	case BSShaderManager::BSSM_SHADER_UTILITY:
@@ -345,7 +345,7 @@ const char *BSShader::GetPSConstantName(uint32_t Type, uint32_t Index)
 	return nullptr;
 }
 
-const char *BSShader::GetPSSamplerName(uint32_t Type, uint32_t Index)
+const char *BSShader::GetPSSamplerName(uint32_t Type, uint32_t Index, uint32_t TechniqueID)
 {
 	switch (Type)
 	{
@@ -360,7 +360,7 @@ const char *BSShader::GetPSSamplerName(uint32_t Type, uint32_t Index)
 		//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
 		//	break;
 	case BSShaderManager::BSSM_SHADER_LIGHTING:
-		return BSShaderInfo::BSLightingShader::Samplers::GetString(Index, 0);
+		return BSShaderInfo::BSLightingShader::Samplers::GetString(Index, TechniqueID);
 	case BSShaderManager::BSSM_SHADER_EFFECT:
 		return BSShaderInfo::BSXShader::Samplers::GetString(Index);
 	case BSShaderManager::BSSM_SHADER_UTILITY:

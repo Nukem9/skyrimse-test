@@ -16,6 +16,15 @@ DEFINE_SHADER_DESCRIPTOR(
 	"Lighting",
 
 	// Vertex
+	CONFIG_ENTRY(VS, PER_TEC, 12, float4, HighDetailRange)
+	CONFIG_ENTRY(VS, PER_TEC, 13, float4, FogParam)
+	CONFIG_ENTRY(VS, PER_TEC, 14, float4, FogNearColor)
+	CONFIG_ENTRY(VS, PER_TEC, 15, float4, FogFarColor)
+
+	CONFIG_ENTRY(VS, PER_MAT, 9, float3, LeftEyeCenter)
+	CONFIG_ENTRY(VS, PER_MAT, 10, float3, RightEyeCenter)
+	CONFIG_ENTRY(VS, PER_MAT, 11, float4, TexcoordOffset)
+
 	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float3x4, World)
 	CONFIG_ENTRY(VS, PER_GEO, 1, row_major float3x4, PreviousWorld)
 	CONFIG_ENTRY(VS, PER_GEO, 2, float3, EyePosition)
@@ -25,37 +34,13 @@ DEFINE_SHADER_DESCRIPTOR(
 	CONFIG_ENTRY(VS, PER_GEO, 6, row_major float3x4, TextureProj)
 	CONFIG_ENTRY(VS, PER_GEO, 7, float, IndexScale)
 	CONFIG_ENTRY(VS, PER_GEO, 8, float4, WorldMapOverlayParameters)
-	CONFIG_ENTRY(VS, PER_MAT, 9, float3, LeftEyeCenter)
-	CONFIG_ENTRY(VS, PER_MAT, 10, float3, RightEyeCenter)
-	CONFIG_ENTRY(VS, PER_MAT, 11, float4, TexcoordOffset)
-	CONFIG_ENTRY(VS, PER_TEC, 12, float4, HighDetailRange)
-	CONFIG_ENTRY(VS, PER_TEC, 13, float4, FogParam)
-	CONFIG_ENTRY(VS, PER_TEC, 14, float4, FogNearColor)
-	CONFIG_ENTRY(VS, PER_TEC, 15, float4, FogFarColor)
-	CONFIG_ENTRY(VS, PER_GEO, 16, unknown, Bones)
+	CONFIG_ENTRY(VS, PER_GEO, 16, unknown, Bones)								// Unknown, not found anywhere
 
 	// Pixel
-	CONFIG_ENTRY(PS, PER_GEO, 0, float2, NumLightNumShadowLight)
-	CONFIG_ENTRY(PS, PER_GEO, 1, float4[7], PointLightPosition)
-	CONFIG_ENTRY(PS, PER_GEO, 2, float4[7], PointLightColor)
-	CONFIG_ENTRY(PS, PER_GEO, 3, float3, DirLightDirection)
-	CONFIG_ENTRY(PS, PER_GEO, 4, float3, DirLightColor)
-	CONFIG_ENTRY(PS, PER_GEO, 5, float3x4, DirectionalAmbient)
-	CONFIG_ENTRY(PS, PER_MAT, 6, float4, AmbientSpecularTintAndFresnelPower)
-	CONFIG_ENTRY(PS, PER_GEO, 7, float4, MaterialData)
-	CONFIG_ENTRY(PS, PER_GEO, 8, float4, EmitColor)
-	CONFIG_ENTRY(PS, PER_GEO, 9, unknown, AlphaTestRef)
-	CONFIG_ENTRY(PS, PER_GEO, 10, float4, ShadowLightMaskSelect)
-	CONFIG_ENTRY(PS, PER_TEC, 11, float4, VPOSOffset)
-	CONFIG_ENTRY(PS, PER_GEO, 12, float4, ProjectedUVParams)
-	CONFIG_ENTRY(PS, PER_GEO, 13, float4, ProjectedUVParams2)
-	CONFIG_ENTRY(PS, PER_GEO, 14, float4, ProjectedUVParams3)
-	CONFIG_ENTRY(PS, PER_GEO, 15, unknown, SplitDistance)
-	CONFIG_ENTRY(PS, PER_GEO, 16, float4, SSRParams)
-	CONFIG_ENTRY(PS, PER_GEO, 17, float4, WorldMapOverlayParametersPS)
-	CONFIG_ENTRY(PS, PER_GEO, 18, unknown, AmbientColor)
+	CONFIG_ENTRY(PS, PER_TEC, 11, float4, VPOSOffset)							// Unknown
 	CONFIG_ENTRY(PS, PER_TEC, 19, float4, FogColor)
 	CONFIG_ENTRY(PS, PER_TEC, 20, float4, ColourOutputClamp)
+
 	CONFIG_ENTRY(PS, PER_MAT, 21, float4, EnvmapData)
 	CONFIG_ENTRY(PS, PER_MAT, 22, float4, ParallaxOccData)
 	CONFIG_ENTRY(PS, PER_MAT, 23, float4, TintColor)
@@ -71,6 +56,25 @@ DEFINE_SHADER_DESCRIPTOR(
 	CONFIG_ENTRY(PS, PER_MAT, 33, float4, LandscapeTexture5to6IsSpecPower)
 	CONFIG_ENTRY(PS, PER_MAT, 34, float4, SnowRimLightParameters)
 	CONFIG_ENTRY(PS, PER_MAT, 35, float4, CharacterLightParams)
+
+	CONFIG_ENTRY(PS, PER_GEO, 0, float2, NumLightNumShadowLight)
+	CONFIG_ENTRY(PS, PER_GEO, 1, float4[7], PointLightPosition)
+	CONFIG_ENTRY(PS, PER_GEO, 2, float4[7], PointLightColor)
+	CONFIG_ENTRY(PS, PER_GEO, 3, float3, DirLightDirection)
+	CONFIG_ENTRY(PS, PER_GEO, 4, float3, DirLightColor)
+	CONFIG_ENTRY(PS, PER_GEO, 5, float3x4, DirectionalAmbient)
+	CONFIG_ENTRY(PS, PER_GEO, 6, float4, AmbientSpecularTintAndFresnelPower)	// Vanilla code incorrectly labels this as PerMaterial
+	CONFIG_ENTRY(PS, PER_GEO, 7, float4, MaterialData)
+	CONFIG_ENTRY(PS, PER_GEO, 8, float4, EmitColor)
+	CONFIG_ENTRY(PS, PER_GEO, 9, float, AlphaTestRef)							// Unused, type assumed from PS4
+	CONFIG_ENTRY(PS, PER_GEO, 10, float4, ShadowLightMaskSelect)
+	CONFIG_ENTRY(PS, PER_GEO, 12, float4, ProjectedUVParams)
+	CONFIG_ENTRY(PS, PER_GEO, 13, float4, ProjectedUVParams2)
+	CONFIG_ENTRY(PS, PER_GEO, 14, float4, ProjectedUVParams3)
+	CONFIG_ENTRY(PS, PER_GEO, 15, unknown, SplitDistance)						// Unknown, not found anywhere
+	CONFIG_ENTRY(PS, PER_GEO, 16, float4, SSRParams)
+	CONFIG_ENTRY(PS, PER_GEO, 17, float4, WorldMapOverlayParametersPS)
+	CONFIG_ENTRY(PS, PER_GEO, 18, unknown, AmbientColor)						// Unknown, not found anywhere
 );
 
 //
@@ -82,6 +86,7 @@ DEFINE_SHADER_DESCRIPTOR(
 // - Global variables eliminated in each Setup/Restore function
 // - A lock is held in GeometrySetupMTLandExtraConstants()
 // - "Bones" and "IndexScale" vertex constants are not used in the game (undefined types)
+// - AmbientSpecularTintAndFresnelPower has a bug where it's set in SetupMaterial() rather than SetupGeometry()
 //
 using namespace DirectX;
 using namespace BSGraphics;
@@ -419,8 +424,8 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 		MatSetMultiTextureLandOverrides(m);
 
-		if (m->spUnknownTexture2)
-			MatSetTextureSlot(15, m->spUnknownTexture2, m);
+		if (m->spTerrainNoiseTexture)
+			MatSetTextureSlot(15, m->spTerrainNoiseTexture, m);
 
 		setDiffuseNormalSamplers = false;
 
@@ -1208,9 +1213,9 @@ void BSLightingShader::MatSetMultiTextureLandOverrides(const BSLightingShaderMat
 		renderer->SetTextureAddressMode(i + 8, 3);
 	}
 
-	if (Material->spUnknownTexture1)
+	if (Material->spTerrainOverlayTexture)
 	{
-		renderer->SetTexture(13, Material->spUnknownTexture1);
+		renderer->SetTexture(13, Material->spTerrainOverlayTexture);
 		renderer->SetTextureAddressMode(13, 0);
 	}
 }

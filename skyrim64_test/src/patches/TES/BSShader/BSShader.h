@@ -189,7 +189,7 @@ public:
 	static ShaderDescriptor::DeclType GetVariableCategory(uint32_t Type, const char *Name);
 	static const char *GetVSConstantName(uint32_t Type, uint32_t Index);
 	static const char *GetPSConstantName(uint32_t Type, uint32_t Index);
-	static const char *GetPSSamplerName(uint32_t Type, uint32_t Index);
+	static const char *GetPSSamplerName(uint32_t Type, uint32_t Index, uint32_t TechniqueID);
 
 	uint32_t m_Type;
 	TechniqueIDMap<BSGraphics::VertexShader *> m_VertexShaderTable;

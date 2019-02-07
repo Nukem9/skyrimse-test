@@ -512,7 +512,7 @@ void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<Pa
 		// Samplers
 		for (int i = 0;; i++)
 		{
-			const char *name = BSShader::GetPSSamplerName(m_Type, i/*, m_Shader->m_TechniqueID*/);
+			const char *name = BSShader::GetPSSamplerName(m_Type, i, m_Shader->m_TechniqueID);
 
 			if (!name || strstr(name, "Add-your-"))
 				break;

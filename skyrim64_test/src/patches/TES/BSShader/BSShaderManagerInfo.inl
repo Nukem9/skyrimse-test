@@ -517,98 +517,34 @@ namespace BSXShader
 
 namespace BSLightingShader
 {
-	namespace PSConstants
-	{
-		static const char *GetString(int Index)
-		{
-			switch (Index)
-			{
-			case 0:return "NumLightNumShadowLight";
-			case 1:return "PointLightPosition";
-			case 2:return "PointLightColor";
-			case 3:return "DirLightDirection";
-			case 4:return "DirLightColor";
-			case 5:return "DirectionalAmbient";
-			case 6:return "AmbientSpecularTintAndFresnelPower";
-			case 7:return "MaterialData";
-			case 8:return "EmitColor";
-			case 9:return "AlphaTestRef";
-			case 10:return "ShadowLightMaskSelect";
-			case 11:return "VPOSOffset";
-			case 12:return "ProjectedUVParams";
-			case 13:return "ProjectedUVParams2";
-			case 14:return "ProjectedUVParams3";
-			case 15:return "SplitDistance";
-			case 16:return "SSRParams";
-			case 17:return "WorldMapOverlayParametersPS";
-			case 18:return "AmbientColor";
-			case 19:return "FogColor";
-			case 20:return "ColourOutputClamp";
-			case 21:return "EnvmapData";
-			case 22:return "ParallaxOccData";
-			case 23:return "TintColor";
-			case 24:return "LODTexParams";
-			case 25:return "SpecularColor";
-			case 26:return "SparkleParams";
-			case 27:return "MultiLayerParallaxData";
-			case 28:return "LightingEffectParams";
-			case 29:return "IBLParams";
-			case 30:return "LandscapeTexture1to4IsSnow";
-			case 31:return "LandscapeTexture5to6IsSnow";
-			case 32:return "LandscapeTexture1to4IsSpecPower";
-			case 33:return "LandscapeTexture5to6IsSpecPower";
-			case 34:return "SnowRimLightParameters";
-			case 35:return "CharacterLightParams";
-			}
-
-			return BSSM_PLACEHOLDER;
-		}
-
-		static int GetSize(int Index, uint32_t Technique)
-		{
-			int v2 = 1;
-
-			// PointLightPosition/PointLightColor variable size array
-			if ((unsigned int)(Index - 1) <= 1)
-				v2 = (Technique >> 3) & 7;
-
-			switch (Index)
-			{
-			case 5:
-				return 3;
-			case 6:
-			case 16:
-			case 17:
-			case 18:
-			case 19:
-			case 20:
-			case 21:
-			case 22:
-			case 23:
-			case 24:
-			case 25:
-			case 26:
-			case 27:
-			case 28:
-			case 29:
-			case 30:
-			case 31:
-			case 32:
-			case 33:
-			case 34:
-			case 35:
-				return 0;
-			}
-
-			return v2;
-		}
-	}
-
 	namespace Samplers
 	{
 		static const char *GetString(int Index, uint32_t Technique)
 		{
 			uint32_t subType = (Technique >> 24) & 0x3F;
+
+			if (subType == 8 || subType == 19)
+			{
+				switch (Index)
+				{
+				case 0:return "MTLandDiffuseBase";
+				case 1:return "MTLandDiffuse1";
+				case 2:return "MTLandDiffuse2";
+				case 3:return "MTLandDiffuse3";
+				case 4:return "MTLandDiffuse4";
+				case 5:return "MTLandDiffuse5";
+				case 6:return "Unknown";
+				case 7:return "MTLandNormalBase";
+				case 8:return "MTLandNormal1";
+				case 9:return "MTLandNormal2";
+				case 10:return "MTLandNormal3";
+				case 11:return "MTLandNormal4";
+				case 12:return "MTLandNormal5";
+				case 13:return "MTLandTerrainOverlayTexture";
+				case 14:return "Unknown";
+				case 15:return "MTLandTerrainNoiseTexture";
+				}
+			}
 
 			if (TEST_BIT(18))
 			{
