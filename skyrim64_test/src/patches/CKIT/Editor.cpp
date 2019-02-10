@@ -440,25 +440,22 @@ void EndUIDefer()
 		RedrawWindow(g_DeferredListView, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
 	}
 
-	if (g_DeferredMenuItems.size() > 0)
+	if (!g_DeferredMenuItems.empty())
 	{
 		const HWND control = g_DeferredComboBox;
 
 		SendMessage(control, WM_SETREDRAW, FALSE, 0);// Prevent repainting until finished
 		SendMessage(control, CB_SETMINVISIBLE, 1, 0);// Possible optimization for older libraries (source: MSDN forums)
 
-		// Sort alphabetically if requested, but do it manually instead of on every new item insertion
+		// Sort alphabetically if requested to try and speed up inserts
 		LONG_PTR style = GetWindowLongPtr(control, GWL_STYLE);
 
 		if ((style & CBS_SORT) == CBS_SORT)
 		{
-			LONG_PTR newStyle = SetWindowLongPtr(control, GWL_STYLE, style & ~CBS_SORT);
-			Assert(newStyle != 0);
-
 			std::sort(g_DeferredMenuItems.begin(), g_DeferredMenuItems.end(),
 				[](const std::pair<const char *, void *>& a, const std::pair<const char *, void *>& b) -> bool
 			{
-				return strcmp(a.first, b.first) < 0;
+				return _stricmp(a.first, b.first) > 0;
 			});
 		}
 
@@ -466,7 +463,7 @@ void EndUIDefer()
 		SendMessage(control, CB_INITSTORAGE, g_DeferredMenuItems.size(), g_DeferredStringLength * sizeof(char));
 		{
 			HDC hdc = GetDC(control);
-			uint32_t boxWidth = 0;
+			int boxWidth = 0;
 
 			Assert(hdc);
 
@@ -479,7 +476,7 @@ void EndUIDefer()
 					SendMessageA(control, CB_SETITEMDATA, index, (LPARAM)value);
 
 				if (g_AllowResize && GetTextExtentPoint32A(hdc, display, (int)strlen(display), &size))
-					boxWidth = std::max<uint32_t>(boxWidth, size.cx);
+					boxWidth = std::max<int>(boxWidth, size.cx);
 
 				free((void *)display);
 			}
@@ -495,10 +492,6 @@ void EndUIDefer()
 
 			ReleaseDC(control, hdc);
 		}
-
-		// Restore original style
-		if ((style & CBS_SORT) == CBS_SORT)
-			SetWindowLongPtr(control, GWL_STYLE, style);
 
 		SendMessage(control, CB_SETMINVISIBLE, 30, 0);
 		SendMessage(control, WM_SETREDRAW, TRUE, 0);
@@ -520,7 +513,7 @@ void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, void *Valu
 		AssertMsg(!g_DeferredComboBox || (g_DeferredComboBox == ComboBoxHandle), "Got handles to different combo boxes? Reset probably wasn't called.");
 
 		g_DeferredComboBox = ComboBoxHandle;
-		g_DeferredStringLength += strlen(DisplayText);
+		g_DeferredStringLength += strlen(DisplayText) + 1;
 		g_AllowResize |= AllowResize;
 
 		// A copy must be created since lifetime isn't guaranteed after this function returns
