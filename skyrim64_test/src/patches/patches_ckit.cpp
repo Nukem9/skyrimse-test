@@ -254,6 +254,7 @@ void Patch_TESVCreationKit()
 		XUtil::DetourJump(g_ModuleBase + 0x20A9710, &CSScript_PickScriptsToCompileDlg_WindowMessage);
 		XUtil::DetourJump(g_ModuleBase + 0x1985F20, &SortDialogueInfo);
 		XUtil::DetourCall(g_ModuleBase + 0x12C8B63, &UpdateObjectWindowTreeView);
+		XUtil::DetourCall(g_ModuleBase + 0x13E117C, &UpdateCellViewListView);
 
 		// Disable useless "Processing Topic X..." status bar updates
 		XUtil::PatchMemory(g_ModuleBase + 0x199DE29, (PBYTE)"\x90\x90\x90\x90\x90", 5);
