@@ -347,6 +347,8 @@ void Patch_TESVCreationKit()
 	// Kill broken destructors causing crashes on exit
 	//
 	XUtil::DetourCall(g_ModuleBase + 0x13F3370, &QuitHandler);
+	XUtil::DetourCall(g_ModuleBase + 0x2E54B7E, &QuitHandler);
+	XUtil::DetourCall(g_ModuleBase + 0x2E54B88, &QuitHandler);
 
 	//
 	// Fix crash when loading new CC ESLs as master files
