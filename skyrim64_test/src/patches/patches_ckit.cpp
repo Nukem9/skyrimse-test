@@ -437,6 +437,13 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(g_ModuleBase + 0x1C26F3A, &hk_call_141C26F3A);
 
 	//
+	// Fix for broken terrain edit dialog undo functionality (Incorrectly removing elements from a linked list, still contains a memory leak)
+	//
+	XUtil::PatchMemory(g_ModuleBase + 0x143E8CA, (PBYTE)"\x90\x90\x90\x90", 4);
+	XUtil::PatchMemory(g_ModuleBase + 0x143EE21, (PBYTE)"\x90\x90\x90\x90", 4);
+	XUtil::PatchMemory(g_ModuleBase + 0x143E87E, (PBYTE)"\x90\x90\x90\x90", 4);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
