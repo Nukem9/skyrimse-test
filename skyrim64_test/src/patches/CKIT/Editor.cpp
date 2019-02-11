@@ -919,7 +919,7 @@ void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
 	sub_1418F5320();
 }
 
-void hk_call_1C68FA6(class TESForm *DialogForm, __int64 Unused)
+void hk_call_141C68FA6(class TESForm *DialogForm, __int64 Unused)
 {
 	auto *waterRoot = TESWaterRoot::Singleton();
 
@@ -931,4 +931,12 @@ void hk_call_1C68FA6(class TESForm *DialogForm, __int64 Unused)
 		if (currentFormId == baseFormId)
 			((void(__fastcall *)(class TESForm *, class BSShaderMaterial *))(g_ModuleBase + 0x1C62AA0))(DialogForm, waterRoot->m_WaterObjects[i]->m_TriShape->QShaderProperty()->pMaterial);
 	}
+}
+
+void *hk_call_141C26F3A(void *a1)
+{
+	if (!a1)
+		return nullptr;
+
+	return ((void *(__fastcall *)(void *))(g_ModuleBase + 0x1BA5C60))(a1);
 }

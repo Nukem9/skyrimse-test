@@ -57,8 +57,6 @@ void Patch_TESVCreationKit()
 		fclose(f);
 	}
 
-	XUtil::DetourCall(g_ModuleBase + 0x1C26F3A, &testfunction);
-
 	//
 	// Replace broken crash dump functionality
 	//
@@ -427,9 +425,14 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for "Water Type" window options not updating water in the "Render Window" preview
 	//
-	XUtil::DetourCall(g_ModuleBase + 0x1C68FA6, &hk_call_1C68FA6);
+	XUtil::DetourCall(g_ModuleBase + 0x1C68FA6, &hk_call_141C68FA6);
 	XUtil::PatchMemory(g_ModuleBase + 0x1C68F93, (PBYTE)"\x90\x90", 2);
 	XUtil::PatchMemory(g_ModuleBase + 0x1C62AD8, (PBYTE)"\xEB", 1);
+
+	//
+	// Fix for crash when duplicating worldspaces
+	//
+	XUtil::DetourCall(g_ModuleBase + 0x1C26F3A, &hk_call_141C26F3A);
 
 	//
 	// Plugin loading optimizations:
