@@ -81,3 +81,5 @@ void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entr
 
 void FaceGenOverflowWarning(__int64 Texture);
 void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2);
+
+void hk_call_1C68FA6(class TESForm *DialogForm, __int64 Unused);

@@ -1,14 +1,14 @@
 #include <libdeflate/libdeflate.h>
 #include <mutex>
-#include <xmmintrin.h>
 #include <smmintrin.h>
 #include <windows.h>
 #include <CommCtrl.h>
 #include "../../common.h"
+#include "../TES/NiMain/BSTriShape.h"
+#include "../TES/BSShader/BSShaderProperty.h"
 #include "Editor.h"
 #include "EditorUI.h"
-
-extern "C" IMAGE_DOS_HEADER __ImageBase;
+#include "TESWater.h"
 
 #pragma comment(lib, "libdeflate.lib")
 
@@ -917,4 +917,18 @@ void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
 	// Done => unpatch it
 	XUtil::PatchMemory(g_ModuleBase + 0x18F4D4A, (PBYTE)"\xE8\x98\xDA\x6F\xFF", 5);
 	sub_1418F5320();
+}
+
+void hk_call_1C68FA6(class TESForm *DialogForm, __int64 Unused)
+{
+	auto *waterRoot = TESWaterRoot::Singleton();
+
+	for (uint32_t i = 0; i < waterRoot->m_WaterObjects.QSize(); i++)
+	{
+		uint32_t currentFormId = *(uint32_t *)((uintptr_t)DialogForm + 0x14);
+		uint32_t baseFormId = *(uint32_t *)((uintptr_t)waterRoot->m_WaterObjects[i]->m_BaseWaterForm + 0x14);
+
+		if (currentFormId == baseFormId)
+			((void(__fastcall *)(class TESForm *, class BSShaderMaterial *))(g_ModuleBase + 0x1C62AA0))(DialogForm, waterRoot->m_WaterObjects[i]->m_TriShape->QShaderProperty()->pMaterial);
+	}
 }

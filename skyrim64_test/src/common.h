@@ -50,6 +50,8 @@ extern __itt_heap_function ITT_FreeCallback;
 #include "dump.h"
 #include "profiler.h"
 
+extern "C" IMAGE_DOS_HEADER __ImageBase;
+
 extern INIReader g_INI;
 
 extern uintptr_t g_ModuleBase;

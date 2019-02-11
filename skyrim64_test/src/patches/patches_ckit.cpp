@@ -425,6 +425,13 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(g_ModuleBase + 0x2B37750, &BNetConvertUnicodeString);
 
 	//
+	// Fix for "Water Type" window options not updating water in the "Render Window" preview
+	//
+	XUtil::DetourCall(g_ModuleBase + 0x1C68FA6, &hk_call_1C68FA6);
+	XUtil::PatchMemory(g_ModuleBase + 0x1C68F93, (PBYTE)"\x90\x90", 2);
+	XUtil::PatchMemory(g_ModuleBase + 0x1C62AD8, (PBYTE)"\xEB", 1);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
