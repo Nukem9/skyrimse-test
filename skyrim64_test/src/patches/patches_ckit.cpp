@@ -444,6 +444,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x143E87E, (PBYTE)"\x90\x90\x90\x90", 4);
 
 	//
+	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
+	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
+	//
+	XUtil::DetourCall(g_ModuleBase + 0x12DC59D, &hk_sub_140FEC464);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

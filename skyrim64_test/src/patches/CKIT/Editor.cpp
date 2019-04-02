@@ -940,3 +940,27 @@ void *hk_call_141C26F3A(void *a1)
 
 	return ((void *(__fastcall *)(void *))(g_ModuleBase + 0x1BA5C60))(a1);
 }
+
+uint32_t hk_sub_140FEC464(__int64 a1, uint32_t a2, bool a3)
+{
+	// a1 is NiPick::Results (NiTPrimitiveArray<NiPick::Record>)
+	for (uint32_t i = a2; i < *(uint32_t *)(a1 + 0x18); i++)
+	{
+		uint32_t recordIndex = ((uint32_t(__fastcall *)(__int64, uint32_t, bool))(g_ModuleBase + 0x12E4740))(a1, i, a3);
+
+		if (recordIndex == 0xFFFFFFFF)
+			continue;
+
+		__int64 record = ((__int64(__fastcall *)(__int64, uint32_t))(g_ModuleBase + 0x12E21E0))(a1, recordIndex);
+		NiObject *object = *(NiObject **)record;
+
+		// If possible, avoiding picking any object of type BSDynamicTriShape
+		if (object->IsExactKindOf(NiRTTI::ms_BSDynamicTriShape))
+			continue;
+
+		return recordIndex;
+	}
+
+	// Fallback if BSDynamicTriShape can't be avoided
+	return ((uint32_t(__fastcall *)(__int64, uint32_t, bool))(g_ModuleBase + 0x12E4740))(a1, a2, a3);
+}

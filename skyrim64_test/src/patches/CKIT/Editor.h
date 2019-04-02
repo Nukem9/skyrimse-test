@@ -84,3 +84,4 @@ void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2);
 
 void hk_call_141C68FA6(class TESForm *DialogForm, __int64 Unused);
 void *hk_call_141C26F3A(void *a1);
+uint32_t hk_sub_140FEC464(__int64 a1, uint32_t a2, bool a3);
