@@ -739,7 +739,7 @@ void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFuncti
 	}
 }
 
-bool BSShaderResourceManager::FindIntersectionsTriShapeFastPath(class NiPoint3 *P1, class NiPoint3 *P2, class NiPick *Pick, class BSTriShape *Shape)
+bool BSShaderResourceManager::FindIntersectionsTriShapeFastPath(class NiPoint3 *Origin, class NiPoint3 *Dir, class NiPick *Pick, class BSTriShape *Shape)
 {
 	// Pretend this is a regular BSTriShape when using BSMultiIndexTriShape
 	uint8_t& type = *(uint8_t *)((uintptr_t)Shape + 0x150);
@@ -748,7 +748,7 @@ bool BSShaderResourceManager::FindIntersectionsTriShapeFastPath(class NiPoint3 *
 	if (type == 7)
 		type = 3;
 
-	bool result = ((bool(__thiscall *)(void *, void *, void *, void *, void *))(g_ModuleBase + 0x2E17BE0))(this, P1, P2, Pick, Shape);
+	bool result = ((bool(__thiscall *)(void *, void *, void *, void *, void *))(g_ModuleBase + 0x2E17BE0))(this, Origin, Dir, Pick, Shape);
 
 	if (oldType == 7)
 		type = 7;

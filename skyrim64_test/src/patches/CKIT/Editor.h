@@ -47,7 +47,7 @@ class IRendererResourceManager
 class BSShaderResourceManager : public IRendererResourceManager
 {
 public:
-	bool FindIntersectionsTriShapeFastPath(class NiPoint3 *P1, class NiPoint3 *P2, class NiPick *Pick, class BSTriShape *Shape);
+	bool FindIntersectionsTriShapeFastPath(class NiPoint3 *Origin, class NiPoint3 *Dir, class NiPick *Pick, class BSTriShape *Shape);
 };
 
 struct PerkRankEntry
