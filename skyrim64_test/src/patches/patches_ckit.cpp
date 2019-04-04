@@ -160,11 +160,11 @@ void Patch_TESVCreationKit()
 
 	// Don't produce DDS files
 	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportDDS", false))
-		XUtil::PatchMemory(g_ModuleBase + 0x1904318, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x1904318, 5);
 
 	// Don't produce TGA files
 	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportTGA", false))
-		XUtil::PatchMemory(g_ModuleBase + 0x190436B, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x190436B, 5);
 
 	// Don't produce NIF files
 	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableExportNIF", false))
@@ -249,10 +249,10 @@ void Patch_TESVCreationKit()
 		EditorUI_Initialize();
 		*(PBYTE *)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3770), &EditorUI_WndProc);
 
-		XUtil::PatchMemory(g_ModuleBase + 0x1434473, (PBYTE)"\x90\x90", 2);	// Force bShowReloadShadersButton to always be enabled
-		XUtil::PatchMemory(g_ModuleBase + 0x1487B69, (PBYTE)"\x90\x90", 2);	// Enable push to game button even if version control is disabled
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x1434473, 2);				// Force bShowReloadShadersButton to always be enabled
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x1487B69, 2);				// Enable push to game button even if version control is disabled
 		XUtil::PatchMemory(g_ModuleBase + 0x1487B7C, (PBYTE)"\xEB", 1);
-		XUtil::PatchMemory(g_ModuleBase + 0x16179C0, (PBYTE)"\xC3", 1);		// Disable "MEM_CATEGORY_X" log spam
+		XUtil::PatchMemory(g_ModuleBase + 0x16179C0, (PBYTE)"\xC3", 1);	// Disable "MEM_CATEGORY_X" log spam
 
 		XUtil::DetourJump(g_ModuleBase + 0x1256600, &EditorUI_Warning);
 		XUtil::DetourJump(g_ModuleBase + 0x243D610, &EditorUI_Warning);
@@ -279,9 +279,9 @@ void Patch_TESVCreationKit()
 		XUtil::DetourCall(g_ModuleBase + 0x13E117C, &UpdateCellViewListView);
 
 		// Disable useless "Processing Topic X..." status bar updates
-		XUtil::PatchMemory(g_ModuleBase + 0x199DE29, (PBYTE)"\x90\x90\x90\x90\x90", 5);
-		XUtil::PatchMemory(g_ModuleBase + 0x199EA9E, (PBYTE)"\x90\x90\x90\x90\x90", 5);
-		XUtil::PatchMemory(g_ModuleBase + 0x199DA62, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x199DE29, 5);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x199EA9E, 5);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x199DA62, 5);
 	}
 
 	//
@@ -292,11 +292,11 @@ void Patch_TESVCreationKit()
 		// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
 		const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
 
-		XUtil::PatchMemory(g_ModuleBase + 0x164020A, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x164020A, 12);
 		XUtil::PatchMemory(g_ModuleBase + 0x30B9090, (PBYTE)newFormat, strlen(newFormat) + 1);
 
 		// Also allow ESM's to be set as "Active File"
-		XUtil::PatchMemory(g_ModuleBase + 0x13E2D45, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x13E2D45, 5);
 
 		XUtil::DetourJump(g_ModuleBase + 0x1482DA0, &OpenPluginSaveDialog);
 	}
@@ -306,7 +306,7 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "AllowMasterESP", false))
 	{
-		XUtil::PatchMemory(g_ModuleBase + 0x1657279, (PBYTE)"\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 12);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x1657279, 12);
 	}
 
 	//
@@ -327,7 +327,7 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "DisableAssertions", false))
 	{
-		XUtil::PatchMemory(g_ModuleBase + 0x243D9FE, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x243D9FE, 5);
 	}
 
 	//
@@ -411,7 +411,7 @@ void Patch_TESVCreationKit()
 	//
 	// Fix use-after-free with a NavMeshInfoMap inserted in the altered forms list during a virtual destructor call
 	//
-	XUtil::PatchMemory(g_ModuleBase + 0x1DD1D38, (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x1DD1D38, 6);
 
 	//
 	// Fix crash when using more than 16 NPC face tint masks during FaceGen
@@ -428,7 +428,7 @@ void Patch_TESVCreationKit()
 	// Fix for "Water Type" window options not updating water in the "Render Window" preview
 	//
 	XUtil::DetourCall(g_ModuleBase + 0x1C68FA6, &hk_call_141C68FA6);
-	XUtil::PatchMemory(g_ModuleBase + 0x1C68F93, (PBYTE)"\x90\x90", 2);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x1C68F93, 2);
 	XUtil::PatchMemory(g_ModuleBase + 0x1C62AD8, (PBYTE)"\xEB", 1);
 
 	//
@@ -439,9 +439,9 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for broken terrain edit dialog undo functionality (Incorrectly removing elements from a linked list, still contains a memory leak)
 	//
-	XUtil::PatchMemory(g_ModuleBase + 0x143E8CA, (PBYTE)"\x90\x90\x90\x90", 4);
-	XUtil::PatchMemory(g_ModuleBase + 0x143EE21, (PBYTE)"\x90\x90\x90\x90", 4);
-	XUtil::PatchMemory(g_ModuleBase + 0x143E87E, (PBYTE)"\x90\x90\x90\x90", 4);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x143E8CA, 4);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x143EE21, 4);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x143E87E, 4);
 
 	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer

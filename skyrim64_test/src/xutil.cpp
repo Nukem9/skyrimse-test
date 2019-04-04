@@ -173,6 +173,18 @@ void XUtil::PatchMemory(uintptr_t Address, uint8_t *Data, size_t Size)
 	FlushInstructionCache(GetCurrentProcess(), (LPVOID)Address, Size);
 }
 
+void XUtil::PatchMemoryNop(uintptr_t Address, size_t Size)
+{
+	DWORD d = 0;
+	VirtualProtect((LPVOID)Address, Size, PAGE_EXECUTE_READWRITE, &d);
+
+	for (uintptr_t i = Address; i < (Address + Size); i++)
+		* (volatile uint8_t*)i = 0x90;
+
+	VirtualProtect((LPVOID)Address, Size, d, &d);
+	FlushInstructionCache(GetCurrentProcess(), (LPVOID)Address, Size);
+}
+
 void XUtil::DetourJump(uintptr_t Target, uintptr_t Destination)
 {
 	Detours::X64::DetourFunction((uint8_t *)Target, (uint8_t *)Destination);
