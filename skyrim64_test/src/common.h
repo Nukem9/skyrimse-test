@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <vector>
+#include <unordered_map>
 #include <algorithm>
 #include <windows.h>
 #include <d3d11.h>

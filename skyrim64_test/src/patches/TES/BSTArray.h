@@ -77,16 +77,14 @@ public:
 
 	reference at(const size_type Pos)
 	{
-		if (Pos < 0 || Pos >= QSize())
-			throw std::out_of_range("Exceeded array bounds");
+		AssertMsg(Pos >= 0 && Pos < QSize(), "Exceeded array bounds");
 
 		return (this->_Myfirst()[Pos]);
 	}
 
 	const_reference at(const size_type Pos) const
 	{
-		if (Pos < 0 || Pos >= QSize())
-			throw std::out_of_range("Exceeded array bounds");
+		AssertMsg(Pos >= 0 && Pos < QSize(), "Exceeded array bounds");
 
 		return (this->_Myfirst()[Pos]);
 	}
