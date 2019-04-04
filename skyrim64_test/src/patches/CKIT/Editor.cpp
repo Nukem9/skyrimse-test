@@ -812,3 +812,20 @@ void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3)
 
 	((void(__fastcall *)())(g_ModuleBase + 0x2E2EEB0))();
 }
+
+void *hk_call_1417E42BF(void *a1)
+{
+	// Patch flowchartx64.dll every time - it's a COM dll and I have no idea if it gets reloaded
+	uintptr_t flowchartBase = (uintptr_t)GetModuleHandleA("flowchartx64.dll");
+
+	if (flowchartBase)
+	{
+		AssertMsg(*(uint8_t *)(flowchartBase + 0x5FF89) == 0x48 && *(uint8_t *)(flowchartBase + 0x5FF8A) == 0x8B, "Unknown FlowChartX64.dll version");
+
+		// Prevent the XML element <Tag Type="14">16745094784</Tag> from being written
+		XUtil::PatchMemoryNop(flowchartBase + 0x5FF9A, 60);
+	}
+
+	// Return null so the branch directly after is never taken
+	return nullptr;
+}

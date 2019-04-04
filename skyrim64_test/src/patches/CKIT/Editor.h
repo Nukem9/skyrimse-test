@@ -79,3 +79,4 @@ void hk_call_141C68FA6(class TESForm *DialogForm, __int64 Unused);
 void *hk_call_141C26F3A(void *a1);
 uint32_t hk_sub_140FEC464(__int64 a1, uint32_t a2, bool a3);
 void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3);
+void *hk_call_1417E42BF(void *a1);
