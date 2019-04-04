@@ -339,6 +339,28 @@ void Patch_TESVCreationKit()
 	}
 
 	//
+	// Re-enable fog rendering in the Render Window by forcing post-process effects (SAO/SAOComposite/SAOFog)
+	//
+	if (g_INI.GetBoolean("CreationKit", "RenderWindowFog", false))
+	{
+		XUtil::DetourCall(g_ModuleBase + 0x13CDC32, &hk_sub_141032ED7);
+		XUtil::DetourCall(g_ModuleBase + 0x13CDEDF, &hk_sub_141032ED7);
+		XUtil::DetourCall(g_ModuleBase + 0x13CE164, &hk_sub_141032ED7);
+		XUtil::DetourCall(g_ModuleBase + 0x13CE36D, &hk_sub_141032ED7);
+
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x2E2EFAF, 4);		// Pointer always null
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x2E2F0AE, 5);		// Pointer always null (second parameter)
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x2E2F270, 5);		// Pointer always null (second parameter)
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x2E2F275, 38);	// Assert always triggers
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x2E2F29B, 41);	// Assert always triggers
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x2E2F2C4, 22);	// Multiple null pointers in call
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x2E2F2E4, 546);	// Remove most of the useless stuff in the function
+
+		XUtil::PatchMemory(g_ModuleBase + 0x2E2BC50, (PBYTE)"\xC3", 1);// Pointer always null (Godrays? TAA?)
+		XUtil::PatchMemory(g_ModuleBase + 0x2E2BAF0, (PBYTE)"\xC3", 1);// Pointer always null (Godrays? TAA?)
+	}
+
+	//
 	// Fix crash while trying to upload BNet mods with existing archives
 	//
 	XUtil::DetourJump(g_ModuleBase + 0x12BE530, &IsBSAVersionCurrent);

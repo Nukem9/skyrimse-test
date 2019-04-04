@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <CommCtrl.h>
 #include "../../common.h"
+#include "../TES/MemoryManager.h"
 #include "../TES/NiMain/BSTriShape.h"
 #include "../TES/BSShader/BSShaderProperty.h"
 #include "Editor.h"
@@ -963,4 +964,22 @@ uint32_t hk_sub_140FEC464(__int64 a1, uint32_t a2, bool a3)
 
 	// Fallback if BSDynamicTriShape can't be avoided
 	return ((uint32_t(__fastcall *)(__int64, uint32_t, bool))(g_ModuleBase + 0x12E4740))(a1, a2, a3);
+}
+
+void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3)
+{
+	// Draw objects in the render window normally
+	((void(__fastcall*)(__int64, __int64, __int64))(g_ModuleBase + 0x2DAAC80))(a1, a2, a3);
+
+	// Then do post-process SAO (Fog) ("Draw WorldRoot")
+	AutoPtr(uintptr_t, qword_145A11B28, 0x5A11B28);
+	AutoPtr(uintptr_t, qword_145A11B38, 0x5A11B38);
+
+	if (!qword_145A11B28)
+		qword_145A11B28 = (uintptr_t)MemoryManager::Alloc(nullptr, 4096, 8, true);// Fake BSFadeNode
+
+	if (!qword_145A11B38)
+		qword_145A11B38 = (uintptr_t)MemoryManager::Alloc(nullptr, 4096, 8, true);// Fake SceneGraph
+
+	((void(__fastcall*)())(g_ModuleBase + 0x2E2EEB0))();
 }
