@@ -184,7 +184,7 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(g_ModuleBase + 0x13C4C80, &IsLipDataPresent);
 	XUtil::DetourJump(g_ModuleBase + 0x1791240, &WriteLipData);
 	XUtil::DetourCall(g_ModuleBase + 0x13D5443, &IsWavDataPresent);
-	XUtil::DetourJump(g_ModuleBase + 0x13D29B0, &LipRecordDialogProc);
+	XUtil::DetourJump(g_ModuleBase + 0x13D29B0, &EditorUI_LipRecordDialogProc);
 
 	//
 	// MemoryManager
@@ -273,7 +273,7 @@ void Patch_TESVCreationKit()
 		PatchTemplatedFormIterator();
 		XUtil::DetourJump(g_ModuleBase + 0x13B9AD0, &InsertComboBoxItem);
 		XUtil::DetourJump(g_ModuleBase + 0x13BA4D0, &InsertListViewItem);
-		XUtil::DetourJump(g_ModuleBase + 0x20A9710, &CSScript_PickScriptsToCompileDlg_WindowMessage);
+		XUtil::DetourJump(g_ModuleBase + 0x20A9710, &EditorUI_CSScript_PickScriptsToCompileDlgProc);
 		XUtil::DetourJump(g_ModuleBase + 0x1985F20, &SortDialogueInfo);
 		XUtil::DetourCall(g_ModuleBase + 0x12C8B63, &UpdateObjectWindowTreeView);
 		XUtil::DetourCall(g_ModuleBase + 0x13E117C, &UpdateCellViewListView);
@@ -392,9 +392,9 @@ void Patch_TESVCreationKit()
 	//
 	// Fix the "Cell View" object list current selection not being synced with the render window
 	//
-	XUtil::DetourJump(g_ModuleBase + 0x13BB720, &ListViewUnselectItem);
-	XUtil::DetourJump(g_ModuleBase + 0x13BB650, &ListViewSelectItem);
-	XUtil::DetourJump(g_ModuleBase + 0x13BB590, &ListViewFindAndSelectItem);
+	XUtil::DetourJump(g_ModuleBase + 0x13BB650, &EditorUI_ListViewSelectItem);
+	XUtil::DetourJump(g_ModuleBase + 0x13BB590, &EditorUI_ListViewFindAndSelectItem);
+	XUtil::DetourJump(g_ModuleBase + 0x13BB720, &EditorUI_ListViewDeselectItem);
 
 	//
 	// Fix TESModelTextureSwap being incorrectly loaded (Record typo: 'MODS' -> 'MO5S')

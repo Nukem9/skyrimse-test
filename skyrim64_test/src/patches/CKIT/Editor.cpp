@@ -249,52 +249,6 @@ int IsWavDataPresent(const char *Path, __int64 a2, __int64 a3, __int64 a4)
 	return ((int(__fastcall *)(const char *, __int64, __int64, __int64))(g_ModuleBase + 0x264D120))("Sound\\Voice\\Temp.wav", a2, a3, a4);
 }
 
-INT_PTR CALLBACK LipRecordDialogProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	// Id's for "Recording..." dialog window
-	switch (msg)
-	{
-	case WM_APP:
-		// Don't actually kill the dialog, just hide it. It gets destroyed later when the parent window closes.
-		SendMessageA(GetDlgItem(hDlg, 31007), PBM_SETPOS, 0, 0);
-		ShowWindow(hDlg, SW_HIDE);
-		PostQuitMessage(0);
-		return TRUE;
-
-	case 272:
-		// OnSaveSoundFile
-		SendMessageA(GetDlgItem(hDlg, 31007), PBM_SETRANGE, 0, 32768 * 1000);
-		SendMessageA(GetDlgItem(hDlg, 31007), PBM_SETSTEP, 1, 0);
-		return TRUE;
-
-	case 273:
-		// Stop recording
-		if (LOWORD(wParam) != 1)
-			return FALSE;
-
-		*(bool *)(g_ModuleBase + 0x3AFAE28) = false;
-
-		if (FAILED(((HRESULT(__fastcall *)(bool))(g_ModuleBase + 0x13D5310))(false)))
-			MessageBoxA(hDlg, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
-
-		return LipRecordDialogProc(hDlg, WM_APP, 0, 0);
-
-	case 1046:
-		// Start recording
-		ShowWindow(hDlg, SW_SHOW);
-		*(bool *)(g_ModuleBase + 0x3AFAE28) = true;
-
-		if (FAILED(((HRESULT(__fastcall *)(bool))(g_ModuleBase + 0x13D5310))(true)))
-		{
-			MessageBoxA(hDlg, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
-			return LipRecordDialogProc(hDlg, WM_APP, 0, 0);
-		}
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
 std::vector<std::string> g_CCEslNames;
 
 void ParseCreationClubContentFile()
@@ -635,80 +589,9 @@ void PatchTemplatedFormIterator()
 		if (addr == 0x000000014148C1FF || addr == 0x000000014169DFAD)
 			continue;
 
-		Detours::X64::DetourFunctionClass((PBYTE)addr, &BeginUIDefer);
-		XUtil::PatchMemory(addr, (PBYTE)"\xE8", 1);
-		Detours::X64::DetourFunctionClass((PBYTE)end, &EndUIDefer);
-		XUtil::PatchMemory(end, (PBYTE)"\xE8", 1);
+		XUtil::DetourCall(addr, &BeginUIDefer);
+		XUtil::DetourCall(end, &EndUIDefer);
 	}
-}
-
-LRESULT CSScript_PickScriptsToCompileDlg_WindowMessage(void *Thisptr, UINT Message, WPARAM WParam, LPARAM LParam)
-{
-	thread_local bool disableListViewUpdates;
-
-	auto updateListViewItems = [Thisptr]
-	{
-		if (!disableListViewUpdates)
-			((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9870))(Thisptr);
-	};
-
-	switch (Message)
-	{
-	case WM_SIZE:
-		((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9CF0))(Thisptr);
-		break;
-
-	case WM_NOTIFY:
-	{
-		LPNMHDR notification = (LPNMHDR)LParam;
-
-		// "SysListView32" control
-		if (notification->idFrom == 5401 && notification->code == LVN_ITEMCHANGED)
-		{
-			updateListViewItems();
-			return 1;
-		}
-	}
-	break;
-
-	case WM_INITDIALOG:
-		disableListViewUpdates = true;
-		((void(__fastcall *)(void *))(g_ModuleBase + 0x20A99C0))(Thisptr);
-		disableListViewUpdates = false;
-
-		// Update it ONCE after everything is inserted
-		updateListViewItems();
-		break;
-
-	case WM_COMMAND:
-	{
-		const uint32_t param = LOWORD(WParam);
-
-		// "Check All", "Uncheck All", "Check All Checked-Out"
-		if (param == 5474 || param == 5475 || param == 5602)
-		{
-			disableListViewUpdates = true;
-			if (param == 5474)
-				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA080))(Thisptr);
-			else if (param == 5475)
-				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA130))(Thisptr);
-			else if (param == 5602)
-				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA1E0))(Thisptr);
-			disableListViewUpdates = false;
-
-			updateListViewItems();
-			return 1;
-		}
-		else if (param == 1)
-		{
-			// "Compile" button
-			((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9F30))(Thisptr);
-		}
-	}
-	break;
-	}
-
-	return ((LRESULT(__fastcall *)(void *, UINT, WPARAM, LPARAM))(g_ModuleBase + 0x20ABD90))(Thisptr, Message, WParam, LParam);
 }
 
 void SortFormArray(BSTArray<class TESForm *> *Array, int(*SortFunction)(const void *, const void *))
@@ -760,60 +643,6 @@ bool BSShaderResourceManager::FindIntersectionsTriShapeFastPath(class NiPoint3 *
 void QuitHandler()
 {
 	TerminateProcess(GetCurrentProcess(), 0);
-}
-
-// Microsoft's implementation of this define is broken
-#define ListView_CustomSetItemState(hwndLV, i, _data, _mask) \
-{\
-	LV_ITEM _macro_lvi;\
-	memset(&_macro_lvi, 0, sizeof(_macro_lvi));\
-	_macro_lvi.mask = LVIF_STATE;\
-	_macro_lvi.stateMask = (_mask);\
-	_macro_lvi.state = (_data);\
-	SNDMSG((hwndLV), LVM_SETITEMSTATE, (WPARAM)(i), (LPARAM)(LV_ITEM *)&_macro_lvi);\
-}
-
-void ListViewUnselectItem(HWND ListViewHandle, void *Parameter)
-{
-	LVFINDINFOA findInfo;
-	memset(&findInfo, 0, sizeof(findInfo));
-
-	findInfo.flags = LVFI_PARAM;
-	findInfo.lParam = (LPARAM)Parameter;
-
-	int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
-
-	if (index != -1)
-		ListView_CustomSetItemState(ListViewHandle, index, 0, LVIS_SELECTED);
-}
-
-void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections)
-{
-	if (!KeepOtherSelections)
-		ListView_CustomSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
-
-	if (ItemIndex != -1)
-	{
-		ListView_EnsureVisible(ListViewHandle, ItemIndex, FALSE);
-		ListView_CustomSetItemState(ListViewHandle, ItemIndex, LVIS_SELECTED, LVIS_SELECTED);
-	}
-}
-
-void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections)
-{
-	if (!KeepOtherSelections)
-		ListView_CustomSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
-
-	LVFINDINFOA findInfo;
-	memset(&findInfo, 0, sizeof(findInfo));
-
-	findInfo.flags = LVFI_PARAM;
-	findInfo.lParam = (LPARAM)Parameter;
-
-	int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
-
-	if (index != -1)
-		ListViewSelectItem(ListViewHandle, index, KeepOtherSelections);
 }
 
 void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value)
@@ -969,7 +798,7 @@ uint32_t hk_sub_140FEC464(__int64 a1, uint32_t a2, bool a3)
 void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3)
 {
 	// Draw objects in the render window normally
-	((void(__fastcall*)(__int64, __int64, __int64))(g_ModuleBase + 0x2DAAC80))(a1, a2, a3);
+	((void(__fastcall *)(__int64, __int64, __int64))(g_ModuleBase + 0x2DAAC80))(a1, a2, a3);
 
 	// Then do post-process SAO (Fog) ("Draw WorldRoot")
 	AutoPtr(uintptr_t, qword_145A11B28, 0x5A11B28);
@@ -981,5 +810,5 @@ void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3)
 	if (!qword_145A11B38)
 		qword_145A11B38 = (uintptr_t)MemoryManager::Alloc(nullptr, 4096, 8, true);// Fake SceneGraph
 
-	((void(__fastcall*)())(g_ModuleBase + 0x2E2EEB0))();
+	((void(__fastcall *)())(g_ModuleBase + 0x2E2EEB0))();
 }

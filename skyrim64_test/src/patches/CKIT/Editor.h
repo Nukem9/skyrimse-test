@@ -17,7 +17,6 @@ bool IsBSAVersionCurrent(class BSFile *File);
 bool IsLipDataPresent(void *Thisptr);
 bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, bool Unknown3);
 int IsWavDataPresent(const char *Path, __int64 a2, __int64 a3, __int64 a4);
-INT_PTR CALLBACK LipRecordDialogProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 uint32_t GetESLMasterCount();
 const char *GetESLMasterName(uint32_t Index);
@@ -35,8 +34,6 @@ void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, void *Valu
 void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex);
 
 void PatchTemplatedFormIterator();
-LRESULT CSScript_PickScriptsToCompileDlg_WindowMessage(void *Thisptr, UINT Message, WPARAM WParam, LPARAM LParam);
-
 void SortFormArray(BSTArray<class TESForm *> *Array, int(*SortFunction)(const void *, const void *));
 void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *));
 
@@ -70,10 +67,6 @@ struct PerkRankEntry
 static_assert(sizeof(PerkRankEntry) == 0x10);
 
 void QuitHandler();
-
-void ListViewUnselectItem(HWND ListViewHandle, void *Parameter);
-void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections);
-void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections);
 
 void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value);
 bool hk_BGSPerkRankArray_sub_14168DF70(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray);

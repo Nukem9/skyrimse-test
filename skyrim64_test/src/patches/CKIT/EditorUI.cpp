@@ -80,9 +80,9 @@ bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu)
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_CLEARLOG, "Clear Log");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING | MF_CHECKED, (UINT_PTR)UI_EXTMENU_AUTOSCROLL, "Autoscroll Log");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
-	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPRTTI, "Dump RTTI data");
-	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI data");
-	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPHAVOKRTTI, "Dump Havok RTTI data");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPRTTI, "Dump RTTI Data");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI Data");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPHAVOKRTTI, "Dump Havok RTTI Data");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_HARDCODEDFORMS, "Save Hardcoded Forms");
 
@@ -139,112 +139,6 @@ bool EditorUI_CreateStdoutListener()
 
 	pipeReader.detach();
 	return true;
-}
-
-void EditorUI_LogVa(const char *Format, va_list Va)
-{
-	char buffer[2048];
-	int len = _vsnprintf_s(buffer, _TRUNCATE, Format, Va);
-
-	if (len <= 0)
-		return;
-
-	if (len >= 2 && buffer[len - 1] != '\n')
-		strcat_s(buffer, "\n");
-
-	// Buffer messages if the window hasn't been created yet
-	static tbb::concurrent_vector<const char *> pendingMessages;
-
-	if (g_ConsoleHwnd && pendingMessages.size() > 0)
-	{
-		for (size_t i = 0; i < pendingMessages.size(); i++)
-			PostMessageA(g_ConsoleHwnd, UI_CMD_ADDLOGTEXT, 0, (LPARAM)pendingMessages[i]);
-
-		pendingMessages.clear();
-	}
-
-	if (!g_ConsoleHwnd)
-		pendingMessages.push_back(_strdup(buffer));
-	else
-		PostMessageA(g_ConsoleHwnd, UI_CMD_ADDLOGTEXT, 0, (LPARAM)_strdup(buffer));
-}
-
-void EditorUI_Log(const char *Format, ...)
-{
-	va_list va;
-
-	va_start(va, Format);
-	EditorUI_LogVa(Format, va);
-	va_end(va);
-}
-
-void EditorUI_Warning(int Type, const char *Format, ...)
-{
-	static const char *typeList[30] =
-	{
-		"DEFAULT",
-		"COMBAT",
-		"ANIMATION",
-		"AI",
-		"SCRIPTS",
-		"SAVELOAD",
-		"DIALOGUE",
-		"QUESTS",
-		"PACKAGES",
-		"EDITOR",
-		"MODELS",
-		"TEXTURES",
-		"PLUGINS",
-		"MASTERFILE",
-		"FORMS",
-		"MAGIC",
-		"SHADERS",
-		"RENDERING",
-		"PATHFINDING",
-		"MENUS",
-		"AUDIO",
-		"CELLS",
-		"HAVOK",
-		"FACEGEN",
-		"WATER",
-		"INGAME",
-		"MEMORY",
-		"PERFORMANCE",
-		"JOBS",
-		"SYSTEM"
-	};
-
-	char buffer[2048];
-	va_list va;
-
-	va_start(va, Format);
-	_vsnprintf_s(buffer, _TRUNCATE, Format, va);
-	va_end(va);
-
-	EditorUI_Log("%s: %s", typeList[Type], buffer);
-}
-
-void EditorUI_WarningUnknown1(const char *Format, ...)
-{
-	va_list va;
-
-	va_start(va, Format);
-	EditorUI_LogVa(Format, va);
-	va_end(va);
-}
-
-void EditorUI_WarningUnknown2(__int64 Unused, const char *Format, ...)
-{
-	va_list va;
-
-	va_start(va, Format);
-	EditorUI_LogVa(Format, va);
-	va_end(va);
-}
-
-void EditorUI_Assert(const char *File, int Line, const char *Message)
-{
-	EditorUI_Log("ASSERTION: %s (%s line %d)", Message, File, Line);
 }
 
 LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -567,4 +461,279 @@ LRESULT CALLBACK EditorUI_DialogTabProc(HWND Hwnd, UINT Message, WPARAM wParam, 
 	}
 
 	return 0;
+}
+
+INT_PTR CALLBACK EditorUI_LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+	// Id's for "Recording..." dialog window
+	switch (Message)
+	{
+	case WM_APP:
+		// Don't actually kill the dialog, just hide it. It gets destroyed later when the parent window closes.
+		SendMessageA(GetDlgItem(DialogHwnd, 31007), PBM_SETPOS, 0, 0);
+		ShowWindow(DialogHwnd, SW_HIDE);
+		PostQuitMessage(0);
+		return TRUE;
+
+	case 272:
+		// OnSaveSoundFile
+		SendMessageA(GetDlgItem(DialogHwnd, 31007), PBM_SETRANGE, 0, 32768 * 1000);
+		SendMessageA(GetDlgItem(DialogHwnd, 31007), PBM_SETSTEP, 1, 0);
+		return TRUE;
+
+	case 273:
+		// Stop recording
+		if (LOWORD(wParam) != 1)
+			return FALSE;
+
+		*(bool *)(g_ModuleBase + 0x3AFAE28) = false;
+
+		if (FAILED(((HRESULT(__fastcall *)(bool))(g_ModuleBase + 0x13D5310))(false)))
+			MessageBoxA(DialogHwnd, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
+
+		return EditorUI_LipRecordDialogProc(DialogHwnd, WM_APP, 0, 0);
+
+	case 1046:
+		// Start recording
+		ShowWindow(DialogHwnd, SW_SHOW);
+		*(bool *)(g_ModuleBase + 0x3AFAE28) = true;
+
+		if (FAILED(((HRESULT(__fastcall *)(bool))(g_ModuleBase + 0x13D5310))(true)))
+		{
+			MessageBoxA(DialogHwnd, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
+			return EditorUI_LipRecordDialogProc(DialogHwnd, WM_APP, 0, 0);
+		}
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+LRESULT EditorUI_CSScript_PickScriptsToCompileDlgProc(void *Thisptr, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+	thread_local bool disableListViewUpdates;
+
+	auto updateListViewItems = [Thisptr]
+	{
+		if (!disableListViewUpdates)
+			((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9870))(Thisptr);
+	};
+
+	switch (Message)
+	{
+	case WM_SIZE:
+		((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9CF0))(Thisptr);
+		break;
+
+	case WM_NOTIFY:
+	{
+		LPNMHDR notification = (LPNMHDR)lParam;
+
+		// "SysListView32" control
+		if (notification->idFrom == 5401 && notification->code == LVN_ITEMCHANGED)
+		{
+			updateListViewItems();
+			return 1;
+		}
+	}
+	break;
+
+	case WM_INITDIALOG:
+		disableListViewUpdates = true;
+		((void(__fastcall *)(void *))(g_ModuleBase + 0x20A99C0))(Thisptr);
+		disableListViewUpdates = false;
+
+		// Update it ONCE after everything is inserted
+		updateListViewItems();
+		break;
+
+	case WM_COMMAND:
+	{
+		const uint32_t param = LOWORD(wParam);
+
+		// "Check All", "Uncheck All", "Check All Checked-Out"
+		if (param == 5474 || param == 5475 || param == 5602)
+		{
+			disableListViewUpdates = true;
+			if (param == 5474)
+				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA080))(Thisptr);
+			else if (param == 5475)
+				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA130))(Thisptr);
+			else if (param == 5602)
+				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA1E0))(Thisptr);
+			disableListViewUpdates = false;
+
+			updateListViewItems();
+			return 1;
+		}
+		else if (param == 1)
+		{
+			// "Compile" button
+			((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9F30))(Thisptr);
+		}
+	}
+	break;
+	}
+
+	return ((LRESULT(__fastcall *)(void *, UINT, WPARAM, LPARAM))(g_ModuleBase + 0x20ABD90))(Thisptr, Message, wParam, lParam);
+}
+
+void EditorUI_LogVa(const char *Format, va_list Va)
+{
+	char buffer[2048];
+	int len = _vsnprintf_s(buffer, _TRUNCATE, Format, Va);
+
+	if (len <= 0)
+		return;
+
+	if (len >= 2 && buffer[len - 1] != '\n')
+		strcat_s(buffer, "\n");
+
+	// Buffer messages if the window hasn't been created yet
+	static tbb::concurrent_vector<const char *> pendingMessages;
+
+	if (g_ConsoleHwnd && pendingMessages.size() > 0)
+	{
+		for (size_t i = 0; i < pendingMessages.size(); i++)
+			PostMessageA(g_ConsoleHwnd, UI_CMD_ADDLOGTEXT, 0, (LPARAM)pendingMessages[i]);
+
+		pendingMessages.clear();
+	}
+
+	if (!g_ConsoleHwnd)
+		pendingMessages.push_back(_strdup(buffer));
+	else
+		PostMessageA(g_ConsoleHwnd, UI_CMD_ADDLOGTEXT, 0, (LPARAM)_strdup(buffer));
+}
+
+void EditorUI_Log(const char *Format, ...)
+{
+	va_list va;
+
+	va_start(va, Format);
+	EditorUI_LogVa(Format, va);
+	va_end(va);
+}
+
+void EditorUI_Warning(int Type, const char *Format, ...)
+{
+	static const char *typeList[30] =
+	{
+		"DEFAULT",
+		"COMBAT",
+		"ANIMATION",
+		"AI",
+		"SCRIPTS",
+		"SAVELOAD",
+		"DIALOGUE",
+		"QUESTS",
+		"PACKAGES",
+		"EDITOR",
+		"MODELS",
+		"TEXTURES",
+		"PLUGINS",
+		"MASTERFILE",
+		"FORMS",
+		"MAGIC",
+		"SHADERS",
+		"RENDERING",
+		"PATHFINDING",
+		"MENUS",
+		"AUDIO",
+		"CELLS",
+		"HAVOK",
+		"FACEGEN",
+		"WATER",
+		"INGAME",
+		"MEMORY",
+		"PERFORMANCE",
+		"JOBS",
+		"SYSTEM"
+	};
+
+	char buffer[2048];
+	va_list va;
+
+	va_start(va, Format);
+	_vsnprintf_s(buffer, _TRUNCATE, Format, va);
+	va_end(va);
+
+	EditorUI_Log("%s: %s", typeList[Type], buffer);
+}
+
+void EditorUI_WarningUnknown1(const char *Format, ...)
+{
+	va_list va;
+
+	va_start(va, Format);
+	EditorUI_LogVa(Format, va);
+	va_end(va);
+}
+
+void EditorUI_WarningUnknown2(__int64 Unused, const char *Format, ...)
+{
+	va_list va;
+
+	va_start(va, Format);
+	EditorUI_LogVa(Format, va);
+	va_end(va);
+}
+
+void EditorUI_Assert(const char *File, int Line, const char *Message)
+{
+	EditorUI_Log("ASSERTION: %s (%s line %d)", Message, File, Line);
+}
+
+BOOL EditorUI_ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask)
+{
+	// Microsoft's implementation of this define is broken (ListView_SetItemState)
+	LVITEMA lvi = {};
+	lvi.mask = LVIF_STATE;
+	lvi.state = Data;
+	lvi.stateMask = Mask;
+
+	return (BOOL)SendMessageA(ListViewHandle, LVM_SETITEMSTATE, Index, (LPARAM)&lvi);
+}
+
+void EditorUI_ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections)
+{
+	if (!KeepOtherSelections)
+		EditorUI_ListViewCustomSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
+
+	if (ItemIndex != -1)
+	{
+		ListView_EnsureVisible(ListViewHandle, ItemIndex, FALSE);
+		EditorUI_ListViewCustomSetItemState(ListViewHandle, ItemIndex, LVIS_SELECTED, LVIS_SELECTED);
+	}
+}
+
+void EditorUI_ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections)
+{
+	if (!KeepOtherSelections)
+		EditorUI_ListViewCustomSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
+
+	LVFINDINFOA findInfo;
+	memset(&findInfo, 0, sizeof(findInfo));
+
+	findInfo.flags = LVFI_PARAM;
+	findInfo.lParam = (LPARAM)Parameter;
+
+	int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
+
+	if (index != -1)
+		EditorUI_ListViewSelectItem(ListViewHandle, index, KeepOtherSelections);
+}
+
+void EditorUI_ListViewDeselectItem(HWND ListViewHandle, void *Parameter)
+{
+	LVFINDINFOA findInfo;
+	memset(&findInfo, 0, sizeof(findInfo));
+
+	findInfo.flags = LVFI_PARAM;
+	findInfo.lParam = (LPARAM)Parameter;
+
+	int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
+
+	if (index != -1)
+		EditorUI_ListViewCustomSetItemState(ListViewHandle, index, 0, LVIS_SELECTED);
 }
