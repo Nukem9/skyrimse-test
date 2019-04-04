@@ -37,7 +37,7 @@ DEFINE_SHADER_DESCRIPTOR(
 	CONFIG_ENTRY(VS, PER_GEO, 16, unknown, Bones)								// Unknown, not found anywhere
 
 	// Pixel
-	CONFIG_ENTRY(PS, PER_TEC, 11, float4, VPOSOffset)							// Unknown
+	CONFIG_ENTRY(PS, PER_TEC, 11, float4, VPOSOffset)							// Only found in shaders with RAW_FLAG_DEFSHADOW
 	CONFIG_ENTRY(PS, PER_TEC, 19, float4, FogColor)
 	CONFIG_ENTRY(PS, PER_TEC, 20, float4, ColourOutputClamp)
 
