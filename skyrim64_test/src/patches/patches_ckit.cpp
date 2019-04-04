@@ -464,6 +464,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(g_ModuleBase + 0x143E87E, 4);
 
 	//
+	// Fix for crash when using FlowChartX functionality to grab current topic info id in a dialogue view. The broken code path returns
+	// a VARIANT of type VT_UI8 (21) with an invalid 8-byte pointer in the buffer. This code path is never taken in CK32.
+	//
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x17E42BC, 25);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
