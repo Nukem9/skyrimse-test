@@ -175,8 +175,8 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x2DA588C, (PBYTE)&tintResolution, sizeof(uint32_t));
 	XUtil::PatchMemory(g_ModuleBase + 0x2DA5899, (PBYTE)&tintResolution, sizeof(uint32_t));
 
-	if (g_INI.GetBoolean("CreationKit", "FaceGenBatchSpeedup", false))
-		XUtil::DetourJump(g_ModuleBase + 0x12D1AC0, &ExportFaceGenForSelectedNPCs);
+	// Prevent internal filesystem reloads when exporting FaceGen for many NPCs
+	XUtil::DetourJump(g_ModuleBase + 0x12D1AC0, &ExportFaceGenForSelectedNPCs);
 
 	//
 	// LipGen
@@ -268,21 +268,19 @@ void Patch_TESVCreationKit()
 		XUtil::DetourJump(g_ModuleBase + 0x243D260, &EditorUI_Assert);
 	}
 
-	if (g_INI.GetBoolean("CreationKit", "DeferredDialogLoad", false))
-	{
-		PatchTemplatedFormIterator();
-		XUtil::DetourJump(g_ModuleBase + 0x13B9AD0, &InsertComboBoxItem);
-		XUtil::DetourJump(g_ModuleBase + 0x13BA4D0, &InsertListViewItem);
-		XUtil::DetourJump(g_ModuleBase + 0x20A9710, &EditorUI_CSScript_PickScriptsToCompileDlgProc);
-		XUtil::DetourJump(g_ModuleBase + 0x1985F20, &SortDialogueInfo);
-		XUtil::DetourCall(g_ModuleBase + 0x12C8B63, &UpdateObjectWindowTreeView);
-		XUtil::DetourCall(g_ModuleBase + 0x13E117C, &UpdateCellViewListView);
+	// Deferred dialog loading (batched UI updates)
+	PatchTemplatedFormIterator();
+	XUtil::DetourJump(g_ModuleBase + 0x13B9AD0, &InsertComboBoxItem);
+	XUtil::DetourJump(g_ModuleBase + 0x13BA4D0, &InsertListViewItem);
+	XUtil::DetourJump(g_ModuleBase + 0x20A9710, &EditorUI_CSScript_PickScriptsToCompileDlgProc);
+	XUtil::DetourJump(g_ModuleBase + 0x1985F20, &SortDialogueInfo);
+	XUtil::DetourCall(g_ModuleBase + 0x12C8B63, &UpdateObjectWindowTreeView);
+	XUtil::DetourCall(g_ModuleBase + 0x13E117C, &UpdateCellViewListView);
 
-		// Disable useless "Processing Topic X..." status bar updates
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x199DE29, 5);
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x199EA9E, 5);
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x199DA62, 5);
-	}
+	// Disable useless "Processing Topic X..." status bar updates
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x199DE29, 5);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x199EA9E, 5);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x199DA62, 5);
 
 	//
 	// Allow saving ESM's directly
