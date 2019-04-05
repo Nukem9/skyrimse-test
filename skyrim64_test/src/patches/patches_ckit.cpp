@@ -472,6 +472,11 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(g_ModuleBase + 0x17E42BF, &hk_call_1417E42BF);
 
 	//
+	// Fix for crash (invalid parameter termination) when the "Unable to find variable" warning would exceed the buffer size
+	//
+	XUtil::PatchMemory(g_ModuleBase + 0x31027F8, (PBYTE)", Text \"%.240s\"", strlen(", Text \"%.240s\"") + 1);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
