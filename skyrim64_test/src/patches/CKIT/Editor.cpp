@@ -829,3 +829,20 @@ void *hk_call_1417E42BF(void *a1)
 	// Return null so the branch directly after is never taken
 	return nullptr;
 }
+
+HRESULT LoadTextureDataFromFile(__int64 a1, __int64 a2, __int64 a3, __int64 a4, unsigned int a5, int a6)
+{
+	// Modified LoadTextureDataFromFile from DDSTextureLoader (DirectXTex)
+	HRESULT hr = ((HRESULT(__fastcall *)(__int64, __int64, __int64, __int64, unsigned int, int))(g_ModuleBase + 0x2D266E0))(a1, a2, a3, a4, a5, a6);
+
+	if (FAILED(hr))
+	{
+		// NiBinaryStream->BSResourceStream->File name
+		const char *fileName = *(const char **)(*(__int64 *)(a2 + 0x20) + 0x20);
+
+		AssertMsgVa(SUCCEEDED(hr), "Fatal error while trying to load texture \"%s\". File not found or format is incompatible.", fileName);
+	}
+
+	// This return value is ignored. If it fails it returns a null pointer (a3) and crashes later on.
+	return hr;
+}

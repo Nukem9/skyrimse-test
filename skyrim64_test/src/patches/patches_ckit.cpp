@@ -477,6 +477,11 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x31027F8, (PBYTE)", Text \"%.240s\"", strlen(", Text \"%.240s\"") + 1);
 
 	//
+	// Replace direct crash with an assertion when an incompatible texture format is used in the renderer
+	//
+	XUtil::DetourCall(g_ModuleBase + 0x2D0CCBF, &LoadTextureDataFromFile);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
