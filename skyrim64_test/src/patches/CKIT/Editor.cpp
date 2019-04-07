@@ -801,16 +801,20 @@ void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3)
 	((void(__fastcall *)(__int64, __int64, __int64))(g_ModuleBase + 0x2DAAC80))(a1, a2, a3);
 
 	// Then do post-process SAO (Fog) ("Draw WorldRoot")
+	AutoPtr(bool, byte_144F05728, 0x4F05728);
 	AutoPtr(uintptr_t, qword_145A11B28, 0x5A11B28);
 	AutoPtr(uintptr_t, qword_145A11B38, 0x5A11B38);
 
-	if (!qword_145A11B28)
-		qword_145A11B28 = (uintptr_t)MemoryManager::Alloc(nullptr, 4096, 8, true);// Fake BSFadeNode
+	if (byte_144F05728)
+	{
+		if (!qword_145A11B28)
+			qword_145A11B28 = (uintptr_t)MemoryManager::Alloc(nullptr, 4096, 8, true);// Fake BSFadeNode
 
-	if (!qword_145A11B38)
-		qword_145A11B38 = (uintptr_t)MemoryManager::Alloc(nullptr, 4096, 8, true);// Fake SceneGraph
+		if (!qword_145A11B38)
+			qword_145A11B38 = (uintptr_t)MemoryManager::Alloc(nullptr, 4096, 8, true);// Fake SceneGraph
 
-	((void(__fastcall *)())(g_ModuleBase + 0x2E2EEB0))();
+		((void(__fastcall *)())(g_ModuleBase + 0x2E2EEB0))();
+	}
 }
 
 void *hk_call_1417E42BF(void *a1)
