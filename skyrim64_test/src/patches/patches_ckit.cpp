@@ -485,7 +485,8 @@ void Patch_TESVCreationKit()
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
-	XUtil::DetourCall(g_ModuleBase + 0x12DC59D, &hk_sub_140FEC464);
+	// FIXME: Doesn't work
+	// XUtil::DetourCall(g_ModuleBase + 0x12DC59D, &hk_sub_140FEC464);
 
 	//
 	// Plugin loading optimizations:
