@@ -335,6 +335,9 @@
     <ClInclude Include="src\patches\CKIT\TESWater.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSEffectShaderMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">

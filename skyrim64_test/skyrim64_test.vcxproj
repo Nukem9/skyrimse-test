@@ -163,6 +163,7 @@
     <ClInclude Include="src\patches\TES\BSShader\BSShader_Dumper.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShadowLight.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShaderProperty.h" />
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSEffectShaderMaterial.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderMaterial.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderProperty.h" />
