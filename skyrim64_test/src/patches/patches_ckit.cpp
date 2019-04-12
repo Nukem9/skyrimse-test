@@ -482,6 +482,15 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(g_ModuleBase + 0x2D0CCBF, &LoadTextureDataFromFile);
 
 	//
+	// Fix for crash when trying to use "Test Radius" on a reference's "3D Data" dialog tab. This code wasn't correctly ported to
+	// BSGeometry from NiGeometry during the LE->SSE transition. Flags & materials need to be fixed as a result.
+	//
+	XUtil::DetourCall(g_ModuleBase + 0x1C410A1, &hk_call_141C410A1);
+	XUtil::DetourCall(g_ModuleBase + 0x1C41122, &hk_call_141C410A1);
+	XUtil::PatchMemory(g_ModuleBase + 0x1C41094, (PBYTE)"\x48\x8B\xC1\x90\x90", 5);
+	XUtil::PatchMemory(g_ModuleBase + 0x1C41115, (PBYTE)"\x48\x8B\xC1\x90\x90", 5);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//

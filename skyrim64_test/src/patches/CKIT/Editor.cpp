@@ -5,8 +5,12 @@
 #include <CommCtrl.h>
 #include "../../common.h"
 #include "../TES/MemoryManager.h"
+#include "../TES/NiMain/NiColor.h"
+#include "../TES/NiMain/NiPointer.h"
+#include "../TES/NiMain/NiSourceTexture.h"
 #include "../TES/NiMain/BSTriShape.h"
 #include "../TES/BSShader/BSShaderProperty.h"
+#include "../TES/BSShader/Shaders/BSEffectShaderMaterial.h"
 #include "Editor.h"
 #include "EditorUI.h"
 #include "TESWater.h"
@@ -849,4 +853,24 @@ HRESULT LoadTextureDataFromFile(__int64 a1, __int64 a2, __int64 a3, __int64 a4, 
 
 	// This return value is ignored. If it fails it returns a null pointer (a3) and crashes later on.
 	return hr;
+}
+
+void hk_call_141C410A1(__int64 a1, BSShaderProperty *Property)
+{
+	if (Property)
+	{
+		Property->ulFlags |= (1ull << BSShaderProperty::BSSP_FLAG_TWO_SIDED);		// Sphere is only 1 sided
+		Property->ulFlags &= ~(1ull << BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE);	// Transparency is used
+
+		// Fix material alpha. A copy must be made because it uses a global pointer by default.
+		auto oldShaderMaterial = static_cast<BSEffectShaderMaterial *>(Property->pMaterial);
+		auto newShaderMaterial = static_cast<BSEffectShaderMaterial *>(oldShaderMaterial->CreateNew());
+
+		newShaderMaterial->CopyMembers(oldShaderMaterial);
+		newShaderMaterial->kBaseColor.a = 0.5f;
+
+		((void(__fastcall *)(BSShaderProperty *, BSEffectShaderMaterial *, bool))(g_ModuleBase + 0x2D511E0))(Property, newShaderMaterial, false);
+	}
+
+	((void(__fastcall *)(__int64, BSShaderProperty *))(g_ModuleBase + 0x12A4D20))(a1 + 0x128, Property);
 }
