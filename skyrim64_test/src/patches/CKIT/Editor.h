@@ -14,6 +14,8 @@ int hk_inflateInit(z_stream_s *Stream, const char *Version, int Mode);
 int hk_inflate(z_stream_s *Stream, int Flush);
 bool OpenPluginSaveDialog(HWND ParentWindow, const char *BasePath, bool IsESM, char *Buffer, uint32_t BufferSize, const char *Directory);
 bool IsBSAVersionCurrent(class BSFile *File);
+
+void CreateLipGenProcess(__int64 a1);
 bool IsLipDataPresent(void *Thisptr);
 bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, bool Unknown3);
 int IsWavDataPresent(const char *Path, __int64 a2, __int64 a3, __int64 a4);

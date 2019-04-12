@@ -181,6 +181,11 @@ void Patch_TESVCreationKit()
 	//
 	// LipGen
 	//
+	if (g_INI.GetBoolean("CreationKit", "FaceFXDebugOutput", false))
+	{
+		XUtil::DetourJump(g_ModuleBase + 0x20F35E0, &CreateLipGenProcess);
+	}
+
 	XUtil::DetourJump(g_ModuleBase + 0x13C4C80, &IsLipDataPresent);
 	XUtil::DetourJump(g_ModuleBase + 0x1791240, &WriteLipData);
 	XUtil::DetourCall(g_ModuleBase + 0x13D5443, &IsWavDataPresent);

@@ -6,6 +6,7 @@ void EditorUI_Initialize();
 bool EditorUI_CreateLogWindow();
 bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu);
 bool EditorUI_CreateStdoutListener();
+HANDLE EditorUI_GetStdoutListenerPipe();
 
 LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam);

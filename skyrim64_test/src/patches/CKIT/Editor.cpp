@@ -225,6 +225,34 @@ bool IsBSAVersionCurrent(class BSFile *File)
 	return false;
 }
 
+void CreateLipGenProcess(__int64 a1)
+{
+	char procIdString[32];
+	sprintf_s(procIdString, "%d", GetCurrentProcessId());
+	SetEnvironmentVariableA("Ckpid", procIdString);
+
+	char procToolPath[MAX_PATH];
+	strcpy_s(procToolPath, (const char *)(a1 + 0x0));
+	strcat_s(procToolPath, (const char *)(a1 + 0x104));
+
+	PROCESS_INFORMATION * procInfo = (PROCESS_INFORMATION *)(a1 + 0x228);
+	memset(procInfo, 0, sizeof(PROCESS_INFORMATION));
+
+	STARTUPINFOA startupInfo;
+	memset(&startupInfo, 0, sizeof(STARTUPINFOA));
+
+	startupInfo.cb = sizeof(STARTUPINFOA);
+	startupInfo.dwFlags |= STARTF_USESTDHANDLES;
+	startupInfo.hStdError = EditorUI_GetStdoutListenerPipe();
+	startupInfo.hStdOutput = EditorUI_GetStdoutListenerPipe();
+	startupInfo.hStdInput = nullptr;
+
+	if (!CreateProcessA(procToolPath, nullptr, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &startupInfo, procInfo))
+		EditorUI_Log("FaceFXWrapper not found. CreateProcess failed (%d).\n", GetLastError());
+
+	EditorUI_Log("FaceFXWrapper background process started.\n");
+}
+
 bool IsLipDataPresent(void *Thisptr)
 {
 	char currentDir[MAX_PATH];
@@ -245,7 +273,10 @@ bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, b
 	strcat_s(destDir, "\\");
 	strcat_s(destDir, Path);
 
-	return MoveFileEx(srcDir, destDir, MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != FALSE;
+	bool status = MoveFileEx(srcDir, destDir, MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != FALSE;
+
+	EditorUI_Warning(6, "Moving temporary LIP file to '%s' (%s)", destDir, status ? "Succeeded" : "Failed");
+	return status;
 }
 
 int IsWavDataPresent(const char *Path, __int64 a2, __int64 a3, __int64 a4)

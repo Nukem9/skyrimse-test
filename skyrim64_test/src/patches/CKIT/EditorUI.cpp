@@ -27,6 +27,8 @@ HWND g_MainHwnd;
 HWND g_ConsoleHwnd;
 HMENU g_ExtensionMenu;
 WNDPROC OldEditorUI_WndProc;
+HANDLE g_LogPipeReader;
+HANDLE g_LogPipeWriter;
 void ExportTest(FILE *File);
 
 void EditorUI_Initialize()
@@ -107,38 +109,59 @@ bool EditorUI_CreateStdoutListener()
 	saAttr.bInheritHandle = TRUE;
 	saAttr.lpSecurityDescriptor = nullptr;
 
-	HANDLE pipeRead;
-	HANDLE pipeWrite;
-
-	if (!CreatePipe(&pipeRead, &pipeWrite, &saAttr, 0))
+	if (!CreatePipe(&g_LogPipeReader, &g_LogPipeWriter, &saAttr, 0))
 		return false;
 
 	// Ensure the read handle to the pipe for STDOUT is not inherited
-	if (!SetHandleInformation(pipeRead, HANDLE_FLAG_INHERIT, 0))
+	if (!SetHandleInformation(g_LogPipeReader, HANDLE_FLAG_INHERIT, 0))
 		return false;
 
-	std::thread pipeReader([pipeRead, pipeWrite]()
+	std::thread pipeReader([]()
 	{
+		char logBuffer[16384];
+		memset(logBuffer, 0, sizeof(logBuffer));
+
 		while (true)
 		{
 			char buffer[4096];
+			memset(buffer, 0, sizeof(buffer));
+
 			DWORD bytesRead;
-			bool succeeded = ReadFile(pipeRead, buffer, ARRAYSIZE(buffer), &bytesRead, nullptr) != 0;
+			bool succeeded = ReadFile(g_LogPipeReader, buffer, ARRAYSIZE(buffer) - 1, &bytesRead, nullptr) != 0;
 
 			// Bail if there's nothing left or the process exited
 			if (!succeeded || bytesRead <= 0)
 				break;
 
-			buffer[bytesRead - 1] = '\0';
-			EditorUI_Log("%s\n", buffer);
+			strcat_s(logBuffer, buffer);
+
+			// Flush on every newline and skip empty/whitespace strings
+			while (char *end = strchr(logBuffer, '\n'))
+			{
+				*end = '\0';
+				size_t len = (size_t)(end - logBuffer);
+
+				while (strchr(logBuffer, '\r'))
+					*strchr(logBuffer, '\r') = ' ';
+
+				if (len > 0 && (len > 1 || logBuffer[0] != ' '))
+					EditorUI_Warning(6, "%s", logBuffer);
+
+				strcpy_s(logBuffer, end + 1);
+			}
 		}
 
-		CloseHandle(pipeRead);
-		CloseHandle(pipeWrite);
+		CloseHandle(g_LogPipeReader);
+		CloseHandle(g_LogPipeWriter);
 	});
 
 	pipeReader.detach();
 	return true;
+}
+
+HANDLE EditorUI_GetStdoutListenerPipe()
+{
+	return g_LogPipeWriter;
 }
 
 LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
