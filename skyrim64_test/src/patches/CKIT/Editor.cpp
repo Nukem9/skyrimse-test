@@ -388,7 +388,15 @@ void UpdateObjectWindowTreeView(void *Thisptr, HWND ControlHandle)
 	RedrawWindow(ControlHandle, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
 }
 
-void UpdateCellViewListView(void *Thisptr, HWND *ControlHandle)
+void UpdateCellViewCellList(void *Thisptr, HWND ControlHandle, __int64 Unknown)
+{
+	SendMessage(ControlHandle, WM_SETREDRAW, FALSE, 0);
+	((void(__fastcall *)(void *, HWND, __int64))(g_ModuleBase + 0x147FA70))(Thisptr, ControlHandle, Unknown);
+	SendMessage(ControlHandle, WM_SETREDRAW, TRUE, 0);
+	RedrawWindow(ControlHandle, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
+}
+
+void UpdateCellViewObjectList(void *Thisptr, HWND *ControlHandle)
 {
 	SendMessage(*ControlHandle, WM_SETREDRAW, FALSE, 0);
 	((void(__fastcall *)(void *, HWND *))(g_ModuleBase + 0x13E0CE0))(Thisptr, ControlHandle);

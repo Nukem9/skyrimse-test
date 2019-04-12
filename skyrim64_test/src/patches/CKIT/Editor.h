@@ -30,7 +30,8 @@ uint32_t sub_1414974E0(BSTArray<void *>& Array, const void *&Target, uint32_t St
 
 void UpdateLoadProgressBar();
 void UpdateObjectWindowTreeView(void *Thisptr, HWND ControlHandle);
-void UpdateCellViewListView(void *Thisptr, HWND *ControlHandle);
+void UpdateCellViewCellList(void *Thisptr, HWND ControlHandle, __int64 Unknown);
+void UpdateCellViewObjectList(void *Thisptr, HWND *ControlHandle);
 
 void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, void *Value, bool AllowResize);
 void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex);
