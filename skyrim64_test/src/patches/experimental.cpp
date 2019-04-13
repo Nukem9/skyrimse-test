@@ -35,6 +35,8 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 		const uint8_t signature6[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0x48, 0x8B, 0x00, 0xC3 };// return *(QWORD *)this;
 		const uint8_t signature7[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0xC3 };// return this;
 		const uint8_t signature8[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0x8B, 0x00, 0xC3 };// return *(DWORD *)this;
+		const uint8_t signature9[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0x48, 0x8B, 0x40, 0x08, 0xC3 };// return *(QWORD *)(this + 0x8);
+		const uint8_t signature10[] = { 0x48, 0x89, 0x4C, 0x24, 0x08, 0x48, 0x8B, 0x44, 0x24, 0x08, 0x8B, 0x40, 0x14, 0xC3 };// return *(DWORD *)(this + 0x14);
 
 		if (!memcmp(dest, signature2, sizeof(signature2)) ||
 			!memcmp(dest, signature3, sizeof(signature3)) ||
@@ -72,6 +74,24 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x8B\x01\xC3\xCC\xCC", 5);// mov eax, [rcx]; retn; int3; int3;
 			else
 				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x8B\x01\x0F\x1F\x00", 5);// mov eax, [rcx]; nop;
+
+			return true;
+		}
+		else if (!memcmp(dest, signature9, sizeof(signature9)))
+		{
+			if (isJump)
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x48\x8B\x41\x08\xC3", 5);// mov rax, [rcx + 0x8]; retn;
+			else
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x48\x8B\x41\x08\x90", 5);// mov rax, [rcx + 0x8]; nop;
+
+			return true;
+		}
+		else if (!memcmp(dest, signature10, sizeof(signature10)))
+		{
+			if (isJump)
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x8B\x41\x14\xC3\xCC", 5);// mov eax, [rcx + 0x14]; retn; int3;
+			else
+				XUtil::PatchMemory(SourceAddress, (PBYTE)"\x8B\x41\x14\x66\x90", 5);// mov eax, [rcx + 0x14]; nop;
 
 			return true;
 		}
