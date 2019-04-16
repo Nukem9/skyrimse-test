@@ -135,7 +135,8 @@ void XUtil::XAssert(const char *File, int Line, const char *Format, ...)
 		__debugbreak();
 	}
 
-	ExitProcess(1);
+	TerminateProcess(GetCurrentProcess(), 1);
+	__assume(0);
 }
 
 uintptr_t XUtil::FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const uint8_t *Bytes, const char *Mask)
