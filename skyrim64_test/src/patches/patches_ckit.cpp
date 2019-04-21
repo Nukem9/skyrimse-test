@@ -497,6 +497,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x1C41115, (PBYTE)"\x48\x8B\xC1\x90\x90", 5);
 
 	//
+	// Fix for "File in use" UI hang after hitting cancel. It tries to use the main window handle as a parent, but it's suspended
+	// during the initial data load, resulting in a deadlock. The new BGSThreadedProgressDlg causes this.
+	//
+	XUtil::PatchMemory(g_ModuleBase + 0x16641B1, (PBYTE)"\x4D\x33\xC0\x90\x90\x90\x90", 7);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
