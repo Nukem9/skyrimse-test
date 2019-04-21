@@ -9,6 +9,7 @@
 #include "ui_renderer.h"
 
 #include "../patches/TES/NiMain/BSGeometry.h"
+#include "../patches/TES/NiMain/BSTriShape.h"
 #include "../patches/TES/NiMain/BSMultiBoundNode.h"
 #include "../patches/TES/BSShader/BSShaderProperty.h"
 #include "../patches/TES/NiMain/NiCamera.h"
@@ -284,10 +285,12 @@ namespace ui
 
 			if (ImGui::TreeNode("Attributes"))
 			{
-				if (geometry)
-					geometry->GetViewerStrings(ImGui::Text, true);
+				if (Object->IsExactKindOf(NiRTTI::ms_BSTriShape))
+					static_cast<BSTriShape *>(Object)->GetViewerStrings(ImGui::Text, true);
 				else if (Object->IsExactKindOf(NiRTTI::ms_NiCamera))
 					static_cast<NiCamera *>(Object)->GetViewerStrings(ImGui::Text, true);
+				else if (geometry)
+					geometry->GetViewerStrings(ImGui::Text, true);
 				else
 					Object->GetViewerStrings(ImGui::Text, true);
 
@@ -297,7 +300,7 @@ namespace ui
 					{
 						auto shape = multiBoundNode->spMultiBound->spShape;
 
-						if (!strcmp(shape->GetRTTI()->GetName(), "BSMultiBoundAABB"))
+						if (shape->IsKindOf(NiRTTI::ms_BSMultiBoundAABB))
 						{
 							auto aabb = static_cast<BSMultiBoundAABB *>(shape);
 

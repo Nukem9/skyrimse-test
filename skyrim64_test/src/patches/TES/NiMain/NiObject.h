@@ -61,5 +61,16 @@ public:
 	{
 		return GetRTTI() == RTTI;
 	}
+
+	bool IsKindOf(NiRTTI *RTTI) const
+	{
+		for (auto currentRTTI = GetRTTI(); currentRTTI; currentRTTI = currentRTTI->GetBaseRTTI())
+		{
+			if (currentRTTI == RTTI)
+				return true;
+		}
+
+		return false;
+	}
 };
 static_assert(sizeof(NiObject) == 0x10);

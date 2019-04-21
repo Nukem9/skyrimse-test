@@ -102,9 +102,43 @@ public:
 		if (Recursive)
 			__super::GetViewerStrings(Callback, Recursive);
 
+		static const char *vertexDescTypes[] =
+		{
+			"POSITION",
+			"TEXCOORD0",
+			"TEXCOORD1",
+			"NORMAL",
+			"BINORMAL",
+			"COLOR",
+			"SKINNING_DATA",
+			"LANDSCAPE_DATA",
+			"EYE_DATA",
+			"EYE_INSTANCE",
+		};
+
+		char buffer[1024] = {};
+		for (int i = 0; i < ARRAYSIZE(vertexDescTypes); i++)
+		{
+			if (HasVertexAttribute(GetVertexDesc(), i))
+			{
+				strcat_s(buffer, vertexDescTypes[i]);
+
+				if (CalculateVertexAttributeStream(GetVertexDesc(), i) == 1)
+					strcat_s(buffer, "[D]");
+				else
+					strcat_s(buffer, "[S]");
+
+				strcat_s(buffer, " ");
+			}
+		}
+
+		XUtil::Trim(buffer, ' ');
+
 		Callback("-- BSGeometry --\n");
 		Callback("Type = %d\n", QType());
-		Callback("Vertex Desc = 0x%llX\n", GetVertexDesc());
+		Callback("Vertex Desc = 0x%llX (%s)\n", GetVertexDesc(), buffer);
+		Callback("Vertex Stride = %u\n", GetVertexSize());
+		Callback("Vertex Stride Dynamic = %u\n", GetDynamicVertexSize());
 		Callback("Renderer Data = 0x%p\n", QRendererData());
 		Callback("Skin Instance = 0x%p\n", QSkinInstance());
 	}
@@ -124,15 +158,27 @@ public:
 		return (VertexDesc >> (4 * Index + 2)) & 0x3C;
 	}
 
+	static uint32_t CalculateVertexAttributeStream(uint64_t VertexDesc, uint32_t Index)
+	{
+		if (VertexDesc & ((uint64_t)Index << 44))
+			return 0;
+
+		if (VertexDesc & ((uint64_t)Index << 54))
+			return 1;
+
+		return 0xFFFFFFFF;
+	}
+
 	static uint32_t CalculateVertexSize(uint64_t VertexDesc)
 	{
-		return 4 * VertexDesc & 0x3C;
+		// Vertex buffer slot 0
+		return (VertexDesc << 2) & 0x3C;
 	}
 
 	static uint32_t CalculateDyanmicVertexSize(uint64_t VertexDesc)
 	{
-		// VERTEX_DESC_ENTRY_POSITION
-		return CalculateVertexAttributeOffset(VertexDesc, 0);
+		// Vertex buffer slot 1 (BSDynamicTriShape)
+		return (VertexDesc >> 2) & 0x3C;
 	}
 };
 static_assert(sizeof(BSGeometry) == 0x158);
