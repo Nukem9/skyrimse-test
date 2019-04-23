@@ -802,6 +802,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	case RAW_TECHNIQUE_LODLAND:
 	case RAW_TECHNIQUE_LODOBJ:
 	case RAW_TECHNIQUE_LODOBJHD:
+	case RAW_TECHNIQUE_LODLANDNOISE:
 		GeometrySetupViewProjection(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
 		GeometrySetupViewProjection(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, &renderer->m_PreviousPosAdjust);
 		isLOD = true;
