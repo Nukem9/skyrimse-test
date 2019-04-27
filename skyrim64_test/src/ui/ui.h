@@ -31,6 +31,7 @@ namespace ui
 	extern bool showSceneGraphMenuWindow;
 	extern bool showSceneGraphMenu3DWindow;
 	extern bool showSceneGraphShadowNodesWindow;
+	extern bool showSceneGraphReflectionsWindow;
 	extern bool showTaskListWindow;
 	extern bool showJobListWindow;
 

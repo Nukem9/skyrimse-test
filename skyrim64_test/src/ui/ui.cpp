@@ -49,6 +49,7 @@ namespace ui
 	bool showSceneGraphMenuWindow;
 	bool showSceneGraphMenu3DWindow;
 	bool showSceneGraphShadowNodesWindow;
+	bool showSceneGraphReflectionsWindow;
 	bool showTaskListWindow;
 	bool showJobListWindow;
 
@@ -193,6 +194,7 @@ namespace ui
 			ImGui::MenuItem("Menu Tree", nullptr, &showSceneGraphMenuWindow);
 			ImGui::MenuItem("Menu3D Tree", nullptr, &showSceneGraphMenu3DWindow);
 			ImGui::MenuItem("ShadowSceneNode Trees", nullptr, &showSceneGraphShadowNodesWindow);
+			ImGui::MenuItem("Reflection Trees", nullptr, &showSceneGraphReflectionsWindow);
 			ImGui::EndMenu();
 		}
 

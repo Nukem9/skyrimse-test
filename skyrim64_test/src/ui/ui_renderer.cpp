@@ -240,6 +240,9 @@ namespace ui
 	AutoPtr(NiNode *, MenuScenegraph, 0x2F4CE38);
 	AutoPtr(NiNode *, Menu3DScenegraph, 0x2F4CE40);
 	AutoPtr(ShadowSceneNodeArray, ShadowNodeScenegraphs, 0x1E32F20);
+	AutoPtr(NiNode *, TerrainManagerLandNode, 0x2F49E28);
+	AutoPtr(NiNode *, TerrainManagerObjectNode, 0x2F49E30);
+	AutoPtr(NiNode *, WorldLODTreesNode, 0x2F49E10);
 
 	void TraverseSceneGraph(NiAVObject *Object, bool Tree, bool ForceEnable, bool ForceDisable)
 	{
@@ -384,6 +387,18 @@ namespace ui
 			{
 				for (int i = 0; i < 4; i++)
 					TraverseSceneGraph(ShadowNodeScenegraphs[i], true, false, false);
+			}
+
+			ImGui::End();
+		}
+
+		if (showSceneGraphReflectionsWindow)
+		{
+			if (ImGui::Begin("Reflections Scene Graph (Land, Object, Tree)", &showSceneGraphReflectionsWindow))
+			{
+				TraverseSceneGraph(TerrainManagerLandNode, true, false, false);
+				TraverseSceneGraph(TerrainManagerObjectNode, true, false, false);
+				TraverseSceneGraph(WorldLODTreesNode, true, false, false);
 			}
 
 			ImGui::End();
