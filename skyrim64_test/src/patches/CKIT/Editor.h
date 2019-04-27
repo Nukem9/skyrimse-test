@@ -86,3 +86,5 @@ void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3);
 void *hk_call_1417E42BF(void *a1);
 HRESULT LoadTextureDataFromFile(__int64 a1, __int64 a2, __int64 a3, __int64 a4, unsigned int a5, int a6);
 void hk_call_141C410A1(__int64 a1, class BSShaderProperty *Property);
+void hk_sub_141B08540(__int64 DiskCRDT, __int64 SourceCRDT);
+void hk_call_141B037B2(__int64 TESFile, __int64 SourceCRDT);

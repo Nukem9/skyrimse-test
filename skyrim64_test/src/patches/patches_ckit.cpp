@@ -503,6 +503,15 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x16641B1, (PBYTE)"\x4D\x33\xC0\x90\x90\x90\x90", 7);
 
 	//
+	// Fix for weapon critical effect data (CRDT) being destroyed when upgrading from form version <= 43 to form version 44. The CK
+	// reads a structure that has 64bit alignment and is incompatible with old versions.
+	//
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x1B04201, 98);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x1B042C1, 7);
+	XUtil::DetourJump(g_ModuleBase + 0x1B08540, &hk_sub_141B08540);
+	XUtil::DetourCall(g_ModuleBase + 0x1B037B2, &hk_call_141B037B2);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//

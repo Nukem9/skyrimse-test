@@ -981,3 +981,29 @@ void hk_call_141C410A1(__int64 a1, BSShaderProperty *Property)
 
 	((void(__fastcall *)(__int64, BSShaderProperty *))(g_ModuleBase + 0x12A4D20))(a1 + 0x128, Property);
 }
+
+void hk_sub_141B08540(__int64 DiskCRDT, __int64 SourceCRDT)
+{
+	// Convert in-memory CRDT to on-disk CRDT data, but do it properly this time
+	memset((void *)DiskCRDT, 0, 24);
+
+	*(uint16_t *)DiskCRDT = *(uint16_t *)(SourceCRDT + 0x10);		// Damage
+	*(uint32_t *)(DiskCRDT + 0x4) = *(uint32_t *)SourceCRDT;		// Percentage multiplier
+	*(uint8_t *)(DiskCRDT + 0x8) = *(uint8_t *)(SourceCRDT + 0x12);	// Flags
+
+	uintptr_t effectForm = *(uintptr_t *)(SourceCRDT + 0x8);
+
+	if (effectForm)
+		*(uint64_t *)(DiskCRDT + 0x10) = *(uint32_t *)(effectForm + 0x14);// Effect form id
+}
+
+void hk_call_141B037B2(__int64 TESFile, __int64 SourceCRDT)
+{
+	((bool(__fastcall *)(__int64, __int64))(g_ModuleBase + 0x1B07AA0))(TESFile, SourceCRDT);
+
+	// Apply struct fixup after reading SkyrimLE data
+	uint32_t chunkVersion = ((uint32_t(__fastcall *)(__int64))(g_ModuleBase + 0x1222200))(TESFile);
+
+	if (chunkVersion < 44)
+		*(uint32_t *)(SourceCRDT + 0x10) = *(uint32_t *)(SourceCRDT + 0xC);
+}
