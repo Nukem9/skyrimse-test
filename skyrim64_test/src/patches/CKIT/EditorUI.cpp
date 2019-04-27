@@ -174,7 +174,7 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 		{
 			const CREATESTRUCT *createInfo = (CREATESTRUCT *)lParam;
 
-			if (_stricmp(createInfo->lpszName, "Creation Kit") != 0 || _stricmp(createInfo->lpszName, "Creation Kit") != 0)
+			if (_stricmp(createInfo->lpszName, "Creation Kit") != 0 || _stricmp(createInfo->lpszClass, "Creation Kit") != 0)
 			{
 				AssertMsgVa(false, "Trying to initialize menus with an unknown window name: %s", createInfo->lpszName);
 				ExitProcess(0);
