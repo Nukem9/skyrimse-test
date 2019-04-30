@@ -181,11 +181,7 @@ void Patch_TESVCreationKit()
 	//
 	// LipGen
 	//
-	if (g_INI.GetBoolean("CreationKit", "FaceFXDebugOutput", false))
-	{
-		XUtil::DetourJump(g_ModuleBase + 0x20F35E0, &CreateLipGenProcess);
-	}
-
+	XUtil::DetourJump(g_ModuleBase + 0x20F35E0, &CreateLipGenProcess);
 	XUtil::DetourJump(g_ModuleBase + 0x13C4C80, &IsLipDataPresent);
 	XUtil::DetourJump(g_ModuleBase + 0x1791240, &WriteLipData);
 	XUtil::DetourCall(g_ModuleBase + 0x13D5443, &IsWavDataPresent);
@@ -532,11 +528,17 @@ void Patch_TESVCreationKit()
 
 	// Fall back to non-SSE 4.1 code path when not available
 	if ((cpuinfo[2] & (1 << 19)) != 0)
+	{
 		XUtil::DetourJump(g_ModuleBase + 0x1477DA0, &sub_141477DA0_SSE41);
+		XUtil::DetourJump(g_ModuleBase + 0x14974E0, &sub_1414974E0_SSE41);
+	}
 	else
+	{
 		XUtil::DetourJump(g_ModuleBase + 0x1477DA0, &sub_141477DA0);
+		XUtil::DetourJump(g_ModuleBase + 0x14974E0, &sub_1414974E0);
+	}
 
-	XUtil::DetourJump(g_ModuleBase + 0x14974E0, &sub_1414974E0);
+	// Check sub_141669460 - returns endianness? hotspot if it always returns false
 	XUtil::PatchMemory(g_ModuleBase + 0x163D56E, (PBYTE)"\xB9\x90\x01\x00\x00\x90", 6);
 	XUtil::DetourCall(g_ModuleBase + 0x1640FF3, &UpdateLoadProgressBar);
 	XUtil::DetourCall(g_ModuleBase + 0x166BB1E, &hk_inflateInit);

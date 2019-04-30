@@ -235,22 +235,25 @@ void CreateLipGenProcess(__int64 a1)
 	strcpy_s(procToolPath, (const char *)(a1 + 0x0));
 	strcat_s(procToolPath, (const char *)(a1 + 0x104));
 
-	PROCESS_INFORMATION * procInfo = (PROCESS_INFORMATION *)(a1 + 0x228);
+	PROCESS_INFORMATION *procInfo = (PROCESS_INFORMATION *)(a1 + 0x228);
 	memset(procInfo, 0, sizeof(PROCESS_INFORMATION));
 
 	STARTUPINFOA startupInfo;
 	memset(&startupInfo, 0, sizeof(STARTUPINFOA));
-
 	startupInfo.cb = sizeof(STARTUPINFOA);
-	startupInfo.dwFlags |= STARTF_USESTDHANDLES;
-	startupInfo.hStdError = EditorUI_GetStdoutListenerPipe();
-	startupInfo.hStdOutput = EditorUI_GetStdoutListenerPipe();
-	startupInfo.hStdInput = nullptr;
+
+	if (EditorUI_GetStdoutListenerPipe())
+	{
+		startupInfo.dwFlags |= STARTF_USESTDHANDLES;
+		startupInfo.hStdError = EditorUI_GetStdoutListenerPipe();
+		startupInfo.hStdOutput = EditorUI_GetStdoutListenerPipe();
+		startupInfo.hStdInput = nullptr;
+	}
 
 	if (!CreateProcessA(procToolPath, nullptr, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &startupInfo, procInfo))
-		EditorUI_Log("FaceFXWrapper not found. CreateProcess failed (%d).\n", GetLastError());
-
-	EditorUI_Log("FaceFXWrapper background process started.\n");
+		EditorUI_Log("FaceFXWrapper could not be started (%d). LIP generation will be disabled.\n", GetLastError());
+	else
+		EditorUI_Log("FaceFXWrapper background process started.\n");
 }
 
 bool IsLipDataPresent(void *Thisptr)

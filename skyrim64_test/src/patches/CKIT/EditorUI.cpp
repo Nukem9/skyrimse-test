@@ -39,8 +39,11 @@ void EditorUI_Initialize()
 	if (!EditorUI_CreateLogWindow())
 		MessageBoxA(nullptr, "Failed to create console log window", "Error", MB_ICONERROR);
 
-	if (!EditorUI_CreateStdoutListener())
-		MessageBoxA(nullptr, "Failed to create output listener for external processes", "Error", MB_ICONERROR);
+	if (g_INI.GetBoolean("CreationKit", "FaceFXDebugOutput", false))
+	{
+		if (!EditorUI_CreateStdoutListener())
+			MessageBoxA(nullptr, "Failed to create output listener for external processes", "Error", MB_ICONERROR);
+	}
 }
 
 bool EditorUI_CreateLogWindow()
