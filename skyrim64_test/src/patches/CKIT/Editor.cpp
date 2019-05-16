@@ -1010,3 +1010,13 @@ void hk_call_141B037B2(__int64 TESFile, __int64 SourceCRDT)
 	if (chunkVersion < 44)
 		*(uint32_t *)(SourceCRDT + 0x10) = *(uint32_t *)(SourceCRDT + 0xC);
 }
+
+const char *hk_call_1417F4A04(int ActorValueIndex)
+{
+	__int64 actorValue = ((__int64(__fastcall *)(int))(g_ModuleBase + 0x14B8030))(ActorValueIndex);
+
+	if (!actorValue)
+		return nullptr;
+
+	return *(const char **)(actorValue + 0x90);
+}

@@ -508,6 +508,12 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(g_ModuleBase + 0x1B037B2, &hk_call_141B037B2);
 
 	//
+	// Fix for "Could not select actor value X in LoadDialog for BGSEntryPointFunctionDataTwoValue." Use the editor id instead of perk
+	// name for the Perk Entry dialog selection.
+	//
+	XUtil::DetourCall(g_ModuleBase + 0x17F4A04, &hk_call_1417F4A04);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
