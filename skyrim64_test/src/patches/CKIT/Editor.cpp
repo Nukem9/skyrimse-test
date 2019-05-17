@@ -498,6 +498,57 @@ void BeginUIDefer()
 	g_UseDeferredDialogInsert = true;
 }
 
+void SuspendComboBoxUpdates(HWND ComboHandle, bool Suspend)
+{
+	COMBOBOXINFO info = {};
+	info.cbSize = sizeof(COMBOBOXINFO);
+
+	if (!GetComboBoxInfo(ComboHandle, &info))
+		return;
+
+	thread_local WNDPROC originalWndProc;
+
+	if (!Suspend)
+	{
+		SetWindowLongPtrW(info.hwndList, GWLP_WNDPROC, (LONG_PTR)originalWndProc);
+		originalWndProc = nullptr;
+
+		SendMessage(ComboHandle, CB_SHOWDROPDOWN, FALSE, 0);
+		SendMessage(info.hwndList, WM_SETREDRAW, TRUE, 0);
+
+		SendMessage(ComboHandle, CB_SETMINVISIBLE, 30, 0);
+		SendMessage(ComboHandle, WM_SETREDRAW, TRUE, 0);
+
+	}
+	else
+	{
+		SendMessage(ComboHandle, WM_SETREDRAW, FALSE, 0);// Prevent repainting until finished
+		SendMessage(ComboHandle, CB_SETMINVISIBLE, 1, 0);// Possible optimization for older libraries (source: MSDN forums)
+
+		auto hackWndProc = [](HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) -> LRESULT
+		{
+			switch (uMsg)
+			{
+			case WM_SETREDRAW:
+			case LB_ADDSTRING:
+			case LB_INSERTSTRING:
+			case LB_DELETESTRING:
+			case LB_SETTOPINDEX:
+			case LB_SETITEMDATA:
+				return originalWndProc(hwnd, uMsg, wParam, lParam);
+			}
+
+			return 0;
+		};
+
+		originalWndProc = (WNDPROC)GetWindowLongPtrW(info.hwndList, GWLP_WNDPROC);
+		SetWindowLongPtrW(info.hwndList, GWLP_WNDPROC, (LONG_PTR)(WNDPROC)hackWndProc);
+
+		SendMessage(info.hwndList, WM_SETREDRAW, FALSE, 0);
+		SendMessage(ComboHandle, CB_SHOWDROPDOWN, TRUE, 0);
+	}
+}
+
 void EndUIDefer()
 {
 	if (!g_UseDeferredDialogInsert)
@@ -513,10 +564,8 @@ void EndUIDefer()
 	{
 		const HWND control = g_DeferredComboBox;
 
-		SendMessage(control, WM_SETREDRAW, FALSE, 0);// Prevent repainting until finished
-		SendMessage(control, CB_SETMINVISIBLE, 1, 0);// Possible optimization for older libraries (source: MSDN forums)
-
 		// Sort alphabetically if requested to try and speed up inserts
+		int finalWidth = 0;
 		LONG_PTR style = GetWindowLongPtr(control, GWL_STYLE);
 
 		if ((style & CBS_SORT) == CBS_SORT)
@@ -528,42 +577,56 @@ void EndUIDefer()
 			});
 		}
 
-		// Insert everything all at once
 		SendMessage(control, CB_INITSTORAGE, g_DeferredMenuItems.size(), g_DeferredStringLength * sizeof(char));
+
+		if (HDC hdc = GetDC(control); hdc)
 		{
-			HDC hdc = GetDC(control);
-			int boxWidth = 0;
+			SuspendComboBoxUpdates(control, true);
 
-			Assert(hdc);
+			// Pre-calculate font widths for resizing, starting with TrueType
+			int fontWidths[UCHAR_MAX];
+			ABC trueTypeFontWidths[UCHAR_MAX];
 
-			for (auto&[display, value] : g_DeferredMenuItems)
+			if (!GetCharABCWidthsA(hdc, 0, ARRAYSIZE(trueTypeFontWidths) - 1, trueTypeFontWidths))
+			{
+				BOOL result = GetCharWidthA(hdc, 0, ARRAYSIZE(fontWidths) - 1, fontWidths);
+				AssertMsg(result, "Failed to determine any font widths");
+			}
+			else
+			{
+				for (int i = 0; i < ARRAYSIZE(fontWidths); i++)
+					fontWidths[i] = trueTypeFontWidths[i].abcB;
+			}
+
+			// Insert everything all at once
+			for (auto [display, value] : g_DeferredMenuItems)
 			{
 				LRESULT index = SendMessageA(control, CB_ADDSTRING, 0, (LPARAM)display);
-				SIZE size;
+				int lineSize = 0;
 
 				if (index != CB_ERR && index != CB_ERRSPACE)
 					SendMessageA(control, CB_SETITEMDATA, index, (LPARAM)value);
 
-				if (g_AllowResize && GetTextExtentPoint32A(hdc, display, (int)strlen(display), &size))
-					boxWidth = std::max<int>(boxWidth, size.cx);
+				for (const char *c = display; *c != '\0'; c++)
+					lineSize += fontWidths[*c];
+
+				finalWidth = std::max<int>(finalWidth, lineSize);
 
 				free((void *)display);
 			}
 
-			// Resize to fit
-			if (g_AllowResize)
-			{
-				LRESULT currentWidth = SendMessage(control, CB_GETDROPPEDWIDTH, 0, 0);
-
-				if (boxWidth > currentWidth)
-					SendMessage(control, CB_SETDROPPEDWIDTH, boxWidth, 0);
-			}
-
+			SuspendComboBoxUpdates(control, false);
 			ReleaseDC(control, hdc);
 		}
 
-		SendMessage(control, CB_SETMINVISIBLE, 30, 0);
-		SendMessage(control, WM_SETREDRAW, TRUE, 0);
+		// Resize to fit
+		if (g_AllowResize)
+		{
+			LRESULT currentWidth = SendMessage(control, CB_GETDROPPEDWIDTH, 0, 0);
+
+			if (finalWidth > currentWidth)
+				SendMessage(control, CB_SETDROPPEDWIDTH, finalWidth, 0);
+		}
 	}
 
 	ResetUIDefer();
