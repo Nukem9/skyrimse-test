@@ -705,9 +705,16 @@ void EditorUI_WarningUnknown2(__int64 Unused, const char *Format, ...)
 	va_end(va);
 }
 
-void EditorUI_Assert(const char *File, int Line, const char *Message)
+void EditorUI_Assert(const char *File, int Line, const char *Message, ...)
 {
-	EditorUI_Log("ASSERTION: %s (%s line %d)", Message, File, Line);
+	char buffer[2048];
+	va_list va;
+
+	va_start(va, Message);
+	_vsnprintf_s(buffer, _TRUNCATE, Message, va);
+	va_end(va);
+
+	EditorUI_Log("ASSERTION: %s (%s line %d)", buffer, File, Line);
 }
 
 BOOL EditorUI_ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask)

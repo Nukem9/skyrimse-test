@@ -19,7 +19,7 @@ void EditorUI_Log(const char *Format, ...);
 void EditorUI_Warning(int Type, const char *Format, ...);
 void EditorUI_WarningUnknown1(const char *Format, ...);
 void EditorUI_WarningUnknown2(__int64 Unused, const char *Format, ...);
-void EditorUI_Assert(const char *File, int Line, const char *Message);
+void EditorUI_Assert(const char *File, int Line, const char *Message, ...);
 
 BOOL EditorUI_ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask);
 void EditorUI_ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections);
