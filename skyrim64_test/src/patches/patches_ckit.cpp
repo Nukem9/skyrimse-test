@@ -519,6 +519,28 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(g_ModuleBase + 0x17F4A04, &hk_call_1417F4A04);
 
 	//
+	// Fix for crash after erasing an iterator and dereferencing it in "InventoryChanges" code
+	//
+	class changeInventoryHook : public Xbyak::CodeGenerator
+	{
+	public:
+		changeInventoryHook() : Xbyak::CodeGenerator()
+		{
+			// iterator = iterator->next
+			mov(rax, ptr[rsp + 0xD0]);
+			mov(rax, ptr[rax + 0x8]);
+			mov(ptr[rsp + 0xD0], rax);
+
+			// Continue with code that destroys the now-previous iterator
+			mov(rax, ptr [rsp + 0x50]);
+			jmp(ptr[rip]);
+			dq(g_ModuleBase + 0x1776B19);
+		}
+	} static inventoryHookInstance;
+
+	XUtil::DetourJump(g_ModuleBase + 0x1776B14, (uintptr_t)inventoryHookInstance.getCode());
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
