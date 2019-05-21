@@ -269,6 +269,11 @@ void Patch_TESVCreationKit()
 		XUtil::DetourJump(g_ModuleBase + 0x243D260, &EditorUI_Assert);
 	}
 
+	if (g_INI.GetBoolean("CreationKit", "DisableWindowGhosting", false))
+	{
+		DisableProcessWindowsGhosting();
+	}
+
 	// Deferred dialog loading (batched UI updates)
 	PatchTemplatedFormIterator();
 	XUtil::DetourJump(g_ModuleBase + 0x13B9AD0, &InsertComboBoxItem);
