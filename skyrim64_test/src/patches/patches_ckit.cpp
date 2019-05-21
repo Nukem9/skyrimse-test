@@ -541,6 +541,13 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(g_ModuleBase + 0x1776B14, (uintptr_t)inventoryHookInstance.getCode());
 
 	//
+	// Fix for crash when editing a spell effect with a large (>= 1'000'000'000) duration. WARNING: Stack padding allows the buffer
+	// to be up to 12 bytes, 10 are originally reserved.
+	//
+	XUtil::PatchMemory(g_ModuleBase + 0x1CA2CBD, (PBYTE)"\xBA\x0C\x00\x00\x00", 5);
+	XUtil::PatchMemory(g_ModuleBase + 0x1CA2E64, (PBYTE)"\xBA\x0C\x00\x00\x00", 5);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
