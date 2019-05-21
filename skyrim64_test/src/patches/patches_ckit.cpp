@@ -548,6 +548,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x1CA2E64, (PBYTE)"\xBA\x0C\x00\x00\x00", 5);
 
 	//
+	// Increase the maximum navmesh autogeneration cell limit to 100,000 and prevent spamming UI updates (0.01% -> 0.70%)
+	//
+	XUtil::PatchMemory(g_ModuleBase + 0x202F0B6, (PBYTE)"\xA0\x86\x01\x00", 4);
+	XUtil::PatchMemory(g_ModuleBase + 0x202E0ED, (PBYTE)"\x0F\x2F\x05\xBC\x05\x03\x01", 7);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
