@@ -707,6 +707,9 @@ void EditorUI_WarningUnknown2(__int64 Unused, const char *Format, ...)
 
 void EditorUI_Assert(const char *File, int Line, const char *Message, ...)
 {
+	if (!Message)
+		Message = "<No message>";
+
 	char buffer[2048];
 	va_list va;
 
