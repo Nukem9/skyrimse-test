@@ -1,8 +1,9 @@
+#include "../../common.h"
 #include <tbb/concurrent_vector.h>
 #include <regex>
 #include <Richedit.h>
 #include <CommCtrl.h>
-#include "../../common.h"
+#include <commdlg.h>
 #include "../../typeinfo/ms_rtti.h"
 #include "../../typeinfo/hk_rtti.h"
 #include "EditorUI.h"

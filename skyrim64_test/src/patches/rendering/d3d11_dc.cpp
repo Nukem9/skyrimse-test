@@ -1,6 +1,6 @@
+#include "common.h"
 #include <tbb/concurrent_queue.h>
 #include <atomic>
-#include "common.h"
 #include "../TES/BSGraphicsRenderer.h"
 
 //

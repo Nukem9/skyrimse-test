@@ -1,5 +1,5 @@
-#include <regex>
 #include "../common.h"
+#include <regex>
 #include "../patches/TES/NiMain/NiRTTI.h"
 #include "ms_rtti.h"
 

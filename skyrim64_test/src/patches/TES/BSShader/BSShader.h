@@ -25,7 +25,7 @@ struct BSIStream;
 #define BSSHADER_FORWARD_CALL(OptionIndex, Func, ...) \
 if (g_ShaderToggles[m_Type][BSGraphics::CONSTANT_GROUP_LEVEL_##OptionIndex]) { BSSHADER_FORWARD_CALL_ALWAYS(OptionIndex, Func, __VA_ARGS__) }
 
-#define DEFINE_SHADER_DESCRIPTOR(Type, Entries) static const ShaderDescriptor ShaderConfig(Type, { Entries })
+#define DEFINE_SHADER_DESCRIPTOR(Type, Entries) static const ShaderDescriptor ShaderConfig##Type(#Type, { Entries })
 #define CONFIG_ENTRY(a, b, c, d, e) { ShaderDescriptor::##a, ShaderDescriptor::##b, c, #d, #e },
 
 class ShaderDescriptor

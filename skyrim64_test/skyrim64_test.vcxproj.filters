@@ -338,6 +338,9 @@
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSEffectShaderMaterial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\TES.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">

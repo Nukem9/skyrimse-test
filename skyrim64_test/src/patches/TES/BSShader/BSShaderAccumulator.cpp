@@ -323,7 +323,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	AutoFunc(int(__fastcall *)(), sub_140D744B0, 0xD744E0);
 	AutoFunc(__int64(__fastcall *)(__int64 a1, unsigned int a2), sub_140D69E70, 0xD69EA0);
 	AutoFunc(__int64(__fastcall *)(float *a1, float a2, float a3, float a4, int a5), sub_140D69D30, 0xD69D60);
-	AutoFunc(signed __int64(__fastcall *)(), sub_1412FD120, 0x12FD480);
+	AutoFunc(int(__fastcall *)(), sub_1412FD120, 0x12FD480);
 	AutoFunc(__int64(__fastcall *)(__int64 a1, unsigned int a2, int a3, int a4, char a5), sub_140D74350, 0xD74380);
 	AutoFunc(void(__fastcall *)(__int64 a1, uint32_t a2, int a3, uint32_t a4), sub_140D74370, 0xD743A0);
 	AutoFunc(void(__fastcall *)(__int64 a1, char a2), sub_140D69990, 0xD699C0);
@@ -352,7 +352,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		{
 			sub_140D69E70((__int64)flt_14304E490, 2u);// BSGraphics::Renderer::ClearDepthStencil(CLEAR_DEPTH_STENCIL_TARGET_STENCIL)
 			sub_140D69D30((float *)flt_14304E490, 0.0, 0.0, 0.0, 0);
-			__int64 v20 = sub_1412FD120();
+			int v20 = sub_1412FD120();
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 0, v20, 3, 1);// RENDER_TARGET_NORMAL_TAAMASK_SSRMASK (This can change) SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 1u, 7, 3, 1);// RENDER_TARGET_MOTION_VECTOR SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR

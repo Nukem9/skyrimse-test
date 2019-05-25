@@ -1,4 +1,3 @@
-#include <windows.h>
 #include "../common.h"
 
 // Hooks that probably don't do anything
@@ -32,5 +31,5 @@ void PatchThreading()
 	PatchIAT(hk_Sleep, "kernel32.dll", "Sleep");
 
 	SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
-	timeBeginPeriod(1);
+	//timeBeginPeriod(1);
 }

@@ -6,7 +6,7 @@
 #include "BSBloodSplatterShader.h"
 
 DEFINE_SHADER_DESCRIPTOR(
-	"BloodSplatter",
+	BloodSplatter,
 
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float4x4,	WorldViewProj)
@@ -37,9 +37,9 @@ using namespace BSGraphics;
 
 AutoPtr(__int64, qword_14304EF00, 0x304EF00);
 
-BSBloodSplatterShader::BSBloodSplatterShader() : BSShader(ShaderConfig.Type)
+BSBloodSplatterShader::BSBloodSplatterShader() : BSShader(ShaderConfigBloodSplatter.Type)
 {
-	ShaderMetadata[BSShaderManager::BSSM_SHADER_BLOODSPLATTER] = &ShaderConfig;
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_BLOODSPLATTER] = &ShaderConfigBloodSplatter;
 	m_Type = BSShaderManager::BSSM_SHADER_BLOODSPLATTER;
 	pInstance = this;
 
@@ -173,18 +173,18 @@ void BSBloodSplatterShader::CreateAllShaders()
 void BSBloodSplatterShader::CreateVertexShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSBloodSplatterShader::Defines::GetArray(Technique);
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.count(i) ? ShaderConfig.ByConstantIndexVS.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfigBloodSplatter.ByConstantIndexVS.count(i) ? ShaderConfigBloodSplatter.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, ShaderConfig.Type, getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfigBloodSplatter.Type, getDefines, getConstant);
 }
 
 void BSBloodSplatterShader::CreatePixelShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSBloodSplatterShader::Defines::GetArray(Technique);
-	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.count(i) ? ShaderConfig.BySamplerIndex.at(i)->Name : nullptr; };
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.count(i) ? ShaderConfig.ByConstantIndexPS.at(i)->Name : nullptr; };
+	auto getSampler = [](int i) { return ShaderConfigBloodSplatter.BySamplerIndex.count(i) ? ShaderConfigBloodSplatter.BySamplerIndex.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfigBloodSplatter.ByConstantIndexPS.count(i) ? ShaderConfigBloodSplatter.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, ShaderConfig.Type, getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfigBloodSplatter.Type, getDefines, getSampler, getConstant);
 }
 
 uint32_t BSBloodSplatterShader::GetRawTechnique(uint32_t Technique)

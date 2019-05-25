@@ -1,7 +1,7 @@
+#include "../common.h"
 #include <xbyak/xbyak.h>
 #include <intrin.h>
 #include "../typeinfo/ms_rtti.h"
-#include "../common.h"
 #include "TES/MemoryManager.h"
 #include "TES/bhkThreadMemorySource.h"
 #include "TES/NiMain/NiRTTI.h"

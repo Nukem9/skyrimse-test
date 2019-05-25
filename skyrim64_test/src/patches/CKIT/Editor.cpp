@@ -1,9 +1,8 @@
+#include "../../common.h"
 #include <libdeflate/libdeflate.h>
 #include <mutex>
 #include <smmintrin.h>
-#include <windows.h>
 #include <CommCtrl.h>
-#include "../../common.h"
 #include "../TES/MemoryManager.h"
 #include "../TES/NiMain/NiColor.h"
 #include "../TES/NiMain/NiPointer.h"

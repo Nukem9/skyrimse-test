@@ -1,6 +1,7 @@
 #include "../../../rendering/common.h"
 #include "../../../../common.h"
 #include "../../NiMain/NiSourceTexture.h"
+#include "../../TES.h"
 #include "../../BSGraphicsState.h"
 #include "../../Setting.h"
 #include "../../NiMain/NiDirectionalLight.h"
@@ -13,7 +14,7 @@
 #include "BSLightingShaderMaterial.h"
 
 DEFINE_SHADER_DESCRIPTOR(
-	"Lighting",
+	Lighting,
 
 	// Vertex
 	CONFIG_ENTRY(VS, PER_TEC, 12, float4, HighDetailRange)
@@ -103,14 +104,12 @@ AutoPtr(float, flt_141E32F54, 0x1E32F54);
 AutoPtr(float, flt_141E32F58, 0x1E32F58);
 AutoPtr(float, flt_141E32F5C, 0x1E32F5C);
 AutoPtr(float, flt_141E32F60, 0x1E32F60);
-AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(int, dword_141E33BA0, 0x1E33BA0);
 AutoPtr(BYTE, byte_141E32F66, 0x1E32F66);// bEnableCharacterLighting
 AutoPtr(float, xmmword_141E3302C, 0x1E3302C);// CharacterLightingStrength { Primary, Secondary, Luminance, Max Luminance } 
 AutoPtr(XMVECTORF32, xmmword_141E3301C, 0x1E3301C);
 AutoPtr(int, dword_141E33040, 0x1E33040);
 AutoPtr(uintptr_t, qword_1431F5810, 0x31F5810);// ImagespaceShaderManager
-AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 AutoPtr(XMVECTORF32, xmmword_14187D940, 0x187D940);
 AutoPtr(BYTE, byte_141E32E88, 0x1E32E88);
 AutoPtr(uintptr_t, qword_14304EF00, 0x304EF00);
@@ -154,7 +153,7 @@ void TestHook5()
 	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1307BD0), &BSLightingShader::__ctor__);
 }
 
-BSLightingShader::BSLightingShader() : BSShader(ShaderConfig.Type)
+BSLightingShader::BSLightingShader() : BSShader(ShaderConfigLighting.Type)
 {
 	uintptr_t v1 = *(uintptr_t *)((uintptr_t)this + 0x0);
 	uintptr_t v2 = *(uintptr_t *)((uintptr_t)this + 0x10);
@@ -165,7 +164,7 @@ BSLightingShader::BSLightingShader() : BSShader(ShaderConfig.Type)
 	AutoFunc(uintptr_t(__fastcall *)(BSLightingShader *), sub_141307BD0, 0x1307BD0);
 	sub_141307BD0(this);
 
-	ShaderMetadata[BSShaderManager::BSSM_SHADER_LIGHTING] = &ShaderConfig;
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_LIGHTING] = &ShaderConfigLighting;
 	m_Type = BSShaderManager::BSSM_SHADER_LIGHTING;
 	pInstance = this;
 
@@ -1122,7 +1121,7 @@ void BSLightingShader::TechUpdateHighDetailRangeConstants(BSGraphics::ConstantGr
 
 void BSLightingShader::TechUpdateFogConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG)
 {
-	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(byte_141E32FE0);
+	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(TES::byte_141E32FE0);
 
 	if (!fogParams)
 		return;
@@ -1133,7 +1132,7 @@ void BSLightingShader::TechUpdateFogConstants(BSGraphics::ConstantGroup<BSGraphi
 		fogColor.f[0] = *(float *)(fogParams + 56);
 		fogColor.f[1] = *(float *)(fogParams + 60);
 		fogColor.f[2] = *(float *)(fogParams + 64);
-		fogColor.f[3] = flt_141E32FBC;
+		fogColor.f[3] = TES::flt_141E32FBC;
 
 		// VS: p14 float4 FogNearColor
 		VertexCG.ParamVS<XMVECTORF32, 14>() = fogColor;

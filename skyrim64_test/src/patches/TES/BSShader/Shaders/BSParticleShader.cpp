@@ -7,7 +7,7 @@ using namespace DirectX;
 using namespace BSGraphics;
 
 DEFINE_SHADER_DESCRIPTOR(
-	"Particle",
+	Particle,
 
 	// Vertex
 	CONFIG_ENTRY(VS, PER_TEC, 13, float4,				ScaleAdjust)
@@ -53,9 +53,9 @@ AutoPtr(uint32_t, dword_143051B40, 0x3051B40);
 AutoPtr(uint32_t, dword_1434BA458, 0x34BA458);
 AutoPtr(uint32_t, dword_141E33048, 0x1E33048);
 
-BSParticleShader::BSParticleShader() : BSShader(ShaderConfig.Type)
+BSParticleShader::BSParticleShader() : BSShader(ShaderConfigParticle.Type)
 {
-	ShaderMetadata[BSShaderManager::BSSM_SHADER_PARTICLE] = &ShaderConfig;
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_PARTICLE] = &ShaderConfigParticle;
 	m_Type = BSShaderManager::BSSM_SHADER_PARTICLE;
 	pInstance = this;
 }
@@ -165,18 +165,18 @@ void BSParticleShader::CreateAllShaders()
 void BSParticleShader::CreateVertexShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSParticleShader::Defines::GetArray(Technique);
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.count(i) ? ShaderConfig.ByConstantIndexVS.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfigParticle.ByConstantIndexVS.count(i) ? ShaderConfigParticle.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, ShaderConfig.Type, getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfigParticle.Type, getDefines, getConstant);
 }
 
 void BSParticleShader::CreatePixelShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSParticleShader::Defines::GetArray(Technique);
-	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.count(i) ? ShaderConfig.BySamplerIndex.at(i)->Name : nullptr; };
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.count(i) ? ShaderConfig.ByConstantIndexPS.at(i)->Name : nullptr; };
+	auto getSampler = [](int i) { return ShaderConfigParticle.BySamplerIndex.count(i) ? ShaderConfigParticle.BySamplerIndex.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfigParticle.ByConstantIndexPS.count(i) ? ShaderConfigParticle.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, ShaderConfig.Type, getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfigParticle.Type, getDefines, getSampler, getConstant);
 }
 
 uint32_t BSParticleShader::GetRawTechnique(uint32_t Technique)

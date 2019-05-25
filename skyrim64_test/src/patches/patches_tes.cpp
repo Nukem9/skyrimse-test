@@ -1,6 +1,6 @@
+#include "../common.h"
 #include <xbyak/xbyak.h>
 #include "../typeinfo/ms_rtti.h"
-#include "../common.h"
 #include "dinput8.h"
 #include "TES/TESForm.h"
 #include "TES/BSReadWriteLock.h"

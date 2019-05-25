@@ -1,6 +1,7 @@
 #include "../../../../common.h"
 #include "../../NiMain/NiDirectionalLight.h"
 #include "../../BSGraphicsState.h"
+#include "../../TES.h"
 #include "../../BSTArray.h"
 #include "../../Setting.h"
 #include "../BSLight.h"
@@ -9,7 +10,7 @@
 #include "BSGrassShader.h"
 
 DEFINE_SHADER_DESCRIPTOR(
-	"RunGrass",
+	RunGrass,
 
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float4x4,	WorldViewProj)
@@ -48,13 +49,10 @@ AutoPtr(BYTE, byte_14304E4C5, 0x304E4C5);
 AutoPtr(BYTE, byte_141E32E9D, 0x1E32E9D);// bShadowsOnGrass_Display
 AutoPtr(BYTE, byte_141E32F65, 0x1E32F65);// BSShaderManager::bLiteBrite
 AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
-AutoPtr(uintptr_t, qword_141E32F20, 0x1E32F20);
-AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(float, flt_1431F6198, 0x31F6198);// Fade parameter
 AutoPtr(float, flt_1431F619C, 0x31F619C);// Fade parameter
 AutoPtr(float, flt_141E32F50, 0x1E32F50);// Part of BSShaderManager timer array
 AutoPtr(float, flt_1431F63E8, 0x31F63E8);
-AutoPtr(float, flt_141E32FBC, 0x1E32FBC);
 
 DefineIniSetting(iShadowMaskQuarter, Display);
 DefineIniSetting(fShadowClampValue, Display);
@@ -62,9 +60,9 @@ DefineIniSetting(fWindGrassMultiplier, Display);
 
 thread_local XMVECTOR TLS_FogNearColor;
 
-BSGrassShader::BSGrassShader() : BSShader(ShaderConfig.Type)
+BSGrassShader::BSGrassShader() : BSShader(ShaderConfigRunGrass.Type)
 {
-	ShaderMetadata[BSShaderManager::BSSM_SHADER_RUNGRASS] = &ShaderConfig;
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_RUNGRASS] = &ShaderConfigRunGrass;
 	m_Type = BSShaderManager::BSSM_SHADER_RUNGRASS;
 	pInstance = this;
 }
@@ -143,7 +141,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	}
 	else
 	{
-		NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)(qword_141E32F20 + 512))->GetLight());
+		NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)(TES::qword_141E32F20 + 512))->GetLight());
 
 		data->AmbientColor = sunLight->GetAmbientColor();
 		data->DirLightColor = sunLight->GetDiffuseColor();
@@ -234,7 +232,7 @@ void BSGrassShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 void BSGrassShader::UpdateFogParameters()
 {
-	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(byte_141E32FE0);
+	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(TES::byte_141E32FE0);
 
 	if (!fogParams)
 		return;
@@ -243,7 +241,7 @@ void BSGrassShader::UpdateFogParameters()
 	NiColorA color = NiColorA::BLACK;
 
 	if (*(float *)(fogParams + 80) != 0.0f || *(float *)(fogParams + 84) != 0.0f)
-		color = NiColorA(*(float *)(fogParams + 56), *(float *)(fogParams + 60), *(float *)(fogParams + 64), flt_141E32FBC);
+		color = NiColorA(*(float *)(fogParams + 56), *(float *)(fogParams + 60), *(float *)(fogParams + 64), TES::flt_141E32FBC);
 
 	BSGraphics::Utility::CopyNiColorAToFloat(&TLS_FogNearColor, color);
 }
@@ -301,18 +299,18 @@ void BSGrassShader::CreateAllShaders()
 void BSGrassShader::CreateVertexShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSGrassShader::Defines::GetArray(Technique);
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.count(i) ? ShaderConfig.ByConstantIndexVS.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfigRunGrass.ByConstantIndexVS.count(i) ? ShaderConfigRunGrass.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, ShaderConfig.Type, getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfigRunGrass.Type, getDefines, getConstant);
 }
 
 void BSGrassShader::CreatePixelShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSGrassShader::Defines::GetArray(Technique);
-	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.count(i) ? ShaderConfig.BySamplerIndex.at(i)->Name : nullptr; };
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.count(i) ? ShaderConfig.ByConstantIndexPS.at(i)->Name : nullptr; };
+	auto getSampler = [](int i) { return ShaderConfigRunGrass.BySamplerIndex.count(i) ? ShaderConfigRunGrass.BySamplerIndex.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfigRunGrass.ByConstantIndexPS.count(i) ? ShaderConfigRunGrass.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, ShaderConfig.Type, getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfigRunGrass.Type, getDefines, getSampler, getConstant);
 }
 
 uint32_t BSGrassShader::GetRawTechnique(uint32_t Technique)

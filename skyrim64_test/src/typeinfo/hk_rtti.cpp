@@ -1,5 +1,5 @@
-#include <map>
 #include "../common.h"
+#include <map>
 #include "hk_rtti.h"
 
 namespace HKRTTI

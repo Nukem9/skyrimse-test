@@ -1,5 +1,5 @@
-#include <future>
 #include "../common.h"
+#include <future>
 #include "dinput8.h"
 
 #define WM_APP_THREAD_TASK		(WM_APP + 1)

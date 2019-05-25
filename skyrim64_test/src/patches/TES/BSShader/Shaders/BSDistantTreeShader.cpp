@@ -1,4 +1,5 @@
 #include "../../../../common.h"
+#include "../../TES.h"
 #include "../../BSGraphicsState.h"
 #include "../../NiMain/NiSourceTexture.h"
 #include "../../NiMain/NiDirectionalLight.h"
@@ -8,7 +9,7 @@
 #include "BSDistantTreeShader.h"
 
 DEFINE_SHADER_DESCRIPTOR(
-	"DistantTree",
+	DistantTree,
 
 	// Vertex
 	CONFIG_ENTRY(VS, PER_GEO, 0, undefined,				InstanceData)
@@ -42,13 +43,11 @@ DEFINE_SHADER_DESCRIPTOR(
 using namespace DirectX;
 
 AutoPtr(NiSourceTexture *, WorldTreeLODAtlas, 0x32A7F58);
-AutoPtr(BYTE, byte_141E32FE0, 0x1E32FE0);
 AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
-AutoPtr(__int64, qword_141E32F20, 0x1E32F20);
 
-BSDistantTreeShader::BSDistantTreeShader() : BSShader(ShaderConfig.Type)
+BSDistantTreeShader::BSDistantTreeShader() : BSShader(ShaderConfigDistantTree.Type)
 {
-	ShaderMetadata[BSShaderManager::BSSM_SHADER_DISTANTTREE] = &ShaderConfig;
+	ShaderMetadata[BSShaderManager::BSSM_SHADER_DISTANTTREE] = &ShaderConfigDistantTree;
 	m_Type = BSShaderManager::BSSM_SHADER_DISTANTTREE;
 	pInstance = this;
 }
@@ -73,7 +72,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	// fogParams is of type NiFogProperty *
-	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(byte_141E32FE0);
+	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(TES::byte_141E32FE0);
 
 	if (fogParams)
 	{
@@ -108,7 +107,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	}
 
 	// Sun is always of type NiDirectionalLight *
-	NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)(qword_141E32F20 + 512))->GetLight());
+	NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)(TES::qword_141E32F20 + 512))->GetLight());
 
 	if (sunLight)
 	{
@@ -191,18 +190,18 @@ void BSDistantTreeShader::CreateAllShaders()
 void BSDistantTreeShader::CreateVertexShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexVS.count(i) ? ShaderConfig.ByConstantIndexVS.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfigDistantTree.ByConstantIndexVS.count(i) ? ShaderConfigDistantTree.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, ShaderConfig.Type, getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfigDistantTree.Type, getDefines, getConstant);
 }
 
 void BSDistantTreeShader::CreatePixelShader(uint32_t Technique)
 {
 	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
-	auto getSampler = [](int i) { return ShaderConfig.BySamplerIndex.count(i) ? ShaderConfig.BySamplerIndex.at(i)->Name : nullptr; };
-	auto getConstant = [](int i) { return ShaderConfig.ByConstantIndexPS.count(i) ? ShaderConfig.ByConstantIndexPS.at(i)->Name : nullptr; };
+	auto getSampler = [](int i) { return ShaderConfigDistantTree.BySamplerIndex.count(i) ? ShaderConfigDistantTree.BySamplerIndex.at(i)->Name : nullptr; };
+	auto getConstant = [](int i) { return ShaderConfigDistantTree.ByConstantIndexPS.count(i) ? ShaderConfigDistantTree.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, ShaderConfig.Type, getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfigDistantTree.Type, getDefines, getSampler, getConstant);
 }
 
 uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)
