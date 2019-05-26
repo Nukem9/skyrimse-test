@@ -1,4 +1,4 @@
-#include "../../detours/Detours.h"
+#include "../common.h"
 #include "vfs.h"
 #include "vfs_hook.h"
 

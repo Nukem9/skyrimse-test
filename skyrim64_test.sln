@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28922.388
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim64_test", "skyrim64_test\skyrim64_test.vcxproj", "{BF4A1EFE-0BD9-49A1-BC02-2FA53027B0D7}"
 EndProject
@@ -37,6 +37,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim64_ckt", "skyrim64_test\skyrim64_ckt.vcxproj", "{87E6B6A2-89F5-43A4-B794-DF3B8CE7D68D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim32_ckt", "skyrim32_ckt\skyrim32_ckt.vcxproj", "{481763E4-7108-4CDA-A8A0-A4A15A2D841C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "detours", "Dependencies\detours\detours\detours.vcxproj", "{06E30C65-D79A-4FEC-8A60-B36D907E6601}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -406,6 +408,34 @@ Global
 		{481763E4-7108-4CDA-A8A0-A4A15A2D841C}.Release-MT|x64.Build.0 = Release|Win32
 		{481763E4-7108-4CDA-A8A0-A4A15A2D841C}.Release-MT|x86.ActiveCfg = Release|Win32
 		{481763E4-7108-4CDA-A8A0-A4A15A2D841C}.Release-MT|x86.Build.0 = Release|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug|x64.ActiveCfg = Debug|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug|x64.Build.0 = Debug|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug|x86.ActiveCfg = Debug|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug|x86.Build.0 = Debug|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug-MT|Any CPU.ActiveCfg = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug-MT|Any CPU.Build.0 = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug-MT|x64.ActiveCfg = Debug|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug-MT|x64.Build.0 = Debug|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug-MT|x86.ActiveCfg = Debug|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Debug-MT|x86.Build.0 = Debug|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.EditAndContinue|Any CPU.ActiveCfg = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.EditAndContinue|Any CPU.Build.0 = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.EditAndContinue|x64.ActiveCfg = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.EditAndContinue|x64.Build.0 = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.EditAndContinue|x86.ActiveCfg = Release|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.EditAndContinue|x86.Build.0 = Release|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release|Any CPU.ActiveCfg = Release|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release|x64.ActiveCfg = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release|x64.Build.0 = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release|x86.ActiveCfg = Release|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release|x86.Build.0 = Release|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release-MT|Any CPU.ActiveCfg = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release-MT|Any CPU.Build.0 = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release-MT|x64.ActiveCfg = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release-MT|x64.Build.0 = Release|x64
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release-MT|x86.ActiveCfg = Release|Win32
+		{06E30C65-D79A-4FEC-8A60-B36D907E6601}.Release-MT|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

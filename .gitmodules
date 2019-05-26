@@ -17,3 +17,6 @@
 [submodule "Dependencies/libdeflate"]
 	path = Dependencies/libdeflate
 	url = https://github.com/ebiggers/libdeflate.git
+[submodule "Dependencies/detours"]
+	path = Dependencies/detours
+	url = https://github.com/Nukem9/detours.git

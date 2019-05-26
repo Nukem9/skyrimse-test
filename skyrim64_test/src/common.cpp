@@ -13,6 +13,7 @@
 #pragma comment(lib, "libmoc.lib")				// MaskedOcclusionCulling
 #pragma comment(lib, "libmeshoptimizer.lib")	// Meshoptimizer
 #pragma comment(lib, "libimgui.lib")			// ImGui
+#pragma comment(lib, "detours.lib")				// Detours
 
 #if SKYRIM64_USE_VTUNE
 #pragma comment(lib, "libittnotify.lib")		// Intel Threading Tools
@@ -28,11 +29,6 @@ __itt_heap_function ITT_FreeCallback;
 #pragma comment(lib, "libtracy.lib")			// Tracy
 #endif
 
-#ifdef _DEBUG
-#pragma comment(lib, "detours/detours_debug.lib")
-#else
-#pragma comment(lib, "detours/detours.lib")
-#endif
 
 INIReader g_INI("skyrim64_test.ini");
 

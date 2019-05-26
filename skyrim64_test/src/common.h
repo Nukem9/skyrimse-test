@@ -31,11 +31,7 @@ extern __itt_heap_function ITT_FreeCallback;
 #include <tbb/scalable_allocator.h>
 
 // Detours
-#ifdef _DEBUG
-#include "../detours/Detours.h"
-#else
-#include "../detours/Detours.h"
-#endif
+#include <detours/Detours.h>
 
 // ImGui
 #include <imgui/imgui.h>
