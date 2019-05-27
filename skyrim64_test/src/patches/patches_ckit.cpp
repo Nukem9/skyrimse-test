@@ -554,6 +554,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x202E0ED, (PBYTE)"\x0F\x2F\x05\xBC\x05\x03\x01", 7);
 
 	//
+	// Fix for crash when using "Move to topic" in a quest dialogue view. Any unresolved/unused Topic actions default to "Unknown action",
+	// but a null pointer is used while trying to get the type.
+	//
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x198C661, 5);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
