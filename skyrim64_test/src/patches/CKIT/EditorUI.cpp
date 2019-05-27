@@ -10,9 +10,9 @@
 
 #pragma comment(lib, "comctl32.lib")
 
-#define UI_CMD_ADDLOGTEXT	(WM_APP + 1)
-#define UI_CMD_CLEARLOGTEXT (WM_APP + 2)
-#define UI_CMD_AUTOSCROLL	(WM_APP + 3)
+#define UI_LOG_CMD_ADDTEXT			(WM_APP + 1)
+#define UI_LOG_CMD_CLEARTEXT		(WM_APP + 2)
+#define UI_LOG_CMD_AUTOSCROLL		(WM_APP + 3)
 
 #define UI_EXTMENU_ID				51001
 #define UI_EXTMENU_SHOWLOG			51002
@@ -25,12 +25,14 @@
 #define UI_EXTMENU_HARDCODEDFORMS	51009
 
 HWND g_MainHwnd;
-HWND g_ConsoleHwnd;
+HWND g_LogHwnd;
+tbb::concurrent_vector<const char *> g_LogPendingMessages;
 HMENU g_ExtensionMenu;
 WNDPROC OldEditorUI_WndProc;
 HANDLE g_LogPipeReader;
 HANDLE g_LogPipeWriter;
 void ExportTest(FILE *File);
+
 
 void EditorUI_Initialize()
 {
@@ -67,12 +69,16 @@ bool EditorUI_CreateLogWindow()
 	if (!RegisterClassEx(&wc))
 		return false;
 
-	g_ConsoleHwnd = CreateWindowEx(0, TEXT("RTEDITLOG"), TEXT("Log"), WS_OVERLAPPEDWINDOW, 64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
+	g_LogHwnd = CreateWindowEx(0, TEXT("RTEDITLOG"), TEXT("Log"), WS_OVERLAPPEDWINDOW, 64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
 
-	if (!g_ConsoleHwnd)
+	if (!g_LogHwnd)
 		return false;
 
-	ShowWindow(g_ConsoleHwnd, SW_SHOW);
+	// Poll every 100ms for new lines
+	SetTimer(g_LogHwnd, UI_LOG_CMD_ADDTEXT, 100, nullptr);
+	ShowWindow(g_LogHwnd, SW_SHOW);
+	UpdateWindow(g_LogHwnd);
+
 	return true;
 }
 
@@ -197,14 +203,14 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 		{
 		case UI_EXTMENU_SHOWLOG:
 		{
-			ShowWindow(g_ConsoleHwnd, SW_SHOW);
-			SetForegroundWindow(g_ConsoleHwnd);
+			ShowWindow(g_LogHwnd, SW_SHOW);
+			SetForegroundWindow(g_LogHwnd);
 		}
 		return 0;
 
 		case UI_EXTMENU_CLEARLOG:
 		{
-			PostMessageA(g_ConsoleHwnd, UI_CMD_CLEARLOGTEXT, 0, 0);
+			PostMessageA(g_LogHwnd, UI_LOG_CMD_CLEARTEXT, 0, 0);
 		}
 		return 0;
 
@@ -222,7 +228,7 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 			else
 				info.fState |= MFS_CHECKED;
 
-			PostMessageA(g_ConsoleHwnd, UI_CMD_AUTOSCROLL, (WPARAM)check, 0);
+			PostMessageA(g_LogHwnd, UI_LOG_CMD_AUTOSCROLL, (WPARAM)check, 0);
 			SetMenuItemInfo(g_ExtensionMenu, param, FALSE, &info);
 		}
 		return 0;
@@ -311,7 +317,7 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 		// Create the rich edit control (https://docs.microsoft.com/en-us/windows/desktop/Controls/rich-edit-controls)
 		uint32_t style = WS_VISIBLE | WS_CHILD | WS_VSCROLL | ES_MULTILINE | ES_LEFT | ES_NOHIDESEL | ES_AUTOVSCROLL | ES_READONLY;
 
-		richEditHwnd = CreateWindowW(MSFTEDIT_CLASS, L"", style, 0, 0, info->cx, info->cy, Hwnd, nullptr, info->hInstance, nullptr);
+		richEditHwnd = CreateWindowExW(0, MSFTEDIT_CLASS, L"", style, 0, 0, info->cx, info->cy, Hwnd, nullptr, info->hInstance, nullptr);
 		autoScroll = true;
 
 		if (!richEditHwnd)
@@ -338,7 +344,7 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 		SendMessageA(richEditHwnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
 
 		// Subscribe to EN_MSGFILTER and EN_SELCHANGE
-		SendMessageW(richEditHwnd, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_SELCHANGE);
+		SendMessageA(richEditHwnd, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_SELCHANGE);
 	}
 	return 0;
 
@@ -420,39 +426,58 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 	}
 	break;
 
-	case UI_CMD_ADDLOGTEXT:
+	case WM_TIMER:
 	{
-		void *textData = (void *)lParam;
+		if (wParam != UI_LOG_CMD_ADDTEXT)
+			break;
+
+		if (g_LogPendingMessages.size() <= 0)
+			break;
+
+		return EditorUI_LogWndProc(Hwnd, UI_LOG_CMD_ADDTEXT, 0, 0);
+	}
+	return 0;
+
+	case UI_LOG_CMD_ADDTEXT:
+	{
+		SendMessageA(richEditHwnd, WM_SETREDRAW, FALSE, 0);
 
 		// Save old position if not scrolling
 		POINT scrollRange;
 
 		if (!autoScroll)
-		{
-			SendMessageA(richEditHwnd, WM_SETREDRAW, FALSE, 0);
 			SendMessageA(richEditHwnd, EM_GETSCROLLPOS, 0, (WPARAM)&scrollRange);
+
+		// Get a copy of all elements and clear the global list
+		tbb::concurrent_vector<const char *> messages;
+
+		if (!wParam)
+			messages.swap(g_LogPendingMessages);
+		else
+			messages.push_back((const char *)wParam);
+
+		for (const char *message : messages)
+		{
+			// Move caret to the end, then write
+			CHARRANGE range;
+			range.cpMin = LONG_MAX;
+			range.cpMax = LONG_MAX;
+
+			SendMessageA(richEditHwnd, EM_EXSETSEL, 0, (LPARAM)&range);
+			SendMessageA(richEditHwnd, EM_REPLACESEL, FALSE, (LPARAM)message);
+
+			free((void *)message);
 		}
-
-		// Move caret to the end, then write
-		CHARRANGE range;
-		range.cpMin = LONG_MAX;
-		range.cpMax = LONG_MAX;
-
-		SendMessageA(richEditHwnd, EM_EXSETSEL, 0, (LPARAM)&range);
-		SendMessageA(richEditHwnd, EM_REPLACESEL, FALSE, (LPARAM)textData);
 
 		if (!autoScroll)
-		{
 			SendMessageA(richEditHwnd, EM_SETSCROLLPOS, 0, (WPARAM)&scrollRange);
-			SendMessageA(richEditHwnd, WM_SETREDRAW, TRUE, 0);
-			RedrawWindow(richEditHwnd, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
-		}
 
-		free(textData);
+		SendMessageA(richEditHwnd, WM_SETREDRAW, TRUE, 0);
+		RedrawWindow(richEditHwnd, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
 	}
 	return 0;
 
-	case UI_CMD_CLEARLOGTEXT:
+	case UI_LOG_CMD_CLEARTEXT:
 	{
 		char emptyString[1];
 		emptyString[0] = '\0';
@@ -461,7 +486,7 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 	}
 	return 0;
 
-	case UI_CMD_AUTOSCROLL:
+	case UI_LOG_CMD_AUTOSCROLL:
 		autoScroll = (bool)wParam;
 		return 0;
 	}
@@ -616,21 +641,8 @@ void EditorUI_LogVa(const char *Format, va_list Va)
 	if (len >= 2 && buffer[len - 1] != '\n')
 		strcat_s(buffer, "\n");
 
-	// Buffer messages if the window hasn't been created yet
-	static tbb::concurrent_vector<const char *> pendingMessages;
-
-	if (g_ConsoleHwnd && pendingMessages.size() > 0)
-	{
-		for (size_t i = 0; i < pendingMessages.size(); i++)
-			PostMessageA(g_ConsoleHwnd, UI_CMD_ADDLOGTEXT, 0, (LPARAM)pendingMessages[i]);
-
-		pendingMessages.clear();
-	}
-
-	if (!g_ConsoleHwnd)
-		pendingMessages.push_back(_strdup(buffer));
-	else
-		PostMessageA(g_ConsoleHwnd, UI_CMD_ADDLOGTEXT, 0, (LPARAM)_strdup(buffer));
+	if (g_LogPendingMessages.size() < 50000)
+		g_LogPendingMessages.push_back(_strdup(buffer));
 }
 
 void EditorUI_Log(const char *Format, ...)
