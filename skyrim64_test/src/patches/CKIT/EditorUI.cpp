@@ -190,8 +190,21 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 				ExitProcess(0);
 			}
 
-			editorUIInit = true;
+			// Increase status bar spacing
+			int spacing[4] =
+			{
+				200,	// 150
+				300,	// 225
+				700,	// 500
+				-1,		// -1
+			};
+
+			memcpy((void *)(g_ModuleBase + 0x38EC8A8), &spacing, sizeof(spacing));
+
+			// Create custom menu controls
 			g_MainHwnd = Hwnd;
+			editorUIInit = true;
+
 			EditorUI_CreateExtensionMenu(Hwnd, createInfo->hMenu);
 		}
 	}
@@ -295,7 +308,7 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 	{
 		// Continue normal execution but with a custom string
 		char customTitle[1024];
-		sprintf_s(customTitle, "%s (CK64Fixes Rev. %s)", (const char *)lParam, g_GitVersion);
+		sprintf_s(customTitle, "%s [CK64Fixes Rev. %s]", (const char *)lParam, g_GitVersion);
 
 		return CallWindowProc(OldEditorUI_WndProc, Hwnd, Message, wParam, (LPARAM)customTitle);
 	}

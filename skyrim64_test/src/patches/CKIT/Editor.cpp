@@ -517,7 +517,6 @@ void SuspendComboBoxUpdates(HWND ComboHandle, bool Suspend)
 
 		SendMessage(ComboHandle, CB_SETMINVISIBLE, 30, 0);
 		SendMessage(ComboHandle, WM_SETREDRAW, TRUE, 0);
-
 	}
 	else
 	{
