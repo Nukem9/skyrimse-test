@@ -33,7 +33,6 @@ HANDLE g_LogPipeReader;
 HANDLE g_LogPipeWriter;
 void ExportTest(FILE *File);
 
-
 void EditorUI_Initialize()
 {
 	InitCommonControls();

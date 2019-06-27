@@ -6,6 +6,7 @@
 #include "TES/bhkThreadMemorySource.h"
 #include "TES/NiMain/NiRTTI.h"
 #include "CKIT/Editor.h"
+#include "CKIT/TESFile_CK.h"
 #include "CKIT/TESForm_CK.h"
 #include "CKIT/NavMesh.h"
 #include "CKIT/EditorUI.h"
@@ -248,7 +249,7 @@ void Patch_TESVCreationKit()
 	if (g_INI.GetBoolean("CreationKit", "UI", false))
 	{
 		EditorUI_Initialize();
-		*(PBYTE *)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3770), &EditorUI_WndProc);
+		*(uint8_t **)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3770), &EditorUI_WndProc);
 
 		XUtil::PatchMemoryNop(g_ModuleBase + 0x1434473, 2);				// Force bShowReloadShadersButton to always be enabled
 		XUtil::PatchMemoryNop(g_ModuleBase + 0x1487B69, 2);				// Enable push to game button even if version control is disabled
@@ -295,14 +296,18 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "AllowSaveESM", false))
 	{
+		// Also allow non-game ESMs to be set as "Active File"
+		XUtil::DetourCall(g_ModuleBase + 0x13E2D37, &TESFile::IsActiveFileBlacklist);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x163CA2E, 2);
+
+		*(uint8_t **)&TESFile::LoadPluginHeader = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1664CC0), &TESFile::hk_LoadPluginHeader);
+		*(uint8_t **)&TESFile::WritePluginHeader = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1665520), &TESFile::hk_WritePluginHeader);
+
 		// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
 		const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
 
 		XUtil::PatchMemoryNop(g_ModuleBase + 0x164020A, 12);
 		XUtil::PatchMemory(g_ModuleBase + 0x30B9090, (PBYTE)newFormat, strlen(newFormat) + 1);
-
-		// Also allow ESM's to be set as "Active File"
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x13E2D45, 5);
 
 		XUtil::DetourJump(g_ModuleBase + 0x1482DA0, &OpenPluginSaveDialog);
 	}

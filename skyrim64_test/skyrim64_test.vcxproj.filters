@@ -341,6 +341,9 @@
     <ClInclude Include="src\patches\TES\TES.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\CKIT\TESFile_CK.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -563,6 +566,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\bnet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKIT\TESFile_CK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
