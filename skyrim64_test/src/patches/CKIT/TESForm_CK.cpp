@@ -1,9 +1,11 @@
 #include "../../common.h"
+#include <set>
 #include "TESForm_CK.h"
 
 #define FORM_REFERENCE_KEY(x) (((x & 3) == 0) ? (x >> 2) : x)
 
 std::unordered_map<uint64_t, void *> FormReferenceMap;
+std::set<class TESForm *> AlteredFormListShadow;
 
 void FormReferenceMap_RemoveAllEntries()
 {
@@ -62,4 +64,38 @@ bool FormReferenceMap_Get(uint64_t Unused, uint64_t Key, void **Value)
 	}
 
 	return false;
+}
+
+void *AlteredFormList_Create(BSTArray<class TESForm*>* Array, uint32_t Unknown)
+{
+	AlteredFormListShadow.clear();
+
+	return ((void *(__fastcall *)(BSTArray<class TESForm *> *, uint32_t))(g_ModuleBase + 0x16C6990))(Array, Unknown);
+}
+
+void AlteredFormList_RemoveAllEntries(BSTArray<class TESForm *> *Array, bool Unknown)
+{
+	AlteredFormListShadow.clear();
+
+	((void(__fastcall *)(BSTArray<class TESForm *> *, bool))(g_ModuleBase + 0x139B2B0))(Array, Unknown);
+}
+
+void AlteredFormList_Insert(BSTArray<class TESForm *> *Array, class TESForm *&Entry)
+{
+	AlteredFormListShadow.insert(Entry);
+
+	((void(__fastcall *)(BSTArray<class TESForm *> *, class TESForm *&))(g_ModuleBase + 0x146A660))(Array, Entry);
+}
+
+void AlteredFormList_RemoveEntry(BSTArray<class TESForm *> *Array, uint32_t Index, uint32_t Unknown)
+{
+	AlteredFormListShadow.erase(Array->at(Index));
+
+	((void(__fastcall *)(BSTArray<class TESForm *> *, uint32_t, uint32_t))(g_ModuleBase + 0x165EA50))(Array, Index, Unknown);
+}
+
+bool AlteredFormList_ElementExists(BSTArray<class TESForm *> *Array, class TESForm *&Entry)
+{
+	return AlteredFormListShadow.count(Entry) > 0;
+}
 }

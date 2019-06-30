@@ -238,6 +238,14 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(g_ModuleBase + 0x16C0B50, &FormReferenceMap_RemoveEntry);
 	XUtil::DetourJump(g_ModuleBase + 0x146C130, &FormReferenceMap_Get);
 
+	XUtil::PatchMemory(g_ModuleBase + 0x16C081E, (PBYTE)"\xCC", 1);
+	XUtil::DetourCall(g_ModuleBase + 0x16C09DF, &AlteredFormList_Create);
+	XUtil::DetourCall(g_ModuleBase + 0x163D738, &AlteredFormList_RemoveAllEntries);
+	XUtil::DetourCall(g_ModuleBase + 0x16B95E2, &AlteredFormList_Insert);
+	XUtil::DetourCall(g_ModuleBase + 0x16B8EE6, &AlteredFormList_RemoveEntry);
+	XUtil::DetourCall(g_ModuleBase + 0x16B9693, &AlteredFormList_RemoveEntry);
+	XUtil::DetourCall(g_ModuleBase + 0x16B95BD, &AlteredFormList_ElementExists);
+
 	//
 	// UI
 	//
