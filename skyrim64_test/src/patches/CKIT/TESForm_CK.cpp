@@ -2,8 +2,6 @@
 #include <set>
 #include "TESForm_CK.h"
 
-#define FORM_REFERENCE_KEY(x) (((x & 3) == 0) ? (x >> 2) : x)
-
 std::unordered_map<uint64_t, void *> FormReferenceMap;
 std::set<class TESForm *> AlteredFormListShadow;
 
@@ -20,7 +18,7 @@ void FormReferenceMap_RemoveAllEntries()
 
 void *FormReferenceMap_FindOrCreate(uint64_t Key, bool Create)
 {
-	auto itr = FormReferenceMap.find(FORM_REFERENCE_KEY(Key));
+	auto itr = FormReferenceMap.find(Key);
 
 	if (itr != FormReferenceMap.end() && itr->second)
 		return itr->second;
@@ -32,7 +30,7 @@ void *FormReferenceMap_FindOrCreate(uint64_t Key, bool Create)
 		if (ptr)
 			ptr = ((void *(__fastcall *)(void *))(g_ModuleBase + 0x1397CD0))(ptr);
 
-		FormReferenceMap.insert_or_assign(FORM_REFERENCE_KEY(Key), ptr);
+		FormReferenceMap.insert_or_assign(Key, ptr);
 		return ptr;
 	}
 
@@ -41,7 +39,7 @@ void *FormReferenceMap_FindOrCreate(uint64_t Key, bool Create)
 
 void FormReferenceMap_RemoveEntry(uint64_t Key)
 {
-	auto itr = FormReferenceMap.find(FORM_REFERENCE_KEY(Key));
+	auto itr = FormReferenceMap.find(Key);
 
 	if (itr != FormReferenceMap.end() && itr->second)
 	{
@@ -55,7 +53,7 @@ void FormReferenceMap_RemoveEntry(uint64_t Key)
 bool FormReferenceMap_Get(uint64_t Unused, uint64_t Key, void **Value)
 {
 	// Function doesn't care if entry is nullptr, only if it exists
-	auto itr = FormReferenceMap.find(FORM_REFERENCE_KEY(Key));
+	auto itr = FormReferenceMap.find(Key);
 
 	if (itr != FormReferenceMap.end())
 	{
