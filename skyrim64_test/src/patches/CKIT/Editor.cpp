@@ -505,16 +505,9 @@ void SuspendComboBoxUpdates(HWND ComboHandle, bool Suspend)
 	if (!GetComboBoxInfo(ComboHandle, &info))
 		return;
 
-	thread_local WNDPROC originalWndProc;
-
 	if (!Suspend)
 	{
-		SetWindowLongPtrW(info.hwndList, GWLP_WNDPROC, (LONG_PTR)originalWndProc);
-		originalWndProc = nullptr;
-
-		SendMessage(ComboHandle, CB_SHOWDROPDOWN, FALSE, 0);
 		SendMessage(info.hwndList, WM_SETREDRAW, TRUE, 0);
-
 		SendMessage(ComboHandle, CB_SETMINVISIBLE, 30, 0);
 		SendMessage(ComboHandle, WM_SETREDRAW, TRUE, 0);
 	}
@@ -522,28 +515,7 @@ void SuspendComboBoxUpdates(HWND ComboHandle, bool Suspend)
 	{
 		SendMessage(ComboHandle, WM_SETREDRAW, FALSE, 0);// Prevent repainting until finished
 		SendMessage(ComboHandle, CB_SETMINVISIBLE, 1, 0);// Possible optimization for older libraries (source: MSDN forums)
-
-		auto hackWndProc = [](HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) -> LRESULT
-		{
-			switch (uMsg)
-			{
-			case WM_SETREDRAW:
-			case LB_ADDSTRING:
-			case LB_INSERTSTRING:
-			case LB_DELETESTRING:
-			case LB_SETTOPINDEX:
-			case LB_SETITEMDATA:
-				return originalWndProc(hwnd, uMsg, wParam, lParam);
-			}
-
-			return 0;
-		};
-
-		originalWndProc = (WNDPROC)GetWindowLongPtrW(info.hwndList, GWLP_WNDPROC);
-		SetWindowLongPtrW(info.hwndList, GWLP_WNDPROC, (LONG_PTR)(WNDPROC)hackWndProc);
-
 		SendMessage(info.hwndList, WM_SETREDRAW, FALSE, 0);
-		SendMessage(ComboHandle, CB_SHOWDROPDOWN, TRUE, 0);
 	}
 }
 
@@ -582,8 +554,8 @@ void EndUIDefer()
 			SuspendComboBoxUpdates(control, true);
 
 			// Pre-calculate font widths for resizing, starting with TrueType
-			int fontWidths[UCHAR_MAX];
-			ABC trueTypeFontWidths[UCHAR_MAX];
+			int fontWidths[UCHAR_MAX + 1];
+			ABC trueTypeFontWidths[UCHAR_MAX + 1];
 
 			if (!GetCharABCWidthsA(hdc, 0, ARRAYSIZE(trueTypeFontWidths) - 1, trueTypeFontWidths))
 			{
