@@ -588,6 +588,7 @@ void Patch_TESVCreationKit()
 	// - Fix an unoptimized function bottleneck (sub_1414974E0) (Large ESP files only)
 	// - Eliminate millions of calls to update the progress dialog, instead only updating 400 times (0% -> 100%)
 	// - Replace old zlib decompression code with optimized libdeflate
+	// - Cache results from FindFirstFile when GetFileAttributesExA is called immediately after (sub_142647AC0, sub_142676020)
 	//
 	int cpuinfo[4];
 	__cpuid(cpuinfo, 1);
@@ -610,4 +611,9 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(g_ModuleBase + 0x166BB1E, &hk_inflateInit);
 	XUtil::DetourCall(g_ModuleBase + 0x166BBB9, &hk_inflate);
 
+	if (g_INI.GetBoolean("CreationKit", "LooseFileCache", false))
+	{
+		XUtil::DetourJump(g_ModuleBase + 0x2647AC0, &sub_142647AC0);
+		XUtil::DetourJump(g_ModuleBase + 0x2676020, &sub_142676020);
+	}
 }

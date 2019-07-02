@@ -1053,3 +1053,89 @@ const char *hk_call_1417F4A04(int ActorValueIndex)
 
 	return *(const char **)(actorValue + 0x90);
 }
+
+thread_local WIN32_FIND_DATAA CachedFileInfo;
+thread_local char CachedBasePath[MAX_PATH];
+thread_local bool CachedFileInfoValid;
+
+uint32_t sub_142647AC0(__int64 a1, bool *IterationFinished)
+{
+	HANDLE& findHandle = *(HANDLE *)a1;
+	LPWIN32_FIND_DATAA findData = (LPWIN32_FIND_DATAA)(a1 + 8);
+	uint32_t& status = *(uint32_t *)(a1 + 0x24C);
+
+	CachedFileInfoValid = true;
+
+	if (findHandle == INVALID_HANDLE_VALUE)
+	{
+		// Attempting to iterate directory on an already invalid handle
+		status = 6;
+	}
+	else if (findHandle)
+	{
+		*IterationFinished = FindNextFileA(findHandle, findData) == FALSE;
+		memcpy(&CachedFileInfo, findData, sizeof(WIN32_FIND_DATAA));
+
+		if (*IterationFinished)
+			CachedFileInfoValid = false;
+	}
+	else
+	{
+		findHandle = FindFirstFileExA((LPCSTR)(a1 + 0x148), FindExInfoStandard, findData, FindExSearchNameMatch, nullptr, FIND_FIRST_EX_LARGE_FETCH);
+		memcpy(&CachedFileInfo, findData, sizeof(WIN32_FIND_DATAA));
+
+		strcpy_s(CachedBasePath, (LPCSTR)(a1 + 0x148));
+		*strrchr(CachedBasePath, '\\') = '\0';
+
+		// status = x ? EC_INVALID_PARAM : EC_NONE;
+		status = (findHandle == INVALID_HANDLE_VALUE) ? 6 : 0;
+	}
+
+	if (status != 0)
+		CachedFileInfoValid = false;
+
+	return status;
+}
+
+bool sub_142676020(const char *File, uint32_t *FileSize)
+{
+	WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+	fileInfo.dwFileAttributes = INVALID_FILE_ATTRIBUTES;
+
+	if (CachedFileInfoValid)
+	{
+		const static uint32_t cwdLength = GetCurrentDirectoryA(0, nullptr);
+		const size_t filePathLen = strlen(File);
+		const size_t basePathLen = strlen(CachedBasePath);
+
+		if (filePathLen > cwdLength)
+		{
+			// Anything under "<CWD>\\Data\\data\\" will never be valid, so discard all calls with it
+			if (!_strnicmp(File + cwdLength, "Data\\data\\", 10))
+				return false;
+
+			// Check if this file path matches the query from FindFirstFileExA
+			if (filePathLen > basePathLen && !_stricmp(File + basePathLen, CachedFileInfo.cFileName))
+			{
+				fileInfo.dwFileAttributes = CachedFileInfo.dwFileAttributes;
+				fileInfo.nFileSizeLow = CachedFileInfo.nFileSizeLow;
+				fileInfo.nFileSizeHigh = CachedFileInfo.nFileSizeHigh;
+			}
+		}
+	}
+
+	if (fileInfo.dwFileAttributes == INVALID_FILE_ATTRIBUTES)
+	{
+		// Cache miss
+		if (!GetFileAttributesExA(File, GetFileExInfoStandard, &fileInfo))
+			return false;
+	}
+
+	if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		return false;
+
+	AssertMsgVa(fileInfo.nFileSizeHigh <= 0, "Need to move to 64-bit file sizes. '%s' exceeds 4GB.", File);
+
+	*FileSize = fileInfo.nFileSizeLow;
+	return true;
+}
