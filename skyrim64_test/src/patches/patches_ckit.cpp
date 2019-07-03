@@ -574,6 +574,11 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(g_ModuleBase + 0x198C661, 5);
 
 	//
+	// Fix for a package's "Selected Package Data" combo box not having a selected value when using a Topic type. Pointer<->Form ID truncation.
+	//
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x18A0914, 7);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
