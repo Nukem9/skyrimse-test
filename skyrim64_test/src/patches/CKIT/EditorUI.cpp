@@ -31,6 +31,7 @@ HMENU g_ExtensionMenu;
 WNDPROC OldEditorUI_WndProc;
 HANDLE g_LogPipeReader;
 HANDLE g_LogPipeWriter;
+FILE *g_LogFile;
 void ExportTest(FILE *File);
 
 void EditorUI_Initialize()
@@ -50,6 +51,24 @@ void EditorUI_Initialize()
 
 bool EditorUI_CreateLogWindow()
 {
+	// File output
+	const std::string logPath = g_INI.Get("CreationKit_Log", "OutputFile", "none");
+
+	if (strcmp(logPath.c_str(), "none") != 0)
+	{
+		if (fopen_s(&g_LogFile, logPath.c_str(), "w") != 0)
+			g_LogFile = nullptr;
+
+		AssertMsgVa(g_LogFile, "Unable to open the log file '%s' for writing. To disable, set the 'OutputFile' INI option to 'none'.", logPath.c_str());
+
+		atexit([]()
+		{
+			if (g_LogFile)
+				fclose(g_LogFile);
+		});
+	}
+
+	// Window output
 	HINSTANCE instance = (HINSTANCE)GetModuleHandle(nullptr);
 
 	WNDCLASSEX wc;
@@ -652,6 +671,12 @@ void EditorUI_LogVa(const char *Format, va_list Va)
 
 	if (len >= 2 && buffer[len - 1] != '\n')
 		strcat_s(buffer, "\n");
+
+	if (g_LogFile)
+	{
+		fputs(buffer, g_LogFile);
+		fflush(g_LogFile);
+	}
 
 	if (g_LogPendingMessages.size() < 50000)
 		g_LogPendingMessages.push_back(_strdup(buffer));
