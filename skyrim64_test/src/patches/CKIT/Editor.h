@@ -28,6 +28,7 @@ bool sub_141477DA0(__int64 a1);
 bool sub_141477DA0_SSE41(__int64 a1);
 uint32_t sub_1414974E0(BSTArray<void *>& Array, const void *&Target, uint32_t StartIndex, __int64 Unused);
 uint32_t sub_1414974E0_SSE41(BSTArray<void *>& Array, const void *&Target, uint32_t StartIndex, __int64 Unused);
+bool sub_1415D5640(__int64 a1, uint32_t *a2);
 
 void UpdateLoadProgressBar();
 void UpdateObjectWindowTreeView(void *Thisptr, HWND ControlHandle);

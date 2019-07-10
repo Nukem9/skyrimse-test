@@ -591,6 +591,7 @@ void Patch_TESVCreationKit()
 	// - TESForm reference map rewrite (above)
 	// - Fix an unoptimized function bottleneck (sub_141477DA0)
 	// - Fix an unoptimized function bottleneck (sub_1414974E0) (Large ESP files only)
+	// - Fix an unoptimized function bottleneck (sub_1415D5640)
 	// - Eliminate millions of calls to update the progress dialog, instead only updating 400 times (0% -> 100%)
 	// - Replace old zlib decompression code with optimized libdeflate
 	// - Cache results from FindFirstFile when GetFileAttributesExA is called immediately after (sub_142647AC0, sub_142676020)
@@ -598,7 +599,7 @@ void Patch_TESVCreationKit()
 	int cpuinfo[4];
 	__cpuid(cpuinfo, 1);
 
-	// Fall back to non-SSE 4.1 code path when not available
+	// Utilize SSE4.1 instructions if available
 	if ((cpuinfo[2] & (1 << 19)) != 0)
 	{
 		XUtil::DetourJump(g_ModuleBase + 0x1477DA0, &sub_141477DA0_SSE41);
@@ -610,7 +611,7 @@ void Patch_TESVCreationKit()
 		XUtil::DetourJump(g_ModuleBase + 0x14974E0, &sub_1414974E0);
 	}
 
-	// Check sub_141669460 - returns endianness? hotspot if it always returns false
+	XUtil::DetourJump(g_ModuleBase + 0x15D5640, &sub_1415D5640);
 	XUtil::PatchMemory(g_ModuleBase + 0x163D56E, (PBYTE)"\xB9\x90\x01\x00\x00\x90", 6);
 	XUtil::DetourCall(g_ModuleBase + 0x1640FF3, &UpdateLoadProgressBar);
 	XUtil::DetourCall(g_ModuleBase + 0x166BB1E, &hk_inflateInit);

@@ -376,38 +376,15 @@ uint32_t sub_1414974E0_SSE41(BSTArray<void *>& Array, const void *&Target, uint3
 	const uint32_t comparesPerIter = 4;
 	const uint32_t alignedSize = size & ~(comparesPerIter - 1);
 
-	//
 	// Compare 4 pointers per iteration (Strips off the last 2 bits from array size)
-	//
-	// Linear (1x): ~56.6s | ~56.5s | BSIliacBay.esp
-	// SSE4.1 (4x): ~43.6s | ~40.8s | BSIliacBay.esp
-	// AVX2   (4x): ~34.7s | ~32.7s | BSIliacBay.esp
-	//
-#if AVX_CODEPATH
-	const __m256i targets = _mm256_set1_epi64x((__int64)Target);
-
-	for (uint32_t i = StartIndex; i < alignedSize; i += comparesPerIter)
-	{
-		// Set bit 0 if 'a1'=='a2', set bit 1 if 'b1'=='b2', set bit X...
-		int mask = _mm256_movemask_pd(_mm256_castsi256_pd(_mm256_cmpeq_epi64(targets, _mm256_loadu_si256((__m256i *)&data[i]))));
-
-		if (mask != 0)
-		{
-			for (; i < size; i++)
-			{
-				if (data[i] == (__int64)Target)
-					return i;
-			}
-
-			__debugbreak();
-			__assume(0);
-		}
-	}
-#else
 	const __m128i targets = _mm_set1_epi64x((__int64)Target);
 
 	for (uint32_t i = StartIndex; i < alignedSize; i += comparesPerIter)
 	{
+		//
+		// Set bit 0 if 'a1'=='a2', set bit 1 if 'b1'=='b2', set bit X...
+		// AVX: mask = _mm256_movemask_pd(_mm256_castsi256_pd(_mm256_cmpeq_epi64(targets, _mm256_loadu_si256((__m256i *)&data[i]))));
+		//
 		__m128i test1 = _mm_cmpeq_epi64(targets, _mm_loadu_si128((__m128i *)&data[i + 0]));
 		__m128i test2 = _mm_cmpeq_epi64(targets, _mm_loadu_si128((__m128i *)&data[i + 2]));
 
@@ -425,7 +402,6 @@ uint32_t sub_1414974E0_SSE41(BSTArray<void *>& Array, const void *&Target, uint3
 			__assume(0);
 		}
 	}
-#endif
 
 	for (uint32_t i = alignedSize; i < size; i++)
 	{
@@ -434,6 +410,14 @@ uint32_t sub_1414974E0_SSE41(BSTArray<void *>& Array, const void *&Target, uint3
 	}
 
 	return 0xFFFFFFFF;
+}
+
+bool sub_1415D5640(__int64 a1, uint32_t *a2)
+{
+	while (a1 && (*(uint32_t *)a1 != *a2))
+		a1 = *(__int64 *)(a1 + 8);
+
+	return a1 != 0;
 }
 
 void UpdateLoadProgressBar()
