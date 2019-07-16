@@ -208,6 +208,9 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 				ExitProcess(0);
 			}
 
+			// Initialize the original window before adding anything
+			LRESULT status = CallWindowProc(OldEditorUI_WndProc, Hwnd, Message, wParam, lParam);
+
 			// Increase status bar spacing
 			int spacing[4] =
 			{
@@ -217,13 +220,19 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 				-1,		// -1
 			};
 
-			memcpy((void *)(g_ModuleBase + 0x38EC8A8), &spacing, sizeof(spacing));
+			SendMessageA(GetDlgItem(Hwnd, 0x9CCB), SB_SETPARTS, ARRAYSIZE(spacing), (LPARAM)&spacing);
+
+			// Grass is always enabled by default, make the UI buttons match
+			CheckMenuItem(GetMenu(Hwnd), 0xA003, MF_CHECKED);
+			SendMessageA(GetDlgItem(Hwnd, 0x1), TB_CHECKBUTTON, 0xA000, TRUE);
 
 			// Create custom menu controls
 			g_MainHwnd = Hwnd;
 			editorUIInit = true;
 
 			EditorUI_CreateExtensionMenu(Hwnd, createInfo->hMenu);
+
+			return status;
 		}
 	}
 	else if (Message == WM_COMMAND)
