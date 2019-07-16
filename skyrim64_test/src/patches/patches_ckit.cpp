@@ -579,6 +579,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(g_ModuleBase + 0x18A0914, 7);
 
 	//
+	// Fix for TESObjectLAND vertex normals appearing corrupted in worldspaces with a parent worldspace. The purpose of this code is unknown
+	// and not present in the game itself.
+	//
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x1B76B17, 2);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//
