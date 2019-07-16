@@ -1123,3 +1123,11 @@ bool sub_142676020(const char *File, uint32_t *FileSize)
 	*FileSize = fileInfo.nFileSizeLow;
 	return true;
 }
+
+void hk_call_1412DD706(HWND WindowHandle, uint32_t *ControlId)
+{
+	__int64 previewControl = ((__int64(__fastcall *)(HWND, uint32_t *))(g_ModuleBase + 0x1486C50))(WindowHandle, ControlId);
+
+	if (previewControl)
+		((void(__fastcall *)(__int64))(g_ModuleBase + 0x14AD7F0))(previewControl);
+}

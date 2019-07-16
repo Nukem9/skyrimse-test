@@ -92,3 +92,4 @@ void hk_call_141B037B2(__int64 TESFile, __int64 SourceCRDT);
 const char *hk_call_1417F4A04(int ActorValueIndex);
 uint32_t sub_142647AC0(__int64 a1, bool *IterationFinished);
 bool sub_142676020(const char *File, uint32_t *FileSize);
+void hk_call_1412DD706(HWND WindowHandle, uint32_t *ControlId);
