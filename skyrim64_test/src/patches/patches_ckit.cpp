@@ -590,6 +590,11 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(g_ModuleBase + 0x12DD706, &hk_call_1412DD706);
 
 	//
+	// Fix for crash when cell references are added/removed during initialization, similar to the broken iterator in InventoryChanges
+	//
+	XUtil::DetourJump(g_ModuleBase + 0x1BBF320, &sub_141BBF320);
+
+	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
 	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
 	//

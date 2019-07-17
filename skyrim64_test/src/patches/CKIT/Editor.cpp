@@ -1131,3 +1131,46 @@ void hk_call_1412DD706(HWND WindowHandle, uint32_t *ControlId)
 	if (previewControl)
 		((void(__fastcall *)(__int64))(g_ModuleBase + 0x14AD7F0))(previewControl);
 }
+
+int sub_141BBF320(__int64 a1, __int64 a2)
+{
+	// Create a copy of the cell's persistent ref hashmap and increase the ref count for all elements
+	std::vector<__int64> temporaryCellRefList;
+	{
+		struct
+		{
+			uintptr_t unk1;
+			uintptr_t unk2;
+			uint32_t unk3;
+		} currIter, endIter;
+
+		((void(__fastcall *)(__int64, void *))(g_ModuleBase + 0x12D4700))(a1, &currIter);
+		((void(__fastcall *)(__int64, void *))(g_ModuleBase + 0x12D4FD0))(a1, &endIter);
+
+		while (((bool(__fastcall *)(void *, void *))(g_ModuleBase + 0x12D32B0))(&currIter, &endIter))
+		{
+			// Increase refcount via BSHandleRefObject::IncRefCount
+			__int64 refr;
+
+			((__int64(__fastcall *)(__int64 *, __int64))(g_ModuleBase + 0x1348900))(&refr, currIter.unk1);
+			temporaryCellRefList.push_back(refr);
+
+			// Move to next element
+			((void(__fastcall *)(void *))(g_ModuleBase + 0x12D3AC0))(&currIter);
+		}
+	}
+
+	// Now parse the entire list separately - allow InitItem() to modify the cell's hashmap without invalidating any iterators
+	int status = 1;
+
+	for (__int64 refr : temporaryCellRefList)
+	{
+		if (status != 1)
+			break;
+
+		// Automatically decrements ref count
+		status = ((int(__fastcall *)(__int64, __int64 *))(g_ModuleBase + 0x1BC8B00))(*(__int64 *)a2, &refr);
+	}
+
+	return status;
+}
