@@ -22,7 +22,8 @@
 #define UI_EXTMENU_DUMPRTTI			51006
 #define UI_EXTMENU_DUMPNIRTTI		51007
 #define UI_EXTMENU_DUMPHAVOKRTTI	51008
-#define UI_EXTMENU_HARDCODEDFORMS	51009
+#define UI_EXTMENU_LOADEDESPINFO	51009
+#define UI_EXTMENU_HARDCODEDFORMS	51010
 
 HWND g_MainHwnd;
 HWND g_LogHwnd;
@@ -113,6 +114,7 @@ bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu)
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPRTTI, "Dump RTTI Data");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI Data");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPHAVOKRTTI, "Dump Havok RTTI Data");
+	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_LOADEDESPINFO, "Dump Active Forms");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
 	result = result && InsertMenu(g_ExtensionMenu, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_HARDCODEDFORMS, "Save Hardcoded Forms");
 
@@ -276,6 +278,7 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 		case UI_EXTMENU_DUMPRTTI:
 		case UI_EXTMENU_DUMPNIRTTI:
 		case UI_EXTMENU_DUMPHAVOKRTTI:
+		case UI_EXTMENU_LOADEDESPINFO:
 		{
 			char filePath[MAX_PATH];
 			memset(filePath, 0, sizeof(filePath));
@@ -283,45 +286,109 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 			OPENFILENAME ofnData;
 			memset(&ofnData, 0, sizeof(OPENFILENAME));
 			ofnData.lStructSize = sizeof(OPENFILENAME);
-			ofnData.lpstrFilter = "Text Files\0*.txt\0\0";
+			ofnData.lpstrFilter = "Text Files (*.txt)\0*.txt\0\0";
 			ofnData.lpstrFile = filePath;
 			ofnData.nMaxFile = ARRAYSIZE(filePath);
 			ofnData.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 			ofnData.lpstrDefExt = "txt";
 
-			if (GetSaveFileName(&ofnData))
+			if (FILE *f; GetSaveFileName(&ofnData) && fopen_s(&f, filePath, "w") == 0)
 			{
-				if (FILE *f; fopen_s(&f, filePath, "w") == 0)
+				if (param == UI_EXTMENU_DUMPRTTI)
+					MSRTTI::Dump(f);
+				else if (param == UI_EXTMENU_DUMPNIRTTI)
+					ExportTest(f);
+				else if (param == UI_EXTMENU_DUMPHAVOKRTTI)
 				{
-					if (param == UI_EXTMENU_DUMPRTTI)
-						MSRTTI::Dump(f);
-					else if (param == UI_EXTMENU_DUMPNIRTTI)
-						ExportTest(f);
-					else if (param == UI_EXTMENU_DUMPHAVOKRTTI)
+					// Convert path to directory
+					*strrchr(filePath, '\\') = '\0';
+					HKRTTI::DumpReflectionData(filePath);
+				}
+				else if (param == UI_EXTMENU_LOADEDESPINFO)
+				{
+					struct VersionControlListItem
 					{
-						// Convert path to directory
-						*strrchr(filePath, '\\') = '\0';
-						HKRTTI::DumpReflectionData(filePath);
+						const char *EditorId;
+						uint32_t FileOffset;
+						char Type[4];
+						uint32_t FileLength;
+						char GroupType[4];
+						uint32_t FormId;
+						uint32_t VersionControlId;
+						char _pad0[0x8];
+					};
+					static_assert_offset(VersionControlListItem, EditorId, 0x0);
+					static_assert_offset(VersionControlListItem, FileOffset, 0x8);
+					static_assert_offset(VersionControlListItem, Type, 0xC);
+					static_assert_offset(VersionControlListItem, FileLength, 0x10);
+					static_assert_offset(VersionControlListItem, GroupType, 0x14);
+					static_assert_offset(VersionControlListItem, FormId, 0x18);
+					static_assert_offset(VersionControlListItem, VersionControlId, 0x1C);
+					static_assert(sizeof(VersionControlListItem) == 0x28);
+
+					static std::vector<VersionControlListItem> formList;
+
+					// Invoke the dialog, building form list
+					void(*callback)(void *, int, VersionControlListItem *) = [](void *, int, VersionControlListItem *Data)
+					{
+						formList.push_back(*Data);
+						formList.back().EditorId = _strdup(Data->EditorId);
+					};
+
+					XUtil::DetourCall(g_ModuleBase + 0x13E32B0, callback);
+					CallWindowProcA((WNDPROC)(g_ModuleBase + 0x13E6270), Hwnd, WM_COMMAND, 1185, 0);
+
+					// Sort by: form id, then name, then file offset
+					std::sort(formList.begin(), formList.end(),
+						[](const VersionControlListItem& A, const VersionControlListItem& B) -> bool
+					{
+						if (A.FormId == B.FormId)
+						{
+							if (int ret = _stricmp(A.EditorId, B.EditorId); ret != 0)
+								return ret < 0;
+
+							return A.FileOffset > B.FileOffset;
+						}
+
+						return A.FormId > B.FormId;
+					});
+
+					// Dump it to the log
+					fprintf(f, "Type, Editor Id, Form Id, File Offset, File Length, Version Control Id\n");
+
+					for (auto& item : formList)
+					{
+						fprintf(f, "%c%c%c%c,\"%s\",%08X,%u,%u,-%08X-\n",
+							item.Type[0], item.Type[1], item.Type[2], item.Type[3],
+							item.EditorId,
+							item.FormId,
+							item.FileOffset,
+							item.FileLength,
+							item.VersionControlId);
+
+						free((void *)item.EditorId);
 					}
 
-					fclose(f);
+					formList.clear();
 				}
+
+				fclose(f);
 			}
 		}
 		return 0;
 
 		case UI_EXTMENU_HARDCODEDFORMS:
 		{
-			auto GetFormById = (__int64(__fastcall *)(uint32_t))(g_ModuleBase + 0x16B8780);
+			auto getFormById = (__int64(__fastcall *)(uint32_t))(g_ModuleBase + 0x16B8780);
 
-			for (int i = 0; i < 2048; i++)
+			for (uint32_t i = 0; i < 2048; i++)
 			{
-				__int64 form = GetFormById(i);
+				__int64 form = getFormById(i);
 
 				if (form)
 				{
 					(*(void(__fastcall **)(__int64, __int64))(*(__int64 *)form + 360))(form, 1);
-					EditorUI_Log("SetFormModified: %08X\n", i);
+					EditorUI_Log("SetFormModified(%08X)", i);
 				}
 			}
 
