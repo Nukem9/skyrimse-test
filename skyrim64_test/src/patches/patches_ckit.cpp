@@ -632,10 +632,7 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(g_ModuleBase + 0x1640FF3, &UpdateLoadProgressBar);
 	XUtil::DetourCall(g_ModuleBase + 0x166BB1E, &hk_inflateInit);
 	XUtil::DetourCall(g_ModuleBase + 0x166BBB9, &hk_inflate);
+	XUtil::DetourJump(g_ModuleBase + 0x2647AC0, &sub_142647AC0);
+	XUtil::DetourJump(g_ModuleBase + 0x2676020, &sub_142676020);
 
-	if (g_INI.GetBoolean("CreationKit", "LooseFileCache", false))
-	{
-		XUtil::DetourJump(g_ModuleBase + 0x2647AC0, &sub_142647AC0);
-		XUtil::DetourJump(g_ModuleBase + 0x2676020, &sub_142676020);
-	}
 }
