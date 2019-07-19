@@ -380,6 +380,21 @@ void Patch_TESVCreationKit()
 	}
 
 	//
+	// Hack option to force draw shadows on land
+	//
+	if (g_INI.GetBoolean("CreationKit", "EnableLandShadows", false))
+	{
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x13CECD4, 6);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B816CE, 5);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B816EB, 4);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B81709, 9);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B81751, 5);
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B8176E, 5);
+		XUtil::DetourCall(g_ModuleBase + 0x1B7FFB4, &hk_call_141B7FFB4);
+		XUtil::DetourCall(g_ModuleBase + 0x1B816A7, &hk_call_141B816A7);
+	}
+
+	//
 	// Fix crash while trying to upload BNet mods with existing archives
 	//
 	XUtil::DetourJump(g_ModuleBase + 0x12BE530, &IsBSAVersionCurrent);

@@ -94,3 +94,5 @@ uint32_t sub_142647AC0(__int64 a1, bool *IterationFinished);
 bool sub_142676020(const char *File, uint32_t *FileSize);
 void hk_call_1412DD706(HWND WindowHandle, uint32_t *ControlId);
 int sub_141BBF320(__int64 a1, __int64 a2);
+__int64 hk_call_141B7FFB4(__int64 a1);
+void *hk_call_141B816A7();
