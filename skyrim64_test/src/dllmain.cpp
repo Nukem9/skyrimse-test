@@ -1,4 +1,5 @@
 #include "common.h"
+#include "version_info.h"
 #include "patches/rendering/d3d11_tls.h"
 
 void once();
@@ -58,7 +59,7 @@ void ApplyPatches()
 	DoHook();
 #endif
 
-	strcpy_s(g_GitVersion, g_INI.Get("Version", "CommitId", "UNSET").c_str());
+	strcpy_s(g_GitVersion, VER_CURRENT_COMMIT_ID);
 
 	switch (g_LoadType)
 	{

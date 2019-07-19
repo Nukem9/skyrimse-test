@@ -90,6 +90,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PreBuildEvent>
+      <Command>powershell -ExecutionPolicy Bypass "$(SolutionDir)release.ps1" 3</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Update version_info.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -116,6 +122,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PreBuildEvent>
+      <Command>powershell -ExecutionPolicy Bypass "$(SolutionDir)release.ps1" 3</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Update version_info.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'">
     <ClCompile>
@@ -138,6 +150,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PreBuildEvent>
+      <Command>powershell -ExecutionPolicy Bypass "$(SolutionDir)release.ps1" 3</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Update version_info.h</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
