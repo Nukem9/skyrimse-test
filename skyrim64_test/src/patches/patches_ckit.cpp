@@ -377,6 +377,8 @@ void Patch_TESVCreationKit()
 
 		XUtil::PatchMemory(g_ModuleBase + 0x2E2BC50, (PBYTE)"\xC3", 1);// Pointer always null (Godrays? TAA?)
 		XUtil::PatchMemory(g_ModuleBase + 0x2E2BAF0, (PBYTE)"\xC3", 1);// Pointer always null (Godrays? TAA?)
+
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x2DA05C5, 2);		// Force DEPTH_STENCIL_POST_ZPREPASS_COPY RT to be copied every frame
 	}
 
 	//
