@@ -366,7 +366,7 @@ void BSGraphicsRenderTargetManager_CK::CreateRenderTarget(uint32_t TargetIndex, 
 	AssertMsg(TargetIndex != 0, "Framebuffer properties come from the renderer");
 
 	BSGraphics_CK::Renderer::Instance.DestroyRenderTarget(TargetIndex);
-	memcpy(&pRenderTargetDataA[TargetIndex], Properties, sizeof(BSGraphics_CK::RenderTargetProperties));
+	pRenderTargetDataA[TargetIndex] = *Properties;
 	BSGraphics_CK::Renderer::Instance.CreateRenderTarget(TargetIndex, GetRenderTargetName(TargetIndex), Properties);
 }
 
@@ -375,8 +375,8 @@ void BSGraphicsRenderTargetManager_CK::CreateDepthStencil(uint32_t TargetIndex, 
 	AssertMsg(TargetIndex < DEPTH_STENCIL_COUNT && TargetIndex != DEPTH_STENCIL_TARGET_NONE, "Wrong target index");
 
 	BSGraphics_CK::Renderer::Instance.DestroyDepthStencil(TargetIndex);
-	memcpy(&pDepthStencilTargetDataA[TargetIndex], Properties, sizeof(BSGraphics_CK::DepthStencilTargetProperties));
-	BSGraphics_CK::Renderer::Instance.CreateDepthStencil(TargetIndex, GetRenderTargetName(TargetIndex), Properties);
+	pDepthStencilTargetDataA[TargetIndex] = *Properties;
+	BSGraphics_CK::Renderer::Instance.CreateDepthStencil(TargetIndex, GetDepthStencilName(TargetIndex), Properties);
 }
 
 void BSGraphicsRenderTargetManager_CK::CreateCubemapRenderTarget(uint32_t TargetIndex, const BSGraphics_CK::CubeMapRenderTargetProperties *Properties)
@@ -384,7 +384,7 @@ void BSGraphicsRenderTargetManager_CK::CreateCubemapRenderTarget(uint32_t Target
 	AssertMsg(TargetIndex < RENDER_TARGET_CUBEMAP_COUNT, "Wrong target index");
 
 	BSGraphics_CK::Renderer::Instance.DestroyCubemapRenderTarget(TargetIndex);
-	memcpy(&pDepthStencilTargetDataA[TargetIndex], Properties, sizeof(BSGraphics_CK::CubeMapRenderTargetProperties));
+	pCubeMapRenderTargetDataA[TargetIndex] = *Properties;
 	BSGraphics_CK::Renderer::Instance.CreateCubemapRenderTarget(TargetIndex, GetCubemapRenderTargetName(TargetIndex), Properties);
 }
 
