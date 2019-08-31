@@ -161,6 +161,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\INIReader.h" />
+    <ClInclude Include="src\patches\CKIT\BSGraphicsRenderTargetManager_CK.h" />
     <ClInclude Include="src\patches\CKIT\BSPointerHandle.h" />
     <ClInclude Include="src\patches\CKIT\Editor.h" />
     <ClInclude Include="src\patches\CKIT\EditorUI.h" />
@@ -271,6 +272,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\patches\bnet.cpp" />
+    <ClCompile Include="src\patches\CKIT\BSGraphicsRenderTargetManager_CK.cpp" />
     <ClCompile Include="src\patches\CKIT\BSPointerHandle.cpp" />
     <ClCompile Include="src\patches\CKIT\TESFile_CK.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />

@@ -9,29 +9,6 @@ namespace BSShaderRenderTargets
 	ID3D11Texture2D *g_RenderTargetTextures[RENDER_TARGET_COUNT];
 	ID3D11RenderTargetView *g_RenderTargets[RENDER_TARGET_COUNT];
 
-	static const char *Debug_DepthStencilNames[DEPTH_STENCIL_COUNT] =
-	{
-		"DEPTH_STENCIL_TARGET_MAIN",
-		"DEPTH_STENCIL_TARGET_MAIN_COPY",
-		"DEPTH_STENCIL_TARGET_SHADOWMAPS_ESRAM",
-		"DEPTH_STENCIL_TARGET_VOLUMETRIC_LIGHTING_SHADOWMAPS_ESRAM",
-		"DEPTH_STENCIL_TARGET_SHADOWMAPS",
-		"DEPTH_STENCIL_DECAL_OCCLUSION",
-		"DEPTH_STENCIL_CUBEMAP_REFLECTIONS",
-		"DEPTH_STENCIL_POST_ZPREPASS_COPY",
-		"DEPTH_STENCIL_POST_WATER_COPY",
-		"DEPTH_STENCIL_BOOK_TEXT",
-		"DEPTH_STENCIL_TARGET_PRECIPITATION_OCCLUSION_MAP",
-		"DEPTH_STENCIL_TARGET_FOCUS_NEO",
-	};
-
-	static const char *Debug_3DTextureNames[TEXTURE3D_COUNT] =
-	{
-		"VOLUMETRIC_LIGHTING_ACCUMULATION",
-		"VOLUMETRIC_LIGHTING_ACCUMULATION_COPY",
-		"VOLUMETRIC_LIGHTING_NOISE",
-	};
-
 	static const char *Debug_RenderTargetNames[RENDER_TARGET_COUNT] =
 	{
 		"RENDER_TARGET_FRAMEBUFFER",
@@ -148,27 +125,65 @@ namespace BSShaderRenderTargets
 		"RENDER_TARGET_SSR_BLURRED0",
 		"RENDER_TARGET_SNOW_SPECALPHA",
 		"RENDER_TARGET_SNOW_SWAP",
-		//"RENDER_TARGET_CUBEMAP_REFLECTIONS"
 	};
 
-	const char *GetStencilName(int Index)
+	static const char *Debug_CubemapNames[RENDER_TARGET_CUBEMAP_COUNT] =
 	{
-		Assert(Index < DEPTH_STENCIL_COUNT);
+		"RENDER_TARGET_CUBEMAP_REFLECTIONS",
+	};
 
-		return Debug_DepthStencilNames[Index];
+	static const char *Debug_3DTextureNames[TEXTURE3D_COUNT] =
+	{
+		"VOLUMETRIC_LIGHTING_ACCUMULATION",
+		"VOLUMETRIC_LIGHTING_ACCUMULATION_COPY",
+		"VOLUMETRIC_LIGHTING_NOISE",
+	};
+
+	static const char *Debug_DepthStencilNames[DEPTH_STENCIL_COUNT] =
+	{
+		"DEPTH_STENCIL_TARGET_MAIN",
+		"DEPTH_STENCIL_TARGET_MAIN_COPY",
+		"DEPTH_STENCIL_TARGET_SHADOWMAPS_ESRAM",
+		"DEPTH_STENCIL_TARGET_VOLUMETRIC_LIGHTING_SHADOWMAPS_ESRAM",
+		"DEPTH_STENCIL_TARGET_SHADOWMAPS",
+		"DEPTH_STENCIL_DECAL_OCCLUSION",
+		"DEPTH_STENCIL_CUBEMAP_REFLECTIONS",
+		"DEPTH_STENCIL_POST_ZPREPASS_COPY",
+		"DEPTH_STENCIL_POST_WATER_COPY",
+		"DEPTH_STENCIL_BOOK_TEXT",
+		"DEPTH_STENCIL_TARGET_PRECIPITATION_OCCLUSION_MAP",
+		"DEPTH_STENCIL_TARGET_FOCUS_NEO",
+	};
+
+	const char *GetRenderTargetName(uint32_t Index)
+	{
+		if (Index == RENDER_TARGET_NONE)
+			return "RENDER_TARGET_NONE";
+
+		Assert(Index < RENDER_TARGET_COUNT);
+		return Debug_RenderTargetNames[Index];
 	}
 
-	const char *Get3DTextureName(int Index)
+	const char *GetCubemapName(uint32_t Index)
+	{
+		Assert(Index < RENDER_TARGET_CUBEMAP_COUNT);
+
+		return Debug_CubemapNames[Index];
+	}
+
+	const char *Get3DTextureName(uint32_t Index)
 	{
 		Assert(Index < TEXTURE3D_COUNT);
 
 		return Debug_3DTextureNames[Index];
 	}
 
-	const char *GetTargetName(int Index)
+	const char *GetDepthStencilName(uint32_t Index)
 	{
-		Assert(Index < RENDER_TARGET_COUNT);
+		if (Index == DEPTH_STENCIL_TARGET_NONE)
+			return "DEPTH_STENCIL_TARGET_NONE";
 
-		return Debug_RenderTargetNames[Index];
+		Assert(Index < DEPTH_STENCIL_COUNT);
+		return Debug_DepthStencilNames[Index];
 	}
 }

@@ -45,7 +45,7 @@ __int64 hk_CreateDepthStencil(__int64 a1, unsigned int aStencilIndex, __int64 a3
 	// Set name for use in VS's/nvidia's debugger
 	uintptr_t v1 = a1 + (0x98 * aStencilIndex);
 
-	SetName(v1 + 0x1FB8, "%s TEX2D", GetStencilName(aStencilIndex));
+	SetName(v1 + 0x1FB8, "%s TEX2D", GetDepthStencilName(aStencilIndex));
 
 	for (int i = 0; i < *(int *)(a4 + 8); i++)
 	{
@@ -54,8 +54,8 @@ __int64 hk_CreateDepthStencil(__int64 a1, unsigned int aStencilIndex, __int64 a3
 
 		unsigned int v15 = 19 * aStencilIndex;
 
-		SetName(a1 + 0x1FC0 + 8 * (v15 + i), "%s SLICE%d DSV0", GetStencilName(aStencilIndex), i);
-		SetName(a1 + 0x2000 + 8 * (v15 + i), "%s SLICE%d DSV1", GetStencilName(aStencilIndex), i);
+		SetName(a1 + 0x1FC0 + 8 * (v15 + i), "%s SLICE%d DSV0", GetDepthStencilName(aStencilIndex), i);
+		SetName(a1 + 0x2000 + 8 * (v15 + i), "%s SLICE%d DSV1", GetDepthStencilName(aStencilIndex), i);
 
 		g_DepthStencils[aStencilIndex][i][0] = *(ID3D11DepthStencilView **)(a1 + 0x1FC0 + 8 * (v15 + i));
 		g_DepthStencils[aStencilIndex][i][1] = *(ID3D11DepthStencilView **)(a1 + 0x2000 + 8 * (v15 + i));
@@ -102,7 +102,7 @@ struct RenderTargetManager
 		AssertMsg(TargetIndex != 0, "Framebuffer properties come from the renderer");
 
 		memcpy(&pRenderTargetDataA[TargetIndex], Properties, sizeof(BSGraphics::RenderTargetProperties));
-		aCreateRenderTarget((BSGraphics_Renderer_WIP *)(g_ModuleBase + 0x304E490), TargetIndex, GetTargetName(TargetIndex), Properties);
+		aCreateRenderTarget((BSGraphics_Renderer_WIP *)(g_ModuleBase + 0x304E490), TargetIndex, GetRenderTargetName(TargetIndex), Properties);
 	}
 };
 

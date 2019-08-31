@@ -11,6 +11,7 @@
 #include "CKIT/NavMesh.h"
 #include "CKIT/EditorUI.h"
 #include "CKIT/BSPointerHandle.h"
+#include "CKIT/BSGraphicsRenderTargetManager_CK.h"
 
 void PatchSteam();
 void PatchThreading();
@@ -610,6 +611,14 @@ void Patch_TESVCreationKit()
 	// Fix for crash when cell references are added/removed during initialization, similar to the broken iterator in InventoryChanges
 	//
 	XUtil::DetourJump(g_ModuleBase + 0x1BBF320, &sub_141BBF320);
+
+	//
+	// Fix for memory leak when opening many preview windows or resizing them. D3D11 render targets are recreated each time, but the old ones
+	// were never released.
+	//
+	XUtil::DetourJump(g_ModuleBase + 0x2D06B10, &BSGraphicsRenderTargetManager_CK::CreateRenderTarget);
+	XUtil::DetourJump(g_ModuleBase + 0x2D06BB0, &BSGraphicsRenderTargetManager_CK::CreateDepthStencil);
+	XUtil::DetourJump(g_ModuleBase + 0x2D06C30, &BSGraphicsRenderTargetManager_CK::CreateCubemapRenderTarget);
 
 	//
 	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
