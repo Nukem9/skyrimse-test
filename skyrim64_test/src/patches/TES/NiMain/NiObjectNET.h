@@ -8,7 +8,7 @@ struct BSFixedString
 
 	BSFixedString(const char *String)
 	{
-		AutoFunc(void(*)(BSFixedString&, const char *), sub_140C28280, 0xC28280);
+		AutoFunc(BSFixedString *(*)(BSFixedString&, const char *), sub_140C28280, 0xC28280);
 		sub_140C28280(*this, String);
 	}
 
@@ -20,8 +20,8 @@ struct BSFixedString
 
 	BSFixedString& operator= (BSFixedString &Other)
 	{
-		AutoFunc(void(*)(BSFixedString&, BSFixedString&), sub_140C284B0, 0xC284B0);
-		return *this;
+		AutoFunc(BSFixedString&(*)(BSFixedString&, BSFixedString&), sub_140C284B0, 0xC284B0);
+		return sub_140C284B0(*this, Other);
 	}
 
 	const char *c_str() const
