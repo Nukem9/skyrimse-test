@@ -45,7 +45,7 @@ $readMeInfo = @"
 # 
 # REQUIREMENTS
 #
-# FonixData.cdx is a proprietary file required for FaceFX. You can obtain FonixData
+# FonixData.cdf is a proprietary file required for FaceFX. You can obtain FonixData
 # from the Fallout 3, Fallout 4, or Skyrim LE CreationKit files. It must be placed
 # in '<SKYRIM_DIR>\Data\Sound\Voice\Processing'.
 #

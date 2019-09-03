@@ -265,6 +265,7 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemory(g_ModuleBase + 0x1487B7C, (PBYTE)"\xEB", 1);
 		XUtil::PatchMemory(g_ModuleBase + 0x16179C0, (PBYTE)"\xC3", 1);	// Disable "MEM_CATEGORY_X" log spam
 		XUtil::PatchMemoryNop(g_ModuleBase + 0x2DCE6BC, 5);				// Disable "utility failed id" log spam
+		XUtil::PatchMemoryNop(g_ModuleBase + 0x2D270E3, 5);				// Disable "Should have been converted offline" log spam
 
 		XUtil::DetourJump(g_ModuleBase + 0x1256600, &EditorUI_Warning);
 		XUtil::DetourJump(g_ModuleBase + 0x243D610, &EditorUI_Warning);

@@ -975,7 +975,11 @@ HRESULT LoadTextureDataFromFile(__int64 a1, __int64 a2, __int64 a3, __int64 a4, 
 		// NiBinaryStream->BSResourceStream->File name
 		const char *fileName = *(const char **)(*(__int64 *)(a2 + 0x20) + 0x20);
 
-		AssertMsgVa(SUCCEEDED(hr), "Fatal error while trying to load texture \"%s\" due to an incompatible file format. This indicates a problem with your mod or game files.", fileName);
+		AssertMsgVa(SUCCEEDED(hr),
+			"Fatal error while trying to load texture \"%s\" due to an incompatible file format. This "
+			"indicates a problem with your mod or game files. Note that B5G6R5 and B5G5R5A1 texture "
+			"formats are not supported on Windows 7. HR = 0x%08X.",
+			fileName, hr);
 	}
 
 	// This return value is ignored. If it fails it returns a null pointer (a3) and crashes later on.
