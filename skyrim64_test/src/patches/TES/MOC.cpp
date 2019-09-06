@@ -450,7 +450,7 @@ namespace MOC
 			auto rendererData = reinterpret_cast<BSGraphics::DynamicTriShape *>(dynTriShape->QRendererData());
 
 			if (rendererData)
-				Assert(rendererData->m_Unknown4 != nullptr);
+				Assert(rendererData->m_RawVertexData != nullptr);
 		}
 		else if (Geometry->QType() == GEOMETRY_TYPE_TRISHAPE)
 		{

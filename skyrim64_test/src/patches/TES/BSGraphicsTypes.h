@@ -323,8 +323,8 @@ namespace BSGraphics
 		uint32_t m_VertexAllocationOffset;
 		uint32_t m_VertexAllocationSize;
 		uint32_t m_RefCount;
-		void *m_Unknown4;
-		void *m_Unknown5;
+		void *m_RawVertexData;
+		void *m_RawIndexData;
 	};
 	static_assert(sizeof(DynamicTriShape) == 0x38);
 	static_assert_offset(DynamicTriShape, m_VertexBuffer, 0x0);
@@ -333,8 +333,8 @@ namespace BSGraphics
 	static_assert_offset(DynamicTriShape, m_VertexAllocationOffset, 0x18);
 	static_assert_offset(DynamicTriShape, m_VertexAllocationSize, 0x1C);
 	static_assert_offset(DynamicTriShape, m_RefCount, 0x20);
-	static_assert_offset(DynamicTriShape, m_Unknown4, 0x28);
-	static_assert_offset(DynamicTriShape, m_Unknown5, 0x30);
+	static_assert_offset(DynamicTriShape, m_RawVertexData, 0x28);
+	static_assert_offset(DynamicTriShape, m_RawIndexData, 0x30);
 
 	struct UnknownStruct
 	{

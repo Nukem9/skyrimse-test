@@ -15,9 +15,9 @@ class NiPoint3
 public:
 	const static NiPoint3 ZERO;
 
-	float x;
-	float y;
-	float z;
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
 
 	inline NiPoint3()
 	{
@@ -55,6 +55,11 @@ public:
 	inline void Normalize()
 	{
 		Unitize();
+	}
+
+	NiPoint3 Cross(const NiPoint3& Pt) const
+	{
+		return NiPoint3(y * Pt.z - z * Pt.y, z * Pt.x - x * Pt.z, x * Pt.y - y * Pt.x);
 	}
 
 	inline __m128 AsXmm() const
@@ -100,6 +105,11 @@ static_assert(sizeof(NiPoint3) == 0xC);
 inline NiPoint3 operator* (float lhs, const NiPoint3& rhs)
 {
 	return rhs * lhs;
+}
+
+inline NiPoint3 operator+ (const NiPoint3& lhs, const NiPoint3& rhs)
+{
+	return NiPoint3(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z);
 }
 
 inline NiPoint3 operator- (const NiPoint3& lhs, const NiPoint3& rhs)

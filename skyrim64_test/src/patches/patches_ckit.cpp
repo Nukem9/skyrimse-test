@@ -12,6 +12,7 @@
 #include "CKIT/EditorUI.h"
 #include "CKIT/BSPointerHandle.h"
 #include "CKIT/BSGraphicsRenderTargetManager_CK.h"
+#include "CKIT/BSShaderResourceManager_CK.h"
 
 void PatchSteam();
 void PatchThreading();
@@ -423,9 +424,14 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x20CD744, (PBYTE)"\x02", 1);
 
 	//
-	// Fix for being unable to select certain objects in the render view window
+	// Rewrite their ray->triangle intersection function. This fixes 3 things:
 	//
-	Detours::X64::DetourClassVTable((PBYTE)(g_ModuleBase + 0x345ECD0), &BSShaderResourceManager::FindIntersectionsTriShapeFastPath, 34);
+	// - Being unable to select certain objects in the render view window.
+	// - Selections not scaling correctly depending on distance (ex. LOD terrain) and NiObject scale.
+	// - The Object Palette window "Conform to slope" option causing broken object angles on placement. SE changed data
+	// layouts and geometry vertex data may not include normals.
+	//
+	Detours::X64::DetourClassVTable((PBYTE)(g_ModuleBase + 0x345ECD0), &BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath, 34);
 
 	//
 	// Fix the "Cell View" object list current selection not being synced with the render window
@@ -620,13 +626,6 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(g_ModuleBase + 0x2D06B10, &BSGraphicsRenderTargetManager_CK::CreateRenderTarget);
 	XUtil::DetourJump(g_ModuleBase + 0x2D06BB0, &BSGraphicsRenderTargetManager_CK::CreateDepthStencil);
 	XUtil::DetourJump(g_ModuleBase + 0x2D06C30, &BSGraphicsRenderTargetManager_CK::CreateCubemapRenderTarget);
-
-	//
-	// Fix for Object Palette window "Conform to slope" option causing broken object angles on placement. SE uses the newer
-	// BSDynamicTriShape for landscape instead of BSTriShape and old code isn't handling vertex normals correctly.
-	//
-	// FIXME: Doesn't work
-	// XUtil::DetourCall(g_ModuleBase + 0x12DC59D, &hk_sub_140FEC464);
 
 	//
 	// Plugin loading optimizations:

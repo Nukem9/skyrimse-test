@@ -42,16 +42,6 @@ void PatchTemplatedFormIterator();
 void SortFormArray(BSTArray<class TESForm *> *Array, int(*SortFunction)(const void *, const void *));
 void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *));
 
-class IRendererResourceManager
-{
-};
-
-class BSShaderResourceManager : public IRendererResourceManager
-{
-public:
-	bool FindIntersectionsTriShapeFastPath(class NiPoint3 *Origin, class NiPoint3 *Dir, class NiPick *Pick, class BSTriShape *Shape);
-};
-
 struct PerkRankEntry
 {
 	union

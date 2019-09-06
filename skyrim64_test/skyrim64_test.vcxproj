@@ -163,6 +163,7 @@
     <ClInclude Include="src\INIReader.h" />
     <ClInclude Include="src\patches\CKIT\BSGraphicsRenderTargetManager_CK.h" />
     <ClInclude Include="src\patches\CKIT\BSPointerHandle.h" />
+    <ClInclude Include="src\patches\CKIT\BSShaderResourceManager_CK.h" />
     <ClInclude Include="src\patches\CKIT\Editor.h" />
     <ClInclude Include="src\patches\CKIT\EditorUI.h" />
     <ClInclude Include="src\patches\CKIT\NavMesh.h" />
@@ -228,6 +229,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiCamera.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiCollisionUtils.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiColor.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiCullingProcess.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiDirectionalLight.h" />
@@ -237,6 +239,7 @@
     <ClInclude Include="src\patches\TES\NiMain\NiNode.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiPick.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiPoint.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiPointer.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiRefObject.h" />
@@ -274,7 +277,9 @@
     <ClCompile Include="src\patches\bnet.cpp" />
     <ClCompile Include="src\patches\CKIT\BSGraphicsRenderTargetManager_CK.cpp" />
     <ClCompile Include="src\patches\CKIT\BSPointerHandle.cpp" />
+    <ClCompile Include="src\patches\CKIT\BSShaderResourceManager_CK.cpp" />
     <ClCompile Include="src\patches\CKIT\TESFile_CK.cpp" />
+    <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />
     <ClCompile Include="src\common.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />

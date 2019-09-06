@@ -21,3 +21,5 @@ public:
 	}
 };
 static_assert(sizeof(BSTriShape) == 0x160);
+static_assert_offset(BSTriShape, m_TriangleCount, 0x158);
+static_assert_offset(BSTriShape, m_VertexCount, 0x15A);

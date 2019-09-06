@@ -82,6 +82,11 @@ public:
 		return CalculateVertexAttributeOffset(uiVertexDesc, Index);
 	}
 
+	uint32_t GetVertexAttributeStream(uint32_t Index) const
+	{
+		return CalculateVertexAttributeStream(uiVertexDesc, Index);
+	}
+
 	uint32_t GetVertexSize() const
 	{
 		return CalculateVertexSize(uiVertexDesc);
@@ -123,7 +128,7 @@ public:
 			{
 				strcat_s(buffer, vertexDescTypes[i]);
 
-				if (CalculateVertexAttributeStream(GetVertexDesc(), i) == 1)
+				if (GetVertexAttributeStream(i) == 1)
 					strcat_s(buffer, "[D]");
 				else
 					strcat_s(buffer, "[S]");

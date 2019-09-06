@@ -347,6 +347,15 @@
     <ClInclude Include="src\patches\CKIT\BSGraphicsRenderTargetManager_CK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiPick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiCollisionUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKIT\BSShaderResourceManager_CK.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -575,6 +584,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\CKIT\BSGraphicsRenderTargetManager_CK.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKIT\BSShaderResourceManager_CK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

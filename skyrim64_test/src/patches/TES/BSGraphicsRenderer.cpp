@@ -1493,7 +1493,7 @@ namespace BSGraphics
 			AutoFunc(void(__fastcall *)(void *), sub_1400F7DC0, 0xF7DC0);
 			AutoFunc(void(__fastcall *)(void *, __int64), sub_140136112C, 0x136112C);
 
-			sub_1400F7DC0(Shape->m_Unknown5);
+			sub_1400F7DC0(Shape->m_RawIndexData);
 			sub_140136112C(Shape, sizeof(DynamicTriShape));
 		}
 	}
