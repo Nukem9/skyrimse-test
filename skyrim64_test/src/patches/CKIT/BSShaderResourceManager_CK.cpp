@@ -8,7 +8,7 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 	if (pkTriShape->m_TriangleCount <= 0 || !pkTriShape->QRendererData())
 		return false;
 
-	const uint16_t *indices;
+	const uint16_t *indices = nullptr;
 	uintptr_t vertexData[2] = {};
 	uint32_t vertexStrides[2] = {};
 
@@ -16,9 +16,6 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 	{
 		auto shape = static_cast<const BSTriShape *>(pkTriShape);
 		auto rendererData = static_cast<const BSGraphics::TriShape *>(shape->QRendererData());
-
-		if (!rendererData->m_RawIndexData)
-			return false;
 
 		AssertMsg(rendererData->m_RawVertexData, "Trying to select a triangle with no vertex data!?");
 
@@ -37,9 +34,6 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 	{
 		auto shape = static_cast<BSDynamicTriShape *>(pkTriShape);
 		auto rendererData = static_cast<const BSGraphics::DynamicTriShape *>(shape->QRendererData());
-
-		if (!rendererData->m_RawIndexData)
-			return false;
 
 		indices = (uint16_t *)rendererData->m_RawIndexData;
 		uintptr_t dynamicData = (uintptr_t)shape->LockDynamicDataForRead();// NOTE: SPINLOCK IS HELD
@@ -61,6 +55,13 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 
 				vertexStrides[0] = shape->GetVertexSize();
 			}
+		}
+
+		// Annoying hack for broken vertex layouts (LOD land). Vertex descriptions are incorrect.
+		if (!vertexData[0])
+		{
+			vertexData[0] = dynamicData;
+			vertexStrides[0] = shape->GetDynamicVertexSize();
 		}
 
 		// Normals
@@ -91,7 +92,7 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 	// Vertex positions are required, but normals are not
 	bool intersectionFound = false;
 
-	if (vertexData[0])
+	if (indices && vertexData[0])
 	{
 		auto fetchStream = [vertexData, vertexStrides](uint32_t Stream, uintptr_t VertexIndex)
 		{
@@ -116,9 +117,6 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 
 		for (uint32_t i = 0; i < (pkTriShape->m_TriangleCount * 3u); i += 3)
 		{
-			if (intersectionFound && kPick.GetPickType() == NiPick::FIND_FIRST && kPick.GetSortType() == NiPick::NO_SORT)
-				break;
-
 			NiPoint3 v[3] =
 			{
 				fetchStream(0, indices[i + 0]),
@@ -180,6 +178,9 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 					// Zero-initialize if someone tries to access it anyway
 					record->SetNormal(NiPoint3::ZERO);
 				}
+
+				if (kPick.GetPickType() == NiPick::FIND_FIRST && kPick.GetSortType() == NiPick::NO_SORT)
+					break;
 			}
 		}
 	}
