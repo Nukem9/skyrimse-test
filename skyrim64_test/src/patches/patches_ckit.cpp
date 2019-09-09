@@ -626,6 +626,11 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(g_ModuleBase + 0x2D06C30, &BSGraphicsRenderTargetManager_CK::CreateCubemapRenderTarget);
 
 	//
+	// Fix for crash after the "Multiple masters selected for load" dialog is shown. Missing null pointer check.
+	//
+	XUtil::DetourCall(g_ModuleBase + 0x1CE8269, &hk_call_141CE8269);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

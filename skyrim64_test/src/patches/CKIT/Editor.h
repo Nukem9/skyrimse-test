@@ -86,3 +86,4 @@ int sub_141BBF320(__int64 a1, __int64 a2);
 __int64 hk_call_141B7FFB4(__int64 a1);
 void *hk_call_141B816A7();
 void hk_call_141CF03C9(__int64 a1, bool Enable);
+void hk_call_141CE8269(__int64 a1);

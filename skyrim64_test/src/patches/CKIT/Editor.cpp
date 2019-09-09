@@ -1172,3 +1172,9 @@ void hk_call_141CF03C9(__int64 a1, bool Enable)
 
 	CheckMenuItem(GetMenu(EditorUI_GetMainWindow()), UI_EDITOR_TOGGLEFOG, Enable ? MF_CHECKED : MF_UNCHECKED);
 }
+
+void hk_call_141CE8269(__int64 a1)
+{
+	if (*(__int64 *)(a1 + 0x58))
+		((void(__fastcall *)(__int64))(g_ModuleBase + 0x1CEB510))(a1);
+}
