@@ -10,21 +10,6 @@
 
 #pragma comment(lib, "comctl32.lib")
 
-#define UI_LOG_CMD_ADDTEXT			(WM_APP + 1)
-#define UI_LOG_CMD_CLEARTEXT		(WM_APP + 2)
-#define UI_LOG_CMD_AUTOSCROLL		(WM_APP + 3)
-
-#define UI_EXTMENU_ID				51001
-#define UI_EXTMENU_SHOWLOG			51002
-#define UI_EXTMENU_CLEARLOG			51003
-#define UI_EXTMENU_AUTOSCROLL		51004
-#define UI_EXTMENU_SPACER			51005
-#define UI_EXTMENU_DUMPRTTI			51006
-#define UI_EXTMENU_DUMPNIRTTI		51007
-#define UI_EXTMENU_DUMPHAVOKRTTI	51008
-#define UI_EXTMENU_LOADEDESPINFO	51009
-#define UI_EXTMENU_HARDCODEDFORMS	51010
-
 HWND g_MainHwnd;
 HWND g_LogHwnd;
 tbb::concurrent_vector<const char *> g_LogPendingMessages;
@@ -194,24 +179,22 @@ HANDLE EditorUI_GetStdoutListenerPipe()
 	return g_LogPipeWriter;
 }
 
+HWND EditorUI_GetMainWindow()
+{
+	return g_MainHwnd;
+}
+
 LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	if (Message == WM_CREATE)
 	{
-		static bool editorUIInit = false;
+		const CREATESTRUCT *createInfo = (CREATESTRUCT *)lParam;
 
-		if (!editorUIInit)
+		if (!_stricmp(createInfo->lpszName, "Creation Kit") && !_stricmp(createInfo->lpszClass, "Creation Kit"))
 		{
-			const CREATESTRUCT *createInfo = (CREATESTRUCT *)lParam;
-
-			if (_stricmp(createInfo->lpszName, "Creation Kit") != 0 || _stricmp(createInfo->lpszClass, "Creation Kit") != 0)
-			{
-				AssertMsgVa(false, "Trying to initialize menus with an unknown window name: %s", createInfo->lpszName);
-				ExitProcess(0);
-			}
-
 			// Initialize the original window before adding anything
 			LRESULT status = CallWindowProc(OldEditorUI_WndProc, Hwnd, Message, wParam, lParam);
+			g_MainHwnd = Hwnd;
 
 			// Increase status bar spacing
 			int spacing[4] =
@@ -222,16 +205,16 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 				-1,		// -1
 			};
 
-			SendMessageA(GetDlgItem(Hwnd, 0x9CCB), SB_SETPARTS, ARRAYSIZE(spacing), (LPARAM)&spacing);
+			SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_STATUSBAR), SB_SETPARTS, ARRAYSIZE(spacing), (LPARAM)& spacing);
 
 			// Grass is always enabled by default, make the UI buttons match
-			CheckMenuItem(GetMenu(Hwnd), 0xA003, MF_CHECKED);
-			SendMessageA(GetDlgItem(Hwnd, 0x1), TB_CHECKBUTTON, 0xA000, TRUE);
+			CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEGRASS, MF_CHECKED);
+			SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_TOOLBAR), TB_CHECKBUTTON, UI_EDITOR_TOGGLEGRASS_BUTTON, TRUE);
+
+			// Same for fog
+			CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *(bool *)(g_ModuleBase + 0x4F05728) ? MF_CHECKED : MF_UNCHECKED);
 
 			// Create custom menu controls
-			g_MainHwnd = Hwnd;
-			editorUIInit = true;
-
 			EditorUI_CreateExtensionMenu(Hwnd, createInfo->hMenu);
 
 			return status;
@@ -243,6 +226,13 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 
 		switch (param)
 		{
+		case UI_EDITOR_TOGGLEFOG:
+		{
+			// Call the CTRL+F5 hotkey function directly
+			((void(__fastcall *)())(g_ModuleBase + 0x1319740))();
+		}
+		return 0;
+
 		case UI_EXTMENU_SHOWLOG:
 		{
 			ShowWindow(g_LogHwnd, SW_SHOW);

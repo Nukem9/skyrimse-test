@@ -1164,3 +1164,11 @@ void *hk_call_141B816A7()
 
 	return (void *)shape;
 }
+
+void hk_call_141CF03C9(__int64 a1, bool Enable)
+{
+	// Modify the global setting itself then update UI to match
+	((void(__fastcall *)(__int64, bool))(g_ModuleBase + 0x1390C30))(a1, Enable);
+
+	CheckMenuItem(GetMenu(EditorUI_GetMainWindow()), UI_EDITOR_TOGGLEFOG, Enable ? MF_CHECKED : MF_UNCHECKED);
+}

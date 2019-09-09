@@ -261,6 +261,7 @@ void Patch_TESVCreationKit()
 		EditorUI_Initialize();
 		*(uint8_t **)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3770), &EditorUI_WndProc);
 
+		XUtil::DetourCall(g_ModuleBase + 0x1CF03C9, &hk_call_141CF03C9);// Update the UI options when fog is toggled
 		XUtil::PatchMemoryNop(g_ModuleBase + 0x1434473, 2);				// Force bShowReloadShadersButton to always be enabled
 		XUtil::PatchMemoryNop(g_ModuleBase + 0x1487B69, 2);				// Enable push to game button even if version control is disabled
 		XUtil::PatchMemory(g_ModuleBase + 0x1487B7C, (PBYTE)"\xEB", 1);
