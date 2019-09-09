@@ -39,10 +39,14 @@ void *MemAlloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 	if ((Size % Alignment) != 0)
 		Size = ((Size + Alignment - 1) / Alignment) * Alignment;
 
+#if SKYRIM64_USE_PAGE_HEAP
+	void *ptr = VirtualAlloc(nullptr, Size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+#else
 	void *ptr = scalable_aligned_malloc(Size, Alignment);
 
 	if (ptr && Zeroed)
 		memset(ptr, 0, Size);
+#endif
 
 #if SKYRIM64_USE_VTUNE
 	__itt_heap_allocate_end(ITT_AllocateCallback, &ptr, Size, Zeroed ? 1 : 0);
@@ -63,7 +67,11 @@ void MemFree(void *Memory, bool Aligned = false)
 	__itt_heap_free_begin(ITT_FreeCallback, Memory);
 #endif
 
+#if SKYRIM64_USE_PAGE_HEAP
+	VirtualFree(Memory, 0, MEM_RELEASE);
+#else
 	scalable_aligned_free(Memory);
+#endif
 
 #if SKYRIM64_USE_VTUNE
 	__itt_heap_free_end(ITT_FreeCallback, Memory);
@@ -105,7 +113,14 @@ size_t __fastcall hk_msize(void *Block)
 	__itt_heap_internal_access_begin();
 #endif
 
+#if SKYRIM64_USE_PAGE_HEAP
+	MEMORY_BASIC_INFORMATION info;
+	VirtualQuery(Block, &info, sizeof(MEMORY_BASIC_INFORMATION));
+
+	size_t result = info.RegionSize;
+#else
 	size_t result = scalable_msize(Block);
+#endif
 
 #if SKYRIM64_USE_VTUNE
 	__itt_heap_internal_access_end();
