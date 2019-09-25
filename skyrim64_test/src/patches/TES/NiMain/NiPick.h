@@ -54,7 +54,7 @@ public:
 
 	bool GetFrontOnly() const
 	{
-		return m_bReturnNormal;
+		return m_bFrontOnly;
 	}
 
 	bool GetReturnNormal() const
