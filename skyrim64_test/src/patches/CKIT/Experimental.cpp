@@ -1,4 +1,8 @@
-#include "../common.h"
+#include "../../common.h"
+#include <chrono>
+#include "EditorUI.h"
+
+using namespace std::chrono;
 
 struct NullsubPatch
 {
@@ -6,7 +10,7 @@ struct NullsubPatch
 	uint8_t SignatureLength;
 	uint8_t JumpPatch[5];
 	uint8_t CallPatch[5];
-} Patches[] =
+} const Patches[] =
 {
 	// Nullsub || retn; int3; int3; int3; int3; || nop;
 	{ { 0xC2, 0x00, 0x00 }, 3, { 0xC3, 0xCC, 0xCC, 0xCC, 0xCC }, { 0x0F, 0x1F, 0x44, 0x00, 0x00 } },
@@ -73,7 +77,7 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 	// Check if the given function is "unoptimized" and remove the branch completely. Extended
 	// nullsub checking is riskier because of potential false positives.
 	//
-	for (int i = 0; i < ARRAYSIZE(Patches); i++)
+	for (uint32_t i = 0; i < ARRAYSIZE(Patches); i++)
 	{
 		if (!Extended && i > 0)
 			break;
@@ -81,9 +85,9 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 		if (!memcmp(dest, Patches[i].Signature, Patches[i].SignatureLength))
 		{
 			if (isJump)
-				XUtil::PatchMemory(SourceAddress, Patches[i].JumpPatch, 5);
+				memcpy((void *)SourceAddress, Patches[i].JumpPatch, 5);
 			else
-				XUtil::PatchMemory(SourceAddress, Patches[i].CallPatch, 5);
+				memcpy((void *)SourceAddress, Patches[i].CallPatch, 5);
 
 			return true;
 		}
@@ -92,7 +96,7 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 	return false;
 }
 
-void ExperimentalPatchMemInit()
+uint64_t ExperimentalPatchMemInit()
 {
 	//
 	// Remove the thousands of [code below] since they're useless checks:
@@ -105,28 +109,22 @@ void ExperimentalPatchMemInit()
 
 	uint64_t patchCount = 0;
 
-	__try
+	for (uintptr_t i = g_CodeBase; i < g_CodeEnd;)
 	{
-		for (uintptr_t i = g_CodeBase; i < g_CodeEnd;)
-		{
-			uintptr_t addr = XUtil::FindPattern(i, g_CodeEnd - i, (BYTE *)patternStr, maskStr);
+		uintptr_t addr = XUtil::FindPattern(i, g_CodeEnd - i, (uint8_t *)patternStr, maskStr);
 
-			if (!addr)
-				break;
+		if (!addr)
+			break;
 
-			XUtil::PatchMemory(addr, (PBYTE)"\xEB\x1A", 2);
-			i = addr + 1;
-			patchCount++;
-		}
-	}
-	__except (EXCEPTION_EXECUTE_HANDLER)
-	{
+		memcpy((void *)addr, (const void *)"\xEB\x1A", 2);
+		i = addr + 1;
+		patchCount++;
 	}
 
-	ui::log::Add("%s: %lld patches applied.\n", __FUNCTION__, patchCount);
+	return patchCount;
 }
 
-void ExperimentalPatchEditAndContinue()
+uint64_t ExperimentalPatchEditAndContinue()
 {
 	//
 	// Remove any references to the giant trampoline table generated for edit & continue
@@ -152,7 +150,7 @@ void ExperimentalPatchEditAndContinue()
 	for (uintptr_t i = g_CodeBase; i < g_CodeEnd; i++)
 	{
 		// Must be a call or a jump
-		if (*(BYTE *)i != 0xE9 && *(BYTE *)i != 0xE8)
+		if (*(uint8_t *)i != 0xE9 && *(uint8_t *)i != 0xE8)
 			continue;
 
 		uintptr_t destination = i + *(int32_t *)(i + 1) + 5;
@@ -162,11 +160,11 @@ void ExperimentalPatchEditAndContinue()
 			// Find where the trampoline actually points to, then remove it
 			uintptr_t real = destination + *(int32_t *)(destination + 1) + 5;
 
-			BYTE data[5];
-			data[0] = *(BYTE *)i;
+			uint8_t data[5];
+			data[0] = *(uint8_t *)i;
 			*(int32_t *)&data[1] = (int32_t)(real - i) - 5;
 
-			XUtil::PatchMemory(i, data, sizeof(data));
+			memcpy((void *)i, data, sizeof(data));
 			patchCount++;
 
 			if (PatchNullsub(i, real, true))
@@ -184,6 +182,44 @@ void ExperimentalPatchEditAndContinue()
 		if (PatchNullsub(target, destination, true))
 			patchCount++;
 	}
+	
+	return patchCount;
+}
 
-	ui::log::Add("%s: %lld patches applied.\n", __FUNCTION__, patchCount);
+void ExperimentalPatchOptimizations()
+{
+	auto timerStart = high_resolution_clock::now();
+
+	std::tuple<uintptr_t, uintptr_t, DWORD> addressRanges[] =
+	{
+		std::make_tuple(g_ModuleBase + 0x0, 0x1000, 0),			// PE header
+		std::make_tuple(g_ModuleBase + 0x1000, 0xFB3000, 0),	// .textbss
+		std::make_tuple(g_ModuleBase + 0xFB4000, 0x206D000, 0),	// .text
+		std::make_tuple(g_ModuleBase + 0x3021000, 0x8CA000, 0),	// .rdata
+		std::make_tuple(g_ModuleBase + 0x38EB000, 0x2129000, 0),// .data
+	};
+
+	// Mark every page as writable
+	for (auto& range : addressRanges)
+	{
+		BOOL ret = VirtualProtect((void *)std::get<0>(range), std::get<1>(range), PAGE_READWRITE, &std::get<2>(range));
+
+		Assert(ret);
+	}
+
+	uint64_t count1 = ExperimentalPatchEditAndContinue();
+	uint64_t count2 = ExperimentalPatchMemInit();
+
+	// Then restore the old permissions
+	for (auto& range : addressRanges)
+	{
+		BOOL ret =
+			VirtualProtect((void *)std::get<0>(range), std::get<1>(range), std::get<2>(range), &std::get<2>(range)) &&
+			FlushInstructionCache(GetCurrentProcess(), (void *)std::get<0>(range), std::get<1>(range));
+
+		Assert(ret);
+	}
+
+	auto duration = duration_cast<milliseconds>(high_resolution_clock::now() - timerStart).count();
+	EditorUI_Log("%s: (%llu + %llu) = %llu patches applied in %llums.\n", __FUNCTION__, count1, count2, (count1 + count2), duration);
 }

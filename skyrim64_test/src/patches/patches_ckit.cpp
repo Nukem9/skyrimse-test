@@ -5,6 +5,7 @@
 #include "TES/MemoryManager.h"
 #include "TES/bhkThreadMemorySource.h"
 #include "TES/NiMain/NiRTTI.h"
+#include "CKIT/Experimental.h"
 #include "CKIT/Editor.h"
 #include "CKIT/TESFile_CK.h"
 #include "CKIT/TESForm_CK.h"
@@ -17,8 +18,6 @@
 void PatchSteam();
 void PatchThreading();
 void PatchFileIO();
-void ExperimentalPatchMemInit();
-void ExperimentalPatchEditAndContinue();
 void PatchMemory();
 size_t BNetConvertUnicodeString(char *Destination, size_t DestSize, const wchar_t *Source, size_t SourceSize);
 
@@ -105,8 +104,7 @@ void Patch_TESVCreationKit()
 	//
 	// Experimental
 	//
-	ExperimentalPatchEditAndContinue();
-	ExperimentalPatchMemInit();
+	ExperimentalPatchOptimizations();
 
 	//
 	// BSPointerHandle(Manager)

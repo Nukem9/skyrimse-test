@@ -27,9 +27,6 @@ void PatchSteam();
 void PatchThreading();
 void PatchWindow();
 void PatchFileIO();
-void ExperimentalPatchEmptyFunctions();
-void ExperimentalPatchMemInit();
-void ExperimentalPatchEditAndContinue();
 
 void PatchBSGraphicsRenderTargetManager();
 void PatchBSThread();
@@ -240,8 +237,6 @@ void Patch_TESV()
 	//
 	// Misc
 	//
-	//ExperimentalPatchEmptyFunctions();
-	ExperimentalPatchMemInit();
 
 	// Broken printf statement that triggers invalid_parameter_handler(), "%08" should really be "%08X"
 	const char *newFormat = "World object count changed on object '%s' %08X from %i to %i";

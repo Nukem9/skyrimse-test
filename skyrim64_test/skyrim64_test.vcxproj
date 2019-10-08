@@ -166,6 +166,7 @@
     <ClInclude Include="src\patches\CKIT\BSShaderResourceManager_CK.h" />
     <ClInclude Include="src\patches\CKIT\Editor.h" />
     <ClInclude Include="src\patches\CKIT\EditorUI.h" />
+    <ClInclude Include="src\patches\CKIT\Experimental.h" />
     <ClInclude Include="src\patches\CKIT\NavMesh.h" />
     <ClInclude Include="src\patches\CKIT\TESFile_CK.h" />
     <ClInclude Include="src\patches\CKIT\TESForm_CK.h" />
@@ -294,7 +295,7 @@
     <ClCompile Include="src\patches\dinput8.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\dump.cpp" />
-    <ClCompile Include="src\patches\experimental.cpp" />
+    <ClCompile Include="src\patches\CKIT\Experimental.cpp" />
     <ClCompile Include="src\patches\logging.cpp" />
     <ClCompile Include="src\patches\rendering\d3d11_dc.cpp" />
     <ClCompile Include="src\patches\rendering\d3d11_proxy.cpp" />
