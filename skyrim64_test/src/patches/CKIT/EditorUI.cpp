@@ -13,6 +13,7 @@
 HWND g_MainHwnd;
 HWND g_LogHwnd;
 tbb::concurrent_vector<const char *> g_LogPendingMessages;
+std::set<uint64_t> g_LogMessageBlacklist;
 HMENU g_ExtensionMenu;
 WNDPROC OldEditorUI_WndProc;
 HANDLE g_LogPipeReader;
@@ -24,6 +25,8 @@ void EditorUI_Initialize()
 {
 	InitCommonControls();
 	LoadLibraryA("MSFTEDIT.dll");
+
+	EditorUI_GenerateWarningBlacklist();
 
 	if (!EditorUI_CreateLogWindow())
 		MessageBoxA(nullptr, "Failed to create console log window", "Error", MB_ICONERROR);
@@ -172,6 +175,30 @@ bool EditorUI_CreateStdoutListener()
 
 	pipeReader.detach();
 	return true;
+}
+
+void EditorUI_GenerateWarningBlacklist()
+{
+	if (!g_INI.GetBoolean("CreationKit", "WarningBlacklist", false))
+		return;
+
+	// Keep reading entries until an empty one is hit
+	for (uint32_t i = 0;; i++)
+	{
+		std::string& message = g_INI.Get("CreationKit_Warnings", "W" + std::to_string(i), "");
+
+		if (message.length() <= 0)
+			break;
+
+		// Un-escape newline and carriage return characters
+		for (size_t i; (i = message.find("\\n")) != std::string::npos;)
+			message.replace(i, 2, "\n");
+
+		for (size_t i; (i = message.find("\\r")) != std::string::npos;)
+			message.replace(i, 2, "\r");
+
+		g_LogMessageBlacklist.emplace(XUtil::MurmurHash64A(message.c_str(), message.length()));
+	}
 }
 
 HANDLE EditorUI_GetStdoutListenerPipe()
@@ -733,6 +760,9 @@ void EditorUI_LogVa(const char *Format, va_list Va)
 	int len = _vsnprintf_s(buffer, _TRUNCATE, Format, Va);
 
 	if (len <= 0)
+		return;
+
+	if (g_LogMessageBlacklist.count(XUtil::MurmurHash64A(buffer, len)))
 		return;
 
 	if (len >= 2 && buffer[len - 1] != '\n')

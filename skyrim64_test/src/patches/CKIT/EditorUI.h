@@ -27,6 +27,7 @@ void EditorUI_Initialize();
 bool EditorUI_CreateLogWindow();
 bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu);
 bool EditorUI_CreateStdoutListener();
+void EditorUI_GenerateWarningBlacklist();
 
 HANDLE EditorUI_GetStdoutListenerPipe();
 HWND EditorUI_GetMainWindow();

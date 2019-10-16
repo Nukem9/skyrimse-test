@@ -87,6 +87,7 @@ namespace XUtil
 	void SetThreadName(uint32_t ThreadID, const char *ThreadName);
 	void Trim(char *Buffer, char C);
 	void XAssert(const char *File, int Line, const char *Format, ...);
+	uint64_t MurmurHash64A(const void *Key, size_t Len, uint64_t Seed = 0);
 
 	uintptr_t FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const uint8_t *Bytes, const char *Mask);
 	void PatchMemory(uintptr_t Address, uint8_t *Data, size_t Size);

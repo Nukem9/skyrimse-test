@@ -36,14 +36,14 @@ void CreateXbyakPatches()
 	}
 
 	// Do the actual code modifications
-	std::unordered_map<uint32_t, void *> codeCache;
+	std::unordered_map<uint64_t, void *> codeCache;
 	uintptr_t codeBlockBase = g_CodeRegion;
 
 	for (auto& patch : XrefGeneratedPatches)
 	{
 		PatchCodeGen gen(&patch, codeBlockBase, TLS_INSTRUCTION_BLOCK_SIZE);
 		uint8_t *rawCode = (uint8_t *)gen.getCode();
-		uint32_t codeCRC = crc32c(rawCode, gen.getSize());
+		uint64_t codeCRC = XUtil::MurmurHash64A(rawCode, gen.getSize());
 
 		// If it wasn't cached, we just insert it and increase the global code pointer
 		if (codeCache.find(codeCRC) == codeCache.end())
@@ -738,34 +738,4 @@ void WriteCodeHook(uintptr_t TargetAddress, void *Code)
 	}
 
 	XUtil::PatchMemory(TargetAddress, data, instruction.length);
-}
-
-uint32_t crc32c(unsigned char *Data, size_t Len)
-{
-	// http://www.hackersdelight.org/hdcodetxt/crc.c.txt
-	int i, j;
-	unsigned int byte, crc, mask;
-	static unsigned int table[256];
-
-	// Set up the table, if necessary.
-	if (table[1] == 0) {
-		for (byte = 0; byte <= 255; byte++) {
-			crc = byte;
-			for (j = 7; j >= 0; j--) {    // Do eight times.
-				mask = -(crc & 1);
-				crc = (crc >> 1) ^ (0xEDB88320 & mask);
-			}
-			table[byte] = crc;
-		}
-	}
-
-	// Through with table setup, now calculate the CRC.
-	i = 0;
-	crc = 0xFFFFFFFF;
-	while (i < Len) {
-		byte = Data[i];
-		crc = (crc >> 8) ^ table[(crc ^ byte) & 0xFF];
-		i = i + 1;
-	}
-	return ~crc;
 }

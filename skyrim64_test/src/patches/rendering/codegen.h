@@ -88,4 +88,3 @@ void CreateXbyakCodeBlock();
 void GenerateInstruction(uintptr_t Address);
 void GenerateCommonInstruction(ZydisDecodedInstruction *Instruction, ZydisDecodedOperand *Operands, const char *Type);
 void WriteCodeHook(uintptr_t TargetAddress, void *Code);
-uint32_t crc32c(unsigned char *Data, size_t Len);
