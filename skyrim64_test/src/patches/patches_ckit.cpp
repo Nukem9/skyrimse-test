@@ -338,19 +338,12 @@ void Patch_TESVCreationKit()
 	}
 
 	//
-	// Hack option to force draw shadows on land
+	// Re-enable land shadows. Fixes a bug where BSDynatmicTriShape dynamic GPU data would be overwritten before
+	// the geometry was actually rendered. Instead of caching the upload once per frame, upload it on every draw call.
+	// (BSBatchRenderer::DrawGeometry -> GEOMETRY_TYPE_DYNAMIC_TRISHAPE uiFrameCount)
 	//
-	if (g_INI.GetBoolean("CreationKit", "EnableLandShadows", false))
-	{
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x13CECD4, 6);
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B816CE, 5);
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B816EB, 4);
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B81709, 9);
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B81751, 5);
-		XUtil::PatchMemoryNop(g_ModuleBase + 0x1B8176E, 5);
-		XUtil::DetourCall(g_ModuleBase + 0x1B7FFB4, &hk_call_141B7FFB4);
-		XUtil::DetourCall(g_ModuleBase + 0x1B816A7, &hk_call_141B816A7);
-	}
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x13CECD4, 6);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x2DB6A51, 2);
 
 	//
 	// Re-enable fog rendering in the Render Window by forcing post-process effects (SAO/SAOComposite/SAOFog)

@@ -1138,33 +1138,6 @@ int sub_141BBF320(__int64 a1, __int64 a2)
 	return status;
 }
 
-thread_local __int64 bullshit;
-
-__int64 hk_call_141B7FFB4(__int64 a1)
-{
-	bullshit = *(__int64 *)a1;
-	return *(__int64 *)a1;
-}
-
-void *hk_call_141B816A7()
-{
-	// IRendererResourceManager::CreateTrishape
-	void *rendererData = ((void *(__fastcall *)(__int64, __int64, uint32_t, __int64, __int64))(g_ModuleBase + 0x2D0AA90))(g_ModuleBase + 0x56B73A0, bullshit, 11560, 0xBB0080765040A, *(__int64 *)(g_ModuleBase + 0x4F00CB0));
-
-	//
-	// Construct a normal BSTriShape rather than a dynamic one. Also force a crash if any of the uninitialized
-	// pointers are accessed.
-	//
-	// sizeof(BSTriShape) = 0x160, sizeof(BSDynamicTriShape) = 0x180
-	//
-	uintptr_t shape = ((uintptr_t(__fastcall *)(size_t))(g_ModuleBase + 0x1219450))(0x180);
-	((void *(__fastcall *)(uintptr_t, void *, __int64, __int16, __int16))(g_ModuleBase + 0x268D480))(shape, rendererData, 0xBB0080765040A, 289, 512);
-
-	*(uintptr_t *)(shape + 0x160) = 0xFEFEDEADC0DEBADD;
-
-	return (void *)shape;
-}
-
 void hk_call_141CF03C9(__int64 a1, bool Enable)
 {
 	// Modify the global setting itself then update UI to match
