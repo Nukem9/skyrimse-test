@@ -309,11 +309,6 @@ void Patch_TESVCreationKit()
 	}
 
 	//
-	// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
-	//
-	XUtil::PatchMemory(g_ModuleBase + 0x2DC679D, (PBYTE)"\x4D\x89\xE1\x90\x90\x90\x90", 7);
-
-	//
 	// Skip 'Topic Info' validation during load
 	//
 	if (g_INI.GetBoolean("CreationKit", "SkipTopicInfoValidation", false))
@@ -336,6 +331,11 @@ void Patch_TESVCreationKit()
 	{
 		XUtil::PatchMemory(g_ModuleBase + 0x1306978, (PBYTE)"\x01", 1);
 	}
+
+	//
+	// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
+	//
+	XUtil::PatchMemory(g_ModuleBase + 0x2DC679D, (PBYTE)"\x4D\x89\xE1\x90\x90\x90\x90", 7);
 
 	//
 	// Re-enable land shadows. Fixes a bug where BSDynatmicTriShape dynamic GPU data would be overwritten before
@@ -426,7 +426,7 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x1B0AFAA, (PBYTE)&newId, sizeof(uint32_t));// Patch if() comparison
 
 	//
-	// Fix for crash when saving certain ESP files (i.e 3DNPC.esp)
+	// Fix for crash (recursive sorting function stack overflow) when saving certain ESP files (i.e 3DNPC.esp)
 	//
 	XUtil::DetourJump(g_ModuleBase + 0x1651590, &SortFormArray);
 
@@ -598,6 +598,12 @@ void Patch_TESVCreationKit()
 	// Fix for crash after the "Multiple masters selected for load" dialog is shown. Missing null pointer check.
 	//
 	XUtil::DetourCall(g_ModuleBase + 0x1CE8269, &hk_call_141CE8269);
+
+	//
+	// Fix for crash when duplicating a form with an empty editor id. Integer underflow when string length is 0.
+	//
+	XUtil::DetourCall(g_ModuleBase + 0x16B849E, &hk_call_1416B849E);
+	XUtil::PatchMemoryNop(g_ModuleBase + 0x16B84A3, 1);
 
 	//
 	// Plugin loading optimizations:

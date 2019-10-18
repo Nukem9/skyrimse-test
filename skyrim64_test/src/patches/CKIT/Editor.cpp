@@ -1151,3 +1151,13 @@ void hk_call_141CE8269(__int64 a1)
 	if (*(__int64 *)(a1 + 0x58))
 		((void(__fastcall *)(__int64))(g_ModuleBase + 0x1CEB510))(a1);
 }
+
+const char *hk_call_1416B849E(__int64 a1)
+{
+	const char *formEDID = (*(const char *(__fastcall **)(__int64))(*(__int64 *)a1 + 0x1E8))(a1);
+
+	if (!formEDID || strlen(formEDID) <= 0)
+		return "UNNAMED_FORM";
+
+	return formEDID;
+}

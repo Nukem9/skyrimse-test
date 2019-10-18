@@ -85,3 +85,4 @@ void hk_call_1412DD706(HWND WindowHandle, uint32_t *ControlId);
 int sub_141BBF320(__int64 a1, __int64 a2);
 void hk_call_141CF03C9(__int64 a1, bool Enable);
 void hk_call_141CE8269(__int64 a1);
+const char *hk_call_1416B849E(__int64 a1);
