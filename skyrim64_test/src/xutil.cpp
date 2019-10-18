@@ -193,25 +193,56 @@ uint64_t XUtil::MurmurHash64A(const void *Key, size_t Len, uint64_t Seed)
 
 uintptr_t XUtil::FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const uint8_t *Bytes, const char *Mask)
 {
-	auto compare = [](const uint8_t *Data, const uint8_t *Bytes, const char *Mask)
+	std::vector<std::pair<uint8_t, bool>> pattern;
+
+	for (size_t i = 0; i < strlen(Mask); i++)
+		pattern.emplace_back(Bytes[i], Mask[i] == 'x');
+
+	const uint8_t *dataStart = (uint8_t *)StartAddress;
+	const uint8_t *dataEnd = (uint8_t *)StartAddress + MaxSize + 1;
+
+	auto ret = std::search(dataStart, dataEnd, pattern.begin(), pattern.end(),
+		[](uint8_t CurrentByte, std::pair<uint8_t, bool>& Pattern)
 	{
-		for (; *Mask; ++Mask, ++Data, ++Bytes)
+		return !Pattern.second || (CurrentByte == Pattern.first);
+	});
+
+	if (ret == dataEnd)
+		return 0;
+
+	return std::distance(dataStart, ret) + StartAddress;
+}
+
+std::vector<uintptr_t> XUtil::FindPatterns(uintptr_t StartAddress, uintptr_t MaxSize, const uint8_t *Bytes, const char *Mask)
+{
+	std::vector<uintptr_t> results;
+	std::vector<std::pair<uint8_t, bool>> pattern;
+
+	for (size_t i = 0; i < strlen(Mask); i++)
+		pattern.emplace_back(Bytes[i], Mask[i] == 'x');
+
+	const uint8_t *dataStart = (uint8_t *)StartAddress;
+	const uint8_t *dataEnd = (uint8_t *)StartAddress + MaxSize + 1;
+
+	for (const uint8_t *i = dataStart;;)
+	{
+		auto ret = std::search(i, dataEnd, pattern.begin(), pattern.end(),
+			[](uint8_t CurrentByte, std::pair<uint8_t, bool>& Pattern)
 		{
-			if (*Mask == 'x' && *Data != *Bytes)
-				return false;
-		}
+			return !Pattern.second || (CurrentByte == Pattern.first);
+		});
 
-		return *Mask == '\0';
-	};
+		// No byte pattern matched, exit loop
+		if (ret == dataEnd)
+			break;
 
-	const size_t maskLen = strlen(Mask);
-	for (uintptr_t i = 0; i < MaxSize - maskLen; i++)
-	{
-		if (compare((uint8_t *)(StartAddress + i), Bytes, Mask))
-			return StartAddress + i;
+		uintptr_t addr = std::distance(dataStart, ret) + StartAddress;
+		results.push_back(addr);
+
+		i = (uint8_t *)(addr + 1);
 	}
 
-	return 0;
+	return results;
 }
 
 void XUtil::PatchMemory(uintptr_t Address, uint8_t *Data, size_t Size)

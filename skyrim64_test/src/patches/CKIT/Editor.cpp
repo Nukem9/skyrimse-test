@@ -344,19 +344,6 @@ bool IsESLMaster(const char *Name)
 	return false;
 }
 
-bool sub_141477DA0(__int64 a1)
-{
-	// Checks if the 16-byte structure is 0 (list->next pointer, list->data pointer)
-	return *(__int64 *)(a1 + 0) == 0 && *(__int64 *)(a1 + 8) == 0;
-}
-
-bool sub_141477DA0_SSE41(__int64 a1)
-{
-	// Checks if the 16-byte structure is 0 (list->next pointer, list->data pointer) (Branchless)
-	__m128i data = _mm_loadu_si128((__m128i *)a1);
-	return _mm_testz_si128(data, data);
-}
-
 uint32_t sub_1414974E0(BSTArray<void *>& Array, const void *&Target, uint32_t StartIndex, __int64 Unused)
 {
 	for (uint32_t i = StartIndex; i < Array.QSize(); i++)

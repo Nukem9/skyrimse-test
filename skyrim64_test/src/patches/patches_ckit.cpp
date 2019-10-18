@@ -609,7 +609,6 @@ void Patch_TESVCreationKit()
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
-	// - Fix an unoptimized function bottleneck (sub_141477DA0)
 	// - Fix an unoptimized function bottleneck (sub_1414974E0) (Large ESP files only)
 	// - Fix an unoptimized function bottleneck (sub_1415D5640)
 	// - Eliminate millions of calls to update the progress dialog, instead only updating 400 times (0% -> 100%)
@@ -621,15 +620,9 @@ void Patch_TESVCreationKit()
 
 	// Utilize SSE4.1 instructions if available
 	if ((cpuinfo[2] & (1 << 19)) != 0)
-	{
-		XUtil::DetourJump(g_ModuleBase + 0x1477DA0, &sub_141477DA0_SSE41);
 		XUtil::DetourJump(g_ModuleBase + 0x14974E0, &sub_1414974E0_SSE41);
-	}
 	else
-	{
-		XUtil::DetourJump(g_ModuleBase + 0x1477DA0, &sub_141477DA0);
 		XUtil::DetourJump(g_ModuleBase + 0x14974E0, &sub_1414974E0);
-	}
 
 	XUtil::DetourJump(g_ModuleBase + 0x15D5640, &sub_1415D5640);
 	XUtil::PatchMemory(g_ModuleBase + 0x163D56E, (PBYTE)"\xB9\x90\x01\x00\x00\x90", 6);

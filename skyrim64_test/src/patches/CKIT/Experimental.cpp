@@ -1,4 +1,5 @@
 #include "../../common.h"
+#include <intrin.h>
 #include <chrono>
 #include "EditorUI.h"
 
@@ -96,34 +97,6 @@ bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extend
 	return false;
 }
 
-uint64_t ExperimentalPatchMemInit()
-{
-	//
-	// Remove the thousands of [code below] since they're useless checks:
-	//
-	// if ( dword_141ED6C88 != 2 ) // MemoryManager initialized flag
-	//     sub_140C00D30((__int64)&unk_141ED6800, &dword_141ED6C88);
-	//
-	const char *patternStr = "\x83\x3D\x00\x00\x00\x00\x02\x74\x13\x48\x8D\x15\x00\x00\x00\x00\x48\x8D\x0D\x00\x00\x00\x00\xE8\x00\x00\x00\x00";
-	const char *maskStr = "xx????xxxxxx????xxx????x????";
-
-	uint64_t patchCount = 0;
-
-	for (uintptr_t i = g_CodeBase; i < g_CodeEnd;)
-	{
-		uintptr_t addr = XUtil::FindPattern(i, g_CodeEnd - i, (uint8_t *)patternStr, maskStr);
-
-		if (!addr)
-			break;
-
-		memcpy((void *)addr, (const void *)"\xEB\x1A", 2);
-		i = addr + 1;
-		patchCount++;
-	}
-
-	return patchCount;
-}
-
 uint64_t ExperimentalPatchEditAndContinue()
 {
 	//
@@ -186,6 +159,51 @@ uint64_t ExperimentalPatchEditAndContinue()
 	return patchCount;
 }
 
+uint64_t ExperimentalPatchMemInit()
+{
+	//
+	// Remove the thousands of [code below] since they're useless checks:
+	//
+	// if ( dword_141ED6C88 != 2 ) // MemoryManager initialized flag
+	//     sub_140C00D30((__int64)&unk_141ED6800, &dword_141ED6C88);
+	//
+	const char *patternStr = "\x83\x3D\x00\x00\x00\x00\x02\x74\x13\x48\x8D\x15\x00\x00\x00\x00\x48\x8D\x0D\x00\x00\x00\x00\xE8\x00\x00\x00\x00";
+	const char *maskStr = "xx????xxxxxx????xxx????x????";
+
+	auto matches = XUtil::FindPatterns(g_CodeBase, g_CodeEnd - g_CodeBase, (const uint8_t *)patternStr, maskStr);
+
+	for (uintptr_t match : matches)
+		memcpy((void *)match, "\xEB\x1A", 2);
+
+	return matches.size();
+}
+
+uint64_t ExperimentalPatchLinkedList()
+{
+	//
+	// Optimize a linked list HasValue<T>() hot-code-path function. Checks if the 16-byte structure
+	// is 0 (list->next pointer, list->data pointer)
+	//
+	int cpuinfo[4];
+	__cpuid(cpuinfo, 1);
+
+	const bool hasSSE41 = ((cpuinfo[2] & (1 << 19)) != 0);
+	const char *patternStr = "\x48\x89\x4C\x24\x08\x48\x83\xEC\x18\x48\x8B\x44\x24\x20\x48\x83\x78\x08\x00\x75\x14\x48\x8B\x44\x24\x20\x48\x83\x38\x00\x75\x09\xC7\x04\x24\x01\x00\x00\x00\xEB\x07\xC7\x04\x24\x00\x00\x00\x00\x0F\xB6\x04\x24\x48\x83\xC4\x18\xC3";
+	const char *maskStr = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+	auto matches = XUtil::FindPatterns(g_CodeBase, g_CodeEnd - g_CodeBase, (const uint8_t *)patternStr, maskStr);
+
+	for (uintptr_t match : matches)
+	{
+		if (hasSSE41)
+			memcpy((void *)match, "\xF3\x0F\x6F\x01\x66\x0F\x38\x17\xC0\x0F\x94\xC0\xC3", 13);
+		else
+			memcpy((void *)match, "\x48\x83\x39\x00\x75\x0A\x48\x83\x79\x08\x00\x75\x03\xB0\x01\xC3\x32\xC0\xC3", 19);
+	}
+
+	return matches.size();
+}
+
 void ExperimentalPatchOptimizations()
 {
 	auto timerStart = high_resolution_clock::now();
@@ -209,6 +227,7 @@ void ExperimentalPatchOptimizations()
 
 	uint64_t count1 = ExperimentalPatchEditAndContinue();
 	uint64_t count2 = ExperimentalPatchMemInit();
+	uint64_t count3 = ExperimentalPatchLinkedList();
 
 	// Then restore the old permissions
 	for (auto& range : addressRanges)
@@ -221,5 +240,5 @@ void ExperimentalPatchOptimizations()
 	}
 
 	auto duration = duration_cast<milliseconds>(high_resolution_clock::now() - timerStart).count();
-	EditorUI_Log("%s: (%llu + %llu) = %llu patches applied in %llums.\n", __FUNCTION__, count1, count2, (count1 + count2), duration);
+	EditorUI_Log("%s: (%llu + %llu + %llu) = %llu patches applied in %llums.\n", __FUNCTION__, count1, count2, count3,(count1 + count2 + count3), duration);
 }
