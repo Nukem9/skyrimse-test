@@ -338,9 +338,13 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(g_ModuleBase + 0x2DC679D, (PBYTE)"\x4D\x89\xE1\x90\x90\x90\x90", 7);
 
 	//
-	// Re-enable land shadows. Fixes a bug where BSDynatmicTriShape dynamic GPU data would be overwritten before
-	// the geometry was actually rendered. Instead of caching the upload once per frame, upload it on every draw call.
+	// Re-enable land shadows. Instead of caching the upload once per frame, upload it on every draw call.
 	// (BSBatchRenderer::DrawGeometry -> GEOMETRY_TYPE_DYNAMIC_TRISHAPE uiFrameCount)
+	//
+	// Fixes a bug where BSDynamicTriShape dynamic data would be written to 1 of 4 ring buffers in the shadowmap pass and
+	// cached. At some point later in the frame sub_140D6BF00 would increment a counter and swap the currently used
+	// buffer. In the main render pass DrawDynamicTriShape would use that new buffer instead of the previous one during
+	// shadows. The data offset (m_VertexAllocationOffset) was always correct, but the wrong ring buffer was used.
 	//
 	XUtil::PatchMemoryNop(g_ModuleBase + 0x13CECD4, 6);
 	XUtil::PatchMemoryNop(g_ModuleBase + 0x2DB6A51, 2);
