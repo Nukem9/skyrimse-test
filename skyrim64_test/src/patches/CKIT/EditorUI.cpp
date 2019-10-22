@@ -13,6 +13,7 @@ HMENU g_ExtensionMenu;
 void ExportTest(FILE *File);
 
 WNDPROC OldEditorUI_WndProc;
+DLGPROC OldEditorUI_ObjectWindowProc;
 
 void EditorUI_Initialize()
 {
@@ -345,6 +346,38 @@ INT_PTR CALLBACK EditorUI_LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPA
 	}
 
 	return FALSE;
+}
+
+INT_PTR CALLBACK EditorUI_ObjectWindowProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+	if (Message == WM_COMMAND)
+	{
+		const uint32_t param = LOWORD(wParam);
+
+		switch (param)
+		{
+		case UI_OBJECT_WINDOW_CHECKBOX:
+			// Force the list items to update as if it was by timer
+			SendMessageA(DialogHwnd, WM_TIMER, 0x4D, 0);
+			return TRUE;
+		}
+	}
+	else if (Message == UI_OBJECT_WINDOW_ADD_ITEM)
+	{
+		const auto insertData = (__int64)wParam;
+		const auto form = (__int64)lParam;
+		const bool onlyActiveForms = SendMessage(GetDlgItem(DialogHwnd, UI_OBJECT_WINDOW_CHECKBOX), BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+		if (onlyActiveForms)
+		{
+			if (form && (*(uint32_t *)(form + 0x10) & 2) != 2)
+				return TRUE;
+		}
+
+		return ((int(__fastcall *)(__int64, __int64))(g_ModuleBase + 0x12D3BD0))(insertData, form);
+	}
+
+	return OldEditorUI_ObjectWindowProc(DialogHwnd, Message, wParam, lParam);
 }
 
 LRESULT EditorUI_CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, WPARAM wParam, LPARAM lParam)

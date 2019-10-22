@@ -8,6 +8,9 @@
 #define UI_EDITOR_TOGGLEGRASS_BUTTON	40960	// Main toolbar
 #define UI_EDITOR_TOGGLEGRASS			40963	// "View" menu
 
+#define UI_OBJECT_WINDOW_ADD_ITEM		2579
+#define UI_OBJECT_WINDOW_CHECKBOX		2580	// See: resource.rc
+
 #define UI_LOG_CMD_ADDTEXT				(WM_APP + 1)
 #define UI_LOG_CMD_CLEARTEXT			(WM_APP + 2)
 #define UI_LOG_CMD_AUTOSCROLL			(WM_APP + 3)
@@ -30,6 +33,7 @@ HWND EditorUI_GetMainWindow();
 LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK EditorUI_DialogTabProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK EditorUI_LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK EditorUI_ObjectWindowProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 LRESULT EditorUI_CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, WPARAM wParam, LPARAM lParam);
 
 BOOL EditorUI_ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask);

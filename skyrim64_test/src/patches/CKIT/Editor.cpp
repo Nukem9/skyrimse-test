@@ -86,9 +86,14 @@ HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HW
 	DlgData.DialogFunc = lpDialogFunc;
 	DlgData.IsDialog = false;
 
-	// Override the default "Use Report" window sizing
-	if (lpTemplateName == (LPCSTR)0xDC)
+	// Override certain default dialogs to use this DLL's resources
+	switch ((uintptr_t)lpTemplateName)
+	{
+	case 0x7A:// "Object Window"
+	case 0xDC:// "Use Report"
 		hInstance = (HINSTANCE)&__ImageBase;
+		break;
+	}
 
 	return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
 }
@@ -1148,4 +1153,13 @@ const char *hk_call_1416B849E(__int64 a1)
 		return "UNNAMED_FORM";
 
 	return formEDID;
+}
+
+int hk_call_1412D1541(__int64 ObjectListInsertData, __int64 Form)
+{
+	const __int64 objectWindowInstance = *(__int64 *)(ObjectListInsertData + 0x8) - 0x28;
+	const HWND objectWindowHandle = *(HWND *)(objectWindowInstance);
+
+	SendMessageA(objectWindowHandle, UI_OBJECT_WINDOW_ADD_ITEM, ObjectListInsertData, Form);
+	return 1;
 }
