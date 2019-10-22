@@ -11,6 +11,7 @@
 #include "CKIT/TESForm_CK.h"
 #include "CKIT/NavMesh.h"
 #include "CKIT/EditorUI.h"
+#include "CKIT/LogWindow.h"
 #include "CKIT/BSPointerHandle.h"
 #include "CKIT/BSGraphicsRenderTargetManager_CK.h"
 #include "CKIT/BSShaderResourceManager_CK.h"

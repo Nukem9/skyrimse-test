@@ -1,7 +1,7 @@
 #include "../../common.h"
 #include <intrin.h>
 #include <chrono>
-#include "EditorUI.h"
+#include "LogWindow.h"
 
 using namespace std::chrono;
 

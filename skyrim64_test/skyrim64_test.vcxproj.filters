@@ -359,6 +359,9 @@
     <ClInclude Include="src\patches\CKIT\Experimental.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\CKIT\LogWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -593,6 +596,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\CKIT\Experimental.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKIT\LogWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

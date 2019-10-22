@@ -1,6 +1,6 @@
 #include "../../common.h"
 #include "TESFile_CK.h"
-#include "EditorUI.h"
+#include "LogWindow.h"
 
 int TESFile::hk_LoadPluginHeader()
 {

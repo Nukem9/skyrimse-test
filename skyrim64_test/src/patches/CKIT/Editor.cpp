@@ -13,6 +13,7 @@
 #include "Editor.h"
 #include "EditorUI.h"
 #include "TESWater.h"
+#include "LogWindow.h"
 
 #pragma comment(lib, "libdeflate.lib")
 

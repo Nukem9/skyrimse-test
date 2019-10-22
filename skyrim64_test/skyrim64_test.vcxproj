@@ -167,6 +167,7 @@
     <ClInclude Include="src\patches\CKIT\Editor.h" />
     <ClInclude Include="src\patches\CKIT\EditorUI.h" />
     <ClInclude Include="src\patches\CKIT\Experimental.h" />
+    <ClInclude Include="src\patches\CKIT\LogWindow.h" />
     <ClInclude Include="src\patches\CKIT\NavMesh.h" />
     <ClInclude Include="src\patches\CKIT\TESFile_CK.h" />
     <ClInclude Include="src\patches\CKIT\TESForm_CK.h" />
@@ -279,6 +280,7 @@
     <ClCompile Include="src\patches\CKIT\BSGraphicsRenderTargetManager_CK.cpp" />
     <ClCompile Include="src\patches\CKIT\BSPointerHandle.cpp" />
     <ClCompile Include="src\patches\CKIT\BSShaderResourceManager_CK.cpp" />
+    <ClCompile Include="src\patches\CKIT\LogWindow.cpp" />
     <ClCompile Include="src\patches\CKIT\TESFile_CK.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />
