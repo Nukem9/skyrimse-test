@@ -350,13 +350,21 @@ INT_PTR CALLBACK EditorUI_LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPA
 
 INT_PTR CALLBACK EditorUI_ObjectWindowProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-	if (Message == WM_COMMAND)
+	if (Message == WM_INITDIALOG)
+	{
+		// Eliminate the flicker when changing categories
+		ListView_SetExtendedListViewStyleEx(GetDlgItem(DialogHwnd, 1041), LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
+	}
+	else if (Message == WM_COMMAND)
 	{
 		const uint32_t param = LOWORD(wParam);
 
 		switch (param)
 		{
 		case UI_OBJECT_WINDOW_CHECKBOX:
+			bool enableFilter = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+			SetPropA(DialogHwnd, "ActiveOnly", (HANDLE)enableFilter);
+
 			// Force the list items to update as if it was by timer
 			SendMessageA(DialogHwnd, WM_TIMER, 0x4D, 0);
 			return TRUE;
@@ -366,7 +374,7 @@ INT_PTR CALLBACK EditorUI_ObjectWindowProc(HWND DialogHwnd, UINT Message, WPARAM
 	{
 		const auto insertData = (__int64)wParam;
 		const auto form = (__int64)lParam;
-		const bool onlyActiveForms = SendMessage(GetDlgItem(DialogHwnd, UI_OBJECT_WINDOW_CHECKBOX), BM_GETCHECK, 0, 0) == BST_CHECKED;
+		const bool onlyActiveForms = (bool)GetPropA(DialogHwnd, "ActiveOnly");
 
 		if (onlyActiveForms)
 		{
