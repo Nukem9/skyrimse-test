@@ -14,6 +14,7 @@ void ExportTest(FILE *File);
 
 WNDPROC OldEditorUI_WndProc;
 DLGPROC OldEditorUI_ObjectWindowProc;
+DLGPROC OldEditorUI_CellViewProc;
 
 void EditorUI_Initialize()
 {
@@ -359,33 +360,97 @@ INT_PTR CALLBACK EditorUI_ObjectWindowProc(HWND DialogHwnd, UINT Message, WPARAM
 	{
 		const uint32_t param = LOWORD(wParam);
 
-		switch (param)
+		if (param == UI_OBJECT_WINDOW_CHECKBOX)
 		{
-		case UI_OBJECT_WINDOW_CHECKBOX:
 			bool enableFilter = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
 			SetPropA(DialogHwnd, "ActiveOnly", (HANDLE)enableFilter);
 
 			// Force the list items to update as if it was by timer
 			SendMessageA(DialogHwnd, WM_TIMER, 0x4D, 0);
-			return TRUE;
+			return 1;
 		}
 	}
 	else if (Message == UI_OBJECT_WINDOW_ADD_ITEM)
 	{
-		const auto insertData = (__int64)wParam;
-		const auto form = (__int64)lParam;
 		const bool onlyActiveForms = (bool)GetPropA(DialogHwnd, "ActiveOnly");
+		const auto form = (__int64)wParam;
+		bool *allowInsert = (bool *)lParam;
+
+		*allowInsert = true;
 
 		if (onlyActiveForms)
 		{
 			if (form && (*(uint32_t *)(form + 0x10) & 2) != 2)
-				return TRUE;
+				*allowInsert = false;
 		}
 
-		return ((int(__fastcall *)(__int64, __int64))(g_ModuleBase + 0x12D3BD0))(insertData, form);
+		return 1;
 	}
 
 	return OldEditorUI_ObjectWindowProc(DialogHwnd, Message, wParam, lParam);
+}
+
+INT_PTR CALLBACK EditorUI_CellViewProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+	if (Message == WM_INITDIALOG)
+	{
+		// Eliminate the flicker when changing cells
+		ListView_SetExtendedListViewStyleEx(GetDlgItem(DialogHwnd, 1155), LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
+		ListView_SetExtendedListViewStyleEx(GetDlgItem(DialogHwnd, 1156), LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
+
+		ShowWindow(GetDlgItem(DialogHwnd, 1007), SW_HIDE);
+	}
+	else if (Message == WM_SIZE)
+	{
+		auto *labelRect = (RECT *)(g_ModuleBase + 0x3AFB570);
+
+		// Fix the "World Space" label positioning on window resize
+		RECT label;
+		GetClientRect(GetDlgItem(DialogHwnd, 1164), &label);
+
+		RECT rect;
+		GetClientRect(GetDlgItem(DialogHwnd, 2083), &rect);
+
+		int ddMid = rect.left + ((rect.right - rect.left) / 2);
+		int labelMid = (label.right - label.left) / 2;
+
+		SetWindowPos(GetDlgItem(DialogHwnd, 1164), nullptr, ddMid - (labelMid / 2), labelRect->top, 0, 0, SWP_NOSIZE);
+
+		// Force the dropdown to extend the full length of the column
+		labelRect->right = 0;
+	}
+	else if (Message == WM_COMMAND)
+	{
+		const uint32_t param = LOWORD(wParam);
+
+		if (param == UI_CELL_VIEW_CHECKBOX)
+		{
+			bool enableFilter = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
+			SetPropA(DialogHwnd, "ActiveOnly", (HANDLE)enableFilter);
+
+			// Fake the dropdown list being activated
+			SendMessageA(DialogHwnd, WM_COMMAND, MAKEWPARAM(2083, 1), 0);
+			return 1;
+		}
+	}
+	else if (Message == UI_CELL_VIEW_ADD_CELL_ITEM)
+	{
+		const bool onlyActiveForms = (bool)GetPropA(DialogHwnd, "ActiveOnly");
+		const auto form = (__int64)wParam;
+		bool *allowInsert = (bool *)lParam;
+
+		*allowInsert = true;
+
+		if (onlyActiveForms)
+		{
+			if (form && (*(uint32_t *)(form + 0x10) & 2) != 2)
+				*allowInsert = false;
+		}
+
+		return 1;
+	}
+
+	return OldEditorUI_CellViewProc(DialogHwnd, Message, wParam, lParam);
 }
 
 LRESULT EditorUI_CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, WPARAM wParam, LPARAM lParam)

@@ -90,6 +90,7 @@ HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HW
 	switch ((uintptr_t)lpTemplateName)
 	{
 	case 0x7A:// "Object Window"
+	case 0xAF:// "Cell View"
 	case 0xDC:// "Use Report"
 		hInstance = (HINSTANCE)&__ImageBase;
 		break;
@@ -1160,6 +1161,22 @@ int hk_call_1412D1541(__int64 ObjectListInsertData, __int64 Form)
 	const __int64 objectWindowInstance = *(__int64 *)(ObjectListInsertData + 0x8) - 0x28;
 	const HWND objectWindowHandle = *(HWND *)(objectWindowInstance);
 
-	SendMessageA(objectWindowHandle, UI_OBJECT_WINDOW_ADD_ITEM, ObjectListInsertData, Form);
-	return 1;
+	bool allowInsert = true;
+	SendMessageA(objectWindowHandle, UI_OBJECT_WINDOW_ADD_ITEM, Form, (LPARAM)&allowInsert);
+
+	if (!allowInsert)
+		return 1;
+
+	return ((int(__fastcall *)(__int64, __int64))(g_ModuleBase + 0x12D3BD0))(ObjectListInsertData, Form);
+}
+
+void hk_call_14147FB57(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex)
+{
+	bool allowInsert = true;
+	SendMessageA(GetParent(ListViewHandle), UI_CELL_VIEW_ADD_CELL_ITEM, (WPARAM)Parameter, (LPARAM)&allowInsert);
+
+	if (!allowInsert)
+		return;
+
+	((void(__fastcall *)(HWND, void *, bool, int))(g_ModuleBase + 0x13BA4D0))(ListViewHandle, Parameter, UseImage, ItemIndex);
 }

@@ -24,6 +24,7 @@ size_t BNetConvertUnicodeString(char *Destination, size_t DestSize, const wchar_
 
 extern WNDPROC OldEditorUI_WndProc;
 extern DLGPROC OldEditorUI_ObjectWindowProc;
+extern DLGPROC OldEditorUI_CellViewProc;
 
 void Patch_TESVCreationKit()
 {
@@ -239,9 +240,12 @@ void Patch_TESVCreationKit()
 		EditorUI_Initialize();
 		*(uint8_t **)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13F3770), &EditorUI_WndProc);
 		*(uint8_t **)&OldEditorUI_ObjectWindowProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12C3ED0), &EditorUI_ObjectWindowProc);
+		*(uint8_t **)&OldEditorUI_CellViewProc = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13D8F40), &EditorUI_CellViewProc);
 
 		XUtil::DetourCall(g_ModuleBase + 0x1CF03C9, &hk_call_141CF03C9);// Update the UI options when fog is toggled
 		XUtil::DetourCall(g_ModuleBase + 0x12D1541, &hk_call_1412D1541);// Allow forms to be filtered in EditorUI_ObjectWindowProc
+		XUtil::DetourCall(g_ModuleBase + 0x147FB57, &hk_call_14147FB57);// Allow forms to be filtered in EditorUI_CellViewProc
+		XUtil::DetourCall(g_ModuleBase + 0x1C9879C, &hk_call_14147FB57);// ^
 		XUtil::PatchMemoryNop(g_ModuleBase + 0x1434473, 2);				// Force bShowReloadShadersButton to always be enabled
 		XUtil::PatchMemoryNop(g_ModuleBase + 0x1487B69, 2);				// Enable push to game button even if version control is disabled
 		XUtil::PatchMemory(g_ModuleBase + 0x1487B7C, (PBYTE)"\xEB", 1);
