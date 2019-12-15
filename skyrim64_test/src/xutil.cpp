@@ -196,7 +196,7 @@ uintptr_t XUtil::FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const ui
 	std::vector<std::pair<uint8_t, bool>> pattern;
 
 	for (size_t i = 0; i < strlen(Mask); i++)
-		pattern.emplace_back(Bytes[i], Mask[i] == 'x');
+		pattern.emplace_back(Bytes[i], Mask[i] == '?');
 
 	const uint8_t *dataStart = (uint8_t *)StartAddress;
 	const uint8_t *dataEnd = (uint8_t *)StartAddress + MaxSize + 1;
@@ -204,7 +204,7 @@ uintptr_t XUtil::FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const ui
 	auto ret = std::search(dataStart, dataEnd, pattern.begin(), pattern.end(),
 		[](uint8_t CurrentByte, std::pair<uint8_t, bool>& Pattern)
 	{
-		return !Pattern.second || (CurrentByte == Pattern.first);
+		return Pattern.second || (CurrentByte == Pattern.first);
 	});
 
 	if (ret == dataEnd)
@@ -219,7 +219,7 @@ std::vector<uintptr_t> XUtil::FindPatterns(uintptr_t StartAddress, uintptr_t Max
 	std::vector<std::pair<uint8_t, bool>> pattern;
 
 	for (size_t i = 0; i < strlen(Mask); i++)
-		pattern.emplace_back(Bytes[i], Mask[i] == 'x');
+		pattern.emplace_back(Bytes[i], Mask[i] == '?');
 
 	const uint8_t *dataStart = (uint8_t *)StartAddress;
 	const uint8_t *dataEnd = (uint8_t *)StartAddress + MaxSize + 1;
@@ -229,7 +229,7 @@ std::vector<uintptr_t> XUtil::FindPatterns(uintptr_t StartAddress, uintptr_t Max
 		auto ret = std::search(i, dataEnd, pattern.begin(), pattern.end(),
 			[](uint8_t CurrentByte, std::pair<uint8_t, bool>& Pattern)
 		{
-			return !Pattern.second || (CurrentByte == Pattern.first);
+			return Pattern.second || (CurrentByte == Pattern.first);
 		});
 
 		// No byte pattern matched, exit loop
@@ -263,7 +263,7 @@ void XUtil::PatchMemoryNop(uintptr_t Address, size_t Size)
 	VirtualProtect((LPVOID)Address, Size, PAGE_EXECUTE_READWRITE, &d);
 
 	for (uintptr_t i = Address; i < (Address + Size); i++)
-		* (volatile uint8_t*)i = 0x90;
+		*(volatile uint8_t *)i = 0x90;
 
 	VirtualProtect((LPVOID)Address, Size, d, &d);
 	FlushInstructionCache(GetCurrentProcess(), (LPVOID)Address, Size);

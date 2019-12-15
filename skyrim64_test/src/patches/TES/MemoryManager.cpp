@@ -163,8 +163,7 @@ void ScrapHeap::Free(ScrapHeap *Heap, void *Memory)
 
 void PatchMemory()
 {
-	bool useLargePages = scalable_allocation_mode(TBBMALLOC_USE_HUGE_PAGES, 1) == TBBMALLOC_OK;
-	ui::log::Add("TBBMalloc: Large pages are %s\n", useLargePages ? "enabled" : "disabled");
+	scalable_allocation_mode(TBBMALLOC_USE_HUGE_PAGES, 1);
 
 	PatchIAT(hk_calloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc");
 	PatchIAT(hk_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc");

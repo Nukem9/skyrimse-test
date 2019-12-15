@@ -84,5 +84,6 @@ int sub_141BBF320(__int64 a1, __int64 a2);
 void hk_call_141CF03C9(__int64 a1, bool Enable);
 void hk_call_141CE8269(__int64 a1);
 const char *hk_call_1416B849E(__int64 a1);
+void hk_call_14135CDD3(__int64 RenderWindowInstance, uint32_t *UntypedPointerHandle, bool Select);
 int hk_call_1412D1541(__int64 ObjectListInsertData, __int64 Form);
 void hk_call_14147FB57(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex);

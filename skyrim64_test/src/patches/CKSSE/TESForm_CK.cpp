@@ -96,4 +96,60 @@ bool AlteredFormList_ElementExists(BSTArray<class TESForm *> *Array, class TESFo
 {
 	return AlteredFormListShadow.count(Entry) > 0;
 }
+
+bool IsCellInterior(__int64 Cell)
+{
+	return (*(WORD *)(Cell + 80) & 1) != 0;
+}
+
+HWND __fastcall sub_1412560F0(__int64 a1)
+{
+	return *(HWND *)(a1 + 8);
+}
+
+void sub_141BAF3E0(__int64 rcx0, __int64 a2)
+{
+	Assert(IsCellInterior(rcx0));
+
+	if (!IsCellInterior(rcx0))
+		return;
+
+	__int64 unk = *(__int64 *)(g_ModuleBase + 0x3AFC1D8);
+	((void(__fastcall *)(__int64, __int64, __int64))(g_ModuleBase + 0x1304500))(unk, rcx0, 0);
+	/*
+	for (int i = 0; i < 50; i++)
+	{
+		//UpdateWindow(sub_1412560F0(g_ModuleBase + 0x3AFC1D8));
+
+		MSG Msg;
+		while (PeekMessageA(&Msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&Msg);
+			DispatchMessageA(&Msg);
+		}
+
+		Sleep(50);
+	}*/
+
+	__int64 unk2 = *(__int64 *)(g_ModuleBase + 0x3AFC1D8);
+	((void(__fastcall *)(__int64, int))(g_ModuleBase + 0x1304370))(unk2, 5);
+
+	((void(__fastcall *)(__int64, __int64))(g_ModuleBase + 0x1BAF1D0))(rcx0, a2);
+
+	const char *v3 = (*(const char *(__fastcall **)(__int64))(*(__int64 *)rcx0 + 488i64))(rcx0);
+	const char *baseDir = *(const char **)a2;
+
+	CreateDirectoryA(".\\Data\\Textures\\", nullptr);
+	CreateDirectoryA(".\\Data\\Textures\\Maps\\", nullptr);
+	CreateDirectoryA(baseDir, nullptr);
+
+	// Skip the annoying '.\' which is prepended
+	if (baseDir[0] == '.' && baseDir[1] == '\\')
+		baseDir += 2;
+
+	char outPath[MAX_PATH];
+	sprintf_s(outPath, "%s%s.dds", baseDir, v3);
+
+	// Then dump the RENDER_TARGET_LOCAL_MAP target to disk (32bpp RGBA)
+	((void(__fastcall *)(__int64, int, const char *, int))(g_ModuleBase + 0x2D0D690))(g_ModuleBase + 0x56B73A0, 16, outPath, 4);
 }

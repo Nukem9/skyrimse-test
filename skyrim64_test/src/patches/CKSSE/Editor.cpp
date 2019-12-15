@@ -1156,6 +1156,26 @@ const char *hk_call_1416B849E(__int64 a1)
 	return formEDID;
 }
 
+void hk_call_14135CDD3(__int64 RenderWindowInstance, uint32_t *UntypedPointerHandle, bool Select)
+{
+	// The caller of this function already holds a reference to the pointer
+	__int64 parentRefr = ((__int64(__fastcall *)(__int64))(g_ModuleBase + 0x1C0D8F0))(*(__int64 *)(RenderWindowInstance + 0xB8));
+
+	__int64 childRefr;
+	((void(__fastcall *)(__int64 *, uint32_t *))(g_ModuleBase + 0x12E0DF0))(&childRefr, UntypedPointerHandle);
+
+	if (childRefr)
+	{
+		// Only select child forms if they are in the same parent cell
+		if (*(__int64 *)(childRefr + 0x70) == *(__int64 *)(parentRefr + 0x70))
+			((void(__fastcall *)(__int64, uint32_t *, bool))(g_ModuleBase + 0x13059D0))(RenderWindowInstance, UntypedPointerHandle, Select);
+		else
+			EditorUI_Log("Not selecting child refr 0x%X because parent cells don't match (%p != %p)\n", *(uint32_t *)(childRefr + 0x14), *(__int64 *)(childRefr + 0x70), *(__int64 *)(parentRefr + 0x70));
+	}
+
+	((void(__fastcall *)(__int64 *))(g_ModuleBase + 0x128BCF0))(&childRefr);
+}
+
 int hk_call_1412D1541(__int64 ObjectListInsertData, __int64 Form)
 {
 	const __int64 objectWindowInstance = *(__int64 *)(ObjectListInsertData + 0x8) - 0x28;

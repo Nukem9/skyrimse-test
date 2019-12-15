@@ -5,6 +5,21 @@
 
 using namespace std::chrono;
 
+FILE *outfile = fopen("C:\\data.txt", "w");
+
+//#define memcpy(x, y, z) hkmemcpy(x, y, z);
+
+void hkmemcpy(void* _Dst, void const* _Src, size_t _Size)
+{
+	for (size_t i = 0; i < _Size; i++)
+	{
+		*(uint8_t *)((uintptr_t)_Dst + i) = *(uint8_t *)((uintptr_t)_Src + i);
+
+		fprintf(outfile, "patch_byte(0x%p, 0x%x);", (uintptr_t)_Dst + i, *(uint8_t *)((uintptr_t)_Src + i));
+		fflush(outfile);
+	}
+}
+
 struct NullsubPatch
 {
 	uint8_t Signature[32];

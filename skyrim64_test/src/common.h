@@ -72,13 +72,17 @@ extern HMODULE g_DllD3D11;
 enum class GAME_EXECUTABLE_TYPE
 {
 	UNKNOWN,
-	LAUNCHER,
-	GAME,
-	CREATIONKIT,
+
+	LAUNCHER_SKYRIM,
+	GAME_SKYRIM,
+	CREATIONKIT_SKYRIM,
+
+	LAUNCHER_FALLOUT4,
+	GAME_FALLOUT4,
+	CREATIONKIT_FALLOUT4,
 };
 
 extern GAME_EXECUTABLE_TYPE g_LoadType;
-
 extern char g_GitVersion[64];
 
 #define PatchIAT(detour, module, procname) Detours::IATHook((PBYTE)g_ModuleBase, (module), (procname), (PBYTE)(detour));

@@ -60,20 +60,20 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)Dependencies\detours;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
-    <TargetName>d3dx9_42</TargetName>
+    <TargetName>SSE_winhttp</TargetName>
     <IntDir>$(SolutionDir)x64\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)Dependencies\detours;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
-    <TargetName>winhttp</TargetName>
+    <TargetName>SSE_winhttp</TargetName>
     <IntDir>$(SolutionDir)x64\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'">
     <IncludePath>$(SolutionDir)Dependencies\detours;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
-    <TargetName>d3dx9_42</TargetName>
+    <TargetName>SSE_winhttp</TargetName>
     <IntDir>$(SolutionDir)x64\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -81,7 +81,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NOMINMAX;_REENTRANT;JEMALLOC_EXPORT=;_DEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_DEBUG;_WINDOWS;_USRDLL;SKYRIM64=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -103,7 +103,7 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_WINDOWS;_USRDLL;SKYRIM64=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <UseMSVC>false</UseMSVC>
@@ -135,7 +135,7 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NOMINMAX;_REENTRANT;JEMALLOC_EXPORT=;NDEBUG;_WINDOWS;_USRDLL;SKYRIM64_TEST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_WINDOWS;_USRDLL;SKYRIM64=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <UseMSVC>false</UseMSVC>
       <GenerateAlternateCodePaths>AVX2</GenerateAlternateCodePaths>
@@ -161,17 +161,17 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\INIReader.h" />
-    <ClInclude Include="src\patches\CKIT\BSGraphicsRenderTargetManager_CK.h" />
-    <ClInclude Include="src\patches\CKIT\BSPointerHandle.h" />
-    <ClInclude Include="src\patches\CKIT\BSShaderResourceManager_CK.h" />
-    <ClInclude Include="src\patches\CKIT\Editor.h" />
-    <ClInclude Include="src\patches\CKIT\EditorUI.h" />
-    <ClInclude Include="src\patches\CKIT\Experimental.h" />
-    <ClInclude Include="src\patches\CKIT\LogWindow.h" />
-    <ClInclude Include="src\patches\CKIT\NavMesh.h" />
-    <ClInclude Include="src\patches\CKIT\TESFile_CK.h" />
-    <ClInclude Include="src\patches\CKIT\TESForm_CK.h" />
-    <ClInclude Include="src\patches\CKIT\TESWater.h" />
+    <ClInclude Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\BSPointerHandle.h" />
+    <ClInclude Include="src\patches\CKSSE\BSShaderResourceManager_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\Editor.h" />
+    <ClInclude Include="src\patches\CKSSE\EditorUI.h" />
+    <ClInclude Include="src\patches\CKSSE\Experimental.h" />
+    <ClInclude Include="src\patches\CKSSE\LogWindow.h" />
+    <ClInclude Include="src\patches\CKSSE\NavMesh.h" />
+    <ClInclude Include="src\patches\CKSSE\TESFile_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\TESForm_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\TESWater.h" />
     <ClInclude Include="src\patches\INIReader.h" />
     <ClInclude Include="src\patches\rendering\d3d11_proxy.h" />
     <ClInclude Include="src\patches\rendering\GpuCircularBuffer.h" />
@@ -277,27 +277,27 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\patches\bnet.cpp" />
-    <ClCompile Include="src\patches\CKIT\BSGraphicsRenderTargetManager_CK.cpp" />
-    <ClCompile Include="src\patches\CKIT\BSPointerHandle.cpp" />
-    <ClCompile Include="src\patches\CKIT\BSShaderResourceManager_CK.cpp" />
-    <ClCompile Include="src\patches\CKIT\LogWindow.cpp" />
-    <ClCompile Include="src\patches\CKIT\TESFile_CK.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BSPointerHandle.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BSShaderResourceManager_CK.cpp" />
+    <ClCompile Include="src\patches\CKSSE\LogWindow.cpp" />
+    <ClCompile Include="src\patches\CKSSE\TESFile_CK.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />
     <ClCompile Include="src\common.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />
-    <ClCompile Include="src\patches\CKIT\Editor.cpp" />
-    <ClCompile Include="src\patches\CKIT\EditorUI.cpp" />
-    <ClCompile Include="src\patches\CKIT\TESForm_CK.cpp" />
+    <ClCompile Include="src\patches\CKSSE\Editor.cpp" />
+    <ClCompile Include="src\patches\CKSSE\EditorUI.cpp" />
+    <ClCompile Include="src\patches\CKSSE\TESForm_CK.cpp" />
     <ClCompile Include="src\patches\fileio.cpp" />
-    <ClCompile Include="src\patches\patches_ckit.cpp" />
+    <ClCompile Include="src\patches\patches_sseck.cpp" />
     <ClCompile Include="src\patches\patches_tes.cpp" />
     <ClCompile Include="src\patches\rendering\codegen.cpp" />
     <ClCompile Include="src\patches\rendering\d3d11.cpp" />
     <ClCompile Include="src\patches\dinput8.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\dump.cpp" />
-    <ClCompile Include="src\patches\CKIT\Experimental.cpp" />
+    <ClCompile Include="src\patches\CKSSE\Experimental.cpp" />
     <ClCompile Include="src\patches\logging.cpp" />
     <ClCompile Include="src\patches\rendering\d3d11_dc.cpp" />
     <ClCompile Include="src\patches\rendering\d3d11_proxy.cpp" />

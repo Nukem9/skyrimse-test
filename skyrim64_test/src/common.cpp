@@ -29,7 +29,6 @@ __itt_heap_function ITT_FreeCallback;
 #pragma comment(lib, "libtracy.lib")			// Tracy
 #endif
 
-
 INIReader g_INI("skyrim64_test.ini");
 
 uintptr_t g_ModuleBase;
@@ -51,5 +50,4 @@ HMODULE g_DllDXGI;
 HMODULE g_DllD3D11;
 
 GAME_EXECUTABLE_TYPE g_LoadType;
-
 char g_GitVersion[64];

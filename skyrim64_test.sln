@@ -34,7 +34,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tbbmalloc", "Dependencies\t
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libdeflate", "Dependencies\libdeflate.vcxproj", "{9E771CA4-04D9-4ED8-80F2-FFD379413688}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim64_ckt", "skyrim64_test\skyrim64_ckt.vcxproj", "{87E6B6A2-89F5-43A4-B794-DF3B8CE7D68D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fallout4_ckt", "skyrim64_test\fallout4_ckt.vcxproj", "{87E6B6A2-89F5-43A4-B794-DF3B8CE7D68D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skyrim32_ckt", "skyrim32_ckt\skyrim32_ckt.vcxproj", "{481763E4-7108-4CDA-A8A0-A4A15A2D841C}"
 EndProject
