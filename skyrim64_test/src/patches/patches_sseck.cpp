@@ -12,7 +12,7 @@
 #include "CKSSE/NavMesh.h"
 #include "CKSSE/EditorUI.h"
 #include "CKSSE/LogWindow.h"
-#include "CKSSE/BSPointerHandle.h"
+#include "CKSSE/BSPointerHandleManager.h"
 #include "CKSSE/BSGraphicsRenderTargetManager_CK.h"
 #include "CKSSE/BSShaderResourceManager_CK.h"
 
@@ -122,16 +122,16 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "RefrHandleLimitPatch", false))
 	{
-		XUtil::DetourJump(g_ModuleBase + 0x141A5C0, &BSPointerHandleManagerInterface::Initialize);
-		XUtil::DetourJump(g_ModuleBase + 0x12E2260, &BSPointerHandleManagerInterface::GetCurrentHandle);
-		XUtil::DetourJump(g_ModuleBase + 0x12E1BE0, &BSPointerHandleManagerInterface::CreateHandle);
-		XUtil::DetourJump(g_ModuleBase + 0x1291050, &BSPointerHandleManagerInterface::ReleaseHandle);
-		XUtil::DetourJump(g_ModuleBase + 0x12E1F70, &BSPointerHandleManagerInterface::ReleaseHandleAndClear);
-		XUtil::DetourJump(g_ModuleBase + 0x1770560, &BSPointerHandleManagerInterface::CheckForLeaks);
-		XUtil::DetourJump(g_ModuleBase + 0x1770910, &BSPointerHandleManagerInterface::ClearActiveHandles);
-		XUtil::DetourJump(g_ModuleBase + 0x1293870, &BSPointerHandleManagerInterface::sub_141293870);
-		XUtil::DetourJump(g_ModuleBase + 0x12E25B0, &BSPointerHandleManagerInterface::sub_1412E25B0);
-		XUtil::DetourJump(g_ModuleBase + 0x14C52B0, &BSPointerHandleManagerInterface::sub_1414C52B0);
+		XUtil::DetourJump(g_ModuleBase + 0x141A5C0, &BSPointerHandleManager<>::InitSDM);
+		XUtil::DetourJump(g_ModuleBase + 0x1770910, &HandleManager::KillSDM);
+		XUtil::DetourJump(g_ModuleBase + 0x1770560, &HandleManager::WarnForUndestroyedHandles);
+		XUtil::DetourJump(g_ModuleBase + 0x12E2260, &BSPointerHandleManagerInterface<>::GetCurrentHandle);
+		XUtil::DetourJump(g_ModuleBase + 0x12E1BE0, &BSPointerHandleManagerInterface<>::CreateHandle);
+		XUtil::DetourJump(g_ModuleBase + 0x1291050, &BSPointerHandleManagerInterface<>::Destroy1);
+		XUtil::DetourJump(g_ModuleBase + 0x12E1F70, &BSPointerHandleManagerInterface<>::Destroy2);
+		XUtil::DetourJump(g_ModuleBase + 0x1293870, &BSPointerHandleManagerInterface<>::GetSmartPointer1);
+		XUtil::DetourJump(g_ModuleBase + 0x12E25B0, &BSPointerHandleManagerInterface<>::GetSmartPointer2);
+		XUtil::DetourJump(g_ModuleBase + 0x14C52B0, &BSPointerHandleManagerInterface<>::IsValid);
 
 		//
 		// Stub out the rest of the functions which shouldn't ever be called now
@@ -147,7 +147,7 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemory(g_ModuleBase + 0x1294720, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::GetAge - 141294720
 		XUtil::PatchMemory(g_ModuleBase + 0x1297430, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::ClearActive - 141297430
 		XUtil::PatchMemory(g_ModuleBase + 0x12973F0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::SetIndex - 1412973F0
-		XUtil::PatchMemory(g_ModuleBase + 0x12943B0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::IsEmpty - 1412943B0
+		XUtil::PatchMemory(g_ModuleBase + 0x12943B0, (PBYTE)"\xCC", 1);// BSUntypedPointerHandle::IsBitwiseNull - 1412943B0
 		// sub_14100B0A8 - Unknown operator
 		// sub_1412E1300 - Unknown operator
 		// sub_1412E1210 - Unknown operator
@@ -159,7 +159,7 @@ void Patch_TESVCreationKit()
 
 		XUtil::PatchMemory(g_ModuleBase + 0x12E3900, (PBYTE)"\xCC", 1);// BSHandleRefObject::AssignHandleIndex - 1412E3900
 		XUtil::PatchMemory(g_ModuleBase + 0x12949D0, (PBYTE)"\xCC", 1);// BSHandleRefObject::GetIndex - 1412949D0
-		// BSHandleRefObject::GetRefCount - 141294CB0
+		// BSHandleRefObject::QRefCount - 141294CB0
 	}
 
 	//
