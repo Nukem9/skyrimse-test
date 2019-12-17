@@ -51,4 +51,4 @@ shader_analyzer/obj/
 # Nsight
 *.nvuser
 
-!detours.lib
+skyrim64_test/src/version_info.h
