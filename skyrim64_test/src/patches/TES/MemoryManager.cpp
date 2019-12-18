@@ -78,6 +78,28 @@ void MemFree(void *Memory, bool Aligned = false)
 #endif
 }
 
+size_t MemSize(void *Memory)
+{
+#if SKYRIM64_USE_VTUNE
+	__itt_heap_internal_access_begin();
+#endif
+
+#if SKYRIM64_USE_PAGE_HEAP
+	MEMORY_BASIC_INFORMATION info;
+	VirtualQuery(Block, &info, sizeof(MEMORY_BASIC_INFORMATION));
+
+	size_t result = info.RegionSize;
+#else
+	size_t result = scalable_msize(Memory);
+#endif
+
+#if SKYRIM64_USE_VTUNE
+	__itt_heap_internal_access_end();
+#endif
+
+	return result;
+}
+
 //
 // VS2015 CRT hijacked functions
 //
@@ -109,24 +131,7 @@ void __fastcall hk_aligned_free(void *Block)
 
 size_t __fastcall hk_msize(void *Block)
 {
-#if SKYRIM64_USE_VTUNE
-	__itt_heap_internal_access_begin();
-#endif
-
-#if SKYRIM64_USE_PAGE_HEAP
-	MEMORY_BASIC_INFORMATION info;
-	VirtualQuery(Block, &info, sizeof(MEMORY_BASIC_INFORMATION));
-
-	size_t result = info.RegionSize;
-#else
-	size_t result = scalable_msize(Block);
-#endif
-
-#if SKYRIM64_USE_VTUNE
-	__itt_heap_internal_access_end();
-#endif
-
-	return result;
+	return MemSize(Block);
 }
 
 char *__fastcall hk_strdup(const char *str1)
@@ -138,17 +143,22 @@ char *__fastcall hk_strdup(const char *str1)
 //
 // Internal engine heap allocators backed by VirtualAlloc()
 //
-void *MemoryManager::Alloc(MemoryManager *Manager, size_t Size, uint32_t Alignment, bool Aligned)
+void *MemoryManager::Allocate(MemoryManager *Manager, size_t Size, uint32_t Alignment, bool Aligned)
 {
 	return MemAlloc(Size, Alignment, Aligned, true);
 }
 
-void MemoryManager::Free(MemoryManager *Manager, void *Memory, bool Aligned)
+void MemoryManager::Deallocate(MemoryManager *Manager, void *Memory, bool Aligned)
 {
 	MemFree(Memory, Aligned);
 }
 
-void *ScrapHeap::Alloc(ScrapHeap *Heap, size_t Size, uint32_t Alignment)
+size_t MemoryManager::Size(MemoryManager *Manager, void *Memory)
+{
+	return MemSize(Memory);
+}
+
+void *ScrapHeap::Allocate(size_t Size, uint32_t Alignment)
 {
 	if (Size > MAX_ALLOC_SIZE)
 		return nullptr;
@@ -156,7 +166,7 @@ void *ScrapHeap::Alloc(ScrapHeap *Heap, size_t Size, uint32_t Alignment)
 	return MemAlloc(Size, Alignment, Alignment != 0);
 }
 
-void ScrapHeap::Free(ScrapHeap *Heap, void *Memory)
+void ScrapHeap::Deallocate(void *Memory)
 {
 	MemFree(Memory);
 }

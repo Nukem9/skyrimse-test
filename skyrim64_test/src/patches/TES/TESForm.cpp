@@ -89,7 +89,7 @@ const char *TESForm::hk_GetName()
 bool TESForm::hk_SetEditorId(const char *Name)
 {
 	size_t len = strlen(Name) + 1;
-	char *data = (char *)MemoryManager::Alloc(nullptr, len, 0, false);
+	char *data = (char *)MemoryManager::Allocate(nullptr, len, 0, false);
 	strcpy_s(data, len, Name);
 
 	g_EditorNameMap.insert(std::make_pair(GetId(), data));

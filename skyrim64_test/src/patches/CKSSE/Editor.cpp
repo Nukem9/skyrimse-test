@@ -892,10 +892,10 @@ void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3)
 	if (byte_144F05728)
 	{
 		if (!qword_145A11B28)
-			qword_145A11B28 = (uintptr_t)MemoryManager::Alloc(nullptr, 4096, 8, true);// Fake BSFadeNode
+			qword_145A11B28 = (uintptr_t)MemoryManager::Allocate(nullptr, 4096, 8, true);// Fake BSFadeNode
 
 		if (!qword_145A11B38)
-			qword_145A11B38 = (uintptr_t)MemoryManager::Alloc(nullptr, 4096, 8, true);// Fake SceneGraph
+			qword_145A11B38 = (uintptr_t)MemoryManager::Allocate(nullptr, 4096, 8, true);// Fake SceneGraph
 
 		((void(__fastcall *)())(g_ModuleBase + 0x2E2EEB0))();
 	}

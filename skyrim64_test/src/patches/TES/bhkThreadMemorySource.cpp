@@ -14,12 +14,12 @@ bhkThreadMemorySource::~bhkThreadMemorySource()
 
 void *bhkThreadMemorySource::blockAlloc(int numBytes)
 {
-	return MemoryManager::Alloc(nullptr, numBytes, 16, true);
+	return MemoryManager::Allocate(nullptr, numBytes, 16, true);
 }
 
 void bhkThreadMemorySource::blockFree(void *p, int numBytes)
 {
-	MemoryManager::Free(nullptr, p, true);
+	MemoryManager::Deallocate(nullptr, p, true);
 }
 
 void *bhkThreadMemorySource::bufAlloc(int& reqNumBytesInOut)

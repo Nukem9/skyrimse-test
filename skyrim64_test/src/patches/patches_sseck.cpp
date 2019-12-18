@@ -186,10 +186,11 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemory(g_ModuleBase + 0x24488C0, (PBYTE)"\xC3", 1);					// [64MB ] ScrapHeap deinit
 																						// [128MB] BSScaleformSysMemMapper is untouched due to complexity
 
-		XUtil::DetourJump(g_ModuleBase + 0x2440380, &MemoryManager::Alloc);
-		XUtil::DetourJump(g_ModuleBase + 0x24407A0, &MemoryManager::Free);
-		XUtil::DetourJump(g_ModuleBase + 0x2447FA0, &ScrapHeap::Alloc);
-		XUtil::DetourJump(g_ModuleBase + 0x24485F0, &ScrapHeap::Free);
+		XUtil::DetourJump(g_ModuleBase + 0x2440380, &MemoryManager::Allocate);
+		XUtil::DetourJump(g_ModuleBase + 0x24407A0, &MemoryManager::Deallocate);
+		XUtil::DetourJump(g_ModuleBase + 0x243FBA0, &MemoryManager::Size);
+		XUtil::DetourJump(g_ModuleBase + 0x2447FA0, &ScrapHeap::Allocate);
+		XUtil::DetourJump(g_ModuleBase + 0x24485F0, &ScrapHeap::Deallocate);
 	}
 
 	//
