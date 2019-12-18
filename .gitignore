@@ -52,3 +52,4 @@ shader_analyzer/obj/
 *.nvuser
 
 skyrim64_test/src/version_info.h
+skyrim64_test/VTune Amplifier Results/
