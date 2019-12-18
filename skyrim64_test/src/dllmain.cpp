@@ -66,8 +66,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		GetModuleFileNameA(GetModuleHandle(nullptr), modulePath, MAX_PATH);
 
 		char executableName[MAX_PATH];
+		_strlwr_s(modulePath);
 		_splitpath_s(modulePath, nullptr, 0, nullptr, 0, executableName, ARRAYSIZE(executableName), nullptr, 0);
-		_strlwr_s(executableName);
 
 		switch (CRC32(executableName))
 		{
@@ -90,7 +90,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			break;
 
 		case CRC32("creationkit"):
-			if (!_stricmp(modulePath, "Fallout 4"))
+			if (strstr(modulePath, "fallout 4"))
 				g_LoadType = GAME_EXECUTABLE_TYPE::CREATIONKIT_FALLOUT4;
 			else
 				g_LoadType = GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM;

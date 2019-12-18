@@ -68,3 +68,10 @@ void bhkThreadMemorySource::resetPeakMemoryStatistics()
 {
 	// Nothing
 }
+
+#if FALLOUT4
+void *bhkThreadMemorySource::getExtendedInterface()
+{
+	return nullptr;
+}
+#endif

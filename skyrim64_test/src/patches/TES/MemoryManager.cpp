@@ -86,7 +86,7 @@ size_t MemSize(void *Memory)
 
 #if SKYRIM64_USE_PAGE_HEAP
 	MEMORY_BASIC_INFORMATION info;
-	VirtualQuery(Block, &info, sizeof(MEMORY_BASIC_INFORMATION));
+	VirtualQuery(Memory, &info, sizeof(MEMORY_BASIC_INFORMATION));
 
 	size_t result = info.RegionSize;
 #else
@@ -182,4 +182,12 @@ void PatchMemory()
 	PatchIAT(hk_aligned_free, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free");
 	PatchIAT(hk_msize, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize");
 	PatchIAT(hk_strdup, "API-MS-WIN-CRT-STRING-L1-1-0.DLL", "_strdup");
+
+	PatchIAT(hk_calloc, "MSVCR110.dll", "calloc");
+	PatchIAT(hk_malloc, "MSVCR110.dll", "malloc");
+	PatchIAT(hk_aligned_malloc, "MSVCR110.dll", "_aligned_malloc");
+	PatchIAT(hk_free, "MSVCR110.dll", "free");
+	PatchIAT(hk_aligned_free, "MSVCR110.dll", "_aligned_free");
+	PatchIAT(hk_msize, "MSVCR110.dll", "_msize");
+	PatchIAT(hk_strdup, "MSVCR110.dll", "_strdup");
 }

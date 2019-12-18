@@ -21,5 +21,8 @@ public:
 	virtual void getMemoryStatistics(class MemoryStatistics& u);
 	virtual int getAllocatedSize(const void *obj, int nbytes);
 	virtual void resetPeakMemoryStatistics();
+#if FALLOUT4
+	virtual void *getExtendedInterface();
+#endif
 };
 static_assert_offset(bhkThreadMemorySource, m_CritSec, 0x10);
