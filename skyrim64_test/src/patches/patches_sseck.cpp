@@ -26,32 +26,7 @@ extern WNDPROC OldEditorUI_WndProc;
 extern DLGPROC OldEditorUI_ObjectWindowProc;
 extern DLGPROC OldEditorUI_CellViewProc;
 
-bool sub_141477DA0(__int64 a1)
-{
-	__m128i v1 = _mm_loadu_si128((const __m128i *)a1);
-	return _mm_testz_si128(v1, v1);
-}
-
-#include <chrono>
-
-using namespace std::chrono;
-
-void hk_call_14140E4EF(__int64 a1, __int64 a2)
-{
-	auto timerStart = high_resolution_clock::now();
-
-	__itt_resume();
-	((void(__fastcall *)(__int64, __int64))(g_ModuleBase + 0x163CAA0))(a1, a2);
-	__itt_pause();
-	__itt_detach();
-
-	auto duration = duration_cast<milliseconds>(high_resolution_clock::now() - timerStart).count();
-	EditorUI_Log("Load time: %llums\n", duration);
-}
-
 void sub_141BAF3E0(__int64 rcx0, __int64 a2);
-
-//XUtil::PatchMemory(g_ModuleBase + 0x1748740, (PBYTE)"\xC3", 1);
 //Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1BAF3E0), &sub_141BAF3E0);
 
 void Patch_TESVCreationKit()
@@ -114,8 +89,6 @@ void Patch_TESVCreationKit()
 	// Experimental
 	//
 	ExperimentalPatchOptimizations();
-
-	//XUtil::DetourCall(g_ModuleBase + 0x140E4EF, &hk_call_14140E4EF);
 
 	//
 	// BSPointerHandle(Manager)
@@ -648,7 +621,7 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(g_ModuleBase + 0x16B84A3, 1);
 
 	//
-	//
+	// Fix for "Select Enable State Parent" selecting objects outside of the current cell or worldspace
 	//
 	//XUtil::DetourCall(g_ModuleBase + 0x135CDD3, &hk_call_14135CDD3);
 
