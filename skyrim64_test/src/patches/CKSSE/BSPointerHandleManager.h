@@ -122,7 +122,7 @@ protected:
 			return m_EntryBits & HandleType::AGE_MASK;
 		}
 
-		void SetPointer(NiPointer<BSHandleRefObject> Pointer)
+		void SetPointer(BSHandleRefObject *Pointer)
 		{
 			m_Pointer = Pointer;
 		}

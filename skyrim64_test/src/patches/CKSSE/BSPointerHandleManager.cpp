@@ -62,7 +62,7 @@ void HandleManager::WarnForUndestroyedHandles()
 }
 
 template<typename ObjectType, typename Manager>
-inline BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::GetCurrentHandle(ObjectType * Refr)
+inline BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::GetCurrentHandle(ObjectType *Refr)
 {
 	BSUntypedPointerHandle<> untypedHandle;
 
@@ -78,7 +78,7 @@ inline BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Mana
 }
 
 template<typename ObjectType, typename Manager>
-inline BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::CreateHandle(ObjectType * Refr)
+inline BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::CreateHandle(ObjectType *Refr)
 {
 	BSUntypedPointerHandle<> untypedHandle;
 
