@@ -4,7 +4,6 @@
 struct
 {
 	const char *BytesToFind;
-	const char *FindMask;
 	const char *BytePatch;
 	int PatchSize;
 	int AddressModifier;
@@ -12,8 +11,7 @@ struct
 {
 	// SkyrimSE 1.5
 	{
-		"\x48\x83\xEC\x28\xC6\x44\x24\x38\x00\x84\xD2",
-		"xxxxxxxxxxx",
+		"48 83 EC 28 C6 44 24 38 00 84 D2",
 		"\xB0\x00\xC3",
 		3,
 		0x0
@@ -22,8 +20,7 @@ struct
 	// SkyrimSE 1.2, 1.3, 1.4
 	// https://github.com/Sumwunn/AchievementsModsEnabler
 	{
-		"\xC3\x40\x32\xFF\x48\x89\x5C\x24\x40\x48\x89\x6C\x24\x48",
-		"xxxxxxxxxxxxxx",
+		"C3 40 32 FF 48 89 5C 24 40 48 89 6C 24 48",
 		"\xB0\x00\xC3",
 		3,
 		-0x30
@@ -32,8 +29,7 @@ struct
 	// SkyrimSE 1.1 or lower
 	// https://github.com/Sumwunn/AchievementsModsEnabler
 	{
-		"\xC3\x48\x89\x5C\x24\x40\x48\x89\x6C\x24\x48\x8B\xA9\x70\x0D\x00\x00",
-		"xxxxxxxxxxxxxxxxx",
+		"C3 48 89 5C 24 40 48 89 6C 24 48 8B A9 70 0D 00 00",
 		"\xB0\x00\xC3",
 		3,
 		-0x35
@@ -46,7 +42,7 @@ void PatchAchievements()
     // Loop through each fix and exit on the first found
     for (auto &patch : Patches)
     {
-		uintptr_t addr = XUtil::FindPattern(g_CodeBase, g_CodeEnd - g_CodeBase, (uint8_t *)patch.BytesToFind, patch.FindMask);
+		uintptr_t addr = XUtil::FindPattern(g_CodeBase, g_CodeEnd - g_CodeBase, patch.BytesToFind);
 
         if (!addr)
             continue;

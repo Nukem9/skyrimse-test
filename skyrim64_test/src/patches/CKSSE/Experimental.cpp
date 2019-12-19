@@ -120,17 +120,8 @@ uint64_t ExperimentalPatchEditAndContinue()
 	uint64_t patchCount = 0;
 	std::vector<uintptr_t> branchTargets;
 
-	auto isWithinECTable = [](uintptr_t Address)
-	{
-		uintptr_t start = g_ModuleBase + 0xFB4000;
-		uintptr_t end = g_ModuleBase + 0x104C50D;
-
-		// Must be a jump
-		if (Address >= start && Address < end && *(uint8_t *)Address == 0xE9)
-			return true;
-
-		return false;
-	};
+	const uintptr_t ecTableStart = g_ModuleBase + 0xFB4000;
+	const uintptr_t ecTableEnd = g_ModuleBase + 0x104C50D;
 
 	for (uintptr_t i = g_CodeBase; i < g_CodeEnd; i++)
 	{
@@ -140,7 +131,8 @@ uint64_t ExperimentalPatchEditAndContinue()
 
 		uintptr_t destination = i + *(int32_t *)(i + 1) + 5;
 
-		if (isWithinECTable(destination))
+		// if (destination is within E&C table)
+		if (destination >= ecTableStart && destination < ecTableEnd && *(uint8_t *)destination == 0xE9)
 		{
 			// Find where the trampoline actually points to, then remove it
 			uintptr_t real = destination + *(int32_t *)(destination + 1) + 5;
@@ -179,10 +171,7 @@ uint64_t ExperimentalPatchMemInit()
 	// if ( dword_141ED6C88 != 2 ) // MemoryManager initialized flag
 	//     sub_140C00D30((__int64)&unk_141ED6800, &dword_141ED6C88);
 	//
-	const char *patternStr = "\x83\x3D\x00\x00\x00\x00\x02\x74\x13\x48\x8D\x15\x00\x00\x00\x00\x48\x8D\x0D\x00\x00\x00\x00\xE8\x00\x00\x00\x00";
-	const char *maskStr = "xx????xxxxxx????xxx????x????";
-
-	auto matches = XUtil::FindPatterns(g_CodeBase, g_CodeEnd - g_CodeBase, (const uint8_t *)patternStr, maskStr);
+	auto matches = XUtil::FindPatterns(g_CodeBase, g_CodeEnd - g_CodeBase, "83 3D ? ? ? ? 02 74 13 48 8D 15 ? ? ? ? 48 8D 0D ? ? ? ? E8");
 
 	for (uintptr_t match : matches)
 		memcpy((void *)match, "\xEB\x1A", 2);
@@ -200,10 +189,9 @@ uint64_t ExperimentalPatchLinkedList()
 	__cpuid(cpuinfo, 1);
 
 	const bool hasSSE41 = ((cpuinfo[2] & (1 << 19)) != 0);
-	const char *patternStr = "\x48\x89\x4C\x24\x08\x48\x83\xEC\x18\x48\x8B\x44\x24\x20\x48\x83\x78\x08\x00\x75\x14\x48\x8B\x44\x24\x20\x48\x83\x38\x00\x75\x09\xC7\x04\x24\x01\x00\x00\x00\xEB\x07\xC7\x04\x24\x00\x00\x00\x00\x0F\xB6\x04\x24\x48\x83\xC4\x18\xC3";
-	const char *maskStr = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+	const char *pattern = "48 89 4C 24 08 48 83 EC 18 48 8B 44 24 20 48 83 78 08 00 75 14 48 8B 44 24 20 48 83 38 00 75 09 C7 04 24 01 00 00 00 EB 07 C7 04 24 00 00 00 00 0F B6 04 24 48 83 C4 18 C3";
 
-	auto matches = XUtil::FindPatterns(g_CodeBase, g_CodeEnd - g_CodeBase, (const uint8_t *)patternStr, maskStr);
+	auto matches = XUtil::FindPatterns(g_CodeBase, g_CodeEnd - g_CodeBase, pattern);
 
 	for (uintptr_t match : matches)
 	{

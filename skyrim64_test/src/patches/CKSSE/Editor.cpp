@@ -668,12 +668,11 @@ void PatchTemplatedFormIterator()
 	// requires hooking 100-200 separate functions in the EXE as a result. False positives are
 	// a non-issue as long as ctor/dtor calls are balanced.
 	//
-	const char *patternStr = "\xE8\x00\x00\x00\x00\x48\x89\x44\x24\x30\x48\x8B\x44\x24\x30\x48\x89\x44\x24\x38\x48\x8B\x54\x24\x38\x48\x8D\x4C\x24\x28";
-	const char *maskStr = "x????xxxxxxxxxxxxxxxxxxxxxxxxx";
+	const char *pattern = "E8 ? ? ? ? 48 89 44 24 30 48 8B 44 24 30 48 89 44 24 38 48 8B 54 24 38 48 8D 4C 24 28";
 
 	for (uintptr_t i = g_CodeBase; i < g_CodeEnd;)
 	{
-		uintptr_t addr = XUtil::FindPattern(i, g_CodeEnd - i, (uint8_t *)patternStr, maskStr);
+		uintptr_t addr = XUtil::FindPattern(i, g_CodeEnd - i, pattern);
 
 		if (!addr)
 			break;
@@ -681,30 +680,17 @@ void PatchTemplatedFormIterator()
 		i = addr + 1;
 
 		// Make sure the next call points to sub_14102CBEF or it's a nop from ExperimentalPatchEditAndContinue
-		addr += strlen(maskStr) + 11;
+		addr += 30 /* strlen(maskStr) */ + 11;
 		uintptr_t destination = addr + *(int32_t *)(addr + 1) + 5;
 
 		if (destination != OFFSET(0x102CBEF, 1530) && *(uint8_t *)addr != 0x0F)
 			continue;
 
 		// Now look for the matching destructor call
-		uintptr_t end = 0;
+		uintptr_t end = XUtil::FindPattern(addr, std::min<uintptr_t>(g_CodeEnd - addr, 1000), "E8 ? ? ? ? 48 81 C4 ? ? ? ? C3");// sub_140FF81CE
 
-		for (int j = 0; j < 2; j++)
-		{
-			const char *endPattern;
-			const char *endMask = "x????xxx????x";
-
-			if (j == 0)
-				endPattern = "\xE8\x00\x00\x00\x00\x48\x81\xC4\x00\x00\x00\x00\xC3";// sub_140FF81CE
-			else
-				endPattern = "\x0F\x00\x00\x00\x00\x48\x81\xC4\x00\x00\x00\x00\xC3";// nopped version
-
-			end = XUtil::FindPattern(addr, std::min<uintptr_t>(g_CodeEnd - addr, 1000), (uint8_t *)endPattern, endMask);
-
-			if (end)
-				break;
-		}
+		if (!end)
+			end = XUtil::FindPattern(addr, std::min<uintptr_t>(g_CodeEnd - addr, 1000), "0F ? ? ? ? 48 81 C4 ? ? ? ? C3");// nopped version
 
 		if (!end)
 			continue;

@@ -191,12 +191,23 @@ uint64_t XUtil::MurmurHash64A(const void *Key, size_t Len, uint64_t Seed)
 	return h;
 }
 
-uintptr_t XUtil::FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const uint8_t *Bytes, const char *Mask)
+uintptr_t XUtil::FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const char *Mask)
 {
 	std::vector<std::pair<uint8_t, bool>> pattern;
 
-	for (size_t i = 0; i < strlen(Mask); i++)
-		pattern.emplace_back(Bytes[i], Mask[i] == '?');
+	for (size_t i = 0; i < strlen(Mask);)
+	{
+		if (Mask[i] != '?')
+		{
+			pattern.emplace_back((uint8_t)strtoul(&Mask[i], nullptr, 16), false);
+			i += 3;
+		}
+		else
+		{
+			pattern.emplace_back(0x00, true);
+			i += 2;
+		}
+	}
 
 	const uint8_t *dataStart = (uint8_t *)StartAddress;
 	const uint8_t *dataEnd = (uint8_t *)StartAddress + MaxSize + 1;
@@ -213,13 +224,24 @@ uintptr_t XUtil::FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const ui
 	return std::distance(dataStart, ret) + StartAddress;
 }
 
-std::vector<uintptr_t> XUtil::FindPatterns(uintptr_t StartAddress, uintptr_t MaxSize, const uint8_t *Bytes, const char *Mask)
+std::vector<uintptr_t> XUtil::FindPatterns(uintptr_t StartAddress, uintptr_t MaxSize, const char *Mask)
 {
 	std::vector<uintptr_t> results;
 	std::vector<std::pair<uint8_t, bool>> pattern;
 
-	for (size_t i = 0; i < strlen(Mask); i++)
-		pattern.emplace_back(Bytes[i], Mask[i] == '?');
+	for (size_t i = 0; i < strlen(Mask);)
+	{
+		if (Mask[i] != '?')
+		{
+			pattern.emplace_back((uint8_t)strtoul(&Mask[i], nullptr, 16), false);
+			i += 3;
+		}
+		else
+		{
+			pattern.emplace_back(0x00, true);
+			i += 2;
+		}
+	}
 
 	const uint8_t *dataStart = (uint8_t *)StartAddress;
 	const uint8_t *dataEnd = (uint8_t *)StartAddress + MaxSize + 1;
