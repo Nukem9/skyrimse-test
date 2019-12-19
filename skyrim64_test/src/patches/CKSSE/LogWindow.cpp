@@ -273,7 +273,7 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 					// Parse to integer, then bring up the menu
 					uint32_t id = strtoul(sm[1].str().c_str(), nullptr, 16);
 
-					auto GetFormById = (__int64(__fastcall *)(uint32_t))(g_ModuleBase + 0x16B8780);
+					auto GetFormById = (__int64(__fastcall *)(uint32_t))OFFSET(0x16B8780, 1530);
 					__int64 form = GetFormById(id);
 
 					if (form)

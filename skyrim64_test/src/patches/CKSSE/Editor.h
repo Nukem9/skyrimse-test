@@ -4,6 +4,26 @@
 #include "../TES/BSTArray.h"
 
 struct z_stream_s;
+class TESForm_CK;
+
+struct PerkRankEntry
+{
+	union
+	{
+		struct
+		{
+			uint32_t FormId;	// 0x0
+			uint8_t Rank;		// 0x4
+		};
+
+		struct
+		{
+			uint64_t FormIdOrPointer;	// 0x0
+			uint8_t NewRank;			// 0x8
+		};
+	};
+};
+static_assert(sizeof(PerkRankEntry) == 0x10);
 
 HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
 INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
@@ -37,27 +57,8 @@ void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, void *Valu
 void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex);
 
 void PatchTemplatedFormIterator();
-void SortFormArray(BSTArray<class TESForm *> *Array, int(*SortFunction)(const void *, const void *));
+void SortFormArray(BSTArray<TESForm_CK *> *Array, int(*SortFunction)(const void *, const void *));
 void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *));
-
-struct PerkRankEntry
-{
-	union
-	{
-		struct
-		{
-			uint32_t FormId;	// 0x0
-			uint8_t Rank;		// 0x4
-		};
-
-		struct
-		{
-			uint64_t FormIdOrPointer;	// 0x0
-			uint8_t NewRank;			// 0x8
-		};
-	};
-};
-static_assert(sizeof(PerkRankEntry) == 0x10);
 
 void QuitHandler();
 
@@ -68,7 +69,7 @@ void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entr
 void FaceGenOverflowWarning(__int64 Texture);
 void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2);
 
-void hk_call_141C68FA6(class TESForm *DialogForm, __int64 Unused);
+void hk_call_141C68FA6(TESForm_CK *DialogForm, __int64 Unused);
 void *hk_call_141C26F3A(void *a1);
 void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3);
 void *hk_call_1417E42BF(void *a1);
@@ -85,5 +86,5 @@ void hk_call_141CF03C9(__int64 a1, bool Enable);
 void hk_call_141CE8269(__int64 a1);
 const char *hk_call_1416B849E(__int64 a1);
 void hk_call_14135CDD3(__int64 RenderWindowInstance, uint32_t *UntypedPointerHandle, bool Select);
-int hk_call_1412D1541(__int64 ObjectListInsertData, __int64 Form);
-void hk_call_14147FB57(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex);
+int hk_call_1412D1541(__int64 ObjectListInsertData, TESForm_CK *Form);
+void hk_call_14147FB57(HWND ListViewHandle, TESForm_CK *Form, bool UseImage, int ItemIndex);

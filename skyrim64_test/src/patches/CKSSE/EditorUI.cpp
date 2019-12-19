@@ -3,6 +3,7 @@
 #include <commdlg.h>
 #include "../../typeinfo/ms_rtti.h"
 #include "../../typeinfo/hk_rtti.h"
+#include "TESForm_CK.h"
 #include "EditorUI.h"
 #include "LogWindow.h"
 
@@ -94,7 +95,7 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 			SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_TOOLBAR), TB_CHECKBUTTON, UI_EDITOR_TOGGLEGRASS_BUTTON, TRUE);
 
 			// Same for fog
-			CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *(bool *)(g_ModuleBase + 0x4F05728) ? MF_CHECKED : MF_UNCHECKED);
+			CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *(bool *)OFFSET(0x4F05728, 1530) ? MF_CHECKED : MF_UNCHECKED);
 
 			// Create custom menu controls
 			EditorUI_CreateExtensionMenu(Hwnd, createInfo->hMenu);
@@ -111,7 +112,7 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 		case UI_EDITOR_TOGGLEFOG:
 		{
 			// Call the CTRL+F5 hotkey function directly
-			((void(__fastcall *)())(g_ModuleBase + 0x1319740))();
+			((void(__fastcall *)())OFFSET(0x1319740, 1530))();
 		}
 		return 0;
 
@@ -207,8 +208,8 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 						formList.back().EditorId = _strdup(Data->EditorId);
 					};
 
-					XUtil::DetourCall(g_ModuleBase + 0x13E32B0, callback);
-					CallWindowProcA((WNDPROC)(g_ModuleBase + 0x13E6270), Hwnd, WM_COMMAND, 1185, 0);
+					XUtil::DetourCall(OFFSET(0x13E32B0, 1530), callback);
+					CallWindowProcA((WNDPROC)OFFSET(0x13E6270, 1530), Hwnd, WM_COMMAND, 1185, 0);
 
 					// Sort by: form id, then name, then file offset
 					std::sort(formList.begin(), formList.end(),
@@ -251,15 +252,13 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 
 		case UI_EXTMENU_HARDCODEDFORMS:
 		{
-			auto getFormById = (__int64(__fastcall *)(uint32_t))(g_ModuleBase + 0x16B8780);
-
 			for (uint32_t i = 0; i < 2048; i++)
 			{
-				__int64 form = getFormById(i);
+				TESForm_CK *form = TESForm_CK::GetFormByNumericID(i);
 
 				if (form)
 				{
-					(*(void(__fastcall **)(__int64, __int64))(*(__int64 *)form + 360))(form, 1);
+					(*(void(__fastcall **)(TESForm_CK *, __int64))(*(__int64 *)form + 360))(form, 1);
 					EditorUI_Log("SetFormModified(%08X)", i);
 				}
 			}
@@ -326,9 +325,9 @@ INT_PTR CALLBACK EditorUI_LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPA
 		if (LOWORD(wParam) != 1)
 			return FALSE;
 
-		*(bool *)(g_ModuleBase + 0x3AFAE28) = false;
+		*(bool *)OFFSET(0x3AFAE28, 1530) = false;
 
-		if (FAILED(((HRESULT(__fastcall *)(bool))(g_ModuleBase + 0x13D5310))(false)))
+		if (FAILED(((HRESULT(__fastcall *)(bool))OFFSET(0x13D5310, 1530))(false)))
 			MessageBoxA(DialogHwnd, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
 
 		return EditorUI_LipRecordDialogProc(DialogHwnd, WM_APP, 0, 0);
@@ -336,9 +335,9 @@ INT_PTR CALLBACK EditorUI_LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPA
 	case 1046:
 		// Start recording
 		ShowWindow(DialogHwnd, SW_SHOW);
-		*(bool *)(g_ModuleBase + 0x3AFAE28) = true;
+		*(bool *)OFFSET(0x3AFAE28, 1530) = true;
 
-		if (FAILED(((HRESULT(__fastcall *)(bool))(g_ModuleBase + 0x13D5310))(true)))
+		if (FAILED(((HRESULT(__fastcall *)(bool))OFFSET(0x13D5310, 1530))(true)))
 		{
 			MessageBoxA(DialogHwnd, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
 			return EditorUI_LipRecordDialogProc(DialogHwnd, WM_APP, 0, 0);
@@ -373,14 +372,14 @@ INT_PTR CALLBACK EditorUI_ObjectWindowProc(HWND DialogHwnd, UINT Message, WPARAM
 	else if (Message == UI_OBJECT_WINDOW_ADD_ITEM)
 	{
 		const bool onlyActiveForms = (bool)GetPropA(DialogHwnd, "ActiveOnly");
-		const auto form = (__int64)wParam;
+		const auto form = (TESForm_CK *)wParam;
 		bool *allowInsert = (bool *)lParam;
 
 		*allowInsert = true;
 
 		if (onlyActiveForms)
 		{
-			if (form && (*(uint32_t *)(form + 0x10) & 2) != 2)
+			if (form && !form->GetActive())
 				*allowInsert = false;
 		}
 
@@ -402,7 +401,7 @@ INT_PTR CALLBACK EditorUI_CellViewProc(HWND DialogHwnd, UINT Message, WPARAM wPa
 	}
 	else if (Message == WM_SIZE)
 	{
-		auto *labelRect = (RECT *)(g_ModuleBase + 0x3AFB570);
+		auto *labelRect = (RECT *)OFFSET(0x3AFB570, 1530);
 
 		// Fix the "World Space" label positioning on window resize
 		RECT label;
@@ -436,14 +435,14 @@ INT_PTR CALLBACK EditorUI_CellViewProc(HWND DialogHwnd, UINT Message, WPARAM wPa
 	else if (Message == UI_CELL_VIEW_ADD_CELL_ITEM)
 	{
 		const bool onlyActiveForms = (bool)GetPropA(DialogHwnd, "ActiveOnly");
-		const auto form = (__int64)wParam;
+		const auto form = (TESForm_CK *)wParam;
 		bool *allowInsert = (bool *)lParam;
 
 		*allowInsert = true;
 
 		if (onlyActiveForms)
 		{
-			if (form && (*(uint32_t *)(form + 0x10) & 2) != 2)
+			if (form && !form->GetActive())
 				*allowInsert = false;
 		}
 
@@ -460,13 +459,13 @@ LRESULT EditorUI_CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, 
 	auto updateListViewItems = [This]
 	{
 		if (!disableListViewUpdates)
-			((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9870))(This);
+			((void(__fastcall *)(void *))OFFSET(0x20A9870, 1530))(This);
 	};
 
 	switch (Message)
 	{
 	case WM_SIZE:
-		((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9CF0))(This);
+		((void(__fastcall *)(void *))OFFSET(0x20A9CF0, 1530))(This);
 		break;
 
 	case WM_NOTIFY:
@@ -484,7 +483,7 @@ LRESULT EditorUI_CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, 
 
 	case WM_INITDIALOG:
 		disableListViewUpdates = true;
-		((void(__fastcall *)(void *))(g_ModuleBase + 0x20A99C0))(This);
+		((void(__fastcall *)(void *))OFFSET(0x20A99C0, 1530))(This);
 		disableListViewUpdates = false;
 
 		// Update it ONCE after everything is inserted
@@ -500,11 +499,11 @@ LRESULT EditorUI_CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, 
 		{
 			disableListViewUpdates = true;
 			if (param == 5474)
-				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA080))(This);
+				((void(__fastcall *)(void *))OFFSET(0x20AA080, 1530))(This);
 			else if (param == 5475)
-				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA130))(This);
+				((void(__fastcall *)(void *))OFFSET(0x20AA130, 1530))(This);
 			else if (param == 5602)
-				((void(__fastcall *)(void *))(g_ModuleBase + 0x20AA1E0))(This);
+				((void(__fastcall *)(void *))OFFSET(0x20AA1E0, 1530))(This);
 			disableListViewUpdates = false;
 
 			updateListViewItems();
@@ -513,13 +512,13 @@ LRESULT EditorUI_CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, 
 		else if (param == 1)
 		{
 			// "Compile" button
-			((void(__fastcall *)(void *))(g_ModuleBase + 0x20A9F30))(This);
+			((void(__fastcall *)(void *))OFFSET(0x20A9F30, 1530))(This);
 		}
 	}
 	break;
 	}
 
-	return ((LRESULT(__fastcall *)(void *, UINT, WPARAM, LPARAM))(g_ModuleBase + 0x20ABD90))(This, Message, wParam, lParam);
+	return ((LRESULT(__fastcall *)(void *, UINT, WPARAM, LPARAM))OFFSET(0x20ABD90, 1530))(This, Message, wParam, lParam);
 }
 
 BOOL EditorUI_ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask)

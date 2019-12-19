@@ -16,6 +16,7 @@
 #define assert_vtable_index(Function, Index) AssertMsgVa(VtableIndexUtil::GetIndexOf(Function) == Index, "Virtual table index does not match (%d != %d)", VtableIndexUtil::GetIndexOf(Function), Index)
 
 #define GAME_TLS(Type, Offset) *(Type *)(*(uintptr_t *)(__readgsqword(0x58u) + 8i64 * (*(uint32_t *)(g_ModuleBase + 0x34BBA78))) + (Offset))
+#define OFFSET(RelAddr, Version) (g_ModuleBase + (RelAddr))
 
 #define STATIC_CONSTRUCTOR(Id, Lambda) \
 	struct \

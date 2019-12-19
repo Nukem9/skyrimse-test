@@ -138,8 +138,8 @@ public:
 		}
 		else
 		{
-			auto PathingGetSingleton = (void *(__fastcall *)())(g_ModuleBase + 0x1354BC0);
-			auto PathingGetForm = (NavMesh *(__fastcall *)(void *, uint32_t))(g_ModuleBase + 0x1D9C8A0);
+			auto PathingGetSingleton = (void *(__fastcall *)())OFFSET(0x1354BC0, 1530);
+			auto PathingGetForm = (NavMesh *(__fastcall *)(void *, uint32_t))OFFSET(0x1D9C8A0, 1530);
 
 			BSNavmesh::BSNavmeshTriangle& tri = m_Data.m_Triangles.at(TriangleIndex);
 

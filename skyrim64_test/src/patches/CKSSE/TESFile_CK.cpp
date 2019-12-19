@@ -16,7 +16,7 @@ int TESFile::hk_LoadPluginHeader()
 
 		// Strip ESM flag, clear loaded ONAM data
 		m_RecordFlags &= ~FILE_RECORD_ESM;
-		((void(__fastcall *)(TESFile *))(g_ModuleBase + 0x166CC60))(this);
+		((void(__fastcall *)(TESFile *))OFFSET(0x166CC60, 1530))(this);
 	}
 
 	return error;
@@ -34,7 +34,7 @@ __int64 TESFile::hk_WritePluginHeader()
 		{
 			EditorUI_Log("Regenerating ONAM data for master file '%s'...\n", m_FileName);
 
-			((void(__fastcall *)(TESFile *))(g_ModuleBase + 0x166CCF0))(this);
+			((void(__fastcall *)(TESFile *))OFFSET(0x166CCF0, 1530))(this);
 			resetEsmFlag = true;
 		}
 	}

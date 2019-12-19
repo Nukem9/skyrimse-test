@@ -21,7 +21,7 @@ void BSGraphics_CK::Renderer::CreateRenderTarget(uint32_t TargetIndex, const cha
 {
 	Assert(TargetIndex < RENDER_TARGET_COUNT && TargetIndex != RENDER_TARGET_NONE);
 
-	auto device = *(ID3D11Device **)(g_ModuleBase + 0x56B6B40);
+	auto device = *(ID3D11Device **)OFFSET(0x56B6B40, 1530);
 	auto data = &pRenderTargets[TargetIndex];
 
 	HRESULT hr = S_OK;
@@ -122,7 +122,7 @@ void BSGraphics_CK::Renderer::CreateDepthStencil(uint32_t TargetIndex, const cha
 {
 	Assert(TargetIndex < RENDER_TARGET_COUNT && TargetIndex != RENDER_TARGET_NONE);
 
-	auto device = *(ID3D11Device **)(g_ModuleBase + 0x56B6B40);
+	auto device = *(ID3D11Device **)OFFSET(0x56B6B40, 1530);
 	auto data = &pDepthStencils[TargetIndex];
 
 	HRESULT hr = S_OK;
@@ -238,7 +238,7 @@ void BSGraphics_CK::Renderer::CreateCubemapRenderTarget(uint32_t TargetIndex, co
 {
 	Assert(TargetIndex < RENDER_TARGET_CUBEMAP_COUNT);
 
-	auto device = *(ID3D11Device **)(g_ModuleBase + 0x56B6B40);
+	auto device = *(ID3D11Device **)OFFSET(0x56B6B40, 1530);
 	auto data = &pCubemapRenderTargets[TargetIndex];
 
 	HRESULT hr = S_OK;

@@ -131,7 +131,7 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 
 			if (NiCollisionUtils::IntersectTriangle(kModelOrigin, kModelDir, v[0], v[1], v[2], kPick.GetFrontOnly(), intersect, lineParam, triParam1, triParam2))
 			{
-				NiPick::Record *record = ((NiPick::Record *(__fastcall *)(uintptr_t, BSTriShape *))(g_ModuleBase + 0x26D7910))((uintptr_t)&kPick + 0x20, pkTriShape);
+				NiPick::Record *record = ((NiPick::Record *(__fastcall *)(uintptr_t, BSTriShape *))OFFSET(0x26D7910, 1530))((uintptr_t)&kPick + 0x20, pkTriShape);
 				intersectionFound = true;
 
 				// Ray intersection point

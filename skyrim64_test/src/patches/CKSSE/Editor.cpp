@@ -195,7 +195,7 @@ bool OpenPluginSaveDialog(HWND ParentWindow, const char *BasePath, bool IsESM, c
 	}
 
 	return ((bool(__fastcall *)(HWND, const char *, const char *, const char *, const char *, void *, bool, bool, char *, uint32_t, const char *, void *))
-		(g_ModuleBase + 0x14824B0))(ParentWindow, BasePath, filter, title, extension, nullptr, false, true, Buffer, BufferSize, Directory, nullptr);
+		OFFSET(0x14824B0, 1530))(ParentWindow, BasePath, filter, title, extension, nullptr, false, true, Buffer, BufferSize, Directory, nullptr);
 }
 
 bool IsBSAVersionCurrent(class BSFile *File)
@@ -290,7 +290,7 @@ bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, b
 
 int IsWavDataPresent(const char *Path, __int64 a2, __int64 a3, __int64 a4)
 {
-	return ((int(__fastcall *)(const char *, __int64, __int64, __int64))(g_ModuleBase + 0x264D120))("Sound\\Voice\\Temp.wav", a2, a3, a4);
+	return ((int(__fastcall *)(const char *, __int64, __int64, __int64))OFFSET(0x264D120, 1530))("Sound\\Voice\\Temp.wav", a2, a3, a4);
 }
 
 std::vector<std::string> g_CCEslNames;
@@ -419,19 +419,19 @@ void UpdateLoadProgressBar()
 	static float lastPercent = 0.0f;
 
 	// Only update every quarter percent, rather than every single form load
-	float newPercent = ((float)*(uint32_t *)(g_ModuleBase + 0x3BBDA8C) / (float)*(uint32_t *)(g_ModuleBase + 0x3BBDA88)) * 100.0f;
+	float newPercent = ((float)*(uint32_t *)OFFSET(0x3BBDA8C, 1530) / (float)*(uint32_t *)OFFSET(0x3BBDA88, 1530)) * 100.0f;
 
 	if (abs(lastPercent - newPercent) <= 0.25f)
 		return;
 
-	((void(__fastcall *)())(g_ModuleBase + 0x13A4640))();
+	((void(__fastcall *)())OFFSET(0x13A4640, 1530))();
 	lastPercent = newPercent;
 }
 
 void UpdateObjectWindowTreeView(void *Thisptr, HWND ControlHandle)
 {
 	SendMessage(ControlHandle, WM_SETREDRAW, FALSE, 0);
-	((void(__fastcall *)(void *, HWND))(g_ModuleBase + 0x12D8710))(Thisptr, ControlHandle);
+	((void(__fastcall *)(void *, HWND))OFFSET(0x12D8710, 1530))(Thisptr, ControlHandle);
 	SendMessage(ControlHandle, WM_SETREDRAW, TRUE, 0);
 	RedrawWindow(ControlHandle, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
 }
@@ -439,7 +439,7 @@ void UpdateObjectWindowTreeView(void *Thisptr, HWND ControlHandle)
 void UpdateCellViewCellList(void *Thisptr, HWND ControlHandle, __int64 Unknown)
 {
 	SendMessage(ControlHandle, WM_SETREDRAW, FALSE, 0);
-	((void(__fastcall *)(void *, HWND, __int64))(g_ModuleBase + 0x147FA70))(Thisptr, ControlHandle, Unknown);
+	((void(__fastcall *)(void *, HWND, __int64))OFFSET(0x147FA70, 1530))(Thisptr, ControlHandle, Unknown);
 	SendMessage(ControlHandle, WM_SETREDRAW, TRUE, 0);
 	RedrawWindow(ControlHandle, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
 }
@@ -447,7 +447,7 @@ void UpdateCellViewCellList(void *Thisptr, HWND ControlHandle, __int64 Unknown)
 void UpdateCellViewObjectList(void *Thisptr, HWND *ControlHandle)
 {
 	SendMessage(*ControlHandle, WM_SETREDRAW, FALSE, 0);
-	((void(__fastcall *)(void *, HWND *))(g_ModuleBase + 0x13E0CE0))(Thisptr, ControlHandle);
+	((void(__fastcall *)(void *, HWND *))OFFSET(0x13E0CE0, 1530))(Thisptr, ControlHandle);
 	SendMessage(*ControlHandle, WM_SETREDRAW, TRUE, 0);
 	RedrawWindow(*ControlHandle, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
 }
@@ -684,7 +684,7 @@ void PatchTemplatedFormIterator()
 		addr += strlen(maskStr) + 11;
 		uintptr_t destination = addr + *(int32_t *)(addr + 1) + 5;
 
-		if (destination != 0x14102CBEF && *(uint8_t *)addr != 0x0F)
+		if (destination != OFFSET(0x102CBEF, 1530) && *(uint8_t *)addr != 0x0F)
 			continue;
 
 		// Now look for the matching destructor call
@@ -711,7 +711,7 @@ void PatchTemplatedFormIterator()
 
 		// Blacklisted (000000014148C1FF): The "Use Info" dialog which has more than one list view and causes problems
 		// Blacklisted (000000014169DFAD): Adding a new faction to an NPC has more than one list view
-		if (addr == 0x000000014148C1FF || addr == 0x000000014169DFAD)
+		if (addr == OFFSET(0x148C1FF, 1530) || addr == OFFSET(0x169DFAD, 1530))
 			continue;
 
 		XUtil::DetourCall(addr, &BeginUIDefer);
@@ -719,13 +719,13 @@ void PatchTemplatedFormIterator()
 	}
 }
 
-void SortFormArray(BSTArray<class TESForm *> *Array, int(*SortFunction)(const void *, const void *))
+void SortFormArray(BSTArray<TESForm_CK *> *Array, int(*SortFunction)(const void *, const void *))
 {
 	// NOTE: realSort must be updated on a separate line to avoid one-time initialization
 	thread_local int(__fastcall *realSort)(const void *, const void *);
 	realSort = SortFunction;
 
-	qsort(Array->QBuffer(), Array->QSize(), sizeof(class TESForm *), [](const void *a, const void *b)
+	qsort(Array->QBuffer(), Array->QSize(), sizeof(TESForm_CK *), [](const void *a, const void *b)
 	{
 		return realSort(*(const void **)a, *(const void **)b);
 	});
@@ -733,9 +733,9 @@ void SortFormArray(BSTArray<class TESForm *> *Array, int(*SortFunction)(const vo
 
 void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *))
 {
-	static std::unordered_map<BSTArray<class TESForm *> *, std::pair<void *, uint32_t>> arrayCache;
+	static std::unordered_map<BSTArray<TESForm_CK *> *, std::pair<void *, uint32_t>> arrayCache;
 
-	auto *formArray = &((BSTArray<class TESForm *> *)(TESDataHandler + 104))[FormType];
+	auto *formArray = &((BSTArray<TESForm_CK *> *)(TESDataHandler + 104))[FormType];
 	auto itr = arrayCache.find(formArray);
 
 	// If not previously found or any counters changed...
@@ -758,14 +758,14 @@ void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value)
 	// The pointer is converted to a form id, but the top 32 bits are never cleared correctly (ui32/ui64 union)
 	*Value &= 0x00000000FFFFFFFF;
 
-	((void(__fastcall *)(__int64, __int64 *))(g_ModuleBase + 0x15C88D0))(FileHandle, Value);
+	((void(__fastcall *)(__int64, __int64 *))OFFSET(0x15C88D0, 1530))(FileHandle, Value);
 }
 
 bool hk_BGSPerkRankArray_sub_14168DF70(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray)
 {
-	AutoFunc(__int64(*)(__int64, __int64), sub_1416B8A20, 0x16B8A20);
-	AutoFunc(__int64(*)(uint32_t *, __int64), sub_1416C05D0, 0x16C05D0);
-	AutoFunc(__int64(*)(void *, uint32_t *), sub_14168E790, 0x168E790);
+	auto sub_1416B8A20 = (__int64(*)(__int64, __int64))OFFSET(0x16B8A20, 1530);
+	auto sub_1416C05D0 = (__int64(*)(uint32_t *, __int64))OFFSET(0x16C05D0, 1530);
+	auto sub_14168E790 = (__int64(*)(void *, uint32_t *))OFFSET(0x168E790, 1530);
 
 	AssertMsg(Entry->Rank == 0, "NPC perk loading code is still broken somewhere, rank shouldn't be set");
 
@@ -803,32 +803,32 @@ void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entr
 	Entry->FormIdOrPointer &= 0x00000000FFFFFFFF;
 
 	if (Entry->FormId != 0)
-		((void(__fastcall *)(__int64, PerkRankEntry *&))(g_ModuleBase + 0x168EAE0))(ArrayHandle, Entry);
+		((void(__fastcall *)(__int64, PerkRankEntry *&))OFFSET(0x168EAE0, 1530))(ArrayHandle, Entry);
 	else
 		EditorUI_Warning(13, "Null perk found while loading a PerkRankArray. Entry will be discarded.");
 }
 
 void FaceGenOverflowWarning(__int64 Texture)
 {
-	const char *texName = ((const char *(__fastcall *)(__int64))(g_ModuleBase + 0x14BE2E0))(*(__int64 *)Texture);
+	const char *texName = ((const char *(__fastcall *)(__int64))OFFSET(0x14BE2E0, 1530))(*(__int64 *)Texture);
 
 	EditorUI_Warning(23, "Exceeded limit of 16 tint masks. Skipping texture: %s", texName);
 }
 
 void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
 {
-	AutoFunc(bool(*)(), sub_1418F5210, 0x18F5210);
-	AutoFunc(void(*)(), sub_1418F5320, 0x18F5320);
-	AutoFunc(__int64(*)(HWND, __int64), sub_1413BAAC0, 0x13BAAC0);
-	AutoFunc(bool(*)(__int64, __int64), sub_1418F5260, 0x18F5260);
-	AutoFunc(void(*)(__int64), sub_141617680, 0x1617680);
+	auto sub_1418F5210 = (bool(*)())OFFSET(0x18F5210, 1530);
+	auto sub_1418F5320 = (void(*)())OFFSET(0x18F5320, 1530);
+	auto sub_1413BAAC0 = (__int64(*)(HWND, __int64))OFFSET(0x13BAAC0, 1530);
+	auto sub_1418F5260 = (bool(*)(__int64, __int64))OFFSET(0x18F5260, 1530);
+	auto sub_141617680 = (void(*)(__int64))OFFSET(0x1617680, 1530);
 
 	// Display confirmation message box first
 	if (!sub_1418F5210())
 		return;
 
-	// Nop the call to reload the loose file tables
-	XUtil::PatchMemory(g_ModuleBase + 0x18F4D4A, (PBYTE)"\x90\x90\x90\x90\x90", 5);
+	// Nop the call to reload the loose file tables TODO(!!) FIX THIS
+	XUtil::PatchMemory(OFFSET(0x18F4D4A, 1530), (PBYTE)"\x90\x90\x90\x90\x90", 5);
 
 	HWND listHandle = *(HWND *)(a1 + 16);
 	int itemIndex = ListView_GetNextItem(listHandle, -1, LVNI_SELECTED);
@@ -850,24 +850,21 @@ void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
 
 	// Reload loose file paths manually
 	EditorUI_Log("Exported FaceGen for %d NPCs. Reloading loose file paths...", itemCount);
-	sub_141617680(*(__int64 *)(g_ModuleBase + 0x3AFB930));
+	sub_141617680(*(__int64 *)OFFSET(0x3AFB930, 1530));
 
 	// Done => unpatch it
-	XUtil::PatchMemory(g_ModuleBase + 0x18F4D4A, (PBYTE)"\xE8\x98\xDA\x6F\xFF", 5);
+	XUtil::PatchMemory(OFFSET(0x18F4D4A, 1530), (PBYTE)"\xE8\x98\xDA\x6F\xFF", 5);
 	sub_1418F5320();
 }
 
-void hk_call_141C68FA6(class TESForm *DialogForm, __int64 Unused)
+void hk_call_141C68FA6(TESForm_CK *DialogForm, __int64 Unused)
 {
 	auto *waterRoot = TESWaterRoot::Singleton();
 
 	for (uint32_t i = 0; i < waterRoot->m_WaterObjects.QSize(); i++)
 	{
-		uint32_t currentFormId = *(uint32_t *)((uintptr_t)DialogForm + 0x14);
-		uint32_t baseFormId = *(uint32_t *)((uintptr_t)waterRoot->m_WaterObjects[i]->m_BaseWaterForm + 0x14);
-
-		if (currentFormId == baseFormId)
-			((void(__fastcall *)(class TESForm *, class BSShaderMaterial *))(g_ModuleBase + 0x1C62AA0))(DialogForm, waterRoot->m_WaterObjects[i]->m_TriShape->QShaderProperty()->pMaterial);
+		if (DialogForm->GetFormID() == waterRoot->m_WaterObjects[i]->m_BaseWaterForm->GetFormID())
+			((void(__fastcall *)(TESForm_CK *, class BSShaderMaterial *))OFFSET(0x1C62AA0, 1530))(DialogForm, waterRoot->m_WaterObjects[i]->m_TriShape->QShaderProperty()->pMaterial);
 	}
 }
 
@@ -876,18 +873,18 @@ void *hk_call_141C26F3A(void *a1)
 	if (!a1)
 		return nullptr;
 
-	return ((void *(__fastcall *)(void *))(g_ModuleBase + 0x1BA5C60))(a1);
+	return ((void *(__fastcall *)(void *))OFFSET(0x1BA5C60, 1530))(a1);
 }
 
 void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3)
 {
 	// Draw objects in the render window normally
-	((void(__fastcall *)(__int64, __int64, __int64))(g_ModuleBase + 0x2DAAC80))(a1, a2, a3);
+	((void(__fastcall *)(__int64, __int64, __int64))OFFSET(0x2DAAC80, 1530))(a1, a2, a3);
 
 	// Then do post-process SAO (Fog) ("Draw WorldRoot")
-	AutoPtr(bool, byte_144F05728, 0x4F05728);
-	AutoPtr(uintptr_t, qword_145A11B28, 0x5A11B28);
-	AutoPtr(uintptr_t, qword_145A11B38, 0x5A11B38);
+	auto& byte_144F05728 = *(bool *)OFFSET(0x4F05728, 1530);
+	auto& qword_145A11B28 = *(uintptr_t *)OFFSET(0x5A11B28, 1530);
+	auto& qword_145A11B38 = *(uintptr_t *)OFFSET(0x5A11B38, 1530);
 
 	if (byte_144F05728)
 	{
@@ -897,7 +894,7 @@ void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3)
 		if (!qword_145A11B38)
 			qword_145A11B38 = (uintptr_t)MemoryManager::Allocate(nullptr, 4096, 8, true);// Fake SceneGraph
 
-		((void(__fastcall *)())(g_ModuleBase + 0x2E2EEB0))();
+		((void(__fastcall *)())OFFSET(0x2E2EEB0, 1530))();
 	}
 }
 
@@ -921,7 +918,7 @@ void *hk_call_1417E42BF(void *a1)
 HRESULT LoadTextureDataFromFile(__int64 a1, __int64 a2, __int64 a3, __int64 a4, unsigned int a5, int a6)
 {
 	// Modified LoadTextureDataFromFile from DDSTextureLoader (DirectXTex)
-	HRESULT hr = ((HRESULT(__fastcall *)(__int64, __int64, __int64, __int64, unsigned int, int))(g_ModuleBase + 0x2D266E0))(a1, a2, a3, a4, a5, a6);
+	HRESULT hr = ((HRESULT(__fastcall *)(__int64, __int64, __int64, __int64, unsigned int, int))OFFSET(0x2D266E0, 1530))(a1, a2, a3, a4, a5, a6);
 
 	if (FAILED(hr))
 	{
@@ -953,10 +950,10 @@ void hk_call_141C410A1(__int64 a1, BSShaderProperty *Property)
 		newShaderMaterial->CopyMembers(oldShaderMaterial);
 		newShaderMaterial->kBaseColor.a = 0.5f;
 
-		((void(__fastcall *)(BSShaderProperty *, BSEffectShaderMaterial *, bool))(g_ModuleBase + 0x2D511E0))(Property, newShaderMaterial, false);
+		((void(__fastcall *)(BSShaderProperty *, BSEffectShaderMaterial *, bool))OFFSET(0x2D511E0, 1530))(Property, newShaderMaterial, false);
 	}
 
-	((void(__fastcall *)(__int64, BSShaderProperty *))(g_ModuleBase + 0x12A4D20))(a1 + 0x128, Property);
+	((void(__fastcall *)(__int64, BSShaderProperty *))OFFSET(0x12A4D20, 1530))(a1 + 0x128, Property);
 }
 
 void hk_sub_141B08540(__int64 DiskCRDT, __int64 SourceCRDT)
@@ -968,18 +965,18 @@ void hk_sub_141B08540(__int64 DiskCRDT, __int64 SourceCRDT)
 	*(uint32_t *)(DiskCRDT + 0x4) = *(uint32_t *)SourceCRDT;		// Percentage multiplier
 	*(uint8_t *)(DiskCRDT + 0x8) = *(uint8_t *)(SourceCRDT + 0x12);	// Flags
 
-	uintptr_t effectForm = *(uintptr_t *)(SourceCRDT + 0x8);
+	TESForm_CK *effectForm = *(TESForm_CK **)(SourceCRDT + 0x8);
 
 	if (effectForm)
-		*(uint64_t *)(DiskCRDT + 0x10) = *(uint32_t *)(effectForm + 0x14);// Effect form id
+		*(uint64_t *)(DiskCRDT + 0x10) = effectForm->GetFormID();
 }
 
 void hk_call_141B037B2(__int64 TESFile, __int64 SourceCRDT)
 {
-	((bool(__fastcall *)(__int64, __int64))(g_ModuleBase + 0x1B07AA0))(TESFile, SourceCRDT);
+	((bool(__fastcall *)(__int64, __int64))OFFSET(0x1B07AA0, 1530))(TESFile, SourceCRDT);
 
 	// Apply struct fixup after reading SkyrimLE data
-	uint32_t chunkVersion = ((uint32_t(__fastcall *)(__int64))(g_ModuleBase + 0x1222200))(TESFile);
+	uint32_t chunkVersion = ((uint32_t(__fastcall *)(__int64))OFFSET(0x1222200, 1530))(TESFile);
 
 	if (chunkVersion < 44)
 		*(uint32_t *)(SourceCRDT + 0x10) = *(uint32_t *)(SourceCRDT + 0xC);
@@ -987,7 +984,7 @@ void hk_call_141B037B2(__int64 TESFile, __int64 SourceCRDT)
 
 const char *hk_call_1417F4A04(int ActorValueIndex)
 {
-	__int64 actorValue = ((__int64(__fastcall *)(int))(g_ModuleBase + 0x14B8030))(ActorValueIndex);
+	__int64 actorValue = ((__int64(__fastcall *)(int))OFFSET(0x14B8030, 1530))(ActorValueIndex);
 
 	if (!actorValue)
 		return nullptr;
@@ -1083,10 +1080,10 @@ bool sub_142676020(const char *File, uint32_t *FileSize)
 
 void hk_call_1412DD706(HWND WindowHandle, uint32_t *ControlId)
 {
-	__int64 previewControl = ((__int64(__fastcall *)(HWND, uint32_t *))(g_ModuleBase + 0x1486C50))(WindowHandle, ControlId);
+	__int64 previewControl = ((__int64(__fastcall *)(HWND, uint32_t *))OFFSET(0x1486C50, 1530))(WindowHandle, ControlId);
 
 	if (previewControl)
-		((void(__fastcall *)(__int64))(g_ModuleBase + 0x14AD7F0))(previewControl);
+		((void(__fastcall *)(__int64))OFFSET(0x14AD7F0, 1530))(previewControl);
 }
 
 int sub_141BBF320(__int64 a1, __int64 a2)
@@ -1101,19 +1098,19 @@ int sub_141BBF320(__int64 a1, __int64 a2)
 			uint32_t unk3;
 		} currIter, endIter;
 
-		((void(__fastcall *)(__int64, void *))(g_ModuleBase + 0x12D4700))(a1, &currIter);
-		((void(__fastcall *)(__int64, void *))(g_ModuleBase + 0x12D4FD0))(a1, &endIter);
+		((void(__fastcall *)(__int64, void *))OFFSET(0x12D4700, 1530))(a1, &currIter);
+		((void(__fastcall *)(__int64, void *))OFFSET(0x12D4FD0, 1530))(a1, &endIter);
 
-		while (((bool(__fastcall *)(void *, void *))(g_ModuleBase + 0x12D32B0))(&currIter, &endIter))
+		while (((bool(__fastcall *)(void *, void *))OFFSET(0x12D32B0, 1530))(&currIter, &endIter))
 		{
 			// Increase refcount via BSHandleRefObject::IncRefCount
 			__int64 refr;
 
-			((__int64(__fastcall *)(__int64 *, __int64))(g_ModuleBase + 0x1348900))(&refr, currIter.unk1);
+			((__int64(__fastcall *)(__int64 *, __int64))OFFSET(0x1348900, 1530))(&refr, currIter.unk1);
 			temporaryCellRefList.push_back(refr);
 
 			// Move to next element
-			((void(__fastcall *)(void *))(g_ModuleBase + 0x12D3AC0))(&currIter);
+			((void(__fastcall *)(void *))OFFSET(0x12D3AC0, 1530))(&currIter);
 		}
 	}
 
@@ -1126,7 +1123,7 @@ int sub_141BBF320(__int64 a1, __int64 a2)
 			break;
 
 		// Automatically decrements ref count
-		status = ((int(__fastcall *)(__int64, __int64 *))(g_ModuleBase + 0x1BC8B00))(*(__int64 *)a2, &refr);
+		status = ((int(__fastcall *)(__int64, __int64 *))OFFSET(0x1BC8B00, 1530))(*(__int64 *)a2, &refr);
 	}
 
 	return status;
@@ -1135,7 +1132,7 @@ int sub_141BBF320(__int64 a1, __int64 a2)
 void hk_call_141CF03C9(__int64 a1, bool Enable)
 {
 	// Modify the global setting itself then update UI to match
-	((void(__fastcall *)(__int64, bool))(g_ModuleBase + 0x1390C30))(a1, Enable);
+	((void(__fastcall *)(__int64, bool))OFFSET(0x1390C30, 1530))(a1, Enable);
 
 	CheckMenuItem(GetMenu(EditorUI_GetMainWindow()), UI_EDITOR_TOGGLEFOG, Enable ? MF_CHECKED : MF_UNCHECKED);
 }
@@ -1143,7 +1140,7 @@ void hk_call_141CF03C9(__int64 a1, bool Enable)
 void hk_call_141CE8269(__int64 a1)
 {
 	if (*(__int64 *)(a1 + 0x58))
-		((void(__fastcall *)(__int64))(g_ModuleBase + 0x1CEB510))(a1);
+		((void(__fastcall *)(__int64))OFFSET(0x1CEB510, 1530))(a1);
 }
 
 const char *hk_call_1416B849E(__int64 a1)
@@ -1159,44 +1156,44 @@ const char *hk_call_1416B849E(__int64 a1)
 void hk_call_14135CDD3(__int64 RenderWindowInstance, uint32_t *UntypedPointerHandle, bool Select)
 {
 	// The caller of this function already holds a reference to the pointer
-	__int64 parentRefr = ((__int64(__fastcall *)(__int64))(g_ModuleBase + 0x1C0D8F0))(*(__int64 *)(RenderWindowInstance + 0xB8));
+	__int64 parentRefr = ((__int64(__fastcall *)(__int64))OFFSET(0x1C0D8F0, 1530))(*(__int64 *)(RenderWindowInstance + 0xB8));
 
 	__int64 childRefr;
-	((void(__fastcall *)(__int64 *, uint32_t *))(g_ModuleBase + 0x12E0DF0))(&childRefr, UntypedPointerHandle);
+	((void(__fastcall *)(__int64 *, uint32_t *))OFFSET(0x12E0DF0, 1530))(&childRefr, UntypedPointerHandle);
 
 	if (childRefr)
 	{
 		// Only select child forms if they are in the same parent cell
 		if (*(__int64 *)(childRefr + 0x70) == *(__int64 *)(parentRefr + 0x70))
-			((void(__fastcall *)(__int64, uint32_t *, bool))(g_ModuleBase + 0x13059D0))(RenderWindowInstance, UntypedPointerHandle, Select);
+			((void(__fastcall *)(__int64, uint32_t *, bool))OFFSET(0x13059D0, 1530))(RenderWindowInstance, UntypedPointerHandle, Select);
 		else
 			EditorUI_Log("Not selecting child refr 0x%X because parent cells don't match (%p != %p)\n", *(uint32_t *)(childRefr + 0x14), *(__int64 *)(childRefr + 0x70), *(__int64 *)(parentRefr + 0x70));
 	}
 
-	((void(__fastcall *)(__int64 *))(g_ModuleBase + 0x128BCF0))(&childRefr);
+	((void(__fastcall *)(__int64 *))OFFSET(0x128BCF0, 1530))(&childRefr);
 }
 
-int hk_call_1412D1541(__int64 ObjectListInsertData, __int64 Form)
+int hk_call_1412D1541(__int64 ObjectListInsertData, TESForm_CK *Form)
 {
 	const __int64 objectWindowInstance = *(__int64 *)(ObjectListInsertData + 0x8) - 0x28;
 	const HWND objectWindowHandle = *(HWND *)(objectWindowInstance);
 
 	bool allowInsert = true;
-	SendMessageA(objectWindowHandle, UI_OBJECT_WINDOW_ADD_ITEM, Form, (LPARAM)&allowInsert);
+	SendMessageA(objectWindowHandle, UI_OBJECT_WINDOW_ADD_ITEM, (WPARAM)Form, (LPARAM)&allowInsert);
 
 	if (!allowInsert)
 		return 1;
 
-	return ((int(__fastcall *)(__int64, __int64))(g_ModuleBase + 0x12D3BD0))(ObjectListInsertData, Form);
+	return ((int(__fastcall *)(__int64, TESForm_CK *))OFFSET(0x12D3BD0, 1530))(ObjectListInsertData, Form);
 }
 
-void hk_call_14147FB57(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex)
+void hk_call_14147FB57(HWND ListViewHandle, TESForm_CK *Form, bool UseImage, int ItemIndex)
 {
 	bool allowInsert = true;
-	SendMessageA(GetParent(ListViewHandle), UI_CELL_VIEW_ADD_CELL_ITEM, (WPARAM)Parameter, (LPARAM)&allowInsert);
+	SendMessageA(GetParent(ListViewHandle), UI_CELL_VIEW_ADD_CELL_ITEM, (WPARAM)Form, (LPARAM)&allowInsert);
 
 	if (!allowInsert)
 		return;
 
-	((void(__fastcall *)(HWND, void *, bool, int))(g_ModuleBase + 0x13BA4D0))(ListViewHandle, Parameter, UseImage, ItemIndex);
+	((void(__fastcall *)(HWND, TESForm_CK *, bool, int))OFFSET(0x13BA4D0, 1530))(ListViewHandle, Form, UseImage, ItemIndex);
 }
