@@ -54,10 +54,10 @@ void Patch_TESVCreationKit()
 	{
 		SetUnhandledExceptionFilter(DumpExceptionHandler);
 
-		XUtil::PatchMemory(OFFSET(0x247D650, 1530), (PBYTE)"\xC3", 1);						// StackTrace::MemoryTraceWrite
-		XUtil::PatchMemory(OFFSET(0x24801FB, 1530), (PBYTE)"\x90\x90\x90\x90\x90\x90", 6);	// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
-		XUtil::PatchMemory(OFFSET(0x24801DF, 1530), (PBYTE)"\xC3", 1);						// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
-		XUtil::PatchMemory(OFFSET(0x2E558DB, 1530), (PBYTE)"\xC3", 1);						// SetUnhandledExceptionFilter, Unknown
+		XUtil::PatchMemory(OFFSET(0x247D650, 1530), (PBYTE)"\xC3", 1);	// StackTrace::MemoryTraceWrite
+		XUtil::PatchMemory(OFFSET(0x24801DF, 1530), (PBYTE)"\xC3", 1);	// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
+		XUtil::PatchMemory(OFFSET(0x2E558DB, 1530), (PBYTE)"\xC3", 1);	// SetUnhandledExceptionFilter, Unknown
+		XUtil::PatchMemoryNop(OFFSET(0x24801FB, 1530), 6);				// SetUnhandledExceptionFilter, BSWin32ExceptionHandler
 
 		_set_invalid_parameter_handler([](const wchar_t *, const wchar_t *, const wchar_t *, uint32_t, uintptr_t)
 		{
@@ -256,7 +256,7 @@ void Patch_TESVCreationKit()
 		XUtil::DetourCall(OFFSET(0x1C9879C, 1530), &hk_call_14147FB57);// ^
 		XUtil::PatchMemoryNop(OFFSET(0x1434473, 1530), 2);				// Force bShowReloadShadersButton to always be enabled
 		XUtil::PatchMemoryNop(OFFSET(0x1487B69, 1530), 2);				// Enable push to game button even if version control is disabled
-		XUtil::PatchMemory(OFFSET(0x1487B7C, 1530), (PBYTE)"\xEB", 1);
+		XUtil::PatchMemory(OFFSET(0x1487B7C, 1530), (PBYTE)"\xEB", 1);	// ^
 		XUtil::PatchMemory(OFFSET(0x16179C0, 1530), (PBYTE)"\xC3", 1);	// Disable "MEM_CATEGORY_X" log spam
 		XUtil::PatchMemoryNop(OFFSET(0x2DCE6BC, 1530), 5);				// Disable "utility failed id" log spam
 		XUtil::PatchMemoryNop(OFFSET(0x2D270E3, 1530), 5);				// Disable "Should have been converted offline" log spam
@@ -376,9 +376,9 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x2E2EFAF, 1530), 4);		// Pointer always null
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F0AE, 1530), 5);		// Pointer always null (second parameter)
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F270, 1530), 5);		// Pointer always null (second parameter)
-	XUtil::PatchMemoryNop(OFFSET(0x2E2F275, 1530), 38);	// Assert always triggers
-	XUtil::PatchMemoryNop(OFFSET(0x2E2F29B, 1530), 41);	// Assert always triggers
-	XUtil::PatchMemoryNop(OFFSET(0x2E2F2C4, 1530), 22);	// Multiple null pointers in call
+	XUtil::PatchMemoryNop(OFFSET(0x2E2F275, 1530), 38);		// Assert always triggers
+	XUtil::PatchMemoryNop(OFFSET(0x2E2F29B, 1530), 41);		// Assert always triggers
+	XUtil::PatchMemoryNop(OFFSET(0x2E2F2C4, 1530), 22);		// Multiple null pointers in call
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F2E4, 1530), 546);	// Remove most of the useless stuff in the function
 
 	XUtil::PatchMemory(OFFSET(0x2E2BC50, 1530), (PBYTE)"\xC3", 1);// Pointer always null (Godrays? TAA?)

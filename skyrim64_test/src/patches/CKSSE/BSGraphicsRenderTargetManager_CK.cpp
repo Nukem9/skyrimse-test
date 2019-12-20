@@ -3,6 +3,11 @@
 #include "BSGraphicsRenderTargetManager_CK.h"
 #include "Offsets.h"
 
+BSGraphics_CK::Renderer *BSGraphics_CK::Renderer::QInstance()
+{
+	return (Renderer *)OFFSET(0x56B73A0, 1530);
+}
+
 void BSGraphics_CK::Renderer::SetResourceName(ID3D11DeviceChild *Resource, const char *Format, ...)
 {
 	if (!Resource)
@@ -366,27 +371,27 @@ void BSGraphicsRenderTargetManager_CK::CreateRenderTarget(uint32_t TargetIndex, 
 	AssertMsg(TargetIndex < RENDER_TARGET_COUNT && TargetIndex != RENDER_TARGET_NONE, "Wrong target index");
 	AssertMsg(TargetIndex != 0, "Framebuffer properties come from the renderer");
 
-	BSGraphics_CK::Renderer::Instance.DestroyRenderTarget(TargetIndex);
+	BSGraphics_CK::Renderer::QInstance()->DestroyRenderTarget(TargetIndex);
 	pRenderTargetDataA[TargetIndex] = *Properties;
-	BSGraphics_CK::Renderer::Instance.CreateRenderTarget(TargetIndex, GetRenderTargetName(TargetIndex), Properties);
+	BSGraphics_CK::Renderer::QInstance()->CreateRenderTarget(TargetIndex, GetRenderTargetName(TargetIndex), Properties);
 }
 
 void BSGraphicsRenderTargetManager_CK::CreateDepthStencil(uint32_t TargetIndex, const BSGraphics_CK::DepthStencilTargetProperties *Properties)
 {
 	AssertMsg(TargetIndex < DEPTH_STENCIL_COUNT && TargetIndex != DEPTH_STENCIL_TARGET_NONE, "Wrong target index");
 
-	BSGraphics_CK::Renderer::Instance.DestroyDepthStencil(TargetIndex);
+	BSGraphics_CK::Renderer::QInstance()->DestroyDepthStencil(TargetIndex);
 	pDepthStencilTargetDataA[TargetIndex] = *Properties;
-	BSGraphics_CK::Renderer::Instance.CreateDepthStencil(TargetIndex, GetDepthStencilName(TargetIndex), Properties);
+	BSGraphics_CK::Renderer::QInstance()->CreateDepthStencil(TargetIndex, GetDepthStencilName(TargetIndex), Properties);
 }
 
 void BSGraphicsRenderTargetManager_CK::CreateCubemapRenderTarget(uint32_t TargetIndex, const BSGraphics_CK::CubeMapRenderTargetProperties *Properties)
 {
 	AssertMsg(TargetIndex < RENDER_TARGET_CUBEMAP_COUNT, "Wrong target index");
 
-	BSGraphics_CK::Renderer::Instance.DestroyCubemapRenderTarget(TargetIndex);
+	BSGraphics_CK::Renderer::QInstance()->DestroyCubemapRenderTarget(TargetIndex);
 	pCubeMapRenderTargetDataA[TargetIndex] = *Properties;
-	BSGraphics_CK::Renderer::Instance.CreateCubemapRenderTarget(TargetIndex, GetCubemapRenderTargetName(TargetIndex), Properties);
+	BSGraphics_CK::Renderer::QInstance()->CreateCubemapRenderTarget(TargetIndex, GetCubemapRenderTargetName(TargetIndex), Properties);
 }
 
 const char *BSGraphicsRenderTargetManager_CK::GetRenderTargetName(uint32_t Index)

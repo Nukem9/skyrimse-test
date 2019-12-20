@@ -100,13 +100,12 @@ public:
 	class Renderer
 	{
 	public:
-		inline AutoPtr(Renderer, Instance, 0x56B73A0);
-
 		char _pad0[0xAF0];
 		RenderTargetData pRenderTargets[RENDER_TARGET_COUNT];
 		DepthStencilData pDepthStencils[DEPTH_STENCIL_COUNT];
 		CubemapRenderTargetData pCubemapRenderTargets[RENDER_TARGET_CUBEMAP_COUNT];
 
+		static Renderer *QInstance();
 		void SetResourceName(ID3D11DeviceChild *Resource, const char *Format, ...);
 		void CreateRenderTarget(uint32_t TargetIndex, const char *Name, const RenderTargetProperties *Properties);
 		void CreateDepthStencil(uint32_t TargetIndex, const char *Name, const DepthStencilTargetProperties *Properties);
