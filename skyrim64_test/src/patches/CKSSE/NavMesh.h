@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include "../TES/BSTArray.h"
+#include "Offsets.h"
 
 class BSNavmesh
 {

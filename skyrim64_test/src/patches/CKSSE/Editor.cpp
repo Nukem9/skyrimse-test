@@ -14,6 +14,7 @@
 #include "EditorUI.h"
 #include "TESWater.h"
 #include "LogWindow.h"
+#include "Offsets.h"
 
 #pragma comment(lib, "libdeflate.lib")
 

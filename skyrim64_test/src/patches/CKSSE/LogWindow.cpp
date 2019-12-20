@@ -4,6 +4,7 @@
 #include <Richedit.h>
 #include "EditorUI.h"
 #include "LogWindow.h"
+#include "Offsets.h"
 
 HWND g_LogHwnd;
 HANDLE g_LogPipeReader;

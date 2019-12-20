@@ -1,6 +1,7 @@
 #include "../../common.h"
 #include <set>
 #include "TESForm_CK.h"
+#include "Offsets.h"
 
 std::unordered_map<uint64_t, void *> FormReferenceMap;
 std::set<TESForm_CK *> AlteredFormListShadow;

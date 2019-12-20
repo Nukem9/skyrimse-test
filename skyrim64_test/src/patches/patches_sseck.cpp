@@ -15,6 +15,7 @@
 #include "CKSSE/BSPointerHandleManager.h"
 #include "CKSSE/BSGraphicsRenderTargetManager_CK.h"
 #include "CKSSE/BSShaderResourceManager_CK.h"
+#include "CKSSE/Offsets.h"
 
 void PatchSteam();
 void PatchThreading();
@@ -31,7 +32,10 @@ void sub_141BAF3E0(__int64 rcx0, __int64 a2);
 
 void Patch_TESVCreationKit()
 {
-	if (_stricmp((const char *)(OFFSET(0x3078988, 1530)), "1.5.3.0") != 0)
+	BuildTableForVersion(1573);
+	DumpTable();
+
+	/*if (_stricmp((const char *)(OFFSET(0x3078988, 1530)), "1.5.3.0") != 0)
 	{
 		char modulePath[MAX_PATH];
 		GetModuleFileNameA(GetModuleHandle(nullptr), modulePath, ARRAYSIZE(modulePath));
@@ -41,7 +45,7 @@ void Patch_TESVCreationKit()
 
 		MessageBoxA(nullptr, message, "Version Check", MB_ICONERROR);
 		return;
-	}
+	}*/
 
 	//
 	// Replace broken crash dump functionality
@@ -397,9 +401,9 @@ void Patch_TESVCreationKit()
 	//
 	// Fix crash when loading new CC ESLs as master files
 	//
-	XUtil::DetourJump(OFFSET(0x2E44890, 1530), &GetESLMasterCount);
-	XUtil::DetourJump(OFFSET(0x2E44920, 1530), &GetESLMasterName);
-	XUtil::DetourJump(OFFSET(0x2E448A0, 1530), &IsESLMaster);
+	//XUtil::DetourJump(OFFSET(0x2E44890, 1530), &GetESLMasterCount);
+	//XUtil::DetourJump(OFFSET(0x2E44920, 1530), &GetESLMasterName);
+	//XUtil::DetourJump(OFFSET(0x2E448A0, 1530), &IsESLMaster);
 
 	//
 	// Fix for icons not appearing in the script properties dialog (list view) (LVIF_TEXT -> LVIF_IMAGE)

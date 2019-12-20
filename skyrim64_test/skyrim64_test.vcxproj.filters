@@ -365,6 +365,9 @@
     <ClInclude Include="src\patches\CKSSE\BSPointerHandleManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\Offsets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -602,6 +605,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\CKSSE\BSPointerHandleManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\Offsets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

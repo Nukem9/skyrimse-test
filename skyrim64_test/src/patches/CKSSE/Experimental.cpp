@@ -2,6 +2,7 @@
 #include <intrin.h>
 #include <chrono>
 #include "LogWindow.h"
+#include "Offsets.h"
 
 using namespace std::chrono;
 
@@ -120,8 +121,8 @@ uint64_t ExperimentalPatchEditAndContinue()
 	uint64_t patchCount = 0;
 	std::vector<uintptr_t> branchTargets;
 
-	const uintptr_t ecTableStart = g_ModuleBase + 0xFB4000;
-	const uintptr_t ecTableEnd = g_ModuleBase + 0x104C50D;
+	const uintptr_t ecTableStart = OFFSET(0xFB4000, 1530);
+	const uintptr_t ecTableEnd = OFFSET(0x104C50D, 1530);
 
 	for (uintptr_t i = g_CodeBase; i < g_CodeEnd; i++)
 	{
@@ -210,11 +211,18 @@ void ExperimentalPatchOptimizations()
 
 	std::tuple<uintptr_t, uintptr_t, DWORD> addressRanges[] =
 	{
+#if 0
 		std::make_tuple(g_ModuleBase + 0x0, 0x1000, 0),			// PE header
 		std::make_tuple(g_ModuleBase + 0x1000, 0xFB3000, 0),	// .textbss
 		std::make_tuple(g_ModuleBase + 0xFB4000, 0x206D000, 0),	// .text
 		std::make_tuple(g_ModuleBase + 0x3021000, 0x8CA000, 0),	// .rdata
 		std::make_tuple(g_ModuleBase + 0x38EB000, 0x2129000, 0),// .data
+#endif
+		std::make_tuple(g_ModuleBase + 0x0, 0x1000, 0),			// PE header
+		std::make_tuple(g_ModuleBase + 0x1000, 0xFAC000, 0),	// .textbss
+		std::make_tuple(g_ModuleBase + 0xFAD000, 0x205E000, 0),	// .text
+		std::make_tuple(g_ModuleBase + 0x300B000, 0x8C2000, 0),	// .rdata
+		std::make_tuple(g_ModuleBase + 0x38CD000, 0x212B000, 0),// .data
 	};
 
 	// Mark every page as writable

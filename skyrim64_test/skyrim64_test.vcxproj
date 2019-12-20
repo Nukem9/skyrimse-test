@@ -170,6 +170,7 @@
     <ClInclude Include="src\patches\CKSSE\Experimental.h" />
     <ClInclude Include="src\patches\CKSSE\LogWindow.h" />
     <ClInclude Include="src\patches\CKSSE\NavMesh.h" />
+    <ClInclude Include="src\patches\CKSSE\Offsets.h" />
     <ClInclude Include="src\patches\CKSSE\TESFile_CK.h" />
     <ClInclude Include="src\patches\CKSSE\TESForm_CK.h" />
     <ClInclude Include="src\patches\CKSSE\TESWater.h" />
@@ -282,6 +283,7 @@
     <ClCompile Include="src\patches\CKSSE\BSPointerHandleManager.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSShaderResourceManager_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\LogWindow.cpp" />
+    <ClCompile Include="src\patches\CKSSE\Offsets.cpp" />
     <ClCompile Include="src\patches\CKSSE\TESFile_CK.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />

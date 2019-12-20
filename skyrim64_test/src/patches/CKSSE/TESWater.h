@@ -3,6 +3,7 @@
 #include "../../common.h"
 #include "../TES/BSTArray.h"
 #include "TESForm_CK.h"
+#include "Offsets.h"
 
 class BSTriShape;
 

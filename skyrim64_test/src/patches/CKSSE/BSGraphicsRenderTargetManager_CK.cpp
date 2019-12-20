@@ -1,6 +1,7 @@
 #include "../../common.h"
 #include "../TES/BSShader/BSShaderRenderTargets.h"
 #include "BSGraphicsRenderTargetManager_CK.h"
+#include "Offsets.h"
 
 void BSGraphics_CK::Renderer::SetResourceName(ID3D11DeviceChild *Resource, const char *Format, ...)
 {

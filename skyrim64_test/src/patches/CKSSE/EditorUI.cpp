@@ -6,6 +6,7 @@
 #include "TESForm_CK.h"
 #include "EditorUI.h"
 #include "LogWindow.h"
+#include "Offsets.h"
 
 #pragma comment(lib, "comctl32.lib")
 

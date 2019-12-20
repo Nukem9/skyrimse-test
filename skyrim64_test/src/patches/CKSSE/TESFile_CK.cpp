@@ -1,6 +1,7 @@
 #include "../../common.h"
 #include "TESFile_CK.h"
 #include "LogWindow.h"
+#include "Offsets.h"
 
 int TESFile::hk_LoadPluginHeader()
 {
