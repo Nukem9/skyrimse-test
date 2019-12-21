@@ -813,9 +813,6 @@ void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
 	if (!sub_1418F5210())
 		return;
 
-	// Nop the call to reload the loose file tables TODO(!!) FIX THIS
-	XUtil::PatchMemory(OFFSET(0x18F4D4A, 1530), (PBYTE)"\x90\x90\x90\x90\x90", 5);
-
 	HWND listHandle = *(HWND *)(a1 + 16);
 	int itemIndex = ListView_GetNextItem(listHandle, -1, LVNI_SELECTED);
 	int itemCount = 0;
@@ -834,12 +831,10 @@ void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
 		}
 	}
 
-	// Reload loose file paths manually
+	// Reload loose file paths manually since it's patched out
 	EditorUI_Log("Exported FaceGen for %d NPCs. Reloading loose file paths...", itemCount);
 	sub_141617680(*(__int64 *)OFFSET(0x3AFB930, 1530));
 
-	// Done => unpatch it
-	XUtil::PatchMemory(OFFSET(0x18F4D4A, 1530), (PBYTE)"\xE8\x98\xDA\x6F\xFF", 5);
 	sub_1418F5320();
 }
 
@@ -1182,4 +1177,9 @@ void hk_call_14147FB57(HWND ListViewHandle, TESForm_CK *Form, bool UseImage, int
 		return;
 
 	((void(__fastcall *)(HWND, TESForm_CK *, bool, int))OFFSET(0x13BA4D0, 1530))(ListViewHandle, Form, UseImage, ItemIndex);
+}
+
+float hk_call_14202E0E8(float Delta)
+{
+	return abs(Delta) / 100.0f;
 }

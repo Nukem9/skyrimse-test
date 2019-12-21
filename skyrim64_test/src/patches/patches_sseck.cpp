@@ -177,6 +177,7 @@ void Patch_TESVCreationKit()
 
 	// Prevent internal filesystem reloads when exporting FaceGen for many NPCs
 	XUtil::DetourJump(OFFSET(0x12D1AC0, 1530), &ExportFaceGenForSelectedNPCs);
+	XUtil::PatchMemoryNop(OFFSET(0x18F4D4A, 1530), 5);
 
 	//
 	// LipGen
@@ -588,10 +589,10 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x1CA2E64, 1530), (PBYTE)"\xBA\x0C\x00\x00\x00", 5);
 
 	//
-	// Increase the maximum navmesh autogeneration cell limit to 100,000 and prevent spamming UI updates (0.01% -> 0.70%)
+	// Increase the maximum navmesh autogeneration cell limit to 100,000 and prevent spamming UI updates (0.01% -> 1.00%)
 	//
 	XUtil::PatchMemory(OFFSET(0x202F0B6, 1530), (PBYTE)"\xA0\x86\x01\x00", 4);
-	XUtil::PatchMemory(OFFSET(0x202E0ED, 1530), (PBYTE)"\x0F\x2F\x05\xBC\x05\x03\x01", 7);
+	XUtil::DetourCall(OFFSET(0x202E0E8, 1530), &hk_call_14202E0E8);
 
 	//
 	// Fix for crash when using "Move to topic" in a quest dialogue view. Any unresolved/unused Topic actions default to "Unknown action",

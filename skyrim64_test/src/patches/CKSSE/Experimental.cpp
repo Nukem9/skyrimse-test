@@ -230,9 +230,9 @@ void ExperimentalPatchOptimizations()
 		Assert(VirtualProtect((void *)range.Start, range.End - range.Start, PAGE_READWRITE, &range.Protection));
 	}
 
-	uint64_t count1 = ExperimentalPatchEditAndContinue();
-	uint64_t count2 = ExperimentalPatchMemInit();
-	uint64_t count3 = ExperimentalPatchLinkedList();
+	uint64_t count1 = ExperimentalPatchMemInit();
+	uint64_t count2 = ExperimentalPatchLinkedList();
+	uint64_t count3 = ExperimentalPatchEditAndContinue();
 
 	// Then restore the old permissions
 	for (auto& range : addressRanges)
