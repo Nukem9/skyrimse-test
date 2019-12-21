@@ -46,6 +46,7 @@ extern __itt_heap_function ITT_FreeCallback;
 #include "xutil.h"
 #include "dump.h"
 #include "profiler.h"
+#include "patches/offsets.h"
 
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 

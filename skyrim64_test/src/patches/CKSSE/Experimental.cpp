@@ -2,7 +2,6 @@
 #include <intrin.h>
 #include <chrono>
 #include "LogWindow.h"
-#include "Offsets.h"
 
 using namespace std::chrono;
 

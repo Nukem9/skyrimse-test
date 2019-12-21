@@ -1,7 +1,6 @@
 #include "../../common.h"
 #include "../TES/BSShader/BSShaderRenderTargets.h"
 #include "BSGraphicsRenderTargetManager_CK.h"
-#include "Offsets.h"
 
 BSGraphics_CK::Renderer *BSGraphics_CK::Renderer::QInstance()
 {

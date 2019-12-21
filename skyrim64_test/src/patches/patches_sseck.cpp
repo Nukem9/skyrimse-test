@@ -15,7 +15,6 @@
 #include "CKSSE/BSPointerHandleManager.h"
 #include "CKSSE/BSGraphicsRenderTargetManager_CK.h"
 #include "CKSSE/BSShaderResourceManager_CK.h"
-#include "CKSSE/Offsets.h"
 
 void PatchSteam();
 void PatchThreading();
@@ -32,20 +31,32 @@ void sub_141BAF3E0(__int64 rcx0, __int64 a2);
 
 void Patch_TESVCreationKit()
 {
-	BuildTableForVersion(1573);
-	DumpTable();
-
-	/*if (_stricmp((const char *)(OFFSET(0x3078988, 1530)), "1.5.3.0") != 0)
+	if (_stricmp((const char *)(g_ModuleBase + 0x3078988), "1.5.3.0") != 0)
+	{
+		// Released 2018-04-13 / Built Mon Sep 18 18:58:37 2017
+		Offsets::BuildTableForCKSSEVersion(1530);
+	}
+	else if (_stricmp((const char *)(g_ModuleBase + 0x3062CC8), "1.5.73.0") != 0)
+	{
+		// Released 2019-03-13 / Built Tue Mar 05 18:25:55 2019
+		Offsets::BuildTableForCKSSEVersion(1573);
+	}
+	else
 	{
 		char modulePath[MAX_PATH];
 		GetModuleFileNameA(GetModuleHandle(nullptr), modulePath, ARRAYSIZE(modulePath));
 
 		char message[1024];
-		sprintf_s(message, "Incorrect CreationKit version detected. Version 1.5.3.0 from 2018-04-13 is required. Patches are disabled.\n\nExecutable path: %s", modulePath);
+		sprintf_s(message,
+			"Unknown Creation Kit version detected. Patches are disabled.\n\n"
+			"Required versions:\n"
+			"CreationKit.exe 1.5.30 released on 2018-04-13\n"
+			"CreationKit.exe 1.5.73 released on 2019-03-13\n"
+			"\nExecutable path: %s", modulePath);
 
 		MessageBoxA(nullptr, message, "Version Check", MB_ICONERROR);
 		return;
-	}*/
+	}
 
 	//
 	// Replace broken crash dump functionality

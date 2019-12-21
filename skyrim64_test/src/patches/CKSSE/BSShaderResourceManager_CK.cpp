@@ -2,7 +2,6 @@
 #include "../TES/NiMain/BSDynamicTriShape.h"
 #include "../TES/NiMain/NiCollisionUtils.h"
 #include "BSShaderResourceManager_CK.h"
-#include "Offsets.h"
 
 bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOrigin, const NiPoint3& kDir, NiPick& kPick, BSTriShape *pkTriShape)
 {
