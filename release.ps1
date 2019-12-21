@@ -20,7 +20,7 @@ mkdir "Build"
 copy "skyrim64_test.ini" "Build\skyrim64_test.ini"
 
 cd "x64\Release"
-copy "winhttp.dll" "..\..\Build\winhttp.dll"
+copy "SSE_winhttp.dll" "..\..\Build\winhttp.dll"
 copy "tbb.dll" "..\..\Build\tbb.dll"
 copy "tbbmalloc.dll" "..\..\Build\tbbmalloc.dll"
 
