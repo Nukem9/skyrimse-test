@@ -91,6 +91,7 @@ namespace XUtil
 
 	uintptr_t FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const char *Mask);
 	std::vector<uintptr_t> FindPatterns(uintptr_t StartAddress, uintptr_t MaxSize, const char *Mask);
+	bool GetPESectionRange(uintptr_t ModuleBase, const char *Section, uintptr_t *Start, uintptr_t *End);
 	void PatchMemory(uintptr_t Address, uint8_t *Data, size_t Size);
 	void PatchMemoryNop(uintptr_t Address, size_t Size);
 	void DetourJump(uintptr_t Target, uintptr_t Destination);

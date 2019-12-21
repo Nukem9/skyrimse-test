@@ -6,7 +6,7 @@ namespace Offsets
 {
 	uintptr_t Resolve(uint32_t RelOffset, uint32_t Version)
 	{
-		return AddressMap.at(OFFSET_ENTRY_KEY(Version, RelOffset));
+		return AddressMap.at(OFFSET_ENTRY_KEY(RelOffset, Version));
 	}
 
 	bool CanResolve(uint32_t RelOffset, uint32_t Version)
@@ -36,14 +36,14 @@ namespace Offsets
 	void BuildTable(const OffsetEntry *Table, size_t Count, bool CurrentVersion)
 	{
 #if 0
-		ValidateTable(Table);
+		ValidateTable(Table, Count);
 #endif
 
 		for (size_t i = 0; i < Count; i++)
 		{
 			auto& entry = Table[i];
 
-			auto key = OFFSET_ENTRY_KEY(entry.Version, entry.RelOffset);
+			auto key = OFFSET_ENTRY_KEY(entry.RelOffset, entry.Version);
 			uintptr_t finalAddress = 0;
 
 			if (AddressMap.count(key) > 0)

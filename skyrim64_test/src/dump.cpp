@@ -52,44 +52,19 @@ void DumpEnableBreakpoint()
 	g_ModuleBase = moduleBase;
 	g_ModuleSize = ntHeaders->OptionalHeader.SizeOfImage;
 
-	g_CodeBase = std::numeric_limits<uintptr_t>::max();
-	g_RdataBase = std::numeric_limits<uintptr_t>::max();
-	g_DataBase = std::numeric_limits<uintptr_t>::max();
+	uintptr_t tempBssStart;
+	uintptr_t tempBssEnd;
 
-	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(ntHeaders);
+	Assert(XUtil::GetPESectionRange(moduleBase, ".text", &g_CodeBase, &g_CodeEnd));
+	Assert(XUtil::GetPESectionRange(moduleBase, ".textbss", &tempBssStart, &tempBssEnd));
+	Assert(XUtil::GetPESectionRange(moduleBase, ".rdata", &g_RdataBase, &g_RdataEnd));
+	Assert(XUtil::GetPESectionRange(moduleBase, ".data", &g_DataBase, &g_DataEnd));
 
-	for (uint32_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++, section++)
-	{
-		uintptr_t start = g_ModuleBase + section->VirtualAddress;
-		uintptr_t end = g_ModuleBase + section->VirtualAddress + section->Misc.VirtualSize;
-
-		// Name might not be null-terminated
-		char sectionName[sizeof(IMAGE_SECTION_HEADER::Name) + 1];
-		memset(sectionName, 0, sizeof(sectionName));
-		memcpy(sectionName, section->Name, sizeof(IMAGE_SECTION_HEADER::Name));
-
-		if (!_stricmp(sectionName, ".text") || !_stricmp(sectionName, ".textbss"))
-		{
-			if (section->Misc.VirtualSize > 0x10000)
-			{
-				g_CodeBase = std::min(g_CodeBase, start);
-				g_CodeEnd = std::max(g_CodeEnd, end);
-			}
-		}
-		else if (!_stricmp(sectionName, ".rdata"))
-		{
-			g_RdataBase = std::min(g_RdataBase, start);
-			g_RdataEnd = std::max(g_RdataEnd, end);
-		}
-		else if (!_stricmp(sectionName, ".data"))
-		{
-			g_DataBase = std::min(g_DataBase, start);
-			g_DataEnd = std::max(g_DataEnd, end);
-		}
-	}
+	g_CodeBase = std::min(g_CodeBase, tempBssStart);
+	g_CodeEnd = std::max(g_CodeEnd, tempBssEnd);
 
 	// Set the magic value which triggers an early QueryPerformanceCounter call
-	*(ULONGLONG *)loadConfig->SecurityCookie = 0x2B992DDFA232;
+	*(uint64_t *)loadConfig->SecurityCookie = 0x2B992DDFA232;
 	PatchIAT(hk_QueryPerformanceCounter, "kernel32.dll", "QueryPerformanceCounter");
 
 	// Kill steam's unpacker call to NtSetInformationThread(ThreadHideFromDebugger)

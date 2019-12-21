@@ -267,6 +267,44 @@ std::vector<uintptr_t> XUtil::FindPatterns(uintptr_t StartAddress, uintptr_t Max
 	return results;
 }
 
+bool XUtil::GetPESectionRange(uintptr_t ModuleBase, const char *Section, uintptr_t *Start, uintptr_t *End)
+{
+	PIMAGE_NT_HEADERS64 ntHeaders = (PIMAGE_NT_HEADERS64)(ModuleBase + ((PIMAGE_DOS_HEADER)ModuleBase)->e_lfanew);
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(ntHeaders);
+
+	// Assume PE header if no section
+	if (!Section || strlen(Section) <= 0)
+	{
+		if (Start)
+			*Start = ModuleBase;
+
+		if (End)
+			*End = ModuleBase + ntHeaders->OptionalHeader.SizeOfHeaders;
+
+		return true;
+	}
+
+	for (uint32_t i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++, section++)
+	{
+		// Name might not be null-terminated
+		char sectionName[sizeof(IMAGE_SECTION_HEADER::Name) + 1] = { };
+		memcpy(sectionName, section->Name, sizeof(IMAGE_SECTION_HEADER::Name));
+
+		if (!strcmp(sectionName, Section))
+		{
+			if (Start)
+				*Start = ModuleBase + section->VirtualAddress;
+
+			if (End)
+				*End = ModuleBase + section->VirtualAddress + section->Misc.VirtualSize;
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void XUtil::PatchMemory(uintptr_t Address, uint8_t *Data, size_t Size)
 {
 	DWORD d = 0;

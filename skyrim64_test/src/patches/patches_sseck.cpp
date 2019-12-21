@@ -31,12 +31,12 @@ void sub_141BAF3E0(__int64 rcx0, __int64 a2);
 
 void Patch_TESVCreationKit()
 {
-	if (_stricmp((const char *)(g_ModuleBase + 0x3078988), "1.5.3.0") != 0)
+	if (!_stricmp((const char *)(g_ModuleBase + 0x3078988), "1.5.3.0"))
 	{
 		// Released 2018-04-13 / Built Mon Sep 18 18:58:37 2017
 		Offsets::BuildTableForCKSSEVersion(1530);
 	}
-	else if (_stricmp((const char *)(g_ModuleBase + 0x3062CC8), "1.5.73.0") != 0)
+	else if (!_stricmp((const char *)(g_ModuleBase + 0x3062CC8), "1.5.73.0"))
 	{
 		// Released 2019-03-13 / Built Tue Mar 05 18:25:55 2019
 		Offsets::BuildTableForCKSSEVersion(1573);
@@ -410,11 +410,14 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x2E54B88, 1530), &QuitHandler);
 
 	//
-	// Fix crash when loading new CC ESLs as master files
+	// Fix crash when loading new CC ESLs as master files. Update 1.5.73 automatically parses the Skyrim.CCC file.
 	//
-	//XUtil::DetourJump(OFFSET(0x2E44890, 1530), &GetESLMasterCount);
-	//XUtil::DetourJump(OFFSET(0x2E44920, 1530), &GetESLMasterName);
-	//XUtil::DetourJump(OFFSET(0x2E448A0, 1530), &IsESLMaster);
+	if (Offsets::CanResolve(0x2E44890, 1530))
+	{
+		XUtil::DetourJump(OFFSET(0x2E44890, 1530), &GetESLMasterCount);
+		XUtil::DetourJump(OFFSET(0x2E44920, 1530), &GetESLMasterName);
+		XUtil::DetourJump(OFFSET(0x2E448A0, 1530), &IsESLMaster);
+	}
 
 	//
 	// Fix for icons not appearing in the script properties dialog (list view) (LVIF_TEXT -> LVIF_IMAGE)

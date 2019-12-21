@@ -208,28 +208,26 @@ void ExperimentalPatchOptimizations()
 {
 	auto timerStart = high_resolution_clock::now();
 
-	std::tuple<uintptr_t, uintptr_t, DWORD> addressRanges[] =
+	struct
 	{
-#if 0
-		std::make_tuple(g_ModuleBase + 0x0, 0x1000, 0),			// PE header
-		std::make_tuple(g_ModuleBase + 0x1000, 0xFB3000, 0),	// .textbss
-		std::make_tuple(g_ModuleBase + 0xFB4000, 0x206D000, 0),	// .text
-		std::make_tuple(g_ModuleBase + 0x3021000, 0x8CA000, 0),	// .rdata
-		std::make_tuple(g_ModuleBase + 0x38EB000, 0x2129000, 0),// .data
-#endif
-		std::make_tuple(g_ModuleBase + 0x0, 0x1000, 0),			// PE header
-		std::make_tuple(g_ModuleBase + 0x1000, 0xFAC000, 0),	// .textbss
-		std::make_tuple(g_ModuleBase + 0xFAD000, 0x205E000, 0),	// .text
-		std::make_tuple(g_ModuleBase + 0x300B000, 0x8C2000, 0),	// .rdata
-		std::make_tuple(g_ModuleBase + 0x38CD000, 0x212B000, 0),// .data
+		const char *Name;
+		uintptr_t Start;
+		uintptr_t End;
+		DWORD Protection;
+	} addressRanges[] =
+	{
+		{ nullptr, 0, 0, 0 },		// PE header
+		{ ".textbss", 0, 0, 0 },	// .textbss
+		{ ".text", 0, 0, 0 },		// .text
+		{ ".rdata", 0, 0, 0 },		// .rdata
+		{ ".data", 0, 0, 0 },		// .data
 	};
 
 	// Mark every page as writable
 	for (auto& range : addressRanges)
 	{
-		BOOL ret = VirtualProtect((void *)std::get<0>(range), std::get<1>(range), PAGE_READWRITE, &std::get<2>(range));
-
-		Assert(ret);
+		Assert(XUtil::GetPESectionRange(g_ModuleBase, range.Name, &range.Start, &range.End));
+		Assert(VirtualProtect((void *)range.Start, range.End - range.Start, PAGE_READWRITE, &range.Protection));
 	}
 
 	uint64_t count1 = ExperimentalPatchEditAndContinue();
@@ -240,12 +238,12 @@ void ExperimentalPatchOptimizations()
 	for (auto& range : addressRanges)
 	{
 		BOOL ret =
-			VirtualProtect((void *)std::get<0>(range), std::get<1>(range), std::get<2>(range), &std::get<2>(range)) &&
-			FlushInstructionCache(GetCurrentProcess(), (void *)std::get<0>(range), std::get<1>(range));
+			VirtualProtect((void *)range.Start, range.End - range.Start, range.Protection, &range.Protection) &&
+			FlushInstructionCache(GetCurrentProcess(), (void *)range.Start, range.End - range.Start);
 
 		Assert(ret);
 	}
 
 	auto duration = duration_cast<milliseconds>(high_resolution_clock::now() - timerStart).count();
-	EditorUI_Log("%s: (%llu + %llu + %llu) = %llu patches applied in %llums.\n", __FUNCTION__, count1, count2, count3,(count1 + count2 + count3), duration);
+	EditorUI_Log("%s: (%llu + %llu + %llu) = %llu patches applied in %llums.\n", __FUNCTION__, count1, count2, count3, (count1 + count2 + count3), duration);
 }
