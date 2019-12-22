@@ -474,6 +474,11 @@ void Patch_TESVCreationKit()
 	}
 
 	//
+	// Fix for incorrect pointer truncate assertion while saving certain conditions (i.e 3DNPC.esp). TESParameters/CTDA.
+	//
+	XUtil::DetourCall(OFFSET(0x158589F, 1530), &hk_call_14158589F);
+
+	//
 	// Fix for crash on null BGSPerkRankArray form ids and perk ranks being reset to 1 on save (i.e DianaVampire2017Asherz.esp)
 	//
 	XUtil::DetourJump(OFFSET(0x168DF70, 1530), &InitItemPerkRankDataVisitor);

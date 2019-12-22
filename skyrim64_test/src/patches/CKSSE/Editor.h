@@ -63,6 +63,7 @@ void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFuncti
 void QuitHandler();
 
 void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value);
+void hk_call_14158589F(__int64 Buffer, __int64 *Value);
 bool InitItemPerkRankDataVisitor(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray);
 void PerkRankData__LoadFrom(__int64 ArrayHandle, PerkRankEntry *&Entry);
 

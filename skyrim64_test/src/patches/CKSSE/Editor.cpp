@@ -743,6 +743,14 @@ void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value)
 	((void(__fastcall *)(__int64, __int64 *))OFFSET(0x15C88D0, 1530))(FileHandle, Value);
 }
 
+void hk_call_14158589F(__int64 Buffer, __int64 *Value)
+{
+	// The Value pointer can't be modified since it's used immediately after. Garbage data is still written to the plugin.
+	__int64 newValue = *Value & 0x00000000FFFFFFFF;
+
+	((void(__fastcall *)(__int64, __int64 *))OFFSET(0x158D2F0, 1530))(Buffer, &newValue);
+}
+
 bool InitItemPerkRankDataVisitor(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray)
 {
 	auto sub_1416B8A20 = (__int64(*)(__int64, __int64))OFFSET(0x16B8A20, 1530);
