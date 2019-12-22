@@ -318,14 +318,14 @@ void ParseCreationClubContentFile()
 	}();
 }
 
-uint32_t GetESLMasterCount()
+uint32_t BSGameDataSystemUtility__GetCCFileCount()
 {
 	ParseCreationClubContentFile();
 
 	return (uint32_t)g_CCEslNames.size();
 }
 
-const char *GetESLMasterName(uint32_t Index)
+const char *BSGameDataSystemUtility__GetCCFile(uint32_t Index)
 {
 	ParseCreationClubContentFile();
 
@@ -335,7 +335,7 @@ const char *GetESLMasterName(uint32_t Index)
 	return nullptr;
 }
 
-bool IsESLMaster(const char *Name)
+bool BSGameDataSystemUtility__IsCCFile(const char *Name)
 {
 	ParseCreationClubContentFile();
 
@@ -705,15 +705,11 @@ void PatchTemplatedFormIterator()
 	}
 }
 
-void SortFormArray(BSTArray<TESForm_CK *> *Array, int(*SortFunction)(const void *, const void *))
+void ArrayQuickSortRecursive_TESForm(BSTArray<TESForm_CK *>& Array, int(*SortFunction)(const void *, const void *))
 {
-	// NOTE: realSort must be updated on a separate line to avoid one-time initialization
-	thread_local int(__fastcall *realSort)(const void *, const void *);
-	realSort = SortFunction;
-
-	qsort(Array->QBuffer(), Array->QSize(), sizeof(TESForm_CK *), [](const void *a, const void *b)
+	std::sort(&Array[0], &Array[Array.QSize()], [SortFunction](TESForm_CK *A, TESForm_CK *B)
 	{
-		return realSort(*(const void **)a, *(const void **)b);
+		return SortFunction(A, B) == -1;
 	});
 }
 
@@ -728,7 +724,7 @@ void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFuncti
 	if (itr == arrayCache.end() || itr->second.first != formArray->QBuffer() || itr->second.second != formArray->QSize())
 	{
 		// Update and resort the array
-		SortFormArray(formArray, SortFunction);
+		ArrayQuickSortRecursive_TESForm(*formArray, SortFunction);
 
 		arrayCache[formArray] = std::make_pair(formArray->QBuffer(), formArray->QSize());
 	}
@@ -747,7 +743,7 @@ void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value)
 	((void(__fastcall *)(__int64, __int64 *))OFFSET(0x15C88D0, 1530))(FileHandle, Value);
 }
 
-bool hk_BGSPerkRankArray_sub_14168DF70(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray)
+bool InitItemPerkRankDataVisitor(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray)
 {
 	auto sub_1416B8A20 = (__int64(*)(__int64, __int64))OFFSET(0x16B8A20, 1530);
 	auto sub_1416C05D0 = (__int64(*)(uint32_t *, __int64))OFFSET(0x16C05D0, 1530);
@@ -776,7 +772,7 @@ bool hk_BGSPerkRankArray_sub_14168DF70(PerkRankEntry *Entry, uint32_t *FormId, _
 	return true;
 }
 
-void hk_BGSPerkRankArray_sub_14168EAE0(__int64 ArrayHandle, PerkRankEntry *&Entry)
+void PerkRankData__LoadFrom(__int64 ArrayHandle, PerkRankEntry *&Entry)
 {
 	//
 	// This function does two things:
@@ -896,9 +892,9 @@ void *hk_call_1417E42BF(void *a1)
 	return nullptr;
 }
 
-HRESULT LoadTextureDataFromFile(__int64 a1, __int64 a2, __int64 a3, __int64 a4, unsigned int a5, int a6)
+HRESULT DirectX__LoadFromDDSFile(__int64 a1, __int64 a2, __int64 a3, __int64 a4, unsigned int a5, int a6)
 {
-	// Modified LoadTextureDataFromFile from DDSTextureLoader (DirectXTex)
+	// Modified DirectX::LoadFromDDSFile from DDSTextureLoader (DirectXTex)
 	HRESULT hr = ((HRESULT(__fastcall *)(__int64, __int64, __int64, __int64, unsigned int, int))OFFSET(0x2D266E0, 1530))(a1, a2, a3, a4, a5, a6);
 
 	if (FAILED(hr))
@@ -937,7 +933,7 @@ void hk_call_141C410A1(__int64 a1, BSShaderProperty *Property)
 	((void(__fastcall *)(__int64, BSShaderProperty *))OFFSET(0x12A4D20, 1530))(a1 + 0x128, Property);
 }
 
-void hk_sub_141B08540(__int64 DiskCRDT, __int64 SourceCRDT)
+void TESObjectWEAP__Data__ConvertCriticalData(__int64 DiskCRDT, __int64 SourceCRDT)
 {
 	// Convert in-memory CRDT to on-disk CRDT data, but do it properly this time
 	memset((void *)DiskCRDT, 0, 24);
@@ -952,7 +948,7 @@ void hk_sub_141B08540(__int64 DiskCRDT, __int64 SourceCRDT)
 		*(uint64_t *)(DiskCRDT + 0x10) = effectForm->GetFormID();
 }
 
-void hk_call_141B037B2(__int64 TESFile, __int64 SourceCRDT)
+void TESObjectWEAP__Data__LoadCriticalData(__int64 TESFile, __int64 SourceCRDT)
 {
 	((bool(__fastcall *)(__int64, __int64))OFFSET(0x1B07AA0, 1530))(TESFile, SourceCRDT);
 
@@ -1016,7 +1012,7 @@ uint32_t sub_142647AC0(__int64 a1, bool *IterationFinished)
 	return status;
 }
 
-bool sub_142676020(const char *File, uint32_t *FileSize)
+bool BSResource__LooseFileLocation__FileExists(const char *CanonicalFullPath, uint32_t *TotalSize)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fileInfo;
 	fileInfo.dwFileAttributes = INVALID_FILE_ATTRIBUTES;
@@ -1024,17 +1020,17 @@ bool sub_142676020(const char *File, uint32_t *FileSize)
 	if (CachedFileInfoValid)
 	{
 		const static uint32_t cwdLength = GetCurrentDirectoryA(0, nullptr);
-		const size_t filePathLen = strlen(File);
+		const size_t filePathLen = strlen(CanonicalFullPath);
 		const size_t basePathLen = strlen(CachedBasePath);
 
 		if (filePathLen > cwdLength)
 		{
 			// Anything under "<CWD>\\Data\\data\\" will never be valid, so discard all calls with it
-			if (!_strnicmp(File + cwdLength, "Data\\data\\", 10))
+			if (!_strnicmp(CanonicalFullPath + cwdLength, "Data\\data\\", 10))
 				return false;
 
 			// Check if this file path matches the query from FindFirstFileExA
-			if (filePathLen > basePathLen && !_stricmp(File + basePathLen, CachedFileInfo.cFileName))
+			if (filePathLen > basePathLen && !_stricmp(CanonicalFullPath + basePathLen, CachedFileInfo.cFileName))
 			{
 				fileInfo.dwFileAttributes = CachedFileInfo.dwFileAttributes;
 				fileInfo.nFileSizeLow = CachedFileInfo.nFileSizeLow;
@@ -1046,16 +1042,16 @@ bool sub_142676020(const char *File, uint32_t *FileSize)
 	if (fileInfo.dwFileAttributes == INVALID_FILE_ATTRIBUTES)
 	{
 		// Cache miss
-		if (!GetFileAttributesExA(File, GetFileExInfoStandard, &fileInfo))
+		if (!GetFileAttributesExA(CanonicalFullPath, GetFileExInfoStandard, &fileInfo))
 			return false;
 	}
 
 	if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		return false;
 
-	AssertMsgVa(fileInfo.nFileSizeHigh <= 0, "Need to move to 64-bit file sizes. '%s' exceeds 4GB.", File);
+	AssertMsgVa(fileInfo.nFileSizeHigh <= 0, "Need to move to 64-bit file sizes. '%s' exceeds 4GB.", CanonicalFullPath);
 
-	*FileSize = fileInfo.nFileSizeLow;
+	*TotalSize = fileInfo.nFileSizeLow;
 	return true;
 }
 

@@ -21,11 +21,11 @@ public:
 	char _pad1[0x1D8];
 	uint32_t m_RecordFlags;
 
-	inline static int (* LoadPluginHeader)(TESFile *);
-	inline static __int64 (* WritePluginHeader)(TESFile *);
+	inline static int (* LoadTESInfo)(TESFile *);
+	inline static __int64 (* WriteTESInfo)(TESFile *);
 
-	int hk_LoadPluginHeader();
-	__int64 hk_WritePluginHeader();
+	int hk_LoadTESInfo();
+	__int64 hk_WriteTESInfo();
 	bool IsActiveFileBlacklist();
 };
 static_assert_offset(TESFile, m_FileName, 0x58);

@@ -2,9 +2,9 @@
 #include "TESFile_CK.h"
 #include "LogWindow.h"
 
-int TESFile::hk_LoadPluginHeader()
+int TESFile::hk_LoadTESInfo()
 {
-	int error = LoadPluginHeader(this);
+	int error = LoadTESInfo(this);
 
 	if (error != 0)
 		return error;
@@ -22,7 +22,7 @@ int TESFile::hk_LoadPluginHeader()
 	return error;
 }
 
-__int64 TESFile::hk_WritePluginHeader()
+__int64 TESFile::hk_WriteTESInfo()
 {
 	bool resetEsmFlag = false;
 
@@ -39,7 +39,7 @@ __int64 TESFile::hk_WritePluginHeader()
 		}
 	}
 
-	__int64 form = WritePluginHeader(this);
+	__int64 form = WriteTESInfo(this);
 
 	if (resetEsmFlag)
 		m_RecordFlags &= ~FILE_RECORD_ESM;

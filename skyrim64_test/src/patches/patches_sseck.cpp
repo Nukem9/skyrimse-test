@@ -316,8 +316,8 @@ void Patch_TESVCreationKit()
 		XUtil::DetourCall(OFFSET(0x13E2D37, 1530), &TESFile::IsActiveFileBlacklist);
 		XUtil::PatchMemoryNop(OFFSET(0x163CA2E, 1530), 2);
 
-		*(uint8_t **)&TESFile::LoadPluginHeader = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x1664CC0, 1530), &TESFile::hk_LoadPluginHeader);
-		*(uint8_t **)&TESFile::WritePluginHeader = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x1665520, 1530), &TESFile::hk_WritePluginHeader);
+		*(uint8_t **)&TESFile::LoadTESInfo = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x1664CC0, 1530), &TESFile::hk_LoadTESInfo);
+		*(uint8_t **)&TESFile::WriteTESInfo = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x1665520, 1530), &TESFile::hk_WriteTESInfo);
 
 		// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
 		const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
@@ -367,7 +367,7 @@ void Patch_TESVCreationKit()
 
 	//
 	// Re-enable land shadows. Instead of caching the upload once per frame, upload it on every draw call.
-	// (BSBatchRenderer::DrawGeometry -> GEOMETRY_TYPE_DYNAMIC_TRISHAPE uiFrameCount)
+	// (BSBatchRenderer::Draw -> GEOMETRY_TYPE_DYNAMIC_TRISHAPE uiFrameCount)
 	//
 	// Fixes a bug where BSDynamicTriShape dynamic data would be written to 1 of 4 ring buffers in the shadowmap pass and
 	// cached. At some point later in the frame sub_140D6BF00 would increment a counter and swap the currently used
@@ -393,8 +393,8 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F2C4, 1530), 22);		// Multiple null pointers in call
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F2E4, 1530), 546);	// Remove most of the useless stuff in the function
 
-	XUtil::PatchMemory(OFFSET(0x2E2BC50, 1530), (PBYTE)"\xC3", 1);// Pointer always null (Godrays? TAA?)
-	XUtil::PatchMemory(OFFSET(0x2E2BAF0, 1530), (PBYTE)"\xC3", 1);// Pointer always null (Godrays? TAA?)
+	XUtil::PatchMemory(OFFSET(0x2E2BC50, 1530), (PBYTE)"\xC3", 1);// Pointer always null (BSGraphics::State::UpdateTemporalData)
+	XUtil::PatchMemory(OFFSET(0x2E2BAF0, 1530), (PBYTE)"\xC3", 1);// Pointer always null (BSGraphics::State::UpdateTemporalData)
 
 	XUtil::PatchMemoryNop(OFFSET(0x2DA05C5, 1530), 2);		// Force DEPTH_STENCIL_POST_ZPREPASS_COPY RT to be copied every frame
 
@@ -415,9 +415,9 @@ void Patch_TESVCreationKit()
 	//
 	if (Offsets::CanResolve(0x2E44890, 1530))
 	{
-		XUtil::DetourJump(OFFSET(0x2E44890, 1530), &GetESLMasterCount);
-		XUtil::DetourJump(OFFSET(0x2E44920, 1530), &GetESLMasterName);
-		XUtil::DetourJump(OFFSET(0x2E448A0, 1530), &IsESLMaster);
+		XUtil::DetourJump(OFFSET(0x2E44890, 1530), &BSGameDataSystemUtility__GetCCFileCount);
+		XUtil::DetourJump(OFFSET(0x2E44920, 1530), &BSGameDataSystemUtility__GetCCFile);
+		XUtil::DetourJump(OFFSET(0x2E448A0, 1530), &BSGameDataSystemUtility__IsCCFile);
 	}
 
 	//
@@ -463,7 +463,7 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash (recursive sorting function stack overflow) when saving certain ESP files (i.e 3DNPC.esp)
 	//
-	XUtil::DetourJump(OFFSET(0x1651590, 1530), &SortFormArray);
+	XUtil::DetourJump(OFFSET(0x1651590, 1530), &ArrayQuickSortRecursive_TESForm);
 
 	//
 	// Fix for incorrect NavMesh assertion while saving certain ESP files (i.e 3DNPC.esp)
@@ -473,11 +473,11 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash on null BGSPerkRankArray form ids and perk ranks being reset to 1 on save (i.e DianaVampire2017Asherz.esp)
 	//
-	XUtil::DetourJump(OFFSET(0x168DF70, 1530), &hk_BGSPerkRankArray_sub_14168DF70);
-	XUtil::DetourCall(OFFSET(0x168D1CA, 1530), &hk_BGSPerkRankArray_sub_14168EAE0);
+	XUtil::DetourJump(OFFSET(0x168DF70, 1530), &InitItemPerkRankDataVisitor);
+	XUtil::DetourCall(OFFSET(0x168D1CA, 1530), &PerkRankData__LoadFrom);
 
 	//
-	// Fix use-after-free with a NavMeshInfoMap inserted in the altered forms list during a virtual destructor call
+	// Fix use-after-free with a NavMeshInfoMap inserted in the altered forms list during a virtual destructor call. NavMeshInfoMap::Clear.
 	//
 	XUtil::PatchMemoryNop(OFFSET(0x1DD1D38, 1530), 6);
 
@@ -527,7 +527,7 @@ void Patch_TESVCreationKit()
 	//
 	// Replace direct crash with an assertion when an incompatible texture format is used in the renderer
 	//
-	XUtil::DetourCall(OFFSET(0x2D0CCBF, 1530), &LoadTextureDataFromFile);
+	XUtil::DetourCall(OFFSET(0x2D0CCBF, 1530), &DirectX__LoadFromDDSFile);
 
 	//
 	// Fix for crash when trying to use "Test Radius" on a reference's "3D Data" dialog tab. This code wasn't correctly ported to
@@ -550,8 +550,8 @@ void Patch_TESVCreationKit()
 	//
 	XUtil::PatchMemoryNop(OFFSET(0x1B04201, 1530), 98);
 	XUtil::PatchMemoryNop(OFFSET(0x1B042C1, 1530), 7);
-	XUtil::DetourJump(OFFSET(0x1B08540, 1530), &hk_sub_141B08540);
-	XUtil::DetourCall(OFFSET(0x1B037B2, 1530), &hk_call_141B037B2);
+	XUtil::DetourJump(OFFSET(0x1B08540, 1530), &TESObjectWEAP__Data__ConvertCriticalData);
+	XUtil::DetourCall(OFFSET(0x1B037B2, 1530), &TESObjectWEAP__Data__LoadCriticalData);
 
 	//
 	// Fix for "Could not select actor value X in LoadDialog for BGSEntryPointFunctionDataTwoValue." Use the editor id instead of perk
@@ -607,7 +607,7 @@ void Patch_TESVCreationKit()
 
 	//
 	// Fix for TESObjectLAND vertex normals appearing corrupted in worldspaces with a parent worldspace. The purpose of this code is unknown
-	// and not present in the game itself.
+	// and not present in the game itself. TESObjectLAND::LoadVertices.
 	//
 	XUtil::PatchMemoryNop(OFFSET(0x1B76B17, 1530), 2);
 
@@ -630,12 +630,12 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x2D06C30, 1530), &BSGraphicsRenderTargetManager_CK::CreateCubemapRenderTarget);
 
 	//
-	// Fix for crash after the "Multiple masters selected for load" dialog is shown. Missing null pointer check.
+	// Fix for crash after the "Multiple masters selected for load" dialog is shown. Missing null pointer check in Sky::UpdateAurora.
 	//
 	XUtil::DetourCall(OFFSET(0x1CE8269, 1530), &hk_call_141CE8269);
 
 	//
-	// Fix for crash when duplicating a form with an empty editor id. Integer underflow when string length is 0.
+	// Fix for crash when duplicating a form with an empty editor id. Integer underflow when string length is 0. TESForm::MakeUniqueEditorID.
 	//
 	XUtil::DetourCall(OFFSET(0x16B849E, 1530), &hk_call_1416B849E);
 	XUtil::PatchMemoryNop(OFFSET(0x16B84A3, 1530), 1);
@@ -653,7 +653,7 @@ void Patch_TESVCreationKit()
 	// - Fix an unoptimized function bottleneck (sub_1415D5640)
 	// - Eliminate millions of calls to update the progress dialog, instead only updating 400 times (0% -> 100%)
 	// - Replace old zlib decompression code with optimized libdeflate
-	// - Cache results from FindFirstFile when GetFileAttributesExA is called immediately after (sub_142647AC0, sub_142676020)
+	// - Cache results from FindFirstFile when GetFileAttributesExA is called immediately after (sub_142647AC0, BSResource__LooseFileLocation__FileExists)
 	//
 	int cpuinfo[4];
 	__cpuid(cpuinfo, 1);
@@ -670,7 +670,7 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x166BB1E, 1530), &hk_inflateInit);
 	XUtil::DetourCall(OFFSET(0x166BBB9, 1530), &hk_inflate);
 	XUtil::DetourJump(OFFSET(0x2647AC0, 1530), &sub_142647AC0);
-	XUtil::DetourJump(OFFSET(0x2676020, 1530), &sub_142676020);
+	XUtil::DetourJump(OFFSET(0x2676020, 1530), &BSResource__LooseFileLocation__FileExists);
 
 	// Force multiple master loads
 	//XUtil::PatchMemory(OFFSET(0x163CDF3, 1530), (PBYTE)"\xEB", 1);
