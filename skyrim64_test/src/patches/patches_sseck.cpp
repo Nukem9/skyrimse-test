@@ -466,9 +466,12 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x1651590, 1530), &ArrayQuickSortRecursive_TESForm);
 
 	//
-	// Fix for incorrect NavMesh assertion while saving certain ESP files (i.e 3DNPC.esp)
+	// Fix for incorrect NavMesh assertion while saving certain ESP files (i.e 3DNPC.esp). Fixed in 1.5.73.
 	//
-	XUtil::DetourCall(OFFSET(0x159EB48, 1530), &hk_sub_141047AB2);
+	if (Offsets::CanResolve(0x159EB48, 1530))
+	{
+		XUtil::DetourCall(OFFSET(0x159EB48, 1530), &hk_sub_141047AB2);
+	}
 
 	//
 	// Fix for crash on null BGSPerkRankArray form ids and perk ranks being reset to 1 on save (i.e DianaVampire2017Asherz.esp)

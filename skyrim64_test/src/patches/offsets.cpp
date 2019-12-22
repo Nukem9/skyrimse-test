@@ -524,7 +524,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x14B8030, 1530, nullptr, 0, 0x14B6F60)
 		OFFSET_ENTRY(0x14BE2E0, 1530, nullptr, 0, 0x14BD210)
 		OFFSET_ENTRY(0x14C52B0, 1530, nullptr, 0, 0x14C41E0)
-		OFFSET_ENTRY(0x159EB48, 1530, nullptr, 0, 0x159DA84)// Signature failed: Function was modified
+		OFFSET_ENTRY(0x159EB48, 1530, nullptr, 0, -1)// Signature failed: Function was modified, patch no longer needed
 		OFFSET_ENTRY(0x15C88D0, 1530, nullptr, 0, 0x15C7800)
 		OFFSET_ENTRY(0x15D5640, 1530, nullptr, 0, 0x15D4570)
 		OFFSET_ENTRY(0x1617680, 1530, nullptr, 0, 0x16165B0)
@@ -693,9 +693,9 @@ namespace Offsets
 		OFFSET_ENTRY(0x2E2F29B, 1530, nullptr, 0, 0x2E220DB)
 		OFFSET_ENTRY(0x2E2F2C4, 1530, nullptr, 0, 0x2E22104)
 		OFFSET_ENTRY(0x2E2F2E4, 1530, nullptr, 0, 0x2E22124)
-		OFFSET_ENTRY(0x2E44890, 1530, nullptr, 0, -1)// Signature failed: Function was removed
-		OFFSET_ENTRY(0x2E448A0, 1530, nullptr, 0, -1)// Signature failed: Function was removed
-		OFFSET_ENTRY(0x2E44920, 1530, nullptr, 0, -1)// Signature failed: Function was removed
+		OFFSET_ENTRY(0x2E44890, 1530, nullptr, 0, -1)// Signature failed: Function was removed, patch no longer needed
+		OFFSET_ENTRY(0x2E448A0, 1530, nullptr, 0, -1)// Signature failed: Function was removed, patch no longer needed
+		OFFSET_ENTRY(0x2E44920, 1530, nullptr, 0, -1)// Signature failed: Function was removed, patch no longer needed
 		OFFSET_ENTRY(0x2E54B7E, 1530, nullptr, 0, 0x2E47D7E)
 		OFFSET_ENTRY(0x2E54B88, 1530, nullptr, 0, 0x2E47D88)
 		OFFSET_ENTRY(0x2E558DB, 1530, nullptr, 0, 0x2E48ADB)
