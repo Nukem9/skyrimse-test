@@ -7,6 +7,7 @@
 #define UI_EDITOR_TOGGLEFOG				40937	// "View" menu
 #define UI_EDITOR_TOGGLEGRASS_BUTTON	40960	// Main toolbar
 #define UI_EDITOR_TOGGLEGRASS			40963	// "View" menu
+#define UI_EDITOR_OPENFORMBYID			52001	// Sent from the LogWindow on double click
 
 #define UI_OBJECT_WINDOW_ADD_ITEM		2579
 #define UI_OBJECT_WINDOW_CHECKBOX		2580	// See: resource.rc

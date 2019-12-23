@@ -116,6 +116,15 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 		}
 		return 0;
 
+		case UI_EDITOR_OPENFORMBYID:
+		{
+			auto *form = TESForm_CK::GetFormByNumericID((uint32_t)lParam);
+
+			if (form)
+				(*(void(__fastcall **)(TESForm_CK *, HWND, __int64, __int64))(*(__int64 *)form + 720i64))(form, Hwnd, 0, 1);
+		}
+		return 0;
+
 		case UI_EXTMENU_SHOWLOG:
 		{
 			ShowWindow(EditorUI_GetLogWindow(), SW_SHOW);

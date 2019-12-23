@@ -1,5 +1,4 @@
 #include "../../common.h"
-#include <regex>
 #include <tbb/concurrent_vector.h>
 #include <Richedit.h>
 #include "EditorUI.h"
@@ -38,35 +37,48 @@ bool EditorUI_CreateLogWindow()
 		});
 	}
 
-	// Window output
-	HINSTANCE instance = (HINSTANCE)GetModuleHandle(nullptr);
+	std::thread asyncLogThread([]()
+	{
+		// Output window
+		HINSTANCE instance = (HINSTANCE)GetModuleHandle(nullptr);
 
-	WNDCLASSEX wc;
-	memset(&wc, 0, sizeof(WNDCLASSEX));
+		WNDCLASSEX wc;
+		memset(&wc, 0, sizeof(WNDCLASSEX));
 
-	wc.cbSize = sizeof(WNDCLASSEX);
-	wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-	wc.hInstance = instance;
-	wc.hIcon = LoadIcon(instance, MAKEINTRESOURCE(0x13E));
-	wc.hIconSm = wc.hIcon;
-	wc.lpfnWndProc = EditorUI_LogWndProc;
-	wc.lpszClassName = TEXT("RTEDITLOG");
-	wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
+		wc.cbSize = sizeof(WNDCLASSEX);
+		wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+		wc.hInstance = instance;
+		wc.hIcon = LoadIcon(instance, MAKEINTRESOURCE(0x13E));
+		wc.hIconSm = wc.hIcon;
+		wc.lpfnWndProc = EditorUI_LogWndProc;
+		wc.lpszClassName = TEXT("RTEDITLOG");
+		wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 
-	if (!RegisterClassEx(&wc))
-		return false;
+		if (!RegisterClassEx(&wc))
+			return false;
 
-	g_LogHwnd = CreateWindowEx(0, TEXT("RTEDITLOG"), TEXT("Log"), WS_OVERLAPPEDWINDOW, 64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
+		g_LogHwnd = CreateWindowEx(0, TEXT("RTEDITLOG"), TEXT("Log"), WS_OVERLAPPEDWINDOW, 64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
 
-	if (!g_LogHwnd)
-		return false;
+		if (!g_LogHwnd)
+			return false;
 
-	// Poll every 100ms for new lines
-	SetTimer(g_LogHwnd, UI_LOG_CMD_ADDTEXT, 100, nullptr);
-	ShowWindow(g_LogHwnd, SW_SHOW);
-	UpdateWindow(g_LogHwnd);
+		// Poll every 100ms for new lines
+		SetTimer(g_LogHwnd, UI_LOG_CMD_ADDTEXT, 100, nullptr);
+		ShowWindow(g_LogHwnd, SW_SHOW);
+		UpdateWindow(g_LogHwnd);
 
+		MSG msg;
+		while (GetMessage(&msg, nullptr, 0, 0) > 0)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		return true;
+	});
+
+	asyncLogThread.detach();
 	return true;
 }
 
@@ -137,7 +149,7 @@ void EditorUI_GenerateWarningBlacklist()
 	{
 		std::string& message = g_INI.Get("CreationKit_Warnings", "W" + std::to_string(i), "");
 
-		if (message.length() <= 0)
+		if (message.empty())
 			break;
 
 		// Un-escape newline and carriage return characters
@@ -170,7 +182,7 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 	{
 	case WM_CREATE:
 	{
-		const CREATESTRUCT *info = (CREATESTRUCT *)lParam;
+		auto info = (const CREATESTRUCT *)lParam;
 
 		// Create the rich edit control (https://docs.microsoft.com/en-us/windows/desktop/Controls/rich-edit-controls)
 		uint32_t style = WS_VISIBLE | WS_CHILD | WS_VSCROLL | ES_MULTILINE | ES_LEFT | ES_NOHIDESEL | ES_AUTOVSCROLL | ES_READONLY;
@@ -231,55 +243,47 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 
 	case WM_NOTIFY:
 	{
-		static uint64_t lastDoubleClickTime;
-		LPNMHDR notification = (LPNMHDR)lParam;
+		static uint64_t lastClickTime;
+		auto notification = (const LPNMHDR)lParam;
 
 		if (notification->code == EN_MSGFILTER)
 		{
-			auto msgFilter = (MSGFILTER *)notification;
+			auto msgFilter = (const MSGFILTER *)notification;
 
 			if (msgFilter->msg == WM_LBUTTONDBLCLK)
-				lastDoubleClickTime = GetTickCount64();
+				lastClickTime = GetTickCount64();
 		}
 		else if (notification->code == EN_SELCHANGE)
 		{
-			auto selChange = (SELCHANGE *)lParam;
+			auto selChange = (const SELCHANGE *)notification;
 
 			// Mouse double click with a valid selection -> try to parse form id
-			if ((GetTickCount64() - lastDoubleClickTime > 1000) || abs(selChange->chrg.cpMax - selChange->chrg.cpMin) <= 0)
+			if ((GetTickCount64() - lastClickTime > 1000) || selChange->seltyp == SEL_EMPTY)
 				break;
-
-			if (selChange->chrg.cpMin == 0 && selChange->chrg.cpMax == -1)
-				break;
-
-			// Get the line number from the selected range
-			LRESULT lineIndex = SendMessageA(richEditHwnd, EM_LINEFROMCHAR, selChange->chrg.cpMin, 0);
 
 			char lineData[4096];
 			*(uint16_t *)&lineData[0] = ARRAYSIZE(lineData);
 
+			// Get the line number & text from the selected range
+			LRESULT lineIndex = SendMessageA(richEditHwnd, EM_LINEFROMCHAR, selChange->chrg.cpMin, 0);
 			LRESULT charCount = SendMessageA(richEditHwnd, EM_GETLINE, lineIndex, (LPARAM)&lineData);
 
 			if (charCount > 0)
 			{
 				lineData[charCount - 1] = '\0';
 
-				// Capture each form id with regex "(XXXXXXXX)"
-				static const std::regex formIdRegex("\\(([1234567890abcdefABCDEF]*?)\\)");
-				std::smatch sm;
-
-				for (std::string line = lineData; std::regex_search(line, sm, formIdRegex); line = sm.suffix())
+				// Capture each hexadecimal form id in the format of "(XXXXXXXX)"
+				for (char *p = lineData; p[0] != '\0'; p++)
 				{
-					// Parse to integer, then bring up the menu
-					uint32_t id = strtoul(sm[1].str().c_str(), nullptr, 16);
-
-					auto GetFormById = (__int64(__fastcall *)(uint32_t))OFFSET(0x16B8780, 1530);
-					__int64 form = GetFormById(id);
-
-					if (form)
-						(*(void(__fastcall **)(__int64, HWND, __int64, __int64))(*(__int64 *)form + 720i64))(form, EditorUI_GetMainWindow(), 0, 1);
+					if (p[0] == '(' && strlen(p) >= 10 && p[9] == ')')
+					{
+						uint32_t id = strtoul(&p[1], nullptr, 16);
+						PostMessageA(EditorUI_GetMainWindow(), WM_COMMAND, UI_EDITOR_OPENFORMBYID, id);
+					}
 				}
 			}
+
+			lastClickTime = GetTickCount64() + 1000;
 		}
 	}
 	break;
