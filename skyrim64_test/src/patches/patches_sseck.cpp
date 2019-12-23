@@ -661,7 +661,7 @@ void Patch_TESVCreationKit()
 	// - Fix an unoptimized function bottleneck (sub_1415D5640)
 	// - Eliminate millions of calls to update the progress dialog, instead only updating 400 times (0% -> 100%)
 	// - Replace old zlib decompression code with optimized libdeflate
-	// - Cache results from FindFirstFile when GetFileAttributesExA is called immediately after (sub_142647AC0, BSResource__LooseFileLocation__FileExists)
+	// - Cache results from FindFirstFile when GetFileAttributesExA is called immediately after (BSSystemDir__NextEntry, BSResource__LooseFileLocation__FileExists)
 	//
 	int cpuinfo[4];
 	__cpuid(cpuinfo, 1);
@@ -677,7 +677,7 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x1640FF3, 1530), &UpdateLoadProgressBar);
 	XUtil::DetourCall(OFFSET(0x166BB1E, 1530), &hk_inflateInit);
 	XUtil::DetourCall(OFFSET(0x166BBB9, 1530), &hk_inflate);
-	XUtil::DetourJump(OFFSET(0x2647AC0, 1530), &sub_142647AC0);
+	XUtil::DetourJump(OFFSET(0x2647AC0, 1530), &BSSystemDir__NextEntry);
 	XUtil::DetourJump(OFFSET(0x2676020, 1530), &BSResource__LooseFileLocation__FileExists);
 
 	// Force multiple master loads

@@ -6,6 +6,8 @@
 class TESForm_CK
 {
 public:
+	using Array = BSTArray<TESForm_CK *>;
+
 	virtual ~TESForm_CK();
 	char _pad0[0x8];
 	uint32_t FormFlags;
@@ -16,11 +18,11 @@ public:
 	uint32_t GetFormID() const;
 
 	static TESForm_CK *GetFormByNumericID(uint32_t SearchID);
-	static void *AlteredFormList_Create(BSTArray<TESForm_CK *> *Array, uint32_t Unknown);
-	static void AlteredFormList_RemoveAllEntries(BSTArray<TESForm_CK *> *Array, bool Unknown);
-	static void AlteredFormList_Insert(BSTArray<TESForm_CK *> *Array, TESForm_CK *&Entry);
-	static void AlteredFormList_RemoveEntry(BSTArray<TESForm_CK *> *Array, uint32_t Index, uint32_t Unknown);
-	static bool AlteredFormList_ElementExists(BSTArray<TESForm_CK *> *Array, TESForm_CK *&Entry);
+	static void *AlteredFormList_Create(Array *Array, uint32_t Unknown);
+	static void AlteredFormList_RemoveAllEntries(Array *Array, bool Unknown);
+	static void AlteredFormList_Insert(Array *Array, TESForm_CK *&Entry);
+	static void AlteredFormList_RemoveEntry(Array *Array, uint32_t Index, uint32_t Unknown);
+	static bool AlteredFormList_ElementExists(Array *Array, TESForm_CK *&Entry);
 };
 static_assert(sizeof(TESForm_CK) == 0x28);
 static_assert_offset(TESForm_CK, FormFlags, 0x10);
@@ -44,6 +46,6 @@ public:
 static_assert(sizeof(TESObjectREFR_CK) == 0xA0);
 
 void FormReferenceMap_RemoveAllEntries();
-void *FormReferenceMap_FindOrCreate(uint64_t Key, bool Create);
+TESForm_CK::Array *FormReferenceMap_FindOrCreate(uint64_t Key, bool Create);
 void FormReferenceMap_RemoveEntry(uint64_t Key);
-bool FormReferenceMap_Get(uint64_t Unused, uint64_t Key, void **Value);
+bool FormReferenceMap_Get(uint64_t Unused, uint64_t Key, TESForm_CK::Array **Value);

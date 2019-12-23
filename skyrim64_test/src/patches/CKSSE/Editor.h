@@ -79,7 +79,7 @@ void hk_call_141C410A1(__int64 a1, class BSShaderProperty *Property);
 void TESObjectWEAP__Data__ConvertCriticalData(__int64 DiskCRDT, __int64 SourceCRDT);
 void TESObjectWEAP__Data__LoadCriticalData(__int64 TESFile, __int64 SourceCRDT);
 const char *hk_call_1417F4A04(int ActorValueIndex);
-uint32_t sub_142647AC0(__int64 a1, bool *IterationFinished);
+uint32_t BSSystemDir__NextEntry(__int64 a1, bool *IsComplete);
 bool BSResource__LooseFileLocation__FileExists(const char *CanonicalFullPath, uint32_t *TotalSize);
 void hk_call_1412DD706(HWND WindowHandle, uint32_t *ControlId);
 int sub_141BBF320(__int64 a1, __int64 a2);

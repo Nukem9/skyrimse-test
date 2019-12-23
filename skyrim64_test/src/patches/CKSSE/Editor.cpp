@@ -981,7 +981,7 @@ thread_local WIN32_FIND_DATAA CachedFileInfo;
 thread_local char CachedBasePath[MAX_PATH];
 thread_local bool CachedFileInfoValid;
 
-uint32_t sub_142647AC0(__int64 a1, bool *IterationFinished)
+uint32_t BSSystemDir__NextEntry(__int64 a1, bool *IsComplete)
 {
 	HANDLE& findHandle = *(HANDLE *)a1;
 	LPWIN32_FIND_DATAA findData = (LPWIN32_FIND_DATAA)(a1 + 8);
@@ -996,10 +996,10 @@ uint32_t sub_142647AC0(__int64 a1, bool *IterationFinished)
 	}
 	else if (findHandle)
 	{
-		*IterationFinished = FindNextFileA(findHandle, findData) == FALSE;
+		*IsComplete = FindNextFileA(findHandle, findData) == FALSE;
 		memcpy(&CachedFileInfo, findData, sizeof(WIN32_FIND_DATAA));
 
-		if (*IterationFinished)
+		if (*IsComplete)
 			CachedFileInfoValid = false;
 	}
 	else
