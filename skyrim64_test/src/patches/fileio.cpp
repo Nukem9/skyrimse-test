@@ -409,6 +409,8 @@ char *hk_fgets(char *str, int count, FILE *stream)
 			return nullptr;
 
 		char *source = new char[count + 1];
+		char *sourcePtr = source;
+
 		for (char c; count > 0; count--)
 		{
 			if (hk_fread(&c, sizeof(char), 1, stream) != 1)
@@ -429,8 +431,8 @@ char *hk_fgets(char *str, int count, FILE *stream)
 
 		*source = '\0';
 
-		strncpy_s(str, count, source, _TRUNCATE);
-		delete[] source;
+		strncpy_s(str, count, sourcePtr, _TRUNCATE);
+		delete[] sourcePtr;
 
 		return str;
 	}

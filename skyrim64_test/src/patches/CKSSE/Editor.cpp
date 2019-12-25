@@ -3,6 +3,7 @@
 #include <mutex>
 #include <smmintrin.h>
 #include <CommCtrl.h>
+#include <Shlobj.h>
 #include "../TES/MemoryManager.h"
 #include "../TES/NiMain/NiColor.h"
 #include "../TES/NiMain/NiPointer.h"
@@ -106,8 +107,12 @@ INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HW
 	DlgData.IsDialog = true;
 
 	// Override the default "Data" dialog with a custom one in this dll
-	if (lpTemplateName == (LPCSTR)0xA2)
+	switch ((uintptr_t)lpTemplateName)
+	{
+	case 0xA2:// "Data"
 		hInstance = (HINSTANCE)&__ImageBase;
+		break;
+	}
 
 	return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
 }
@@ -1186,4 +1191,14 @@ void hk_call_14147FB57(HWND ListViewHandle, TESForm_CK *Form, bool UseImage, int
 float hk_call_14202E0E8(float Delta)
 {
 	return abs(Delta) / 100.0f;
+}
+
+void BSUtilities__SetLocalAppDataPath(const char *Path)
+{
+	char appDataPath[MAX_PATH];
+	HRESULT hr = SHGetFolderPathA(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, appDataPath);
+
+	AssertMsg(SUCCEEDED(hr), "Failed to get user AppData path for plugins.txt");
+
+	sprintf_s((char *)OFFSET(0x54CD060, 1530), MAX_PATH, "%s\\%s\\", appDataPath, "Skyrim Special Edition");
 }

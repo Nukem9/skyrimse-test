@@ -90,3 +90,4 @@ void hk_call_14135CDD3(__int64 RenderWindowInstance, uint32_t *UntypedPointerHan
 int hk_call_1412D1541(__int64 ObjectListInsertData, TESForm_CK *Form);
 void hk_call_14147FB57(HWND ListViewHandle, TESForm_CK *Form, bool UseImage, int ItemIndex);
 float hk_call_14202E0E8(float Delta);
+void BSUtilities__SetLocalAppDataPath(const char *Path);

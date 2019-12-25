@@ -654,6 +654,12 @@ void Patch_TESVCreationKit()
 	//XUtil::DetourCall(OFFSET(0x135CDD3, 1530), &hk_call_14135CDD3);
 
 	//
+	// Fix for the "Data" window not listing plugins according to the user's load order. The CK tries to find plugins.txt in the executable
+	// directory instead of %localappdata%.
+	//
+	XUtil::DetourJump(OFFSET(0x27B1720, 1530), &BSUtilities__SetLocalAppDataPath);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
