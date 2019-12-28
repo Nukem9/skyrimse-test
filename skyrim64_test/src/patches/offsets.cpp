@@ -509,9 +509,9 @@ namespace Offsets
 		OFFSET_ENTRY(0x13F3770, 1530, nullptr, 0, 0x13EFAD0)
 		OFFSET_ENTRY(0x141A5C0, 1530, nullptr, 0, 0x1416920)
 		OFFSET_ENTRY(0x1434473, 1530, nullptr, 0, 0x14307D3)
-		OFFSET_ENTRY(0x143E87E, 1530, nullptr, 0, 0x143B12F)// Signature failed: Function was modified
-		OFFSET_ENTRY(0x143E8CA, 1530, nullptr, 0, 0x143B17B)// Signature failed: Function was modified
-		OFFSET_ENTRY(0x143EE21, 1530, nullptr, 0, 0x143B6E1)// Signature failed: Function was modified
+		OFFSET_ENTRY(0x143E87E, 1530, "48 89 41 08 48 8B 84 24 40 04 00 00 48 8B 40 08 48", 0, 0x143B12F)// Signature failed: Function was modified
+		OFFSET_ENTRY(0x143E8CA, 1530, "48 89 41 08 48 8D 8C 24 50 03 00 00 E8", 0, 0x143B17B)// Signature failed: Function was modified
+		OFFSET_ENTRY(0x143EE21, 1530, "48 89 41 08 48 8D 8C 24 A0 03 00 00 E8", 0, 0x143B6E1)// Signature failed: Function was modified
 		OFFSET_ENTRY(0x146A660, 1530, nullptr, 0, 0x1469590)
 		OFFSET_ENTRY(0x146C130, 1530, nullptr, 0, 0x146B060)
 		OFFSET_ENTRY(0x147FA70, 1530, nullptr, 0, 0x147E9A0)
@@ -550,7 +550,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x1665520, 1530, nullptr, 0, 0x16642E0)
 		OFFSET_ENTRY(0x166BB1E, 1530, nullptr, 0, 0x166A8EE)
 		OFFSET_ENTRY(0x166BBB9, 1530, nullptr, 0, 0x166A989)
-		OFFSET_ENTRY(0x166CC60, 1530, nullptr, 0, 0x166BA30)// Signature failed: Line number in assert was changed
+		OFFSET_ENTRY(0x166CC60, 1530, "48 89 4C 24 08 48 83 EC 58 C7 44 24 20 DF 10 00 00 4C", 0, 0x166BA30)// Signature failed: Line number in assert was changed
 		OFFSET_ENTRY(0x166CCF0, 1530, nullptr, 0, 0x166BAC0)
 		OFFSET_ENTRY(0x168D1CA, 1530, nullptr, 0, 0x168BFAA)
 		OFFSET_ENTRY(0x168DF70, 1530, nullptr, 0, 0x168CD50)
@@ -693,7 +693,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x2E2BAF0, 1530, nullptr, 0, 0x2E1E930)
 		OFFSET_ENTRY(0x2E2BC50, 1530, nullptr, 0, 0x2E1EA90)
 		OFFSET_ENTRY(0x2E2EEB0, 1530, nullptr, 0, 0x2E21CF0)
-		OFFSET_ENTRY(0x2E2EFAF, 1530, nullptr, 0, 0x2E21DEF)// Signature failed: Line number in assert was changed
+		OFFSET_ENTRY(0x2E2EFAF, 1530, "C6 45 5C 01 C7 44 24 20 2E 06 00 00 4C", 0, 0x2E21DEF)// Signature failed: Line number in assert was changed
 		OFFSET_ENTRY(0x2E2F0AE, 1530, nullptr, 0, 0x2E21EEE)
 		OFFSET_ENTRY(0x2E2F270, 1530, nullptr, 0, 0x2E220B0)
 		OFFSET_ENTRY(0x2E2F275, 1530, nullptr, 0, 0x2E220B5)
