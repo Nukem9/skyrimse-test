@@ -1,5 +1,5 @@
-#include <tbb/concurrent_hash_map.h>
 #include "../common.h"
+#include <tbb/concurrent_hash_map.h>
 
 struct MMapFileInfo
 {
@@ -7,7 +7,7 @@ struct MMapFileInfo
 	HANDLE MapHandle;
 	void *MapBase;
 	uint64_t FilePosition;
-	uint64_t FileMaxPosition;
+	uint64_t FileLength;
 
 	bool IsMMap()
 	{
@@ -16,23 +16,26 @@ struct MMapFileInfo
 
 	uint64_t ReadMapped(void *Buffer, size_t Size)
 	{
-		if (FilePosition + Size > FileMaxPosition)
-			Size = FileMaxPosition - FilePosition + 1;
+		AssertDebug(FilePosition <= FileLength);
+		AssertDebug(Size < std::numeric_limits<DWORD>::max());
+
+		if (FilePosition + Size > FileLength)
+			Size = FileLength - FilePosition;
 
 		memcpy(Buffer, (void *)((uintptr_t)MapBase + FilePosition), Size);
-
 		FilePosition += Size;
 
 		LARGE_INTEGER pos;
 		pos.QuadPart = FilePosition;
-		Assert(SetFilePointerEx(FileHandle, pos, nullptr, FILE_BEGIN));
 
+		Assert(SetFilePointerEx(FileHandle, pos, nullptr, FILE_BEGIN));
 		return Size;
 	}
 
 	uint64_t Read(void *Buffer, size_t Size)
 	{
-		AssertDebug(Size < ULONG_MAX);
+		AssertDebug(FilePosition <= FileLength);
+		AssertDebug(Size < std::numeric_limits<DWORD>::max());
 
 		if (IsMMap())
 			return ReadMapped(Buffer, Size);
@@ -40,21 +43,24 @@ struct MMapFileInfo
 		DWORD bytesRead = 0;
 
 		if (ReadFile(FileHandle, Buffer, (DWORD)Size, &bytesRead, nullptr))
+		{
+			FilePosition += bytesRead;
 			return bytesRead;
+		}
 
-		return UINT64_MAX;
+		return std::numeric_limits<uint64_t>::max();
 	}
 
 	uint64_t Write(const void *Buffer, size_t Size)
 	{
-		AssertDebug(Size < ULONG_MAX);
+		AssertDebug(Size < std::numeric_limits<DWORD>::max());
 
 		DWORD bytesWritten = 0;
 
 		if (WriteFile(FileHandle, Buffer, (DWORD)Size, &bytesWritten, nullptr))
 			return bytesWritten;
 
-		return UINT64_MAX;
+		return std::numeric_limits<uint64_t>::max();
 	}
 
 	bool SetFilePointer(int64_t Offset, int64_t *NewPosition, uint32_t Method)
@@ -116,7 +122,7 @@ MMapFileInfo *GetFileMMap(HANDLE Input)
 		info = new MMapFileInfo;
 		info->FileHandle = Input;
 		info->FilePosition = 0;
-		info->FileMaxPosition = fileSize.QuadPart - 1;
+		info->FileLength = fileSize.QuadPart;
 
 		if (fileSize.QuadPart <= 4096)
 		{
@@ -405,7 +411,7 @@ char *hk_fgets(char *str, int count, FILE *stream)
 {
 	if (MMapFileInfo *info = GetStdioFileMap(stream))
 	{
-		if (info->FilePosition == info->FileMaxPosition)
+		if (info->FilePosition == info->FileLength)
 			return nullptr;
 
 		char *source = new char[count + 1];
@@ -480,7 +486,7 @@ long hk_ftell(FILE *stream)
 			return -1L;
 		}
 
-		AssertMsg(currentPos < LONG_MAX, "64bit -> 32bit truncation");
+		AssertMsg(currentPos < std::numeric_limits<long>::max(), "64bit -> 32bit truncation");
 		return (long)currentPos;
 	}
 
@@ -503,7 +509,7 @@ int hk_feof(FILE *stream)
 {
 	if (MMapFileInfo *info = GetStdioFileMap(stream))
 	{
-		if (info->FilePosition == info->FileMaxPosition)
+		if (info->FilePosition == info->FileLength)
 			return 1;
 
 		return 0;
