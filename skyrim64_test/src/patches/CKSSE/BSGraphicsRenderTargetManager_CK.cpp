@@ -2,6 +2,8 @@
 #include "../TES/BSShader/BSShaderRenderTargets.h"
 #include "BSGraphicsRenderTargetManager_CK.h"
 
+#define CHECK_RESULT(ReturnVar, Statement) do { (ReturnVar) = (Statement); AssertMsgVa(SUCCEEDED(ReturnVar), "Renderer target '%s' creation failed. HR = 0x%X.", Name, (ReturnVar)); } while (0)
+
 BSGraphics_CK::Renderer *BSGraphics_CK::Renderer::QInstance()
 {
 	return (Renderer *)OFFSET(0x56B73A0, 1530);
@@ -53,9 +55,9 @@ void BSGraphics_CK::Renderer::CreateRenderTarget(uint32_t TargetIndex, const cha
 		if (Properties->bAllowMipGeneration)
 			texDesc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-		hr |= device->CreateTexture2D(&texDesc, nullptr, &data->Texture);
-		hr |= device->CreateRenderTargetView(data->Texture, nullptr, &data->RTV);
-		hr |= device->CreateShaderResourceView(data->Texture, nullptr, &data->SRV);
+		CHECK_RESULT(hr, device->CreateTexture2D(&texDesc, nullptr, &data->Texture));
+		CHECK_RESULT(hr, device->CreateRenderTargetView(data->Texture, nullptr, &data->RTV));
+		CHECK_RESULT(hr, device->CreateShaderResourceView(data->Texture, nullptr, &data->SRV));
 
 		SetResourceName(data->Texture, "%s TEX2D", Name);
 		SetResourceName(data->RTV, "%s RTV", Name);
@@ -65,8 +67,8 @@ void BSGraphics_CK::Renderer::CreateRenderTarget(uint32_t TargetIndex, const cha
 		{
 			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
-			hr |= device->CreateTexture2D(&texDesc, nullptr, &data->TextureCopy);
-			hr |= device->CreateShaderResourceView(data->TextureCopy, nullptr, &data->SRVCopy);
+			CHECK_RESULT(hr, device->CreateTexture2D(&texDesc, nullptr, &data->TextureCopy));
+			CHECK_RESULT(hr, device->CreateShaderResourceView(data->TextureCopy, nullptr, &data->SRVCopy));
 
 			SetResourceName(data->TextureCopy, "%s COPY TEX2D", Name);
 			SetResourceName(data->SRVCopy, "%s COPY SRV", Name);
@@ -79,7 +81,7 @@ void BSGraphics_CK::Renderer::CreateRenderTarget(uint32_t TargetIndex, const cha
 			uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 			uavDesc.Texture2D.MipSlice = 0;
 
-			hr |= device->CreateUnorderedAccessView(data->Texture, &uavDesc, &data->UAV);
+			CHECK_RESULT(hr, device->CreateUnorderedAccessView(data->Texture, &uavDesc, &data->UAV));
 
 			SetResourceName(data->UAV, "%s UAV", Name);
 		}
@@ -95,7 +97,7 @@ void BSGraphics_CK::Renderer::CreateRenderTarget(uint32_t TargetIndex, const cha
 		rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 		rtvDesc.Texture2D.MipSlice = 0;
 
-		hr |= device->CreateRenderTargetView(textureTarget, &rtvDesc, &data->RTV);
+		CHECK_RESULT(hr, device->CreateRenderTargetView(textureTarget, &rtvDesc, &data->RTV));
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 		srvDesc.Format = dxgiFormat;
@@ -103,7 +105,7 @@ void BSGraphics_CK::Renderer::CreateRenderTarget(uint32_t TargetIndex, const cha
 		srvDesc.Texture2D.MostDetailedMip = Properties->iMipLevel;
 		srvDesc.Texture2D.MipLevels = 1;
 
-		hr |= device->CreateShaderResourceView(textureTarget, &srvDesc, &data->SRV);
+		CHECK_RESULT(hr, device->CreateShaderResourceView(textureTarget, &srvDesc, &data->SRV));
 
 		if (Properties->bSupportUnorderedAccess)
 		{
@@ -112,15 +114,13 @@ void BSGraphics_CK::Renderer::CreateRenderTarget(uint32_t TargetIndex, const cha
 			uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
 			uavDesc.Texture2D.MipSlice = Properties->iMipLevel;
 
-			hr |= device->CreateUnorderedAccessView(textureTarget, &uavDesc, &data->UAV);
+			CHECK_RESULT(hr, device->CreateUnorderedAccessView(textureTarget, &uavDesc, &data->UAV));
 		}
 
 		SetResourceName(data->RTV, "%s MIP%d RTV", Name, Properties->iMipLevel);
 		SetResourceName(data->SRV, "%s MIP%d SRV", Name, Properties->iMipLevel);
 		SetResourceName(data->UAV, "%s MIP%d UAV", Name, Properties->iMipLevel);
 	}
-
-	AssertMsgVa(SUCCEEDED(hr), "Render target '%s' creation failed (Mip: %d)", Name, Properties->iMipLevel);
 }
 
 void BSGraphics_CK::Renderer::CreateDepthStencil(uint32_t TargetIndex, const char *Name, const DepthStencilTargetProperties *Properties)
@@ -153,7 +153,7 @@ void BSGraphics_CK::Renderer::CreateDepthStencil(uint32_t TargetIndex, const cha
 	if (Properties->Stencil)
 		texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
 
-	hr |= device->CreateTexture2D(&texDesc, nullptr, &data->Texture);
+	CHECK_RESULT(hr, device->CreateTexture2D(&texDesc, nullptr, &data->Texture));
 	SetResourceName(data->Texture, "%s TEX2D", Name);
 
 	// Depth stencil 1 (read / write / main)
@@ -195,8 +195,8 @@ void BSGraphics_CK::Renderer::CreateDepthStencil(uint32_t TargetIndex, const cha
 			dsvDesc2.Texture2DArray.FirstArraySlice = i;
 		}
 
-		hr |= device->CreateDepthStencilView(data->Texture, &dsvDesc1, &data->PrimaryViews[i]);
-		hr |= device->CreateDepthStencilView(data->Texture, &dsvDesc2, &data->SecondaryViews[i]);
+		CHECK_RESULT(hr, device->CreateDepthStencilView(data->Texture, &dsvDesc1, &data->PrimaryViews[i]));
+		CHECK_RESULT(hr, device->CreateDepthStencilView(data->Texture, &dsvDesc2, &data->SecondaryViews[i]));
 
 		SetResourceName(data->PrimaryViews[i], "%s DSV PRI SLICE%u", Name, i);
 		SetResourceName(data->SecondaryViews[i], "%s DSV SEC SLICE%u", Name, i);
@@ -225,18 +225,16 @@ void BSGraphics_CK::Renderer::CreateDepthStencil(uint32_t TargetIndex, const cha
 		srvDesc.Texture2DArray.ArraySize = Properties->uiArraySize;
 	}
 
-	hr |= device->CreateShaderResourceView(data->Texture, &srvDesc, &data->DepthSRV);
+	CHECK_RESULT(hr, device->CreateShaderResourceView(data->Texture, &srvDesc, &data->DepthSRV));
 
 	if (Properties->Stencil)
 	{
 		srvDesc.Format = DXGI_FORMAT_X24_TYPELESS_G8_UINT;
-		hr |= device->CreateShaderResourceView(data->Texture, &srvDesc, &data->StencilSRV);
+		CHECK_RESULT(hr, device->CreateShaderResourceView(data->Texture, &srvDesc, &data->StencilSRV));
 	}
 
 	SetResourceName(data->DepthSRV, "%s DEPTH SRV", Name);
 	SetResourceName(data->StencilSRV, "%s STENCIL SRV", Name);
-
-	AssertMsgVa(SUCCEEDED(hr), "Depth stencil target '%s' creation failed", Name);
 }
 
 void BSGraphics_CK::Renderer::CreateCubemapRenderTarget(uint32_t TargetIndex, const char *Name, const CubeMapRenderTargetProperties *Properties)
@@ -261,7 +259,7 @@ void BSGraphics_CK::Renderer::CreateCubemapRenderTarget(uint32_t TargetIndex, co
 	texDesc.CPUAccessFlags = 0;
 	texDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
 
-	hr |= device->CreateTexture2D(&texDesc, nullptr, &data->Texture);
+	CHECK_RESULT(hr, device->CreateTexture2D(&texDesc, nullptr, &data->Texture));
 	SetResourceName(data->Texture, "%s TEX2D", Name);
 
 	// Create a separate render target for each side
@@ -276,7 +274,7 @@ void BSGraphics_CK::Renderer::CreateCubemapRenderTarget(uint32_t TargetIndex, co
 	{
 		rtvDesc.Texture2DArray.FirstArraySlice = i;
 
-		hr |= device->CreateRenderTargetView(data->Texture, &rtvDesc, &data->CubeSideRTV[i]);
+		CHECK_RESULT(hr, device->CreateRenderTargetView(data->Texture, &rtvDesc, &data->CubeSideRTV[i]));
 		SetResourceName(data->Texture, "%s SIDE %u RTV", Name, i);
 	}
 
@@ -287,10 +285,8 @@ void BSGraphics_CK::Renderer::CreateCubemapRenderTarget(uint32_t TargetIndex, co
 	srvDesc.TextureCube.MostDetailedMip = 0;
 	srvDesc.TextureCube.MipLevels = 1;
 
-	hr |= device->CreateShaderResourceView(data->Texture, &srvDesc, &data->SRV);
+	CHECK_RESULT(hr, device->CreateShaderResourceView(data->Texture, &srvDesc, &data->SRV));
 	SetResourceName(data->Texture, "%s SRV", Name);
-
-	AssertMsgVa(SUCCEEDED(hr), "Cubemap render target '%s' creation failed", Name);
 }
 
 void BSGraphics_CK::Renderer::DestroyRenderTarget(uint32_t TargetIndex)
