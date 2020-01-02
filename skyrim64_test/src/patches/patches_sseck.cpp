@@ -660,6 +660,12 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x27B1720, 1530), &BSUtilities__SetLocalAppDataPath);
 
 	//
+	// Fix for the "Actor Flags" or "Actor Behavior" dialogs not showing their column headers. wParam was swapped to lParam for an unknown
+	// reason in SE only. Undo that change.
+	//
+	XUtil::PatchMemory(OFFSET(0x1232001, 1530), (PBYTE)"\x80\x12\x00\x00", 4);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
