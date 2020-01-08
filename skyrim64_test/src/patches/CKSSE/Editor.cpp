@@ -1202,3 +1202,12 @@ void BSUtilities__SetLocalAppDataPath(const char *Path)
 
 	sprintf_s((char *)OFFSET(0x54CD060, 1530), MAX_PATH, "%s\\%s\\", appDataPath, "Skyrim Special Edition");
 }
+
+void hk_call_14130F9E8(uintptr_t a1, bool a2)
+{
+	memset((void *)a1, 0, 0x1C);
+
+	// Unknown camera distance multiplier
+	*(bool *)(a1 + 0x18) = a2;
+	*(float *)(a1 + 0x10) = 1000.0f;
+}

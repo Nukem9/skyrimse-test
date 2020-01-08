@@ -666,6 +666,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x1232001, 1530), (PBYTE)"\x80\x12\x00\x00", 4);
 
 	//
+	// Fix for water not rendering correctly while using the orthographic (top-down) camera view. SSE camera scaling changes cause
+	// weird behavior with water shaders.
+	//
+	XUtil::DetourCall(OFFSET(0x130F9E8, 1530), &hk_call_14130F9E8);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
