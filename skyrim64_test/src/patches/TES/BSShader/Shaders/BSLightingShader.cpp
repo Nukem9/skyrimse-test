@@ -1436,7 +1436,7 @@ void BSLightingShader::GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<
 		}
 		else
 		{
-			BSGraphics::Utility::CopyNiColorAToFloat((XMVECTOR *)&projectedUVParams2, Property->QProjectedUVColor());
+			BSGraphics::Utility::CopyNiColorAToFloat(&projectedUVParams2.f[0], Property->QProjectedUVColor());
 		}
 	}
 

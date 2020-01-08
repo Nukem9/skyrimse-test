@@ -52,16 +52,18 @@ void DumpEnableBreakpoint()
 	g_ModuleBase = moduleBase;
 	g_ModuleSize = ntHeaders->OptionalHeader.SizeOfImage;
 
-	uintptr_t tempBssStart;
-	uintptr_t tempBssEnd;
-
 	Assert(XUtil::GetPESectionRange(moduleBase, ".text", &g_CodeBase, &g_CodeEnd));
-	Assert(XUtil::GetPESectionRange(moduleBase, ".textbss", &tempBssStart, &tempBssEnd));
 	Assert(XUtil::GetPESectionRange(moduleBase, ".rdata", &g_RdataBase, &g_RdataEnd));
 	Assert(XUtil::GetPESectionRange(moduleBase, ".data", &g_DataBase, &g_DataEnd));
 
-	g_CodeBase = std::min(g_CodeBase, tempBssStart);
-	g_CodeEnd = std::max(g_CodeEnd, tempBssEnd);
+	uintptr_t tempBssStart;
+	uintptr_t tempBssEnd;
+
+	if (XUtil::GetPESectionRange(moduleBase, ".textbss", &tempBssStart, &tempBssEnd))
+	{
+		g_CodeBase = std::min(g_CodeBase, tempBssStart);
+		g_CodeEnd = std::max(g_CodeEnd, tempBssEnd);
+	}
 
 	// Set the magic value which triggers an early QueryPerformanceCounter call
 	*(uint64_t *)loadConfig->SecurityCookie = 0x2B992DDFA232;
