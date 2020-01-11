@@ -150,21 +150,21 @@ void BSShaderProperty::GetViewerStrings(void(*Callback)(const char *, ...), bool
 	int passCount = 0;
 	int debugPassCount = 0;
 
-	for (auto pass = QRenderPasses()->pPassList; pass; pass = pass->m_Previous)
+	for (auto pass = QRenderPasses()->pPassList; pass; pass = pass->m_Next)
 		passCount++;
 
-	for (auto pass = QDebugRenderPasses()->pPassList; pass; pass = pass->m_Previous)
+	for (auto pass = QDebugRenderPasses()->pPassList; pass; pass = pass->m_Next)
 		debugPassCount++;
 
 	Callback("Pass Count = %d\n", passCount);
 
-	for (auto pass = QRenderPasses()->pPassList; pass; pass = pass->m_Previous)
-		Callback("%s Pass\n", ((const char *(*)(uint32_t))(g_ModuleBase + 0x12ABF00))(pass->m_TechniqueID));
+	for (auto pass = QRenderPasses()->pPassList; pass; pass = pass->m_Next)
+		Callback("%s Pass\n", ((const char *(*)(uint32_t))(g_ModuleBase + 0x12ABF00))(pass->m_PassEnum));
 
 	Callback("Debug Pass Count = %d\n", debugPassCount);
 
-	for (auto pass = QDebugRenderPasses()->pPassList; pass; pass = pass->m_Previous)
-		Callback("%s Debug Pass\n", ((const char *(*)(uint32_t))(g_ModuleBase + 0x12ABF00))(pass->m_TechniqueID));
+	for (auto pass = QDebugRenderPasses()->pPassList; pass; pass = pass->m_Next)
+		Callback("%s Debug Pass\n", ((const char *(*)(uint32_t))(g_ModuleBase + 0x12ABF00))(pass->m_PassEnum));
 }
 
 const char *BSShaderProperty::GetFlagString(uint32_t FlagIndex)

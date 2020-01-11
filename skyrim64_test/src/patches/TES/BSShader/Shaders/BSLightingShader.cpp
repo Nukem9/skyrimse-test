@@ -745,7 +745,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, RenderFlags);
 
-	auto property = static_cast<BSLightingShaderProperty *>(Pass->m_Property);
+	auto property = static_cast<BSLightingShaderProperty *>(Pass->m_ShaderProperty);
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
@@ -757,7 +757,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	bool updateEyePosition = false;
 	bool isLOD = false;
 
-	uint8_t v12 = Pass->Byte1C;
+	uint8_t v12 = Pass->m_AccumulationHint;
 	uint8_t v103 = (unsigned __int8)(v12 - 2) <= 1u;
 
 	if (v12 == 3 && property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE))
@@ -832,7 +832,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		XMVECTORF32& materialData = pixelCG.ParamPS<XMVECTORF32, 7>();
 
-		if (Pass->m_Lod.SingleLevel)
+		if (Pass->m_LODMode.SingleLevel)
 			materialData.f[2] = property->GetAlpha() * *(float *)((uintptr_t)property->pFadeNode + 332i64);
 		else
 			materialData.f[2] = property->GetAlpha();
@@ -982,12 +982,12 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		}
 	}
 
-	if (Pass->Byte1C == 10)
+	if (Pass->m_AccumulationHint == 10)
 	{
 		uintptr_t v89 = (uintptr_t)property->pFadeNode;
 		float v90;
 		
-		if (Pass->m_Lod.SingleLevel)
+		if (Pass->m_LODMode.SingleLevel)
 			v90 = *(float *)(v89 + 332) * 31.0f;
 		else
 			v90 = *(float *)(v89 + 304) * 31.0f;
@@ -1042,7 +1042,7 @@ void BSLightingShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 
-	if (Pass->Byte1C == 10)
+	if (Pass->m_AccumulationHint == 10)
 		renderer->DepthStencilStateSetStencilMode(DEPTH_STENCIL_STENCIL_MODE_DEFAULT, 255);
 
 	if (TLS_dword_141E35280 != DEPTH_STENCIL_DEPTH_MODE_TESTGREATER)

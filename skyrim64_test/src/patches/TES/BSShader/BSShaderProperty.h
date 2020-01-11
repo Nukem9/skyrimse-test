@@ -3,7 +3,7 @@
 #include "BSShaderMaterial.h"
 #include "../NiMain/NiAlphaProperty.h"
 
-struct BSRenderPass;
+class BSRenderPass;
 
 class BSShaderProperty : public NiShadeProperty
 {

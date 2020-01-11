@@ -107,7 +107,7 @@ void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
-	auto property = static_cast<const BSBloodSplatterShaderProperty *>(Pass->m_Property);
+	auto property = static_cast<const BSBloodSplatterShaderProperty *>(Pass->m_ShaderProperty);
 
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);

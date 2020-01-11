@@ -131,7 +131,7 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
-	auto property = static_cast<const BSSkyShaderProperty *>(Pass->m_Property);
+	auto property = static_cast<const BSSkyShaderProperty *>(Pass->m_ShaderProperty);
 
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
@@ -313,7 +313,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	uint32_t skyObjectType = static_cast<const BSSkyShaderProperty *>(Pass->m_Property)->uiSkyObjectType;
+	uint32_t skyObjectType = static_cast<const BSSkyShaderProperty *>(Pass->m_ShaderProperty)->uiSkyObjectType;
 
 	if (skyObjectType == 0 || skyObjectType == 6)
 		BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetMode(1);

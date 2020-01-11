@@ -15,6 +15,7 @@
 #include "CKSSE/BSPointerHandleManager.h"
 #include "CKSSE/BSGraphicsRenderTargetManager_CK.h"
 #include "CKSSE/BSShaderResourceManager_CK.h"
+#include "CKSSE/BSRenderPass_CK.h"
 
 void PatchSteam();
 void PatchThreading();
@@ -671,6 +672,15 @@ void Patch_TESVCreationKit()
 	//
 	XUtil::DetourCall(OFFSET(0x130F9E8, 1530), &hk_call_14130F9E8);
 
+	//
+	// Fix for crash when too much geometry is present in the scene (usually with navmesh). The CK runs out of render pass cache entries.
+	// Dynamically allocate them instead.
+	//
+	XUtil::DetourJump(OFFSET(0x2DB3840, 1530), &BSRenderPass_CK::InitSDM);
+	XUtil::DetourJump(OFFSET(0x2DB3A10, 1530), &BSRenderPass_CK::KillSDM);
+	XUtil::DetourJump(OFFSET(0x2DB3610, 1530), &BSRenderPass_CK::AllocatePass);
+	XUtil::DetourJump(OFFSET(0x2DB3750, 1530), &BSRenderPass_CK::DeallocatePass);
+	
 	//
 	// Plugin loading optimizations:
 	//

@@ -9,8 +9,8 @@
 #include "BSShaderProperty.h"
 #include "BSShaderMaterial.h"
 
-struct BSRenderPass;
-struct BSIStream;
+class BSRenderPass;
+class BSIStream;
 
 #define BSSHADER_FORWARD_DEBUG 0
 
@@ -176,7 +176,7 @@ public:
 		std::function<const char *(int Index)> GetSampler,
 		std::function<const char *(int Index)> GetConstant);
 
-	void hk_Load(struct BSIStream *Stream);
+	void hk_Load(BSIStream *Stream);
 
 	bool BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader);
 	void EndTechnique();

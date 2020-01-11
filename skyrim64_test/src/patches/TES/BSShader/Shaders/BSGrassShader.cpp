@@ -124,7 +124,7 @@ void BSGrassShader::RestoreMaterial(BSShaderMaterial const *Material)
 void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	uintptr_t geometry = (uintptr_t)Pass->m_Geometry;
-	uintptr_t property = (uintptr_t)Pass->m_Property;
+	uintptr_t property = (uintptr_t)Pass->m_ShaderProperty;
 
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
@@ -204,7 +204,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		}
 	}
 
-	if (!Pass->m_Property->GetFlag(BSShaderProperty::BSSP_FLAG_UNIFORM_SCALE))
+	if (!Pass->m_ShaderProperty->GetFlag(BSShaderProperty::BSSP_FLAG_UNIFORM_SCALE))
 	{
 		data->ScaleMask[0] = 0.0f;
 		data->ScaleMask[1] = 0.0f;
@@ -223,7 +223,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	renderer->ApplyConstantGroupVSPS(&vertexCG, nullptr, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	// Update constant buffer #8 containing InstanceData
-	UpdateGeometryInstanceData(Pass->m_Geometry, Pass->m_Property);
+	UpdateGeometryInstanceData(Pass->m_Geometry, Pass->m_ShaderProperty);
 }
 
 void BSGrassShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)

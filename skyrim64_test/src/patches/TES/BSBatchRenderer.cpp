@@ -95,7 +95,7 @@ void sub_14131F9F0(BSRenderPass *RenderPasses[2], uint32_t RenderFlags)
 
 		if ((RenderFlags & 0x108) == 0)
 		{
-			if (i->m_Property->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
+			if (i->m_ShaderProperty->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
 				MTRenderer::RasterStateSetCullMode(0);
 			else
 				MTRenderer::RasterStateSetCullMode(1);
@@ -104,9 +104,9 @@ void sub_14131F9F0(BSRenderPass *RenderPasses[2], uint32_t RenderFlags)
 		bool alphaTest = i->m_Geometry->QAlphaProperty() && i->m_Geometry->QAlphaProperty()->GetAlphaTesting();
 
 		if (mtrContext)
-			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_TechniqueID, alphaTest, RenderFlags);
+			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_PassEnum, alphaTest, RenderFlags);
 		else
-			BSBatchRenderer::SetupAndDrawPass(i, i->m_TechniqueID, alphaTest, RenderFlags);
+			BSBatchRenderer::SetupAndDrawPass(i, i->m_PassEnum, alphaTest, RenderFlags);
 	}
 
 	if ((RenderFlags & 0x108) == 0)
@@ -458,7 +458,7 @@ void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, b
 
 	if (techniqueIsSetup)
 	{
-		BSShaderProperty *property = Pass->m_Property;
+		BSShaderProperty *property = Pass->m_ShaderProperty;
 		BSShaderMaterial *material = nullptr;
 
 		if (property)
@@ -472,7 +472,7 @@ void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, b
 			qword_1434B5220 = (uintptr_t)material;
 		}
 
-		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = *(BYTE *)(&Pass->m_Lod);// WARNING: MT data write hazard. ucCurrentMeshLODLevel?
+		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = *(BYTE *)(&Pass->m_LODMode);// WARNING: MT data write hazard. ucCurrentMeshLODLevel?
 
 		if (Pass->m_Geometry->QSkinInstance())
 			DrawPassSkinned(Pass, AlphaTest, RenderFlags);
@@ -487,11 +487,11 @@ void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader
 {
 	if (Shader != BSSkyShader::pInstance)
 	{
-		if ((RenderFlags & 4) && !BSShaderAccumulator::IsGrassShadowBlacklist(Pass->m_TechniqueID))
-			Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, AlphaTest);
+		if ((RenderFlags & 4) && !BSShaderAccumulator::IsGrassShadowBlacklist(Pass->m_PassEnum))
+			Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_ShaderProperty, AlphaTest);
 
 		if (AlphaTest && Pass->QAlphaProperty())
-			Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
+			Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_ShaderProperty);
 	}
 
 	Shader->SetupGeometry(Pass, RenderFlags);
@@ -519,7 +519,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	AssertMsgDebug(Pass->m_Geometry->QSkinInstance(), "Render Error: Skin instance is nullptr");
 	// "Render Error : Skin partition is nullptr"
 	// "Render Error : Skin partition array is nullptr"
-	AssertMsgDebug(Pass->m_Property, "Don't have a shader property when we expected one.");
+	AssertMsgDebug(Pass->m_ShaderProperty, "Don't have a shader property when we expected one.");
 
 	AutoFunc(void(__fastcall *)(), sub_141336450, 0x1336450);
 	sub_141336450();
@@ -539,7 +539,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	{
 		SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
 
-		SkinRenderData skinData(static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader), Pass->m_Geometry, nullptr, Pass->m_Lod.SingleLevel, Pass->m_Lod.Index);
+		SkinRenderData skinData(static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader), Pass->m_Geometry, nullptr, Pass->m_LODMode.SingleLevel, Pass->m_LODMode.Index);
 
 		// Runtime-updated vertices are sent to a GPU vertex buffer directly (non-static objects like trees/characters)
 		BSDynamicTriShape *dynamicTri = Pass->m_Geometry->IsDynamicTriShape();
@@ -565,10 +565,10 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 void BSBatchRenderer::DrawPassCustom(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
 {
 	Pass->m_Shader->SetupGeometry(Pass, RenderFlags);
-	Pass->m_Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_Property, true);
+	Pass->m_Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_ShaderProperty, true);
 
 	if (Pass->QAlphaProperty())
-		Pass->m_Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_Property);
+		Pass->m_Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_ShaderProperty);
 
 	DrawGeometry(Pass);
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);

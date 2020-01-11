@@ -130,7 +130,7 @@ void BSParticleShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSParticleShader::RestoreGeometry, Pass, RenderFlags);
 
 	auto *renderer = Renderer::GetGlobals();
-	BSShaderProperty *property = Pass->m_Property;
+	BSShaderProperty *property = Pass->m_ShaderProperty;
 
 	if (!property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_TEST))
 		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DEFAULT);
