@@ -57,7 +57,6 @@ void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, void *Valu
 void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex);
 
 void PatchTemplatedFormIterator();
-void ArrayQuickSortRecursive_TESForm(BSTArray<TESForm_CK *>& Array, int(*SortFunction)(const void *, const void *));
 void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *));
 
 void QuitHandler();
@@ -66,10 +65,8 @@ void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value);
 void hk_call_14158589F(__int64 Buffer, __int64 *Value);
 bool InitItemPerkRankDataVisitor(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray);
 void PerkRankData__LoadFrom(__int64 ArrayHandle, PerkRankEntry *&Entry);
-
 void FaceGenOverflowWarning(__int64 Texture);
 void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2);
-
 void hk_call_141C68FA6(TESForm_CK *DialogForm, __int64 Unused);
 void *hk_call_141C26F3A(void *a1);
 void hk_sub_141032ED7(__int64 a1, __int64 a2, __int64 a3);
@@ -92,3 +89,17 @@ void hk_call_14147FB57(HWND ListViewHandle, TESForm_CK *Form, bool UseImage, int
 float hk_call_14202E0E8(float Delta);
 void BSUtilities__SetLocalAppDataPath(const char *Path);
 void hk_call_14130F9E8(uintptr_t a1, bool a2);
+
+template<typename T, bool Stable = false>
+void ArrayQuickSortRecursive(BSTArray<T>& Array, int(*SortFunction)(const void *, const void *))
+{
+	auto compare = [SortFunction](const T& A, const T& B)
+	{
+		return SortFunction(A, B) == -1;
+	};
+
+	if constexpr (Stable)
+		std::stable_sort(&Array[0], &Array[Array.QSize()], compare);
+	else
+		std::sort(&Array[0], &Array[Array.QSize()], compare);
+}

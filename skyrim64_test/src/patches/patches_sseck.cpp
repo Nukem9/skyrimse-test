@@ -273,6 +273,7 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemory(OFFSET(0x16179C0, 1530), (PBYTE)"\xC3", 1);	// Disable "MEM_CATEGORY_X" log spam
 		XUtil::PatchMemoryNop(OFFSET(0x2DCE6BC, 1530), 5);				// Disable "utility failed id" log spam
 		XUtil::PatchMemoryNop(OFFSET(0x2D270E3, 1530), 5);				// Disable "Should have been converted offline" log spam
+		XUtil::DetourCall(OFFSET(0x18276C9, 1530), &ArrayQuickSortRecursive<class BGSEntryPointPerkEntry *, true>);// Stable sort for perk entry window
 
 		XUtil::DetourJump(OFFSET(0x1256600, 1530), &EditorUI_Warning);
 		XUtil::DetourJump(OFFSET(0x243D610, 1530), &EditorUI_Warning);
@@ -464,7 +465,7 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash (recursive sorting function stack overflow) when saving certain ESP files (i.e 3DNPC.esp)
 	//
-	XUtil::DetourJump(OFFSET(0x1651590, 1530), &ArrayQuickSortRecursive_TESForm);
+	XUtil::DetourJump(OFFSET(0x1651590, 1530), &ArrayQuickSortRecursive<class TESForm_CK *>);
 
 	//
 	// Fix for incorrect NavMesh assertion while saving certain ESP files (i.e 3DNPC.esp). Fixed in 1.5.73.

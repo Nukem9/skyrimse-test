@@ -710,14 +710,6 @@ void PatchTemplatedFormIterator()
 	}
 }
 
-void ArrayQuickSortRecursive_TESForm(BSTArray<TESForm_CK *>& Array, int(*SortFunction)(const void *, const void *))
-{
-	std::sort(&Array[0], &Array[Array.QSize()], [SortFunction](TESForm_CK *A, TESForm_CK *B)
-	{
-		return SortFunction(A, B) == -1;
-	});
-}
-
 void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *))
 {
 	static std::unordered_map<BSTArray<TESForm_CK *> *, std::pair<void *, uint32_t>> arrayCache;
@@ -729,7 +721,7 @@ void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFuncti
 	if (itr == arrayCache.end() || itr->second.first != formArray->QBuffer() || itr->second.second != formArray->QSize())
 	{
 		// Update and resort the array
-		ArrayQuickSortRecursive_TESForm(*formArray, SortFunction);
+		ArrayQuickSortRecursive(*formArray, SortFunction);
 
 		arrayCache[formArray] = std::make_pair(formArray->QBuffer(), formArray->QSize());
 	}
