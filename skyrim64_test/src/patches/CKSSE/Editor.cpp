@@ -13,6 +13,7 @@
 #include "../TES/BSShader/Shaders/BSEffectShaderMaterial.h"
 #include "Editor.h"
 #include "EditorUI.h"
+#include "EditorUIDarkMode.h"
 #include "TESWater.h"
 #include "LogWindow.h"
 
@@ -42,8 +43,6 @@ thread_local DialogOverrideData DlgData;
 
 INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	Assert(IsWindow(hwndDlg));
-
 	DLGPROC proc = nullptr;
 
 	g_DialogMutex.lock();
@@ -78,7 +77,20 @@ INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 	}
 	g_DialogMutex.unlock();
 
+	if (auto hook = EditorUIDarkMode_ApplyMessageHook(hwndDlg, uMsg, wParam, lParam); hook.has_value())
+		return hook.value();
+
 	return proc(hwndDlg, uMsg, wParam, lParam);
+}
+
+HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
+{
+	HWND wnd = CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+
+	if (wnd)
+		EditorUIDarkMode_ApplyMessageHook(wnd, WM_CREATE, 0, 0);
+
+	return wnd;
 }
 
 HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
@@ -119,7 +131,6 @@ INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HW
 
 BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult)
 {
-	Assert(hDlg);
 	std::lock_guard lock(g_DialogMutex);
 
 	// Fix for the CK calling EndDialog on a CreateDialogParamA window

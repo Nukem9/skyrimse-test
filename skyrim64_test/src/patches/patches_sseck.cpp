@@ -11,6 +11,7 @@
 #include "CKSSE/TESForm_CK.h"
 #include "CKSSE/NavMesh.h"
 #include "CKSSE/EditorUI.h"
+#include "CKSSE/EditorUIDarkMode.h"
 #include "CKSSE/LogWindow.h"
 #include "CKSSE/BSPointerHandleManager.h"
 #include "CKSSE/BSGraphicsRenderTargetManager_CK.h"
@@ -251,6 +252,7 @@ void Patch_TESVCreationKit()
 	//
 	// UI
 	//
+	PatchIAT(hk_CreateWindowExA, "USER32.DLL", "CreateWindowExA");
 	PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
 	PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
 	PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
@@ -287,6 +289,18 @@ void Patch_TESVCreationKit()
 		XUtil::DetourJump(OFFSET(0x27A6270, 1530), &EditorUI_WarningUnknown2);
 		XUtil::DetourCall(OFFSET(0x163D3D1, 1530), &EditorUI_WarningUnknown2);
 		XUtil::DetourJump(OFFSET(0x243D260, 1530), &EditorUI_Assert);
+	}
+
+	if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
+	{
+		HMODULE comDll = GetModuleHandle("comctl32.dll");
+		Assert(comDll);
+
+		EditorUIDarkMode_Initialize();
+		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColor", (uint8_t *)&Comctl32GetSysColor);
+		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColorBrush", (uint8_t *)&Comctl32GetSysColorBrush);
+		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeBackground", (uint8_t *)&Comctl32DrawThemeBackground);
+		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeText", (uint8_t *)&Comctl32DrawThemeText);
 	}
 
 	if (g_INI.GetBoolean("CreationKit", "DisableWindowGhosting", false))

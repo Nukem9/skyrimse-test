@@ -5,6 +5,7 @@
 #include "../../typeinfo/hk_rtti.h"
 #include "TESForm_CK.h"
 #include "EditorUI.h"
+#include "EditorUIDarkMode.h"
 #include "LogWindow.h"
 
 #pragma comment(lib, "comctl32.lib")
@@ -88,7 +89,7 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 				-1,		// -1
 			};
 
-			SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_STATUSBAR), SB_SETPARTS, ARRAYSIZE(spacing), (LPARAM)& spacing);
+			SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_STATUSBAR), SB_SETPARTS, ARRAYSIZE(spacing), (LPARAM)&spacing);
 
 			// Grass is always enabled by default, make the UI buttons match
 			CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEGRASS, MF_CHECKED);
@@ -97,9 +98,10 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 			// Same for fog
 			CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *(bool *)OFFSET(0x4F05728, 1530) ? MF_CHECKED : MF_UNCHECKED);
 
+			EditorUIDarkMode_ApplyMessageHook(*(HWND *)0x143AFDBE0, WM_CREATE, 0, 0);
+
 			// Create custom menu controls
 			EditorUI_CreateExtensionMenu(Hwnd, createInfo->hMenu);
-
 			return status;
 		}
 	}

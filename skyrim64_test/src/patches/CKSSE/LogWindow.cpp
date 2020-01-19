@@ -2,6 +2,7 @@
 #include <tbb/concurrent_vector.h>
 #include <Richedit.h>
 #include "EditorUI.h"
+#include "EditorUIDarkMode.h"
 #include "LogWindow.h"
 
 HWND g_LogHwnd;
@@ -199,22 +200,20 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 
 		MoveWindow(Hwnd, info->x, info->y, winW, winH, FALSE);
 
-		// Set a better font
-		CHARFORMAT2A format;
-		memset(&format, 0, sizeof(format));
-
-		// Convert Twips to points (1 point = 20 Twips)
-		int pointSize = g_INI.GetInteger("CreationKit_Log", "FontSize", 10) * 20;
-
+		// Set a better font & convert Twips to points (1 point = 20 Twips)
+		CHARFORMAT2A format = {};
 		format.cbSize = sizeof(format);
 		format.dwMask = CFM_FACE | CFM_SIZE | CFM_WEIGHT;
-		format.yHeight = pointSize;
-		strcpy_s(format.szFaceName, g_INI.Get("CreationKit_Log", "Font", "Consolas").c_str());
+		format.yHeight = g_INI.GetInteger("CreationKit_Log", "FontSize", 10) * 20;
 		format.wWeight = (WORD)g_INI.GetInteger("CreationKit_Log", "FontWeight", FW_NORMAL);
+		strcpy_s(format.szFaceName, g_INI.Get("CreationKit_Log", "Font", "Consolas").c_str());
+
 		SendMessageA(richEditHwnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
 
 		// Subscribe to EN_MSGFILTER and EN_SELCHANGE
 		SendMessageA(richEditHwnd, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_SELCHANGE);
+
+		EditorUIDarkMode_ApplyMessageHook(Hwnd, Message, wParam, lParam);
 	}
 	return 0;
 

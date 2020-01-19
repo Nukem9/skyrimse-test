@@ -371,6 +371,9 @@
     <ClInclude Include="src\patches\CKSSE\BSRenderPass_CK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\EditorUIDarkMode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -617,6 +620,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSRenderPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\EditorUIDarkMode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

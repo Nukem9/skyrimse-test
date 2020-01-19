@@ -108,7 +108,7 @@ DWORD WINAPI MessageThread(LPVOID)
 	return 0;
 }
 
-HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
+HWND WINAPI hk_GameCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
 	// Create this window on a separate thread
 	auto threadTask = std::packaged_task<HWND()>([&]()
@@ -139,5 +139,5 @@ void PatchWindow()
 	XUtil::PatchMemory(g_ModuleBase + 0x5AF310, (PBYTE)"\xE9\xD3\x00\x00\x00", 5);
 	CreateThread(nullptr, 0, MessageThread, nullptr, 0, &MessageThreadId);
 
-	PatchIAT(hk_CreateWindowExA, "USER32.DLL", "CreateWindowExA");
+	PatchIAT(hk_GameCreateWindowExA, "USER32.DLL", "CreateWindowExA");
 }
