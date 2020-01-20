@@ -30,18 +30,26 @@
 #define UI_EXTMENU_LOADEDESPINFO		51009
 #define UI_EXTMENU_HARDCODEDFORMS		51010
 
-void EditorUI_Initialize();
-bool EditorUI_CreateExtensionMenu(HWND MainWindow, HMENU MainMenu);
-HWND EditorUI_GetMainWindow();
+namespace EditorUI
+{
+	extern WNDPROC OldWndProc;
+	extern DLGPROC OldObjectWindowProc;
+	extern DLGPROC OldCellViewProc;
 
-LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK EditorUI_DialogTabProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK EditorUI_LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK EditorUI_ObjectWindowProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK EditorUI_CellViewProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-LRESULT EditorUI_CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, WPARAM wParam, LPARAM lParam);
+	HWND GetWindow();
 
-BOOL EditorUI_ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask);
-void EditorUI_ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections);
-void EditorUI_ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections);
-void EditorUI_ListViewDeselectItem(HWND ListViewHandle, void *Parameter);
+	void Initialize();
+	bool CreateExtensionMenu(HWND MainWindow, HMENU MainMenu);
+
+	LRESULT CALLBACK WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	LRESULT CALLBACK DialogTabProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	INT_PTR CALLBACK LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	INT_PTR CALLBACK ObjectWindowProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	INT_PTR CALLBACK CellViewProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	LRESULT CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, WPARAM wParam, LPARAM lParam);
+
+	BOOL ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask);
+	void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections);
+	void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections);
+	void ListViewDeselectItem(HWND ListViewHandle, void *Parameter);
+}

@@ -12,7 +12,7 @@ int TESFile::hk_LoadTESInfo()
 	// If the file is an ESM being loaded as an active file, pretend it's a normal ESP
 	if ((m_RecordFlags & (FILE_RECORD_ESM | FILE_RECORD_ACTIVE)) == (FILE_RECORD_ESM | FILE_RECORD_ACTIVE))
 	{
-		EditorUI_Log("Loading master file '%s' as a plugin...\n", m_FileName);
+		LogWindow::Log("Loading master file '%s' as a plugin...\n", m_FileName);
 
 		// Strip ESM flag, clear loaded ONAM data
 		m_RecordFlags &= ~FILE_RECORD_ESM;
@@ -32,7 +32,7 @@ __int64 TESFile::hk_WriteTESInfo()
 
 		if (extension && !_stricmp(extension, ".esm"))
 		{
-			EditorUI_Log("Regenerating ONAM data for master file '%s'...\n", m_FileName);
+			LogWindow::Log("Regenerating ONAM data for master file '%s'...\n", m_FileName);
 
 			((void(__fastcall *)(TESFile *))OFFSET(0x166CCF0, 1530))(this);
 			resetEsmFlag = true;

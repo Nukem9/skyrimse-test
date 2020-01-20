@@ -251,18 +251,18 @@ void CreateLipGenProcess(__int64 a1)
 	memset(&startupInfo, 0, sizeof(STARTUPINFOA));
 	startupInfo.cb = sizeof(STARTUPINFOA);
 
-	if (EditorUI_GetStdoutListenerPipe())
+	if (LogWindow::GetStdoutListenerPipe())
 	{
 		startupInfo.dwFlags |= STARTF_USESTDHANDLES;
-		startupInfo.hStdError = EditorUI_GetStdoutListenerPipe();
-		startupInfo.hStdOutput = EditorUI_GetStdoutListenerPipe();
+		startupInfo.hStdError = LogWindow::GetStdoutListenerPipe();
+		startupInfo.hStdOutput = LogWindow::GetStdoutListenerPipe();
 		startupInfo.hStdInput = nullptr;
 	}
 
 	if (!CreateProcessA(procToolPath, nullptr, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &startupInfo, procInfo))
-		EditorUI_Log("FaceFXWrapper could not be started (%d). LIP generation will be disabled.\n", GetLastError());
+		LogWindow::Log("FaceFXWrapper could not be started (%d). LIP generation will be disabled.\n", GetLastError());
 	else
-		EditorUI_Log("FaceFXWrapper background process started.\n");
+		LogWindow::Log("FaceFXWrapper background process started.\n");
 }
 
 bool IsLipDataPresent(void *Thisptr)
@@ -287,7 +287,7 @@ bool WriteLipData(void *Thisptr, const char *Path, int Unkown1, bool Unknown2, b
 
 	bool status = MoveFileEx(srcDir, destDir, MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != FALSE;
 
-	EditorUI_Warning(6, "Moving temporary LIP file to '%s' (%s)", destDir, status ? "Succeeded" : "Failed");
+	LogWindow::LogWarning(6, "Moving temporary LIP file to '%s' (%s)", destDir, status ? "Succeeded" : "Failed");
 	return status;
 }
 
@@ -790,14 +790,14 @@ void PerkRankData__LoadFrom(__int64 ArrayHandle, PerkRankEntry *&Entry)
 	if (Entry->FormId != 0)
 		((void(__fastcall *)(__int64, PerkRankEntry *&))OFFSET(0x168EAE0, 1530))(ArrayHandle, Entry);
 	else
-		EditorUI_Warning(13, "Null perk found while loading a PerkRankArray. Entry will be discarded.");
+		LogWindow::LogWarning(13, "Null perk found while loading a PerkRankArray. Entry will be discarded.");
 }
 
 void FaceGenOverflowWarning(__int64 Texture)
 {
 	const char *texName = ((const char *(__fastcall *)(__int64))OFFSET(0x14BE2E0, 1530))(*(__int64 *)Texture);
 
-	EditorUI_Warning(23, "Exceeded limit of 16 tint masks. Skipping texture: %s", texName);
+	LogWindow::LogWarning(23, "Exceeded limit of 16 tint masks. Skipping texture: %s", texName);
 }
 
 void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
@@ -831,7 +831,7 @@ void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
 	}
 
 	// Reload loose file paths manually since it's patched out
-	EditorUI_Log("Exported FaceGen for %d NPCs. Reloading loose file paths...", itemCount);
+	LogWindow::Log("Exported FaceGen for %d NPCs. Reloading loose file paths...", itemCount);
 	sub_141617680(*(__int64 *)OFFSET(0x3AFB930, 1530));
 
 	sub_1418F5320();
@@ -1114,7 +1114,7 @@ void hk_call_141CF03C9(__int64 a1, bool Enable)
 	// Modify the global setting itself then update UI to match
 	((void(__fastcall *)(__int64, bool))OFFSET(0x1390C30, 1530))(a1, Enable);
 
-	CheckMenuItem(GetMenu(EditorUI_GetMainWindow()), UI_EDITOR_TOGGLEFOG, Enable ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(GetMenu(EditorUI::GetWindow()), UI_EDITOR_TOGGLEFOG, Enable ? MF_CHECKED : MF_UNCHECKED);
 }
 
 void hk_call_141CE8269(__int64 a1)
@@ -1147,7 +1147,7 @@ void hk_call_14135CDD3(__int64 RenderWindowInstance, uint32_t *UntypedPointerHan
 		if (*(__int64 *)(childRefr + 0x70) == *(__int64 *)(parentRefr + 0x70))
 			((void(__fastcall *)(__int64, uint32_t *, bool))OFFSET(0x13059D0, 1530))(RenderWindowInstance, UntypedPointerHandle, Select);
 		else
-			EditorUI_Log("Not selecting child refr 0x%X because parent cells don't match (%p != %p)\n", *(uint32_t *)(childRefr + 0x14), *(__int64 *)(childRefr + 0x70), *(__int64 *)(parentRefr + 0x70));
+			LogWindow::Log("Not selecting child refr 0x%X because parent cells don't match (%p != %p)\n", *(uint32_t *)(childRefr + 0x14), *(__int64 *)(childRefr + 0x70), *(__int64 *)(parentRefr + 0x70));
 	}
 
 	((void(__fastcall *)(__int64 *))OFFSET(0x128BCF0, 1530))(&childRefr);

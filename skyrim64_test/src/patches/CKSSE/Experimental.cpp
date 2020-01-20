@@ -284,5 +284,5 @@ void ExperimentalPatchOptimizations()
 	}
 
 	auto duration = duration_cast<milliseconds>(high_resolution_clock::now() - timerStart).count();
-	EditorUI_Log("%s: (%llu + %llu + %llu) = %llu patches applied in %llums.\n", __FUNCTION__, count1, count2, count3, (count1 + count2 + count3), duration);
+	LogWindow::Log("%s: (%llu + %llu + %llu) = %llu patches applied in %llums.\n", __FUNCTION__, count1, count2, count3, (count1 + count2 + count3), duration);
 }

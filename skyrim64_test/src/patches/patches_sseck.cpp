@@ -24,10 +24,6 @@ void PatchFileIO();
 void PatchMemory();
 size_t BNetConvertUnicodeString(char *Destination, size_t DestSize, const wchar_t *Source, size_t SourceSize);
 
-extern WNDPROC OldEditorUI_WndProc;
-extern DLGPROC OldEditorUI_ObjectWindowProc;
-extern DLGPROC OldEditorUI_CellViewProc;
-
 void sub_141BAF3E0(__int64 rcx0, __int64 a2);
 //Detours::X64::DetourFunctionClass((PBYTE)(OFFSET(0x1BAF3E0), 1530), &sub_141BAF3E0);
 
@@ -188,7 +184,7 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x13C4C80, 1530), &IsLipDataPresent);
 	XUtil::DetourJump(OFFSET(0x1791240, 1530), &WriteLipData);
 	XUtil::DetourCall(OFFSET(0x13D5443, 1530), &IsWavDataPresent);
-	XUtil::DetourJump(OFFSET(0x13D29B0, 1530), &EditorUI_LipRecordDialogProc);
+	XUtil::DetourJump(OFFSET(0x13D29B0, 1530), &EditorUI::LipRecordDialogProc);
 
 	//
 	// MemoryManager
@@ -259,10 +255,10 @@ void Patch_TESVCreationKit()
 
 	if (g_INI.GetBoolean("CreationKit", "UI", false))
 	{
-		EditorUI_Initialize();
-		*(uint8_t **)&OldEditorUI_WndProc = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x13F3770, 1530), &EditorUI_WndProc);
-		*(uint8_t **)&OldEditorUI_ObjectWindowProc = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x12C3ED0, 1530), &EditorUI_ObjectWindowProc);
-		*(uint8_t **)&OldEditorUI_CellViewProc = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x13D8F40, 1530), &EditorUI_CellViewProc);
+		EditorUI::Initialize();
+		*(uint8_t **)&EditorUI::OldWndProc = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x13F3770, 1530), &EditorUI::WndProc);
+		*(uint8_t **)&EditorUI::OldObjectWindowProc = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x12C3ED0, 1530), &EditorUI::ObjectWindowProc);
+		*(uint8_t **)&EditorUI::OldCellViewProc = Detours::X64::DetourFunctionClass((PBYTE)OFFSET(0x13D8F40, 1530), &EditorUI::CellViewProc);
 
 		XUtil::DetourCall(OFFSET(0x1CF03C9, 1530), &hk_call_141CF03C9);// Update the UI options when fog is toggled
 		XUtil::DetourCall(OFFSET(0x12D1541, 1530), &hk_call_1412D1541);// Allow forms to be filtered in EditorUI_ObjectWindowProc
@@ -276,18 +272,18 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemoryNop(OFFSET(0x2D270E3, 1530), 5);				// Disable "Should have been converted offline" log spam
 		XUtil::DetourCall(OFFSET(0x18276C9, 1530), &ArrayQuickSortRecursive<class BGSEntryPointPerkEntry *, true>);// Stable sort for perk entry window
 
-		XUtil::DetourJump(OFFSET(0x1256600, 1530), &EditorUI_Warning);
-		XUtil::DetourJump(OFFSET(0x243D610, 1530), &EditorUI_Warning);
-		XUtil::DetourJump(OFFSET(0x1CD29E0, 1530), &EditorUI_Warning);
-		XUtil::DetourJump(OFFSET(0x122C5F0, 1530), &EditorUI_WarningUnknown1);
-		XUtil::DetourJump(OFFSET(0x137FC60, 1530), &EditorUI_WarningUnknown1);
-		XUtil::DetourJump(OFFSET(0x1FCB030, 1530), &EditorUI_WarningUnknown1);
-		XUtil::DetourJump(OFFSET(0x2452480, 1530), &EditorUI_WarningUnknown1);
-		XUtil::DetourJump(OFFSET(0x243D5A0, 1530), &EditorUI_WarningUnknown1);
-		XUtil::DetourJump(OFFSET(0x27A6150, 1530), &EditorUI_WarningUnknown2);
-		XUtil::DetourJump(OFFSET(0x27A6270, 1530), &EditorUI_WarningUnknown2);
-		XUtil::DetourCall(OFFSET(0x163D3D1, 1530), &EditorUI_WarningUnknown2);
-		XUtil::DetourJump(OFFSET(0x243D260, 1530), &EditorUI_Assert);
+		XUtil::DetourJump(OFFSET(0x1256600, 1530), &LogWindow::LogWarning);
+		XUtil::DetourJump(OFFSET(0x243D610, 1530), &LogWindow::LogWarning);
+		XUtil::DetourJump(OFFSET(0x1CD29E0, 1530), &LogWindow::LogWarning);
+		XUtil::DetourJump(OFFSET(0x122C5F0, 1530), &LogWindow::LogWarningUnknown1);
+		XUtil::DetourJump(OFFSET(0x137FC60, 1530), &LogWindow::LogWarningUnknown1);
+		XUtil::DetourJump(OFFSET(0x1FCB030, 1530), &LogWindow::LogWarningUnknown1);
+		XUtil::DetourJump(OFFSET(0x2452480, 1530), &LogWindow::LogWarningUnknown1);
+		XUtil::DetourJump(OFFSET(0x243D5A0, 1530), &LogWindow::LogWarningUnknown1);
+		XUtil::DetourJump(OFFSET(0x27A6150, 1530), &LogWindow::LogWarningUnknown2);
+		XUtil::DetourJump(OFFSET(0x27A6270, 1530), &LogWindow::LogWarningUnknown2);
+		XUtil::DetourCall(OFFSET(0x163D3D1, 1530), &LogWindow::LogWarningUnknown2);
+		XUtil::DetourJump(OFFSET(0x243D260, 1530), &LogWindow::LogAssert);
 	}
 
 	if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
@@ -295,12 +291,12 @@ void Patch_TESVCreationKit()
 		HMODULE comDll = GetModuleHandle("comctl32.dll");
 		Assert(comDll);
 
-		EditorUIDarkMode_Initialize();
-		EditorUIDarkMode_InitializeThread();
-		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColor", (uint8_t *)&Comctl32GetSysColor);
-		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColorBrush", (uint8_t *)&Comctl32GetSysColorBrush);
-		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeBackground", (uint8_t *)&Comctl32DrawThemeBackground);
-		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeText", (uint8_t *)&Comctl32DrawThemeText);
+		EditorUIDarkMode::Initialize();
+		EditorUIDarkMode::InitializeThread();
+		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColor", (uint8_t *)&EditorUIDarkMode::Comctl32GetSysColor);
+		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColorBrush", (uint8_t *)&EditorUIDarkMode::Comctl32GetSysColorBrush);
+		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeBackground", (uint8_t *)&EditorUIDarkMode::Comctl32DrawThemeBackground);
+		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeText", (uint8_t *)&EditorUIDarkMode::Comctl32DrawThemeText);
 	}
 
 	if (g_INI.GetBoolean("CreationKit", "DisableWindowGhosting", false))
@@ -312,7 +308,7 @@ void Patch_TESVCreationKit()
 	PatchTemplatedFormIterator();
 	XUtil::DetourJump(OFFSET(0x13B9AD0, 1530), &InsertComboBoxItem);
 	XUtil::DetourJump(OFFSET(0x13BA4D0, 1530), &InsertListViewItem);
-	XUtil::DetourJump(OFFSET(0x20A9710, 1530), &EditorUI_CSScript_PickScriptsToCompileDlgProc);
+	XUtil::DetourJump(OFFSET(0x20A9710, 1530), &EditorUI::CSScript_PickScriptsToCompileDlgProc);
 	XUtil::DetourJump(OFFSET(0x1985F20, 1530), &SortDialogueInfo);
 	XUtil::DetourCall(OFFSET(0x12C8B63, 1530), &UpdateObjectWindowTreeView);
 	XUtil::DetourCall(OFFSET(0x13DAB04, 1530), &UpdateCellViewCellList);
@@ -454,9 +450,9 @@ void Patch_TESVCreationKit()
 	//
 	// Fix the "Cell View" object list current selection not being synced with the render window
 	//
-	XUtil::DetourJump(OFFSET(0x13BB650, 1530), &EditorUI_ListViewSelectItem);
-	XUtil::DetourJump(OFFSET(0x13BB590, 1530), &EditorUI_ListViewFindAndSelectItem);
-	XUtil::DetourJump(OFFSET(0x13BB720, 1530), &EditorUI_ListViewDeselectItem);
+	XUtil::DetourJump(OFFSET(0x13BB650, 1530), &EditorUI::ListViewSelectItem);
+	XUtil::DetourJump(OFFSET(0x13BB590, 1530), &EditorUI::ListViewFindAndSelectItem);
+	XUtil::DetourJump(OFFSET(0x13BB720, 1530), &EditorUI::ListViewDeselectItem);
 
 	//
 	// Fix TESModelTextureSwap being incorrectly loaded (Record typo: 'MODS' -> 'MO5S')
@@ -468,7 +464,7 @@ void Patch_TESVCreationKit()
 	// dialog. 3682 is reserved exclusively for the PTG functionality, so the button id must be changed. Remapped to
 	// 3683 instead.
 	//
-	XUtil::DetourJump(OFFSET(0x13B9900, 1530), &EditorUI_DialogTabProc);
+	XUtil::DetourJump(OFFSET(0x13B9900, 1530), &EditorUI::DialogTabProc);
 
 	uint32_t newId = 3683;
 	XUtil::PatchMemory(OFFSET(0x1B0CBC4, 1530), (PBYTE)&newId, sizeof(uint32_t));// SetDlgItemTextA
