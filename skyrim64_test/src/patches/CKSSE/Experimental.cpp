@@ -1,4 +1,7 @@
 #include "../../common.h"
+#include <zydis/include/Zydis/Zydis.h>
+#include <tbb/concurrent_vector.h>
+#include <execution>
 #include <intrin.h>
 #include <chrono>
 #include "LogWindow.h"
@@ -118,48 +121,84 @@ uint64_t ExperimentalPatchEditAndContinue()
 	// After:  [Function call] -> [Function]
 	//
 	uint64_t patchCount = 0;
-	std::vector<uintptr_t> branchTargets;
+	tbb::concurrent_vector<std::pair<uintptr_t, uintptr_t>> branchTargets;
+	std::vector<uintptr_t> secondaryTargets;
 
-	const uintptr_t ecTableStart = OFFSET(0xFB4000, 1530);
-	const uintptr_t ecTableEnd = OFFSET(0x104C50D, 1530);
+	// Enumerate all functions present in the x64 exception directory section
+	auto ntHeaders = (PIMAGE_NT_HEADERS64)(g_ModuleBase + ((PIMAGE_DOS_HEADER)g_ModuleBase)->e_lfanew);
+	const auto sectionRVA = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].VirtualAddress;
+	const auto sectionSize = ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].Size;
 
-	for (uintptr_t i = g_CodeBase; i < g_CodeEnd; i++)
+	Assert(sectionRVA > 0 && sectionSize > 0);
+
+	auto functionEntries = (PRUNTIME_FUNCTION)(g_ModuleBase + sectionRVA);
+	uint64_t functionEntryCount = sectionSize / sizeof(RUNTIME_FUNCTION);
+
+	// Init threadsafe instruction decoder
+	ZydisDecoder decoder;
+	Assert(ZYDIS_SUCCESS(ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64)));
+
+	std::for_each(std::execution::par_unseq, &functionEntries[0], &functionEntries[functionEntryCount],
+	[&branchTargets, &decoder](const RUNTIME_FUNCTION& Function)
 	{
-		// Must be a call or a jump
-		if (*(uint8_t *)i != 0xE9 && *(uint8_t *)i != 0xE8)
-			continue;
+		const uintptr_t ecTableStart = OFFSET(0xFB4000, 1530);
+		const uintptr_t ecTableEnd = OFFSET(0x104C50D, 1530);
 
-		uintptr_t destination = i + *(int32_t *)(i + 1) + 5;
-
-		// if (destination is within E&C table)
-		if (destination >= ecTableStart && destination < ecTableEnd && *(uint8_t *)destination == 0xE9)
+		for (uint32_t offset = Function.BeginAddress; offset < Function.EndAddress;)
 		{
-			// Find where the trampoline actually points to, then remove it
-			uintptr_t real = destination + *(int32_t *)(destination + 1) + 5;
+			const uintptr_t ip = g_ModuleBase + offset;
+			const uint8_t opcode = *(uint8_t *)ip;
+			ZydisDecodedInstruction instruction;
 
-			uint8_t data[5];
-			data[0] = *(uint8_t *)i;
-			*(int32_t *)&data[1] = (int32_t)(real - i) - 5;
+			if (!ZYDIS_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, (void *)ip, ZYDIS_MAX_INSTRUCTION_LENGTH, ip, &instruction)))
+			{
+				// Decode failed. Always increase byte offset by 1.
+				offset += 1;
+				continue;
+			}
 
-			memcpy((void *)i, data, sizeof(data));
-			patchCount++;
+			offset += instruction.length;
 
-			if (PatchNullsub(i, real, true))
-				patchCount++;
-			else
-				branchTargets.push_back(i);
+			// Must be a call or a jump
+			if (opcode != 0xE9 && opcode != 0xE8)
+				continue;
+
+			uintptr_t destination = ip + *(int32_t *)(ip + 1) + 5;
+
+			// if (destination is within E&C table)
+			if (destination >= ecTableStart && destination < ecTableEnd && *(uint8_t *)destination == 0xE9)
+			{
+				// Find where the trampoline actually points to, then mark it for patching
+				uintptr_t real = destination + *(int32_t *)(destination + 1) + 5;
+
+				branchTargets.emplace_back(ip, real);
+			}
 		}
+	});
+
+	for (auto [ip, finalDest] : branchTargets)
+	{
+		// The instruction byte (CALL/JMP) is never changed, but displacement is
+		int32_t disp = (int32_t)(finalDest - ip) - 5;
+		memcpy((void *)(ip + 1), &disp, sizeof(disp));
+
+		patchCount++;
+
+		if (PatchNullsub(ip, finalDest, true))
+			patchCount++;
+		else
+			secondaryTargets.emplace_back(ip);
 	}
 
 	// Secondary pass to remove nullsubs missed or created above
-	for (uintptr_t target : branchTargets)
+	for (uintptr_t target : secondaryTargets)
 	{
 		uintptr_t destination = target + *(int32_t *)(target + 1) + 5;
 
 		if (PatchNullsub(target, destination, true))
 			patchCount++;
 	}
-	
+
 	return patchCount;
 }
 
