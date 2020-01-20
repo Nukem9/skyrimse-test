@@ -34,7 +34,6 @@ struct MMapFileInfo
 
 	uint64_t Read(void *Buffer, size_t Size)
 	{
-		AssertDebug(FilePosition <= FileLength);
 		AssertDebug(Size < std::numeric_limits<DWORD>::max());
 
 		if (IsMMap())
@@ -58,7 +57,10 @@ struct MMapFileInfo
 		DWORD bytesWritten = 0;
 
 		if (WriteFile(FileHandle, Buffer, (DWORD)Size, &bytesWritten, nullptr))
+		{
+			FilePosition += bytesWritten;
 			return bytesWritten;
+		}
 
 		return std::numeric_limits<uint64_t>::max();
 	}
@@ -108,7 +110,6 @@ MMapFileInfo *GetFileMMap(HANDLE Input)
 	MMapFileInfo *info = nullptr;
 
 	AssertMsg(((uintptr_t)Input & 0b11) == 0, "Unexpected bits set");
-	Assert(Input);
 
 	// If this entry wasn't present already, create a new mapping
 	tbb::concurrent_hash_map<HANDLE, MMapFileInfo *>::accessor accessor;
@@ -124,7 +125,7 @@ MMapFileInfo *GetFileMMap(HANDLE Input)
 		info->FilePosition = 0;
 		info->FileLength = fileSize.QuadPart;
 
-		if (fileSize.QuadPart <= 4096)
+		if (info->FileLength <= 4096)
 		{
 			info->MapHandle = nullptr;
 			info->MapBase = nullptr;
@@ -135,8 +136,7 @@ MMapFileInfo *GetFileMMap(HANDLE Input)
 			info->MapHandle = CreateFileMapping(info->FileHandle, nullptr, PAGE_READONLY, 0, 0, nullptr);
 			info->MapBase = MapViewOfFile(info->MapHandle, FILE_MAP_READ, 0, 0, 0);
 
-			if (!info->MapHandle || !info->MapBase)
-				Assert(false);
+			Assert(info->MapHandle && info->MapBase);
 		}
 
 		g_FileMap.emplace(Input, info);
@@ -223,6 +223,7 @@ BOOL WINAPI hk_CloseHandle(HANDLE Input)
 	if (g_FileMap.find(accessor, Input))
 	{
 		auto *info = accessor->second;
+		g_FileMap.erase(accessor);
 
 		if (info->IsMMap())
 		{
@@ -230,7 +231,6 @@ BOOL WINAPI hk_CloseHandle(HANDLE Input)
 			CloseHandle(info->MapHandle);
 		}
 
-		g_FileMap.erase(accessor);
 		delete info;
 	}
 
