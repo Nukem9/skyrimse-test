@@ -1,8 +1,8 @@
 #include "../../common.h"
 #include <tbb/concurrent_unordered_map.h>
+#include <unordered_set>
 #include <vssym32.h>
 #include <Richedit.h>
-#include "LogWindow.h"
 #include "EditorUIDarkMode.h"
 
 #pragma comment(lib, "uxtheme.lib")
@@ -23,126 +23,83 @@ enum class CustomThemeType
 	TabControl,
 };
 
-tbb::concurrent_unordered_map<HTHEME, CustomThemeType> g_ThemeHandles;
-bool g_EnableTheming;
+const std::unordered_map<std::string_view, CustomThemeType> TargetWindowThemes
+{
+	{ "MDIClient", CustomThemeType::MDIClient },
+	{ "Static", CustomThemeType::Static },
+	{ "Edit", CustomThemeType::Edit },
+	{ "RICHEDIT50W", CustomThemeType::RichEdit },
+	{ "Button", CustomThemeType::Button },
+	{ "ComboBox", CustomThemeType::ComboBox },
+	{ "SysHeader32", CustomThemeType::Header },
+	{ "SysListView32", CustomThemeType::ListView },
+	{ "SysTreeView32", CustomThemeType::TreeView },
+	{ "SysTabControl32", CustomThemeType::TabControl },
+};
+
+const std::unordered_set<std::string_view> PermanentWindowSubclasses
+{
+	"Creation Kit",
+	"ActivatorClass",
+	"AlchemyClass",
+	"ArmorClass",
+	"CreatureClass",
+	"LockPickClass",
+	"NPCClass",
+	"WeaponClass",
+	"FaceClass",
+	"PlaneClass",
+	"MonitorClass",
+	"ViewerClass",
+	"SpeakerClass",
+	"LandClass",
+	"NPCClass",
+	"RenderWindow",
+	"#32770",
+	// "BABYGRID",
+	// "NiTreeCtrl",
+};
+
+tbb::concurrent_unordered_map<HTHEME, CustomThemeType> ThemeHandles;
+bool EnableThemeHooking;
 
 void EditorUIDarkMode_Initialize()
 {
-	g_EnableTheming = true;
+	EnableThemeHooking = true;
 }
 
-BOOL CALLBACK EditorUIDarkMode_EnumWindowsProc(HWND hWnd, LPARAM lParam)
+void EditorUIDarkMode_InitializeThread()
 {
-	CustomThemeType themeType = CustomThemeType::None;
-	HTHEME scrollBarTheme = nullptr;
-
-	char className[256] = {};
-	GetClassName(hWnd, className, ARRAYSIZE(className));
-
-	if (!_stricmp(className, "MDICLIENT"))
-	{
-		SetWindowSubclass(hWnd, EditorUIDarkMode_MDIClientSubclass, 0, 0);
-
-		themeType = CustomThemeType::MDIClient;
-	}
-	else if (!_stricmp(className, "Static"))
-		themeType = CustomThemeType::Static;
-	else if (!_stricmp(className, "Edit"))
-		themeType = CustomThemeType::Edit;
-	else if (!_stricmp(className, "RICHEDIT50W"))
-	{
-		CHARFORMAT2A format = {};
-		format.cbSize = sizeof(format);
-		format.dwMask = CFM_COLOR;
-		format.crTextColor = RGB(255, 255, 255);
-		SendMessageA(hWnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
-		SendMessageA(hWnd, EM_SETBKGNDCOLOR, FALSE, RGB(56, 56, 56));
-
-		themeType = CustomThemeType::Edit;
-	}
-	else if (!_stricmp(className, "Button"))
-		themeType = CustomThemeType::Button;
-	else if (!_stricmp(className, "ComboBox"))
-		themeType = CustomThemeType::ComboBox;
-	else if (!_stricmp(className, "SysHeader32"))
-		themeType = CustomThemeType::Header;
-	else if (!_stricmp(className, "SysListView32"))
-	{
-		SetWindowSubclass(hWnd, EditorUIDarkMode_ListViewSubclass, 0, 0);
-
-		ListView_SetTextColor(hWnd, RGB(255, 255, 255));
-		ListView_SetTextBkColor(hWnd, RGB(32, 32, 32));
-		ListView_SetBkColor(hWnd, RGB(32, 32, 32));
-
-		themeType = CustomThemeType::ListView;
-		scrollBarTheme = OpenThemeData(hWnd, VSCLASS_SCROLLBAR);
-	}
-	else if (!_stricmp(className, "SysTreeView32"))
-	{
-		TreeView_SetTextColor(hWnd, RGB(255, 255, 255));
-		TreeView_SetBkColor(hWnd, RGB(32, 32, 32));
-
-		themeType = CustomThemeType::TreeView;
-		scrollBarTheme = OpenThemeData(hWnd, VSCLASS_SCROLLBAR);
-	}
-	else if (!_stricmp(className, "SysTabControl32"))
-	{
-		SetWindowLongPtrA(hWnd, GWL_STYLE, (GetWindowLongPtrA(hWnd, GWL_STYLE) & ~TCS_BUTTONS) | TCS_TABS);
-		SetWindowTheme(hWnd, nullptr, nullptr);
-
-		themeType = CustomThemeType::TabControl;
-	}
-	else
-	{
-		EditorUI_Log("Unhandled class type: %s\n", className);
-	}
-
-	if (scrollBarTheme)
-	{
-		g_ThemeHandles.emplace(scrollBarTheme, CustomThemeType::ScrollBar);
-
-		// TODO: This is a hack...the handle should be valid as long as at least one window is still open
-		CloseThemeData(scrollBarTheme);
-	}
-
-	if (HTHEME windowTheme = GetWindowTheme(hWnd); windowTheme)
-		g_ThemeHandles.emplace(windowTheme, themeType);
-
-	return TRUE;
+	if (EnableThemeHooking)
+		SetWindowsHookExA(WH_CALLWNDPROC, EditorUIDarkMode_CallWndProcCallback, nullptr, GetCurrentThreadId());
 }
 
-std::optional<INT_PTR> EditorUIDarkMode_ApplyMessageHook(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK EditorUIDarkMode_CallWndProcCallback(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	if (!g_EnableTheming)
-		return std::nullopt;
+	if (nCode == HC_ACTION)
+	{
+		auto messageData = reinterpret_cast<CWPSTRUCT *>(lParam);
 
+		switch (messageData->message)
+		{
+		case WM_CREATE:
+		case WM_INITDIALOG:
+			SetWindowSubclass(messageData->hwnd, EditorUIDarkMode_WindowSubclass, 0, 0);
+			break;
+		}
+	}
+
+	return CallNextHookEx(nullptr, nCode, wParam, lParam);
+}
+
+LRESULT CALLBACK EditorUIDarkMode_WindowSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
 	constexpr COLORREF generalBackgroundColor = RGB(56, 56, 56);
 	constexpr COLORREF generalTextColor = RGB(255, 255, 255);
 	static HBRUSH generalBackgroundBrush = CreateSolidBrush(generalBackgroundColor);
 
 	switch (uMsg)
 	{
-	case WM_INITDIALOG:
-	case WM_CREATE:
-	{
-		// Prevent running this code on the same window multiple times
-		if (!static_cast<bool>(GetProp(hWnd, "CKSSE_DMINIT")))
-		{
-			EditorUIDarkMode_EnumWindowsProc(hWnd, 0);
-			EnumChildWindows(hWnd, EditorUIDarkMode_EnumWindowsProc, 0);
-
-			SetProp(hWnd, "CKSSE_DMINIT", reinterpret_cast<HANDLE>(true));
-		}
-	}
-	break;
-
-	case WM_DESTROY:
-	{
-		// NOTE/TODO: Properties are leaked when using DialogBoxParam or anything with EndDialog()
-		RemoveProp(hWnd, "CKSSE_DMINIT");
-	}
-	break;
-
 	case WM_CTLCOLOREDIT:
 	case WM_CTLCOLORLISTBOX:
 	case WM_CTLCOLORBTN:
@@ -160,7 +117,89 @@ std::optional<INT_PTR> EditorUIDarkMode_ApplyMessageHook(HWND hWnd, UINT uMsg, W
 	break;
 	}
 
-	return std::nullopt;
+	LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+	case WM_CREATE:
+	{
+		// Theme settings are initialized after WM_CREATE is processed
+		auto themeType = CustomThemeType::None;
+		HTHEME scrollBarTheme = nullptr;
+
+		char className[256] = {};
+		GetClassName(hWnd, className, ARRAYSIZE(className));
+
+		if (auto itr = TargetWindowThemes.find(className); itr != TargetWindowThemes.end())
+			themeType = itr->second;
+
+		switch (themeType)
+		{
+		case CustomThemeType::MDIClient:
+		{
+			SetWindowSubclass(hWnd, EditorUIDarkMode_MDIClientSubclass, 0, 0);
+		}
+		break;
+
+		case CustomThemeType::RichEdit:
+		{
+			CHARFORMAT2A format = {};
+			format.cbSize = sizeof(format);
+			format.dwMask = CFM_COLOR;
+			format.crTextColor = RGB(255, 255, 255);
+			SendMessageA(hWnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
+			SendMessageA(hWnd, EM_SETBKGNDCOLOR, FALSE, RGB(56, 56, 56));
+		}
+		break;
+
+		case CustomThemeType::ListView:
+		{
+			SetWindowSubclass(hWnd, EditorUIDarkMode_ListViewSubclass, 0, 0);
+
+			ListView_SetTextColor(hWnd, RGB(255, 255, 255));
+			ListView_SetTextBkColor(hWnd, RGB(32, 32, 32));
+			ListView_SetBkColor(hWnd, RGB(32, 32, 32));
+
+			scrollBarTheme = OpenThemeData(hWnd, VSCLASS_SCROLLBAR);
+		}
+		break;
+
+		case CustomThemeType::TreeView:
+		{
+			TreeView_SetTextColor(hWnd, RGB(255, 255, 255));
+			TreeView_SetBkColor(hWnd, RGB(32, 32, 32));
+
+			scrollBarTheme = OpenThemeData(hWnd, VSCLASS_SCROLLBAR);
+		}
+		break;
+
+		case CustomThemeType::TabControl:
+		{
+			SetWindowLongPtrA(hWnd, GWL_STYLE, (GetWindowLongPtrA(hWnd, GWL_STYLE) & ~TCS_BUTTONS) | TCS_TABS);
+			SetWindowTheme(hWnd, nullptr, nullptr);
+		}
+		break;
+		}
+
+		if (scrollBarTheme)
+		{
+			ThemeHandles.emplace(scrollBarTheme, CustomThemeType::ScrollBar);
+
+			// TODO: This is a hack...the handle should be valid as long as at least one window is still open
+			CloseThemeData(scrollBarTheme);
+		}
+
+		if (HTHEME windowTheme = GetWindowTheme(hWnd); windowTheme)
+			ThemeHandles.emplace(windowTheme, themeType);
+
+		if (!PermanentWindowSubclasses.count(className))
+			RemoveWindowSubclass(hWnd, EditorUIDarkMode_WindowSubclass, 0);
+	}
+	break;
+	}
+
+	return result;
 }
 
 LRESULT CALLBACK EditorUIDarkMode_ListViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
@@ -183,7 +222,7 @@ LRESULT CALLBACK EditorUIDarkMode_ListViewSubclass(HWND hWnd, UINT uMsg, WPARAM 
 			HGDIOBJ oldPen = SelectObject(hdc, GetStockObject(DC_PEN));
 			int x = 0 - GetScrollPos(hWnd, SB_HORZ);
 
-			LVCOLUMN colInfo;
+			LVCOLUMN colInfo = {};
 			colInfo.mask = LVCF_WIDTH;
 
 			for (int col = 0; ListView_GetColumn(hWnd, col, &colInfo); col++)
@@ -218,28 +257,6 @@ LRESULT CALLBACK EditorUIDarkMode_ListViewSubclass(HWND hWnd, UINT uMsg, WPARAM 
 
 		return result;
 	}
-
-	case WM_NOTIFY:
-	{
-		if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
-		{
-			auto customDraw = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
-
-			switch (customDraw->dwDrawStage)
-			{
-			case CDDS_PREPAINT:
-				return CDRF_NOTIFYITEMDRAW;
-
-			case CDDS_ITEMPREPAINT:
-			{
-				// Newer versions of windows have bugs: this is only ever called for header items
-				SetTextColor(customDraw->hdc, RGB(211, 211, 211));
-			}
-			return CDRF_DODEFAULT;
-			}
-		}
-	}
-	break;
 
 	case LVM_SETEXTENDEDLISTVIEWSTYLE:
 	{
@@ -316,7 +333,7 @@ HRESULT WINAPI Comctl32DrawThemeBackground(HTHEME hTheme, HDC hdc, int iPartId, 
 {
 	auto themeType = CustomThemeType::None;
 
-	if (auto itr = g_ThemeHandles.find(hTheme); itr != g_ThemeHandles.end())
+	if (auto itr = ThemeHandles.find(hTheme); itr != ThemeHandles.end())
 		themeType = itr->second;
 
 	if (themeType == CustomThemeType::ScrollBar)

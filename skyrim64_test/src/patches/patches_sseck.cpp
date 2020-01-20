@@ -252,7 +252,6 @@ void Patch_TESVCreationKit()
 	//
 	// UI
 	//
-	PatchIAT(hk_CreateWindowExA, "USER32.DLL", "CreateWindowExA");
 	PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
 	PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
 	PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
@@ -297,6 +296,7 @@ void Patch_TESVCreationKit()
 		Assert(comDll);
 
 		EditorUIDarkMode_Initialize();
+		EditorUIDarkMode_InitializeThread();
 		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColor", (uint8_t *)&Comctl32GetSysColor);
 		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColorBrush", (uint8_t *)&Comctl32GetSysColorBrush);
 		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeBackground", (uint8_t *)&Comctl32DrawThemeBackground);

@@ -98,8 +98,6 @@ LRESULT CALLBACK EditorUI_WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM
 			// Same for fog
 			CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *(bool *)OFFSET(0x4F05728, 1530) ? MF_CHECKED : MF_UNCHECKED);
 
-			EditorUIDarkMode_ApplyMessageHook(*(HWND *)0x143AFDBE0, WM_CREATE, 0, 0);
-
 			// Create custom menu controls
 			EditorUI_CreateExtensionMenu(Hwnd, createInfo->hMenu);
 			return status;

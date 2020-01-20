@@ -2,11 +2,11 @@
 
 #include "../../common.h"
 #include <Uxtheme.h>
-#include <optional>
 
 void EditorUIDarkMode_Initialize();
-BOOL CALLBACK EditorUIDarkMode_EnumWindowsProc(HWND hWnd, LPARAM lParam);
-std::optional<INT_PTR> EditorUIDarkMode_ApplyMessageHook(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void EditorUIDarkMode_InitializeThread();
+LRESULT CALLBACK EditorUIDarkMode_CallWndProcCallback(int nCode, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK EditorUIDarkMode_WindowSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 LRESULT CALLBACK EditorUIDarkMode_ListViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 LRESULT CALLBACK EditorUIDarkMode_MDIClientSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 

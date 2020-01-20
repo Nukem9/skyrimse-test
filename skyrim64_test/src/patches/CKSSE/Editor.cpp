@@ -77,20 +77,7 @@ INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 	}
 	g_DialogMutex.unlock();
 
-	if (auto hook = EditorUIDarkMode_ApplyMessageHook(hwndDlg, uMsg, wParam, lParam); hook.has_value())
-		return hook.value();
-
 	return proc(hwndDlg, uMsg, wParam, lParam);
-}
-
-HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
-{
-	HWND wnd = CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
-
-	if (wnd)
-		EditorUIDarkMode_ApplyMessageHook(wnd, WM_CREATE, 0, 0);
-
-	return wnd;
 }
 
 HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)

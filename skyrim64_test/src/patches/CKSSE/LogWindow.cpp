@@ -40,6 +40,8 @@ bool EditorUI_CreateLogWindow()
 
 	std::thread asyncLogThread([]()
 	{
+		EditorUIDarkMode_InitializeThread();
+
 		// Output window
 		HINSTANCE instance = (HINSTANCE)GetModuleHandle(nullptr);
 
@@ -212,8 +214,6 @@ LRESULT CALLBACK EditorUI_LogWndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPA
 
 		// Subscribe to EN_MSGFILTER and EN_SELCHANGE
 		SendMessageA(richEditHwnd, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_SELCHANGE);
-
-		EditorUIDarkMode_ApplyMessageHook(Hwnd, Message, wParam, lParam);
 	}
 	return 0;
 
