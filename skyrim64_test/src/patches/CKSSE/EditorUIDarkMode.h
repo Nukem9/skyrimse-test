@@ -9,6 +9,7 @@ namespace EditorUIDarkMode
 	{
 		None,
 		ScrollBar,
+		StatusBar,
 		MDIClient,
 		Static,
 		Edit,

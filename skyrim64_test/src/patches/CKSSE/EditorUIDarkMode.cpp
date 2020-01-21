@@ -14,6 +14,7 @@ namespace EditorUIDarkMode
 
 	const std::unordered_map<std::string_view, ThemeType> TargetWindowThemes
 	{
+		{ "msctls_statusbar32", ThemeType::StatusBar },
 		{ "MDIClient", ThemeType::MDIClient },
 		{ "Static", ThemeType::Static },
 		{ "Edit", ThemeType::Edit },
@@ -123,10 +124,8 @@ namespace EditorUIDarkMode
 			switch (themeType)
 			{
 			case ThemeType::MDIClient:
-			{
 				SetWindowSubclass(hWnd, MDIClientSubclass, 0, 0);
-			}
-			break;
+				break;
 
 			case ThemeType::RichEdit:
 			{
@@ -140,7 +139,6 @@ namespace EditorUIDarkMode
 			break;
 
 			case ThemeType::ListView:
-			{
 				SetWindowSubclass(hWnd, ListViewSubclass, 0, 0);
 
 				ListView_SetTextColor(hWnd, RGB(255, 255, 255));
@@ -148,24 +146,19 @@ namespace EditorUIDarkMode
 				ListView_SetBkColor(hWnd, RGB(32, 32, 32));
 
 				scrollBarTheme = OpenThemeData(hWnd, VSCLASS_SCROLLBAR);
-			}
-			break;
+				break;
 
 			case ThemeType::TreeView:
-			{
 				TreeView_SetTextColor(hWnd, RGB(255, 255, 255));
 				TreeView_SetBkColor(hWnd, RGB(32, 32, 32));
 
 				scrollBarTheme = OpenThemeData(hWnd, VSCLASS_SCROLLBAR);
-			}
-			break;
+				break;
 
 			case ThemeType::TabControl:
-			{
 				SetWindowLongPtrA(hWnd, GWL_STYLE, (GetWindowLongPtrA(hWnd, GWL_STYLE) & ~TCS_BUTTONS) | TCS_TABS);
 				SetWindowTheme(hWnd, nullptr, nullptr);
-			}
-			break;
+				break;
 			}
 
 			if (scrollBarTheme)
@@ -355,6 +348,30 @@ namespace EditorUIDarkMode
 			case SBP_SIZEBOX:		// Resize box, bottom right
 			case SBP_SIZEBOXBKGND:	// Resize box, background, unused
 				break;
+			}
+		}
+		else if (themeType == ThemeType::StatusBar)
+		{
+			static HBRUSH statusBarBorder = CreateSolidBrush(RGB(130, 135, 144));// RGB(83, 83, 83)
+			static HBRUSH statusBarFill = CreateSolidBrush(RGB(56, 56, 56));
+
+			switch (iPartId)
+			{
+			case 0:
+			{
+				// Outside border (top, right)
+				FillRect(hdc, pRect, statusBarBorder);
+			}
+			return S_OK;
+
+			case SP_PANE:
+			case SP_GRIPPERPANE:
+			case SP_GRIPPER:
+			{
+				// Everything else
+				FillRect(hdc, pRect, statusBarFill);
+			}
+			return S_OK;
 			}
 		}
 		else if (themeType == ThemeType::Edit)
