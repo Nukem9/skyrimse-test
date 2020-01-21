@@ -631,6 +631,11 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x1B76B17, 1530), 2);
 
 	//
+	// Fix for TESObjectLAND vertex normals becoming corrupted when saving worldspaces with a parent worldspace. Invalid memcpy() size supplied.
+	//
+	XUtil::PatchMemory(OFFSET(0x1B93216, 1530), (PBYTE)"\x41\xB8\x63\x03\x00\x00", 6);
+
+	//
 	// Fix for the "Object Palette" preview window not working. Window render state has to be set to '2'.
 	//
 	XUtil::DetourCall(OFFSET(0x12DD706, 1530), &hk_call_1412DD706);
