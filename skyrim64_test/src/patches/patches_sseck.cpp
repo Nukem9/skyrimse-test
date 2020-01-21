@@ -253,6 +253,18 @@ void Patch_TESVCreationKit()
 	PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
 	PatchIAT(hk_SendMessageA, "USER32.DLL", "SendMessageA");
 
+	if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
+	{
+		HMODULE comDll = GetModuleHandle("comctl32.dll");
+		Assert(comDll);
+
+		EditorUIDarkMode::Initialize();
+		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColor", (uint8_t *)&EditorUIDarkMode::Comctl32GetSysColor);
+		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColorBrush", (uint8_t *)&EditorUIDarkMode::Comctl32GetSysColorBrush);
+		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeBackground", (uint8_t *)&EditorUIDarkMode::Comctl32DrawThemeBackground);
+		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeText", (uint8_t *)&EditorUIDarkMode::Comctl32DrawThemeText);
+	}
+
 	if (g_INI.GetBoolean("CreationKit", "UI", false))
 	{
 		EditorUI::Initialize();
@@ -284,19 +296,6 @@ void Patch_TESVCreationKit()
 		XUtil::DetourJump(OFFSET(0x27A6270, 1530), &LogWindow::LogWarningUnknown2);
 		XUtil::DetourCall(OFFSET(0x163D3D1, 1530), &LogWindow::LogWarningUnknown2);
 		XUtil::DetourJump(OFFSET(0x243D260, 1530), &LogWindow::LogAssert);
-	}
-
-	if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
-	{
-		HMODULE comDll = GetModuleHandle("comctl32.dll");
-		Assert(comDll);
-
-		EditorUIDarkMode::Initialize();
-		EditorUIDarkMode::InitializeThread();
-		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColor", (uint8_t *)&EditorUIDarkMode::Comctl32GetSysColor);
-		Detours::IATHook((uint8_t *)comDll, "USER32.dll", "GetSysColorBrush", (uint8_t *)&EditorUIDarkMode::Comctl32GetSysColorBrush);
-		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeBackground", (uint8_t *)&EditorUIDarkMode::Comctl32DrawThemeBackground);
-		Detours::IATDelayedHook((uint8_t *)comDll, "UxTheme.dll", "DrawThemeText", (uint8_t *)&EditorUIDarkMode::Comctl32DrawThemeText);
 	}
 
 	if (g_INI.GetBoolean("CreationKit", "DisableWindowGhosting", false))

@@ -27,6 +27,7 @@ namespace EditorUI
 	void Initialize()
 	{
 		InitCommonControls();
+		EditorUIDarkMode::InitializeThread();
 
 		if (!LogWindow::Initialize())
 			MessageBoxA(nullptr, "Failed to create console log window", "Error", MB_ICONERROR);

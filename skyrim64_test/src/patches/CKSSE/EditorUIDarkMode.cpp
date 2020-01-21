@@ -5,6 +5,8 @@
 #include <Richedit.h>
 #include "EditorUIDarkMode.h"
 
+#pragma comment(lib, "uxtheme.lib")
+
 namespace EditorUIDarkMode
 {
 	tbb::concurrent_unordered_map<HTHEME, ThemeType> ThemeHandles;
