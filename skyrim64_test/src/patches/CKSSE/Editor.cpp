@@ -1201,3 +1201,14 @@ void hk_call_14130F9E8(uintptr_t a1, bool a2)
 	*(bool *)(a1 + 0x18) = a2;
 	*(float *)(a1 + 0x10) = 1000.0f;
 }
+
+void hk_call_14267B359(__int64 SourceNode, __int64 DestNode, __int64 CloningProcess)
+{
+	const char *sourceNodeName = *(const char **)(SourceNode + 0x10);
+	__int64 sourceNodeParent = *(__int64 *)(SourceNode + 0x30);
+
+	if (*(const char **)(SourceNode + 0x40) && !sourceNodeName && sourceNodeParent)
+		LogWindow::LogWarning(10, "Cloning a child node with collision and no name present. Parent is \"%s\".", *(const char **)(sourceNodeParent + 0x10));
+
+	((void(__fastcall *)(__int64, __int64, __int64))OFFSET(0x267B390, 1530))(SourceNode, DestNode, CloningProcess);
+}

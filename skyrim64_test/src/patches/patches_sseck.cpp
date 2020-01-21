@@ -692,6 +692,11 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x2DB3750, 1530), &BSRenderPass_CK::DeallocatePass);
 	
 	//
+	// Print a warning when a cloned NiCollisionObject has no name specified in its NIF file. This comes from malformed/ported game assets.
+	//
+	XUtil::DetourCall(OFFSET(0x267B359, 1530), &hk_call_14267B359);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

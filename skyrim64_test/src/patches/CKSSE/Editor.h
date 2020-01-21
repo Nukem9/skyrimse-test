@@ -89,6 +89,7 @@ void hk_call_14147FB57(HWND ListViewHandle, TESForm_CK *Form, bool UseImage, int
 float hk_call_14202E0E8(float Delta);
 void BSUtilities__SetLocalAppDataPath(const char *Path);
 void hk_call_14130F9E8(uintptr_t a1, bool a2);
+void hk_call_14267B359(__int64 SourceNode, __int64 DestNode, __int64 CloningProcess);
 
 template<typename T, bool Stable = false>
 void ArrayQuickSortRecursive(BSTArray<T>& Array, int(*SortFunction)(const void *, const void *))
