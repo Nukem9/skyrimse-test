@@ -3,6 +3,7 @@
 // Used by resource.rc
 //
 #define IDD_OBJECT_WINDOW_DIALOG        122
+#define IDD_REFERENCE_EDIT_DIALOG       141
 #define IDD_DATA_LOAD_DIALOG            162
 #define IDD_CELL_VIEW_DIALOG            175
 #define IDD_USE_REPORT_DIALOG           220

@@ -435,6 +435,19 @@ namespace EditorUIDarkMode
 			}
 			return S_OK;
 
+			case CP_BORDER:				// Main control with text edit
+			{
+				// Special case: dropdown arrow needs to be drawn
+				DrawThemeBackground(hTheme, hdc, iPartId, iStateId, pRect, pClipRect);
+				FillRect(hdc, pRect, comboBoxFill);
+
+				if (iStateId == CBB_DISABLED)
+					FillRect(hdc, pRect, comboBoxBorder);
+				else
+					FrameRect(hdc, pRect, comboBoxBorder);
+			}
+			return S_OK;
+
 			case CP_DROPDOWNBUTTONRIGHT:// Dropdown arrow
 			case CP_DROPDOWNBUTTONLEFT:	// Dropdown arrow
 				break;
@@ -442,7 +455,6 @@ namespace EditorUIDarkMode
 			case CP_DROPDOWNBUTTON:
 			case CP_BACKGROUND:
 			case CP_TRANSPARENTBACKGROUND:
-			case CP_BORDER:
 			case CP_CUEBANNER:
 			case CP_DROPDOWNITEM:
 				return S_OK;
@@ -506,20 +518,32 @@ namespace EditorUIDarkMode
 
 			switch (iPartId)
 			{
-			case TABP_TOPTABITEM:			// Middle tab buttons
-			case TABP_TOPTABITEMLEFTEDGE:	// Leftmost tab button
-			case TABP_TOPTABITEMRIGHTEDGE:	// Rightmost tab button
+			case TABP_TABITEM:				// TCS_MULTILINE middle buttons
+			case TABP_TABITEMLEFTEDGE:		// TCS_MULTILINE leftmost button
+			case TABP_TABITEMRIGHTEDGE:		// TCS_MULTILINE rightmost button
+			case TABP_TABITEMBOTHEDGE:		// TCS_MULTILINE ???
+			case TABP_TOPTABITEM:			// Middle buttons
+			case TABP_TOPTABITEMLEFTEDGE:	// Leftmost button
+			case TABP_TOPTABITEMRIGHTEDGE:	// Rightmost button
 			case TABP_TOPTABITEMBOTHEDGE:	// ???
 			{
 				RECT paddedRect = *pRect;
 				RECT insideRect = { pRect->left + 1, pRect->top + 1, pRect->right - 1, pRect->bottom - 1 };
 
-				bool isHover = (iPartId == TABP_TOPTABITEM && iStateId == TTIS_HOT) ||
+				bool isHover = (iPartId == TABP_TABITEM && iStateId == TIS_HOT) ||
+					(iPartId == TABP_TABITEMLEFTEDGE && iStateId == TILES_HOT) ||
+					(iPartId == TABP_TABITEMRIGHTEDGE && iStateId == TIRES_HOT) ||
+					(iPartId == TABP_TABITEMBOTHEDGE && iStateId == TIBES_HOT) ||
+					(iPartId == TABP_TOPTABITEM && iStateId == TTIS_HOT) ||
 					(iPartId == TABP_TOPTABITEMLEFTEDGE && iStateId == TTILES_HOT) ||
 					(iPartId == TABP_TOPTABITEMRIGHTEDGE && iStateId == TTIRES_HOT) ||
 					(iPartId == TABP_TOPTABITEMBOTHEDGE && iStateId == TTIBES_HOT);
 
-				if ((iPartId == TABP_TOPTABITEM && iStateId == TTIS_SELECTED) ||
+				if ((iPartId == TABP_TABITEM && iStateId == TIS_SELECTED) ||
+					(iPartId == TABP_TABITEMLEFTEDGE && iStateId == TILES_SELECTED) ||
+					(iPartId == TABP_TABITEMRIGHTEDGE && iStateId == TIRES_SELECTED) ||
+					(iPartId == TABP_TABITEMBOTHEDGE && iStateId == TIBES_SELECTED) ||
+					(iPartId == TABP_TOPTABITEM && iStateId == TTIS_SELECTED) ||
 					(iPartId == TABP_TOPTABITEMLEFTEDGE && iStateId == TTILES_SELECTED) ||
 					(iPartId == TABP_TOPTABITEMRIGHTEDGE && iStateId == TTIRES_SELECTED) ||
 					(iPartId == TABP_TOPTABITEMBOTHEDGE && iStateId == TTIBES_SELECTED))
