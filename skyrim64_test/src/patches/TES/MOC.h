@@ -19,7 +19,7 @@ namespace MOC
 	void RenderGeometryCallback(MaskedOcclusionCulling *MOC, void *UserData);
 	void TraverseSceneGraphCallback(MaskedOcclusionCulling *MOC, void *UserData);
 
-	bool TestObject(NiAVObject *Object);
+	bool TestObject(class NiAVObject *Object);
 
 	using namespace DirectX;
 

@@ -6,7 +6,6 @@
 #include "BSSpinLock.h"
 #include "BSBatchRenderer.h"
 #include "BSShader/Shaders/BSSkyShader.h"
-#include "MTRenderer.h"
 
 AutoPtr(BYTE, byte_1431F54CD, 0x31F54CD);
 AutoPtr(DWORD, dword_141E32FDC, 0x1E32FDC);
@@ -296,55 +295,20 @@ bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, B
 		}
 
 		if (cullMode != -1)
-			MTRenderer::RasterStateSetCullMode(cullMode);
+			BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(cullMode);
 
 		if (alphaBlendUnknown != -1)
-			MTRenderer::AlphaBlendStateSetUnknown1(0);
+			BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetUnknown1(0);
 
 		renderer->SetUseAlphaTestRef(useScrapConstant);
 	}
 
 	// Render this group with a specific render pass list
-	int shaderType = -1;
 	PassGroup *group = &m_RenderPass[m_RenderPassMap.get(Technique)];
 	BSRenderPass *currentPass = group->m_Passes[GroupIndex];
 
-	if (currentPass)
-		shaderType = currentPass->m_Shader->m_Type;
-
-	MTRenderer::LockShader(shaderType);
-
-	// If we can, submit it to the command list queue instead of running it directly
-	if (MTRenderer::IsGeneratingGameCommandList())
-	{
-		// Combine 3 draw command packets into 1 when possible
-		BSRenderPass *temp[3];
-
-		for (int count = 0;; count = 0)
-		{
-			for (; currentPass && count < ARRAYSIZE(temp); currentPass = currentPass->m_Next)
-				temp[count++] = currentPass;
-
-			if (count == 0)
-				break;
-
-			if (count == ARRAYSIZE(temp))
-			{
-				// 3 x BSRenderPass, 1 packet
-				MTRenderer::InsertCommand<MTRenderer::DrawGeometryMultiRenderCommand>(temp, Technique, alphaTest, RenderFlags);
-			}
-			else
-			{
-				for (int i = 0; i < count; i++)
-					MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(temp[i], Technique, alphaTest, RenderFlags);
-			}
-		}
-	}
-	else
-	{
-		for (; currentPass; currentPass = currentPass->m_Next)
-			RenderPassImmediately(currentPass, Technique, alphaTest, RenderFlags);
-	}
+	for (; currentPass; currentPass = currentPass->m_Next)
+		RenderPassImmediately(currentPass, Technique, alphaTest, RenderFlags);
 
 	// Zero the pointers only - the memory is freed elsewhere
 	if (m_AutoClearPasses)
@@ -355,9 +319,8 @@ bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, B
 		group->m_Passes[GroupIndex] = nullptr;
 	}
 
-	MTRenderer::EndPass();
-	MTRenderer::AlphaBlendStateSetUnknown1(0);
-	MTRenderer::UnlockShader(shaderType);
+	BSBatchRenderer::EndPass();
+	BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetUnknown1(0);
 
 	GroupIndex++;
 	return sub_14131E700(Technique, GroupIndex, PassIndexList);
@@ -388,49 +351,31 @@ void BSBatchRenderer::RenderPersistentPassList(PersistentPassList *PassList, uin
 	if (!PassList->m_Head)
 		return;
 
-	MTRenderer::EndPass();
-
-	bool mtrContext = MTRenderer::IsGeneratingGameCommandList();
-	int lockType = PassList->m_Head->m_Shader->m_Type;
-
-	MTRenderer::LockShader(lockType);
+	BSBatchRenderer::EndPass();
 
 	for (BSRenderPass *i = PassList->m_Head; i; i = i->m_Next)
 	{
 		if (!i->m_Geometry)
 			continue;
 
-		// This render pass function doesn't always use one shader type
-		if (lockType != i->m_Shader->m_Type)
-		{
-			MTRenderer::UnlockShader(lockType);
-			lockType = i->m_Shader->m_Type;
-			MTRenderer::LockShader(lockType);
-		}
-
 		if ((RenderFlags & 0x108) == 0)
 		{
 			if (i->m_ShaderProperty->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
-				MTRenderer::RasterStateSetCullMode(0);
+				BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(0);
 			else
-				MTRenderer::RasterStateSetCullMode(1);
+				BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(1);
 		}
 
 		bool alphaTest = i->m_Geometry->QAlphaProperty() && i->m_Geometry->QAlphaProperty()->GetAlphaTesting();
 
-		if (mtrContext)
-			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_PassEnum, alphaTest, RenderFlags);
-		else
-			BSBatchRenderer::RenderPassImmediately(i, i->m_PassEnum, alphaTest, RenderFlags);
+		BSBatchRenderer::RenderPassImmediately(i, i->m_PassEnum, alphaTest, RenderFlags);
 	}
 
 	if ((RenderFlags & 0x108) == 0)
-		MTRenderer::RasterStateSetCullMode(1);
+		BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(1);
 
 	PassList->Clear();
-
-	MTRenderer::EndPass();
-	MTRenderer::UnlockShader(lockType);
+	BSBatchRenderer::EndPass();
 }
 
 void BSBatchRenderer::RenderPassImmediately(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags)

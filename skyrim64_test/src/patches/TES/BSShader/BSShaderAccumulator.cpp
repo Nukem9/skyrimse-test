@@ -7,7 +7,6 @@
 #include "BSShaderManager.h"
 #include "BSShaderAccumulator.h"
 #include "../BSReadWriteLock.h"
-#include "../MTRenderer.h"
 #include "../MOC.h"
 
 AutoPtr(BSShaderAccumulator *, ZPrePassAccumulator, 0x3257A68);
@@ -520,7 +519,6 @@ void BSShaderAccumulator::RenderBatches(uint32_t StartTechnique, uint32_t EndTec
 
 	// Always run the full function because I'm not sure if the structure
 	// is used somewhere important.
-	MTRenderer::InsertCommand<MTRenderer::SetAccumulatorRenderCommand>(this);
 	BSShaderManager::SetCurrentAccumulator(this);
 
 	if (GeometryGroup <= -1)
@@ -565,5 +563,5 @@ void BSShaderAccumulator::RenderBatches(uint32_t StartTechnique, uint32_t EndTec
 	if (group)
 		group->ClearAndFreePasses();
 
-	MTRenderer::EndPass();
+	BSBatchRenderer::EndPass();
 }

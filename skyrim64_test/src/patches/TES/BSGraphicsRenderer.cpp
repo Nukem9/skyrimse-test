@@ -5,8 +5,8 @@
 #include "BSShader/BSShaderAccumulator.h"
 #include "BSShader/BSShaderRenderTargets.h"
 #include "BSReadWriteLock.h"
-#include "MTRenderer.h"
 #include "MOC.h"
+#include "NiMain/BSGeometry.h"
 
 namespace BSGraphics::Utility
 {
@@ -685,9 +685,6 @@ namespace BSGraphics
 
 	void Renderer::DepthStencilStateSetDepthMode(DepthStencilDepthMode Mode)
 	{
-		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::DepthStencilStateDepthMode, Mode))
-			return;
-
 		if (*(DWORD *)&__zz0[32] != Mode)
 		{
 			*(DWORD *)&__zz0[32] = Mode;
@@ -753,9 +750,6 @@ namespace BSGraphics
 
 	void Renderer::AlphaBlendStateSetUnknown2(uint32_t Value)
 	{
-		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::AlphaBlendStateUnknown2, Value))
-			return;
-
 		if (*(DWORD *)&__zz0[72] != Value)
 		{
 			*(DWORD *)&__zz0[72] = Value;
@@ -770,9 +764,6 @@ namespace BSGraphics
 
 	void Renderer::SetUseAlphaTestRef(bool UseStoredValue)
 	{
-		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_1, UseStoredValue))
-			return;
-
 		// When UseStoredValue is false, the constant buffer data is zeroed, but m_AlphaTestRef is saved
 		if (__zz0[76] != (char)UseStoredValue)
 		{
@@ -783,9 +774,6 @@ namespace BSGraphics
 
 	void Renderer::SetAlphaTestRef(float Value)
 	{
-		if (MTRenderer::InsertCommand<MTRenderer::SetStateRenderCommand>(MTRenderer::SetStateRenderCommand::UseScrapConstantValue_2, *(uint32_t *)&Value))
-			return;
-
 		if (m_AlphaTestRef != Value)
 		{
 			m_AlphaTestRef = Value;
@@ -889,7 +877,8 @@ namespace BSGraphics
 		// If the user lets us, try to use the global ring buffer instead of small temporary
 		// allocations. It must be used on the immediate D3D context only. No MTR here.
 		//
-		if (initialAllocSize > ThresholdSize && !MTRenderer::IsRenderingMultithreaded())
+		//if (initialAllocSize > ThresholdSize && !MTRenderer::IsRenderingMultithreaded())
+		if (initialAllocSize > ThresholdSize && true)
 		{
 			// Size must be rounded up to nearest 256 bytes (D3D11.1 specification)
 			roundedAllocSize = (initialAllocSize + 256 - 1) & ~(256 - 1);
@@ -949,7 +938,7 @@ namespace BSGraphics
 
 	void Renderer::UnmapDynamicConstantBuffer()
 	{
-		if (!MTRenderer::IsRenderingMultithreaded())
+		//if (!MTRenderer::IsRenderingMultithreaded())
 			ShaderConstantBuffer->UnmapData(m_DeviceContext);
 
 		memset(&TestBufferUsedBits, 0, sizeof(TestBufferUsedBits));
@@ -963,7 +952,8 @@ namespace BSGraphics
 		// Try to use the global ring buffer instead of small temporary allocations. It
 		// must be used on the immediate D3D context only. No MTR here.
 		//
-		if (!MTRenderer::IsRenderingMultithreaded())
+		//if (!MTRenderer::IsRenderingMultithreaded())
+		if (true)
 		{
 			m_DynamicBuffers[0] = DynamicBuffer->D3DBuffer;
 			m_CurrentDynamicBufferIndex = 0;

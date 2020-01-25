@@ -164,9 +164,6 @@
     <ClInclude Include="src\patches\TES\NiMain\NiSkinInstance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\MTRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\rendering\GpuCircularBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -491,9 +488,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSLightingShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\MTRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\rendering\GpuCircularBuffer.cpp">
