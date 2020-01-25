@@ -176,7 +176,7 @@ void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
 #endif
 }
 
-uint8_t *RenderSceneNormal;
+uint8_t *FinishAccumulating_Standard_PreResolveDepth;
 
 HRESULT WINAPI hk_CreateDXGIFactory(REFIID riid, void **ppFactory)
 {
@@ -363,7 +363,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x131F0D0, (PBYTE)&BSBatchRenderer::RenderPassImmediately);
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&BSGraphics::Renderer::SyncD3DState);
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF30, (PBYTE)&sub_140D6BF00);
-	*(PBYTE *)&RenderSceneNormal = Detours::X64::DetourFunctionClass((PBYTE)g_ModuleBase + 0x12E1960, &BSShaderAccumulator::RenderSceneNormal);
+	*(PBYTE *)&FinishAccumulating_Standard_PreResolveDepth = Detours::X64::DetourFunctionClass((PBYTE)g_ModuleBase + 0x12E1960, &BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth);
 
 	g_GPUTimers.Create(g_Device, 1);
 	//TracyDx11Context(g_Device, g_DeviceContext);

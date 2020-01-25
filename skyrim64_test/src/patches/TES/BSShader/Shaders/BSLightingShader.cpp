@@ -968,18 +968,16 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 		if (drawInWorldSpace)
 		{
-			float *v83 = (float *)BSShaderManager::GetCurrentAccumulator();
-			XMVECTOR coord = XMVectorSet(v83[91], v83[92], v83[93], 0.0f);
-
+			XMVECTOR coord = BSShaderManager::GetCurrentAccumulator()->m_EyePosition.AsXmm();
 			XMStoreFloat3(&eyePosition, XMVector3TransformCoord(coord, inverseWorldMatrix));
 		}
 		else
 		{
-			float *v86 = (float *)BSShaderManager::GetCurrentAccumulator();
+			auto& position = BSShaderManager::GetCurrentAccumulator()->m_EyePosition;
 
-			eyePosition.x = v86[91] - renderer->m_CurrentPosAdjust.x;
-			eyePosition.y = v86[92] - renderer->m_CurrentPosAdjust.y;
-			eyePosition.z = v86[93] - renderer->m_CurrentPosAdjust.z;
+			eyePosition.x = position.x - renderer->m_CurrentPosAdjust.x;
+			eyePosition.y = position.y - renderer->m_CurrentPosAdjust.y;
+			eyePosition.z = position.z - renderer->m_CurrentPosAdjust.z;
 		}
 	}
 

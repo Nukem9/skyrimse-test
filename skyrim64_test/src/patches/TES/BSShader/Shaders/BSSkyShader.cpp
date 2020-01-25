@@ -139,7 +139,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	uint32_t rawTechnique = GAME_TLS(uint32_t, 0x9F0);
 	NiTransform geoTransform = Pass->m_Geometry->GetWorldTransform();
 
-	if (auto *accumulator = BSShaderManager::GetCurrentAccumulator(); accumulator->m_UseUnknownCameraAdjust)
+	if (auto *accumulator = BSShaderManager::GetCurrentAccumulator(); accumulator->m_1stPerson)
 	{
 		NiPoint3 adjusted = geoTransform.m_Translate - qword_1431F55F8->GetWorldTranslate();
 
@@ -171,10 +171,10 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		XMFLOAT3& eyePos = vertexCG.ParamVS<XMFLOAT3, 4>();
 
-		float *v27 = (float *)BSShaderManager::GetCurrentAccumulator();
-		eyePos.x = v27[91] - renderer->m_CurrentPosAdjust.x;
-		eyePos.y = v27[92] - renderer->m_CurrentPosAdjust.y;
-		eyePos.z = v27[93] - renderer->m_CurrentPosAdjust.z;
+		auto& position = BSShaderManager::GetCurrentAccumulator()->m_EyePosition;
+		eyePos.x = position.x - renderer->m_CurrentPosAdjust.x;
+		eyePos.y = position.y - renderer->m_CurrentPosAdjust.y;
+		eyePos.z = position.z - renderer->m_CurrentPosAdjust.z;
 	}
 
 	//

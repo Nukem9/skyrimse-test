@@ -15,39 +15,39 @@ AutoPtr(BSShaderAccumulator *, MainPassAccumulator, 0x3257A70);
 void BSShaderAccumulator::InitCallbackTable()
 {
 	// If the pointer is null, it defaults to the function at index 0
-	RegisterObjectArray[0] = RegisterObject_Default;							// 00 RegisterObject_Default
-	RegisterObjectArray[1] = RegisterObject_Default;							// 01 ^
-	RegisterObjectArray[2] = RegisterObject_Default;							// 02 ^
-	RegisterObjectArray[3] = RegisterObject_Default;							// 03 ^
-	RegisterObjectArray[4] = RegisterObject_Default;							// 04 ^
-	RegisterObjectArray[5] = RegisterObject_Default;							// 05 ^
-	RegisterObjectArray[6] = RegisterObject_Default;							// 06 ^
-	RegisterObjectArray[7] = RegisterObject_Default;							// 07 ^
-	RegisterObjectArray[8] = RegisterObject_Default;							// 08 ^
-	RegisterObjectArray[9] = RegisterObject_Default;							// 09 ^
-	RegisterObjectArray[10] = RegisterObject_Default;							// 10 ^
-	RegisterObjectArray[11] = RegisterObject_Default;							// 11 ^
+	RegisterObjectArray[0] = RegisterObject_Standard;							// 00 RegisterObject_Standard
+	RegisterObjectArray[1] = RegisterObject_Standard;							// 01 ^
+	RegisterObjectArray[2] = RegisterObject_Standard;							// 02 ^
+	RegisterObjectArray[3] = RegisterObject_Standard;							// 03 ^
+	RegisterObjectArray[4] = RegisterObject_Standard;							// 04 ^
+	RegisterObjectArray[5] = RegisterObject_Standard;							// 05 ^
+	RegisterObjectArray[6] = RegisterObject_Standard;							// 06 ^
+	RegisterObjectArray[7] = RegisterObject_Standard;							// 07 ^
+	RegisterObjectArray[8] = RegisterObject_Standard;							// 08 ^
+	RegisterObjectArray[9] = RegisterObject_Standard;							// 09 ^
+	RegisterObjectArray[10] = RegisterObject_Standard;							// 10 ^
+	RegisterObjectArray[11] = RegisterObject_Standard;							// 11 ^
 	RegisterObjectArray[12] = RegisterObject_ShadowMapOrMask;					// 12 RegisterObject_ShadowMapOrMask
 	RegisterObjectArray[13] = RegisterObject_ShadowMapOrMask;					// 13 ^
 	RegisterObjectArray[14] = RegisterObject_ShadowMapOrMask;					// 14 ^
 	RegisterObjectArray[15] = RegisterObject_ShadowMapOrMask;					// 15 ^
 	RegisterObjectArray[16] = RegisterObject_ShadowMapOrMask;					// 16 ^
 	RegisterObjectArray[17] = RegisterObject_ShadowMapOrMask;					// 17 ^
-	RegisterObjectArray[18] = (RegisterObjFunc)(g_ModuleBase + 0x12E1400);		// 18 ?
-	RegisterObjectArray[19] = (RegisterObjFunc)(g_ModuleBase + 0x12E1400);		// 19 ?
-	RegisterObjectArray[20] = (RegisterObjFunc)(g_ModuleBase + 0x12E1340);		// 20 RegisterObject_Interface
-	RegisterObjectArray[21] = (RegisterObjFunc)(g_ModuleBase + 0x12E1370);		// 21 ?
-	RegisterObjectArray[22] = RegisterObject_Default;							// 22 RegisterObject_Default
-	RegisterObjectArray[23] = (RegisterObjFunc)(g_ModuleBase + 0x12E1380);		// 23 ?
-	RegisterObjectArray[24] = (RegisterObjFunc)(g_ModuleBase + 0x12E15E0);		// 24 ?
-	RegisterObjectArray[25] = (RegisterObjFunc)(g_ModuleBase + 0x12E1780);		// 25 RegisterObject_LOD
-	RegisterObjectArray[26] = (RegisterObjFunc)(g_ModuleBase + 0x12E1780);		// 26 RegisterObject_LOD
-	RegisterObjectArray[27] = RegisterObject_Default;							// 27 RegisterObject_Default
-	RegisterObjectArray[28] = (RegisterObjFunc)(g_ModuleBase + 0x12E1800);		// 28 ?
-	RegisterObjectArray[29] = RegisterObject_Default;							// 29 RegisterObject_Default
+	RegisterObjectArray[18] = (REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E1400);	// 18 ?
+	RegisterObjectArray[19] = (REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E1400);	// 19 ?
+	RegisterObjectArray[20] = (REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E1340);	// 20 RegisterObject_Interface
+	RegisterObjectArray[21] = (REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E1370);	// 21 ?
+	RegisterObjectArray[22] = RegisterObject_Standard;							// 22 RegisterObject_Standard
+	RegisterObjectArray[23] = (REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E1380);	// 23 ?
+	RegisterObjectArray[24] = (REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E15E0);	// 24 ?
+	RegisterObjectArray[25] = (REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E1780);	// 25 RegisterObject_LOD
+	RegisterObjectArray[26] = (REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E1780);	// 26 RegisterObject_LOD
+	RegisterObjectArray[27] = RegisterObject_Standard;							// 27 RegisterObject_Standard
+	RegisterObjectArray[28] = (REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E1800);	// 28 ?
+	RegisterObjectArray[29] = RegisterObject_Standard;							// 29 RegisterObject_Standard
 
 	// If the pointer is null, it defaults to the function at index 0
-	FinishAccumulatingArray[0] = FinishAccumulating_Default;					// 00 FinishAccumulating_Default
+	FinishAccumulatingArray[0] = FinishAccumulating_Standard;					// 00 FinishAccumulating_Standard
 	FinishAccumulatingArray[1] = nullptr;										// 01 ^
 	FinishAccumulatingArray[2] = nullptr;										// 02 ^
 	FinishAccumulatingArray[3] = nullptr;										// 03 ^
@@ -65,18 +65,18 @@ void BSShaderAccumulator::InitCallbackTable()
 	FinishAccumulatingArray[15] = FinishAccumulating_ShadowMapOrMask;			// 15 ^
 	FinishAccumulatingArray[16] = FinishAccumulating_ShadowMapOrMask;			// 16 ^
 	FinishAccumulatingArray[17] = FinishAccumulating_ShadowMapOrMask;			// 17 ^
-	FinishAccumulatingArray[18] = nullptr;										// 18 FinishAccumulating_Default
+	FinishAccumulatingArray[18] = nullptr;										// 18 FinishAccumulating_Standard
 	FinishAccumulatingArray[19] = nullptr;										// 19 ^
 	FinishAccumulatingArray[20] = FinishAccumulating_InterfaceElements;			// 20 FinishAccumulating_InterfaceElements
-	FinishAccumulatingArray[21] = nullptr;										// 21 FinishAccumulating_Default
+	FinishAccumulatingArray[21] = nullptr;										// 21 FinishAccumulating_Standard
 	FinishAccumulatingArray[22] = FinishAccumulating_FirstPerson;				// 22 FinishAccumulating_FirstPerson
-	FinishAccumulatingArray[23] = (FinishAccumFunc)(g_ModuleBase + 0x12E3020);	// 23 ?
-	FinishAccumulatingArray[24] = (FinishAccumFunc)(g_ModuleBase + 0x12E3030);	// 24 ?
+	FinishAccumulatingArray[23] = (FINISHACCUMULATINGFUNC)(g_ModuleBase + 0x12E3020);	// 23 ?
+	FinishAccumulatingArray[24] = (FINISHACCUMULATINGFUNC)(g_ModuleBase + 0x12E3030);	// 24 ?
 	FinishAccumulatingArray[25] = FinishAccumulating_LODOnly;					// 25 FinishAccumulating_LODOnly
 	FinishAccumulatingArray[26] = FinishAccumulating_LODOnly;					// 26 FinishAccumulating_LODOnly
-	FinishAccumulatingArray[27] = nullptr;										// 27 FinishAccumulating_Default
+	FinishAccumulatingArray[27] = nullptr;										// 27 FinishAccumulating_Standard
 	FinishAccumulatingArray[28] = FinishAccumulating_Unknown1;					// 28 Never used? BSSM_RENDER_PRECIPITATION_OCCLUSION_MAP?
-	FinishAccumulatingArray[29] = nullptr;										// 29 FinishAccumulating_Default
+	FinishAccumulatingArray[29] = nullptr;										// 29 FinishAccumulating_Standard
 
 	SetRenderMode(0);
 }
@@ -135,7 +135,7 @@ void BSShaderAccumulator::hk_FinishAccumulatingDispatch(uint32_t RenderFlags)
 	if (m_RenderMode != 0)
 		FinishAccumulatingCurrent(this, RenderFlags);
 	else
-		RenderSceneNormal(this, RenderFlags);
+		FinishAccumulating_Standard_PreResolveDepth(this, RenderFlags);
 }
 
 bool BSShaderAccumulator::IsGrassShadowBlacklist(uint32_t Technique)
@@ -156,26 +156,26 @@ void ResetSceneDepthShift()
 	((void(__fastcall *)())(g_ModuleBase + 0x12F8C70))();
 }
 
-bool BSShaderAccumulator::RegisterObject_Default(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown)
+bool BSShaderAccumulator::RegisterObject_Standard(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown)
 {
-	return ((RegisterObjFunc)(g_ModuleBase + 0x12E0F90))(Accumulator, Geometry, Property, Unknown);
+	return ((REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E0F90))(Accumulator, Geometry, Property, Unknown);
 }
 
 bool BSShaderAccumulator::RegisterObject_ShadowMapOrMask(BSShaderAccumulator *Accumulator, BSGeometry *Geometry, BSShaderProperty *Property, void *Unknown)
 {
-	return ((RegisterObjFunc)(g_ModuleBase + 0x12E1650))(Accumulator, Geometry, Property, Unknown);
+	return ((REGISTEROBJECTFUNC)(g_ModuleBase + 0x12E1650))(Accumulator, Geometry, Property, Unknown);
 }
 
-void BSShaderAccumulator::FinishAccumulating_Default(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+void BSShaderAccumulator::FinishAccumulating_Standard(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
-	ZoneScopedN("FinishAccumulating_Default");
-	BSGraphics::BeginEvent(L"FinishAccumulating_Default");
-	RenderSceneNormal(Accumulator, RenderFlags);
-	RenderSceneNormalAlphaZ(Accumulator, RenderFlags);
+	ZoneScopedN("FinishAccumulating_Standard");
+	BSGraphics::BeginEvent(L"FinishAccumulating_Standard");
+	FinishAccumulating_Standard_PreResolveDepth(Accumulator, RenderFlags);
+	FinishAccumulating_Standard_PostResolveDepth(Accumulator, RenderFlags);
 	BSGraphics::EndEvent();
 }
 
-void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+void BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
 	static bool once = false;
 
@@ -192,7 +192,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	auto renderer = BSGraphics::Renderer::GetGlobals();
 
 	renderer->BeginEvent(L"BSShaderAccumulator: Draw1");
-	ZoneScopedN("RenderSceneNormal");
+	ZoneScopedN("FinishAccumulating_Standard_PreResolveDepth");
 
 	if (*(BYTE *)(a1 + 92) && !BSGraphics::gState.bUseEarlyZ)
 		renderer->DepthStencilStateSetDepthMode(BSGraphics::DEPTH_STENCIL_DEPTH_MODE_TESTEQUAL);
@@ -331,7 +331,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 
 	DWORD *flt_14304E490 = (DWORD *)(g_ModuleBase + 0x304E490);
 
-	if ((RenderFlags & 0x80) != 0 && Accumulator->m_MainBatch->QPassesWithinRange(0x5C000071, 0x5C006071))
+	if ((RenderFlags & 0x80) != 0 && Accumulator->m_BatchRenderer->QPassesWithinRange(0x5C000071, 0x5C006071))
 	{
 		int aiSource = sub_140D744B0();
 
@@ -347,7 +347,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	// RenderWaterStencil
 	renderer->BeginEvent(L"RenderWaterStencil");
 	{
-		if (Accumulator->m_MainBatch->QPassesWithinRange(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc))
+		if (Accumulator->m_BatchRenderer->QPassesWithinRange(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc))
 		{
 			sub_140D69E70((__int64)flt_14304E490, 2u);// BSGraphics::Renderer::ClearDepthStencil(CLEAR_DEPTH_STENCIL_TARGET_STENCIL)
 			sub_140D69D30((float *)flt_14304E490, 0.0, 0.0, 0.0, 0);
@@ -386,10 +386,10 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	renderer->EndEvent();
 }
 
-void BSShaderAccumulator::RenderSceneNormalAlphaZ(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
+void BSShaderAccumulator::FinishAccumulating_Standard_PostResolveDepth(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
 {
-	ZoneScopedN("RenderSceneNormalAlphaZ");
-	((FinishAccumFunc)(g_ModuleBase + 0x12E1F70))(Accumulator, RenderFlags);
+	ZoneScopedN("FinishAccumulating_Standard_PostResolveDepth");
+	((FINISHACCUMULATINGFUNC)(g_ModuleBase + 0x12E1F70))(Accumulator, RenderFlags);
 }
 
 void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator *Accumulator, uint32_t RenderFlags)
@@ -440,7 +440,7 @@ void BSShaderAccumulator::FinishAccumulating_InterfaceElements(BSShaderAccumulat
 {
 	ZoneScopedN("FinishAccumulating_InterfaceElements");
 	BSGraphics::BeginEvent(L"FinishAccumulating_InterfaceElements");
-	((FinishAccumFunc)(g_ModuleBase + 0x12E2FE0))(Accumulator, RenderFlags);
+	((FINISHACCUMULATINGFUNC)(g_ModuleBase + 0x12E2FE0))(Accumulator, RenderFlags);
 	BSGraphics::EndEvent();
 }
 
@@ -448,7 +448,7 @@ void BSShaderAccumulator::FinishAccumulating_FirstPerson(BSShaderAccumulator *Ac
 {
 	ZoneScopedN("FinishAccumulating_FirstPerson");
 	BSGraphics::BeginEvent(L"FinishAccumulating_FirstPerson");
-	((FinishAccumFunc)(g_ModuleBase + 0x12E2B20))(Accumulator, RenderFlags);
+	((FINISHACCUMULATINGFUNC)(g_ModuleBase + 0x12E2B20))(Accumulator, RenderFlags);
 	BSGraphics::EndEvent();
 }
 
@@ -497,7 +497,7 @@ void BSShaderAccumulator::RenderGeometryGroup(uint32_t StartTechnique, uint32_t 
 	}
 	else
 	{
-		auto group = m_MainBatch->m_GeometryGroups[GeometryGroup];
+		auto group = m_BatchRenderer->m_GeometryGroups[GeometryGroup];
 
 		if (group)
 		{
@@ -517,24 +517,22 @@ void BSShaderAccumulator::RenderBatches(uint32_t StartTechnique, uint32_t EndTec
 	BSBatchRenderer::GeometryGroup *group = nullptr;
 	BSBatchRenderer *batch = nullptr;
 
-	// Always run the full function because I'm not sure if the structure
-	// is used somewhere important.
 	BSShaderManager::SetCurrentAccumulator(this);
 
 	if (GeometryGroup <= -1)
 	{
 		// Wildcard: render everything with the given techniques
 		group = nullptr;
-		batch = m_MainBatch;
+		batch = m_BatchRenderer;
 	}
 	else
 	{
 		// Render a single group with given techniques
-		group = m_MainBatch->m_GeometryGroups[GeometryGroup];
+		group = m_BatchRenderer->m_GeometryGroups[GeometryGroup];
 		batch = group->m_BatchRenderer;
 	}
 
-	m_CurrentTech = 0;
+	m_CurrentPass = 0;
 
 	if (batch)
 	{
@@ -543,21 +541,21 @@ void BSShaderAccumulator::RenderBatches(uint32_t StartTechnique, uint32_t EndTec
 		batch->m_CurrentFirstPass = StartTechnique;
 		batch->m_CurrentLastPass = EndTechnique;
 
-		m_CurrentGroupIndex = 0;
-		m_HasPendingDraws = batch->sub_14131E700(m_CurrentTech, m_CurrentGroupIndex, activeListHead);
+		m_CurrentBucket = 0;
+		m_CurrentActive = batch->sub_14131E700(m_CurrentPass, m_CurrentBucket, activeListHead);
 
-		while (m_HasPendingDraws)
+		while (m_CurrentActive)
 		{
-			if (IsGrassShadowBlacklist(m_CurrentTech) && (m_UseUnknownCameraAdjust || *(BYTE *)((__int64)this + 297)))// if (is grass shadow) ???
-				m_HasPendingDraws = batch->DiscardBatches(m_CurrentTech, m_CurrentGroupIndex, activeListHead);
+			if (IsGrassShadowBlacklist(m_CurrentPass) && (m_1stPerson || *(BYTE *)((__int64)this + 297)))// if (is grass shadow) ???
+				m_CurrentActive = batch->DiscardBatches(m_CurrentPass, m_CurrentBucket, activeListHead);
 			else
-				m_HasPendingDraws = batch->RenderBatches(m_CurrentTech, m_CurrentGroupIndex, activeListHead, RenderFlags);
+				m_CurrentActive = batch->RenderBatches(m_CurrentPass, m_CurrentBucket, activeListHead, RenderFlags);
 		}
 	}
 	else
 	{
 		// No batcher available to render these, so just drop them
-		m_HasPendingDraws = false;
+		m_CurrentActive = false;
 	}
 
 	if (group)
