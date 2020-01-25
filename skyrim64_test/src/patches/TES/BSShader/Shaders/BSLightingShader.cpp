@@ -22,8 +22,8 @@ DEFINE_SHADER_DESCRIPTOR(
 	CONFIG_ENTRY(VS, PER_TEC, 14, float4, FogNearColor)
 	CONFIG_ENTRY(VS, PER_TEC, 15, float4, FogFarColor)
 
-	CONFIG_ENTRY(VS, PER_MAT, 9, float3, LeftEyeCenter)
-	CONFIG_ENTRY(VS, PER_MAT, 10, float3, RightEyeCenter)
+	CONFIG_ENTRY(VS, PER_MAT, 9, float4, LeftEyeCenter)
+	CONFIG_ENTRY(VS, PER_MAT, 10, float4, RightEyeCenter)
 	CONFIG_ENTRY(VS, PER_MAT, 11, float4, TexcoordOffset)
 
 	CONFIG_ENTRY(VS, PER_GEO, 0, row_major float3x4, World)
@@ -63,10 +63,11 @@ DEFINE_SHADER_DESCRIPTOR(
 	CONFIG_ENTRY(PS, PER_GEO, 2, float4[7], PointLightColor)
 	CONFIG_ENTRY(PS, PER_GEO, 3, float3, DirLightDirection)
 	CONFIG_ENTRY(PS, PER_GEO, 4, float3, DirLightColor)
-	CONFIG_ENTRY(PS, PER_GEO, 5, float3x4, DirectionalAmbient)
-	CONFIG_ENTRY(PS, PER_GEO, 6, float4, AmbientSpecularTintAndFresnelPower)	// Vanilla code incorrectly labels this as PerMaterial
+	CONFIG_ENTRY(PS, PER_GEO, 5, row_major float3x4, DirectionalAmbient)
+	CONFIG_ENTRY(PS, PER_GEO, 6, float4, AmbientSpecularTintAndFresnelPower)	// BUG: Vanilla code incorrectly labels this as PerMaterial
 	CONFIG_ENTRY(PS, PER_GEO, 7, float4, MaterialData)
-	CONFIG_ENTRY(PS, PER_GEO, 8, float4, EmitColor)
+	CONFIG_ENTRY(PS, PER_GEO, 8, float3, EmitColor)
+	// CONFIG_ENTRY(PS, PER_GEO, X, float3, GlitterParams)						// BUG: Unused, undocumented, type assumed from PS4, shader cbuffer offset 0x50
 	CONFIG_ENTRY(PS, PER_GEO, 9, float, AlphaTestRef)							// Unused, type assumed from PS4
 	CONFIG_ENTRY(PS, PER_GEO, 10, float4, ShadowLightMaskSelect)
 	CONFIG_ENTRY(PS, PER_GEO, 12, float4, ProjectedUVParams)
@@ -1354,12 +1355,12 @@ void BSLightingShader::GeometrySetupAmbientLights(const BSGraphics::ConstantGrou
 
 void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSLightingShaderProperty *Property)
 {
-	// PS: p8 float4 EmitColor
-	XMVECTORF32& emitColor = PixelCG.ParamPS<XMVECTORF32, 8>();
+	// PS: p8 float3 EmitColor
+	XMFLOAT3& emitColor = PixelCG.ParamPS<XMFLOAT3, 8>();
 
-	emitColor.f[0] = Property->pEmitColor->r * Property->fEmitColorScale;
-	emitColor.f[1] = Property->pEmitColor->g * Property->fEmitColorScale;
-	emitColor.f[2] = Property->pEmitColor->b * Property->fEmitColorScale;
+	emitColor.x = Property->pEmitColor->r * Property->fEmitColorScale;
+	emitColor.y = Property->pEmitColor->g * Property->fEmitColorScale;
+	emitColor.z = Property->pEmitColor->b * Property->fEmitColorScale;
 }
 
 void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSRenderPass *Pass, XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, bool WorldSpace)

@@ -38,12 +38,12 @@ namespace MTRenderer
 		return testmtr;
 	}
 
-	void ClearShaderAndTechnique()
+	void EndPass()
 	{
 		if (IsGeneratingGameCommandList())
 			InsertCommand<ClearStateRenderCommand>();
 		else
-			BSBatchRenderer::ClearShaderAndTechnique();
+			BSBatchRenderer::EndPass();
 	}
 
 	void RasterStateSetCullMode(uint32_t CullMode)

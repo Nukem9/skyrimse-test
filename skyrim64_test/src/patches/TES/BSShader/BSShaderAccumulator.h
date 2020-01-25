@@ -107,8 +107,8 @@ public:
 	static void FinishAccumulating_LODOnly(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
 	static void FinishAccumulating_Unknown1(BSShaderAccumulator *Accumulator, uint32_t RenderFlags);
 
-	void RenderFromMainGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType);
-	void RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType);
+	void RenderGeometryGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GeometryGroup);
+	void RenderBatches(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GeometryGroup);
 };
 static_assert(sizeof(BSShaderAccumulator) == 0x180);
 static_assert_offset(BSShaderAccumulator, _pad1, 0x58);

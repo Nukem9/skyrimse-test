@@ -527,22 +527,22 @@ namespace BSLightingShader
 			{
 				switch (Index)
 				{
-				case 0:return "MTLandDiffuseBase";
-				case 1:return "MTLandDiffuse1";
-				case 2:return "MTLandDiffuse2";
-				case 3:return "MTLandDiffuse3";
-				case 4:return "MTLandDiffuse4";
-				case 5:return "MTLandDiffuse5";
+				case 0:return "MultiTextureDiffuse0Sampler";
+				case 1:return "MultiTextureDiffuse1Sampler";
+				case 2:return "MultiTextureDiffuse2Sampler";
+				case 3:return "MultiTextureDiffuse3Sampler";
+				case 4:return "MultiTextureDiffuse4Sampler";
+				case 5:return "MultiTextureDiffuse5Sampler";
 				case 6:return "Unknown";
-				case 7:return "MTLandNormalBase";
-				case 8:return "MTLandNormal1";
-				case 9:return "MTLandNormal2";
-				case 10:return "MTLandNormal3";
-				case 11:return "MTLandNormal4";
-				case 12:return "MTLandNormal5";
-				case 13:return "MTLandTerrainOverlayTexture";
-				case 14:return "Unknown";
-				case 15:return "MTLandTerrainNoiseTexture";
+				case 7:return "MultiTextureNormal0Sampler";
+				case 8:return "MultiTextureNormal1Sampler";
+				case 9:return "MultiTextureNormal2Sampler";
+				case 10:return "MultiTextureNormal3Sampler";
+				case 11:return "MultiTextureNormal4Sampler";
+				case 12:return "MultiTextureNormal5Sampler";
+				case 13:return "MultiTextureDiffuseLODSampler";
+				case 14:return "ShadowMaskSampler";
+				case 15:return "LODNoiseSampler";
 				}
 			}
 
@@ -579,7 +579,7 @@ namespace BSLightingShader
 			case 8:return "MultiLayerParallaxSampler";
 			case 9:return "BackLightMaskSampler";
 			case 10:return "ProjectedNormalDetailSampler";
-			case 11:return "ProjectedNoiseSampler";
+			case 11:return "HDRLumPreviousFrameSampler";
 			case 12:return "SubSurfaceSampler";
 			case 13:return "LODBlendSampler";
 			case 14:return "ShadowMaskSampler";

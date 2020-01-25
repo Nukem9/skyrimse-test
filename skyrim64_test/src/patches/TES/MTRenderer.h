@@ -20,7 +20,7 @@ namespace MTRenderer
 	bool IsGeneratingGameCommandList();	// Returns true when main thread is queuing commands for worker threads
 	bool IsRenderingMultithreaded();	// Retruns true when generating D3D command list on a worker thread
 
-	void ClearShaderAndTechnique();
+	void EndPass();
 	void RasterStateSetCullMode(uint32_t CullMode);
 	void AlphaBlendStateSetUnknown1(uint32_t Value);
 
@@ -50,7 +50,7 @@ namespace MTRenderer
 
 	struct ClearStateRenderCommand : RenderCommand
 	{
-		// Equivalent to calling ClearShaderAndTechnique();
+		// Equivalent to calling EndPass();
 		ClearStateRenderCommand()
 			: RenderCommand(1, sizeof(ClearStateRenderCommand))
 		{
@@ -58,7 +58,7 @@ namespace MTRenderer
 
 		void Run()
 		{
-			ClearShaderAndTechnique();
+			EndPass();
 		}
 	};
 
@@ -160,7 +160,7 @@ namespace MTRenderer
 
 	struct DrawGeometryRenderCommand : RenderCommand
 	{
-		// Equivalent to calling SetupAndDrawPass();
+		// Equivalent to calling RenderPassImmediately();
 		BSRenderPass Pass;
 		uint32_t Technique;
 		unsigned __int8 a3;
@@ -202,13 +202,13 @@ namespace MTRenderer
 			return;
 			*/
 
-			BSBatchRenderer::SetupAndDrawPass(&Pass, Technique, a3, a4);
+			BSBatchRenderer::RenderPassImmediately(&Pass, Technique, a3, a4);
 		}
 	};
 
 	struct DrawGeometryMultiRenderCommand : RenderCommand
 	{
-		// Equivalent to calling SetupAndDrawPass();
+		// Equivalent to calling RenderPassImmediately();
 		BSRenderPass Pass[3];
 		uint32_t Technique;
 		unsigned __int8 a3;
@@ -251,9 +251,9 @@ namespace MTRenderer
 			return;
 			*/
 
-			BSBatchRenderer::SetupAndDrawPass(&Pass[0], Technique, a3, a4);
-			BSBatchRenderer::SetupAndDrawPass(&Pass[1], Technique, a3, a4);
-			BSBatchRenderer::SetupAndDrawPass(&Pass[2], Technique, a3, a4);
+			BSBatchRenderer::RenderPassImmediately(&Pass[0], Technique, a3, a4);
+			BSBatchRenderer::RenderPassImmediately(&Pass[1], Technique, a3, a4);
+			BSBatchRenderer::RenderPassImmediately(&Pass[2], Technique, a3, a4);
 		}
 	};
 

@@ -233,35 +233,35 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		// RenderBatches
 		renderer->BeginEvent(L"RenderBatches");
 		{
-			Accumulator->RenderFromMainGroup(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
+			Accumulator->RenderGeometryGroup(1, BSSM_DISTANTTREE_DEPTH, RenderFlags, -1);
 		}
 		renderer->EndEvent();
 
 		// LowAniso
 		renderer->BeginEvent(L"LowAniso");
 		{
-			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
+			Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
 		}
 		renderer->EndEvent();
 
 		// RenderGrass
 		renderer->BeginEvent(L"RenderGrass");
 		{
-			Accumulator->RenderFromMainGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
+			Accumulator->RenderGeometryGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
 		}
 		renderer->EndEvent();
 
 		// RenderNoShadowGroup
 		renderer->BeginEvent(L"RenderNoShadowGroup");
 		{
-			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
+			Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 8);
 		}
 		renderer->EndEvent();
 
 		// RenderLODObjects
 		renderer->BeginEvent(L"RenderLODObjects");
 		{
-			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
+			Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 
 			if (*(BYTE *)(a1 + 92) && !BSGraphics::gState.bUseEarlyZ)
 				renderer->DepthStencilStateSetDepthMode(BSGraphics::DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
@@ -271,7 +271,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		// RenderLODLand
 		renderer->BeginEvent(L"RenderLODLand");
 		{
-			Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
+			Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 
 			if (!v7)
 				ResetSceneDepthShift();
@@ -285,7 +285,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 		renderer->SetUseAlphaTestRef(true);
 		renderer->SetAlphaTestRef(128.0f / 255.0f);
 
-		Accumulator->RenderFromMainGroup(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
+		Accumulator->RenderGeometryGroup(BSSM_SKYBASEPRE, BSSM_SKY_CLOUDSFADE, RenderFlags, -1);
 	}
 	renderer->EndEvent();
 
@@ -294,7 +294,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	{
 		renderer->AlphaBlendStateSetUnknown2(11);
 
-		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 13);
+		Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 13);
 
 		renderer->AlphaBlendStateSetUnknown2(1);
 	}
@@ -332,7 +332,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 
 	DWORD *flt_14304E490 = (DWORD *)(g_ModuleBase + 0x304E490);
 
-	if ((RenderFlags & 0x80) != 0 && Accumulator->m_MainBatch->HasTechniquePasses(0x5C000071, 0x5C006071))
+	if ((RenderFlags & 0x80) != 0 && Accumulator->m_MainBatch->QPassesWithinRange(0x5C000071, 0x5C006071))
 	{
 		int aiSource = sub_140D744B0();
 
@@ -348,7 +348,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 	// RenderWaterStencil
 	renderer->BeginEvent(L"RenderWaterStencil");
 	{
-		if (Accumulator->m_MainBatch->HasTechniquePasses(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc))
+		if (Accumulator->m_MainBatch->QPassesWithinRange(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc))
 		{
 			sub_140D69E70((__int64)flt_14304E490, 2u);// BSGraphics::Renderer::ClearDepthStencil(CLEAR_DEPTH_STENCIL_TARGET_STENCIL)
 			sub_140D69D30((float *)flt_14304E490, 0.0, 0.0, 0.0, 0);
@@ -358,7 +358,7 @@ void BSShaderAccumulator::RenderSceneNormal(BSShaderAccumulator *Accumulator, ui
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 2u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 3u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
 			sub_140D74350((__int64)(g_ModuleBase + 0x3051B20), 4u, -1, 3, 1);// RENDER_TARGET_NONE SRTM_NO_CLEAR
-			Accumulator->RenderFromMainGroup(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc, RenderFlags, -1);
+			Accumulator->RenderGeometryGroup(BSSM_WATER_STENCIL, BSSM_WATER_DISPLACEMENT_STENCIL_Vc, RenderFlags, -1);
 			sub_140D69DA0((DWORD *)flt_14304E490);
 			*(DWORD *)(*(uint64_t *)((*(uint64_t*)(g_ModuleBase + 0x31F5810)) + 496) + 44i64) = 1;
 		}
@@ -411,19 +411,19 @@ void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator
 
 		BSGraphics::BeginEvent(L"Volumetric lighting specific shadow map");
 		BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(0);
-		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 15);
+		Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 15);
 		BSGraphics::EndEvent();
 	}
 	else
 	{
 		BSGraphics::BeginEvent(L"RenderBatches");
-		Accumulator->RenderFromMainGroup(0x2B, 0x4000002B, RenderFlags, -1);
-		Accumulator->RenderFromMainGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
-		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
+		Accumulator->RenderGeometryGroup(0x2B, 0x4000002B, RenderFlags, -1);
+		Accumulator->RenderGeometryGroup(BSSM_GRASS_DIRONLY_LF, 0x5C00005C, RenderFlags, -1);
+		Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 		BSGraphics::EndEvent();
 
 		BSGraphics::BeginEvent(L"LowAniso");
-		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
+		Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 9);
 		BSGraphics::EndEvent();
 
 		BSGraphics::BeginEvent(L"Decals");
@@ -465,11 +465,11 @@ void BSShaderAccumulator::FinishAccumulating_LODOnly(BSShaderAccumulator *Accumu
 		ZoneScopedN("FinishAccumulating_LODOnly");
 
 		BSGraphics::BeginEvent(L"RenderLODLand");
-		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
+		Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 0);
 		BSGraphics::EndEvent();
 
 		BSGraphics::BeginEvent(L"RenderLODObjects");
-		Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
+		Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 1);
 		BSGraphics::EndEvent();
 	}
 	BSGraphics::EndEvent();
@@ -485,37 +485,37 @@ void BSShaderAccumulator::FinishAccumulating_Unknown1(BSShaderAccumulator *Accum
 	ZoneScopedN("FinishAccumulating_Unknown1");
 	BSGraphics::BeginEvent(L"FinishAccumulating_Unknown1");
 
-	Accumulator->RenderFromMainGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 14);
+	Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 14);
 
 	BSGraphics::EndEvent();
 }
 
-void BSShaderAccumulator::RenderFromMainGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType)
+void BSShaderAccumulator::RenderGeometryGroup(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GeometryGroup)
 {
-	if (GroupType == -1)
+	if (GeometryGroup == -1)
 	{
-		RenderTechniques(StartTechnique, EndTechnique, RenderFlags, -1);
+		RenderBatches(StartTechnique, EndTechnique, RenderFlags, -1);
 	}
 	else
 	{
-		auto pass = m_MainBatch->m_Groups[GroupType];
+		auto group = m_MainBatch->m_GeometryGroups[GeometryGroup];
 
-		if (pass)
+		if (group)
 		{
-			if (pass->UnkByte1 & 1)
-				pass->Render(RenderFlags);
+			if (group->m_Flags & 1)
+				group->Render(RenderFlags);
 			else
-				RenderTechniques(StartTechnique, EndTechnique, RenderFlags, GroupType);
+				RenderBatches(StartTechnique, EndTechnique, RenderFlags, GeometryGroup);
 		}
 	}
 }
 
-void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GroupType)
+void BSShaderAccumulator::RenderBatches(uint32_t StartTechnique, uint32_t EndTechnique, uint32_t RenderFlags, int GeometryGroup)
 {
-	Assert(GroupType >= -1 && GroupType < 16);
+	Assert(GeometryGroup >= -1 && GeometryGroup < 16);
 	Assert(StartTechnique <= EndTechnique);
 
-	BSBatchRenderer::RenderGroup *group = nullptr;
+	BSBatchRenderer::GeometryGroup *group = nullptr;
 	BSBatchRenderer *batch = nullptr;
 
 	// Always run the full function because I'm not sure if the structure
@@ -523,7 +523,7 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 	MTRenderer::InsertCommand<MTRenderer::SetAccumulatorRenderCommand>(this);
 	BSShaderManager::SetCurrentAccumulator(this);
 
-	if (GroupType <= -1)
+	if (GeometryGroup <= -1)
 	{
 		// Wildcard: render everything with the given techniques
 		group = nullptr;
@@ -532,7 +532,7 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 	else
 	{
 		// Render a single group with given techniques
-		group = m_MainBatch->m_Groups[GroupType];
+		group = m_MainBatch->m_GeometryGroups[GeometryGroup];
 		batch = group->m_BatchRenderer;
 	}
 
@@ -540,20 +540,20 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 
 	if (batch)
 	{
-		auto *currentNode = &batch->m_UnknownList;
+		auto activeListHead = &batch->m_ActivePassIndexList;
 
-		batch->m_StartingTech = StartTechnique;
-		batch->m_EndingTech = EndTechnique;
+		batch->m_CurrentFirstPass = StartTechnique;
+		batch->m_CurrentLastPass = EndTechnique;
 
 		m_CurrentGroupIndex = 0;
-		m_HasPendingDraws = batch->sub_14131E700(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode);
+		m_HasPendingDraws = batch->sub_14131E700(m_CurrentTech, m_CurrentGroupIndex, activeListHead);
 
 		while (m_HasPendingDraws)
 		{
 			if (IsGrassShadowBlacklist(m_CurrentTech) && (m_UseUnknownCameraAdjust || *(BYTE *)((__int64)this + 297)))// if (is grass shadow) ???
-				m_HasPendingDraws = batch->DiscardNextGroup(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode);
+				m_HasPendingDraws = batch->DiscardBatches(m_CurrentTech, m_CurrentGroupIndex, activeListHead);
 			else
-				m_HasPendingDraws = batch->RenderNextGroup(m_CurrentTech, m_CurrentGroupIndex, (__int64)&currentNode, RenderFlags);
+				m_HasPendingDraws = batch->RenderBatches(m_CurrentTech, m_CurrentGroupIndex, activeListHead, RenderFlags);
 		}
 	}
 	else
@@ -563,7 +563,7 @@ void BSShaderAccumulator::RenderTechniques(uint32_t StartTechnique, uint32_t End
 	}
 
 	if (group)
-		group->Unregister();
+		group->ClearAndFreePasses();
 
-	MTRenderer::ClearShaderAndTechnique();
+	MTRenderer::EndPass();
 }

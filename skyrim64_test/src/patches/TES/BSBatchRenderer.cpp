@@ -11,9 +11,9 @@
 AutoPtr(BYTE, byte_1431F54CD, 0x31F54CD);
 AutoPtr(DWORD, dword_141E32FDC, 0x1E32FDC);
 
-bool BSBatchRenderer::SetupShaderAndTechnique(BSShader *Shader, uint32_t Technique)
+bool BSBatchRenderer::BeginPass(BSShader *Shader, uint32_t Technique)
 {
-	ClearShaderAndTechnique();
+	EndPass();
 
 	auto GraphicsGlobals = HACK_GetThreadedGlobals();
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
@@ -31,18 +31,18 @@ bool BSBatchRenderer::SetupShaderAndTechnique(BSShader *Shader, uint32_t Techniq
 	return false;
 }
 
-void BSBatchRenderer::ClearShaderAndTechnique()
+void BSBatchRenderer::EndPass()
 {
 	auto GraphicsGlobals = HACK_GetThreadedGlobals();
 	//uint32_t& dword_1432A8210 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3010);
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
-	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
+	BSShader*& qword_1432A8218 = *(BSShader **)((uintptr_t)GraphicsGlobals + 0x3018);
 	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
 
 	if (qword_1432A8218)
 	{
-		((BSShader *)qword_1432A8218)->RestoreTechnique(dword_1432A8214);
-		qword_1432A8218 = 0;// Shader
+		qword_1432A8218->RestoreTechnique(dword_1432A8214);
+		qword_1432A8218 = nullptr;
 	}
 
 	dword_1432A8214 = 0;// Technique
@@ -68,64 +68,17 @@ void sub_14131F910(BSSimpleList<uint32_t> *Node, void *UserData)
 	}
 }
 
-void sub_14131F9F0(BSRenderPass *RenderPasses[2], uint32_t RenderFlags)
+void BSBatchRenderer::PersistentPassList::Clear()
 {
-	if (!RenderPasses[0])
-		return;
-
-	MTRenderer::ClearShaderAndTechnique();
-
-	bool mtrContext = MTRenderer::IsGeneratingGameCommandList();
-	int lockType = RenderPasses[0]->m_Shader->m_Type;
-
-	MTRenderer::LockShader(lockType);
-
-	for (BSRenderPass *i = RenderPasses[0]; i; i = i->m_Next)
-	{
-		if (!i->m_Geometry)
-			continue;
-
-		// This render pass function doesn't always use one shader type
-		if (lockType != i->m_Shader->m_Type)
-		{
-			MTRenderer::UnlockShader(lockType);
-			lockType = i->m_Shader->m_Type;
-			MTRenderer::LockShader(lockType);
-		}
-
-		if ((RenderFlags & 0x108) == 0)
-		{
-			if (i->m_ShaderProperty->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
-				MTRenderer::RasterStateSetCullMode(0);
-			else
-				MTRenderer::RasterStateSetCullMode(1);
-		}
-
-		bool alphaTest = i->m_Geometry->QAlphaProperty() && i->m_Geometry->QAlphaProperty()->GetAlphaTesting();
-
-		if (mtrContext)
-			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_PassEnum, alphaTest, RenderFlags);
-		else
-			BSBatchRenderer::SetupAndDrawPass(i, i->m_PassEnum, alphaTest, RenderFlags);
-	}
-
-	if ((RenderFlags & 0x108) == 0)
-		MTRenderer::RasterStateSetCullMode(1);
-
-	RenderPasses[0] = nullptr;
-	RenderPasses[1] = nullptr;
-
-	MTRenderer::ClearShaderAndTechnique();
-	MTRenderer::UnlockShader(lockType);
+	m_Head = nullptr;
+	m_Tail = nullptr;
 }
 
-void BSBatchRenderer::RenderGroup::Render(uint32_t RenderFlags)
+void BSBatchRenderer::GeometryGroup::Render(uint32_t RenderFlags)
 {
-	static_assert(ARRAYSIZE(m_UnkPtrs) == 2);
-
-	if (this->UnkByte1 & 1)
+	if (m_Flags & 1)
 	{
-		sub_14131F9F0(m_UnkPtrs, RenderFlags);
+		RenderPersistentPassList(&m_PassList, RenderFlags);
 	}
 	else if(m_BatchRenderer)
 	{
@@ -136,55 +89,54 @@ void BSBatchRenderer::RenderGroup::Render(uint32_t RenderFlags)
 
 	if (m_BatchRenderer)
 	{
-		if (!m_BatchRenderer->m_DiscardPassesAfterRender)
+		if (!m_BatchRenderer->m_AutoClearPasses)
 			return;
 
-		m_BatchRenderer->m_UnknownList.RemoveAllNodes(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
+		m_BatchRenderer->m_ActivePassIndexList.RemoveAllNodes(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
 	}
 
-	this->UnkWord1 = 0;
+	m_Count = 0;
 }
 
-void BSBatchRenderer::RenderGroup::Unregister()
+void BSBatchRenderer::GeometryGroup::ClearAndFreePasses()
 {
 	MemoryContextTracker tracker(MemoryContextTracker::RENDER_ACCUMULATOR, "BSBatchRenderer.cpp");
 
-	m_UnkPtrs[0] = nullptr;
-	m_UnkPtrs[1] = nullptr;
+	m_PassList.Clear();
 
 	if (m_BatchRenderer)
-		m_BatchRenderer->sub_14131D6E0();
+		m_BatchRenderer->ClearRenderPasses();
 
-	this->UnkWord1 = 0;
+	m_Count = 0;
 }
 
-void BSBatchRenderer::AlphaGroupPass::Clear(bool Validate)
+void BSBatchRenderer::PassGroup::Clear(bool ReportNotEmpty, bool FreePasses)
 {
-	for (int i = 0; i < ARRAYSIZE(m_Pass); i++)
+	for (int i = 0; i < ARRAYSIZE(m_Passes); i++)
 	{
-		if (Validate && m_Pass[i])
+		if (ReportNotEmpty && m_Passes[i])
 			AssertMsg(false, "Pass still has passes");
 
 		// This is removed in public builds? Sets the bool to indicate pass is no longer registered
 		// for (result = *(_QWORD *)(v4 + 8 * v3); result; result = *(_QWORD *)(result + 48))
 		//	*(_BYTE *)(result + 33) = 0;
 
-		m_Pass[i] = nullptr;
+		m_Passes[i] = nullptr;
 	}
 
-	m_PassIndexBits = 0;
+	m_ValidPassBits = 0;
 }
 
-bool BSBatchRenderer::HasTechniquePasses(uint32_t StartTech, uint32_t EndTech)
+bool BSBatchRenderer::QPassesWithinRange(uint32_t StartRange, uint32_t EndRange)
 {
-	BSSimpleList<uint32_t> *node = &m_UnknownList;
+	BSSimpleList<uint32_t> *node = &m_ActivePassIndexList;
 
 	if (!node->QNext() && node->QItem() == 0)
 		return false;
 
-	while (node && node->QItem() <= EndTech)
+	while (node && node->QItem() <= EndRange)
 	{
-		if (node->QItem() >= StartTech)
+		if (node->QItem() >= StartRange)
 			return true;
 
 		node = node->QNext();
@@ -206,7 +158,7 @@ bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, uint32_t& GroupIndex)
 		uint32_t v6 = GroupIndex;
 		do
 		{
-			if (this->m_RenderArrays[a2].m_Pass[v6])
+			if (m_RenderPass[a2].m_Passes[v6])
 			{
 				GroupIndex = v4;
 				v4 = 5;
@@ -222,69 +174,63 @@ bool BSBatchRenderer::sub_14131E8F0(unsigned int a2, uint32_t& GroupIndex)
 	return v4 == 6;
 }
 
-bool BSBatchRenderer::sub_14131E700(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4)
+bool BSBatchRenderer::sub_14131E700(uint32_t& Technique, uint32_t& GroupIndex, BSSimpleList<uint32_t> *&PassIndexList)
 {
 	if (!Technique)
-		return sub_14131E7B0(Technique, GroupIndex, (__int64 *)a4);
+		return sub_14131E7B0(Technique, GroupIndex, PassIndexList);
 
-	uint32_t passArray = m_TechToArrayMap.get(Technique);
+	uint32_t passGroup = m_RenderPassMap.get(Technique);
 
-	if (!sub_14131E8F0(passArray, GroupIndex))
-		return sub_14131E7B0(Technique, GroupIndex, (__int64 *)a4);
+	if (!sub_14131E8F0(passGroup, GroupIndex))
+		return sub_14131E7B0(Technique, GroupIndex, PassIndexList);
 
 	return true;
 }
 
-bool BSBatchRenderer::DiscardNextGroup(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4)
+bool BSBatchRenderer::DiscardBatches(uint32_t& Technique, uint32_t& GroupIndex, BSSimpleList<uint32_t> *&PassIndexList)
 {
 	// Probably discards pass, returns true if there's remaining sub passes
-	uint32_t passArray = m_TechToArrayMap.get(Technique);
+	uint32_t passArray = m_RenderPassMap.get(Technique);
 
-	if (m_DiscardPassesAfterRender)
-		m_RenderArrays[passArray].Clear(true);
+	if (m_AutoClearPasses)
+		m_RenderPass[passArray].Clear(true, false);
 
-	return sub_14131E700(Technique, GroupIndex, a4);
+	return sub_14131E700(Technique, GroupIndex, PassIndexList);
 }
 
-bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& GroupIndex, __int64 *a4)
+bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& GroupIndex, BSSimpleList<uint32_t> *&PassIndexList)
 {
-	__int64 v7; // rax
-	unsigned int v8; // ecx
+	BSSimpleList<uint32_t> *list = PassIndexList;
 
-	v7 = *a4;
-
-	if (!*a4 || !*(uint64_t *)(v7 + 8) && !*(DWORD *)v7)
+	if (!list || (!list->QNext() && !list->QItem()))
 		return false;
 
-	v8 = *(DWORD *)v7;
-	for (Technique = *(DWORD *)v7; v8 < m_StartingTech; Technique = *(DWORD *)v7)
+	for (Technique = list->QItem(); Technique < m_CurrentFirstPass; Technique = list->QItem())
 	{
-		v7 = *(uint64_t *)(v7 + 8);
+		list = list->QNext();
 
-		if (!v7)
+		if (!list)
 			return false;
-
-		v8 = *(DWORD *)v7;
 	}
 
-	if (v8 > m_EndingTech)
+	if (Technique > m_CurrentLastPass)
 		return false;
 
-	if (m_DiscardPassesAfterRender)
+	if (m_AutoClearPasses)
 	{
-		AssertMsg(m_EndingTech >= m_StartingTech, "RenderPasses in active lists are out of order, passes will probably be leaked");
+		AssertMsg(m_CurrentLastPass >= m_CurrentFirstPass, "RenderPasses in active lists are out of order, passes will probably be leaked");
 
-		m_UnknownList.RemoveNode(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
+		m_ActivePassIndexList.RemoveNode(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
 	}
 	else
 	{
-		*a4 = *(uint64_t *)(*a4 + 8);
+		PassIndexList = PassIndexList->QNext();
 	}
 
-	return sub_14131E8F0(m_TechToArrayMap.get(Technique), GroupIndex);
+	return sub_14131E8F0(m_RenderPassMap.get(Technique), GroupIndex);
 }
 
-bool BSBatchRenderer::RenderNextGroup(uint32_t& Technique, uint32_t& GroupIndex, __int64 a4, uint32_t RenderFlags)
+bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, BSSimpleList<uint32_t> *&PassIndexList, uint32_t RenderFlags)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	bool alphaTest;
@@ -360,8 +306,8 @@ bool BSBatchRenderer::RenderNextGroup(uint32_t& Technique, uint32_t& GroupIndex,
 
 	// Render this group with a specific render pass list
 	int shaderType = -1;
-	AlphaGroupPass *group = &m_RenderArrays[m_TechToArrayMap.get(Technique)];
-	BSRenderPass *currentPass = group->m_Pass[GroupIndex];
+	PassGroup *group = &m_RenderPass[m_RenderPassMap.get(Technique)];
+	BSRenderPass *currentPass = group->m_Passes[GroupIndex];
 
 	if (currentPass)
 		shaderType = currentPass->m_Shader->m_Type;
@@ -397,37 +343,37 @@ bool BSBatchRenderer::RenderNextGroup(uint32_t& Technique, uint32_t& GroupIndex,
 	else
 	{
 		for (; currentPass; currentPass = currentPass->m_Next)
-			SetupAndDrawPass(currentPass, Technique, alphaTest, RenderFlags);
+			RenderPassImmediately(currentPass, Technique, alphaTest, RenderFlags);
 	}
 
 	// Zero the pointers only - the memory is freed elsewhere
-	if (m_DiscardPassesAfterRender)
+	if (m_AutoClearPasses)
 	{
-		Assert(GroupIndex >= 0 && GroupIndex < ARRAYSIZE(group->m_Pass));
+		Assert(GroupIndex >= 0 && GroupIndex < ARRAYSIZE(group->m_Passes));
 
-		group->m_PassIndexBits &= ~(1 << GroupIndex);
-		group->m_Pass[GroupIndex] = nullptr;
+		group->m_ValidPassBits &= ~(1 << GroupIndex);
+		group->m_Passes[GroupIndex] = nullptr;
 	}
 
-	MTRenderer::ClearShaderAndTechnique();
+	MTRenderer::EndPass();
 	MTRenderer::AlphaBlendStateSetUnknown1(0);
 	MTRenderer::UnlockShader(shaderType);
 
 	GroupIndex++;
-	return sub_14131E700(Technique, GroupIndex, a4);
+	return sub_14131E700(Technique, GroupIndex, PassIndexList);
 }
 
-void BSBatchRenderer::sub_14131D6E0()
+void BSBatchRenderer::ClearRenderPasses()
 {
 	MemoryContextTracker tracker(MemoryContextTracker::RENDER_ACCUMULATOR, "BSBatchRenderer.cpp");
 
-	for (auto itr = m_TechToArrayMap.begin(); itr != m_TechToArrayMap.end(); itr++)
+	for (auto itr = m_RenderPassMap.begin(); itr != m_RenderPassMap.end(); itr++)
 	{
 		if (itr)
-			m_RenderArrays[*itr].Clear(true);
+			m_RenderPass[*itr].Clear(true, false);
 	}
 
-	m_UnknownList.RemoveAllNodes(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
+	m_ActivePassIndexList.RemoveAllNodes(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
 }
 
 void UnmapDynamicData()
@@ -437,23 +383,73 @@ void UnmapDynamicData()
 	renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
 }
 
-void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::RenderPersistentPassList(PersistentPassList *PassList, uint32_t RenderFlags)
+{
+	if (!PassList->m_Head)
+		return;
+
+	MTRenderer::EndPass();
+
+	bool mtrContext = MTRenderer::IsGeneratingGameCommandList();
+	int lockType = PassList->m_Head->m_Shader->m_Type;
+
+	MTRenderer::LockShader(lockType);
+
+	for (BSRenderPass *i = PassList->m_Head; i; i = i->m_Next)
+	{
+		if (!i->m_Geometry)
+			continue;
+
+		// This render pass function doesn't always use one shader type
+		if (lockType != i->m_Shader->m_Type)
+		{
+			MTRenderer::UnlockShader(lockType);
+			lockType = i->m_Shader->m_Type;
+			MTRenderer::LockShader(lockType);
+		}
+
+		if ((RenderFlags & 0x108) == 0)
+		{
+			if (i->m_ShaderProperty->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
+				MTRenderer::RasterStateSetCullMode(0);
+			else
+				MTRenderer::RasterStateSetCullMode(1);
+		}
+
+		bool alphaTest = i->m_Geometry->QAlphaProperty() && i->m_Geometry->QAlphaProperty()->GetAlphaTesting();
+
+		if (mtrContext)
+			MTRenderer::InsertCommand<MTRenderer::DrawGeometryRenderCommand>(i, i->m_PassEnum, alphaTest, RenderFlags);
+		else
+			BSBatchRenderer::RenderPassImmediately(i, i->m_PassEnum, alphaTest, RenderFlags);
+	}
+
+	if ((RenderFlags & 0x108) == 0)
+		MTRenderer::RasterStateSetCullMode(1);
+
+	PassList->Clear();
+
+	MTRenderer::EndPass();
+	MTRenderer::UnlockShader(lockType);
+}
+
+void BSBatchRenderer::RenderPassImmediately(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags)
 {
 	auto *GraphicsGlobals = BSGraphics::Renderer::GetGlobals();
-	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);
-	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);
-	uint64_t& qword_1434B5220 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3500);
+	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);// LastPass
+	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);// LastShader
+	BSShaderMaterial*& qword_1434B5220 = *(BSShaderMaterial **)((uintptr_t)GraphicsGlobals + 0x3500);// LastMaterial
 
 	bool techniqueIsSetup = false;
 
-	// SetupShaderAndTechnique doesn't need to be called again if we used this shader previously
+	// BeginPass doesn't need to be called again if we used this shader previously
 	if (dword_1432A8214 == Technique && Technique != 0x5C006076 && (uint64_t)Pass->m_Shader == qword_1432A8218)
 		techniqueIsSetup = true;
 
 	if (!techniqueIsSetup)
 	{
 		dword_141E32FDC = Technique;// This is written but never read anywhere?
-		techniqueIsSetup = SetupShaderAndTechnique(Pass->m_Shader, Technique);
+		techniqueIsSetup = BeginPass(Pass->m_Shader, Technique);
 	}
 
 	if (techniqueIsSetup)
@@ -464,26 +460,26 @@ void BSBatchRenderer::SetupAndDrawPass(BSRenderPass *Pass, uint32_t Technique, b
 		if (property)
 			material = property->pMaterial;
 
-		if ((uintptr_t)material != qword_1434B5220)
+		if (material != qword_1434B5220)
 		{
 			if (material)
 				Pass->m_Shader->SetupMaterial(material);
 
-			qword_1434B5220 = (uintptr_t)material;
+			qword_1434B5220 = material;
 		}
 
 		*(BYTE *)((uintptr_t)Pass->m_Geometry + 264) = *(BYTE *)(&Pass->m_LODMode);// WARNING: MT data write hazard. ucCurrentMeshLODLevel?
 
 		if (Pass->m_Geometry->QSkinInstance())
-			DrawPassSkinned(Pass, AlphaTest, RenderFlags);
+			RenderPassImmediately_Skinned(Pass, AlphaTest, RenderFlags);
 		else if (*(BYTE *)((uintptr_t)Pass->m_Geometry + 265) & 8)// BSGeometry::NeedsCustomRender()?
-			DrawPassCustom(Pass, AlphaTest, RenderFlags);
+			RenderPassImmediately_Custom(Pass, AlphaTest, RenderFlags);
 		else
-			DrawPass(Pass, AlphaTest, RenderFlags);
+			RenderPassImmediately_Standard(Pass, AlphaTest, RenderFlags);
 	}
 }
 
-void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::ShaderSetup(BSRenderPass *Pass, BSShader *Shader, bool AlphaTest, uint32_t RenderFlags)
 {
 	if (Shader != BSSkyShader::pInstance)
 	{
@@ -497,7 +493,7 @@ void BSBatchRenderer::SetupGeometryBlending(BSRenderPass *Pass, BSShader *Shader
 	Shader->SetupGeometry(Pass, RenderFlags);
 }
 
-void BSBatchRenderer::DrawPass(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::RenderPassImmediately_Standard(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
 {
 	MemoryContextTracker tracker(MemoryContextTracker::RENDER_ACCUMULATOR, "BSBatchRenderer.cpp");
 
@@ -505,12 +501,12 @@ void BSBatchRenderer::DrawPass(BSRenderPass *Pass, bool AlphaTest, uint32_t Rend
 	AssertMsgDebug(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
 	AssertMsgDebug(Pass->m_Shader, "Render Error: There is no BSShader attached to the geometry");
 
-	SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest || BSGraphics::gState.bUseEarlyZ, RenderFlags);
-	DrawGeometry(Pass);
+	ShaderSetup(Pass, Pass->m_Shader, AlphaTest || BSGraphics::gState.bUseEarlyZ, RenderFlags);
+	Draw(Pass);
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
-void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::RenderPassImmediately_Skinned(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
 {
 	AssertMsgDebug(Pass, "Render Error: Render pass is nullptr");
 	AssertMsgDebug(Pass->m_Geometry, "Render Error: Render pass geometry is nullptr");
@@ -527,17 +523,17 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	// BSTriShape::IsBSSkinnedDecalTriShape?
 	if ((*(__int64(__fastcall **)(BSGeometry *))(*(uintptr_t *)Pass->m_Geometry + 432i64))(Pass->m_Geometry))
 	{
-		SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
+		ShaderSetup(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
 
 		NiSkinPartition::Partition partition;
 		partition.m_usBones = 1;
 
 		Pass->m_Shader->SetBoneMatrix(Pass->m_Geometry->QSkinInstance(), &partition, &Pass->m_Geometry->GetWorldTransform());
-		DrawGeometry(Pass);
+		Draw(Pass);
 	}
 	else
 	{
-		SetupGeometryBlending(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
+		ShaderSetup(Pass, Pass->m_Shader, AlphaTest, RenderFlags);
 
 		SkinRenderData skinData(static_cast<NiBoneMatrixSetterI *>(Pass->m_Shader), Pass->m_Geometry, nullptr, Pass->m_LODMode.SingleLevel, Pass->m_LODMode.Index);
 
@@ -562,7 +558,7 @@ void BSBatchRenderer::DrawPassSkinned(BSRenderPass *Pass, bool AlphaTest, uint32
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
-void BSBatchRenderer::DrawPassCustom(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
+void BSBatchRenderer::RenderPassImmediately_Custom(BSRenderPass *Pass, bool AlphaTest, uint32_t RenderFlags)
 {
 	Pass->m_Shader->SetupGeometry(Pass, RenderFlags);
 	Pass->m_Shader->SetupGeometryAlphaBlending(Pass->QAlphaProperty(), Pass->m_ShaderProperty, true);
@@ -570,11 +566,11 @@ void BSBatchRenderer::DrawPassCustom(BSRenderPass *Pass, bool AlphaTest, uint32_
 	if (Pass->QAlphaProperty())
 		Pass->m_Shader->SetupAlphaTestRef(Pass->QAlphaProperty(), Pass->m_ShaderProperty);
 
-	DrawGeometry(Pass);
+	Draw(Pass);
 	Pass->m_Shader->RestoreGeometry(Pass, RenderFlags);
 }
 
-void BSBatchRenderer::DrawGeometry(BSRenderPass *Pass)
+void BSBatchRenderer::Draw(BSRenderPass *Pass)
 {
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	BSGeometry *geometry = Pass->m_Geometry;
