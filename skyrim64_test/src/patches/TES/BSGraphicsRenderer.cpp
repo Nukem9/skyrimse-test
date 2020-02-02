@@ -821,6 +821,16 @@ namespace BSGraphics
 		m_DeviceContext->PSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
 	}
 
+	void Renderer::SetHullShader(HullShader *Shader)
+	{
+		m_DeviceContext->HSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
+	}
+
+	void Renderer::SetDomainShader(DomainShader *Shader)
+	{
+		m_DeviceContext->DSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
+	}
+
 	void Renderer::SetTexture(uint32_t Index, const NiSourceTexture *Texture)
 	{
 		SetTexture(Index, Texture ? Texture->QRendererTexture() : nullptr);
@@ -1174,7 +1184,7 @@ namespace BSGraphics
 		return m_ShaderBytecodeMap.at(Shader);
 	}
 
-	VertexShader *Renderer::CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
+	ID3DBlob *Renderer::CompileShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, const char *ProgramType)
 	{
 		// Build defines (aka convert vector->D3DCONSTANT array)
 		D3D_SHADER_MACRO macros[20 + 3 + 1];
@@ -1188,21 +1198,32 @@ namespace BSGraphics
 			macros[i].Definition = Defines[i].second;
 		}
 
-		macros[Defines.size() + 0].Name = "VSHADER";
+		macros[Defines.size() + 0].Name = "PLACEHOLDER_TYPE";
 		macros[Defines.size() + 0].Definition = "";
 		macros[Defines.size() + 1].Name = "WINPC";
 		macros[Defines.size() + 1].Definition = "";
 		macros[Defines.size() + 2].Name = "DX11";
 		macros[Defines.size() + 2].Definition = "";
 
+		if (!_stricmp(ProgramType, "ps_5_0"))
+			macros[Defines.size() + 0].Name = "PIXELSHADER";
+		else if (!_stricmp(ProgramType, "vs_5_0"))
+			macros[Defines.size() + 0].Name = "VERTEXSHADER";
+		else if (!_stricmp(ProgramType, "hs_5_0"))
+			macros[Defines.size() + 0].Name = "HULLSHADER";
+		else if (!_stricmp(ProgramType, "ds_5_0"))
+			macros[Defines.size() + 0].Name = "DOMAINSHADER";
+		else
+			Assert(false);
+
 		// Compiler setup
 		UINT flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
 		ID3DBlob *shaderBlob = nullptr;
 		ID3DBlob *shaderErrors = nullptr;
 
-		if (FAILED(D3DCompileFromFile(FilePath, macros, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0", flags, 0, &shaderBlob, &shaderErrors)))
+		if (FAILED(D3DCompileFromFile(FilePath, macros, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", ProgramType, flags, 0, &shaderBlob, &shaderErrors)))
 		{
-			AssertMsgVa(false, "Vertex shader compilation failed:\n\n%s", shaderErrors ? (const char *)shaderErrors->GetBufferPointer() : "Unknown error");
+			AssertMsgVa(false, "Shader compilation failed:\n\n%s", shaderErrors ? (const char *)shaderErrors->GetBufferPointer() : "Unknown error");
 
 			if (shaderBlob)
 				shaderBlob->Release();
@@ -1215,6 +1236,16 @@ namespace BSGraphics
 
 		if (shaderErrors)
 			shaderErrors->Release();
+
+		return shaderBlob;
+	}
+
+	VertexShader *Renderer::CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant)
+	{
+		ID3DBlob *shaderBlob = CompileShader(FilePath, Defines, "vs_5_0");
+
+		if (!shaderBlob)
+			return nullptr;
 
 		void *rawPtr = malloc(sizeof(VertexShader) + shaderBlob->GetBufferSize());
 		VertexShader *vs = new (rawPtr) VertexShader;
@@ -1241,45 +1272,10 @@ namespace BSGraphics
 
 	PixelShader *Renderer::CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant)
 	{
-		// Build defines (aka convert vector->D3DCONSTANT array)
-		D3D_SHADER_MACRO macros[20 + 3 + 1];
-		memset(macros, 0, sizeof(macros));
+		ID3DBlob *shaderBlob = CompileShader(FilePath, Defines, "ps_5_0");
 
-		AssertMsg(Defines.size() <= 20, "Not enough space reserved for #defines and null terminator");
-
-		for (size_t i = 0; i < Defines.size(); i++)
-		{
-			macros[i].Name = Defines[i].first;
-			macros[i].Definition = Defines[i].second;
-		}
-
-		macros[Defines.size() + 0].Name = "PSHADER";
-		macros[Defines.size() + 0].Definition = "";
-		macros[Defines.size() + 1].Name = "WINPC";
-		macros[Defines.size() + 1].Definition = "";
-		macros[Defines.size() + 2].Name = "DX11";
-		macros[Defines.size() + 2].Definition = "";
-
-		// Compiler setup
-		UINT flags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_OPTIMIZATION_LEVEL3;
-		ID3DBlob *shaderBlob = nullptr;
-		ID3DBlob *shaderErrors = nullptr;
-
-		if (FAILED(D3DCompileFromFile(FilePath, macros, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0", flags, 0, &shaderBlob, &shaderErrors)))
-		{
-			AssertMsgVa(false, "Pixel shader compilation failed:\n\n%s", shaderErrors ? (const char *)shaderErrors->GetBufferPointer() : "Unknown error");
-
-			if (shaderBlob)
-				shaderBlob->Release();
-
-			if (shaderErrors)
-				shaderErrors->Release();
-
+		if (!shaderBlob)
 			return nullptr;
-		}
-
-		if (shaderErrors)
-			shaderErrors->Release();
 
 		void *rawPtr = malloc(sizeof(PixelShader));
 		PixelShader *ps = new (rawPtr) PixelShader;
@@ -1299,6 +1295,44 @@ namespace BSGraphics
 		shaderBlob->Release();
 
 		return ps;
+	}
+
+	HullShader *Renderer::CompileHullShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines)
+	{
+		ID3DBlob *shaderBlob = CompileShader(FilePath, Defines, "hs_5_0");
+
+		if (!shaderBlob)
+			return nullptr;
+
+		void *rawPtr = malloc(sizeof(HullShader));
+		HullShader *hs = new (rawPtr) HullShader;
+
+		// Register shader with the DX runtime itself
+		Assert(SUCCEEDED(m_Device->CreateHullShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), nullptr, &hs->m_Shader)));
+
+		RegisterShaderBytecode(hs->m_Shader, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
+		shaderBlob->Release();
+
+		return hs;
+	}
+
+	DomainShader *Renderer::CompileDomainShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines)
+	{
+		ID3DBlob *shaderBlob = CompileShader(FilePath, Defines, "ds_5_0");
+
+		if (!shaderBlob)
+			return nullptr;
+
+		void *rawPtr = malloc(sizeof(DomainShader));
+		DomainShader *ds = new (rawPtr) DomainShader;
+
+		// Register shader with the DX runtime itself
+		Assert(SUCCEEDED(m_Device->CreateDomainShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), nullptr, &ds->m_Shader)));
+
+		RegisterShaderBytecode(ds->m_Shader, shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
+		shaderBlob->Release();
+
+		return ds;
 	}
 
 	CustomConstantGroup Renderer::GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level)

@@ -288,6 +288,20 @@ namespace BSGraphics
 	static_assert_offset(ComputeShader, m_ShaderLength, 0x6C);
 	static_assert_offset(ComputeShader, m_ConstantOffsets, 0x70);
 	static_assert_offset(ComputeShader, m_RawBytecode, 0x90);
+
+	// Not part of the vanilla game
+	struct HullShader
+	{
+		uint32_t m_TechniqueID;						// Bit flags
+		ID3D11HullShader *m_Shader;					// DirectX handle
+	};
+
+	// Not part of the vanilla game
+	struct DomainShader
+	{
+		uint32_t m_TechniqueID;						// Bit flags
+		ID3D11DomainShader *m_Shader;				// DirectX handle
+	};
 #pragma warning(pop)
 
 	//

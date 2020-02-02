@@ -9,6 +9,9 @@
 #include "Shaders/BSGrassShader.h"
 #include "Shaders/BSSkyShader.h"
 
+std::unordered_map<uint32_t, BSGraphics::HullShader *> HullShaders;
+std::unordered_map<uint32_t, BSGraphics::DomainShader *> DomainShaders;
+
 bool BSShader::g_ShaderToggles[16][3];
 const ShaderDescriptor *BSShader::ShaderMetadata[BSShaderManager::BSSM_SHADER_COUNT];
 
@@ -139,11 +142,33 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 	e.temphack(pixelShader);
 }
 
+void BSShader::CreateHullShader(uint32_t Technique, const char *SourceFile, const std::vector<std::pair<const char *, const char *>>& Defines)
+{
+	// Build source disk path, hand off to D3D11
+	wchar_t fxpPath[MAX_PATH];
+	swprintf_s(fxpPath, L"C:\\myshaders\\%S.hlsl", SourceFile);
+
+	BSGraphics::HullShader *hullShader = BSGraphics::Renderer::GetGlobals()->CompileHullShader(fxpPath, Defines);
+
+	HullShaders[Technique] = hullShader;
+}
+
+void BSShader::CreateDomainShader(uint32_t Technique, const char *SourceFile, const std::vector<std::pair<const char *, const char *>>& Defines)
+{
+	// Build source disk path, hand off to D3D11
+	wchar_t fxpPath[MAX_PATH];
+	swprintf_s(fxpPath, L"C:\\myshaders\\%S.hlsl", SourceFile);
+
+	BSGraphics::DomainShader *domainShader = BSGraphics::Renderer::GetGlobals()->CompileDomainShader(fxpPath, Defines);
+
+	DomainShaders[Technique] = domainShader;
+}
+
 void BSShader::hk_Load(BSIStream *Stream)
 {
 	// Load original shaders first
 	(this->*Load)(Stream);
-
+	/*
 	// Dump everything for debugging
 	for (auto itr = m_VertexShaderTable.begin(); itr != m_VertexShaderTable.end(); itr++)
 	{
@@ -175,12 +200,28 @@ void BSShader::hk_Load(BSIStream *Stream)
 
 	if (this == BSSkyShader::pInstance)
 		BSSkyShader::pInstance->CreateAllShaders();
+	*/
+
+	if (strstr(m_LoaderType, "Lighting"))
+	{
+		for (auto itr = m_VertexShaderTable.begin(); itr != m_VertexShaderTable.end(); itr++)
+		{
+			// Apply to parallax shaders only
+			if (((itr->m_TechniqueID >> 24) & 0x3F) != 3)
+				continue;
+
+			CreateHullShader(itr->m_TechniqueID, "Lighting", BSShaderInfo::BSLightingShader::Defines::GetArray(itr->m_TechniqueID));
+			CreateDomainShader(itr->m_TechniqueID, "Lighting", BSShaderInfo::BSLightingShader::Defines::GetArray(itr->m_TechniqueID));
+		}
+	}
 }
 
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
 {
 	BSGraphics::VertexShader *vertexShader = nullptr;
 	BSGraphics::PixelShader *pixelShader = nullptr;
+	BSGraphics::DomainShader *domainShader = nullptr;
+	BSGraphics::HullShader *hullShader = nullptr;
 
 	if (!m_VertexShaderTable.get(VertexShaderID, vertexShader))
 		return false;
@@ -188,9 +229,19 @@ bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, b
 	if (!IgnorePixelShader && !m_PixelShaderTable.get(PixelShaderID, pixelShader))
 		return false;
 
+	if (HullShaders.count(VertexShaderID))
+		hullShader = HullShaders[VertexShaderID];
+
+	if (DomainShaders.count(VertexShaderID))
+		domainShader = DomainShaders[VertexShaderID];
+
 	// Vertex shader required, pixel shader optional (nullptr)
-	BSGraphics::Renderer::GetGlobals()->SetVertexShader(vertexShader);
-	BSGraphics::Renderer::GetGlobals()->SetPixelShader(pixelShader);
+	auto globals = BSGraphics::Renderer::GetGlobals();
+
+	globals->SetVertexShader(vertexShader);
+	globals->SetPixelShader(pixelShader);
+	globals->SetHullShader(hullShader);
+	globals->SetDomainShader(domainShader);
 	return true;
 }
 

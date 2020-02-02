@@ -80,6 +80,8 @@ namespace BSGraphics
 
 		void SetVertexShader(VertexShader *Shader);
 		void SetPixelShader(PixelShader *Shader);
+		void SetHullShader(HullShader *Shader);
+		void SetDomainShader(DomainShader *Shader);
 
 		void SetTexture(uint32_t Index, const NiSourceTexture *Texture);
 		void SetTexture(uint32_t Index, const Texture *Resource);
@@ -106,9 +108,11 @@ namespace BSGraphics
 		void RegisterShaderBytecode(void *Shader, const void *Bytecode, size_t BytecodeLength);
 		const std::pair<void *, size_t>& GetShaderBytecode(void *Shader);
 
+		ID3DBlob *CompileShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, const char *ProgramType);
 		VertexShader *CompileVertexShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetConstant);
 		PixelShader *CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant);
-
+		HullShader *CompileHullShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines);
+		DomainShader *CompileDomainShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines);
 		//
 		// Shader constant buffers
 		//

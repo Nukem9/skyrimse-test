@@ -176,6 +176,9 @@ public:
 		std::function<const char *(int Index)> GetSampler,
 		std::function<const char *(int Index)> GetConstant);
 
+	void CreateHullShader(uint32_t Technique, const char *SourceFile, const std::vector<std::pair<const char *, const char *>>& Defines);
+	void CreateDomainShader(uint32_t Technique, const char *SourceFile, const std::vector<std::pair<const char *, const char *>>& Defines);
+
 	void hk_Load(BSIStream *Stream);
 
 	bool BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader);
