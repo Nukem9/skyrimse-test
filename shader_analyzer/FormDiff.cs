@@ -157,6 +157,8 @@ namespace shader_analyzer
 
     public static class Win32
     {
+        private static readonly System.Threading.ThreadLocal<bool> IsSendingScrollCommand = new System.Threading.ThreadLocal<bool>();
+
         public enum ScrollBarType : int
         {
             SbHorz = 0,
@@ -183,9 +185,14 @@ namespace shader_analyzer
 
         public static void SyncVerticalScrollbars(IntPtr TargetHwnd, IntPtr SourceHwnd)
         {
+            if (IsSendingScrollCommand.Value)
+                return;
+
+            IsSendingScrollCommand.Value = true;
             int nPos = GetScrollPos(SourceHwnd, (int)ScrollBarType.SbVert) << 16;
             uint wParam = (uint)ScrollBarCommands.SB_THUMBPOSITION | (uint)nPos;
             SendMessage(TargetHwnd, (int)Message.WM_VSCROLL, new IntPtr(wParam), IntPtr.Zero);
+            IsSendingScrollCommand.Value = false;
         }
     }
 }
