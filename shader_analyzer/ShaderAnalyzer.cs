@@ -192,17 +192,13 @@ namespace shader_analyzer
             var techniqueId = metadata.GetTechnique();
             var macros = GetCompilationMacros(Type, HlslType, metadata.GetDefines().ToList());
 
-            //Program.LogLine("Validating shader [Technique: {0:X8}]: {1}...", techniqueId, OriginalFile);
-
             // Read from disk, compile, then disassemble to text
             ShaderBytecode originalBytecode = null;
             ShaderBytecode newBytecode = null;
 
             try
             {
-                originalBytecode = RecompileShader3DMigoto(OriginalFile, HlslType).Strip(m_StripFlags);
-
-                //originalBytecode = ShaderBytecode.FromFile(OriginalFile).Strip(m_StripFlags);
+                originalBytecode = ShaderBytecode.FromFile(OriginalFile).Strip(m_StripFlags);
                 newBytecode = CompileShaderOfType(SourcePath, HlslType, macros).Strip(m_StripFlags);
             }
             catch(InvalidProgramException e)
@@ -261,15 +257,6 @@ namespace shader_analyzer
             }
 
             return true;
-        }
-
-        public static ShaderBytecode RecompileShader3DMigoto(string OriginalFile, string HlslType)
-        {
-            // Create a copy of the file since it will be trashed
-            string copyPath = OriginalFile.Replace(".bin", ".hlsl");
-            ShaderDecompiler.DecompileShader(OriginalFile, copyPath, OriginalFile.Replace(".bin", ".txt"));
-
-            return CompileShaderOfType(copyPath, HlslType, null);
         }
 
         public static void ValidateShaderHeader(string[] OldData, string[] NewData)
