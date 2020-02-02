@@ -53,7 +53,7 @@ namespace shader_analyzer
             buttonRun.Enabled = false;
             ClearListView();
 
-            ShaderAnalyzer.DoStuff(() =>
+            ShaderAnalyzer.RecompileAndValidateShaders(() =>
             {
                 Invoke(new Action(() => { PopulateListView(); buttonRun.Enabled = true; }));
             });

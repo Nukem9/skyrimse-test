@@ -61,6 +61,30 @@ namespace shader_analyzer
             }).Start();
         }
 
+        public static void RecompileAndValidateShaders(Action OnFinish)
+        {
+            new Thread(() =>
+            {
+                List<string> types = new List<string>()
+                {
+                    //"BloodSplatter",
+                    //"DistantTree",
+                    //"Effect",
+                    "Lighting",
+                    //"Particle",
+                    //"RunGrass",
+                    //"Sky",
+                    //"Utility",
+                    //"Water",
+                };
+
+                foreach (string type in types)
+                    ValidateAllShadersOfType(type);
+
+                OnFinish();
+            }).Start();
+        }
+
         public static void DecompileAllShadersOfType(string Type)
         {
             string inputDir = Path.Combine(Program.ShaderDumpDirectory, Type);
@@ -90,30 +114,6 @@ namespace shader_analyzer
             });
 
             Program.LogLine($"DecompileAllShadersOfType({Type}): Done.");
-        }
-
-        public static void DoStuff(Action OnFinish)
-        {
-            new Thread(() =>
-            {
-                List<string> types = new List<string>()
-                {
-                    "BloodSplatter",
-                    "DistantTree",
-                    //"Effect",
-                    //"Lighting",
-                    //"Particle",
-                    "RunGrass",
-                    //"Sky",
-                    //"Utility",
-                    //"Water",
-                };
-
-                foreach (string type in types)
-                    ValidateAllShadersOfType(type);
-
-                OnFinish();
-            }).Start();
         }
 
         public static void ValidateAllShadersOfType(string Type)
@@ -148,38 +148,31 @@ namespace shader_analyzer
             int succeses = 0;
             int fails = 0;
 
-            //System.Threading.Tasks.Parallel.For(0, vsFiles.Length, i =>
-            //{
-            for (int i = 0; i < vsFiles.Length; i++)
+            System.Threading.Tasks.Parallel.For(0, vsFiles.Length, i =>
             {
                 if (ValidateShaderOfType(Type, "vs_5_0", vsFiles[i], hlslSourcePath))
                     Interlocked.Increment(ref succeses);
                 else
                     Interlocked.Increment(ref fails);
-            }
-            //});
+            });
 
-            //System.Threading.Tasks.Parallel.For(0, psFiles.Length, i =>
-            //{
-            for (int i = 0; i < psFiles.Length; i++)
+            /*
+            System.Threading.Tasks.Parallel.For(0, psFiles.Length, i =>
             {
                 if (ValidateShaderOfType(Type, "ps_5_0", psFiles[i], hlslSourcePath))
                     Interlocked.Increment(ref succeses);
                 else
                     Interlocked.Increment(ref fails);
-            }
-            //});
+            });
+            */
 
-            //System.Threading.Tasks.Parallel.For(0, csFiles.Length, i =>
-            //{
-            for (int i = 0; i < csFiles.Length; i++)
+            System.Threading.Tasks.Parallel.For(0, csFiles.Length, i =>
             {
                 if (ValidateShaderOfType(Type, "cs_5_0", csFiles[i], hlslSourcePath))
                     Interlocked.Increment(ref succeses);
                 else
                     Interlocked.Increment(ref fails);
-            }
-            //});
+            });
 
             Program.LogLine($"ValidateAllShadersOfType({Type}): {succeses} shaders matched, {fails} failed.");
         }
@@ -230,8 +223,6 @@ namespace shader_analyzer
             }
             catch(Exception)
             {
-                //Program.LogLine("Validation failed.");
-
                 // Dump raw disassembly to file
                 File.WriteAllLines($"{Program.ShaderDiffDirectory}\\{Type}-{techniqueId:X}-{HlslType}-old.txt", originalDisasm);
                 File.WriteAllLines($"{Program.ShaderDiffDirectory}\\{Type}-{techniqueId:X}-{HlslType}-new.txt", newDisasm);
@@ -332,11 +323,11 @@ namespace shader_analyzer
             };
 
             if (HlslType.Equals("vs_5_0"))
-                macros.Add(new SharpDX.Direct3D.ShaderMacro("VSHADER", ""));
+                macros.Add(new SharpDX.Direct3D.ShaderMacro("VERTEXSHADER", ""));
             else if (HlslType.Equals("ps_5_0"))
-                macros.Add(new SharpDX.Direct3D.ShaderMacro("PSHADER", ""));
+                macros.Add(new SharpDX.Direct3D.ShaderMacro("PIXELSHADER", ""));
             else if (HlslType.Equals("cs_5_0"))
-                macros.Add(new SharpDX.Direct3D.ShaderMacro("CSHADER", ""));
+                macros.Add(new SharpDX.Direct3D.ShaderMacro("COMPUTESHADER", ""));
             else
                 throw new ArgumentException("Unexpected value", nameof(HlslType));
 
