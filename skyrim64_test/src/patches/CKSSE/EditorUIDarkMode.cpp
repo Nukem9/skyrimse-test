@@ -391,18 +391,36 @@ namespace EditorUIDarkMode
 		}
 		else if (themeType == ThemeType::Button)
 		{
-			static HBRUSH buttonBorder = CreateSolidBrush(RGB(130, 135, 144));// RGB(83, 83, 83)
+			static HBRUSH buttonBorder = CreateSolidBrush(RGB(130, 135, 144));
 			static HBRUSH buttonBorderHighlighted = CreateSolidBrush(RGB(0, 120, 215));
 			static HBRUSH buttonFill = CreateSolidBrush(RGB(32, 32, 32));
+			static HBRUSH buttonPressed = CreateSolidBrush(RGB(83, 83, 83));
 
 			switch (iPartId)
 			{
 			case BP_PUSHBUTTON:
 			{
-				bool isHighlight = iStateId == PBS_DEFAULTED || iStateId == PBS_HOT;
+				HBRUSH frameColor = buttonBorder;
+				HBRUSH fillColor = buttonFill;
 
-				FillRect(hdc, pRect, iStateId == PBS_DISABLED ? buttonBorder : buttonFill);
-				FrameRect(hdc, pRect, isHighlight ? buttonBorderHighlighted : buttonBorder);
+				switch (iStateId)
+				{
+				case PBS_HOT:
+				case PBS_DEFAULTED:
+					frameColor = buttonBorderHighlighted;
+					break;
+
+				case PBS_DISABLED:
+					fillColor = buttonBorder;
+					break;
+
+				case PBS_PRESSED:
+					fillColor = buttonPressed;
+					break;
+				}
+
+				FillRect(hdc, pRect, fillColor);
+				FrameRect(hdc, pRect, frameColor);
 			}
 			return S_OK;
 
