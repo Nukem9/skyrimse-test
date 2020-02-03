@@ -5,6 +5,7 @@
 #include "../../BSGraphicsState.h"
 #include "../../Setting.h"
 #include "../../NiMain/NiDirectionalLight.h"
+#include "../../NiMain/BSMultiIndexTriShape.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "../BSLight.h"
@@ -619,21 +620,9 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 		pixelCG.ParamPS<XMVECTORF32, 6>() = xmmword_141E3301C;
 	}
 
-	if (rawTechnique & RAW_FLAG_SOFT_LIGHTING)
+	// These two conditions were originally separate code blocks
+	if ((rawTechnique & RAW_FLAG_SOFT_LIGHTING) || (rawTechnique & RAW_FLAG_RIM_LIGHTING))
 	{
-		renderer->SetTexture(12, lightingMaterial->spRimSoftLightingTexture);
-		renderer->SetTextureAddressMode(12, lightingMaterial->eTextureClampMode);
-
-		// PS: p28 float4 LightingEffectParams
-		XMVECTORF32& lightingEffectParams = pixelCG.ParamPS<XMVECTORF32, 28>();
-
-		lightingEffectParams.f[0] = lightingMaterial->fSubSurfaceLightRolloff;
-		lightingEffectParams.f[1] = lightingMaterial->fRimLightPower;
-	}
-
-	if (rawTechnique & RAW_FLAG_RIM_LIGHTING)
-	{
-		// Identical to RAW_FLAG_SOFT_LIGHTING above
 		renderer->SetTexture(12, lightingMaterial->spRimSoftLightingTexture);
 		renderer->SetTextureAddressMode(12, lightingMaterial->eTextureClampMode);
 
@@ -893,6 +882,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	if ((rawTechnique & RAW_FLAG_PROJECTED_UV) && (baseTechniqueID != RAW_TECHNIQUE_HAIR))
 	{
 		bool enableProjectedUvNormals = bEnableProjecteUVDiffuseNormals->uValue.b && (!(RenderFlags & 0x8) || !bEnableProjecteUVDiffuseNormalsOnCubemap->uValue.b);
+		XMMATRIX textureProjectionTemp;
 
 		renderer->SetTexture(11, BSGraphics::gState.pDefaultTextureProjNoiseMap);
 		renderer->SetTextureMode(11, 3, 1);
@@ -909,41 +899,19 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			renderer->SetTextureMode(10, 3, 1);
 		}
 
-		// IDA says there are 2 args to this virtual function, it's probably wrong
-		if ((*(__int64(__fastcall **)(BSGeometry *))(*(uintptr_t *)Pass->m_Geometry + 424i64))(Pass->m_Geometry))
+		if (auto *multiIndexShape = Pass->m_Geometry->IsMultiIndexTriShape())
 		{
-			float *v60 = (float *)Pass->m_Geometry;
-
-			// VS: p6 float3x4 TextureProj
-			float *textureProj = &vertexCG.ParamVS<float, 6>();
-
-			textureProj[0] = v60[91];
-			textureProj[1] = v60[95];
-			textureProj[2] = v60[99];
-			textureProj[3] = v60[103];
-
-			textureProj[4] = v60[92];
-			textureProj[5] = v60[96];
-			textureProj[6] = v60[100];
-			textureProj[7] = v60[104];
-
-			textureProj[8] = v60[93];
-			textureProj[9] = v60[97];
-			textureProj[10] = v60[101];
-			textureProj[11] = v60[105];
-
-			GeometrySetupProjectedUv(pixelCG, Pass->m_Geometry, property, enableProjectedUvNormals);
+			textureProjectionTemp = XMLoadFloat4x4((XMFLOAT4X4 *)&multiIndexShape->MaterialProjection);
+			GeometrySetupConstantProjectedUVData(pixelCG, multiIndexShape, property, enableProjectedUvNormals);
 		}
 		else
 		{
-			XMMATRIX outputTemp;
-			sub_14130C8A0(Pass->m_Geometry->GetWorldTransform(), outputTemp, baseTechniqueID == RAW_TECHNIQUE_ENVMAP);
-
-			// VS: p6 float3x4 textureProj
-			BSShaderUtil::TransposeStoreMatrix3x4(&vertexCG.ParamVS<float, 6>(), outputTemp);
-
-			GeometrySetupProjectedUv(pixelCG, nullptr, property, enableProjectedUvNormals);
+			GenerateProjectionMatrix(Pass->m_Geometry->GetWorldTransform(), textureProjectionTemp, baseTechniqueID == RAW_TECHNIQUE_ENVMAP);
+			GeometrySetupConstantProjectedUVData(pixelCG, nullptr, property, enableProjectedUvNormals);
 		}
+
+		// VS: p6 float3x4 textureProj
+		BSShaderUtil::TransposeStoreMatrix3x4(&vertexCG.ParamVS<float, 6>(), textureProjectionTemp);
 	}
 
 	if (rawTechnique & RAW_FLAG_WORLD_MAP)
@@ -1092,12 +1060,12 @@ uint32_t BSLightingShader::GetVertexTechnique(uint32_t RawTechnique)
 uint32_t BSLightingShader::GetPixelTechnique(uint32_t RawTechnique)
 {
 	uint32_t flags = RawTechnique & ~(
-		RAW_FLAG_UNKNOWN1 |
-		RAW_FLAG_UNKNOWN2 |
-		RAW_FLAG_UNKNOWN3 |
-		RAW_FLAG_UNKNOWN4 |
-		RAW_FLAG_UNKNOWN5 |
-		RAW_FLAG_UNKNOWN6);
+		RAW_FLAG_LIGHTCOUNT1 |
+		RAW_FLAG_LIGHTCOUNT2 |
+		RAW_FLAG_LIGHTCOUNT3 |
+		RAW_FLAG_LIGHTCOUNT4 |
+		RAW_FLAG_LIGHTCOUNT5 |
+		RAW_FLAG_LIGHTCOUNT6);
 
 	if ((flags & RAW_FLAG_MODELSPACENORMALS) == 0)
 		flags &= ~RAW_FLAG_SKINNED;
@@ -1405,33 +1373,28 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::Consta
 	}
 }
 
-void BSLightingShader::GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals)
+void BSLightingShader::GeometrySetupConstantProjectedUVData(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSMultiIndexTriShape *Shape, BSLightingShaderProperty *Property, bool EnableProjectedNormals)
 {
 	// PS: p12 float4 ProjectedUVParams
 	{
 		XMVECTORF32& projectedUVParams = PixelCG.ParamPS<XMVECTORF32, 12>();
 
-		float *v6 = (float *)((uintptr_t)Geometry + 444);
+		const NiColorA& params = Shape ? Shape->fMaterialParams : Property->QProjectedUVParams();
 
-		if (!Geometry)
-			v6 = (float *)((uintptr_t)Property + 0x10C);
-
-		float v8 = 1.0f - v6[3];
-
-		projectedUVParams.f[0] = v8 * v6[0];
+		projectedUVParams.f[0] = (1.0f - params.a) * params.r;
 		//projectedUVParams.f[1] = ;
-		projectedUVParams.f[2] = v6[2];
-		projectedUVParams.f[3] = (v8 * v6[1]) + v6[3];
+		projectedUVParams.f[2] = params.b;
+		projectedUVParams.f[3] = ((1.0f - params.a) * params.g) + params.a;
 	}
 
 	// PS: p13 float4 ProjectedUVParams2
 	{
 		XMVECTORF32& projectedUVParams2 = PixelCG.ParamPS<XMVECTORF32, 13>();
 
-		if (Geometry)
+		if (Shape)
 		{
-			projectedUVParams2.f[0] = *(float *)((uintptr_t)Geometry + 464);// Reversed on purpose?
-			projectedUVParams2.f[1] = *(float *)((uintptr_t)Geometry + 460);// Reversed on purpose?
+			projectedUVParams2.f[0] = Shape->fNormalDampener;
+			projectedUVParams2.f[1] = Shape->fMaterialScale;
 		}
 		else
 		{
@@ -1450,8 +1413,9 @@ void BSLightingShader::GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<
 	}
 }
 
-void BSLightingShader::sub_14130C8A0(const NiTransform& Transform, XMMATRIX& OutMatrix, bool DontMultiply)
+void BSLightingShader::GenerateProjectionMatrix(const NiTransform& ObjectWorldTrans, XMMATRIX& OutProjection, bool ModelSpace)
 {
+	// Identity matrix
 	NiTransform temp;
 
 	temp.m_Rotate.m_pEntry[0][0] = 0.0f;
@@ -1469,23 +1433,22 @@ void BSLightingShader::sub_14130C8A0(const NiTransform& Transform, XMMATRIX& Out
 	temp.m_Translate = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
 	temp.m_fScale = 1.0f;
 
-	if (DontMultiply)
+	if (ModelSpace)
 	{
-		OutMatrix = BSShaderUtil::GetXMFromNi(temp);
+		OutProjection = BSShaderUtil::GetXMFromNi(temp);
 	}
 	else
 	{
 		XMMATRIX m1 = BSShaderUtil::GetXMFromNi(temp);
-		XMMATRIX m2 = BSShaderUtil::GetXMFromNi(Transform);
+		XMMATRIX m2 = BSShaderUtil::GetXMFromNi(ObjectWorldTrans);
 
-		// * Operator order DOES matter
-		// OutMatrix = Mul(Translate(m2, renderer->m_CurrentPosAdjust), m1);
+		// OutProjection = Mul(Translate(m2, renderer->m_CurrentPosAdjust), m1);
 		m2.r[3] = XMVectorAdd(m2.r[3], XMVectorSet(
 			temp.m_Translate.x,
 			temp.m_Translate.y,
 			temp.m_Translate.z,
 			0.0f));
 
-		OutMatrix = XMMatrixMultiply(m2, m1);
+		OutProjection = XMMatrixMultiply(m2, m1);
 	}
 }

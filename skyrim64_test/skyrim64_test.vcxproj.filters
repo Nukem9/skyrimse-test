@@ -371,6 +371,9 @@
     <ClInclude Include="src\patches\CKSSE\EditorUIDarkMode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\BSMultiIndexTriShape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">

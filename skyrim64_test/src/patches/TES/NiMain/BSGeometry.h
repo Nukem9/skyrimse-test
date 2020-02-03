@@ -1,5 +1,6 @@
 #pragma once
 
+#include "NiPointer.h"
 #include "NiAVObject.h"
 #include "NiAlphaProperty.h"
 #include "NiSkinInstance.h"
@@ -30,10 +31,13 @@ class BSGeometry : public NiAVObject
 {
 public:
 	virtual ~BSGeometry();
+	virtual class BSMultiIndexTriShape *IsMultiIndexTriShape();
+	virtual class BSSkinnedDecalTriShape *IsSkinnedDecalTriShape();
+	virtual void *IsUnknown();
 
 	char _pad[0x10];
-	NiProperty *spProperties[2];	// NiPointer<NiProperty> spProperties[2];
-	NiSkinInstance *spSkinInstance;	// NiPointer<NiSkinInstance>
+	NiPointer<NiProperty> spProperties[2];
+	NiPointer<NiSkinInstance> spSkinInstance;
 	void *pRendererData;
 	char _pad2[0x8];
 	uint64_t uiVertexDesc;

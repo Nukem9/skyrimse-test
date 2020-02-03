@@ -5,6 +5,7 @@
 class BSLightingShaderMaterialBase;
 class BSLightingShaderMaterialLandscape;
 class BSLightingShaderProperty;
+class BSMultiIndexTriShape;
 
 class BSLightingShader : public BSShader
 {
@@ -38,12 +39,12 @@ private:
 		RAW_FLAG_VC = 1 << 0,
 		RAW_FLAG_SKINNED = 1 << 1,
 		RAW_FLAG_MODELSPACENORMALS = 1 << 2,
-		RAW_FLAG_UNKNOWN1 = 1 << 3,
-		RAW_FLAG_UNKNOWN2 = 1 << 4,
-		RAW_FLAG_UNKNOWN3 = 1 << 5,
-		RAW_FLAG_UNKNOWN4 = 1 << 6,
-		RAW_FLAG_UNKNOWN5 = 1 << 7,
-		RAW_FLAG_UNKNOWN6 = 1 << 8,
+		RAW_FLAG_LIGHTCOUNT1 = 1 << 3,			// Probably not used
+		RAW_FLAG_LIGHTCOUNT2 = 1 << 4,			// ^
+		RAW_FLAG_LIGHTCOUNT3 = 1 << 5,			// ^
+		RAW_FLAG_LIGHTCOUNT4 = 1 << 6,			// ^
+		RAW_FLAG_LIGHTCOUNT5 = 1 << 7,			// ^
+		RAW_FLAG_LIGHTCOUNT6 = 1 << 8,			// ^
 		RAW_FLAG_SPECULAR = 1 << 9,
 		RAW_FLAG_SOFT_LIGHTING = 1 << 10,
 		RAW_FLAG_RIM_LIGHTING = 1 << 11,
@@ -103,8 +104,8 @@ private:
 	static void GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const NiTransform& Transform, bool WorldSpace);
 	static void GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSLightingShaderProperty *Property);
 	static void GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSRenderPass *Pass, DirectX::XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, bool WorldSpace);
-	static void GeometrySetupProjectedUv(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSGeometry *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals);
-	static void sub_14130C8A0(const NiTransform& Transform, DirectX::XMMATRIX& OutMatrix, bool DontMultiply);
+	static void GeometrySetupConstantProjectedUVData(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSMultiIndexTriShape *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals);
+	static void GenerateProjectionMatrix(const NiTransform& ObjectWorldTrans, DirectX::XMMATRIX& OutProjection, bool ModelSpace);
 };
 static_assert(sizeof(BSLightingShader) == 0xF8);
 static_assert_offset(BSLightingShader, m_CurrentRawTechnique, 0x94);

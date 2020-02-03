@@ -12,9 +12,15 @@ public:
 	char _pad1[0x4];
 	float fSpecularLODFade;
 	float fEnvmapLODFade;
-	char _pad2[0x14];
+	char _pad2[0x4];
+	NiColorA kProjectedUVParams;
 	NiColorA kProjectedUVColor;
 	char _pad3[0x34];
+
+	const NiColorA& QProjectedUVParams() const
+	{
+		return kProjectedUVParams;
+	}
 
 	const NiColorA& QProjectedUVColor() const
 	{
@@ -26,4 +32,5 @@ static_assert_offset(BSLightingShaderProperty, pEmitColor, 0xF0);
 static_assert_offset(BSLightingShaderProperty, fEmitColorScale, 0xF8);
 static_assert_offset(BSLightingShaderProperty, fSpecularLODFade, 0x100);
 static_assert_offset(BSLightingShaderProperty, fEnvmapLODFade, 0x104);
+static_assert_offset(BSLightingShaderProperty, kProjectedUVParams, 0x10C);
 static_assert_offset(BSLightingShaderProperty, kProjectedUVColor, 0x11C);
