@@ -298,7 +298,7 @@ bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, B
 			BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(cullMode);
 
 		if (alphaBlendUnknown != -1)
-			BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetUnknown1(0);
+			BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetUnknown1(alphaBlendUnknown);
 
 		renderer->SetUseAlphaTestRef(useScrapConstant);
 	}
@@ -307,7 +307,7 @@ bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, B
 	PassGroup *group = &m_RenderPass[m_RenderPassMap.get(Technique)];
 	BSRenderPass *currentPass = group->m_Passes[GroupIndex];
 
-	for (; currentPass; currentPass = currentPass->m_Next)
+	for (; currentPass; currentPass = currentPass->m_PassGroupNext)
 		RenderPassImmediately(currentPass, Technique, alphaTest, RenderFlags);
 
 	// Zero the pointers only - the memory is freed elsewhere
