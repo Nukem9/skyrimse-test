@@ -1213,6 +1213,8 @@ namespace BSGraphics
 			macros[Defines.size() + 0].Name = "HULLSHADER";
 		else if (!_stricmp(ProgramType, "ds_5_0"))
 			macros[Defines.size() + 0].Name = "DOMAINSHADER";
+		else if (!_stricmp(ProgramType, "cs_5_0"))
+			macros[Defines.size() + 0].Name = "COMPUTESHADER";
 		else
 			Assert(false);
 

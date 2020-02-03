@@ -8,6 +8,7 @@
 #include "Shaders/BSDistantTreeShader.h"
 #include "Shaders/BSGrassShader.h"
 #include "Shaders/BSSkyShader.h"
+#include "Shaders/BSLightingShader.h"
 
 std::unordered_map<uint32_t, BSGraphics::HullShader *> HullShaders;
 std::unordered_map<uint32_t, BSGraphics::DomainShader *> DomainShaders;
@@ -86,7 +87,7 @@ void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, co
 {
 	// Build source disk path, hand off to D3D11
 	wchar_t fxpPath[MAX_PATH];
-	swprintf_s(fxpPath, L"C:\\myshaders\\%S.hlsl", SourceFile);
+	swprintf_s(fxpPath, L"C:\\SA\\ShaderSource\\%S.hlsl", SourceFile);
 
 	BSGraphics::VertexShader *vertexShader = BSGraphics::Renderer::GetGlobals()->CompileVertexShader(fxpPath, Defines, GetConstant);
 
@@ -117,7 +118,7 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 {
 	// Build source disk path, hand off to D3D11
 	wchar_t fxpPath[MAX_PATH];
-	swprintf_s(fxpPath, L"C:\\myshaders\\%S.hlsl", SourceFile);
+	swprintf_s(fxpPath, L"C:\\SA\\ShaderSource\\%S.hlsl", SourceFile);
 
 	BSGraphics::PixelShader *pixelShader = BSGraphics::Renderer::GetGlobals()->CompilePixelShader(fxpPath, Defines, GetSampler, GetConstant);
 
@@ -146,7 +147,7 @@ void BSShader::CreateHullShader(uint32_t Technique, const char *SourceFile, cons
 {
 	// Build source disk path, hand off to D3D11
 	wchar_t fxpPath[MAX_PATH];
-	swprintf_s(fxpPath, L"C:\\myshaders\\%S.hlsl", SourceFile);
+	swprintf_s(fxpPath, L"C:\\SA\\ShaderSource\\%S.hlsl", SourceFile);
 
 	BSGraphics::HullShader *hullShader = BSGraphics::Renderer::GetGlobals()->CompileHullShader(fxpPath, Defines);
 
@@ -157,7 +158,7 @@ void BSShader::CreateDomainShader(uint32_t Technique, const char *SourceFile, co
 {
 	// Build source disk path, hand off to D3D11
 	wchar_t fxpPath[MAX_PATH];
-	swprintf_s(fxpPath, L"C:\\myshaders\\%S.hlsl", SourceFile);
+	swprintf_s(fxpPath, L"C:\\SA\\ShaderSource\\%S.hlsl", SourceFile);
 
 	BSGraphics::DomainShader *domainShader = BSGraphics::Renderer::GetGlobals()->CompileDomainShader(fxpPath, Defines);
 

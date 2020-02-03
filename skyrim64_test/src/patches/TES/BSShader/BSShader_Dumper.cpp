@@ -4,7 +4,7 @@
 #include "BSShader_Dumper.h"
 #include "BSShader.h"
 
-#define SHADER_DUMP_PATH "C:\\ShaderDump"
+#define SHADER_DUMP_PATH "C:\\SA\\ShaderDump"
 
 ShaderDecoder::ShaderDecoder(const char *Type, BSSM_SHADER_TYPE CodeType)
 {
@@ -420,9 +420,6 @@ void VertexShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<P
 	char buf[1024];
 	sprintf_s(buf, "%s\\%s\\%s_%s_%X.vs.txt", SHADER_DUMP_PATH, m_LoaderType, m_LoaderType, TechName, m_Shader->m_TechniqueID);
 
-	// Something went really wrong if the shader exists already
-	AssertMsg(GetFileAttributesA(buf) == INVALID_FILE_ATTRIBUTES, "Trying to overwrite a shader that already exists!");
-
 	if (FILE *file; fopen_s(&file, buf, "w") == 0)
 	{
 		fprintf(file, "// %s\n", m_LoaderType);
@@ -490,9 +487,6 @@ void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<Pa
 {
 	char buf[1024];
 	sprintf_s(buf, "%s\\%s\\%s_%s_%X.ps.txt", SHADER_DUMP_PATH, m_LoaderType, m_LoaderType, TechName, m_Shader->m_TechniqueID);
-
-	// Something went really wrong if the shader exists already
-	AssertMsg(GetFileAttributesA(buf) == INVALID_FILE_ATTRIBUTES, "Trying to overwrite a shader that already exists!");
 
 	if (FILE *file; fopen_s(&file, buf, "w") == 0)
 	{
