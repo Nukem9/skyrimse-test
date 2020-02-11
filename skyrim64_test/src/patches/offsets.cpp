@@ -115,7 +115,7 @@ namespace Offsets
 		}
 	}
 
-	const std::array<OffsetEntry, 308> EntryListCK1530
+	const std::array<OffsetEntry, 309> EntryListCK1530
 	{{
 		// Version 1.5.30 RelOffset -> Version 1.5.30 Translated
 		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x102CBEF)
@@ -397,6 +397,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x2E2BC50, 1530, "48 83 EC 68 80 3D ? ? ? ? ? 75", 0, 0x2E2BC50)
 		OFFSET_ENTRY(0x2E2EEB0, 1530, "48 8B C4 56 57 41 56 48 81 EC 00 01 00 00 48", 0, 0x2E2EEB0)
 		OFFSET_ENTRY(0x2E2EFAF, 1530, "C6 45 5C 01 C7 44 24 20 2A 06 00 00 4C", 0, 0x2E2EFAF)
+		OFFSET_ENTRY(0x2E2F003, 1530, "0F 10 82 50 01 00 00 0F 11 44 24 50 F2", 0, 0x2E2F003)
 		OFFSET_ENTRY(0x2E2F0AE, 1530, "E8 ? ? ? ? C6 44 24 20 01 41 B9 03 00 00 00 83 CF FF 44", 0, 0x2E2F0AE)
 		OFFSET_ENTRY(0x2E2F270, 1530, nullptr, 0, 0x2E2F270)
 		OFFSET_ENTRY(0x2E2F275, 1530, nullptr, 0, 0x2E2F275)
@@ -432,7 +433,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x104C50D, 1530, nullptr, 0, 0x104C50D)
 	}};
 
-	const std::array<OffsetEntry, 308> EntryListCK1573
+	const std::array<OffsetEntry, 309> EntryListCK1573
 	{{
 		// Version X.X.XX RelOffset -> Version 1.5.73 Translated
 		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x1025A6E)
@@ -714,6 +715,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x2E2BC50, 1530, nullptr, 0, 0x2E1EA90)
 		OFFSET_ENTRY(0x2E2EEB0, 1530, nullptr, 0, 0x2E21CF0)
 		OFFSET_ENTRY(0x2E2EFAF, 1530, "C6 45 5C 01 C7 44 24 20 2E 06 00 00 4C", 0, 0x2E21DEF)// Signature failed: Line number in assert was changed
+		OFFSET_ENTRY(0x2E2F003, 1530, nullptr, 0, 0x2E21E43)
 		OFFSET_ENTRY(0x2E2F0AE, 1530, nullptr, 0, 0x2E21EEE)
 		OFFSET_ENTRY(0x2E2F270, 1530, nullptr, 0, 0x2E220B0)
 		OFFSET_ENTRY(0x2E2F275, 1530, nullptr, 0, 0x2E220B5)

@@ -397,6 +397,7 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x13CE36D, 1530), &hk_sub_141032ED7);
 
 	XUtil::PatchMemoryNop(OFFSET(0x2E2EFAF, 1530), 4);		// Pointer always null
+	XUtil::PatchMemoryNop(OFFSET(0x2E2F003, 1530), 99);		// Pointer always null
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F0AE, 1530), 5);		// Pointer always null (second parameter)
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F270, 1530), 5);		// Pointer always null (second parameter)
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F275, 1530), 38);		// Assert always triggers
