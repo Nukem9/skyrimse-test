@@ -709,7 +709,7 @@ namespace BSLightingShader
 			case 16:defines.emplace_back("EYE", ""); break;
 			case 17:defines.emplace_back("CLOUD", ""); defines.emplace_back("INSTANCED", ""); break;
 			case 18:defines.emplace_back("LODLANDSCAPE", ""); defines.emplace_back("LODLANDNOISE", ""); break;
-			case 19:defines.emplace_back("MULTI_TEXTURE", ""); defines.emplace_back("LANDSCAPE", "LOD_LAND_BLEND"); break;
+			case 19:defines.emplace_back("MULTI_TEXTURE", ""); defines.emplace_back("LANDSCAPE", ""); defines.emplace_back("LOD_LAND_BLEND", ""); break;
 			default:__debugbreak(); break;
 			}
 

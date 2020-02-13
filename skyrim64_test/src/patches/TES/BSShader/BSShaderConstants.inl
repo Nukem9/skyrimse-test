@@ -79,44 +79,6 @@ REMAP_PIXEL("Effect", PER_TEC, 10, 0)
 REMAP_PIXEL("Effect", PER_TEC, 11, 0)
 
 //
-// BSLightingShader
-//
-REMAP_PIXEL("Lighting", PER_GEO, 11, 0)				// This is doing something weird....
-REMAP_PIXEL("Lighting", PER_GEO, 19, "float4")
-REMAP_PIXEL("Lighting", PER_GEO, 20, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 6, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 21, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 22, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 23, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 24, "float4")
-REMAP_PIXEL("Lighting", PER_MAT, 25, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 26, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 27, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 28, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 29, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 30, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 31, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 32, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 33, 0)
-REMAP_PIXEL("Lighting", PER_MAT, 34, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 0, "float2")
-REMAP_PIXEL("Lighting", PER_TEC, 1, "float4[7]")	// WARNING: The size of this can apparently change
-REMAP_PIXEL("Lighting", PER_TEC, 2, "float4[7]")	// WARNING: The size of this can apparently change
-REMAP_PIXEL("Lighting", PER_TEC, 3, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 4, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 5, "float3x4")
-REMAP_PIXEL("Lighting", PER_TEC, 7, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 8, "float4")
-REMAP_PIXEL("Lighting", PER_TEC, 9, "float")		// Guessed based on cbuffer offset. "Offset: 0x0040 AlphaTestRef"
-REMAP_PIXEL("Lighting", PER_TEC, 10, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 12, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 13, 0)				// Guessed based on cbuffer offset. "Offset: 0x0090 ProjectedUVParams2"
-REMAP_PIXEL("Lighting", PER_TEC, 14, 0)				// Guessed based on cbuffer offset. "Offset: 0x00A0 ProjectedUVParams3"
-REMAP_PIXEL("Lighting", PER_TEC, 16, 0)
-REMAP_PIXEL("Lighting", PER_TEC, 17, "float4")
-REMAP_PIXEL("Lighting", PER_TEC, 35, 0)				// Guessed based on cbuffer offset. "Offset: 0x00E0 CharacterLightParams"
-
-//
 // BSUtilityShader
 //
 REMAP_VERTEX("Utility", PER_GEO, 3, 0)
