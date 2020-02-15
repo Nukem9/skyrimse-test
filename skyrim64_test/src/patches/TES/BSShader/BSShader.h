@@ -187,7 +187,8 @@ public:
 	void SetupGeometryAlphaBlending(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty, bool a4);
 	void SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderProperty *ShaderProperty);
 
-	static std::vector<std::pair<const char *, const char *>> GetSourceDefines(uint32_t Type, uint32_t Technique);
+	static std::vector<std::pair<const char *, const char *>> GetAnySourceDefines(uint32_t Type, uint32_t Technique);
+	static std::string GetAnyTechniqueName(uint32_t Type, uint32_t Technique);
 	static const char *GetVariableType(uint32_t Type, const char *Name);
 	static ShaderDescriptor::DeclType GetVariableCategory(uint32_t Type, const char *Name);
 	static const char *GetVSConstantName(uint32_t Type, uint32_t Index);

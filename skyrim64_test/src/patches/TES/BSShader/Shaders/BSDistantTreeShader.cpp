@@ -48,8 +48,9 @@ AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 BSDistantTreeShader::BSDistantTreeShader() : BSShader(ShaderConfigDistantTree.Type)
 {
 	ShaderMetadata[BSShaderManager::BSSM_SHADER_DISTANTTREE] = &ShaderConfigDistantTree;
-	m_Type = BSShaderManager::BSSM_SHADER_DISTANTTREE;
+
 	pInstance = this;
+	m_Type = BSShaderManager::BSSM_SHADER_DISTANTTREE;
 }
 
 BSDistantTreeShader::~BSDistantTreeShader()
@@ -59,15 +60,14 @@ BSDistantTreeShader::~BSDistantTreeShader()
 
 bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 {
+	auto renderer = BSGraphics::Renderer::GetGlobals();
+
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
-	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
-	uint32_t pixelShaderTechnique = GetPixelTechnique(rawTechnique);
 
-	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
+	if (!BeginTechnique(GetVertexTechnique(rawTechnique), GetPixelTechnique(rawTechnique), false))
 		return false;
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
@@ -128,8 +128,8 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 
 	AssertMsg(WorldTreeLODAtlas, "LOD tree texture atlas for current worldspace not found.");
 
-	renderer->SetTexture(0, WorldTreeLODAtlas->QRendererTexture());// Diffuse
-	renderer->SetTextureAddressMode(0, 0);
+	renderer->SetTexture(TexSlot::Diffuse, WorldTreeLODAtlas->QRendererTexture());
+	renderer->SetTextureAddressMode(TexSlot::Diffuse, 0);
 
 	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
@@ -142,7 +142,7 @@ void BSDistantTreeShader::RestoreTechnique(uint32_t Technique)
 
 void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::GetGlobals();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	//
@@ -189,19 +189,19 @@ void BSDistantTreeShader::CreateAllShaders()
 
 void BSDistantTreeShader::CreateVertexShader(uint32_t Technique)
 {
-	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
+	auto defines = GetSourceDefines(Technique);
 	auto getConstant = [](int i) { return ShaderConfigDistantTree.ByConstantIndexVS.count(i) ? ShaderConfigDistantTree.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, ShaderConfigDistantTree.Type, getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfigDistantTree.Type, defines, getConstant);
 }
 
 void BSDistantTreeShader::CreatePixelShader(uint32_t Technique)
 {
-	auto getDefines = BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
+	auto defines = GetSourceDefines(Technique);
 	auto getSampler = [](int i) { return ShaderConfigDistantTree.BySamplerIndex.count(i) ? ShaderConfigDistantTree.BySamplerIndex.at(i)->Name : nullptr; };
 	auto getConstant = [](int i) { return ShaderConfigDistantTree.ByConstantIndexPS.count(i) ? ShaderConfigDistantTree.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, ShaderConfigDistantTree.Type, getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfigDistantTree.Type, defines, getSampler, getConstant);
 }
 
 uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)
@@ -210,9 +210,9 @@ uint32_t BSDistantTreeShader::GetRawTechnique(uint32_t Technique)
 
 	switch (Technique)
 	{
-	case BSSM_DISTANTTREE:outputTech = RAW_TECHNIQUE_BLOCK; break;
-	case BSSM_DISTANTTREE_DEPTH:outputTech = RAW_TECHNIQUE_DEPTH; break;
-	default:AssertMsg(false, "BSDistantTreeShader: bad technique ID"); break;
+	case BSSM_DISTANTTREE: outputTech = RAW_TECHNIQUE_BLOCK; break;
+	case BSSM_DISTANTTREE_DEPTH: outputTech = RAW_TECHNIQUE_DEPTH; break;
+	default: AssertMsg(false, "BSDistantTreeShader: bad technique ID"); break;
 	}
 
 	if (BSGraphics::gState.bUseEarlyZ)
@@ -233,6 +233,34 @@ uint32_t BSDistantTreeShader::GetPixelTechnique(uint32_t RawTechnique)
 
 std::vector<std::pair<const char *, const char *>> BSDistantTreeShader::GetSourceDefines(uint32_t Technique)
 {
-	// FIXME
-	return BSShaderInfo::BSDistantTreeShader::Defines::GetArray(Technique);
+	std::vector<std::pair<const char *, const char *>> defines;
+
+	switch (Technique & ~RAW_FLAG_DO_ALPHA)
+	{
+	case RAW_TECHNIQUE_BLOCK: break;
+	case RAW_TECHNIQUE_DEPTH: defines.emplace_back("RENDER_DEPTH", ""); break;
+	default: Assert(false); break;
+	}
+
+	if (Technique & RAW_FLAG_DO_ALPHA)
+		defines.emplace_back("DO_ALPHA_TEST", "");
+
+	return defines;
+}
+
+std::string BSDistantTreeShader::GetTechniqueString(uint32_t Technique)
+{
+	std::string str;
+
+	switch (Technique & ~RAW_FLAG_DO_ALPHA)
+	{
+	case RAW_TECHNIQUE_BLOCK: str = "DistantTreeBlock"; break;
+	case RAW_TECHNIQUE_DEPTH: str = "Depth"; break;
+	default: Assert(false); break;
+	}
+
+	if (Technique & RAW_FLAG_DO_ALPHA)
+		str += " AlphaTest";
+
+	return str;
 }

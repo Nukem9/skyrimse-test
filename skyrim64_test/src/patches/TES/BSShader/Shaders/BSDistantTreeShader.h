@@ -16,6 +16,14 @@ private:
 		RAW_FLAG_DO_ALPHA = 0x10000,
 	};
 
+	struct TexSlot
+	{
+		enum
+		{
+			Diffuse = 0,
+		};
+	};
+
 	const static uintptr_t OriginalVTableBase = 0x1881808;
 
 public:
@@ -25,7 +33,6 @@ public:
 
 	BSDistantTreeShader();
 	virtual ~BSDistantTreeShader();
-
 	virtual bool SetupTechnique(uint32_t Technique) override;						// Implemented
 	virtual void RestoreTechnique(uint32_t Technique) override;						// Nullsub
 	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;	// Implemented
@@ -40,5 +47,6 @@ public:
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 
 	static std::vector<std::pair<const char *, const char *>> GetSourceDefines(uint32_t Technique);
+	static std::string GetTechniqueString(uint32_t Technique);
 };
 static_assert(sizeof(BSDistantTreeShader) == 0x90);

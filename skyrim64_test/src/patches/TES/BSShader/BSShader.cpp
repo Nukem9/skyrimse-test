@@ -9,6 +9,7 @@
 #include "Shaders/BSGrassShader.h"
 #include "Shaders/BSSkyShader.h"
 #include "Shaders/BSLightingShader.h"
+#include "Shaders/BSParticleShader.h"
 
 std::unordered_map<uint32_t, BSGraphics::HullShader *> HullShaders;
 std::unordered_map<uint32_t, BSGraphics::DomainShader *> DomainShaders;
@@ -203,18 +204,8 @@ void BSShader::hk_Load(BSIStream *Stream)
 		BSSkyShader::pInstance->CreateAllShaders();
 	*/
 
-	if (strstr(m_LoaderType, "Lighting"))
-	{
-		for (auto itr = m_VertexShaderTable.begin(); itr != m_VertexShaderTable.end(); itr++)
-		{
-			// Apply to parallax shaders only
-			if (((itr->m_TechniqueID >> 24) & 0x3F) != 3)
-				continue;
-
-			CreateHullShader(itr->m_TechniqueID, "Lighting", BSShaderInfo::BSLightingShader::Defines::GetArray(itr->m_TechniqueID));
-			CreateDomainShader(itr->m_TechniqueID, "Lighting", BSShaderInfo::BSLightingShader::Defines::GetArray(itr->m_TechniqueID));
-		}
-	}
+	if (this == BSLightingShader::pInstance)
+		BSLightingShader::pInstance->CreateAllShaders();
 }
 
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
@@ -263,7 +254,7 @@ void BSShader::SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderP
 	BSGraphics::Renderer::GetGlobals()->SetAlphaTestRef(alphaRef * (1.0f / 255.0f));
 }
 
-std::vector<std::pair<const char *, const char *>> BSShader::GetSourceDefines(uint32_t Type, uint32_t Technique)
+std::vector<std::pair<const char *, const char *>> BSShader::GetAnySourceDefines(uint32_t Type, uint32_t Technique)
 {
 	switch (Type)
 	{
@@ -278,7 +269,7 @@ std::vector<std::pair<const char *, const char *>> BSShader::GetSourceDefines(ui
 	//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
 	//	break;
 	case BSShaderManager::BSSM_SHADER_LIGHTING:
-		return BSShaderInfo::BSLightingShader::Defines::GetArray(Technique);
+		return BSLightingShader::GetSourceDefines(Technique);
 	case BSShaderManager::BSSM_SHADER_EFFECT:
 		return BSShaderInfo::BSXShader::Defines::GetArray(Technique);
 	case BSShaderManager::BSSM_SHADER_UTILITY:
@@ -286,11 +277,49 @@ std::vector<std::pair<const char *, const char *>> BSShader::GetSourceDefines(ui
 	case BSShaderManager::BSSM_SHADER_DISTANTTREE:
 		return BSDistantTreeShader::GetSourceDefines(Technique);
 	case BSShaderManager::BSSM_SHADER_PARTICLE:
-		return BSShaderInfo::BSParticleShader::Defines::GetArray(Technique);
+		return BSParticleShader::GetSourceDefines(Technique);
 	}
 
 	// Return empty vector
-	return std::vector<std::pair<const char *, const char *>>();
+	return {};
+}
+
+std::string BSShader::GetAnyTechniqueName(uint32_t Type, uint32_t Technique)
+{
+	char temp[1024];
+
+	switch (Type)
+	{
+	case BSShaderManager::BSSM_SHADER_RUNGRASS:
+		return BSGrassShader::GetTechniqueString(Technique);
+	case BSShaderManager::BSSM_SHADER_SKY:
+		return BSSkyShader::GetTechniqueString(Technique);
+	case BSShaderManager::BSSM_SHADER_WATER:
+		BSShaderInfo::BSWaterShader::Techniques::GetString(Technique, temp, ARRAYSIZE(temp));
+		break;
+	case BSShaderManager::BSSM_SHADER_BLOODSPLATTER:
+		return BSBloodSplatterShader::GetTechniqueString(Technique);
+	//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
+	//	break;
+	case BSShaderManager::BSSM_SHADER_LIGHTING:
+		return BSLightingShader::GetTechniqueString(Technique);
+	case BSShaderManager::BSSM_SHADER_EFFECT:
+		BSShaderInfo::BSXShader::Techniques::GetString(Technique, temp, ARRAYSIZE(temp));
+		break;
+	case BSShaderManager::BSSM_SHADER_UTILITY:
+		BSShaderInfo::BSUtilityShader::Techniques::GetString(Technique, temp, ARRAYSIZE(temp));
+		break;
+	case BSShaderManager::BSSM_SHADER_DISTANTTREE:
+		return BSDistantTreeShader::GetTechniqueString(Technique);
+	case BSShaderManager::BSSM_SHADER_PARTICLE:
+		return BSParticleShader::GetTechniqueString(Technique);
+
+	default:
+		Assert(false);
+		break;
+	}
+
+	return temp;
 }
 
 const char *BSShader::GetVariableType(uint32_t Type, const char *Name)
@@ -329,26 +358,14 @@ const char *BSShader::GetVSConstantName(uint32_t Type, uint32_t Index)
 {
 	switch (Type)
 	{
-	case BSShaderManager::BSSM_SHADER_RUNGRASS:
-		break;
-	case BSShaderManager::BSSM_SHADER_SKY:
-		break;
 	case BSShaderManager::BSSM_SHADER_WATER:
 		return BSShaderInfo::BSWaterShader::VSConstants::GetString(Index);
-	case BSShaderManager::BSSM_SHADER_BLOODSPLATTER:
-		break;
 	//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
 	//	break;
-	case BSShaderManager::BSSM_SHADER_LIGHTING:
-		break;
 	case BSShaderManager::BSSM_SHADER_EFFECT:
 		return BSShaderInfo::BSXShader::VSConstants::GetString(Index);
 	case BSShaderManager::BSSM_SHADER_UTILITY:
 		return BSShaderInfo::BSUtilityShader::VSConstants::GetString(Index);
-	case BSShaderManager::BSSM_SHADER_DISTANTTREE:
-		break;
-	case BSShaderManager::BSSM_SHADER_PARTICLE:
-		return BSShaderInfo::BSParticleShader::VSConstants::GetString(Index);
 
 	default:
 		Assert(false);
@@ -365,26 +382,14 @@ const char *BSShader::GetPSConstantName(uint32_t Type, uint32_t Index)
 {
 	switch (Type)
 	{
-	case BSShaderManager::BSSM_SHADER_RUNGRASS:
-		break;
-	case BSShaderManager::BSSM_SHADER_SKY:
-		break;
 	case BSShaderManager::BSSM_SHADER_WATER:
 		return BSShaderInfo::BSWaterShader::PSConstants::GetString(Index);
-	case BSShaderManager::BSSM_SHADER_BLOODSPLATTER:
-		break;
-		//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
-		//	break;
-	case BSShaderManager::BSSM_SHADER_LIGHTING:
-		break;
+	//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
+	//	break;
 	case BSShaderManager::BSSM_SHADER_EFFECT:
 		return BSShaderInfo::BSXShader::PSConstants::GetString(Index);
 	case BSShaderManager::BSSM_SHADER_UTILITY:
 		return BSShaderInfo::BSUtilityShader::PSConstants::GetString(Index);
-	case BSShaderManager::BSSM_SHADER_DISTANTTREE:
-		break;
-	case BSShaderManager::BSSM_SHADER_PARTICLE:
-		return BSShaderInfo::BSParticleShader::PSConstants::GetString(Index);
 
 	default:
 		Assert(false);
@@ -401,26 +406,16 @@ const char *BSShader::GetPSSamplerName(uint32_t Type, uint32_t Index, uint32_t T
 {
 	switch (Type)
 	{
-	case BSShaderManager::BSSM_SHADER_RUNGRASS:
-		break;
-	case BSShaderManager::BSSM_SHADER_SKY:
-		break;
 	case BSShaderManager::BSSM_SHADER_WATER:
 		return BSShaderInfo::BSWaterShader::Samplers::GetString(Index);
-	case BSShaderManager::BSSM_SHADER_BLOODSPLATTER:
-		break;
-		//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
-		//	break;
+	//case BSShaderManager::BSSM_SHADER_IMAGESPACE:
+	//	break;
 	case BSShaderManager::BSSM_SHADER_LIGHTING:
 		return BSShaderInfo::BSLightingShader::Samplers::GetString(Index, TechniqueID);
 	case BSShaderManager::BSSM_SHADER_EFFECT:
 		return BSShaderInfo::BSXShader::Samplers::GetString(Index);
 	case BSShaderManager::BSSM_SHADER_UTILITY:
 		return BSShaderInfo::BSUtilityShader::Samplers::GetString(Index);
-	case BSShaderManager::BSSM_SHADER_DISTANTTREE:
-		break;
-	case BSShaderManager::BSSM_SHADER_PARTICLE:
-		return BSShaderInfo::BSParticleShader::Samplers::GetString(Index);
 
 	default:
 		Assert(false);

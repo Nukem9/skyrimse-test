@@ -38,7 +38,6 @@ protected:
 	const char *GetConstantName(int Index);
 	ShaderDescriptor::DeclType GetVariableCategory(int Index);
 	const char *GetVariableType(int Index);
-	void GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t Technique);
 };
 
 class VertexShaderDecoder : public ShaderDecoder

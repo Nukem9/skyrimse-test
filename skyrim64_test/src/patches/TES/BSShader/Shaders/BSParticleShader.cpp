@@ -3,9 +3,6 @@
 #include "../BSShaderUtil.h"
 #include "BSParticleShader.h"
 
-using namespace DirectX;
-using namespace BSGraphics;
-
 DEFINE_SHADER_DESCRIPTOR(
 	Particle,
 
@@ -47,6 +44,9 @@ DEFINE_SHADER_DESCRIPTOR(
 //
 // - SetupGeometry is unimplemented
 //
+using namespace DirectX;
+using namespace BSGraphics;
+
 AutoPtr(float, flt_141E357A0, 0x1E357A0);
 AutoPtr(uint32_t, dword_143051B3C, 0x3051B3C);
 AutoPtr(uint32_t, dword_143051B40, 0x3051B40);
@@ -56,8 +56,9 @@ AutoPtr(uint32_t, dword_141E33048, 0x1E33048);
 BSParticleShader::BSParticleShader() : BSShader(ShaderConfigParticle.Type)
 {
 	ShaderMetadata[BSShaderManager::BSSM_SHADER_PARTICLE] = &ShaderConfigParticle;
-	m_Type = BSShaderManager::BSSM_SHADER_PARTICLE;
+
 	pInstance = this;
+	m_Type = BSShaderManager::BSSM_SHADER_PARTICLE;
 }
 
 BSParticleShader::~BSParticleShader()
@@ -69,17 +70,15 @@ bool BSParticleShader::SetupTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSParticleShader::SetupTechnique, Technique);
 
+	auto renderer = Renderer::GetGlobals();
+
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
-	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
-	uint32_t pixelShaderTechnique = GetPixelTechnique(rawTechnique);
 
-	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
+	if (!BeginTechnique(GetVertexTechnique(rawTechnique), GetPixelTechnique(rawTechnique), false))
 		return false;
 
-	auto *renderer = Renderer::GetGlobals();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-
 	dword_1434BA458 = rawTechnique;
 
 	if (rawTechnique == RAW_TECHNIQUE_ENVCUBESNOW || rawTechnique == RAW_TECHNIQUE_ENVCUBERAIN)
@@ -129,7 +128,7 @@ void BSParticleShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSParticleShader::RestoreGeometry, Pass, RenderFlags);
 
-	auto *renderer = Renderer::GetGlobals();
+	auto renderer = Renderer::GetGlobals();
 	BSShaderProperty *property = Pass->m_ShaderProperty;
 
 	if (!property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_TEST))
@@ -164,31 +163,31 @@ void BSParticleShader::CreateAllShaders()
 
 void BSParticleShader::CreateVertexShader(uint32_t Technique)
 {
-	auto getDefines = BSShaderInfo::BSParticleShader::Defines::GetArray(Technique);
+	auto defines = GetSourceDefines(Technique);
 	auto getConstant = [](int i) { return ShaderConfigParticle.ByConstantIndexVS.count(i) ? ShaderConfigParticle.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, ShaderConfigParticle.Type, getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfigParticle.Type, defines, getConstant);
 }
 
 void BSParticleShader::CreatePixelShader(uint32_t Technique)
 {
-	auto getDefines = BSShaderInfo::BSParticleShader::Defines::GetArray(Technique);
+	auto defines = GetSourceDefines(Technique);
 	auto getSampler = [](int i) { return ShaderConfigParticle.BySamplerIndex.count(i) ? ShaderConfigParticle.BySamplerIndex.at(i)->Name : nullptr; };
 	auto getConstant = [](int i) { return ShaderConfigParticle.ByConstantIndexPS.count(i) ? ShaderConfigParticle.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, ShaderConfigParticle.Type, getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfigParticle.Type, defines, getSampler, getConstant);
 }
 
 uint32_t BSParticleShader::GetRawTechnique(uint32_t Technique)
 {
 	switch (Technique)
 	{
-	case BSSM_PARTICLE:return RAW_TECHNIQUE_PARTICLES;
-	case BSSM_PARTICLE_GRYCOLORALPHA:return RAW_TECHNIQUE_PARTICLES_GRYCOLORALPHA;
-	case BSSM_PARTICLE_GRYCOLOR:return RAW_TECHNIQUE_PARTICLES_GRYCOLOR;
-	case BSSM_PARTICLE_GRYALPHA:return RAW_TECHNIQUE_PARTICLES_GRYALPHA;
-	case BSSM_ENVCUBESNOWPARTICLE:return RAW_TECHNIQUE_ENVCUBESNOW;
-	case BSSM_ENVCUBERAINPARTICLE:return RAW_TECHNIQUE_ENVCUBERAIN;
+	case BSSM_PARTICLE: return RAW_TECHNIQUE_PARTICLES;
+	case BSSM_PARTICLE_GRYCOLORALPHA: return RAW_TECHNIQUE_PARTICLES_GRYCOLORALPHA;
+	case BSSM_PARTICLE_GRYCOLOR: return RAW_TECHNIQUE_PARTICLES_GRYCOLOR;
+	case BSSM_PARTICLE_GRYALPHA: return RAW_TECHNIQUE_PARTICLES_GRYALPHA;
+	case BSSM_ENVCUBESNOWPARTICLE: return RAW_TECHNIQUE_ENVCUBESNOW;
+	case BSSM_ENVCUBERAINPARTICLE: return RAW_TECHNIQUE_ENVCUBERAIN;
 	}
 
 	AssertMsg(false, "BSParticleShader: bad technique ID");
@@ -197,10 +196,14 @@ uint32_t BSParticleShader::GetRawTechnique(uint32_t Technique)
 
 uint32_t BSParticleShader::GetVertexTechnique(uint32_t RawTechnique)
 {
-	if (RawTechnique == RAW_TECHNIQUE_PARTICLES_GRYCOLOR ||
-		RawTechnique == RAW_TECHNIQUE_PARTICLES_GRYALPHA ||
-		RawTechnique == RAW_TECHNIQUE_PARTICLES_GRYCOLORALPHA)
-		return 0;
+	switch (RawTechnique)
+	{
+	case RAW_TECHNIQUE_PARTICLES:
+	case RAW_TECHNIQUE_PARTICLES_GRYCOLOR:
+	case RAW_TECHNIQUE_PARTICLES_GRYALPHA:
+	case RAW_TECHNIQUE_PARTICLES_GRYCOLORALPHA:
+		return RAW_TECHNIQUE_PARTICLES;
+	}
 
 	return RawTechnique;
 }
@@ -208,4 +211,39 @@ uint32_t BSParticleShader::GetVertexTechnique(uint32_t RawTechnique)
 uint32_t BSParticleShader::GetPixelTechnique(uint32_t RawTechnique)
 {
 	return RawTechnique;
+}
+
+std::vector<std::pair<const char *, const char *>> BSParticleShader::GetSourceDefines(uint32_t Technique)
+{
+	std::vector<std::pair<const char *, const char *>> defines;
+
+	switch (Technique)
+	{
+	case RAW_TECHNIQUE_PARTICLES: break;
+	case RAW_TECHNIQUE_PARTICLES_GRYCOLOR: defines.emplace_back("GRAYSCALE_TO_COLOR", ""); break;
+	case RAW_TECHNIQUE_PARTICLES_GRYALPHA: defines.emplace_back("GRAYSCALE_TO_ALPHA", ""); break;
+	case RAW_TECHNIQUE_PARTICLES_GRYCOLORALPHA: defines.emplace_back("GRAYSCALE_TO_COLOR", ""); defines.emplace_back("GRAYSCALE_TO_ALPHA", ""); break;
+	case RAW_TECHNIQUE_ENVCUBESNOW: defines.emplace_back("ENVCUBE", ""); defines.emplace_back("SNOW", ""); break;
+	case RAW_TECHNIQUE_ENVCUBERAIN: defines.emplace_back("ENVCUBE", ""); defines.emplace_back("RAIN", ""); break;
+	default: Assert(false); break;
+	}
+
+	return defines;
+}
+
+std::string BSParticleShader::GetTechniqueString(uint32_t Technique)
+{
+	switch (Technique)
+	{
+	case RAW_TECHNIQUE_PARTICLES: return "Particles"; break;
+	case RAW_TECHNIQUE_PARTICLES_GRYCOLOR: return "ParticlesGryColor"; break;
+	case RAW_TECHNIQUE_PARTICLES_GRYALPHA: return "ParticlesGryAlpha"; break;
+	case RAW_TECHNIQUE_PARTICLES_GRYCOLORALPHA: return "ParticlesGryColorAlpha"; break;
+	case RAW_TECHNIQUE_ENVCUBESNOW: return "EnvCubeSnow"; break;
+	case RAW_TECHNIQUE_ENVCUBERAIN: return "EnvCubeRain"; break;
+	default: break;
+	}
+
+	Assert(false);
+	return "";
 }

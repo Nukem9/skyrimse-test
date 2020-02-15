@@ -69,7 +69,7 @@ namespace BSGraphics
 
 		void AlphaBlendStateSetMode(uint32_t Mode);
 		void AlphaBlendStateSetUnknown1(uint32_t Value);
-		void AlphaBlendStateSetUnknown2(uint32_t Value);
+		void AlphaBlendStateSetWriteMode(uint32_t Value);
 		uint32_t AlphaBlendStateGetUnknown2() const;
 
 		void SetUseAlphaTestRef(bool UseStoredValue);

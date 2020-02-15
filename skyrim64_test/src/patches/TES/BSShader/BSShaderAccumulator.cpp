@@ -291,11 +291,11 @@ void BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth(BSShaderAc
 	// RenderSkyClouds
 	renderer->BeginEvent(L"RenderSkyClouds");
 	{
-		renderer->AlphaBlendStateSetUnknown2(11);
+		renderer->AlphaBlendStateSetWriteMode(11);
 
 		Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 13);
 
-		renderer->AlphaBlendStateSetUnknown2(1);
+		renderer->AlphaBlendStateSetWriteMode(1);
 	}
 	renderer->EndEvent();
 
@@ -304,20 +304,20 @@ void BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth(BSShaderAc
 
 	// NormalDecals?...CK doesn't have a specific name for this
 	{
-		renderer->AlphaBlendStateSetUnknown2(10);
+		renderer->AlphaBlendStateSetWriteMode(10);
 		((void(__fastcall *)(BSShaderAccumulator *, unsigned int))(g_ModuleBase + 0x12E27B0))(Accumulator, RenderFlags);
 	}
 
 	// BlendedDecals
 	renderer->BeginEvent(L"BlendedDecals");
 	{
-		renderer->AlphaBlendStateSetUnknown2(11);
+		renderer->AlphaBlendStateSetWriteMode(11);
 		((void(__fastcall *)(BSShaderAccumulator *, unsigned int))(g_ModuleBase + 0x12E2950))(Accumulator, RenderFlags);
 	}
 	renderer->EndEvent();
 
 	renderer->AlphaBlendStateSetMode(0);
-	renderer->AlphaBlendStateSetUnknown2(1);
+	renderer->AlphaBlendStateSetWriteMode(1);
 
 	AutoFunc(int(__fastcall *)(), sub_140D744B0, 0xD744E0);
 	AutoFunc(__int64(__fastcall *)(__int64 a1, unsigned int a2), sub_140D69E70, 0xD69EA0);

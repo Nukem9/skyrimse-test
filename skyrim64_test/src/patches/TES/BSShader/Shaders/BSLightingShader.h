@@ -69,13 +69,12 @@ public:
 
 	DECLARE_CONSTRUCTOR_HOOK(BSLightingShader);
 
-	BSLightingShader();
-	virtual ~BSLightingShader();
-
 	char _pad0[0x4];
 	uint32_t m_CurrentRawTechnique;
 	char _pad1[0x60];
 
+	BSLightingShader();
+	virtual ~BSLightingShader();
 	virtual bool SetupTechnique(uint32_t Technique) override;						// Implemented
 	virtual void RestoreTechnique(uint32_t Technique) override;						// Implemented
 	virtual void SetupMaterial(BSShaderMaterial const *Material) override;			// Implemented
@@ -83,9 +82,14 @@ public:
 	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;	// Implemented
 	virtual void RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;// Implemented
 
+	void CreateAllShaders();
+
 	static uint32_t GetRawTechnique(uint32_t Technique);
 	static uint32_t GetVertexTechnique(uint32_t RawTechnique);
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
+
+	static std::vector<std::pair<const char *, const char *>> GetSourceDefines(uint32_t Technique);
+	static std::string GetTechniqueString(uint32_t Technique);
 
 private:
 	static void TechUpdateHighDetailRangeConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG);

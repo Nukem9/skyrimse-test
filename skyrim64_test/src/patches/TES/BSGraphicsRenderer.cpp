@@ -207,16 +207,12 @@ namespace BSGraphics
 
 	void Renderer::BeginEvent(wchar_t *Marker) const
 	{
-#if SKYRIM64_USE_PROFILER
 		m_DeviceContext->BeginEventInt(Marker, 0);
-#endif
 	}
 
 	void Renderer::EndEvent() const
 	{
-#if SKYRIM64_USE_PROFILER
 		m_DeviceContext->EndEvent();
-#endif
 	}
 
 	void Renderer::DrawLineShape(LineShape *GraphicsLineShape, uint32_t StartIndex, uint32_t Count)
@@ -748,7 +744,7 @@ namespace BSGraphics
 		}
 	}
 
-	void Renderer::AlphaBlendStateSetUnknown2(uint32_t Value)
+	void Renderer::AlphaBlendStateSetWriteMode(uint32_t Value)
 	{
 		if (*(DWORD *)&__zz0[72] != Value)
 		{

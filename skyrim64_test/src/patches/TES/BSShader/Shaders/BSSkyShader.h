@@ -18,6 +18,16 @@ private:
 		RAW_TECHNIQUE_SKY = 8,
 	};
 
+	struct TexSlot
+	{
+		enum
+		{
+			Base = 0,
+			Blend = 1,
+			NoiseGrad = 2,
+		};
+	};
+
 	inline AutoPtr(NiColorA, NightBlendColor0, 0x3257D48);
 	inline AutoPtr(NiColorA, NightBlendColor1, 0x3257D58);
 	inline AutoPtr(NiColorA, NightBlendColor2, 0x3257D68);
@@ -46,5 +56,6 @@ public:
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 
 	static std::vector<std::pair<const char *, const char *>> GetSourceDefines(uint32_t Technique);
+	static std::string GetTechniqueString(uint32_t Technique);
 };
 static_assert(sizeof(BSSkyShader) == 0x90);

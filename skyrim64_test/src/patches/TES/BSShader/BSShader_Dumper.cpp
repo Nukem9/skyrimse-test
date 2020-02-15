@@ -96,19 +96,18 @@ void ShaderDecoder::DumpShader()
 	}
 
 	// Technique name string (delimited by underscores)
-	char technique[1024];
-	GetTechniqueName(technique, ARRAYSIZE(technique), GetTechnique());
+	std::string techName = BSShader::GetAnyTechniqueName(m_Type, GetTechnique());
 
 	for (int i = 0;; i++)
 	{
-		if (technique[i] == '\0')
+		if (techName[i] == '\0')
 			break;
 
-		if (technique[i] == ' ')
-			technique[i] = '_';
+		if (techName[i] == ' ')
+			techName[i] = '_';
 	}
 
-	DumpShaderSpecific(technique, geoIndexes, matIndexes, tecIndexes, undefinedIndexes);
+	DumpShaderSpecific(techName.c_str(), geoIndexes, matIndexes, tecIndexes, undefinedIndexes);
 }
 
 void ShaderDecoder::DumpCBuffer(FILE *File, BSGraphics::Buffer *Buffer, std::vector<ParamIndexPair> Params, int GroupIndex)
@@ -190,11 +189,14 @@ const char *ShaderDecoder::GetGroupName(int Index)
 {
 	switch (Index)
 	{
-	case 0:return "PerTechnique";
-	case 1:return "PerMaterial";
-	case 2:return "PerGeometry";
-	case 11:return "AlphaTestRefCB";
-	case 12:return "PerFrame";
+	case 0: return "PerTechnique";
+	case 1: return "PerMaterial";
+	case 2: return "PerGeometry";
+	case 8: return "InstanceDataCB";
+	case 9: return "PreviousBonesCB";
+	case 10: return "BonesCB";
+	case 11: return "AlphaTestRefCB";
+	case 12: return "PerFrame";
 	}
 
 	return nullptr;
@@ -204,19 +206,19 @@ const char *ShaderDecoder::GetGroupRegister(int Index)
 {
 	switch (Index)
 	{
-	case 0:return "b0";
-	case 1:return "b1";
-	case 2:return "b2";
-	case 3:return "b3";
-	case 4:return "b4";
-	case 5:return "b5";
-	case 6:return "b6";
-	case 7:return "b7";
-	case 8:return "b8";
-	case 9:return "b9";
-	case 10:return "b10";
-	case 11:return "b11";
-	case 12:return "b12";
+	case 0: return "b0";
+	case 1: return "b1";
+	case 2: return "b2";
+	case 3: return "b3";
+	case 4: return "b4";
+	case 5: return "b5";
+	case 6: return "b6";
+	case 7: return "b7";
+	case 8: return "b8";
+	case 9: return "b9";
+	case 10: return "b10";
+	case 11: return "b11";
+	case 12: return "b12";
 	}
 
 	return nullptr;
@@ -289,109 +291,6 @@ const char *ShaderDecoder::GetVariableType(int Index)
 	return nullptr;
 }
 
-void ShaderDecoder::GetTechniqueName(char *Buffer, size_t BufferSize, uint32_t Technique)
-{
-	switch (m_CodeType)
-	{
-	case BSSM_SHADER_TYPE::VERTEX:
-	case BSSM_SHADER_TYPE::PIXEL:
-		if (!_stricmp(m_LoaderType, "BloodSplatter"))
-			return BSShaderInfo::BSBloodSplatterShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(m_LoaderType, "DistantTree"))
-			return BSShaderInfo::BSDistantTreeShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(m_LoaderType, "RunGrass"))
-			return BSShaderInfo::BSGrassShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(m_LoaderType, "Particle"))
-			return BSShaderInfo::BSParticleShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(m_LoaderType, "Sky"))
-			return BSShaderInfo::BSSkyShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(m_LoaderType, "Effect"))
-			return BSShaderInfo::BSXShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(m_LoaderType, "Lighting"))
-			return BSShaderInfo::BSLightingShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(m_LoaderType, "Utility"))
-			return BSShaderInfo::BSUtilityShader::Techniques::GetString(Technique, Buffer, BufferSize);
-		else if (!_stricmp(m_LoaderType, "Water"))
-			return BSShaderInfo::BSWaterShader::Techniques::GetString(Technique, Buffer, BufferSize);
-
-		// TODO: ImageSpace
-		break;
-
-	case BSSM_SHADER_TYPE::COMPUTE:
-		Assert(false);
-		break;
-	}
-}
-
-/*
-void ValidateShaderParamTable()
-{
-	//
-	// Validate everything to check for typos:
-	//
-	// Invalid shader types
-	// Invalid group types
-	// Duplicate/invalid param indexes
-	// Duplicate/invalid param names
-	//
-	auto doValidation = [](const BSShaderMappings::Entry *Entries, size_t EntryCount, BSSM_SHADER_TYPE CodeType)
-	{
-		const char *lastType = "";
-		std::vector<std::string> paramNames;
-		std::vector<int> paramIndexes;
-
-		for (int i = 0; i < EntryCount; i++)
-		{
-			if (_stricmp(Entries[i].Type, lastType) != 0)
-			{
-				lastType = Entries[i].Type;
-				paramNames.clear();
-				paramIndexes.clear();
-			}
-
-			const BSSM_GROUP_TYPE group = Entries[i].Group;
-			const int index = Entries[i].Index;
-
-			// Group must be Geometry, Material, or Technique
-			if (group != BSSM_GROUP_TYPE::PER_GEO &&
-				group != BSSM_GROUP_TYPE::PER_MAT &&
-				group != BSSM_GROUP_TYPE::PER_TEC)
-				printf("VALIDATION FAILURE: Group type for [%s, param index %d] is %d\n", lastType, index, group);
-
-			// Check for dupe indexes
-			if (std::find(paramIndexes.begin(), paramIndexes.end(), index) != paramIndexes.end())
-			{
-				printf("VALIDATION FAILURE: Duplicate parameter index %d for %s\n", index, lastType);
-				continue;
-			}
-
-			paramIndexes.push_back(index);
-
-			// Check if index is valid
-			const char *constName = GetShaderConstantName(lastType, CodeType, index);
-
-			if (!constName || strstr(constName, "Add-your-"))
-			{
-				printf("VALIDATION FAILURE: Invalid parameter name for index %d in %s\n", index, lastType);
-				continue;
-			}
-
-			// Check for dupe names
-			if (std::find(paramNames.begin(), paramNames.end(), constName) != paramNames.end())
-			{
-				printf("VALIDATION FAILURE: Duplicate parameter name %s for %s\n", constName, lastType);
-				continue;
-			}
-
-			paramNames.push_back(constName);
-		}
-	};
-
-	doValidation(BSShaderMappings::Vertex, ARRAYSIZE(BSShaderMappings::Vertex), BSSM_SHADER_TYPE::VERTEX);
-	doValidation(BSShaderMappings::Pixel, ARRAYSIZE(BSShaderMappings::Pixel), BSSM_SHADER_TYPE::PIXEL);
-}
-*/
-
 //
 // VertexShaderDecoder
 //
@@ -428,7 +327,7 @@ void VertexShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<P
 		fprintf(file, "// Technique: %s\n\n", TechName);
 
 		// Defines
-		if (auto& defs = BSShader::GetSourceDefines(m_Type, m_Shader->m_TechniqueID); defs.size() > 0)
+		if (auto& defs = BSShader::GetAnySourceDefines(m_Type, m_Shader->m_TechniqueID); defs.size() > 0)
 		{
 			for (const auto& define : defs)
 				fprintf(file, "#define %s %s\n", define.first, define.second);
@@ -495,7 +394,7 @@ void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<Pa
 		fprintf(file, "// Technique: %s\n\n", TechName);
 
 		// Defines
-		if (auto& defs = BSShader::GetSourceDefines(m_Type, m_Shader->m_TechniqueID); defs.size() > 0)
+		if (auto& defs = BSShader::GetAnySourceDefines(m_Type, m_Shader->m_TechniqueID); defs.size() > 0)
 		{
 			for (auto& define : defs)
 				fprintf(file, "#define %s %s\n", define.first, define.second);

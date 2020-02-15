@@ -63,8 +63,9 @@ thread_local XMVECTOR TLS_FogNearColor;
 BSGrassShader::BSGrassShader() : BSShader(ShaderConfigRunGrass.Type)
 {
 	ShaderMetadata[BSShaderManager::BSSM_SHADER_RUNGRASS] = &ShaderConfigRunGrass;
-	m_Type = BSShaderManager::BSSM_SHADER_RUNGRASS;
+
 	pInstance = this;
+	m_Type = BSShaderManager::BSSM_SHADER_RUNGRASS;
 }
 
 BSGrassShader::~BSGrassShader()
@@ -74,31 +75,30 @@ BSGrassShader::~BSGrassShader()
 
 bool BSGrassShader::SetupTechnique(uint32_t Technique)
 {
+	auto renderer = BSGraphics::Renderer::GetGlobals();
+
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
-	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
-	uint32_t pixelShaderTechnique = GetPixelTechnique(rawTechnique);
 
-	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
+	if (!BeginTechnique(GetVertexTechnique(rawTechnique), GetPixelTechnique(rawTechnique), false))
 		return false;
 
 	// Fog params get stored in TLS, read in SetupGeometry()
 	UpdateFogParameters();
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
-	renderer->SetTextureFilterMode(0, 2);
+	renderer->SetTextureFilterMode(TexSlot::Base, 2);
 
 	if (rawTechnique != RAW_TECHNIQUE_RENDERDEPTH && byte_141E32E9D)
 	{
-		renderer->SetShaderResource(1, (ID3D11ShaderResourceView *)qword_14304F260);// ShadowMaskSampler
+		renderer->SetShaderResource(TexSlot::ShadowMask, (ID3D11ShaderResourceView *)qword_14304F260);
 
-		renderer->SetTextureAddressMode(1, 0);
-		renderer->SetTextureFilterMode(1, (iShadowMaskQuarter->uValue.i != 4) ? 1 : 0);
+		renderer->SetTextureAddressMode(TexSlot::ShadowMask, 0);
+		renderer->SetTextureFilterMode(TexSlot::ShadowMask, (iShadowMaskQuarter->uValue.i != 4) ? 1 : 0);
 	}
 	else
 	{
-		renderer->SetTexture(1, BSGraphics::gState.pDefaultTextureWhite->QRendererTexture());// ShadowMaskSampler
-		renderer->SetTextureMode(1, 0, 0);
+		renderer->SetTexture(TexSlot::ShadowMask, BSGraphics::gState.pDefaultTextureWhite->QRendererTexture());
+		renderer->SetTextureMode(TexSlot::ShadowMask, 0, 0);
 	}
 
 	return true;
@@ -113,8 +113,8 @@ void BSGrassShader::SetupMaterial(BSShaderMaterial const *Material)
 	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	NiSourceTexture *baseTexture = *(NiSourceTexture **)((uintptr_t)Material + 72);
 
-	renderer->SetTexture(0, baseTexture->QRendererTexture());// BaseSampler
-	renderer->SetTextureAddressMode(0, 0);
+	renderer->SetTexture(TexSlot::Base, baseTexture->QRendererTexture());
+	renderer->SetTextureAddressMode(TexSlot::Base, 0);
 }
 
 void BSGrassShader::RestoreMaterial(BSShaderMaterial const *Material)
@@ -126,7 +126,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	uintptr_t geometry = (uintptr_t)Pass->m_Geometry;
 	uintptr_t property = (uintptr_t)Pass->m_ShaderProperty;
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::GetGlobals();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto data = (VertexConstantData *)vertexCG.RawData();
 
@@ -248,7 +248,7 @@ void BSGrassShader::UpdateFogParameters()
 
 void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const NiTransform& GeoTransform)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::GetGlobals();
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(GeoTransform);
 
 	Data->WorldViewProj = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_ViewProjMat);
@@ -259,7 +259,7 @@ void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const Ni
 
 void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSShaderProperty *Property)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::GetGlobals();
 
 	BSTArray<float> *propertyInstanceData = (BSTArray<float> *)((uintptr_t)Property + 0x160);
 	uint32_t instanceDataCount = propertyInstanceData->QSize();
@@ -298,19 +298,19 @@ void BSGrassShader::CreateAllShaders()
 
 void BSGrassShader::CreateVertexShader(uint32_t Technique)
 {
-	auto getDefines = BSShaderInfo::BSGrassShader::Defines::GetArray(Technique);
+	auto defines = GetSourceDefines(Technique);
 	auto getConstant = [](int i) { return ShaderConfigRunGrass.ByConstantIndexVS.count(i) ? ShaderConfigRunGrass.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, ShaderConfigRunGrass.Type, getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfigRunGrass.Type, defines, getConstant);
 }
 
 void BSGrassShader::CreatePixelShader(uint32_t Technique)
 {
-	auto getDefines = BSShaderInfo::BSGrassShader::Defines::GetArray(Technique);
+	auto defines = GetSourceDefines(Technique);
 	auto getSampler = [](int i) { return ShaderConfigRunGrass.BySamplerIndex.count(i) ? ShaderConfigRunGrass.BySamplerIndex.at(i)->Name : nullptr; };
 	auto getConstant = [](int i) { return ShaderConfigRunGrass.ByConstantIndexPS.count(i) ? ShaderConfigRunGrass.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, ShaderConfigRunGrass.Type, getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfigRunGrass.Type, defines, getSampler, getConstant);
 }
 
 uint32_t BSGrassShader::GetRawTechnique(uint32_t Technique)
@@ -371,6 +371,48 @@ uint32_t BSGrassShader::GetPixelTechnique(uint32_t RawTechnique)
 
 std::vector<std::pair<const char *, const char *>> BSGrassShader::GetSourceDefines(uint32_t Technique)
 {
-	// FIXME
-	return BSShaderInfo::BSGrassShader::Defines::GetArray(Technique);
+	std::vector<std::pair<const char *, const char *>> defines;
+
+	switch (Technique & ~RAW_FLAG_DO_ALPHA)
+	{
+	case RAW_TECHNIQUE_VERTEXL: defines.emplace_back("VERTLIT", ""); break;
+	case RAW_TECHNIQUE_FLATL: break;
+	case RAW_TECHNIQUE_FLATL_SLOPE: defines.emplace_back("SLOPE", ""); break;
+	case RAW_TECHNIQUE_VERTEXL_SLOPE: defines.emplace_back("VERTLIT", ""); defines.emplace_back("SLOPE", ""); break;
+	case RAW_TECHNIQUE_VERTEXL_BILLBOARD: defines.emplace_back("VERTLIT", ""); defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); break;
+	case RAW_TECHNIQUE_FLATL_BILLBOARD: defines.emplace_back("BILLBOARD", ""); break;
+	case RAW_TECHNIQUE_FLATL_SLOPE_BILLBOARD: defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); break;
+	case RAW_TECHNIQUE_VERTEXL_SLOPE_BILLBOARD: defines.emplace_back("VERTLIT", ""); defines.emplace_back("SLOPE", ""); defines.emplace_back("BILLBOARD", ""); defines.emplace_back("RENDER_DEPTH", ""); break;
+	case RAW_TECHNIQUE_RENDERDEPTH: defines.emplace_back("RENDER_DEPTH", ""); break;
+	default: Assert(false); break;
+	}
+
+	if (Technique & RAW_FLAG_DO_ALPHA)
+		defines.emplace_back("DO_ALPHA_TEST", "");
+
+	return defines;
+}
+
+std::string BSGrassShader::GetTechniqueString(uint32_t Technique)
+{
+	std::string str;
+
+	switch (Technique & ~RAW_FLAG_DO_ALPHA)
+	{
+	case RAW_TECHNIQUE_VERTEXL: str = "VertexL"; break;
+	case RAW_TECHNIQUE_FLATL: str = "FlatL"; break;
+	case RAW_TECHNIQUE_FLATL_SLOPE: str = "FlatL_Slope"; break;
+	case RAW_TECHNIQUE_VERTEXL_SLOPE: str = "VertexL_Slope"; break;
+	case RAW_TECHNIQUE_VERTEXL_BILLBOARD: str = "VertexL_Billboard"; break;
+	case RAW_TECHNIQUE_FLATL_BILLBOARD: str = "FlatL_Billboard"; break;
+	case RAW_TECHNIQUE_FLATL_SLOPE_BILLBOARD: str = "FlatL_Slope_Billboard"; break;
+	case RAW_TECHNIQUE_VERTEXL_SLOPE_BILLBOARD: str = "VertexL_Slope_Billboard"; break;
+	case RAW_TECHNIQUE_RENDERDEPTH: str = "RenderDepth"; break;
+	default: Assert(false); break;
+	}
+
+	if (Technique & RAW_FLAG_DO_ALPHA)
+		str += " AlphaTest";
+
+	return str;
 }

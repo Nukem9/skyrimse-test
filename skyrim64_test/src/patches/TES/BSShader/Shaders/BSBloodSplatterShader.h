@@ -11,8 +11,19 @@ private:
 		RAW_TECHNIQUE_FLARE = 1,
 	};
 
+	struct TexSlot
+	{
+		enum
+		{
+			BloodColor = 0,
+			BloodAlpha = 1,
+			FlareColor = 2,
+			FlareHDR = 3,
+		};
+	};
+
 	// Is either 0 or 1 [enum], set in SetupTechnique(), used in SetupGeometry()
-	uint32_t m_CurrentRawTechnique;
+	uint32_t m_CurrentTechniqueID;
 
 	inline AutoPtr(NiColorA, LightLoc, 0x32573D0);
 	inline AutoPtr(int, iAdaptedLightRenderTarget, 0x32573C8);
@@ -30,7 +41,6 @@ public:
 
 	BSBloodSplatterShader();
 	virtual ~BSBloodSplatterShader();
-
 	virtual bool SetupTechnique(uint32_t Technique) override;						// Implemented
 	virtual void RestoreTechnique(uint32_t Technique) override;						// Implemented
 	virtual void SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags) override;	// Implemented
@@ -45,8 +55,7 @@ public:
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 
 	static std::vector<std::pair<const char *, const char *>> GetSourceDefines(uint32_t Technique);
-
-	// float QGlobalAlpha(); fGlobalAlpha
+	static std::string GetTechniqueString(uint32_t Technique);
 };
 static_assert(sizeof(BSBloodSplatterShader) == 0x98);
-//static_assert_offset(BSBloodSplatterShader, m_CurrentRawTechnique, 0x90);
+//static_assert_offset(BSBloodSplatterShader, m_CurrentTechniqueID, 0x90);

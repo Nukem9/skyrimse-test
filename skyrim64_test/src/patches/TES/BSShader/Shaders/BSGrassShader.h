@@ -23,6 +23,15 @@ private:
 		RAW_FLAG_DO_ALPHA = 0x10000,
 	};
 
+	struct TexSlot
+	{
+		enum
+		{
+			Base = 0,
+			ShadowMask = 1,
+		};
+	};
+
 #pragma pack(push, 16)
 	struct VertexConstantData
 	{
@@ -54,7 +63,6 @@ public:
 
 	BSGrassShader();
 	virtual ~BSGrassShader();
-
 	virtual bool SetupTechnique(uint32_t Technique) override;						// Implemented
 	virtual void RestoreTechnique(uint32_t Technique) override;						// Nullsub
 	virtual void SetupMaterial(BSShaderMaterial const *Material) override;			// Implemented
@@ -75,5 +83,6 @@ public:
 	static uint32_t GetPixelTechnique(uint32_t RawTechnique);
 
 	static std::vector<std::pair<const char *, const char *>> GetSourceDefines(uint32_t Technique);
+	static std::string GetTechniqueString(uint32_t Technique);
 };
 static_assert(sizeof(BSGrassShader) == 0x90);

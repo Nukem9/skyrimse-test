@@ -270,7 +270,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		colourOutputClamp.f[3] = 0.0f;
 	}
 
-	bool shadowed = (rawTechnique & RAW_FLAG_SHADOW_DIR) || (rawTechnique & (RAW_FLAG_UNKNOWN6 | RAW_FLAG_UNKNOWN5 | RAW_FLAG_UNKNOWN4));
+	bool shadowed = (rawTechnique & RAW_FLAG_SHADOW_DIR) || (rawTechnique & (RAW_FLAG_LIGHTCOUNT6 | RAW_FLAG_LIGHTCOUNT5 | RAW_FLAG_LIGHTCOUNT4));
 	bool defShadow = (rawTechnique & RAW_FLAG_DEFSHADOW);
 
 	// NOTE: A use-after-free has been eliminated. Constants are flushed AFTER this code block now.
@@ -753,7 +753,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	if (v12 == 3 && property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE))
 	{
 		TLS_dword_141E3527C = renderer->AlphaBlendStateGetUnknown2();
-		renderer->AlphaBlendStateSetUnknown2(1);
+		renderer->AlphaBlendStateSetWriteMode(1);
 	}
 
 	switch (baseTechniqueID)
@@ -1020,7 +1020,7 @@ void BSLightingShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	if (TLS_dword_141E3527C != 13)
 	{
-		renderer->AlphaBlendStateSetUnknown2(TLS_dword_141E3527C);
+		renderer->AlphaBlendStateSetWriteMode(TLS_dword_141E3527C);
 		TLS_dword_141E3527C = 13;
 	}
 }
@@ -1071,6 +1071,129 @@ uint32_t BSLightingShader::GetPixelTechnique(uint32_t RawTechnique)
 		flags &= ~RAW_FLAG_SKINNED;
 
 	return flags | RAW_FLAG_VC;
+}
+
+std::vector<std::pair<const char*, const char*>> BSLightingShader::GetSourceDefines(uint32_t Technique)
+{
+	std::vector<std::pair<const char *, const char *>> defines;
+	uint32_t subType = (Technique >> 24) & 0x3F;
+
+	if (Technique & RAW_FLAG_VC) defines.emplace_back("VC", "");
+	if (Technique & RAW_FLAG_SKINNED) defines.emplace_back("SKINNED", "");
+	if (Technique & RAW_FLAG_MODELSPACENORMALS) defines.emplace_back("MODELSPACENORMALS", "");
+	if (Technique & RAW_FLAG_SPECULAR) defines.emplace_back("SPECULAR", "");
+	if (Technique & RAW_FLAG_SOFT_LIGHTING) defines.emplace_back("SOFT_LIGHTING", "");
+	if (Technique & RAW_FLAG_SHADOW_DIR) defines.emplace_back("SHADOW_DIR", "");
+	if (Technique & RAW_FLAG_DEFSHADOW) defines.emplace_back("DEFSHADOW", "");
+	if (Technique & RAW_FLAG_RIM_LIGHTING) defines.emplace_back("RIM_LIGHTING", "");
+	if (Technique & RAW_FLAG_BACK_LIGHTING) defines.emplace_back("BACK_LIGHTING", "");
+	if ((Technique & RAW_FLAG_PROJECTED_UV) && subType != RAW_TECHNIQUE_HAIR) defines.emplace_back("PROJECTED_UV", "");
+	if (Technique & RAW_FLAG_ANISO_LIGHTING) defines.emplace_back("ANISO_LIGHTING", "");
+	if (Technique & RAW_FLAG_AMBIENT_SPECULAR) defines.emplace_back("AMBIENT_SPECULAR", "");
+	if (Technique & RAW_FLAG_WORLD_MAP) defines.emplace_back("WORLD_MAP", "");
+	if (Technique & RAW_FLAG_DO_ALPHA_TEST) defines.emplace_back("DO_ALPHA_TEST", "");
+	if (Technique & RAW_FLAG_SNOW) defines.emplace_back("SNOW", "");
+	if (Technique & RAW_FLAG_BASE_OBJECT_IS_SNOW) defines.emplace_back("BASE_OBJECT_IS_SNOW", "");
+	if (Technique & RAW_FLAG_CHARACTER_LIGHT) defines.emplace_back("CHARACTER_LIGHT", "");
+	if ((Technique & RAW_FLAG_PROJECTED_UV) && subType == RAW_TECHNIQUE_HAIR) defines.emplace_back("DEPTH_WRITE_DECALS", "");
+	if (Technique & RAW_FLAG_ADDITIONAL_ALPHA_MASK) defines.emplace_back("ADDITIONAL_ALPHA_MASK", "");
+
+	switch (subType)
+	{
+	case RAW_TECHNIQUE_NONE: /* Nothing */ break;
+	case RAW_TECHNIQUE_ENVMAP: defines.emplace_back("ENVMAP", ""); break;
+	case RAW_TECHNIQUE_GLOWMAP: defines.emplace_back("GLOWMAP", ""); break;
+	case RAW_TECHNIQUE_PARALLAX: defines.emplace_back("PARALLAX", ""); break;
+	case RAW_TECHNIQUE_FACEGEN: defines.emplace_back("FACEGEN", ""); break;
+	case RAW_TECHNIQUE_FACEGENRGBTINT: defines.emplace_back("FACEGEN_RGB_TINT", ""); break;
+	case RAW_TECHNIQUE_HAIR: defines.emplace_back("HAIR", ""); break;
+	case RAW_TECHNIQUE_PARALLAXOCC: defines.emplace_back("PARALLAX_OCC", ""); break;
+	case RAW_TECHNIQUE_MTLAND: defines.emplace_back("MULTI_TEXTURE", ""); defines.emplace_back("LANDSCAPE", ""); break;
+	case RAW_TECHNIQUE_LODLAND: defines.emplace_back("LODLANDSCAPE", ""); break;
+	case RAW_TECHNIQUE_SNOW: /* Nothing */ break;
+	case RAW_TECHNIQUE_MULTILAYERPARALLAX: defines.emplace_back("MULTI_LAYER_PARALLAX", ""); defines.emplace_back("ENVMAP", ""); break;
+	case RAW_TECHNIQUE_TREE: defines.emplace_back("TREE_ANIM", ""); break;
+	case RAW_TECHNIQUE_LODOBJ: defines.emplace_back("LODOBJECTS", ""); break;
+	case RAW_TECHNIQUE_MULTIINDEXTRISHAPESNOW: defines.emplace_back("MULTI_INDEX", ""); defines.emplace_back("SPARKLE", ""); break;
+	case RAW_TECHNIQUE_LODOBJHD: defines.emplace_back("LODOBJECTSHD", ""); break;
+	case RAW_TECHNIQUE_EYE: defines.emplace_back("EYE", ""); break;
+	case RAW_TECHNIQUE_CLOUD: defines.emplace_back("CLOUD", ""); defines.emplace_back("INSTANCED", ""); break;
+	case RAW_TECHNIQUE_LODLANDNOISE: defines.emplace_back("LODLANDSCAPE", ""); defines.emplace_back("LODLANDNOISE", ""); break;
+	case RAW_TECHNIQUE_MTLANDLODBLEND: defines.emplace_back("MULTI_TEXTURE", ""); defines.emplace_back("LANDSCAPE", ""); defines.emplace_back("LOD_LAND_BLEND", ""); break;
+	default: Assert(false); break;
+	}
+
+	return defines;
+}
+
+std::string BSLightingShader::GetTechniqueString(uint32_t Technique)
+{
+	char buffer[1024];
+	sprintf_s(buffer, "%dSh%d ", (Technique >> 3) & 7, (Technique >> 6) & 7);
+	uint32_t subType = (Technique >> 24) & 0x3F;
+
+	if (Technique & RAW_FLAG_VC)
+		strcat_s(buffer, "Vc ");
+	if (Technique & RAW_FLAG_SKINNED)
+		strcat_s(buffer, "Sk ");
+	if (Technique & RAW_FLAG_MODELSPACENORMALS)
+		strcat_s(buffer, "Msn ");
+	if (Technique & RAW_FLAG_SPECULAR)
+		strcat_s(buffer, "Spc ");
+	if (Technique & RAW_FLAG_SOFT_LIGHTING)
+		strcat_s(buffer, "Sss ");
+	if (Technique & RAW_FLAG_SHADOW_DIR)
+		strcat_s(buffer, "Shd ");
+	if (Technique & RAW_FLAG_DEFSHADOW)
+		strcat_s(buffer, "DfSh ");
+	if (Technique & RAW_FLAG_RIM_LIGHTING)
+		strcat_s(buffer, "Rim ");
+	if (Technique & RAW_FLAG_BACK_LIGHTING)
+		strcat_s(buffer, "Bk ");
+	if ((Technique & RAW_FLAG_PROJECTED_UV) && subType != RAW_TECHNIQUE_HAIR)
+		strcat_s(buffer, "Projuv ");
+	if (Technique & RAW_FLAG_AMBIENT_SPECULAR)
+		strcat_s(buffer, "Aspc ");
+	if (Technique & RAW_FLAG_WORLD_MAP)
+		strcat_s(buffer, "Wmap ");
+	if (Technique & RAW_FLAG_DO_ALPHA_TEST)
+		strcat_s(buffer, "Atest ");
+	if (Technique & RAW_FLAG_SNOW)
+		strcat_s(buffer, "Snow ");
+	if (Technique & RAW_FLAG_BASE_OBJECT_IS_SNOW)
+		strcat_s(buffer, "BaseSnow ");
+	if ((Technique & RAW_FLAG_PROJECTED_UV) && subType == RAW_TECHNIQUE_HAIR)
+		strcat_s(buffer, "DwDecals ");
+	if (Technique & RAW_FLAG_ADDITIONAL_ALPHA_MASK)
+		strcat_s(buffer, "Aam ");
+
+	switch (subType)
+	{
+	case RAW_TECHNIQUE_NONE: strcat_s(buffer, "None"); break;
+	case RAW_TECHNIQUE_ENVMAP: strcat_s(buffer, "Envmap"); break;
+	case RAW_TECHNIQUE_GLOWMAP: strcat_s(buffer, "Glowmap"); break;
+	case RAW_TECHNIQUE_PARALLAX: strcat_s(buffer, "Parallax"); break;
+	case RAW_TECHNIQUE_FACEGEN: strcat_s(buffer, "Facegen"); break;
+	case RAW_TECHNIQUE_FACEGENRGBTINT: strcat_s(buffer, "FacegenRGBTint"); break;
+	case RAW_TECHNIQUE_HAIR: strcat_s(buffer, "Hair"); break;
+	case RAW_TECHNIQUE_PARALLAXOCC: strcat_s(buffer, "ParallaxOcc"); break;
+	case RAW_TECHNIQUE_MTLAND: strcat_s(buffer, "MTLand"); break;
+	case RAW_TECHNIQUE_LODLAND: strcat_s(buffer, "LODLand"); break;
+	case RAW_TECHNIQUE_SNOW: /* No subtype defined in their code */ break;
+	case RAW_TECHNIQUE_MULTILAYERPARALLAX: strcat_s(buffer, "MultiLayerParallax"); break;
+	case RAW_TECHNIQUE_TREE: strcat_s(buffer, "Tree"); break;
+	case RAW_TECHNIQUE_LODOBJ: strcat_s(buffer, "LODObj"); break;
+	case RAW_TECHNIQUE_MULTIINDEXTRISHAPESNOW: strcat_s(buffer, "MultiIndexTriShapeSnow"); break;
+	case RAW_TECHNIQUE_LODOBJHD: strcat_s(buffer, "LODObjHD"); break;
+	case RAW_TECHNIQUE_EYE: strcat_s(buffer, "Eye"); break;
+	case RAW_TECHNIQUE_CLOUD: /* No subtype defined in their code */ break;
+	case RAW_TECHNIQUE_LODLANDNOISE: strcat_s(buffer, "LODLandNoise"); break;
+	case RAW_TECHNIQUE_MTLANDLODBLEND: strcat_s(buffer, "MTLandLODBlend"); break;
+	default: Assert(false); break;
+	}
+
+	XUtil::Trim(buffer, ' ');
+	return buffer;
 }
 
 void BSLightingShader::TechUpdateHighDetailRangeConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG)

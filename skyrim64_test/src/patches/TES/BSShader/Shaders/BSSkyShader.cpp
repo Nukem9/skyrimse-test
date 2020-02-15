@@ -48,8 +48,9 @@ AutoPtr(float, qword_143257D80, 0x3257D80);
 BSSkyShader::BSSkyShader() : BSShader(ShaderConfigSky.Type)
 {
 	ShaderMetadata[BSShaderManager::BSSM_SHADER_SKY] = &ShaderConfigSky;
-	m_Type = BSShaderManager::BSSM_SHADER_SKY;
+
 	pInstance = this;
+	m_Type = BSShaderManager::BSSM_SHADER_SKY;
 
 	NightBlendColor0 = NiColorA::BLACK;
 	NightBlendColor1 = NiColorA::BLACK;
@@ -63,15 +64,14 @@ BSSkyShader::~BSSkyShader()
 
 bool BSSkyShader::SetupTechnique(uint32_t Technique)
 {
+	auto renderer = BSGraphics::Renderer::GetGlobals();
+
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
-	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
-	uint32_t pixelShaderTechnique = GetPixelTechnique(rawTechnique);
 
-	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
+	if (!BeginTechnique(GetVertexTechnique(rawTechnique), GetPixelTechnique(rawTechnique), false))
 		return false;
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
 	renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST);
 
 	GAME_TLS(uint32_t, 0x9F0) = rawTechnique;
@@ -79,18 +79,18 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 	switch (rawTechnique)
 	{
 	case RAW_TECHNIQUE_SUNOCCLUDE:
-		renderer->AlphaBlendStateSetUnknown2(0);
+		renderer->AlphaBlendStateSetWriteMode(0);
 		break;
 
 	case RAW_TECHNIQUE_SUNGLARE:
 		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DISABLED);
 		renderer->AlphaBlendStateSetMode(2);
-		renderer->AlphaBlendStateSetUnknown2(11);
+		renderer->AlphaBlendStateSetWriteMode(11);
 		break;
 
 	case RAW_TECHNIQUE_MOONANDSTARSMASK:
 		renderer->SetUseAlphaTestRef(true);
-		renderer->AlphaBlendStateSetUnknown2(0);
+		renderer->AlphaBlendStateSetWriteMode(0);
 		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
 		renderer->RasterStateSetUnknown1(3);
 		break;
@@ -112,16 +112,17 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 		break;
 	}
 
-	renderer->SetTexture(2, BSGraphics::gState.pDefaultTextureDitherNoiseMap->QRendererTexture());// NoiseGradSampler
-	renderer->SetTextureMode(2, 3, 0);
+	renderer->SetTexture(TexSlot::NoiseGrad, BSGraphics::gState.pDefaultTextureDitherNoiseMap->QRendererTexture());
+	renderer->SetTextureMode(TexSlot::NoiseGrad, 3, 0);
 	return true;
 }
 
 void BSSkyShader::RestoreTechnique(uint32_t Technique)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::GetGlobals();
+
 	renderer->AlphaBlendStateSetMode(0);
-	renderer->AlphaBlendStateSetUnknown2(1);
+	renderer->AlphaBlendStateSetWriteMode(1);
 	renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DEFAULT);
 	renderer->SetUseAlphaTestRef(false);
 	renderer->RasterStateSetUnknown1(0);
@@ -130,7 +131,7 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 
 void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::GetGlobals();
 	auto property = static_cast<const BSSkyShaderProperty *>(Pass->m_ShaderProperty);
 
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
@@ -183,9 +184,9 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		XMFLOAT2& pparams = pixelCG.ParamPS<XMFLOAT2, 0>();
 
-		if (property->uiSkyObjectType == 3)
+		if (property->uiSkyObjectType == BSSkyShaderProperty::SO_CLOUDS)
 		{
-			if (rawTechnique == RAW_TECHNIQUE_CLOUDSFADE && !property->bUnknown)
+			if (rawTechnique == RAW_TECHNIQUE_CLOUDSFADE && !property->bFadeSecondTexture)
 				pparams.x = 1.0f - property->fBlendValue;
 			else
 				pparams.x = property->fBlendValue;
@@ -193,9 +194,9 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			pparams.y = dword_141E32FBC * *(float *)(qword_1431F5810 + 228);
 
 			// VS: p5 float2 TexCoordOff
-			vertexCG.ParamVS<XMFLOAT2, 5>() = *((XMFLOAT2 *)&qword_143257D80 + property->usUnknown);
+			vertexCG.ParamVS<XMFLOAT2, 5>() = *((XMFLOAT2 *)&qword_143257D80 + property->usCloudLayer);
 		}
-		else if (property->uiSkyObjectType != 6 && property->uiSkyObjectType != 1)
+		else if (property->uiSkyObjectType != BSSkyShaderProperty::SO_MOON && property->uiSkyObjectType != BSSkyShaderProperty::SO_SUN_GLARE)
 		{
 			pparams.y = dword_141E32FBC * *(float *)(qword_1431F5810 + 228);
 		}
@@ -217,18 +218,18 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 	switch (property->uiSkyObjectType)
 	{
-	case 0:
-	case 1:
-	case 3:
-	case 5:
-	case 6:
-	case 7:
+	case BSSkyShaderProperty::SO_SUN:
+	case BSSkyShaderProperty::SO_SUN_GLARE:
+	case BSSkyShaderProperty::SO_CLOUDS:
+	case BSSkyShaderProperty::SO_STARS:
+	case BSSkyShaderProperty::SO_MOON:
+	case BSSkyShaderProperty::SO_MOON_SHADOW:
 		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[0], property->kBlendColor);
 		//blendColor[1] = _mm_loadzero_ps(); -- Already zeroed
 		//blendColor[2] = _mm_loadzero_ps(); -- Already zeroed
 		break;
 
-	case 2:
+	case BSSkyShaderProperty::SO_ATMOSPHERE:
 		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[0], NightBlendColor0);
 		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[1], NightBlendColor1);
 		BSGraphics::Utility::CopyNiColorAToFloat(&blendColor[2], NightBlendColor2);
@@ -254,8 +255,8 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		if (!baseSamplerTex)
 			baseSamplerTex = BSGraphics::gState.pDefaultHeightMap;
 
-		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
-		renderer->SetTextureMode(0, 3, 1);
+		renderer->SetTexture(TexSlot::Base, baseSamplerTex->QRendererTexture());
+		renderer->SetTextureMode(TexSlot::Base, 3, 1);
 	}
 	break;
 
@@ -270,23 +271,21 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		if (!baseSamplerTex)
 			baseSamplerTex = BSGraphics::gState.pDefaultTextureNormalMap;
 
-		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
-		renderer->SetTextureMode(0, 3, 1);
+		renderer->SetTexture(TexSlot::Base, baseSamplerTex->QRendererTexture());
+		renderer->SetTextureMode(TexSlot::Base, 3, 1);
 
 		if (rawTechnique == RAW_TECHNIQUE_CLOUDSLERP)
 		{
 			NiSourceTexture *blendSamplerTex = property->pBlendTexture;
 
 			if (!blendSamplerTex)
-			{
 				blendSamplerTex = property->pBaseTexture;
 
-				if (!blendSamplerTex)
-					break;
+			if (blendSamplerTex)
+			{
+				renderer->SetTexture(TexSlot::Blend, blendSamplerTex->QRendererTexture());
+				renderer->SetTextureMode(TexSlot::Blend, 3, 1);
 			}
-
-			renderer->SetTexture(1, blendSamplerTex->QRendererTexture());// BlendSampler
-			renderer->SetTextureMode(1, 3, 1);
 		}
 	}
 	break;
@@ -295,27 +294,27 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		NiSourceTexture *baseSamplerTex = property->pBaseTexture;
 
-		if (property->bUnknown)
+		if (property->bFadeSecondTexture)
 			baseSamplerTex = property->pBlendTexture;
 
 		if (!baseSamplerTex)
 			baseSamplerTex = BSGraphics::gState.pDefaultTextureNormalMap;
 
-		renderer->SetTexture(0, baseSamplerTex->QRendererTexture());// BaseSampler
-		renderer->SetTextureMode(0, 3, 1);
+		renderer->SetTexture(TexSlot::Base, baseSamplerTex->QRendererTexture());
+		renderer->SetTextureMode(TexSlot::Base, 3, 1);
 	}
 	break;
 	}
 
-	if (property->uiSkyObjectType == 0 || property->uiSkyObjectType == 6)
+	if (property->uiSkyObjectType == BSSkyShaderProperty::SO_SUN || property->uiSkyObjectType == BSSkyShaderProperty::SO_MOON)
 		renderer->AlphaBlendStateSetMode(2);
 }
 
 void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	uint32_t skyObjectType = static_cast<const BSSkyShaderProperty *>(Pass->m_ShaderProperty)->uiSkyObjectType;
+	auto skyObjectType = static_cast<const BSSkyShaderProperty *>(Pass->m_ShaderProperty)->uiSkyObjectType;
 
-	if (skyObjectType == 0 || skyObjectType == 6)
+	if (skyObjectType == BSSkyShaderProperty::SO_SUN || skyObjectType == BSSkyShaderProperty::SO_MOON)
 		BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetMode(1);
 }
 
@@ -333,37 +332,37 @@ void BSSkyShader::CreateAllShaders()
 
 void BSSkyShader::CreateVertexShader(uint32_t Technique)
 {
-	auto getDefines = BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
+	auto defines = GetSourceDefines(Technique);
 	auto getConstant = [](int i) { return ShaderConfigSky.ByConstantIndexVS.count(i) ? ShaderConfigSky.ByConstantIndexVS.at(i)->Name : nullptr; };
 
-	BSShader::CreateVertexShader(Technique, ShaderConfigSky.Type, getDefines, getConstant);
+	BSShader::CreateVertexShader(Technique, ShaderConfigSky.Type, defines, getConstant);
 }
 
 void BSSkyShader::CreatePixelShader(uint32_t Technique)
 {
-	auto getDefines = BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
+	auto defines = GetSourceDefines(Technique);
 	auto getSampler = [](int i) { return ShaderConfigSky.BySamplerIndex.count(i) ? ShaderConfigSky.BySamplerIndex.at(i)->Name : nullptr; };
 	auto getConstant = [](int i) { return ShaderConfigSky.ByConstantIndexPS.count(i) ? ShaderConfigSky.ByConstantIndexPS.at(i)->Name : nullptr; };
 
-	BSShader::CreatePixelShader(Technique, ShaderConfigSky.Type, getDefines, getSampler, getConstant);
+	BSShader::CreatePixelShader(Technique, ShaderConfigSky.Type, defines, getSampler, getConstant);
 }
 
 uint32_t BSSkyShader::GetRawTechnique(uint32_t Technique)
 {
 	switch (Technique)
 	{
-	case BSSM_SKYBASEPRE:return RAW_TECHNIQUE_SUNOCCLUDE;
-	case BSSM_SKY:return RAW_TECHNIQUE_SKY;
-	case BSSM_SKY_MOON_STARS_MASK:return RAW_TECHNIQUE_MOONANDSTARSMASK;
-	case BSSM_SKY_STARS:return RAW_TECHNIQUE_STARS;
-	case BSSM_SKY_TEXTURE:return RAW_TECHNIQUE_TEXTURE;
-	case BSSM_SKY_CLOUDS:return RAW_TECHNIQUE_CLOUDS;
-	case BSSM_SKY_CLOUDSLERP:return RAW_TECHNIQUE_CLOUDSLERP;
-	case BSSM_SKY_CLOUDSFADE:return RAW_TECHNIQUE_CLOUDSFADE;
-	case BSSM_SKY_SUNGLARE:return RAW_TECHNIQUE_SUNGLARE;
+	case BSSM_SKYBASEPRE: return RAW_TECHNIQUE_SUNOCCLUDE;
+	case BSSM_SKY: return RAW_TECHNIQUE_SKY;
+	case BSSM_SKY_MOON_STARS_MASK: return RAW_TECHNIQUE_MOONANDSTARSMASK;
+	case BSSM_SKY_STARS: return RAW_TECHNIQUE_STARS;
+	case BSSM_SKY_TEXTURE: return RAW_TECHNIQUE_TEXTURE;
+	case BSSM_SKY_CLOUDS: return RAW_TECHNIQUE_CLOUDS;
+	case BSSM_SKY_CLOUDSLERP: return RAW_TECHNIQUE_CLOUDSLERP;
+	case BSSM_SKY_CLOUDSFADE: return RAW_TECHNIQUE_CLOUDSFADE;
+	case BSSM_SKY_SUNGLARE: return RAW_TECHNIQUE_SUNGLARE;
 
-	// The game calls BSSkyShader with AO for some reason. It defaults to 0.
-	case BSSM_AMBIENT_OCCLUSION:return 0;
+	// The game calls BSSkyShader with AO for some reason (lens flare occlusion test?). It defaults to tech 0.
+	case BSSM_AMBIENT_OCCLUSION: return RAW_TECHNIQUE_SUNOCCLUDE;
 	}
 
 	AssertMsg(false, "BSSkyShader: bad technique ID");
@@ -382,6 +381,40 @@ uint32_t BSSkyShader::GetPixelTechnique(uint32_t RawTechnique)
 
 std::vector<std::pair<const char *, const char *>> BSSkyShader::GetSourceDefines(uint32_t Technique)
 {
-	// FIXME
-	return BSShaderInfo::BSSkyShader::Defines::GetArray(Technique);
+	std::vector<std::pair<const char *, const char *>> defines;
+
+	switch (Technique)
+	{
+	case RAW_TECHNIQUE_SUNOCCLUDE: defines.emplace_back("OCCLUSION", ""); break;
+	case RAW_TECHNIQUE_SUNGLARE: defines.emplace_back("TEX", ""); defines.emplace_back("DITHER", ""); break;
+	case RAW_TECHNIQUE_MOONANDSTARSMASK: defines.emplace_back("TEX", ""); defines.emplace_back("MOONMASK", ""); break;
+	case RAW_TECHNIQUE_STARS: defines.emplace_back("HORIZFADE", ""); break;
+	case RAW_TECHNIQUE_CLOUDS: defines.emplace_back("TEX", ""); defines.emplace_back("CLOUDS", ""); break;
+	case RAW_TECHNIQUE_CLOUDSLERP: defines.emplace_back("TEX", ""); defines.emplace_back("CLOUDS", ""); defines.emplace_back("TEXLERP", ""); break;
+	case RAW_TECHNIQUE_CLOUDSFADE: defines.emplace_back("TEX", ""); defines.emplace_back("CLOUDS", ""); defines.emplace_back("TEXFADE", ""); break;
+	case RAW_TECHNIQUE_TEXTURE: defines.emplace_back("TEX", ""); break;
+	case RAW_TECHNIQUE_SKY: defines.emplace_back("DITHER", ""); break;
+	default: Assert(false); break;
+	}
+
+	return defines;
+}
+
+std::string BSSkyShader::GetTechniqueString(uint32_t Technique)
+{
+	switch (Technique)
+	{
+	case RAW_TECHNIQUE_SUNOCCLUDE: return "SunOcclude"; break;
+	case RAW_TECHNIQUE_SUNGLARE: return "SunGlare"; break;
+	case RAW_TECHNIQUE_MOONANDSTARSMASK: return "MoonAndStarsMask"; break;
+	case RAW_TECHNIQUE_STARS: return "Stars"; break;
+	case RAW_TECHNIQUE_CLOUDS: return "Clouds"; break;
+	case RAW_TECHNIQUE_CLOUDSLERP: return "CloudsLerp"; break;
+	case RAW_TECHNIQUE_CLOUDSFADE: return "CloudsFade"; break;
+	case RAW_TECHNIQUE_TEXTURE: return "Texture"; break;
+	case RAW_TECHNIQUE_SKY: return "Sky"; break;
+	}
+
+	Assert(false);
+	return "";
 }
