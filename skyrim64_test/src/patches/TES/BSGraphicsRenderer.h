@@ -57,20 +57,20 @@ namespace BSGraphics
 		//
 		// State management
 		//
-		static void SyncD3DState(bool Unknown);
-		static void SyncD3DResources();
+		static void SetDirtyStates(bool IsComputeShader);
+		static void FlushD3DResources();
 
 		void DepthStencilStateSetDepthMode(DepthStencilDepthMode Mode);
 		DepthStencilDepthMode DepthStencilStateGetDepthMode() const;
 		void DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef);
 
 		void RasterStateSetCullMode(uint32_t CullMode);
-		void RasterStateSetUnknown1(uint32_t Value);
+		void RasterStateSetDepthBias(uint32_t Value);
 
 		void AlphaBlendStateSetMode(uint32_t Mode);
-		void AlphaBlendStateSetUnknown1(uint32_t Value);
+		void AlphaBlendStateSetAlphaToCoverage(uint32_t Value);
 		void AlphaBlendStateSetWriteMode(uint32_t Value);
-		uint32_t AlphaBlendStateGetUnknown2() const;
+		uint32_t AlphaBlendStateGetWriteMode() const;
 
 		void SetUseAlphaTestRef(bool UseStoredValue);
 		void SetAlphaTestRef(float Value);
@@ -163,7 +163,7 @@ namespace BSGraphics
 			bool				m_EventQueryFinished[3];
 			ID3D11Query			*m_CommandListEndEvents[3];		// D3D11_QUERY_EVENT (Waits for a series of commands to finish execution)
 
-			float m_UnknownFloats1[3][4];						// Probably a matrix
+			float m_DepthBiasFactors[3][4];
 
 			ID3D11DepthStencilState *m_DepthStates[6][40];		// OMSetDepthStencilState
 			ID3D11RasterizerState *m_RasterStates[2][3][12][2];	// RSSetState
@@ -192,7 +192,7 @@ namespace BSGraphics
 			void *m_FrameDurationStringHandle;					// "Frame Duration" but stored in their global string pool
 
 			//
-			// This is probably a separate structure...possibly the BSGraphics::RendererData class
+			// This is a separate structure with a global instance: BSGraphics::RendererShadowState
 			//
 			uint32_t m_StateUpdateFlags;						// Flags +0x0  0xFFFFFFFF; global state updates
 			uint32_t m_PSResourceModifiedBits;					// Flags +0x4  0xFFFF
@@ -201,36 +201,55 @@ namespace BSGraphics
 			uint32_t m_CSSamplerModifiedBits;					// Flags +0x10 0xFFFF
 			uint32_t m_CSUAVModifiedBits;						// Flags +0x14 0xFF
 
-			uint32_t m_RenderTargetIndexes[8];					// enum <unnamed>: RENDER_TARGET_NONE...RENDER_TARGET_CUBEMAP_REFLECTIONS
-			uint32_t rshadowState_iDepthStencil;				// Index
-			uint32_t rshadowState_iDepthStencilSlice;			// Index
-			uint32_t unknown1;
-			uint32_t unknown2;
-			uint32_t m_RenderTargetStates[8];					// enum SetRenderTargetMode: SRTM_CLEAR...SRTM_INIT
+			uint32_t m_RenderTargets[8];						// enum <unnamed>: RENDER_TARGET_NONE...RENDER_TARGET_CUBEMAP_REFLECTIONS
+			uint32_t m_DepthStencil;							// Index
+			uint32_t m_DepthStencilSlice;						// Index
+			uint32_t m_CubeMapRenderTarget;						// Index
+			uint32_t m_CubeMapRenderTargetView;					// Index
 
-			char __zz0[0x50];
-			float m_AlphaTestRef;							// Can hold any float value. Used for the CONSTANT_GROUP_LEVEL_SCRAP_VALUE buffer.
+			SetRenderTargetMode m_SetRenderTargetMode[8];
+			SetRenderTargetMode m_SetDepthStencilMode;
+			SetRenderTargetMode m_SetCubeMapRenderTargetMode;
 
-			uint32_t m_PSSamplerAddressMode[16];
-			uint32_t m_PSSamplerFilterMode[16];
-			ID3D11ShaderResourceView *m_PSResources[16];
+			D3D11_VIEWPORT m_ViewPort;
 
-			uint32_t m_CSSamplerSetting1[16];
-			uint32_t m_CSSamplerSetting2[16];
+			DepthStencilDepthMode m_DepthStencilDepthMode;
+			uint32_t m_DepthStencilUnknown;
+			uint32_t m_DepthStencilStencilMode;
+			uint32_t m_StencilRef;
 
-			ID3D11ShaderResourceView *m_CSResources[16];
-			char __zz1[0x40];
-			ID3D11UnorderedAccessView *m_CSUAVResources[8];
+			uint32_t m_RasterStateFillMode;
+			uint32_t m_RasterStateCullMode;
+			uint32_t m_RasterStateDepthBiasMode;
+			uint32_t m_RasterStateScissorMode;
+
+			uint32_t m_AlphaBlendMode;
+			uint32_t m_AlphaBlendAlphaToCoverage;
+			uint32_t m_AlphaBlendWriteMode;
+
+			bool m_AlphaTestEnabled;
+			float m_AlphaTestRef;
+
+			uint32_t m_PSTextureAddressMode[16];
+			uint32_t m_PSTextureFilterMode[16];
+			ID3D11ShaderResourceView *m_PSTexture[16];
+
+			uint32_t m_CSTextureAddressMode[16];
+			uint32_t m_CSTextureFilterMode[16];
+
+			ID3D11ShaderResourceView *m_CSTexture[16];
+			uint32_t m_CSTextureMinLodMode[16];
+			ID3D11UnorderedAccessView *m_CSUAV[8];
 
 			union
 			{
 				struct
 				{
-					uint64_t m_VertexDescSetting;
+					uint64_t m_VertexDesc;
 					VertexShader *m_CurrentVertexShader;
 					PixelShader *m_CurrentPixelShader;
-					D3D11_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
-					NiPoint3 m_CurrentPosAdjust;
+					D3D11_PRIMITIVE_TOPOLOGY m_Topology;
+					NiPoint3 m_PosAdjust;
 					NiPoint3 m_PreviousPosAdjust;
 					char _zpad3[0x3C];
 					DirectX::XMMATRIX m_ViewMat;
@@ -267,7 +286,7 @@ namespace BSGraphics
 	CHECK_OFFSET(m_UnknownCounter3, 0x14304C160);
 	CHECK_OFFSET(m_EventQueryFinished, 0x14304C164);
 	CHECK_OFFSET(m_CommandListEndEvents, 0x14304C168);
-	CHECK_OFFSET(m_UnknownFloats1, 0x14304C180);
+	CHECK_OFFSET(m_DepthBiasFactors, 0x14304C180);
 	CHECK_OFFSET(m_DepthStates, 0x14304C1B0);
 	CHECK_OFFSET(m_RasterStates, 0x14304C930);
 	CHECK_OFFSET(m_BlendStates, 0x14304CDB0);
@@ -293,24 +312,23 @@ namespace BSGraphics
 	CHECK_OFFSET(m_CSResourceModifiedBits, 0x14304DEBC);
 	CHECK_OFFSET(m_CSSamplerModifiedBits, 0x14304DEC0);
 	CHECK_OFFSET(m_CSUAVModifiedBits, 0x14304DEC4);
-	CHECK_OFFSET(m_RenderTargetIndexes, 0x14304DEC8);
-	CHECK_OFFSET(rshadowState_iDepthStencil, 0x14304DEE8);
-	CHECK_OFFSET(rshadowState_iDepthStencilSlice, 0x14304DEEC);
-	CHECK_OFFSET(m_RenderTargetStates, 0x14304DEF8);
-	CHECK_OFFSET(__zz0, 0x14304DF18);
+	CHECK_OFFSET(m_RenderTargets, 0x14304DEC8);
+	CHECK_OFFSET(m_DepthStencil, 0x14304DEE8);
+	CHECK_OFFSET(m_DepthStencilSlice, 0x14304DEEC);
+	CHECK_OFFSET(m_SetRenderTargetMode, 0x14304DEF8);
 	CHECK_OFFSET(m_AlphaTestRef, 0x14304DF68);
-	CHECK_OFFSET(m_PSSamplerAddressMode, 0x14304DF6C);
-	CHECK_OFFSET(m_PSSamplerFilterMode, 0x14304DFAC);
-	CHECK_OFFSET(m_PSResources, 0x14304DFF0);
-	CHECK_OFFSET(m_CSSamplerSetting1, 0x14304E070);
-	CHECK_OFFSET(m_CSSamplerSetting2, 0x14304E0B0);
-	CHECK_OFFSET(m_CSResources, 0x14304E0F0);
-	CHECK_OFFSET(m_CSUAVResources, 0x14304E1B0);
-	CHECK_OFFSET(m_VertexDescSetting, 0x14304E1F0);
+	CHECK_OFFSET(m_PSTextureAddressMode, 0x14304DF6C);
+	CHECK_OFFSET(m_PSTextureFilterMode, 0x14304DFAC);
+	CHECK_OFFSET(m_PSTexture, 0x14304DFF0);
+	CHECK_OFFSET(m_CSTextureAddressMode, 0x14304E070);
+	CHECK_OFFSET(m_CSTextureFilterMode, 0x14304E0B0);
+	CHECK_OFFSET(m_CSTexture, 0x14304E0F0);
+	CHECK_OFFSET(m_CSUAV, 0x14304E1B0);
+	CHECK_OFFSET(m_VertexDesc, 0x14304E1F0);
 	CHECK_OFFSET(m_CurrentVertexShader, 0x14304E1F8);
 	CHECK_OFFSET(m_CurrentPixelShader, 0x14304E200);
-	CHECK_OFFSET(m_PrimitiveTopology, 0x14304E208);
-	CHECK_OFFSET(m_CurrentPosAdjust, 0x14304E20C);
+	CHECK_OFFSET(m_Topology, 0x14304E208);
+	CHECK_OFFSET(m_PosAdjust, 0x14304E20C);
 	CHECK_OFFSET(m_PreviousPosAdjust, 0x14304E218);
 	CHECK_OFFSET(m_ViewMat, 0x14304E260);
 	CHECK_OFFSET(m_ProjMat, 0x14304E2A0);

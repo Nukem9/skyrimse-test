@@ -361,7 +361,7 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
 
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x131F0D0, (PBYTE)&BSBatchRenderer::RenderPassImmediately);
-	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&BSGraphics::Renderer::SyncD3DState);
+	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&BSGraphics::Renderer::SetDirtyStates);
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF30, (PBYTE)&sub_140D6BF00);
 	*(PBYTE *)&FinishAccumulating_Standard_PreResolveDepth = Detours::X64::DetourFunctionClass((PBYTE)g_ModuleBase + 0x12E1960, &BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth);
 
@@ -393,6 +393,12 @@ void CreateXbyakPatches();
 void PatchD3D11()
 {
     // Grab the original function pointers
+	if (!g_DllDXGI)
+		g_DllDXGI = GetModuleHandleA("dxgi.dll");
+
+	if (!g_DllD3D11)
+		g_DllD3D11 = GetModuleHandleA("d3d11.dll");
+
     *(FARPROC *)&ptrCreateDXGIFactory = GetProcAddress(g_DllDXGI, "CreateDXGIFactory1");
 
     if (!ptrCreateDXGIFactory)

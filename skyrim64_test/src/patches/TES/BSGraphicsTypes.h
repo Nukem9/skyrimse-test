@@ -10,8 +10,25 @@
 namespace BSGraphics
 {
 	//
-	// Render targets/depth/stencil
+	// Renderer shadow state settings
 	//
+	enum
+	{
+		DIRTY_RENDERTARGET = 0x1,
+		DIRTY_VIEWPORT = 0x2,
+		DIRTY_DEPTH_MODE = 0x4,
+		DIRTY_DEPTH_STENCILREF_MODE = 0x8,
+		DIRTY_UNKNOWN1 = 0x10,
+		DIRTY_RASTER_CULL_MODE = 0x20,
+		DIRTY_RASTER_DEPTH_BIAS = 0x40,
+		DIRTY_ALPHA_BLEND = 0x80,
+		DIRTY_ALPHA_TEST_REF = 0x100,
+		DIRTY_ALPHA_ENABLE_TEST = 0x200,
+		DIRTY_VERTEX_DESC = 0x400,
+		DIRTY_PRIMITIVE_TOPO = 0x800,
+		DIRTY_UNKNOWN2 = 0x1000,
+	};
+
 	enum ClearDepthStencilTarget
 	{
 		CLEAR_DEPTH_STENCIL_TARGET_DEPTH = 0x1,
@@ -21,14 +38,13 @@ namespace BSGraphics
 
 	enum SetRenderTargetMode
 	{
-		// Probably wrong
-		SRTM_CLEAR = 0x0,
-		SRTM_CLEAR_DEPTH = 0x1,
-		SRTM_CLEAR_STENCIL = 0x2,
-		SRTM_NO_CLEAR = 0x3,
-		SRTM_RESTORE = 0x3,
-		SRTM_FORCE_COPY_RESTORE = 0x4,
-		SRTM_INIT = 0x5,
+		SRTM_CLEAR = 0,// confirmed
+		SRTM_CLEAR_DEPTH = 1,// confirmed
+		SRTM_CLEAR_STENCIL = 2,// confirmed
+		SRTM_RESTORE = 3,
+		SRTM_NO_CLEAR = 4,// confirmed
+		SRTM_FORCE_COPY_RESTORE = 5,
+		SRTM_INIT = 6,// confirmed
 	};
 
 	enum DepthStencilStencilMode

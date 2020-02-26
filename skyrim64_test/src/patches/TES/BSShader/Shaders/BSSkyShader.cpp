@@ -92,7 +92,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 		renderer->SetUseAlphaTestRef(true);
 		renderer->AlphaBlendStateSetWriteMode(0);
 		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
-		renderer->RasterStateSetUnknown1(3);
+		renderer->RasterStateSetDepthBias(3);
 		break;
 
 	case RAW_TECHNIQUE_STARS:
@@ -104,7 +104,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 	case RAW_TECHNIQUE_CLOUDSFADE:
 	case RAW_TECHNIQUE_TEXTURE:
 		renderer->AlphaBlendStateSetMode(1);
-		renderer->RasterStateSetUnknown1(2);
+		renderer->RasterStateSetDepthBias(2);
 		break;
 
 	case RAW_TECHNIQUE_SKY:
@@ -125,7 +125,7 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 	renderer->AlphaBlendStateSetWriteMode(1);
 	renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_DEFAULT);
 	renderer->SetUseAlphaTestRef(false);
-	renderer->RasterStateSetUnknown1(0);
+	renderer->RasterStateSetDepthBias(0);
 	EndTechnique();
 }
 
@@ -173,9 +173,9 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		XMFLOAT3& eyePos = vertexCG.ParamVS<XMFLOAT3, 4>();
 
 		auto& position = BSShaderManager::GetCurrentAccumulator()->m_EyePosition;
-		eyePos.x = position.x - renderer->m_CurrentPosAdjust.x;
-		eyePos.y = position.y - renderer->m_CurrentPosAdjust.y;
-		eyePos.z = position.z - renderer->m_CurrentPosAdjust.z;
+		eyePos.x = position.x - renderer->m_PosAdjust.x;
+		eyePos.y = position.y - renderer->m_PosAdjust.y;
+		eyePos.z = position.z - renderer->m_PosAdjust.z;
 	}
 
 	//

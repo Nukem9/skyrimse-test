@@ -298,7 +298,7 @@ bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, B
 			BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(cullMode);
 
 		if (alphaBlendUnknown != -1)
-			BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetUnknown1(alphaBlendUnknown);
+			BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetAlphaToCoverage(alphaBlendUnknown);
 
 		renderer->SetUseAlphaTestRef(useScrapConstant);
 	}
@@ -320,7 +320,7 @@ bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, B
 	}
 
 	BSBatchRenderer::EndPass();
-	BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetUnknown1(0);
+	BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetAlphaToCoverage(0);
 
 	GroupIndex++;
 	return sub_14131E700(Technique, GroupIndex, PassIndexList);

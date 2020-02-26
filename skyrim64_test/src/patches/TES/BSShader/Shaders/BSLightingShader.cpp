@@ -717,7 +717,7 @@ void GetInverseWorldMatrix(const NiTransform& Transform, bool Skinned, XMMATRIX&
 {
 	if (Skinned)
 	{
-		const NiPoint3 posAdjust = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
+		const NiPoint3 posAdjust = BSGraphics::Renderer::GetGlobals()->m_PosAdjust;
 
 		// XMMatrixIdentity(), row[3] = { world.x, world.y, world.z, 1.0f }, XMMatrixInverse()
 		OutMatrix = XMMatrixInverse(nullptr, XMMatrixTranslation(posAdjust.x, posAdjust.y, posAdjust.z));
@@ -744,16 +744,16 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
 
 	bool isSkinned = (rawTechnique & RAW_FLAG_SKINNED) != 0;
-	auto renderSpace = isSkinned ? Space::Model : Space::World;
-	bool updateEyePosition = false;
 	bool isLOD = false;
+	bool updateEyePosition = false;
+	auto renderSpace = isSkinned ? Space::World : Space::Model;
 
 	uint8_t v12 = Pass->m_AccumulationHint;
 	uint8_t v103 = (unsigned __int8)(v12 - 2) <= 1u;
 
 	if (v12 == 3 && property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_WRITE))
 	{
-		TLS_dword_141E3527C = renderer->AlphaBlendStateGetUnknown2();
+		TLS_dword_141E3527C = renderer->AlphaBlendStateGetWriteMode();
 		renderer->AlphaBlendStateSetWriteMode(1);
 	}
 
@@ -944,9 +944,9 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		{
 			auto& position = BSShaderManager::GetCurrentAccumulator()->m_EyePosition;
 
-			eyePosition.x = position.x - renderer->m_CurrentPosAdjust.x;
-			eyePosition.y = position.y - renderer->m_CurrentPosAdjust.y;
-			eyePosition.z = position.z - renderer->m_CurrentPosAdjust.z;
+			eyePosition.x = position.x - renderer->m_PosAdjust.x;
+			eyePosition.y = position.y - renderer->m_PosAdjust.y;
+			eyePosition.z = position.z - renderer->m_PosAdjust.z;
 		}
 	}
 
@@ -1204,8 +1204,8 @@ void BSLightingShader::TechUpdateHighDetailRangeConstants(BSGraphics::VertexCGro
 	// VS: p12 float4 HighDetailRange
 	BSGraphics::Utility::CopyNiColorAToFloat(&VertexCG.ParamVS<XMVECTOR, 12>(),
 		NiColorA(
-			flt_141E32F54 - renderer->m_CurrentPosAdjust.x,
-			flt_141E32F58 - renderer->m_CurrentPosAdjust.y,
+			flt_141E32F54 - renderer->m_PosAdjust.x,
+			flt_141E32F58 - renderer->m_PosAdjust.y,
 			flt_141E32F5C - 15.0f,
 			flt_141E32F60 - 15.0f));
 }
@@ -1487,7 +1487,7 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::PixelC
 		}
 		else
 		{
-			worldPos = worldPos - BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
+			worldPos = worldPos - BSGraphics::Renderer::GetGlobals()->m_PosAdjust;
 
 			pointLightPosition[i].v = worldPos.AsXmm();
 			pointLightPosition[i].f[3] = niLight->GetSpecularColor().r;
@@ -1555,7 +1555,7 @@ void BSLightingShader::GenerateProjectionMatrix(const NiTransform& ObjectWorldTr
 	temp.m_Rotate.m_pEntry[2][1] = 0.0f;
 	temp.m_Rotate.m_pEntry[2][2] = 1.0f;
 
-	temp.m_Translate = BSGraphics::Renderer::GetGlobals()->m_CurrentPosAdjust;
+	temp.m_Translate = BSGraphics::Renderer::GetGlobals()->m_PosAdjust;
 	temp.m_fScale = 1.0f;
 
 	if (ModelSpace)
@@ -1567,7 +1567,7 @@ void BSLightingShader::GenerateProjectionMatrix(const NiTransform& ObjectWorldTr
 		XMMATRIX m1 = BSShaderUtil::GetXMFromNi(temp);
 		XMMATRIX m2 = BSShaderUtil::GetXMFromNi(ObjectWorldTrans);
 
-		// OutProjection = Mul(Translate(m2, renderer->m_CurrentPosAdjust), m1);
+		// OutProjection = Mul(Translate(m2, renderer->m_PosAdjust), m1);
 		m2.r[3] = XMVectorAdd(m2.r[3], XMVectorSet(
 			temp.m_Translate.x,
 			temp.m_Translate.y,

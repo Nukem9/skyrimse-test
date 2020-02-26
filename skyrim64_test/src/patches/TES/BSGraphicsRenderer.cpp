@@ -220,7 +220,7 @@ namespace BSGraphics
 		SetVertexDescription(GraphicsLineShape->m_VertexDesc);
 		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
-		SyncD3DState(false);
+		SetDirtyStates(false);
 
 		UINT stride = BSGeometry::CalculateVertexSize(GraphicsLineShape->m_VertexDesc);
 		UINT offset = 0;
@@ -235,7 +235,7 @@ namespace BSGraphics
 		SetVertexDescription(GraphicsTriShape->m_VertexDesc);
 		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		SyncD3DState(false);
+		SetDirtyStates(false);
 
 		UINT stride = BSGeometry::CalculateVertexSize(GraphicsTriShape->m_VertexDesc);
 		UINT offset = 0;
@@ -290,7 +290,7 @@ namespace BSGraphics
 		SetVertexDescription(Params->m_VertexDesc);
 		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		SyncD3DState(false);
+		SetDirtyStates(false);
 
 		ID3D11Buffer *buffers[2];
 		buffers[0] = Params->m_VertexBuffer;
@@ -323,7 +323,7 @@ namespace BSGraphics
 		SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_StateUpdateFlags &= ~0x400;
 
-		SyncD3DState(false);
+		SetDirtyStates(false);
 
 		if (!m_UnknownInputLayout)
 		{
@@ -345,7 +345,7 @@ namespace BSGraphics
 
 		m_InputLayoutLock.LockForWrite();
 		{
-			uint64_t desc = m_VertexDescSetting & m_CurrentVertexShader->m_VertexDescription;
+			uint64_t desc = m_VertexDesc & m_CurrentVertexShader->m_VertexDescription;
 			m_InputLayoutMap.try_emplace(desc, m_UnknownInputLayout);
 		}
 		m_InputLayoutLock.UnlockWrite();
@@ -360,15 +360,12 @@ namespace BSGraphics
 
 	SRWLOCK InputLayoutLock = SRWLOCK_INIT;
 
-	void Renderer::SyncD3DState(bool Unknown)
+	void Renderer::SetDirtyStates(bool IsComputeShader)
 	{
 		auto renderer = BSGraphics::Renderer::GetGlobals();
 
 		__int64 v5; // rdx
-		int v10; // edx
 		signed __int64 v12; // rcx
-		float v14; // xmm0_4
-		float v15; // xmm0_4
 
 		renderer->UnmapDynamicConstantBuffer();
 
@@ -376,7 +373,7 @@ namespace BSGraphics
 
 		if (uint32_t flags = renderer->m_StateUpdateFlags; flags != 0)
 		{
-			if (flags & 1)
+			if (flags & DIRTY_RENDERTARGET)
 			{
 				//
 				// Build active render target view array
@@ -384,48 +381,49 @@ namespace BSGraphics
 				ID3D11RenderTargetView *renderTargetViews[8];
 				uint32_t viewCount = 0;
 
-				if (renderer->unknown1 == -1)
+				if (renderer->m_CubeMapRenderTarget == -1)
 				{
-					// This loops through all 8 entries ONLY IF they are not RENDER_TARGET_NONE. Otherwise break early.
+					// This loops through all 8 RTs or until a RENDER_TARGET_NONE entry is hit
 					for (int i = 0; i < 8; i++)
 					{
-						uint32_t& rtState = renderer->m_RenderTargetStates[i];
-						uint32_t rtIndex = renderer->m_RenderTargetIndexes[i];
-
-						if (rtIndex == RENDER_TARGET_NONE)
+						if (renderer->m_RenderTargets[i] == RENDER_TARGET_NONE)
 							break;
 
-						renderTargetViews[i] = (ID3D11RenderTargetView *)*((uint64_t *)v3 + 6 * rtIndex + 0x14B);
+						renderTargetViews[i] = (ID3D11RenderTargetView *)*((uint64_t *)v3 + 6 * renderer->m_RenderTargets[i] + 0x14B);
 						viewCount++;
 
-						if (rtState == 0)// if state == SRTM_CLEAR
+						if (renderer->m_SetRenderTargetMode[i] == SRTM_CLEAR)
 						{
 							renderer->m_DeviceContext->ClearRenderTargetView(renderTargetViews[i], (const FLOAT *)v3 + 2522);
-							rtState = 4;// SRTM_INIT?
+							renderer->m_SetRenderTargetMode[i] = SRTM_NO_CLEAR;
 						}
 					}
 				}
 				else
 				{
-					// Use a single RT instead. The purpose of this is unknown...
+					// Use a single RT for the cubemap
 					v5 = *((uint64_t *)renderer->qword_14304BF00
-						+ (signed int)renderer->unknown2
-						+ 8i64 * (signed int)renderer->unknown1
+						+ (signed int)renderer->m_CubeMapRenderTargetView
+						+ 8i64 * (signed int)renderer->m_CubeMapRenderTarget
 						+ 1242);
 					renderTargetViews[0] = (ID3D11RenderTargetView *)v5;
 					viewCount = 1;
 
-					if (!*(DWORD *)&renderer->__zz0[4])
+					if (renderer->m_SetCubeMapRenderTargetMode == SRTM_CLEAR)
 					{
 						renderer->m_DeviceContext->ClearRenderTargetView((ID3D11RenderTargetView *)v5, (float *)(char *)renderer->qword_14304BF00 + 10088);
-						*(DWORD *)&renderer->__zz0[4] = 4;
+						renderer->m_SetCubeMapRenderTargetMode = SRTM_NO_CLEAR;
 					}
 				}
 
-				v10 = *(DWORD *)renderer->__zz0;
-				if (v10 <= 2u || v10 == 6)
+				switch (renderer->m_SetDepthStencilMode)
 				{
+				case SRTM_CLEAR:
+				case SRTM_CLEAR_DEPTH:
+				case SRTM_CLEAR_STENCIL:
+				case SRTM_INIT:
 					*((BYTE *)v3 + 34) = 0;
+					break;
 				}
 
 				//
@@ -434,10 +432,10 @@ namespace BSGraphics
 				//
 				ID3D11DepthStencilView *depthStencil = nullptr;
 
-				if (renderer->rshadowState_iDepthStencil != -1)
+				if (renderer->m_DepthStencil != -1)
 				{
-					v12 = renderer->rshadowState_iDepthStencilSlice
-						+ 19i64 * (signed int)renderer->rshadowState_iDepthStencil;
+					v12 = renderer->m_DepthStencilSlice
+						+ 19i64 * (signed int)renderer->m_DepthStencil;
 
 					if (*((BYTE *)v3 + 34))
 						depthStencil = (ID3D11DepthStencilView *)v3[v12 + 1022];
@@ -445,32 +443,31 @@ namespace BSGraphics
 						depthStencil = (ID3D11DepthStencilView *)v3[v12 + 1014];
 
 					// Only clear the stencil if specific flags are set
-					if (depthStencil && v10 != 3 && v10 != 4 && v10 != 5)
+					if (depthStencil)
 					{
-						uint32_t clearFlags;
+						uint32_t clearFlags = 0;
 
-						switch (v10)
+						switch (renderer->m_SetDepthStencilMode)
 						{
-						case 0:
-						case 6:
+						case SRTM_CLEAR:
+						case SRTM_INIT:
 							clearFlags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL;
 							break;
 
-						case 2:
-							clearFlags = D3D11_CLEAR_STENCIL;
-							break;
-
-						case 1:
+						case SRTM_CLEAR_DEPTH:
 							clearFlags = D3D11_CLEAR_DEPTH;
 							break;
 
-						default:
-							Assert(false);
+						case SRTM_CLEAR_STENCIL:
+							clearFlags = D3D11_CLEAR_STENCIL;
 							break;
 						}
 
-						renderer->m_DeviceContext->ClearDepthStencilView(depthStencil, clearFlags, 1.0f, 0);
-						*(DWORD *)renderer->__zz0 = 4;
+						if (clearFlags)
+						{
+							renderer->m_DeviceContext->ClearDepthStencilView(depthStencil, clearFlags, 1.0f, 0);
+							renderer->m_SetDepthStencilMode = SRTM_NO_CLEAR;
+						}
 					}
 				}
 
@@ -478,78 +475,75 @@ namespace BSGraphics
 			}
 
 			// OMSetDepthStencilState
-			if (flags & (0x4 | 0x8))
+			if (flags & (DIRTY_DEPTH_STENCILREF_MODE | DIRTY_DEPTH_MODE))
 			{
-				// OMSetDepthStencilState(m_DepthStates[m_DepthMode][m_StencilMode], m_StencilRef);
-				renderer->m_DeviceContext->OMSetDepthStencilState(
-					renderer->m_DepthStates[*(signed int *)&renderer->__zz0[32]][*(signed int *)&renderer->__zz0[40]],
-					*(UINT *)&renderer->__zz0[44]);
+				renderer->m_DeviceContext->OMSetDepthStencilState(renderer->m_DepthStates[renderer->m_DepthStencilDepthMode][renderer->m_DepthStencilStencilMode], renderer->m_StencilRef);
 			}
 
 			// RSSetState
-			if (flags & (0x1000 | 0x40 | 0x20 | 0x10))
+			if (flags & (DIRTY_UNKNOWN2 | DIRTY_RASTER_DEPTH_BIAS | DIRTY_RASTER_CULL_MODE | DIRTY_UNKNOWN1))
 			{
 				// Cull mode, depth bias, fill mode, scissor mode, scissor rect (order unknown)
-				void *wtf = renderer->m_RasterStates[0][0][0][*(signed int *)&renderer->__zz0[60]
+				void *wtf = renderer->m_RasterStates[0][0][0][renderer->m_RasterStateScissorMode
 					+ 2
-					* (*(signed int *)&renderer->__zz0[56]
+					* (renderer->m_RasterStateDepthBiasMode
 						+ 12
-						* (*(signed int *)&renderer->__zz0[52]// Cull mode
-							+ 3i64 * *(signed int *)&renderer->__zz0[48]))];
+						* (renderer->m_RasterStateCullMode
+							+ 3i64 * renderer->m_RasterStateFillMode))];
+
+				Assert(wtf == renderer->m_RasterStates[renderer->m_RasterStateScissorMode][renderer->m_RasterStateDepthBiasMode][renderer->m_RasterStateCullMode][renderer->m_RasterStateFillMode]);
 
 				renderer->m_DeviceContext->RSSetState((ID3D11RasterizerState *)wtf);
 
-				flags = renderer->m_StateUpdateFlags;
-				if (renderer->m_StateUpdateFlags & 0x40)
+				if (flags & 0x40)
 				{
-					if (*(float *)&renderer->__zz0[24] != *(float *)&renderer->__zz2[640]
-						|| (v14 = *(float *)&renderer->__zz0[28],
-							*(float *)&renderer->__zz0[28] != *(float *)&renderer->__zz2[644]))
+					if (renderer->m_ViewPort.MinDepth != *(float *)&renderer->__zz2[640] || renderer->m_ViewPort.MaxDepth != *(float *)&renderer->__zz2[644])
 					{
-						v14 = *(float *)&renderer->__zz2[644];
-						*(DWORD *)&renderer->__zz0[24] = *(DWORD *)&renderer->__zz2[640];
-						flags = renderer->m_StateUpdateFlags | 2;
-						*(DWORD *)&renderer->__zz0[28] = *(DWORD *)&renderer->__zz2[644];
-						renderer->m_StateUpdateFlags |= 2u;
+						renderer->m_ViewPort.MinDepth = *(float *)&renderer->__zz2[640];
+						renderer->m_ViewPort.MaxDepth = *(float *)&renderer->__zz2[644];
+						flags |= DIRTY_VIEWPORT;
 					}
-					if (*(DWORD *)&renderer->__zz0[56])
+
+					if (renderer->m_RasterStateDepthBiasMode)
 					{
-						v15 = v14 - renderer->m_UnknownFloats1[0][*(signed int *)&renderer->__zz0[56]];
-						flags |= 2u;
-						renderer->m_StateUpdateFlags = flags;
-						*(float *)&renderer->__zz0[28] = v15;
+						renderer->m_ViewPort.MaxDepth -= renderer->m_DepthBiasFactors[0][renderer->m_RasterStateDepthBiasMode];
+						flags |= DIRTY_VIEWPORT;
 					}
 				}
 			}
 
 			// RSSetViewports
-			if (flags & 0x2)
+			if (flags & DIRTY_VIEWPORT)
 			{
-				renderer->m_DeviceContext->RSSetViewports(1, (D3D11_VIEWPORT *)&renderer->__zz0[8]);
+				renderer->m_DeviceContext->RSSetViewports(1, &renderer->m_ViewPort);
 			}
 
 			// OMSetBlendState
-			if (flags & 0x80)
+			if (flags & DIRTY_ALPHA_BLEND)
 			{
 				float *blendFactor = (float *)(g_ModuleBase + 0x1E2C168);
+
+				Assert(blendFactor[0] == 1.0f && blendFactor[1] == 1.0f && blendFactor[2] == 1.0f && blendFactor[3] == 1.0f);
 
 				// Mode, write mode, alpha to coverage, blend state (order unknown)
 				void *wtf = renderer->m_BlendStates[0][0][0][*(unsigned int *)&renderer->__zz2[656]
 					+ 2
-					* (*(signed int *)&renderer->__zz0[72]
+					* (renderer->m_AlphaBlendWriteMode
 						+ 13
-						* (*(signed int *)&renderer->__zz0[68]
-							+ 2i64 * *(signed int *)&renderer->__zz0[64]))];// AlphaBlendMode
+						* (renderer->m_AlphaBlendAlphaToCoverage
+							+ 2i64 * renderer->m_AlphaBlendMode))];// AlphaBlendMode
+
+				Assert(wtf == renderer->m_BlendStates[renderer->m_AlphaBlendMode][renderer->m_AlphaBlendAlphaToCoverage][renderer->m_AlphaBlendWriteMode][*(unsigned int *)&renderer->__zz2[656]]);
 
 				renderer->m_DeviceContext->OMSetBlendState((ID3D11BlendState *)wtf, blendFactor, 0xFFFFFFFF);
 			}
 
-			if (flags & (0x200 | 0x100))
+			if (flags & (DIRTY_ALPHA_ENABLE_TEST | DIRTY_ALPHA_TEST_REF))
 			{
 				D3D11_MAPPED_SUBRESOURCE resource;
 				renderer->m_DeviceContext->Map(renderer->m_AlphaTestRefCB, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
 
-				if (renderer->__zz0[76])
+				if (renderer->m_AlphaTestEnabled)
 					*(float *)resource.pData = renderer->m_AlphaTestRef;
 				else
 					*(float *)resource.pData = 0.0f;
@@ -558,11 +552,11 @@ namespace BSGraphics
 			}
 
 			// Shader input layout creation + updates
-			if (!Unknown && (flags & 0x400))
+			if (!IsComputeShader && (flags & DIRTY_VERTEX_DESC))
 			{
 				m_InputLayoutLock.LockForWrite();
 				{
-					uint64_t desc = renderer->m_VertexDescSetting & renderer->m_CurrentVertexShader->m_VertexDescription;
+					uint64_t desc = renderer->m_VertexDesc & renderer->m_CurrentVertexShader->m_VertexDescription;
 
 					// Does the entry exist already?
 					if (auto e = m_InputLayoutMap.find(desc); e != m_InputLayoutMap.end())
@@ -586,23 +580,24 @@ namespace BSGraphics
 			}
 
 			// IASetPrimitiveTopology
-			if (flags & 0x800)
+			if (flags & DIRTY_PRIMITIVE_TOPO)
 			{
-				renderer->m_DeviceContext->IASetPrimitiveTopology(renderer->m_PrimitiveTopology);
+				renderer->m_DeviceContext->IASetPrimitiveTopology(renderer->m_Topology);
 			}
 
-			if (Unknown)
-				renderer->m_StateUpdateFlags = flags & 0x400;
+			// Compute shaders are pretty much custom and always require state to be reset
+			if (IsComputeShader)
+				renderer->m_StateUpdateFlags = flags & DIRTY_PRIMITIVE_TOPO;
 			else
 				renderer->m_StateUpdateFlags = 0;
 		}
 
-		SyncD3DResources();
+		FlushD3DResources();
 	}
 
-	void Renderer::SyncD3DResources()
+	void Renderer::FlushD3DResources()
 	{
-		auto *renderer = BSGraphics::Renderer::GetGlobals();
+		auto renderer = BSGraphics::Renderer::GetGlobals();
 
 		//
 		// Resource/state setting code. It's been modified to take 1 of 2 paths for each type:
@@ -618,7 +613,7 @@ namespace BSGraphics
 			AssertMsg((bits & 0xFFFFFF00) == 0, "CSUAVModifiedBits must not exceed 7th index");
 
 			for_each_bit(i, bits)
-				renderer->m_DeviceContext->CSSetUnorderedAccessViews(i, 1, &renderer->m_CSUAVResources[i], nullptr);
+				renderer->m_DeviceContext->CSSetUnorderedAccessViews(i, 1, &renderer->m_CSUAV[i], nullptr);
 
 			renderer->m_CSUAVModifiedBits = 0;
 		}
@@ -629,7 +624,7 @@ namespace BSGraphics
 			AssertMsg((bits & 0xFFFF0000) == 0, "PSSamplerModifiedBits must not exceed 15th index");
 
 			for_each_bit(i, bits)
-				renderer->m_DeviceContext->PSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_PSSamplerAddressMode[i]][renderer->m_PSSamplerFilterMode[i]]);
+				renderer->m_DeviceContext->PSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_PSTextureAddressMode[i]][renderer->m_PSTextureFilterMode[i]]);
 
 			renderer->m_PSSamplerModifiedBits = 0;
 		}
@@ -644,11 +639,11 @@ namespace BSGraphics
 				// Combine PSSSR(0, 1, [rsc1]) + PSSSR(1, 1, [rsc2]) into PSSSR(0, 2, [rsc1, rsc2])
 				if (bits & (1 << (i + 1)))
 				{
-					renderer->m_DeviceContext->PSSetShaderResources(i, 2, &renderer->m_PSResources[i]);
+					renderer->m_DeviceContext->PSSetShaderResources(i, 2, &renderer->m_PSTexture[i]);
 					bits &= ~(1 << (i + 1));
 				}
 				else
-					renderer->m_DeviceContext->PSSetShaderResources(i, 1, &renderer->m_PSResources[i]);
+					renderer->m_DeviceContext->PSSetShaderResources(i, 1, &renderer->m_PSTexture[i]);
 			}
 
 			renderer->m_PSResourceModifiedBits = 0;
@@ -660,7 +655,7 @@ namespace BSGraphics
 			AssertMsg((bits & 0xFFFF0000) == 0, "CSSamplerModifiedBits must not exceed 15th index");
 
 			for_each_bit(i, bits)
-				renderer->m_DeviceContext->CSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_CSSamplerSetting1[i]][renderer->m_CSSamplerSetting2[i]]);
+				renderer->m_DeviceContext->CSSetSamplers(i, 1, &renderer->m_SamplerStates[renderer->m_CSTextureAddressMode[i]][renderer->m_CSTextureFilterMode[i]]);
 
 			renderer->m_CSSamplerModifiedBits = 0;
 		}
@@ -671,7 +666,7 @@ namespace BSGraphics
 			AssertMsg((bits & 0xFFFF0000) == 0, "CSResourceModifiedBits must not exceed 15th index");
 
 			for_each_bit(i, bits)
-				renderer->m_DeviceContext->CSSetShaderResources(i, 1, &renderer->m_CSResources[i]);
+				renderer->m_DeviceContext->CSSetShaderResources(i, 1, &renderer->m_CSTexture[i]);
 
 			renderer->m_CSResourceModifiedBits = 0;
 		}
@@ -681,90 +676,90 @@ namespace BSGraphics
 
 	void Renderer::DepthStencilStateSetDepthMode(DepthStencilDepthMode Mode)
 	{
-		if (*(DWORD *)&__zz0[32] != Mode)
+		if (m_DepthStencilDepthMode != Mode)
 		{
-			*(DWORD *)&__zz0[32] = Mode;
+			m_DepthStencilDepthMode = Mode;
 
 			// Temp var to prevent duplicate state setting? Don't know where this gets set.
-			if (*(DWORD *)&__zz0[36] != Mode)
-				m_StateUpdateFlags |= 0x4;
+			if (m_DepthStencilUnknown != Mode)
+				m_StateUpdateFlags |= DIRTY_DEPTH_MODE;
 			else
-				m_StateUpdateFlags &= ~0x4;
+				m_StateUpdateFlags &= ~DIRTY_DEPTH_MODE;
 		}
 	}
 
 	DepthStencilDepthMode Renderer::DepthStencilStateGetDepthMode() const
 	{
-		return (DepthStencilDepthMode)*(DWORD *)&__zz0[32];
+		return m_DepthStencilDepthMode;
 	}
 
 	void Renderer::DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef)
 	{
-		if (*(DWORD *)&__zz0[40] != Mode || *(DWORD *)&__zz0[44] != StencilRef)
+		if (m_DepthStencilStencilMode != Mode || m_StencilRef != StencilRef)
 		{
-			*(DWORD *)&__zz0[40] = Mode;
-			*(DWORD *)&__zz0[44] = StencilRef;
-			m_StateUpdateFlags |= 0x8;
+			m_DepthStencilStencilMode = Mode;
+			m_StencilRef = StencilRef;
+			m_StateUpdateFlags |= DIRTY_DEPTH_STENCILREF_MODE;
 		}
 	}
 
 	void Renderer::RasterStateSetCullMode(uint32_t CullMode)
 	{
-		if (*(DWORD *)&__zz0[52] != CullMode)
+		if (m_RasterStateCullMode != CullMode)
 		{
-			*(DWORD *)&__zz0[52] = CullMode;
-			m_StateUpdateFlags |= 0x20;
+			m_RasterStateCullMode = CullMode;
+			m_StateUpdateFlags |= DIRTY_RASTER_CULL_MODE;
 		}
 	}
 
-	void Renderer::RasterStateSetUnknown1(uint32_t Value)
+	void Renderer::RasterStateSetDepthBias(uint32_t Value)
 	{
-		if (*(DWORD *)&__zz0[56] != Value)
+		if (m_RasterStateDepthBiasMode != Value)
 		{
-			*(DWORD *)&__zz0[56] = Value;
-			m_StateUpdateFlags |= 0x40;
+			m_RasterStateDepthBiasMode = Value;
+			m_StateUpdateFlags |= DIRTY_RASTER_DEPTH_BIAS;
 		}
 	}
 
 	void Renderer::AlphaBlendStateSetMode(uint32_t Mode)
 	{
-		if (*(DWORD *)&__zz0[64] != Mode)
+		if (m_AlphaBlendMode != Mode)
 		{
-			*(DWORD *)&__zz0[64] = Mode;
-			m_StateUpdateFlags |= 0x80;
+			m_AlphaBlendMode = Mode;
+			m_StateUpdateFlags |= DIRTY_ALPHA_BLEND;
 		}
 	}
 
-	void Renderer::AlphaBlendStateSetUnknown1(uint32_t Value)
+	void Renderer::AlphaBlendStateSetAlphaToCoverage(uint32_t Value)
 	{
-		if (*(DWORD *)&__zz0[68] != Value)
+		if (m_AlphaBlendAlphaToCoverage != Value)
 		{
-			*(DWORD *)&__zz0[68] = Value;
-			m_StateUpdateFlags |= 0x80;
+			m_AlphaBlendAlphaToCoverage = Value;
+			m_StateUpdateFlags |= DIRTY_ALPHA_BLEND;
 		}
 	}
 
 	void Renderer::AlphaBlendStateSetWriteMode(uint32_t Value)
 	{
-		if (*(DWORD *)&__zz0[72] != Value)
+		if (m_AlphaBlendWriteMode != Value)
 		{
-			*(DWORD *)&__zz0[72] = Value;
-			m_StateUpdateFlags |= 0x80;
+			m_AlphaBlendWriteMode = Value;
+			m_StateUpdateFlags |= DIRTY_ALPHA_BLEND;
 		}
 	}
 
-	uint32_t Renderer::AlphaBlendStateGetUnknown2() const
+	uint32_t Renderer::AlphaBlendStateGetWriteMode() const
 	{
-		return *(DWORD *)&__zz0[72];
+		return m_AlphaBlendWriteMode;
 	}
 
 	void Renderer::SetUseAlphaTestRef(bool UseStoredValue)
 	{
 		// When UseStoredValue is false, the constant buffer data is zeroed, but m_AlphaTestRef is saved
-		if (__zz0[76] != (char)UseStoredValue)
+		if (m_AlphaTestEnabled != UseStoredValue)
 		{
-			__zz0[76] = UseStoredValue;
-			m_StateUpdateFlags |= 0x100u;
+			m_AlphaTestEnabled = UseStoredValue;
+			m_StateUpdateFlags |= DIRTY_ALPHA_TEST_REF;
 		}
 	}
 
@@ -773,25 +768,25 @@ namespace BSGraphics
 		if (m_AlphaTestRef != Value)
 		{
 			m_AlphaTestRef = Value;
-			m_StateUpdateFlags |= 0x200u;
+			m_StateUpdateFlags |= DIRTY_ALPHA_ENABLE_TEST;
 		}
 	}
 
 	void Renderer::SetVertexDescription(uint64_t VertexDesc)
 	{
-		if (m_VertexDescSetting != VertexDesc)
+		if (m_VertexDesc != VertexDesc)
 		{
-			m_VertexDescSetting = VertexDesc;
-			m_StateUpdateFlags |= 0x400;
+			m_VertexDesc = VertexDesc;
+			m_StateUpdateFlags |= DIRTY_VERTEX_DESC;
 		}
 	}
 
 	void Renderer::SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY Topology)
 	{
-		if (m_PrimitiveTopology != Topology)
+		if (m_Topology != Topology)
 		{
-			m_PrimitiveTopology = Topology;
-			m_StateUpdateFlags |= 0x800;
+			m_Topology = Topology;
+			m_StateUpdateFlags |= DIRTY_PRIMITIVE_TOPO;
 		}
 	}
 
@@ -803,8 +798,8 @@ namespace BSGraphics
 		// The input layout (IASetInputLayout) may need to be created and updated
 		TLS_CurrentVertexShader = Shader;
 		m_CurrentVertexShader = Shader;
-		m_StateUpdateFlags |= 0x400;
 		m_DeviceContext->VSSetShader(Shader ? Shader->m_Shader : nullptr, nullptr, 0);
+		m_StateUpdateFlags |= DIRTY_VERTEX_DESC;
 	}
 
 	void Renderer::SetPixelShader(PixelShader *Shader)
@@ -845,18 +840,18 @@ namespace BSGraphics
 
 	void Renderer::SetTextureAddressMode(uint32_t Index, uint32_t Mode)
 	{
-		if (m_PSSamplerAddressMode[Index] != Mode)
+		if (m_PSTextureAddressMode[Index] != Mode)
 		{
-			m_PSSamplerAddressMode[Index] = Mode;
+			m_PSTextureAddressMode[Index] = Mode;
 			m_PSSamplerModifiedBits |= 1 << Index;
 		}
 	}
 
 	void Renderer::SetTextureFilterMode(uint32_t Index, uint32_t Mode)
 	{
-		if (m_PSSamplerFilterMode[Index] != Mode)
+		if (m_PSTextureFilterMode[Index] != Mode)
 		{
-			m_PSSamplerFilterMode[Index] = Mode;
+			m_PSTextureFilterMode[Index] = Mode;
 			m_PSSamplerModifiedBits |= 1 << Index;
 		}
 	}
@@ -864,9 +859,9 @@ namespace BSGraphics
 	// Not a real function name. Needs to be removed.
 	void Renderer::SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource)
 	{
-		if (m_PSResources[Index] != Resource)
+		if (m_PSTexture[Index] != Resource)
 		{
-			m_PSResources[Index] = Resource;
+			m_PSTexture[Index] = Resource;
 			m_PSResourceModifiedBits |= 1 << Index;
 		}
 	}
