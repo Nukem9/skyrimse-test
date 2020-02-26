@@ -19,31 +19,6 @@
 #define PER_TEC 2	// PerTechnique
 
 //
-// BSParticleShader
-//
-REMAP_VERTEX("Particle", PER_GEO, 13, 0)
-REMAP_VERTEX_UNUSED("Particle", PER_MAT)
-REMAP_VERTEX("Particle", PER_TEC, 0, "float4x4")
-REMAP_VERTEX("Particle", PER_TEC, 1, "float4x4")	// Guessed based on cbuffer offset. "Offset: 0x0040 PrevWorldViewProj"
-REMAP_VERTEX("Particle", PER_TEC, 2, "float4x4")
-REMAP_VERTEX("Particle", PER_TEC, 3, 0)
-REMAP_VERTEX("Particle", PER_TEC, 4, 0)
-REMAP_VERTEX("Particle", PER_TEC, 5, 0)
-REMAP_VERTEX("Particle", PER_TEC, 6, 0)
-REMAP_VERTEX("Particle", PER_TEC, 7, 0)
-REMAP_VERTEX("Particle", PER_TEC, 8, 0)
-REMAP_VERTEX("Particle", PER_TEC, 9, 0)
-REMAP_VERTEX("Particle", PER_TEC, 10, 0)
-REMAP_VERTEX("Particle", PER_TEC, 11, 0)
-REMAP_VERTEX("Particle", PER_TEC, 12, 0)
-REMAP_VERTEX("Particle", PER_TEC, 14, 0)
-
-REMAP_PIXEL_UNUSED("Particle", PER_GEO)
-REMAP_PIXEL_UNUSED("Particle", PER_MAT)
-REMAP_PIXEL("Particle", PER_TEC, 0, 0)
-REMAP_PIXEL("Particle", PER_TEC, 1, 0)
-
-//
 // BSEffectShader
 //
 REMAP_VERTEX("Effect", PER_GEO, 4, "float4")

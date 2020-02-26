@@ -113,12 +113,13 @@ namespace BSGraphics
 		PixelShader *CompilePixelShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, std::function<const char *(int Index)> GetSampler, std::function<const char *(int Index)> GetConstant);
 		HullShader *CompileHullShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines);
 		DomainShader *CompileDomainShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines);
+
 		//
 		// Shader constant buffers
 		//
 		CustomConstantGroup GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level);
-		ConstantGroup<VertexShader> GetShaderConstantGroup(VertexShader *Shader, ConstantGroupLevel Level);
-		ConstantGroup<PixelShader> GetShaderConstantGroup(PixelShader *Shader, ConstantGroupLevel Level);
+		VertexCGroup GetShaderConstantGroup(VertexShader *Shader, ConstantGroupLevel Level);
+		PixelCGroup GetShaderConstantGroup(PixelShader *Shader, ConstantGroupLevel Level);
 		void FlushConstantGroup(CustomConstantGroup *Group);
 		void FlushConstantGroupVSPS(ConstantGroup<VertexShader> *VertexGroup, ConstantGroup<PixelShader> *PixelGroup);
 		void ApplyConstantGroupVS(const CustomConstantGroup *Group, ConstantGroupLevel Level);

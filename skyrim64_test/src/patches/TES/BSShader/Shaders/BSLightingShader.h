@@ -62,6 +62,12 @@ private:
 		RAW_FLAG_ADDITIONAL_ALPHA_MASK = 1 << 23,
 	};
 
+	enum class Space
+	{
+		World = 0,
+		Model = 1,
+	};
+
 	const static uintptr_t OriginalVTableBase = 0x187FBD8;
 
 public:
@@ -92,8 +98,8 @@ public:
 	static std::string GetTechniqueString(uint32_t Technique);
 
 private:
-	static void TechUpdateHighDetailRangeConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG);
-	static void TechUpdateFogConstants(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG);
+	static void TechUpdateHighDetailRangeConstants(BSGraphics::VertexCGroup& VertexCG);
+	static void TechUpdateFogConstants(BSGraphics::VertexCGroup& VertexCG, BSGraphics::PixelCGroup& PixelCG);
 
 	static void MatSetEnvTexture(const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material);
 	static void MatSetEnvMaskTexture(const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material);
@@ -101,14 +107,14 @@ private:
 	static void MatSetMultiTextureLandOverrides(const BSLightingShaderMaterialLandscape *Material);
 	static __int64 sub_141314170(__int64 a1);
 
-	static void GeometrySetupViewProjection(BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust);
-	static void GeometrySetupMTLandExtraConstants(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, const NiPoint3& Translate, float BlendParam1, float BlendParam2);
-	static void GeometrySetupTreeAnimConstants(const BSGraphics::ConstantGroup<BSGraphics::VertexShader>& VertexCG, BSLightingShaderProperty *Property);
-	static void GeometrySetupDirectionalLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const BSRenderPass *Pass, DirectX::XMMATRIX& World, bool WorldSpace);
-	static void GeometrySetupAmbientLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, const NiTransform& Transform, bool WorldSpace);
-	static void GeometrySetupEmitColorConstants(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSLightingShaderProperty *Property);
-	static void GeometrySetupConstantPointLights(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSRenderPass *Pass, DirectX::XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float Scale, bool WorldSpace);
-	static void GeometrySetupConstantProjectedUVData(const BSGraphics::ConstantGroup<BSGraphics::PixelShader>& PixelCG, BSMultiIndexTriShape *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals);
+	static void GeometrySetupConstantWorld(BSGraphics::VertexCGroup& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust);
+	static void GeometrySetupConstantLandBlendParams(const BSGraphics::VertexCGroup& VertexCG, const NiPoint3& Translate, float OffsetX, float OffsetY);
+	static void GeometrySetupTreeAnimConstants(const BSGraphics::VertexCGroup& VertexCG, BSLightingShaderProperty *Property);
+	static void GeometrySetupConstantDirectionalLight(const BSGraphics::PixelCGroup& PixelCG, const BSRenderPass *Pass, DirectX::XMMATRIX& InvWorld, Space RenderSpace);
+	static void GeometrySetupConstantDirectionalAmbientLight(const BSGraphics::PixelCGroup& PixelCG, const NiTransform& Transform, Space RenderSpace);
+	static void GeometrySetupEmitColorConstants(const BSGraphics::PixelCGroup& PixelCG, BSLightingShaderProperty *Property);
+	static void GeometrySetupConstantPointLights(const BSGraphics::PixelCGroup& PixelCG, BSRenderPass *Pass, DirectX::XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float WorldScale, Space RenderSpace);
+	static void GeometrySetupConstantProjectedUVData(const BSGraphics::PixelCGroup& PixelCG, BSMultiIndexTriShape *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals);
 	static void GenerateProjectionMatrix(const NiTransform& ObjectWorldTrans, DirectX::XMMATRIX& OutProjection, bool ModelSpace);
 };
 static_assert(sizeof(BSLightingShader) == 0xF8);

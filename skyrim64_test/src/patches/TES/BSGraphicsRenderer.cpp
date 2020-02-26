@@ -1346,7 +1346,7 @@ namespace BSGraphics
 		return temp;
 	}
 
-	ConstantGroup<VertexShader> Renderer::GetShaderConstantGroup(VertexShader *Shader, ConstantGroupLevel Level)
+	VertexCGroup Renderer::GetShaderConstantGroup(VertexShader *Shader, ConstantGroupLevel Level)
 	{
 		ConstantGroup<VertexShader> temp;
 		Buffer *group = &Shader->m_ConstantGroups[Level];
@@ -1377,7 +1377,7 @@ namespace BSGraphics
 		return temp;
 	}
 
-	ConstantGroup<PixelShader> Renderer::GetShaderConstantGroup(PixelShader *Shader, ConstantGroupLevel Level)
+	PixelCGroup Renderer::GetShaderConstantGroup(PixelShader *Shader, ConstantGroupLevel Level)
 	{
 		ConstantGroup<PixelShader> temp;
 		Buffer *group = &Shader->m_ConstantGroups[Level];

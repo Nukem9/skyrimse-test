@@ -302,6 +302,9 @@ namespace BSGraphics
 		uint32_t m_TechniqueID;						// Bit flags
 		ID3D11DomainShader *m_Shader;				// DirectX handle
 	};
+
+	using VertexCGroup = ConstantGroup<VertexShader>;
+	using PixelCGroup = ConstantGroup<PixelShader>;
 #pragma warning(pop)
 
 	//
