@@ -119,7 +119,7 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFla
 	// VS: p0 float4x4 WorldViewProj
 	//
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
-	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, renderer->m_ViewProjMat);
+	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, renderer->m_CameraData.m_ViewProjMat);
 
 	vertexCG.ParamVS<XMMATRIX, 0>() = worldViewProj;
 

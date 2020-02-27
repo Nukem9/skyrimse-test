@@ -162,7 +162,7 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags
 	// VS: p2 float4x4 World
 	// VS: p3 float4x4 PreviousWorld
 	//
-	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixMultiplyTranspose(geoTransform, renderer->m_ViewProjMat);
+	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixMultiplyTranspose(geoTransform, renderer->m_CameraData.m_ViewProjMat);
 	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(geoTransform);
 	vertexCG.ParamVS<XMMATRIX, 3>() = XMMatrixTranspose(prevGeoTransform);
 

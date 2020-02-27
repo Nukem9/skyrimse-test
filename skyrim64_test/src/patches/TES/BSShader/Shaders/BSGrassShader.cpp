@@ -251,8 +251,8 @@ void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const Ni
 	auto renderer = BSGraphics::Renderer::GetGlobals();
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(GeoTransform);
 
-	Data->WorldViewProj = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_ViewProjMat);
-	Data->WorldView = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_ViewMat);
+	Data->WorldViewProj = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_CameraData.m_ViewProjMat);
+	Data->WorldView = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_CameraData.m_ViewMat);
 	Data->World = XMMatrixTranspose(xmmGeoTransform);
 	Data->PreviousWorld = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(GeoTransform, renderer->m_PreviousPosAdjust));
 }

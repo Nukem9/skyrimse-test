@@ -324,9 +324,7 @@ std::string BSShader::GetAnyTechniqueName(uint32_t Type, uint32_t Technique)
 
 const char *BSShader::GetVariableType(uint32_t Type, const char *Name)
 {
-	auto *descriptor = ShaderMetadata[Type];
-
-	if (descriptor)
+	if (auto descriptor = ShaderMetadata[Type])
 	{
 		for (const ShaderDescriptor::Entry& e : descriptor->AllEntries())
 		{
@@ -340,9 +338,7 @@ const char *BSShader::GetVariableType(uint32_t Type, const char *Name)
 
 ShaderDescriptor::DeclType BSShader::GetVariableCategory(uint32_t Type, const char *Name)
 {
-	auto *descriptor = ShaderMetadata[Type];
-
-	if (descriptor)
+	if (auto descriptor = ShaderMetadata[Type])
 	{
 		for (const ShaderDescriptor::Entry& e : descriptor->AllEntries())
 		{
@@ -366,10 +362,6 @@ const char *BSShader::GetVSConstantName(uint32_t Type, uint32_t Index)
 		return BSShaderInfo::BSXShader::VSConstants::GetString(Index);
 	case BSShaderManager::BSSM_SHADER_UTILITY:
 		return BSShaderInfo::BSUtilityShader::VSConstants::GetString(Index);
-
-	default:
-		Assert(false);
-		return nullptr;
 	}
 
 	if (ShaderMetadata[Type]->ByConstantIndexVS.count(Index))
@@ -390,10 +382,6 @@ const char *BSShader::GetPSConstantName(uint32_t Type, uint32_t Index)
 		return BSShaderInfo::BSXShader::PSConstants::GetString(Index);
 	case BSShaderManager::BSSM_SHADER_UTILITY:
 		return BSShaderInfo::BSUtilityShader::PSConstants::GetString(Index);
-
-	default:
-		Assert(false);
-		return nullptr;
 	}
 
 	if (ShaderMetadata[Type]->ByConstantIndexPS.count(Index))
@@ -416,10 +404,6 @@ const char *BSShader::GetPSSamplerName(uint32_t Type, uint32_t Index, uint32_t T
 		return BSShaderInfo::BSXShader::Samplers::GetString(Index);
 	case BSShaderManager::BSSM_SHADER_UTILITY:
 		return BSShaderInfo::BSUtilityShader::Samplers::GetString(Index);
-
-	default:
-		Assert(false);
-		return nullptr;
 	}
 
 	if (ShaderMetadata[Type]->BySamplerIndex.count(Index))

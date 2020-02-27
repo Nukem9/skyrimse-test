@@ -10,40 +10,42 @@ class NiCamera;
 
 namespace BSGraphics
 {
+	struct alignas(16) ViewData
+	{
+		DirectX::XMVECTOR m_ViewUp;
+		DirectX::XMVECTOR m_ViewRight;
+		DirectX::XMVECTOR m_ViewDir;
+		DirectX::XMMATRIX m_ViewMat;
+		DirectX::XMMATRIX m_ProjMat;
+		DirectX::XMMATRIX m_ViewProjMat;
+		DirectX::XMMATRIX m_UnknownMat1;
+		DirectX::XMMATRIX m_ViewProjMatrixUnjittered;
+		DirectX::XMMATRIX m_PreviousViewProjMatrixUnjittered;
+		DirectX::XMMATRIX m_ProjMatrixUnjittered;
+		DirectX::XMMATRIX m_UnknownMat2;
+		float m_ViewPort[4];// NiRect<float> { left = 0, right = 1, top = 1, bottom = 0 }
+		NiPoint2 m_ViewDepthRange;
+		char _pad0[0x8];
+	};
+	static_assert(sizeof(ViewData) == 0x250);
+
 	struct CameraStateData
 	{
 		NiCamera *pReferenceCamera;
-		char _pad0[0x8];
-		DirectX::XMVECTOR kViewUp;
-		DirectX::XMVECTOR kViewRight;
-		DirectX::XMVECTOR kViewDir;
-		DirectX::XMMATRIX kViewMat;
-		DirectX::XMMATRIX kProjMat;
-		DirectX::XMMATRIX kViewProjMat;
-		char _pad1[0x40];
-		DirectX::XMMATRIX kViewProjMatUnjittered;
-		char _pad2[0x40];
-		DirectX::XMMATRIX kProjMatUnjittered;
-		char _pad3[0x60];
+		ViewData CamViewData;
 		NiPoint3 PosAdjust;
-		char _pad4[0xC];
+		NiPoint3 CurrentPosAdjust;
 		NiPoint3 PreviousPosAdjust;
 		bool UseJitter;
-		char _pad5[0x8];
+		char _pad0[0x8];
 
 		CameraStateData();
 	};
 	static_assert(sizeof(CameraStateData) == 0x290);
 	static_assert_offset(CameraStateData, pReferenceCamera, 0x0);
-	static_assert_offset(CameraStateData, kViewUp, 0x10);
-	static_assert_offset(CameraStateData, kViewRight, 0x20);
-	static_assert_offset(CameraStateData, kViewDir, 0x30);
-	static_assert_offset(CameraStateData, kViewMat, 0x40);
-	static_assert_offset(CameraStateData, kProjMat, 0x80);
-	static_assert_offset(CameraStateData, kViewProjMat, 0xC0);
-	static_assert_offset(CameraStateData, kViewProjMatUnjittered, 0x140);
-	static_assert_offset(CameraStateData, kProjMatUnjittered, 0x1C0);
+	static_assert_offset(CameraStateData, CamViewData, 0x10);
 	static_assert_offset(CameraStateData, PosAdjust, 0x260);
+	static_assert_offset(CameraStateData, CurrentPosAdjust, 0x26C);
 	static_assert_offset(CameraStateData, PreviousPosAdjust, 0x278);
 	static_assert_offset(CameraStateData, UseJitter, 0x284);
 

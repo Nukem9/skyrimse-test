@@ -483,24 +483,14 @@ namespace BSGraphics
 			// RSSetState
 			if (flags & (DIRTY_UNKNOWN2 | DIRTY_RASTER_DEPTH_BIAS | DIRTY_RASTER_CULL_MODE | DIRTY_UNKNOWN1))
 			{
-				// Cull mode, depth bias, fill mode, scissor mode, scissor rect (order unknown)
-				void *wtf = renderer->m_RasterStates[0][0][0][renderer->m_RasterStateScissorMode
-					+ 2
-					* (renderer->m_RasterStateDepthBiasMode
-						+ 12
-						* (renderer->m_RasterStateCullMode
-							+ 3i64 * renderer->m_RasterStateFillMode))];
-
-				Assert(wtf == renderer->m_RasterStates[renderer->m_RasterStateScissorMode][renderer->m_RasterStateDepthBiasMode][renderer->m_RasterStateCullMode][renderer->m_RasterStateFillMode]);
-
-				renderer->m_DeviceContext->RSSetState((ID3D11RasterizerState *)wtf);
+				renderer->m_DeviceContext->RSSetState(renderer->m_RasterStates[renderer->m_RasterStateFillMode][renderer->m_RasterStateCullMode][renderer->m_RasterStateDepthBiasMode][renderer->m_RasterStateScissorMode]);
 
 				if (flags & 0x40)
 				{
-					if (renderer->m_ViewPort.MinDepth != *(float *)&renderer->__zz2[640] || renderer->m_ViewPort.MaxDepth != *(float *)&renderer->__zz2[644])
+					if (renderer->m_ViewPort.MinDepth != renderer->m_CameraData.m_ViewDepthRange.x || renderer->m_ViewPort.MaxDepth != renderer->m_CameraData.m_ViewDepthRange.y)
 					{
-						renderer->m_ViewPort.MinDepth = *(float *)&renderer->__zz2[640];
-						renderer->m_ViewPort.MaxDepth = *(float *)&renderer->__zz2[644];
+						renderer->m_ViewPort.MinDepth = renderer->m_CameraData.m_ViewDepthRange.x;
+						renderer->m_ViewPort.MaxDepth = renderer->m_CameraData.m_ViewDepthRange.y;
 						flags |= DIRTY_VIEWPORT;
 					}
 
@@ -521,21 +511,9 @@ namespace BSGraphics
 			// OMSetBlendState
 			if (flags & DIRTY_ALPHA_BLEND)
 			{
-				float *blendFactor = (float *)(g_ModuleBase + 0x1E2C168);
+				const float blendFactor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-				Assert(blendFactor[0] == 1.0f && blendFactor[1] == 1.0f && blendFactor[2] == 1.0f && blendFactor[3] == 1.0f);
-
-				// Mode, write mode, alpha to coverage, blend state (order unknown)
-				void *wtf = renderer->m_BlendStates[0][0][0][*(unsigned int *)&renderer->__zz2[656]
-					+ 2
-					* (renderer->m_AlphaBlendWriteMode
-						+ 13
-						* (renderer->m_AlphaBlendAlphaToCoverage
-							+ 2i64 * renderer->m_AlphaBlendMode))];// AlphaBlendMode
-
-				Assert(wtf == renderer->m_BlendStates[renderer->m_AlphaBlendMode][renderer->m_AlphaBlendAlphaToCoverage][renderer->m_AlphaBlendWriteMode][*(unsigned int *)&renderer->__zz2[656]]);
-
-				renderer->m_DeviceContext->OMSetBlendState((ID3D11BlendState *)wtf, blendFactor, 0xFFFFFFFF);
+				renderer->m_DeviceContext->OMSetBlendState(renderer->m_BlendStates[renderer->m_AlphaBlendMode][renderer->m_AlphaBlendAlphaToCoverage][renderer->m_AlphaBlendWriteMode][renderer->m_AlphaBlendModeExtra], blendFactor, 0xFFFFFFFF);
 			}
 
 			if (flags & (DIRTY_ALPHA_ENABLE_TEST | DIRTY_ALPHA_TEST_REF))

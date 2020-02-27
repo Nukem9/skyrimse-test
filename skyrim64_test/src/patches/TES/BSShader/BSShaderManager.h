@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../BSRenderPass.h"
-#include "BSShader.h"
 #include "BSShaderAccumulator.h"
 
 #define BAD_SHADER 0x11223344

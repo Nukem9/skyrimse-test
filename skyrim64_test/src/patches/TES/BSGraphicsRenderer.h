@@ -5,6 +5,7 @@
 #include "NiMain/NiColor.h"
 #include "NiMain/NiTransform.h"
 #include "BSGraphicsTypes.h"
+#include "BSGraphicsState.h"
 #include "NiMain/NiSourceTexture.h"
 
 class BSTriShape;
@@ -241,29 +242,17 @@ namespace BSGraphics
 			uint32_t m_CSTextureMinLodMode[16];
 			ID3D11UnorderedAccessView *m_CSUAV[8];
 
-			union
-			{
-				struct
-				{
-					uint64_t m_VertexDesc;
-					VertexShader *m_CurrentVertexShader;
-					PixelShader *m_CurrentPixelShader;
-					D3D11_PRIMITIVE_TOPOLOGY m_Topology;
-					NiPoint3 m_PosAdjust;
-					NiPoint3 m_PreviousPosAdjust;
-					char _zpad3[0x3C];
-					DirectX::XMMATRIX m_ViewMat;
-					DirectX::XMMATRIX m_ProjMat;
-					DirectX::XMMATRIX m_ViewProjMat;
-					char _a_pad4[0x40];
-					DirectX::XMMATRIX m_ViewProjMatrixUnjittered;
-					DirectX::XMMATRIX m_PreviousViewProjMatrixUnjittered;
-					DirectX::XMMATRIX m_ProjMatrixUnjittered;
-					char _a_zz2[0x70];
-				};
+			uint64_t m_VertexDesc;
+			VertexShader *m_CurrentVertexShader;
+			PixelShader *m_CurrentPixelShader;
+			D3D11_PRIMITIVE_TOPOLOGY m_Topology;
 
-				char __zz2[0x2A0];
-			};
+			NiPoint3 m_PosAdjust;
+			NiPoint3 m_PreviousPosAdjust;
+			ViewData m_CameraData;
+
+			uint32_t m_AlphaBlendModeExtra;
+			char _pad0[0xC];
 		};
 	};
 
@@ -330,10 +319,6 @@ namespace BSGraphics
 	CHECK_OFFSET(m_Topology, 0x14304E208);
 	CHECK_OFFSET(m_PosAdjust, 0x14304E20C);
 	CHECK_OFFSET(m_PreviousPosAdjust, 0x14304E218);
-	CHECK_OFFSET(m_ViewMat, 0x14304E260);
-	CHECK_OFFSET(m_ProjMat, 0x14304E2A0);
-	CHECK_OFFSET(m_ViewProjMat, 0x14304E2E0);
-	CHECK_OFFSET(m_ViewProjMatrixUnjittered, 0x14304E360);
-	CHECK_OFFSET(m_PreviousViewProjMatrixUnjittered, 0x14304E3A0);
-	CHECK_OFFSET(m_ProjMatrixUnjittered, 0x14304E3E0);
+	CHECK_OFFSET(m_CameraData, 0x14304E230);
+	CHECK_OFFSET(m_AlphaBlendModeExtra, 0x14304E480);
 }

@@ -155,7 +155,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	// VS: p1 float4x4 World
 	//
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(geoTransform);
-	vertexCG.ParamVS<XMMATRIX, 0>() = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_ViewProjMat);
+	vertexCG.ParamVS<XMMATRIX, 0>() = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_CameraData.m_ViewProjMat);
 	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixTranspose(xmmGeoTransform);
 
 	//
