@@ -1,4 +1,5 @@
 #include "../../../../common.h"
+#include "../../BSGraphics/BSGraphicsUtility.h"
 #include "../../BSGraphicsState.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
@@ -52,7 +53,7 @@ BSBloodSplatterShader::~BSBloodSplatterShader()
 
 bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -90,7 +91,7 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 
 void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->AlphaBlendStateSetMode(0);
 	renderer->DepthStencilStateSetDepthMode(BSGraphics::DEPTH_STENCIL_DEPTH_MODE_DEFAULT);
@@ -99,7 +100,7 @@ void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 
 void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 	auto property = static_cast<const BSBloodSplatterShaderProperty *>(Pass->m_ShaderProperty);
 
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);

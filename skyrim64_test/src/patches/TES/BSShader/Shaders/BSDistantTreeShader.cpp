@@ -1,5 +1,6 @@
 #include "../../../../common.h"
 #include "../../TES.h"
+#include "../../BSGraphics/BSGraphicsRenderer.h"
 #include "../../BSGraphicsState.h"
 #include "../../NiMain/NiSourceTexture.h"
 #include "../../NiMain/NiDirectionalLight.h"
@@ -60,7 +61,7 @@ BSDistantTreeShader::~BSDistantTreeShader()
 
 bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -142,7 +143,7 @@ void BSDistantTreeShader::RestoreTechnique(uint32_t Technique)
 
 void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	//

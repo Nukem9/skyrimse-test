@@ -70,7 +70,7 @@ bool BSParticleShader::SetupTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSParticleShader::SetupTechnique, Technique);
 
-	auto renderer = Renderer::GetGlobals();
+	auto renderer = Renderer::QInstance();
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -114,7 +114,7 @@ void BSParticleShader::RestoreTechnique(uint32_t Technique)
 		//sub_140D74380((__int64)renderTargetManager, 1u, 85, 3, 1);// RENDER_TARGET_TEMPORAL_AA_MASK
 	}
 	else
-		Renderer::GetGlobals()->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
+		Renderer::QInstance()->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
 
 	BSShader::EndTechnique();
 }
@@ -128,7 +128,7 @@ void BSParticleShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSParticleShader::RestoreGeometry, Pass, RenderFlags);
 
-	auto renderer = Renderer::GetGlobals();
+	auto renderer = Renderer::QInstance();
 	BSShaderProperty *property = Pass->m_ShaderProperty;
 
 	if (!property->GetFlag(BSShaderProperty::BSSP_FLAG_ZBUFFER_TEST))

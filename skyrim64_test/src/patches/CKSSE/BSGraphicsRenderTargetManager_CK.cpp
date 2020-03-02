@@ -195,11 +195,11 @@ void BSGraphics_CK::Renderer::CreateDepthStencil(uint32_t TargetIndex, const cha
 			dsvDesc2.Texture2DArray.FirstArraySlice = i;
 		}
 
-		CHECK_RESULT(hr, device->CreateDepthStencilView(data->Texture, &dsvDesc1, &data->PrimaryViews[i]));
-		CHECK_RESULT(hr, device->CreateDepthStencilView(data->Texture, &dsvDesc2, &data->SecondaryViews[i]));
+		CHECK_RESULT(hr, device->CreateDepthStencilView(data->Texture, &dsvDesc1, &data->Views[i]));
+		CHECK_RESULT(hr, device->CreateDepthStencilView(data->Texture, &dsvDesc2, &data->ReadOnlyViews[i]));
 
-		SetResourceName(data->PrimaryViews[i], "%s DSV PRI SLICE%u", Name, i);
-		SetResourceName(data->SecondaryViews[i], "%s DSV SEC SLICE%u", Name, i);
+		SetResourceName(data->Views[i], "%s DSV PRI SLICE%u", Name, i);
+		SetResourceName(data->ReadOnlyViews[i], "%s DSV SEC SLICE%u", Name, i);
 	}
 
 	// Shader resource access
@@ -311,7 +311,7 @@ void BSGraphics_CK::Renderer::DestroyRenderTarget(uint32_t TargetIndex)
 	if (data->UAV)
 		data->UAV->Release();
 
-	memset(data, 0, sizeof(BSGraphics_CK::RenderTargetData));
+	memset(data, 0, sizeof(RenderTargetData));
 }
 
 void BSGraphics_CK::Renderer::DestroyDepthStencil(uint32_t TargetIndex)
@@ -321,13 +321,13 @@ void BSGraphics_CK::Renderer::DestroyDepthStencil(uint32_t TargetIndex)
 	if (data->Texture)
 		data->Texture->Release();
 
-	for (ID3D11DepthStencilView *view : data->PrimaryViews)
+	for (ID3D11DepthStencilView *view : data->Views)
 	{
 		if (view)
 			view->Release();
 	}
 
-	for (ID3D11DepthStencilView *view : data->SecondaryViews)
+	for (ID3D11DepthStencilView *view : data->ReadOnlyViews)
 	{
 		if (view)
 			view->Release();
@@ -339,7 +339,7 @@ void BSGraphics_CK::Renderer::DestroyDepthStencil(uint32_t TargetIndex)
 	if (data->StencilSRV)
 		data->StencilSRV->Release();
 
-	memset(data, 0, sizeof(BSGraphics_CK::DepthStencilData));
+	memset(data, 0, sizeof(DepthStencilData));
 }
 
 void BSGraphics_CK::Renderer::DestroyCubemapRenderTarget(uint32_t TargetIndex)
@@ -358,10 +358,10 @@ void BSGraphics_CK::Renderer::DestroyCubemapRenderTarget(uint32_t TargetIndex)
 	if (data->SRV)
 		data->SRV->Release();
 
-	memset(data, 0, sizeof(BSGraphics_CK::CubemapRenderTargetData));
+	memset(data, 0, sizeof(CubemapRenderTargetData));
 }
 
-void BSGraphicsRenderTargetManager_CK::CreateRenderTarget(uint32_t TargetIndex, const BSGraphics_CK::RenderTargetProperties *Properties)
+void BSGraphicsRenderTargetManager_CK::CreateRenderTarget(uint32_t TargetIndex, const RenderTargetProperties *Properties)
 {
 	AssertMsg(TargetIndex < RENDER_TARGET_COUNT && TargetIndex != RENDER_TARGET_NONE, "Wrong target index");
 	AssertMsg(TargetIndex != 0, "Framebuffer properties come from the renderer");
@@ -371,7 +371,7 @@ void BSGraphicsRenderTargetManager_CK::CreateRenderTarget(uint32_t TargetIndex, 
 	BSGraphics_CK::Renderer::QInstance()->CreateRenderTarget(TargetIndex, GetRenderTargetName(TargetIndex), Properties);
 }
 
-void BSGraphicsRenderTargetManager_CK::CreateDepthStencil(uint32_t TargetIndex, const BSGraphics_CK::DepthStencilTargetProperties *Properties)
+void BSGraphicsRenderTargetManager_CK::CreateDepthStencil(uint32_t TargetIndex, const DepthStencilTargetProperties *Properties)
 {
 	AssertMsg(TargetIndex < DEPTH_STENCIL_COUNT && TargetIndex != DEPTH_STENCIL_TARGET_NONE, "Wrong target index");
 
@@ -380,7 +380,7 @@ void BSGraphicsRenderTargetManager_CK::CreateDepthStencil(uint32_t TargetIndex, 
 	BSGraphics_CK::Renderer::QInstance()->CreateDepthStencil(TargetIndex, GetDepthStencilName(TargetIndex), Properties);
 }
 
-void BSGraphicsRenderTargetManager_CK::CreateCubemapRenderTarget(uint32_t TargetIndex, const BSGraphics_CK::CubeMapRenderTargetProperties *Properties)
+void BSGraphicsRenderTargetManager_CK::CreateCubemapRenderTarget(uint32_t TargetIndex, const CubeMapRenderTargetProperties *Properties)
 {
 	AssertMsg(TargetIndex < RENDER_TARGET_CUBEMAP_COUNT, "Wrong target index");
 

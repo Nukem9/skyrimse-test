@@ -1,5 +1,6 @@
 #include "../../../rendering/common.h"
 #include "../../../../common.h"
+#include "../../BSGraphics/BSGraphicsUtility.h"
 #include "../../BSGraphicsState.h"
 #include "../../NiMain/NiNode.h"
 #include "../../NiMain/NiCamera.h"
@@ -64,7 +65,7 @@ BSSkyShader::~BSSkyShader()
 
 bool BSSkyShader::SetupTechnique(uint32_t Technique)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -119,7 +120,7 @@ bool BSSkyShader::SetupTechnique(uint32_t Technique)
 
 void BSSkyShader::RestoreTechnique(uint32_t Technique)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->AlphaBlendStateSetMode(0);
 	renderer->AlphaBlendStateSetWriteMode(1);
@@ -131,7 +132,7 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 
 void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 	auto property = static_cast<const BSSkyShaderProperty *>(Pass->m_ShaderProperty);
 
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
@@ -315,7 +316,7 @@ void BSSkyShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	auto skyObjectType = static_cast<const BSSkyShaderProperty *>(Pass->m_ShaderProperty)->uiSkyObjectType;
 
 	if (skyObjectType == BSSkyShaderProperty::SO_SUN || skyObjectType == BSSkyShaderProperty::SO_MOON)
-		BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetMode(1);
+		BSGraphics::Renderer::QInstance()->AlphaBlendStateSetMode(1);
 }
 
 void BSSkyShader::CreateAllShaders()

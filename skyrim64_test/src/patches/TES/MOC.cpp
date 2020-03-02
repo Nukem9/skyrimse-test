@@ -180,7 +180,7 @@ namespace MOC
 	void UpdateDepthViewTexture()
 	{
 		ZoneScopedN("MOC UpdateDepthView");
-		ThreadedMOC->UpdateDepthViewTexture(BSGraphics::Renderer::GetGlobals()->m_DeviceContext, g_OcclusionTexture);
+		ThreadedMOC->UpdateDepthViewTexture(BSGraphics::Renderer::QInstance()->m_DeviceContext, g_OcclusionTexture);
 	}
 
 	void ForceFlush()

@@ -62,9 +62,6 @@
     <ClInclude Include="src\ui\imgui_ext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSGraphicsRenderTargetManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -114,9 +111,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSGrassShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSGraphicsRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\TES\BSShader\BSShaderUtil.h">
@@ -374,6 +368,12 @@
     <ClInclude Include="src\patches\TES\NiMain\BSMultiIndexTriShape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -436,9 +436,6 @@
     <ClCompile Include="src\ui\imgui_ext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSGraphicsRenderTargetManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\logging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -473,9 +470,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSShader\BSShaderProperty.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSGraphicsRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSShader\BSShaderUtil.cpp">
@@ -620,6 +614,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\CKSSE\EditorUIDarkMode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsUtility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -231,18 +231,16 @@ bool BSBatchRenderer::sub_14131E7B0(uint32_t& Technique, uint32_t& GroupIndex, B
 
 bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, BSSimpleList<uint32_t> *&PassIndexList, uint32_t RenderFlags)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
-	bool alphaTest;
-	bool unknownFlag;
+	auto renderer = BSGraphics::Renderer::QInstance();
+
+	bool alphaTest = false;
+	bool unknownFlag = (RenderFlags & 0x108) != 0;
 
 	// Set pass render state
 	{
 		int cullMode = -1;
-		int alphaBlendUnknown = -1;
-		bool useScrapConstant = false;
-
-		alphaTest = false;
-		unknownFlag = (RenderFlags & 0x108) != 0;
+		int alphaToCoverage = -1;
+		bool useAlphaTestRef = false;
 
 		switch (GroupIndex)
 		{
@@ -250,62 +248,62 @@ bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, B
 			if (!unknownFlag)
 				cullMode = 1;
 
-			useScrapConstant = false;
-			alphaBlendUnknown = 0;
+			useAlphaTestRef = false;
+			alphaToCoverage = 0;
 			break;
 
 		case 1:
 			if (!unknownFlag)
 				cullMode = 1;
 
-			useScrapConstant = true;
+			useAlphaTestRef = true;
 			alphaTest = true;
 
 			if (byte_1431F54CD)
-				alphaBlendUnknown = 1;
+				alphaToCoverage = 1;
 			break;
 
 		case 2:
 			if (!unknownFlag)
 				cullMode = 0;
 
-			useScrapConstant = false;
-			alphaBlendUnknown = 0;
+			useAlphaTestRef = false;
+			alphaToCoverage = 0;
 			break;
 
 		case 3:
 			if (!unknownFlag)
 				cullMode = 0;
 
-			useScrapConstant = true;
+			useAlphaTestRef = true;
 			alphaTest = true;
 
 			if (byte_1431F54CD)
-				alphaBlendUnknown = 1;
+				alphaToCoverage = 1;
 			break;
 
 		case 4:
 			if (!unknownFlag)
 				cullMode = 1;
 
-			useScrapConstant = true;
+			useAlphaTestRef = true;
 			alphaTest = true;
-			alphaBlendUnknown = 0;
+			alphaToCoverage = 0;
 			break;
 		}
 
 		if (cullMode != -1)
-			BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(cullMode);
+			BSGraphics::Renderer::QInstance()->RasterStateSetCullMode(cullMode);
 
-		if (alphaBlendUnknown != -1)
-			BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetAlphaToCoverage(alphaBlendUnknown);
+		if (alphaToCoverage != -1)
+			BSGraphics::Renderer::QInstance()->AlphaBlendStateSetAlphaToCoverage(alphaToCoverage);
 
-		renderer->SetUseAlphaTestRef(useScrapConstant);
+		renderer->SetUseAlphaTestRef(useAlphaTestRef);
 	}
 
 	// Render this group with a specific render pass list
-	PassGroup *group = &m_RenderPass[m_RenderPassMap.get(Technique)];
-	BSRenderPass *currentPass = group->m_Passes[GroupIndex];
+	auto group = &m_RenderPass[m_RenderPassMap.get(Technique)];
+	auto currentPass = group->m_Passes[GroupIndex];
 
 	for (; currentPass; currentPass = currentPass->m_PassGroupNext)
 		RenderPassImmediately(currentPass, Technique, alphaTest, RenderFlags);
@@ -319,8 +317,8 @@ bool BSBatchRenderer::RenderBatches(uint32_t& Technique, uint32_t& GroupIndex, B
 		group->m_Passes[GroupIndex] = nullptr;
 	}
 
-	BSBatchRenderer::EndPass();
-	BSGraphics::Renderer::GetGlobals()->AlphaBlendStateSetAlphaToCoverage(0);
+	EndPass();
+	BSGraphics::Renderer::QInstance()->AlphaBlendStateSetAlphaToCoverage(0);
 
 	GroupIndex++;
 	return sub_14131E700(Technique, GroupIndex, PassIndexList);
@@ -341,7 +339,7 @@ void BSBatchRenderer::ClearRenderPasses()
 
 void UnmapDynamicData()
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
 }
@@ -351,7 +349,7 @@ void BSBatchRenderer::RenderPersistentPassList(PersistentPassList *PassList, uin
 	if (!PassList->m_Head)
 		return;
 
-	BSBatchRenderer::EndPass();
+	EndPass();
 
 	for (BSRenderPass *i = PassList->m_Head; i; i = i->m_Next)
 	{
@@ -361,26 +359,26 @@ void BSBatchRenderer::RenderPersistentPassList(PersistentPassList *PassList, uin
 		if ((RenderFlags & 0x108) == 0)
 		{
 			if (i->m_ShaderProperty->GetFlag(BSShaderProperty::BSSP_FLAG_TWO_SIDED))
-				BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(0);
+				BSGraphics::Renderer::QInstance()->RasterStateSetCullMode(0);
 			else
-				BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(1);
+				BSGraphics::Renderer::QInstance()->RasterStateSetCullMode(1);
 		}
 
 		bool alphaTest = i->m_Geometry->QAlphaProperty() && i->m_Geometry->QAlphaProperty()->GetAlphaTesting();
 
-		BSBatchRenderer::RenderPassImmediately(i, i->m_PassEnum, alphaTest, RenderFlags);
+		RenderPassImmediately(i, i->m_PassEnum, alphaTest, RenderFlags);
 	}
 
 	if ((RenderFlags & 0x108) == 0)
-		BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(1);
+		BSGraphics::Renderer::QInstance()->RasterStateSetCullMode(1);
 
 	PassList->Clear();
-	BSBatchRenderer::EndPass();
+	EndPass();
 }
 
 void BSBatchRenderer::RenderPassImmediately(BSRenderPass *Pass, uint32_t Technique, bool AlphaTest, uint32_t RenderFlags)
 {
-	auto *GraphicsGlobals = BSGraphics::Renderer::GetGlobals();
+	auto *GraphicsGlobals = BSGraphics::Renderer::QInstance();
 	uint32_t& dword_1432A8214 = *(uint32_t *)((uintptr_t)GraphicsGlobals + 0x3014);// LastPass
 	uint64_t& qword_1432A8218 = *(uint64_t *)((uintptr_t)GraphicsGlobals + 0x3018);// LastShader
 	BSShaderMaterial*& qword_1434B5220 = *(BSShaderMaterial **)((uintptr_t)GraphicsGlobals + 0x3500);// LastMaterial
@@ -488,7 +486,7 @@ void BSBatchRenderer::RenderPassImmediately_Skinned(BSRenderPass *Pass, bool Alp
 		if (dynamicTri)
 		{
 			const uint32_t size = dynamicTri->QDynamicDataSize();
-			void *vertexBuffer = BSGraphics::Renderer::GetGlobals()->MapDynamicBuffer(size, &skinData.m_VertexBufferOffset);
+			void *vertexBuffer = BSGraphics::Renderer::QInstance()->MapDynamicBuffer(size, &skinData.m_VertexBufferOffset);
 
 			memcpy(vertexBuffer, dynamicTri->LockDynamicDataForRead(), size);
 
@@ -517,8 +515,8 @@ void BSBatchRenderer::RenderPassImmediately_Custom(BSRenderPass *Pass, bool Alph
 
 void BSBatchRenderer::Draw(BSRenderPass *Pass)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
-	BSGeometry *geometry = Pass->m_Geometry;
+	auto renderer = BSGraphics::Renderer::QInstance();
+	auto geometry = Pass->m_Geometry;
 
 	switch (geometry->QType())
 	{

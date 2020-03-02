@@ -35,7 +35,6 @@ GpuCircularBuffer::~GpuCircularBuffer()
 
 void *GpuCircularBuffer::MapData(ID3D11DeviceContext *Context, uint32_t AllocationSize, uint32_t *AllocationOffset, bool ForceRemap)
 {
-	// GPU allocations are required to be 16-byte aligned (explicitly set by me)
 	Assert(AllocationSize % 16 == 0);
 
 	//

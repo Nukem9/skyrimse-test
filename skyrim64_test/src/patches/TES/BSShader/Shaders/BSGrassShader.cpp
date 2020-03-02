@@ -75,7 +75,7 @@ BSGrassShader::~BSGrassShader()
 
 bool BSGrassShader::SetupTechnique(uint32_t Technique)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -110,7 +110,7 @@ void BSGrassShader::RestoreTechnique(uint32_t Technique)
 
 void BSGrassShader::SetupMaterial(BSShaderMaterial const *Material)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 	NiSourceTexture *baseTexture = *(NiSourceTexture **)((uintptr_t)Material + 72);
 
 	renderer->SetTexture(TexSlot::Base, baseTexture->QRendererTexture());
@@ -126,7 +126,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	uintptr_t geometry = (uintptr_t)Pass->m_Geometry;
 	uintptr_t property = (uintptr_t)Pass->m_ShaderProperty;
 
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto data = (VertexConstantData *)vertexCG.RawData();
 
@@ -248,7 +248,7 @@ void BSGrassShader::UpdateFogParameters()
 
 void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const NiTransform& GeoTransform)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(GeoTransform);
 
 	Data->WorldViewProj = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_CameraData.m_ViewProjMat);
@@ -259,7 +259,7 @@ void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const Ni
 
 void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSShaderProperty *Property)
 {
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	BSTArray<float> *propertyInstanceData = (BSTArray<float> *)((uintptr_t)Property + 0x160);
 	uint32_t instanceDataCount = propertyInstanceData->QSize();

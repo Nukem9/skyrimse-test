@@ -5,7 +5,7 @@
 #include <functional>
 #include "../NiMain/common.h"
 #include "../BSTScatterTable.h"
-#include "../BSGraphicsRenderer.h"
+#include "../BSGraphics/BSGraphicsRenderer.h"
 #include "BSShaderProperty.h"
 #include "BSShaderMaterial.h"
 

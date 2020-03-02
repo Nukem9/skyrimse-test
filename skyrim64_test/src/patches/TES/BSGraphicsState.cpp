@@ -19,10 +19,8 @@ namespace BSGraphics
 	{
 		for (uint32_t i = 0; i < kCameraDataCacheA.QSize(); i++)
 		{
-			if (kCameraDataCacheA[i].pReferenceCamera != Camera || kCameraDataCacheA[i].UseJitter != UseJitter)
-				continue;
-
-			return &kCameraDataCacheA[i];
+			if (kCameraDataCacheA[i].pReferenceCamera == Camera && kCameraDataCacheA[i].UseJitter == UseJitter)
+				return &kCameraDataCacheA[i];
 		}
 
 		return nullptr;

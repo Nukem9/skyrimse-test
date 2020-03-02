@@ -110,7 +110,7 @@ HRESULT STDMETHODCALLTYPE D3D11DeviceProxy::CreateVertexShader(const void *pShad
 	HRESULT hr = m_Device->CreateVertexShader(pShaderBytecode, BytecodeLength, pClassLinkage, ppVertexShader);
 
 	if (SUCCEEDED(hr))
-		BSGraphics::Renderer::GetGlobals()->RegisterShaderBytecode(*ppVertexShader, pShaderBytecode, BytecodeLength);
+		BSGraphics::Renderer::QInstance()->RegisterShaderBytecode(*ppVertexShader, pShaderBytecode, BytecodeLength);
 
 	return hr;
 }
@@ -130,7 +130,7 @@ HRESULT STDMETHODCALLTYPE D3D11DeviceProxy::CreatePixelShader(const void *pShade
 	HRESULT hr = m_Device->CreatePixelShader(pShaderBytecode, BytecodeLength, pClassLinkage, ppPixelShader);
 
 	if (SUCCEEDED(hr))
-		BSGraphics::Renderer::GetGlobals()->RegisterShaderBytecode(*ppPixelShader, pShaderBytecode, BytecodeLength);
+		BSGraphics::Renderer::QInstance()->RegisterShaderBytecode(*ppPixelShader, pShaderBytecode, BytecodeLength);
 
 	return hr;
 }
@@ -150,7 +150,7 @@ HRESULT STDMETHODCALLTYPE D3D11DeviceProxy::CreateComputeShader(const void *pSha
 	HRESULT hr = m_Device->CreateComputeShader(pShaderBytecode, BytecodeLength, pClassLinkage, ppComputeShader);
 
 	if (SUCCEEDED(hr))
-		BSGraphics::Renderer::GetGlobals()->RegisterShaderBytecode(*ppComputeShader, pShaderBytecode, BytecodeLength);
+		BSGraphics::Renderer::QInstance()->RegisterShaderBytecode(*ppComputeShader, pShaderBytecode, BytecodeLength);
 
 	return hr;
 }

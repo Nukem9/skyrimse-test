@@ -76,7 +76,7 @@ DWORD WINAPI DC_Thread(LPVOID Arg)
 		// Swap our TLS renderer pointers to this job & validate it
 		*(uintptr_t *)(__readgsqword(0x58) + g_TlsIndex * sizeof(void *)) = (uintptr_t)&jobData->ThreadGlobals;
 
-		AssertDebug(&jobData->ThreadGlobals == BSGraphics::Renderer::GetGlobals());
+		AssertDebug(&jobData->ThreadGlobals == BSGraphics::Renderer::QInstance());
 		AssertDebug(&jobData->ThreadGlobals != BSGraphics::Renderer::GetGlobalsNonThreaded());
 
 		// Previous command list should've been released (aka sent to GPU)

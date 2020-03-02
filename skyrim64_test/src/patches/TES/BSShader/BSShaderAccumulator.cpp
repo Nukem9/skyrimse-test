@@ -1,8 +1,7 @@
 #include "../../rendering/common.h"
 #include "../../../common.h"
-#include "../BSGraphicsRenderer.h"
+#include "../BSGraphics/BSGraphicsRenderer.h"
 #include "../BSGraphicsState.h"
-#include "../BSGraphicsRenderTargetManager.h"
 #include "../BSBatchRenderer.h"
 #include "BSShaderManager.h"
 #include "BSShaderAccumulator.h"
@@ -189,7 +188,7 @@ void BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth(BSShaderAc
 		return;
 
 	__int64 a1 = (__int64)Accumulator;
-	auto renderer = BSGraphics::Renderer::GetGlobals();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->BeginEvent(L"BSShaderAccumulator: Draw1");
 	ZoneScopedN("FinishAccumulating_Standard_PreResolveDepth");
@@ -409,7 +408,7 @@ void BSShaderAccumulator::FinishAccumulating_ShadowMapOrMask(BSShaderAccumulator
 		//AssertMsgDebug(Accumulator->m_RenderMode == ?, "Volumetric lighting shadow map render was called for a non directional light.");
 
 		BSGraphics::BeginEvent(L"Volumetric lighting specific shadow map");
-		BSGraphics::Renderer::GetGlobals()->RasterStateSetCullMode(0);
+		BSGraphics::Renderer::QInstance()->RasterStateSetCullMode(0);
 		Accumulator->RenderGeometryGroup(1, BSSM_BLOOD_SPLATTER, RenderFlags, 15);
 		BSGraphics::EndEvent();
 	}

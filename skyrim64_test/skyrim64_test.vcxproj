@@ -184,6 +184,8 @@
     <ClInclude Include="src\patches\TES\bhkThreadMemorySource.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsState.h" />
     <ClInclude Include="src\patches\TES\BSGraphicsTypes.h" />
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.h" />
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsUtility.h" />
     <ClInclude Include="src\patches\TES\BSJobs.h" />
     <ClInclude Include="src\patches\TES\BSRenderPass.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSLight.h" />
@@ -210,11 +212,9 @@
     <ClInclude Include="src\patches\rendering\common.h" />
     <ClInclude Include="src\patches\rendering\d3d11_tls.h" />
     <ClInclude Include="src\patches\TES\BSBatchRenderer.h" />
-    <ClInclude Include="src\patches\TES\BSGraphicsRenderer.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShaderMaterial.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShaderUtil.h" />
     <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.h" />
-    <ClInclude Include="src\patches\TES\BSGraphicsRenderTargetManager.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShader.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShaderAccumulator.h" />
     <ClInclude Include="src\patches\TES\BSShader\BSShaderManager.h" />
@@ -289,6 +289,8 @@
     <ClCompile Include="src\patches\CKSSE\LogWindow.cpp" />
     <ClCompile Include="src\patches\offsets.cpp" />
     <ClCompile Include="src\patches\CKSSE\TESFile_CK.cpp" />
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.cpp" />
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsUtility.cpp" />
     <ClCompile Include="src\patches\TES\BSRenderPass.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />
@@ -316,14 +318,12 @@
     <ClCompile Include="src\patches\TES\BGSDistantTreeBlock.cpp" />
     <ClCompile Include="src\patches\TES\bhkThreadMemorySource.cpp" />
     <ClCompile Include="src\patches\TES\BSBatchRenderer.cpp" />
-    <ClCompile Include="src\patches\TES\BSGraphicsRenderer.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphicsState.cpp" />
     <ClCompile Include="src\patches\TES\BSJobs.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderProperty.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderUtil.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShader_Dumper.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.cpp" />
-    <ClCompile Include="src\patches\TES\BSGraphicsRenderTargetManager.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShader.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderAccumulator.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderManager.cpp" />

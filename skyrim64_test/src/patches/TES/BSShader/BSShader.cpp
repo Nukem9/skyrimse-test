@@ -1,6 +1,6 @@
 #include "../../../common.h"
 #include "../MemoryContextTracker.h"
-#include "../BSGraphicsRenderer.h"
+#include "../BSGraphics/BSGraphicsRenderer.h"
 #include "BSShaderManager.h"
 #include "BSShader.h"
 #include "BSShader_Dumper.h"
@@ -59,7 +59,7 @@ void BSShader::SetBoneMatrix(NiSkinInstance *SkinInstance, NiSkinPartition::Part
 	if (!Partition || Partition->m_usBones == 0)
 		return;
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 
 	if (GAME_TLS(NiSkinInstance *, 0x2A00) == SkinInstance)
 		return;
@@ -90,7 +90,7 @@ void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, co
 	wchar_t fxpPath[MAX_PATH];
 	swprintf_s(fxpPath, L"C:\\SA\\ShaderSource\\%S.hlsl", SourceFile);
 
-	BSGraphics::VertexShader *vertexShader = BSGraphics::Renderer::GetGlobals()->CompileVertexShader(fxpPath, Defines, GetConstant);
+	BSGraphics::VertexShader *vertexShader = BSGraphics::Renderer::QInstance()->CompileVertexShader(fxpPath, Defines, GetConstant);
 
 	auto e = m_VertexShaderTable.find(Technique);
 
@@ -98,7 +98,7 @@ void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, co
 
 	if (!strstr(SourceFile, "DistantTree"))
 	{
-		BSGraphics::Renderer::GetGlobals()->ValidateShaderReplacement(e->m_Shader, vertexShader->m_Shader);
+		BSGraphics::Renderer::QInstance()->ValidateShaderReplacement(e->m_Shader, vertexShader->m_Shader);
 
 		for (int i = 0; i < 20; i++)
 		{
@@ -109,6 +109,9 @@ void BSShader::CreateVertexShader(uint32_t Technique, const char *SourceFile, co
 			//	Assert(false);
 		}
 	}
+
+	memcpy(vertexShader->m_ConstantOffsets, e->m_ConstantOffsets, sizeof(e->m_ConstantOffsets));
+	memcpy(vertexShader->m_ConstantGroups, e->m_ConstantGroups, sizeof(e->m_ConstantGroups));
 
 	vertexShader->m_TechniqueID = e->m_TechniqueID;
 	vertexShader->m_VertexDescription = e->m_VertexDescription;
@@ -121,7 +124,7 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 	wchar_t fxpPath[MAX_PATH];
 	swprintf_s(fxpPath, L"C:\\SA\\ShaderSource\\%S.hlsl", SourceFile);
 
-	BSGraphics::PixelShader *pixelShader = BSGraphics::Renderer::GetGlobals()->CompilePixelShader(fxpPath, Defines, GetSampler, GetConstant);
+	BSGraphics::PixelShader *pixelShader = BSGraphics::Renderer::QInstance()->CompilePixelShader(fxpPath, Defines, GetSampler, GetConstant);
 
 	auto e = m_PixelShaderTable.find(Technique);
 
@@ -129,7 +132,7 @@ void BSShader::CreatePixelShader(uint32_t Technique, const char *SourceFile, con
 
 	if (!strstr(SourceFile, "DistantTree"))
 	{
-		BSGraphics::Renderer::GetGlobals()->ValidateShaderReplacement(e->m_Shader, pixelShader->m_Shader);
+		BSGraphics::Renderer::QInstance()->ValidateShaderReplacement(e->m_Shader, pixelShader->m_Shader);
 
 		for (int i = 0; i < 64; i++)
 		{
@@ -150,7 +153,7 @@ void BSShader::CreateHullShader(uint32_t Technique, const char *SourceFile, cons
 	wchar_t fxpPath[MAX_PATH];
 	swprintf_s(fxpPath, L"C:\\SA\\ShaderSource\\%S.hlsl", SourceFile);
 
-	BSGraphics::HullShader *hullShader = BSGraphics::Renderer::GetGlobals()->CompileHullShader(fxpPath, Defines);
+	BSGraphics::HullShader *hullShader = BSGraphics::Renderer::QInstance()->CompileHullShader(fxpPath, Defines);
 
 	HullShaders[Technique] = hullShader;
 }
@@ -161,7 +164,7 @@ void BSShader::CreateDomainShader(uint32_t Technique, const char *SourceFile, co
 	wchar_t fxpPath[MAX_PATH];
 	swprintf_s(fxpPath, L"C:\\SA\\ShaderSource\\%S.hlsl", SourceFile);
 
-	BSGraphics::DomainShader *domainShader = BSGraphics::Renderer::GetGlobals()->CompileDomainShader(fxpPath, Defines);
+	BSGraphics::DomainShader *domainShader = BSGraphics::Renderer::QInstance()->CompileDomainShader(fxpPath, Defines);
 
 	DomainShaders[Technique] = domainShader;
 }
@@ -170,11 +173,11 @@ void BSShader::hk_Load(BSIStream *Stream)
 {
 	// Load original shaders first
 	(this->*Load)(Stream);
-	/*
+
 	// Dump everything for debugging
 	for (auto itr = m_VertexShaderTable.begin(); itr != m_VertexShaderTable.end(); itr++)
 	{
-		auto bytecode = BSGraphics::Renderer::GetGlobals()->GetShaderBytecode(itr->m_Shader);
+		auto bytecode = BSGraphics::Renderer::QInstance()->GetShaderBytecode(itr->m_Shader);
 
 		VertexShaderDecoder d(m_LoaderType, *itr);
 		d.SetShaderData(bytecode.first, bytecode.second);
@@ -183,13 +186,14 @@ void BSShader::hk_Load(BSIStream *Stream)
 
 	for (auto itr = m_PixelShaderTable.begin(); itr != m_PixelShaderTable.end(); itr++)
 	{
-		auto bytecode = BSGraphics::Renderer::GetGlobals()->GetShaderBytecode(itr->m_Shader);
+		auto bytecode = BSGraphics::Renderer::QInstance()->GetShaderBytecode(itr->m_Shader);
 
 		PixelShaderDecoder d(m_LoaderType, *itr);
 		d.SetShaderData(bytecode.first, bytecode.second);
 		d.DumpShader();
 	}
 
+	/*
 	// ...and then replace with custom ones
 	if (this == BSBloodSplatterShader::pInstance)
 		BSBloodSplatterShader::pInstance->CreateAllShaders();
@@ -202,10 +206,10 @@ void BSShader::hk_Load(BSIStream *Stream)
 
 	if (this == BSSkyShader::pInstance)
 		BSSkyShader::pInstance->CreateAllShaders();
-	*/
 
 	if (this == BSLightingShader::pInstance)
 		BSLightingShader::pInstance->CreateAllShaders();
+	*/
 }
 
 bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, bool IgnorePixelShader)
@@ -228,7 +232,7 @@ bool BSShader::BeginTechnique(uint32_t VertexShaderID, uint32_t PixelShaderID, b
 		domainShader = DomainShaders[VertexShaderID];
 
 	// Vertex shader required, pixel shader optional (nullptr)
-	auto globals = BSGraphics::Renderer::GetGlobals();
+	auto globals = BSGraphics::Renderer::QInstance();
 
 	globals->SetVertexShader(vertexShader);
 	globals->SetPixelShader(pixelShader);
@@ -251,7 +255,7 @@ void BSShader::SetupAlphaTestRef(const NiAlphaProperty *AlphaProperty, BSShaderP
 {
 	int alphaRef = (int)((float)AlphaProperty->GetTestRef() * ShaderProperty->GetAlpha());
 
-	BSGraphics::Renderer::GetGlobals()->SetAlphaTestRef(alphaRef * (1.0f / 255.0f));
+	BSGraphics::Renderer::QInstance()->SetAlphaTestRef(alphaRef * (1.0f / 255.0f));
 }
 
 std::vector<std::pair<const char *, const char *>> BSShader::GetAnySourceDefines(uint32_t Type, uint32_t Technique)

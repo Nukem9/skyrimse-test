@@ -9,7 +9,7 @@
 #include "../TES/BSShader/Shaders/BSDistantTreeShader.h"
 #include "../TES/BSShader/Shaders/BSSkyShader.h"
 #include "../TES/BSShader/Shaders/BSGrassShader.h"
-#include "../TES/BSGraphicsRenderer.h"
+#include "../TES/BSGraphics/BSGraphicsRenderer.h"
 #include "../TES/BSBatchRenderer.h"
 
 ID3D11Texture2D *g_OcclusionTexture;
@@ -115,65 +115,6 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 	g_DeviceContext->EndEvent();
 
 	return hr;
-}
-
-void *sub_140D6BF00(__int64 a1, int AllocationSize, uint32_t *AllocationOffset)
-{
-	return BSGraphics::Renderer::GetGlobals()->MapDynamicBuffer(AllocationSize, AllocationOffset);
-
-#if 0
-	AssertMsg(AllocationSize > 0, "Size must be > 0");
-
-	uint32_t frameDataOffset = globals->m_FrameDataUsedSize;
-	uint32_t frameBufferIndex = globals->m_CurrentDynamicBufferIndex;
-	uint32_t newFrameDataSzie = globals->m_FrameDataUsedSize + AllocationSize;
-
-	//
-	// Check if this request would exceed the allocated buffer size for the currently executing command list. If it does,
-	// we end the current query and move on to the next buffer.
-	//
-	if (newFrameDataSzie > 0x400000)
-	{
-		AssertMsg(AllocationSize <= 0x400000, "Dynamic geometry buffer overflow.");
-
-		newFrameDataSzie = AllocationSize;
-		frameDataOffset = 0;
-
-		globals->m_EventQueryFinished[globals->m_CurrentDynamicBufferIndex] = false;
-		globals->m_DeviceContext->End(globals->m_CommandListEndEvents[globals->m_CurrentDynamicBufferIndex]);
-
-		frameBufferIndex++;
-
-		if (frameBufferIndex >= 3)
-			frameBufferIndex = 0;
-	}
-	
-	//
-	// This will **suspend execution** until the buffer we want is no longer in use. The query waits on a list of commands
-	// using said buffer.
-	//
-	if (!globals->m_EventQueryFinished[frameBufferIndex])
-	{
-		ID3D11Query *query = globals->m_CommandListEndEvents[frameBufferIndex];
-		BOOL data;
-
-		HRESULT hr = globals->m_DeviceContext->GetData(query, &data, sizeof(data), 0);
-
-		for (; FAILED(hr) || data == FALSE; hr = globals->m_DeviceContext->GetData(query, &data, sizeof(data), D3D11_ASYNC_GETDATA_DONOTFLUSH))
-			Sleep(1);
-
-		globals->m_EventQueryFinished[frameBufferIndex] = (data == TRUE);
-	}
-	
-	D3D11_MAPPED_SUBRESOURCE resource;
-	globals->m_DeviceContext->Map(globals->m_DynamicBuffers[frameBufferIndex], 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &resource);
-
-	globals->m_CurrentDynamicBufferIndex = frameBufferIndex;
-	*AllocationOffset = frameDataOffset;
-	globals->m_FrameDataUsedSize = newFrameDataSzie;
-
-	return (void *)((uintptr_t)resource.pData + frameDataOffset);
-#endif
 }
 
 uint8_t *FinishAccumulating_Standard_PreResolveDepth;

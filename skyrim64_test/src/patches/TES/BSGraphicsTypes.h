@@ -76,7 +76,7 @@ namespace BSGraphics
 	{
 		uint32_t uiWidth;
 		uint32_t uiHeight;
-		uint32_t eFormat;
+		DXGI_FORMAT eFormat;
 		bool bCopyable;
 		bool bSupportUnorderedAccess;
 		bool bAllowMipGeneration;
@@ -93,6 +93,82 @@ namespace BSGraphics
 	static_assert_offset(RenderTargetProperties, bAllowMipGeneration, 0xE);
 	static_assert_offset(RenderTargetProperties, iMipLevel, 0x10);
 	static_assert_offset(RenderTargetProperties, uiTextureTarget, 0x14);
+
+	struct DepthStencilTargetProperties
+	{
+		uint32_t uiWidth;
+		uint32_t uiHeight;
+		uint32_t uiArraySize;
+		bool Unknown1;
+		bool Stencil;
+		bool Use16BitsDepth;
+	};
+	static_assert(sizeof(DepthStencilTargetProperties) == 0x10);
+	static_assert_offset(DepthStencilTargetProperties, uiWidth, 0x0);
+	static_assert_offset(DepthStencilTargetProperties, uiHeight, 0x4);
+	static_assert_offset(DepthStencilTargetProperties, uiArraySize, 0x8);
+	static_assert_offset(DepthStencilTargetProperties, Stencil, 0xD);
+	static_assert_offset(DepthStencilTargetProperties, Use16BitsDepth, 0xE);
+
+	struct CubeMapRenderTargetProperties
+	{
+		uint32_t uiWidth;
+		uint32_t uiHeight;
+		DXGI_FORMAT eFormat;
+	};
+	static_assert(sizeof(CubeMapRenderTargetProperties) == 0xC);
+	static_assert_offset(CubeMapRenderTargetProperties, uiWidth, 0x0);
+	static_assert_offset(CubeMapRenderTargetProperties, uiHeight, 0x4);
+	static_assert_offset(CubeMapRenderTargetProperties, eFormat, 0x8);
+
+	struct RenderTargetData
+	{
+		ID3D11Texture2D *Texture;
+		ID3D11Texture2D *TextureCopy;
+		ID3D11RenderTargetView *RTV;		// For "Texture"
+		ID3D11ShaderResourceView *SRV;		// For "Texture"
+		ID3D11ShaderResourceView *SRVCopy;	// For "TextureCopy"
+		ID3D11UnorderedAccessView *UAV;		// For "Texture"
+	};
+	static_assert(sizeof(RenderTargetData) == 0x30);
+	static_assert_offset(RenderTargetData, Texture, 0x0);
+	static_assert_offset(RenderTargetData, TextureCopy, 0x8);
+	static_assert_offset(RenderTargetData, RTV, 0x10);
+	static_assert_offset(RenderTargetData, SRV, 0x18);
+	static_assert_offset(RenderTargetData, SRVCopy, 0x20);
+	static_assert_offset(RenderTargetData, UAV, 0x28);
+
+	struct DepthStencilData
+	{
+		ID3D11Texture2D *Texture;
+		ID3D11DepthStencilView *Views[8];
+		ID3D11DepthStencilView *ReadOnlyViews[8];
+		ID3D11ShaderResourceView *DepthSRV;
+		ID3D11ShaderResourceView *StencilSRV;
+	};
+	static_assert(sizeof(DepthStencilData) == 0x98);
+	static_assert_offset(DepthStencilData, Texture, 0x0);
+	static_assert_offset(DepthStencilData, Views, 0x8);
+	static_assert_offset(DepthStencilData, ReadOnlyViews, 0x48);
+	static_assert_offset(DepthStencilData, DepthSRV, 0x88);
+	static_assert_offset(DepthStencilData, StencilSRV, 0x90);
+
+	struct CubemapRenderTargetData
+	{
+		ID3D11Texture2D *Texture;
+		ID3D11RenderTargetView *CubeSideRTV[6];
+		ID3D11ShaderResourceView *SRV;
+	};
+	static_assert(sizeof(CubemapRenderTargetData) == 0x40);
+	static_assert_offset(CubemapRenderTargetData, Texture, 0x0);
+	static_assert_offset(CubemapRenderTargetData, CubeSideRTV, 0x8);
+	static_assert_offset(CubemapRenderTargetData, SRV, 0x38);
+
+	struct Texture3DTargetData
+	{
+		char _pad0[0x20];
+	};
+	static_assert(sizeof(Texture3DTargetData) == 0x20);
 
 	//
 	// General resources
@@ -369,18 +445,18 @@ namespace BSGraphics
 	static_assert_offset(DynamicTriShape, m_RawVertexData, 0x28);
 	static_assert_offset(DynamicTriShape, m_RawIndexData, 0x30);
 
-	struct UnknownStruct
+	struct DynamicTriShapeData
 	{
 		ID3D11Buffer *m_VertexBuffer;
 		ID3D11Buffer *m_IndexBuffer;
 		uint64_t m_VertexDesc;
 	};
-	static_assert_offset(UnknownStruct, m_VertexBuffer, 0x0);
-	static_assert_offset(UnknownStruct, m_IndexBuffer, 0x8);
-	static_assert_offset(UnknownStruct, m_VertexDesc, 0x10);
+	static_assert_offset(DynamicTriShapeData, m_VertexBuffer, 0x0);
+	static_assert_offset(DynamicTriShapeData, m_IndexBuffer, 0x8);
+	static_assert_offset(DynamicTriShapeData, m_VertexDesc, 0x10);
 
 	struct DynamicTriShapeDrawData
 	{
-		uint32_t m_Unknown;
+		uint32_t m_Offset;
 	};
 }

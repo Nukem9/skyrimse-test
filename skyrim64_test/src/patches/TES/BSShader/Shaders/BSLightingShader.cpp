@@ -1,6 +1,7 @@
 #include "../../../rendering/common.h"
 #include "../../../../common.h"
 #include "../../NiMain/NiSourceTexture.h"
+#include "../../BSGraphics/BSGraphicsUtility.h"
 #include "../../TES.h"
 #include "../../BSGraphicsState.h"
 #include "../../Setting.h"
@@ -180,6 +181,8 @@ BSLightingShader::~BSLightingShader()
 	Assert(false);
 }
 
+extern D3D_PRIMITIVE_TOPOLOGY TopoOverride;
+
 bool BSLightingShader::SetupTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSLightingShader::SetupTechnique, Technique);
@@ -195,7 +198,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	//m_CurrentRawTechnique = rawTechnique;
 	TLS_m_CurrentRawTechnique = rawTechnique;
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
@@ -228,6 +231,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	case RAW_TECHNIQUE_MTLAND:
 	case RAW_TECHNIQUE_MTLANDLODBLEND:
 	{
+		TopoOverride = D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST;
 		// Override all 16 samplers
 		for (int i = 0; i < 16; i++)
 		{
@@ -241,6 +245,7 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 
 	case RAW_TECHNIQUE_LODLAND:
 	case RAW_TECHNIQUE_LODLANDNOISE:
+		TopoOverride = D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST;
 		renderer->SetTextureMode(0, 3, 1);
 		renderer->SetTextureMode(1, 3, 1);
 		TechUpdateHighDetailRangeConstants(vertexCG);
@@ -288,6 +293,11 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 		vposOffset.f[3] = 0.0f;
 	}
 
+	ID3D11Buffer *cbuffer12;
+	renderer->m_DeviceContext->PSGetConstantBuffers(12, 1, &cbuffer12);
+	renderer->m_DeviceContext->DSSetConstantBuffers(12, 1, &cbuffer12);
+	cbuffer12->Release();
+
 	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
 	renderer->ApplyConstantGroupVSPS(&vertexCG, &pixelCG, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 	return true;
@@ -297,7 +307,7 @@ void BSLightingShader::RestoreTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSLightingShader::RestoreTechnique, Technique);
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 
 	if (TLS_m_CurrentRawTechnique & RAW_FLAG_DEFSHADOW)
 		renderer->SetShaderResource(14, nullptr);
@@ -307,6 +317,7 @@ void BSLightingShader::RestoreTechnique(uint32_t Technique)
 	if (v2 && *(bool *)(v2 + 16) && *(bool *)(v2 + 17))
 		renderer->SetShaderResource(15, nullptr);
 
+	TopoOverride = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
 	EndTechnique();
 }
 
@@ -314,7 +325,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 {
 	BSSHADER_FORWARD_CALL(MATERIAL, &BSLightingShader::SetupMaterial, Material);
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 
@@ -717,7 +728,7 @@ void GetInverseWorldMatrix(const NiTransform& Transform, bool Skinned, XMMATRIX&
 {
 	if (Skinned)
 	{
-		const NiPoint3 posAdjust = BSGraphics::Renderer::GetGlobals()->m_PosAdjust;
+		const NiPoint3 posAdjust = BSGraphics::Renderer::QInstance()->m_PosAdjust;
 
 		// XMMatrixIdentity(), row[3] = { world.x, world.y, world.z, 1.0f }, XMMatrixInverse()
 		OutMatrix = XMMatrixInverse(nullptr, XMMatrixTranslation(posAdjust.x, posAdjust.y, posAdjust.z));
@@ -736,7 +747,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, RenderFlags);
 
 	auto property = static_cast<BSLightingShaderProperty *>(Pass->m_ShaderProperty);
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
@@ -1008,7 +1019,7 @@ void BSLightingShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::RestoreGeometry, Pass, RenderFlags);
 
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 
 	if (Pass->m_AccumulationHint == 10)
 		renderer->DepthStencilStateSetStencilMode(DEPTH_STENCIL_STENCIL_MODE_DEFAULT, 255);
@@ -1023,6 +1034,35 @@ void BSLightingShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	{
 		renderer->AlphaBlendStateSetWriteMode(TLS_dword_141E3527C);
 		TLS_dword_141E3527C = 13;
+	}
+}
+
+void BSLightingShader::CreateAllShaders()
+{
+	for (auto itr = m_VertexShaderTable.begin(); itr != m_VertexShaderTable.end(); itr++)
+	{
+		// Apply to parallax shaders only
+		//if (((itr->m_TechniqueID >> 24) & 0x3F) != RAW_TECHNIQUE_PARALLAX)
+		//	continue;
+
+		switch ((itr->m_TechniqueID >> 24) & 0x3F)
+		{
+		case RAW_TECHNIQUE_MTLAND:
+		case RAW_TECHNIQUE_MTLANDLODBLEND:
+		case RAW_TECHNIQUE_LODLAND:
+		case RAW_TECHNIQUE_LODLANDNOISE:
+			break;
+
+		default:
+			continue;
+		}
+
+		auto defines = GetSourceDefines(itr->m_TechniqueID);
+		auto getConstant = [](int i) { return ShaderConfigLighting.ByConstantIndexVS.count(i) ? ShaderConfigLighting.ByConstantIndexVS.at(i)->Name : nullptr; };
+
+		CreateVertexShader(itr->m_TechniqueID, "Lighting", defines, getConstant);
+		CreateHullShader(itr->m_TechniqueID, "Lighting", defines);
+		CreateDomainShader(itr->m_TechniqueID, "Lighting", defines);
 	}
 }
 
@@ -1199,7 +1239,7 @@ std::string BSLightingShader::GetTechniqueString(uint32_t Technique)
 
 void BSLightingShader::TechUpdateHighDetailRangeConstants(BSGraphics::VertexCGroup& VertexCG)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 
 	// VS: p12 float4 HighDetailRange
 	BSGraphics::Utility::CopyNiColorAToFloat(&VertexCG.ParamVS<XMVECTOR, 12>(),
@@ -1262,7 +1302,7 @@ void BSLightingShader::TechUpdateFogConstants(BSGraphics::VertexCGroup& VertexCG
 
 void BSLightingShader::MatSetEnvTexture(const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->SetTexture(4, Texture);
 	renderer->SetTextureAddressMode(4, Material->eTextureClampMode);
@@ -1270,7 +1310,7 @@ void BSLightingShader::MatSetEnvTexture(const NiSourceTexture *Texture, const BS
 
 void BSLightingShader::MatSetEnvMaskTexture(const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->SetTexture(5, Texture ? Texture : BSGraphics::gState.pDefaultTextureNormalMap);
 	renderer->SetTextureAddressMode(5, Material->eTextureClampMode);
@@ -1278,7 +1318,7 @@ void BSLightingShader::MatSetEnvMaskTexture(const NiSourceTexture *Texture, cons
 
 void BSLightingShader::MatSetTextureSlot(int Slot, const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->SetTexture(Slot, Texture);
 	renderer->SetTextureAddressMode(Slot, Material->eTextureClampMode);
@@ -1286,7 +1326,7 @@ void BSLightingShader::MatSetTextureSlot(int Slot, const NiSourceTexture *Textur
 
 void BSLightingShader::MatSetMultiTextureLandOverrides(const BSLightingShaderMaterialLandscape *Material)
 {
-	auto *renderer = BSGraphics::Renderer::GetGlobals();
+	auto *renderer = BSGraphics::Renderer::QInstance();
 
 	// This overrides all 12 samplers for land parameters if set in the property (max 6 diffuse, 6 normal)
 	renderer->SetTexture(0, Material->spDiffuseTexture);
@@ -1487,7 +1527,7 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::PixelC
 		}
 		else
 		{
-			worldPos = worldPos - BSGraphics::Renderer::GetGlobals()->m_PosAdjust;
+			worldPos = worldPos - BSGraphics::Renderer::QInstance()->m_PosAdjust;
 
 			pointLightPosition[i].v = worldPos.AsXmm();
 			pointLightPosition[i].f[3] = niLight->GetSpecularColor().r;
@@ -1555,7 +1595,7 @@ void BSLightingShader::GenerateProjectionMatrix(const NiTransform& ObjectWorldTr
 	temp.m_Rotate.m_pEntry[2][1] = 0.0f;
 	temp.m_Rotate.m_pEntry[2][2] = 1.0f;
 
-	temp.m_Translate = BSGraphics::Renderer::GetGlobals()->m_PosAdjust;
+	temp.m_Translate = BSGraphics::Renderer::QInstance()->m_PosAdjust;
 	temp.m_fScale = 1.0f;
 
 	if (ModelSpace)
