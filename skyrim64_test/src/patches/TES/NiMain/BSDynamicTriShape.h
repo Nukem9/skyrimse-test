@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../BSSpinLock.h"
-#include "../BSGraphicsTypes.h"
+#include "../BSGraphics/BSGraphicsTypes.h"
 #include "BSTriShape.h"
 
 class BSDynamicTriShape : public BSTriShape

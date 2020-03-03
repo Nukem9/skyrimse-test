@@ -894,7 +894,7 @@ namespace BSGraphics
 		}
 
 		if (UpdateViewport)
-			UpdateViewPort();
+			UpdateViewPort(0, 0, false);
 	}
 
 	void BSGraphics::Renderer::SetDepthStencilTarget(uint32_t TargetIndex, SetRenderTargetMode Mode, uint32_t Slice)
@@ -923,7 +923,7 @@ namespace BSGraphics
 		}
 
 		if (UpdateViewport)
-			UpdateViewPort();
+			UpdateViewPort(0, 0, false);
 	}
 
 	void BSGraphics::Renderer::SetClearColor(float R, float G, float B, float A)
@@ -949,6 +949,52 @@ namespace BSGraphics
 		renderer->Data.ClearColor[1] = Globals.m_PreviousClearColor[1];
 		renderer->Data.ClearColor[2] = Globals.m_PreviousClearColor[2];
 		renderer->Data.ClearColor[3] = Globals.m_PreviousClearColor[3];
+	}
+
+	void Renderer::UpdateViewPort(uint32_t Width, uint32_t Height, bool ForceMatchRenderTarget)
+	{
+		auto s = GetRendererShadowState();
+
+		float widthRatio = 1.0f;
+		float heightRatio = 1.0f;
+
+		if (Width <= 0)
+		{
+			if (!ForceMatchRenderTarget)
+			{
+				if (gState.uiDynamicResolutionUnknown2)
+				{
+					widthRatio = 1.0f;
+					heightRatio = 1.0f;
+				}
+				else
+				{
+					widthRatio = gState.fDynamicResolutionWidthRatio;
+					heightRatio = gState.fDynamicResolutionHeightRatio;
+				}
+			}
+
+			if (s->m_CubeMapRenderTarget != RENDER_TARGET_CUBEMAP_NONE)
+			{
+				Width = gRenderTargetManager.QCurrentCubeMapRenderTargetWidth();
+				Height = gRenderTargetManager.QCurrentCubeMapRenderTargetHeight();
+			}
+			else
+			{
+				Width = gRenderTargetManager.QCurrentRenderTargetWidth();
+				Height = gRenderTargetManager.QCurrentRenderTargetHeight();
+			}
+		}
+
+		// TODO: Does viewport depth need to be set here? SSE doesn't but F4 does.
+		s->m_ViewPort.TopLeftX = s->m_CameraData.m_ViewPort[0] * Width;
+		s->m_ViewPort.TopLeftY = (1.0f - s->m_CameraData.m_ViewPort[2]) * Height;
+		s->m_ViewPort.Width = (s->m_CameraData.m_ViewPort[1] - s->m_CameraData.m_ViewPort[0]) * Width * widthRatio;
+		s->m_ViewPort.Height = (s->m_CameraData.m_ViewPort[2] - s->m_CameraData.m_ViewPort[3]) * Height * heightRatio;
+		//s->m_ViewPort.MinDepth = s->m_CameraData.m_ViewDepthRange[0];
+		//s->m_ViewPort.MaxDepth = s->m_CameraData.m_ViewDepthRange[1];
+
+		s->m_StateUpdateFlags |= DIRTY_VIEWPORT;
 	}
 
 	void Renderer::DepthStencilStateSetDepthMode(DepthStencilDepthMode Mode)

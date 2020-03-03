@@ -3,7 +3,7 @@
 #include "../BSRenderPass.h"
 #include "BSShaderAccumulator.h"
 
-#define BAD_SHADER 0x11223344
+#define BAD_SHADER							0x11223344
 
 #define BSSM_AMBIENT_OCCLUSION				0x2
 #define BSSM_GRASS_NOALPHA_DIRONLY_LF		0x3
@@ -75,11 +75,76 @@ public:
 
 	enum BSShaderTimerMode
 	{
+		TIMER_MODE_DEFAULT = 0,
+		TIMER_MODE_DELTA = 1,
+		TIMER_MODE_SYSTEM = 2,
+		TIMER_MODE_REAL_DELTA = 3,
+		TIMER_MODE_FRAME_COUNT = 4,
+		TIMER_MODE_COUNT = 5,
 	};
 
 	enum etRenderMode
 	{
 	};
+
+	class State
+	{
+	public:
+		class ShadowSceneNode *pShadowSceneNode[4];
+		float fTimerValues[TIMER_MODE_COUNT];
+		NiColorA LoadedRange;
+		bool bInterior;
+		bool bLiteBrite;
+		bool CharacterLightEnabled;
+		char _pad0[0x51];
+		float fLandLOFadeSeconds;
+		float fInvFrameBufferRange;
+		float fLeafAnimDampenDistStartSPU;
+		float fLeafAnimDampenDistEndSPU;
+		NiPoint2 kOldGridArrayCenter;
+		NiPoint2 kGridArrayCenter;
+		float kfGriddArrayLerpStart;
+		uint32_t uiCurrentShaderTechnique;
+		uint8_t cSceneGraph;
+		uint32_t usDebugMode;
+		NiTransform DirectionalAmbientTransform;
+		NiColorA AmbientSpecular;
+		NiColorA CharacterLightParams;
+		bool bAmbientSpecularEnabled;
+		uint32_t uiTextureTransformCurrentBuffer;
+		uint32_t uiTextureTransformFlipMode;
+		uint32_t uiCameraInWaterState;
+		NiBound kCachedPlayerBound;
+		char _pad1[0x8];
+		float fWaterIntersect;
+	};
+	static_assert_offset(State, pShadowSceneNode, 0x0);
+	static_assert_offset(State, fTimerValues, 0x20);
+	static_assert_offset(State, LoadedRange, 0x34);
+	static_assert_offset(State, bInterior, 0x44);
+	static_assert_offset(State, bLiteBrite, 0x45);
+	static_assert_offset(State, CharacterLightEnabled, 0x46);
+	static_assert_offset(State, fLandLOFadeSeconds, 0x98);
+	static_assert_offset(State, fInvFrameBufferRange, 0x9C);
+	static_assert_offset(State, fLeafAnimDampenDistStartSPU, 0xA0);
+	static_assert_offset(State, fLeafAnimDampenDistEndSPU, 0xA4);
+	static_assert_offset(State, kOldGridArrayCenter, 0xA8);
+	static_assert_offset(State, kGridArrayCenter, 0xB0);
+	static_assert_offset(State, kfGriddArrayLerpStart, 0xB8);
+	static_assert_offset(State, uiCurrentShaderTechnique, 0xBC);
+	static_assert_offset(State, cSceneGraph, 0xC0);
+	static_assert_offset(State, usDebugMode, 0xC4);
+	static_assert_offset(State, DirectionalAmbientTransform, 0xC8);
+	static_assert_offset(State, AmbientSpecular, 0xFC);
+	static_assert_offset(State, CharacterLightParams, 0x10C);
+	static_assert_offset(State, bAmbientSpecularEnabled, 0x11C);
+	static_assert_offset(State, uiTextureTransformCurrentBuffer, 0x120);
+	static_assert_offset(State, uiTextureTransformFlipMode, 0x124);
+	static_assert_offset(State, uiCameraInWaterState, 0x128);
+	static_assert_offset(State, kCachedPlayerBound, 0x12C);
+	static_assert_offset(State, fWaterIntersect, 0x144);
+
+	inline AutoPtr(State, St, 0x1E32F20);
 
 private:
 	inline AutoPtr(BSShaderAccumulator *, pCurrentShaderAccumulator, 0x31F5490);// NOTE: This is now a per-thread variable in SetCurrentAccumulator

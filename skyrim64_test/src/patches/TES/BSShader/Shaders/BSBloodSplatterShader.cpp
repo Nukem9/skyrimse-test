@@ -35,8 +35,6 @@ DEFINE_SHADER_DESCRIPTOR(
 //
 using namespace DirectX;
 
-AutoPtr(__int64, qword_14304EF00, 0x304EF00);
-
 BSBloodSplatterShader::BSBloodSplatterShader() : BSShader(ShaderConfigBloodSplatter.Type)
 {
 	ShaderMetadata[BSShaderManager::BSSM_SHADER_BLOODSPLATTER] = &ShaderConfigBloodSplatter;
@@ -70,9 +68,7 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 		}
 		else
 		{
-			uintptr_t v9 = *(&qword_14304EF00 + 6 * iAdaptedLightRenderTarget);// BSGraphics::RenderTargetManager::SetTextureRenderTarget
-
-			renderer->SetShaderResource(TexSlot::FlareHDR, (ID3D11ShaderResourceView *)v9);
+			renderer->SetShaderResource(TexSlot::FlareHDR, renderer->Data.pRenderTargets[iAdaptedLightRenderTarget].SRV);
 		}
 
 		renderer->SetTextureMode(TexSlot::FlareHDR, 0, 1);

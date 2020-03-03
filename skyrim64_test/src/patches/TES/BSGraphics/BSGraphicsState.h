@@ -74,10 +74,10 @@ namespace BSGraphics
 		BSTArray<CameraStateData> kCameraDataCacheA;
 		char _pad2[0x4];// unknown dword
 		float fHaltonSequence[2][8]; // (2, 3) Halton Sequence points
-		float fDynamicResolutionWidth;
-		float fDynamicResolutionHeight;
-		float fDynamicResolutionPreviousWidth;
-		float fDynamicResolutionPreviousHeight;
+		float fDynamicResolutionWidthRatio;
+		float fDynamicResolutionHeightRatio;
+		float fDynamicResolutionPreviousWidthRatio;
+		float fDynamicResolutionPreviousHeightRatio;
 		uint32_t uiDynamicResolutionUnknown1;
 		uint32_t uiDynamicResolutionUnknown2;
 		uint16_t usDynamicResolutionUnknown3;
@@ -107,10 +107,10 @@ namespace BSGraphics
 	static_assert_offset(State, pDefaultTextureDitherNoiseMap, 0x98);
 	static_assert_offset(State, kCameraDataCacheA, 0xA0);
 	static_assert_offset(State, fHaltonSequence, 0xBC);
-	static_assert_offset(State, fDynamicResolutionWidth, 0xFC);
-	static_assert_offset(State, fDynamicResolutionHeight, 0x100);
-	static_assert_offset(State, fDynamicResolutionPreviousWidth, 0x104);
-	static_assert_offset(State, fDynamicResolutionPreviousHeight, 0x108);
+	static_assert_offset(State, fDynamicResolutionWidthRatio, 0xFC);
+	static_assert_offset(State, fDynamicResolutionHeightRatio, 0x100);
+	static_assert_offset(State, fDynamicResolutionPreviousWidthRatio, 0x104);
+	static_assert_offset(State, fDynamicResolutionPreviousHeightRatio, 0x108);
 	static_assert_offset(State, uiDynamicResolutionUnknown1, 0x10C);
 	static_assert_offset(State, uiDynamicResolutionUnknown2, 0x110);
 	static_assert_offset(State, usDynamicResolutionUnknown3, 0x114);

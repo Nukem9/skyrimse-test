@@ -235,6 +235,8 @@ namespace BSGraphics
 		void SetClearColor(float R, float G, float B, float A);
 		void RestorePreviousClearColor();
 
+		void UpdateViewPort(uint32_t Width, uint32_t Height, bool ForceMatchRenderTarget);
+
 		void DepthStencilStateSetDepthMode(DepthStencilDepthMode Mode);
 		DepthStencilDepthMode DepthStencilStateGetDepthMode() const;
 		void DepthStencilStateSetStencilMode(uint32_t Mode, uint32_t StencilRef);

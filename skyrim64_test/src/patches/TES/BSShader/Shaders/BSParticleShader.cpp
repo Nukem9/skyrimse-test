@@ -1,4 +1,5 @@
 #include "../../../../common.h"
+#include "../../BSGraphics/BSGraphicsRenderTargetManager.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "BSParticleShader.h"
@@ -82,13 +83,9 @@ bool BSParticleShader::SetupTechnique(uint32_t Technique)
 	dword_1434BA458 = rawTechnique;
 
 	if (rawTechnique == RAW_TECHNIQUE_ENVCUBESNOW || rawTechnique == RAW_TECHNIQUE_ENVCUBERAIN)
-	{
-		//sub_140D74380((__int64)renderTargetManager, 1u, 85, 3, 1);// RENDER_TARGET_TEMPORAL_AA_MASK
-	}
+		gRenderTargetManager.SetCurrentRenderTarget(1, RENDER_TARGET_TEMPORAL_AA_MASK, SRTM_RESTORE, true);
 	else
-	{
 		renderer->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST);
-	}
 
 	// VS: p13 float4 ScaleAdjust
 	{
@@ -110,9 +107,7 @@ void BSParticleShader::RestoreTechnique(uint32_t Technique)
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSParticleShader::RestoreTechnique, Technique);
 
 	if (dword_1434BA458 == RAW_TECHNIQUE_ENVCUBESNOW || dword_1434BA458 == RAW_TECHNIQUE_ENVCUBERAIN)
-	{
-		//sub_140D74380((__int64)renderTargetManager, 1u, 85, 3, 1);// RENDER_TARGET_TEMPORAL_AA_MASK
-	}
+		gRenderTargetManager.SetCurrentRenderTarget(1, RENDER_TARGET_TEMPORAL_AA_MASK, SRTM_RESTORE, true);
 	else
 		Renderer::QInstance()->DepthStencilStateSetDepthMode(DEPTH_STENCIL_DEPTH_MODE_TEST_WRITE);
 
