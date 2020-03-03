@@ -31,20 +31,20 @@ namespace BSGraphics
 
 	enum ClearDepthStencilTarget
 	{
-		CLEAR_DEPTH_STENCIL_TARGET_DEPTH = 0x1,
-		CLEAR_DEPTH_STENCIL_TARGET_STENCIL = 0x2,
-		CLEAR_DEPTH_STENCIL_TARGET_ALL = 0x3,
+		CLEAR_DEPTH_STENCIL_TARGET_DEPTH = 1,
+		CLEAR_DEPTH_STENCIL_TARGET_STENCIL = 2,
+		CLEAR_DEPTH_STENCIL_TARGET_ALL = 3,
 	};
 
-	enum SetRenderTargetMode
+	enum SetRenderTargetMode : uint32_t
 	{
-		SRTM_CLEAR = 0,// confirmed
-		SRTM_CLEAR_DEPTH = 1,// confirmed
-		SRTM_CLEAR_STENCIL = 2,// confirmed
+		SRTM_CLEAR = 0,
+		SRTM_CLEAR_DEPTH = 1,
+		SRTM_CLEAR_STENCIL = 2,
 		SRTM_RESTORE = 3,
-		SRTM_NO_CLEAR = 4,// confirmed
+		SRTM_NO_CLEAR = 4,
 		SRTM_FORCE_COPY_RESTORE = 5,
-		SRTM_INIT = 6,// confirmed
+		SRTM_INIT = 6,
 	};
 
 	enum DepthStencilStencilMode

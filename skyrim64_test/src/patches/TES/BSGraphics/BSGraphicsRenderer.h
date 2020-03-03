@@ -5,8 +5,8 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
-#include "../BSGraphicsTypes.h"
-#include "../BSGraphicsState.h"
+#include "BSGraphicsState.h"
+#include "BSGraphicsTypes.h"
 #include "../BSShader/BSShaderRenderTargets.h"
 
 namespace BSGraphics
@@ -18,7 +18,7 @@ namespace BSGraphics
 	{
 	public:
 		float m_PreviousClearColor[4];			// Render target clear color
-		void *qword_14304BF00;					// Unknown class pointer
+		void *qword_14304BF00;					// RendererData *
 		ID3D11Device *m_Device;
 		HWND m_Window;
 
@@ -130,7 +130,7 @@ namespace BSGraphics
 		uint32_t m_CubeMapRenderTarget;						// Index
 		uint32_t m_CubeMapRenderTargetView;					// Index
 
-		SetRenderTargetMode m_SetRenderTargetMode[8];
+		SetRenderTargetMode m_SetRenderTargetMode[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 		SetRenderTargetMode m_SetDepthStencilMode;
 		SetRenderTargetMode m_SetCubeMapRenderTargetMode;
 
@@ -189,6 +189,9 @@ namespace BSGraphics
 		void Initialize();
 		void OnNewFrame();
 
+		void Lock();
+		void Unlock();
+
 		void BeginEvent(wchar_t *Marker) const;
 		void EndEvent() const;
 		void SetResourceName(ID3D11DeviceChild *Resource, const char *Format, ...);
@@ -212,13 +215,10 @@ namespace BSGraphics
 		void DrawDynamicTriShape(DynamicTriShapeData *ShapeData, DynamicTriShapeDrawData *DrawData, uint32_t IndexStartOffset, uint32_t TriangleCount, uint32_t VertexBufferOffset);
 		void DrawParticleShaderTriShape(const void *DynamicData, uint32_t Count);
 
+		void ClearColor();
+		void ClearDepthStencil(uint32_t ClearFlags);
+
 		DynamicTriShape *GetParticlesDynamicTriShape();
-
-
-		void ClearDepthStencil(uint32_t ClearFlags)
-		{
-
-		}
 
 		//
 		// API state (RendererShadowState)
@@ -227,6 +227,10 @@ namespace BSGraphics
 		static void FlushD3DResources();
 
 		RendererShadowState *GetRendererShadowState() const;
+
+		void SetRenderTarget(uint32_t Slot, uint32_t TargetIndex, SetRenderTargetMode Mode, bool UpdateViewport);
+		void SetDepthStencilTarget(uint32_t TargetIndex, SetRenderTargetMode Mode, uint32_t Slice);
+		void SetCubeMapRenderTarget(uint32_t TargetIndex, SetRenderTargetMode Mode, uint32_t View, bool UpdateViewport);
 
 		void SetClearColor(float R, float G, float B, float A);
 		void RestorePreviousClearColor();

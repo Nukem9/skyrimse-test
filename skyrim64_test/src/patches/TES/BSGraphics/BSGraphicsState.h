@@ -1,10 +1,10 @@
 #pragma once
 
 #include <DirectXMath.h>
-#include "NiMain/NiPointer.h"
-#include "NiMain/NiSourceTexture.h"
-#include "NiMain/NiPoint.h"
-#include "BSTArray.h"
+#include "../NiMain/NiPointer.h"
+#include "../NiMain/NiSourceTexture.h"
+#include "../NiMain/NiPoint.h"
+#include "../BSTArray.h"
 
 class NiCamera;
 

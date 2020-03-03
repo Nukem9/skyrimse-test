@@ -3,6 +3,7 @@
 #include "../../rendering/GpuCircularBuffer.h"
 #include "../NiMain/BSGeometry.h"
 #include "BSGraphicsRenderer.h"
+#include "BSGraphicsRenderTargetManager.h"
 
 #define CHECK_RESULT(ReturnVar, Statement) do { (ReturnVar) = (Statement); AssertMsgVa(SUCCEEDED(ReturnVar), "Renderer target '%s' creation failed. HR = 0x%X.", Name, (ReturnVar)); } while (0)
 
@@ -72,6 +73,16 @@ namespace BSGraphics
 
 		if (CurrentFrameIndex >= RingBufferMaxFrames)
 			CurrentFrameIndex = 0;
+	}
+
+	void Renderer::Lock()
+	{
+		EnterCriticalSection(&Data.RendererLock);
+	}
+
+	void Renderer::Unlock()
+	{
+		LeaveCriticalSection(&Data.RendererLock);
 	}
 
 	void Renderer::BeginEvent(wchar_t *Marker) const
@@ -442,8 +453,8 @@ namespace BSGraphics
 
 		SetDirtyStates(false);
 
-		UINT stride = BSGeometry::CalculateVertexSize(GraphicsLineShape->m_VertexDesc);
-		UINT offset = 0;
+		uint32_t stride = BSGeometry::CalculateVertexSize(GraphicsLineShape->m_VertexDesc);
+		uint32_t offset = 0;
 
 		Data.pContext->IASetVertexBuffers(0, 1, &GraphicsLineShape->m_VertexBuffer, &stride, &offset);
 		Data.pContext->IASetIndexBuffer(GraphicsLineShape->m_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
@@ -457,8 +468,8 @@ namespace BSGraphics
 
 		SetDirtyStates(false);
 
-		UINT stride = BSGeometry::CalculateVertexSize(GraphicsTriShape->m_VertexDesc);
-		UINT offset = 0;
+		uint32_t stride = BSGeometry::CalculateVertexSize(GraphicsTriShape->m_VertexDesc);
+		uint32_t offset = 0;
 
 		Data.pContext->IASetVertexBuffers(0, 1, &GraphicsTriShape->m_VertexBuffer, &stride, &offset);
 		Data.pContext->IASetIndexBuffer(GraphicsTriShape->m_IndexBuffer, DXGI_FORMAT_R16_UINT, 0);
@@ -486,11 +497,11 @@ namespace BSGraphics
 		buffers[0] = ShapeData->m_VertexBuffer;
 		buffers[1] = Globals.m_DynamicVertexBuffers[Globals.m_CurrentDynamicVertexBuffer];
 
-		UINT strides[2];
+		uint32_t strides[2];
 		strides[0] = BSGeometry::CalculateVertexSize(ShapeData->m_VertexDesc);
 		strides[1] = BSGeometry::CalculateDyanmicVertexSize(ShapeData->m_VertexDesc);
 
-		UINT offsets[2];
+		uint32_t offsets[2];
 		offsets[0] = 0;
 		offsets[1] = VertexBufferOffset;
 
@@ -550,6 +561,19 @@ namespace BSGraphics
 		Data.pContext->DrawIndexed(6 * (Count / 4), 0, 0);
 	}
 
+	void Renderer::ClearColor()
+	{
+		Data.pContext->ClearRenderTargetView(Data.pRenderTargets[gRenderTargetManager.QCurrentPlatformRenderTarget()].RTV, Data.ClearColor);
+	}
+
+	void Renderer::ClearDepthStencil(uint32_t ClearFlags)
+	{
+		auto state = GetRendererShadowState();
+
+		Data.bReadOnlyDepth = false;
+		Data.pContext->ClearDepthStencilView(Data.pDepthStencils[state->m_DepthStencil].Views[state->m_DepthStencilSlice], ClearFlags, 1.0f, Data.ClearStencil);
+	}
+
 	DynamicTriShape *Renderer::GetParticlesDynamicTriShape()
 	{
 		static DynamicTriShape particles =
@@ -581,7 +605,7 @@ namespace BSGraphics
 				ID3D11RenderTargetView *renderTargetViews[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 				uint32_t viewCount = 0;
 
-				if (state->m_CubeMapRenderTarget == -1)
+				if (state->m_CubeMapRenderTarget == RENDER_TARGET_CUBEMAP_NONE)
 				{
 					// This loops through all 8 RTs or until a RENDER_TARGET_NONE entry is hit
 					for (int i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; i++)
@@ -849,6 +873,57 @@ namespace BSGraphics
 	RendererShadowState *Renderer::GetRendererShadowState() const
 	{
 		return (RendererShadowState *)(g_ModuleBase + 0x304DEB0);
+	}
+
+	void BSGraphics::Renderer::SetRenderTarget(uint32_t Slot, uint32_t TargetIndex, SetRenderTargetMode Mode, bool UpdateViewport)
+	{
+		auto s = GetRendererShadowState();
+
+		if (Mode == SRTM_FORCE_COPY_RESTORE)
+		{
+			Data.pContext->CopyResource(Data.pRenderTargets[TargetIndex].TextureCopy, Data.pRenderTargets[TargetIndex].Texture);
+			Mode = SRTM_RESTORE;
+		}
+
+		if (s->m_RenderTargets[Slot] != TargetIndex || s->m_SetRenderTargetMode[Slot] != Mode || Mode != SRTM_RESTORE)
+		{
+			s->m_RenderTargets[Slot] = TargetIndex;
+			s->m_CubeMapRenderTarget = RENDER_TARGET_CUBEMAP_NONE;
+			s->m_SetRenderTargetMode[Slot] = Mode;
+			s->m_StateUpdateFlags |= DIRTY_RENDERTARGET;
+		}
+
+		if (UpdateViewport)
+			UpdateViewPort();
+	}
+
+	void BSGraphics::Renderer::SetDepthStencilTarget(uint32_t TargetIndex, SetRenderTargetMode Mode, uint32_t Slice)
+	{
+		auto s = GetRendererShadowState();
+
+		if (s->m_DepthStencil != TargetIndex || s->m_SetDepthStencilMode != Mode || Mode != SRTM_RESTORE || s->m_DepthStencilSlice != Slice)
+		{
+			s->m_DepthStencil = TargetIndex;
+			s->m_SetDepthStencilMode = Mode;
+			s->m_DepthStencilSlice = Slice;
+			s->m_StateUpdateFlags |= DIRTY_RENDERTARGET;
+		}
+	}
+
+	void BSGraphics::Renderer::SetCubeMapRenderTarget(uint32_t TargetIndex, SetRenderTargetMode Mode, uint32_t View, bool UpdateViewport)
+	{
+		auto s = GetRendererShadowState();
+
+		if (s->m_CubeMapRenderTarget != TargetIndex || s->m_SetCubeMapRenderTargetMode != Mode || s->m_CubeMapRenderTargetView != View)
+		{
+			s->m_CubeMapRenderTarget = TargetIndex;
+			s->m_SetCubeMapRenderTargetMode = Mode;
+			s->m_CubeMapRenderTargetView = View;
+			s->m_StateUpdateFlags |= DIRTY_RENDERTARGET;
+		}
+
+		if (UpdateViewport)
+			UpdateViewPort();
 	}
 
 	void BSGraphics::Renderer::SetClearColor(float R, float G, float B, float A)
@@ -1314,15 +1389,15 @@ namespace BSGraphics
 
 		// Disassemble both shaders, then compare the string output (case insensitive)
 		UINT stripFlags = D3DCOMPILER_STRIP_REFLECTION_DATA | D3DCOMPILER_STRIP_DEBUG_INFO | D3DCOMPILER_STRIP_TEST_BLOBS | D3DCOMPILER_STRIP_PRIVATE_DATA;
-		ID3DBlob *oldStrippedBlob = nullptr;
-		ID3DBlob *newStrippedBlob = nullptr;
+		ComPtr<ID3DBlob> oldStrippedBlob;
+		ComPtr<ID3DBlob> newStrippedBlob;
 
 		Assert(SUCCEEDED(D3DStripShader(oldData->second.first, oldData->second.second, stripFlags, &oldStrippedBlob)));
 		Assert(SUCCEEDED(D3DStripShader(newData->second.first, newData->second.second, stripFlags, &newStrippedBlob)));
 
 		UINT disasmFlags = D3D_DISASM_ENABLE_INSTRUCTION_OFFSET;
-		ID3DBlob *oldDataBlob = nullptr;
-		ID3DBlob *newDataBlob = nullptr;
+		ComPtr<ID3DBlob> oldDataBlob;
+		ComPtr<ID3DBlob> newDataBlob;
 
 		Assert(SUCCEEDED(D3DDisassemble(oldStrippedBlob->GetBufferPointer(), oldStrippedBlob->GetBufferSize(), disasmFlags, nullptr, &oldDataBlob)));
 		Assert(SUCCEEDED(D3DDisassemble(newStrippedBlob->GetBufferPointer(), newStrippedBlob->GetBufferSize(), disasmFlags, nullptr, &newDataBlob)));
@@ -1334,8 +1409,8 @@ namespace BSGraphics
 		// at the top of the file.
 		auto tokenize = [](const std::string& str, std::vector<std::string> *tokens)
 		{
-			std::string::size_type lastPos = str.find_first_not_of("\n", 0);
-			std::string::size_type pos = str.find_first_of("\n", lastPos);
+			auto lastPos = str.find_first_not_of("\n", 0);
+			auto pos = str.find_first_of("\n", lastPos);
 
 			while (pos != std::string::npos || lastPos != std::string::npos)
 			{
@@ -1369,11 +1444,6 @@ namespace BSGraphics
 
 			AssertMsgVa(false, "Shader disasm doesn't match.\n\n%s\n%s", tokensOld[i].c_str(), tokensNew[i].c_str());
 		}
-
-		oldStrippedBlob->Release();
-		newStrippedBlob->Release();
-		oldDataBlob->Release();
-		newDataBlob->Release();
 #endif
 	}
 
@@ -1550,8 +1620,8 @@ namespace BSGraphics
 
 	void Renderer::ApplyConstantGroupVS(const CustomConstantGroup *Group, ConstantGroupLevel Level)
 	{
-		UINT offset = Group->m_UnifiedByteOffset / 16;
-		UINT size = Group->m_Map.RowPitch / 16;
+		uint32_t offset = Group->m_UnifiedByteOffset / 16;
+		uint32_t size = Group->m_Map.RowPitch / 16;
 
 		Data.pContext->VSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
 		Data.pContext->DSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
@@ -1559,8 +1629,8 @@ namespace BSGraphics
 
 	void Renderer::ApplyConstantGroupPS(const CustomConstantGroup *Group, ConstantGroupLevel Level)
 	{
-		UINT offset = Group->m_UnifiedByteOffset / 16;
-		UINT size = Group->m_Map.RowPitch / 16;
+		uint32_t offset = Group->m_UnifiedByteOffset / 16;
+		uint32_t size = Group->m_Map.RowPitch / 16;
 
 		Data.pContext->PSSetConstantBuffers1(Level, 1, &Group->m_Buffer, &offset, &size);
 	}

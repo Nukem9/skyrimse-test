@@ -176,9 +176,6 @@
     <ClInclude Include="src\patches\TES\NiMain\BSTriShape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSGraphicsTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\NiMain\BSDynamicTriShape.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -281,9 +278,6 @@
     <ClInclude Include="src\patches\TES\Console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSGraphicsState.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\NiMain\NiPointer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -372,6 +366,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsRenderTargetManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -556,9 +559,6 @@
     <ClCompile Include="src\common.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSGraphicsState.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\patches_tes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -620,6 +620,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderTargetManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

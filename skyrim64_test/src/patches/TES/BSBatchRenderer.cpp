@@ -1,7 +1,7 @@
 #include "../rendering/common.h"
 #include "../../common.h"
+#include "BSGraphics/BSGraphicsRenderer.h"
 #include "BSGraphicsState.h"
-#include "BSGraphicsRenderer.h"
 #include "MemoryContextTracker.h"
 #include "BSSpinLock.h"
 #include "BSBatchRenderer.h"

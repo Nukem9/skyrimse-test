@@ -3,12 +3,6 @@
 
 namespace BSShaderRenderTargets
 {
-	ID3D11Texture2D *g_DepthStencilTextures[DEPTH_STENCIL_COUNT];
-	ID3D11DepthStencilView *g_DepthStencils[DEPTH_STENCIL_COUNT][128][2];
-
-	ID3D11Texture2D *g_RenderTargetTextures[RENDER_TARGET_COUNT];
-	ID3D11RenderTargetView *g_RenderTargets[RENDER_TARGET_COUNT];
-
 	static const char *Debug_RenderTargetNames[RENDER_TARGET_COUNT] =
 	{
 		"RENDER_TARGET_FRAMEBUFFER",
@@ -166,15 +160,19 @@ namespace BSShaderRenderTargets
 
 	const char *GetCubemapName(uint32_t Index)
 	{
-		Assert(Index < RENDER_TARGET_CUBEMAP_COUNT);
+		if (Index == RENDER_TARGET_CUBEMAP_NONE)
+			return "RENDER_TARGET_CUBEMAP_NONE";
 
+		Assert(Index < RENDER_TARGET_CUBEMAP_COUNT);
 		return Debug_CubemapNames[Index];
 	}
 
-	const char *Get3DTextureName(uint32_t Index)
+	const char *GetTexture3DName(uint32_t Index)
 	{
-		Assert(Index < TEXTURE3D_COUNT);
+		if (Index == TEXTURE3D_NONE)
+			return "TEXTURE3D_NONE";
 
+		Assert(Index < TEXTURE3D_COUNT);
 		return Debug_3DTextureNames[Index];
 	}
 

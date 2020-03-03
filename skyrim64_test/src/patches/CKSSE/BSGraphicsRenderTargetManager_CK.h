@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../TES/BSShader/BSShaderRenderTargets.h"
-#include "../TES/BSGraphicsTypes.h"
+#include "../TES/BSGraphics/BSGraphicsTypes.h"
 
 using namespace BSGraphics;
 

@@ -182,8 +182,9 @@
     <ClInclude Include="src\patches\rendering\GpuTimer.h" />
     <ClInclude Include="src\patches\TES\BGSDistantTreeBlock.h" />
     <ClInclude Include="src\patches\TES\bhkThreadMemorySource.h" />
-    <ClInclude Include="src\patches\TES\BSGraphicsState.h" />
-    <ClInclude Include="src\patches\TES\BSGraphicsTypes.h" />
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsRenderTargetManager.h" />
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsState.h" />
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsTypes.h" />
     <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.h" />
     <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsUtility.h" />
     <ClInclude Include="src\patches\TES\BSJobs.h" />
@@ -290,6 +291,7 @@
     <ClCompile Include="src\patches\offsets.cpp" />
     <ClCompile Include="src\patches\CKSSE\TESFile_CK.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.cpp" />
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderTargetManager.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsUtility.cpp" />
     <ClCompile Include="src\patches\TES\BSRenderPass.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp" />
@@ -318,7 +320,7 @@
     <ClCompile Include="src\patches\TES\BGSDistantTreeBlock.cpp" />
     <ClCompile Include="src\patches\TES\bhkThreadMemorySource.cpp" />
     <ClCompile Include="src\patches\TES\BSBatchRenderer.cpp" />
-    <ClCompile Include="src\patches\TES\BSGraphicsState.cpp" />
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsState.cpp" />
     <ClCompile Include="src\patches\TES\BSJobs.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderProperty.cpp" />
     <ClCompile Include="src\patches\TES\BSShader\BSShaderUtil.cpp" />
