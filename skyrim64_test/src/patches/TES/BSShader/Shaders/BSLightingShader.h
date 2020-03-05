@@ -111,7 +111,7 @@ private:
 	static void GeometrySetupConstantLandBlendParams(const BSGraphics::VertexCGroup& VertexCG, const NiPoint3& Translate, float OffsetX, float OffsetY);
 	static void GeometrySetupTreeAnimConstants(const BSGraphics::VertexCGroup& VertexCG, BSLightingShaderProperty *Property);
 	static void GeometrySetupConstantDirectionalLight(const BSGraphics::PixelCGroup& PixelCG, const BSRenderPass *Pass, DirectX::XMMATRIX& InvWorld, Space RenderSpace);
-	static void GeometrySetupConstantDirectionalAmbientLight(const BSGraphics::PixelCGroup& PixelCG, const NiTransform& Transform, Space RenderSpace);
+	static void GeometrySetupConstantDirectionalAmbientLight(const BSGraphics::PixelCGroup& PixelCG, const NiMatrix3& ModelToWorld, Space RenderSpace);
 	static void GeometrySetupEmitColorConstants(const BSGraphics::PixelCGroup& PixelCG, BSLightingShaderProperty *Property);
 	static void GeometrySetupConstantPointLights(const BSGraphics::PixelCGroup& PixelCG, BSRenderPass *Pass, DirectX::XMMATRIX& Transform, uint32_t LightCount, uint32_t ShadowLightCount, float WorldScale, Space RenderSpace);
 	static void GeometrySetupConstantProjectedUVData(const BSGraphics::PixelCGroup& PixelCG, BSMultiIndexTriShape *Geometry, BSLightingShaderProperty *Property, bool EnableProjectedNormals);

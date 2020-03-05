@@ -1,5 +1,5 @@
 #include "../../common.h"
-#include "../TES/BSGraphicsRenderer.h"
+#include "../TES/BSGraphics/BSGraphicsRenderer.h"
 #include "d3d11_proxy.h"
 
 // ***************************************** //

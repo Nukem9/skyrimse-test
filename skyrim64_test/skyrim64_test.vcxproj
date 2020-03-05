@@ -311,7 +311,6 @@
     <ClCompile Include="src\dump.cpp" />
     <ClCompile Include="src\patches\CKSSE\Experimental.cpp" />
     <ClCompile Include="src\patches\logging.cpp" />
-    <ClCompile Include="src\patches\rendering\d3d11_dc.cpp" />
     <ClCompile Include="src\patches\rendering\d3d11_proxy.cpp" />
     <ClCompile Include="src\patches\rendering\d3d11_tls.cpp" />
     <ClCompile Include="src\patches\rendering\GpuCircularBuffer.cpp" />

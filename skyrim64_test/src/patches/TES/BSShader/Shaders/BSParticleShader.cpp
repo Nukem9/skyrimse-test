@@ -52,7 +52,6 @@ AutoPtr(float, flt_141E357A0, 0x1E357A0);
 AutoPtr(uint32_t, dword_143051B3C, 0x3051B3C);
 AutoPtr(uint32_t, dword_143051B40, 0x3051B40);
 AutoPtr(uint32_t, dword_1434BA458, 0x34BA458);
-AutoPtr(uint32_t, dword_141E33048, 0x1E33048);
 
 BSParticleShader::BSParticleShader() : BSShader(ShaderConfigParticle.Type)
 {
@@ -72,6 +71,7 @@ bool BSParticleShader::SetupTechnique(uint32_t Technique)
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSParticleShader::SetupTechnique, Technique);
 
 	auto renderer = Renderer::QInstance();
+	auto state = renderer->GetRendererShadowState();
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -79,7 +79,7 @@ bool BSParticleShader::SetupTechnique(uint32_t Technique)
 	if (!BeginTechnique(GetVertexTechnique(rawTechnique), GetPixelTechnique(rawTechnique), false))
 		return false;
 
-	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 	dword_1434BA458 = rawTechnique;
 
 	if (rawTechnique == RAW_TECHNIQUE_ENVCUBESNOW || rawTechnique == RAW_TECHNIQUE_ENVCUBERAIN)
@@ -136,7 +136,7 @@ void BSParticleShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		renderer->RasterStateSetCullMode(RASTER_STATE_CULL_MODE_DEFAULT);
 	}
 
-	if ((dword_1434BA458 == RAW_TECHNIQUE_ENVCUBESNOW || dword_1434BA458 == RAW_TECHNIQUE_ENVCUBERAIN) && dword_141E33048 == 2)
+	if ((dword_1434BA458 == RAW_TECHNIQUE_ENVCUBESNOW || dword_1434BA458 == RAW_TECHNIQUE_ENVCUBERAIN) && BSShaderManager::St.uiCameraInWaterState == 2)
 		renderer->DepthStencilStateSetStencilMode(DEPTH_STENCIL_STENCIL_MODE_DEFAULT, 255);
 }
 

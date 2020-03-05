@@ -109,7 +109,7 @@ public:
 		uint32_t usDebugMode;
 		NiTransform DirectionalAmbientTransform;
 		NiColorA AmbientSpecular;
-		NiColorA CharacterLightParams;
+		NiColorA CharacterLightParams;// { Primary, Secondary, Luminance, Max Luminance } 
 		bool bAmbientSpecularEnabled;
 		uint32_t uiTextureTransformCurrentBuffer;
 		uint32_t uiTextureTransformFlipMode;

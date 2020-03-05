@@ -70,50 +70,6 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 
 	BSGraphics::Renderer::OnNewFrame();
 
-	using namespace BSShaderRenderTargets;
-
-	//
-	// Certain SLI bits emulate this behavior, but for all render targets. If the game uses ClearRenderTargetView(),
-	// we probably don't need to discard.
-	//
-	// These can't be discarded without rewriting engine code:
-	// - RENDER_TARGET_MAIN_ONLY_ALPHA
-	// - RENDER_TARGET_MENUBG
-	// - RENDER_TARGET_WATER_1 (Consume/Write every other frame)
-	// - RENDER_TARGET_WATER_2 (Consume/Write every other frame)
-	// - DEPTH_STENCIL_TARGET_MAIN_COPY
-	//
-	// NvAPI_D3D_SetResourceHint() or agsDriverExtensionsDX11_CreateTexture2D(TransferDisable) are better options.
-	//
-	g_DeviceContext->BeginEventInt(L"SLI Hacks", 0);
-	{
-		g_DeviceContext->ClearState();
-
-		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_MAIN]);				// Overwrite: ClearRTV()
-		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_MAIN_COPY]);			// Overwrite: DrawIndexed()
-
-		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_SHADOW_MASK]);		// Overwrite: ClearRTV()
-
-		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_RAW_WATER]);			// Dirty
-
-		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_SSR]);				// Overwrite: Dispatch()
-		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_SSR_RAW]);			// Overwrite: DrawIndexed()
-		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_SSR_BLURRED0]);		// Overwrite: Dispatch()
-
-		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_SNOW_SWAP]);			// Overwrite: DrawIndexed()
-		g_DeviceContext->DiscardResource(g_RenderTargetTextures[RENDER_TARGET_MENUBG]);				// Dirty 99% of the time
-
-		g_DeviceContext->DiscardResource(g_DepthStencilTextures[DEPTH_STENCIL_TARGET_MAIN]);
-		//g_DeviceContext->DiscardResource(g_DepthStencilTextures[DEPTH_STENCIL_TARGET_SHADOWMAPS_ESRAM]);// Uses 2 4096x4096 slices and both are overwritten. Note: They clear both
-																										// slices SEPARATELY (i.e clear s0, render s0, clear s1, render s1) which
-																										// may cause dependency issues on slice 1. I hope this fixes it.
-
-		const float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		//g_DeviceContext->ClearRenderTargetView(g_RenderTargets[RENDER_TARGET_RAW_WATER], black);
-		//g_DeviceContext->ClearRenderTargetView(g_RenderTargets[RENDER_TARGET_MENUBG], black);		// Fixes flickering in the system menu, but background screen is black
-	}
-	g_DeviceContext->EndEvent();
-
 	return hr;
 }
 

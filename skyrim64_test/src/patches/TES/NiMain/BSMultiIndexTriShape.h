@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../BSGraphicsTypes.h"
+#include "../BSGraphics/BSGraphicsTypes.h"
 #include "BSTriShape.h"
 #include "NiColor.h"
 

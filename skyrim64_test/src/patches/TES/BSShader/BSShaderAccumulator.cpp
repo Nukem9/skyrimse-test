@@ -1,7 +1,6 @@
 #include "../../rendering/common.h"
 #include "../../../common.h"
 #include "../BSGraphics/BSGraphicsRenderer.h"
-#include "../BSGraphicsState.h"
 #include "../BSBatchRenderer.h"
 #include "BSShaderManager.h"
 #include "BSShaderAccumulator.h"
@@ -340,7 +339,7 @@ void BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth(BSShaderAc
 		//		aiSource != DEPTH_STENCIL_TARGET_NONE &&
 		//		aiTarget != DEPTH_STENCIL_TARGET_NONE);
 
-		renderer->m_DeviceContext->CopyResource(*(ID3D11Resource **)(g_ModuleBase + 0x3050870), *((ID3D11Resource **)flt_14304E490 + 19 * aiSource + 1015));
+		renderer->Data.pContext->CopyResource(*(ID3D11Resource **)(g_ModuleBase + 0x3050870), *((ID3D11Resource **)flt_14304E490 + 19 * aiSource + 1015));
 	}
 
 	// RenderWaterStencil

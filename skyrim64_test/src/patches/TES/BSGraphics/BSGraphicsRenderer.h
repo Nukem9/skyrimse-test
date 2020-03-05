@@ -13,6 +13,9 @@ namespace BSGraphics
 {
 	using Microsoft::WRL::ComPtr;
 
+	void BeginEvent(wchar_t *Name);
+	void EndEvent();
+
 	// Not an actual class
 	class HACK_Globals
 	{
@@ -290,6 +293,7 @@ namespace BSGraphics
 		// Buffers
 		//
 		void *AllocateAndMapDynamicVertexBuffer(uint32_t Size, uint32_t *OutOffset);
+		void UnmapDynamicVertexBuffer();
 		void *MapDynamicTriShapeDynamicData(BSDynamicTriShape *DynTriShape, DynamicTriShape *TriShape, DynamicTriShapeDrawData *DrawData, uint32_t VertexSize);
 		void UnmapDynamicTriShapeDynamicData(DynamicTriShape *TriShape, DynamicTriShapeDrawData *DrawData);
 

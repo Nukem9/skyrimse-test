@@ -3,7 +3,6 @@
 #include "../../common.h"
 #include "BSShader/BSShaderUtil.h"
 #include "BSShader/BSShaderProperty.h"
-#include "BSGraphicsRenderer.h"
 #include "BSBatchRenderer.h"
 #include "MOC.h"
 
@@ -180,7 +179,7 @@ namespace MOC
 	void UpdateDepthViewTexture()
 	{
 		ZoneScopedN("MOC UpdateDepthView");
-		ThreadedMOC->UpdateDepthViewTexture(BSGraphics::Renderer::QInstance()->m_DeviceContext, g_OcclusionTexture);
+		ThreadedMOC->UpdateDepthViewTexture(BSGraphics::Renderer::QInstance()->Data.pContext, g_OcclusionTexture);
 	}
 
 	void ForceFlush()

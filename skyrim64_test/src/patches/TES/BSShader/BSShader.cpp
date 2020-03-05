@@ -177,19 +177,19 @@ void BSShader::hk_Load(BSIStream *Stream)
 	// Dump everything for debugging
 	for (auto itr = m_VertexShaderTable.begin(); itr != m_VertexShaderTable.end(); itr++)
 	{
-		auto bytecode = BSGraphics::Renderer::QInstance()->GetShaderBytecode(itr->m_Shader);
+		auto& bytecode = BSGraphics::Renderer::QInstance()->GetShaderBytecode(itr->m_Shader);
 
 		VertexShaderDecoder d(m_LoaderType, *itr);
-		d.SetShaderData(bytecode.first, bytecode.second);
+		d.SetShaderData(bytecode.first.get(), bytecode.second);
 		d.DumpShader();
 	}
 
 	for (auto itr = m_PixelShaderTable.begin(); itr != m_PixelShaderTable.end(); itr++)
 	{
-		auto bytecode = BSGraphics::Renderer::QInstance()->GetShaderBytecode(itr->m_Shader);
+		auto& bytecode = BSGraphics::Renderer::QInstance()->GetShaderBytecode(itr->m_Shader);
 
 		PixelShaderDecoder d(m_LoaderType, *itr);
-		d.SetShaderData(bytecode.first, bytecode.second);
+		d.SetShaderData(bytecode.first.get(), bytecode.second);
 		d.DumpShader();
 	}
 

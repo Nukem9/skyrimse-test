@@ -1,6 +1,6 @@
 #include "../../../../common.h"
 #include "../../NiMain/NiDirectionalLight.h"
-#include "../../BSGraphicsState.h"
+#include "../../BSGraphics/BSGraphicsUtility.h"
 #include "../../TES.h"
 #include "../../BSTArray.h"
 #include "../../Setting.h"
@@ -47,11 +47,9 @@ using namespace DirectX;
 
 AutoPtr(BYTE, byte_14304E4C5, 0x304E4C5);
 AutoPtr(BYTE, byte_141E32E9D, 0x1E32E9D);// bShadowsOnGrass_Display
-AutoPtr(BYTE, byte_141E32F65, 0x1E32F65);// BSShaderManager::bLiteBrite
 AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
 AutoPtr(float, flt_1431F6198, 0x31F6198);// Fade parameter
 AutoPtr(float, flt_1431F619C, 0x31F619C);// Fade parameter
-AutoPtr(float, flt_141E32F50, 0x1E32F50);// Part of BSShaderManager timer array
 AutoPtr(float, flt_1431F63E8, 0x31F63E8);
 
 DefineIniSetting(iShadowMaskQuarter, Display);
@@ -110,7 +108,7 @@ void BSGrassShader::RestoreTechnique(uint32_t Technique)
 
 void BSGrassShader::SetupMaterial(BSShaderMaterial const *Material)
 {
-	auto *renderer = BSGraphics::Renderer::QInstance();
+	auto renderer = BSGraphics::Renderer::QInstance();
 	NiSourceTexture *baseTexture = *(NiSourceTexture **)((uintptr_t)Material + 72);
 
 	renderer->SetTexture(TexSlot::Base, baseTexture->QRendererTexture());
@@ -127,13 +125,15 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	uintptr_t property = (uintptr_t)Pass->m_ShaderProperty;
 
 	auto renderer = BSGraphics::Renderer::QInstance();
-	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto state = renderer->GetRendererShadowState();
+
+	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 	auto data = (VertexConstantData *)vertexCG.RawData();
 
 	UpdateGeometryProjections(data, Pass->m_Geometry->GetWorldTransform());
 	data->FogNearColor = TLS_FogNearColor;
 
-	if (byte_141E32F65)
+	if (BSShaderManager::St.bLiteBrite)
 	{
 		data->AmbientColor = NiColor::WHITE;
 		data->DirLightColor = NiColor::BLACK;
@@ -151,7 +151,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	data->AlphaParam1 = flt_1431F6198;
 	data->AlphaParam2 = flt_1431F619C;
 
-	float windTimer = ((flt_141E32F50 / 600.0f) * DirectX::XM_2PI) * *(float *)(property + 388);
+	float windTimer = ((BSShaderManager::St.fTimerValues[BSShaderManager::TIMER_MODE_FRAME_COUNT] / 600.0f) * DirectX::XM_2PI) * *(float *)(property + 388);
 	float windDirZ = std::min(60.0f, flt_1431F63E8);
 
 	// NiTransform::XMLoad()?
@@ -241,7 +241,7 @@ void BSGrassShader::UpdateFogParameters()
 	NiColorA color = NiColorA::BLACK;
 
 	if (*(float *)(fogParams + 80) != 0.0f || *(float *)(fogParams + 84) != 0.0f)
-		color = NiColorA(*(float *)(fogParams + 56), *(float *)(fogParams + 60), *(float *)(fogParams + 64), TES::flt_141E32FBC);
+		color = NiColorA(*(float *)(fogParams + 56), *(float *)(fogParams + 60), *(float *)(fogParams + 64), BSShaderManager::St.fInvFrameBufferRange);
 
 	BSGraphics::Utility::CopyNiColorAToFloat(&TLS_FogNearColor, color);
 }
@@ -249,12 +249,14 @@ void BSGrassShader::UpdateFogParameters()
 void BSGrassShader::UpdateGeometryProjections(VertexConstantData *Data, const NiTransform& GeoTransform)
 {
 	auto renderer = BSGraphics::Renderer::QInstance();
+	auto state = renderer->GetRendererShadowState();
+
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(GeoTransform);
 
-	Data->WorldViewProj = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_CameraData.m_ViewProjMat);
-	Data->WorldView = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_CameraData.m_ViewMat);
+	Data->WorldViewProj = XMMatrixMultiplyTranspose(xmmGeoTransform, state->m_CameraData.m_ViewProjMat);
+	Data->WorldView = XMMatrixMultiplyTranspose(xmmGeoTransform, state->m_CameraData.m_ViewMat);
 	Data->World = XMMatrixTranspose(xmmGeoTransform);
-	Data->PreviousWorld = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(GeoTransform, renderer->m_PreviousPosAdjust));
+	Data->PreviousWorld = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(GeoTransform, state->m_PreviousPosAdjust));
 }
 
 void BSGrassShader::UpdateGeometryInstanceData(const BSGeometry *Geometry, BSShaderProperty *Property)

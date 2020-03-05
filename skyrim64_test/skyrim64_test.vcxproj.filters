@@ -541,9 +541,6 @@
     <ClCompile Include="src\patches\TES\BSTaskManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\rendering\d3d11_dc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\typeinfo\hk_rtti.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -1,7 +1,7 @@
 #include "../../../../common.h"
 #include "../../TES.h"
 #include "../../BSGraphics/BSGraphicsRenderer.h"
-#include "../../BSGraphicsState.h"
+#include "../../BSGraphics/BSGraphicsUtility.h"
 #include "../../NiMain/NiSourceTexture.h"
 #include "../../NiMain/NiDirectionalLight.h"
 #include "../BSLight.h"
@@ -44,7 +44,6 @@ DEFINE_SHADER_DESCRIPTOR(
 using namespace DirectX;
 
 AutoPtr(NiSourceTexture *, WorldTreeLODAtlas, 0x32A7F58);
-AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 
 BSDistantTreeShader::BSDistantTreeShader() : BSShader(ShaderConfigDistantTree.Type)
 {
@@ -62,6 +61,7 @@ BSDistantTreeShader::~BSDistantTreeShader()
 bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 {
 	auto renderer = BSGraphics::Renderer::QInstance();
+	auto state = renderer->GetRendererShadowState();
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
@@ -69,8 +69,8 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	if (!BeginTechnique(GetVertexTechnique(rawTechnique), GetPixelTechnique(rawTechnique), false))
 		return false;
 
-	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto pixelCG = renderer->GetShaderConstantGroup(state->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	// fogParams is of type NiFogProperty *
 	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(TES::byte_141E32FE0);
@@ -93,7 +93,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 
 			// NiFogProperty::GetFogNearColor(v6);
 			BSGraphics::Utility::CopyNiColorAToFloat(&vs_fogNearColor,
-				NiColorA(*(float *)(fogParams + 56), *(float *)(fogParams + 60), *(float *)(fogParams + 64), dword_141E32FBC));
+				NiColorA(*(float *)(fogParams + 56), *(float *)(fogParams + 60), *(float *)(fogParams + 64), BSShaderManager::St.fInvFrameBufferRange));
 
 			// NiFogProperty::GetFogFarColor(v6);
 			BSGraphics::Utility::CopyNiColorAToFloat(&vs_fogFarColor,
@@ -117,7 +117,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 		XMVECTOR& ps_Unknown = pixelCG.ParamPS<XMVECTOR, 7>();		// TODO: WHAT IS THIS PARAM??? It should be for vertex instead of pixel?
 
 		BSGraphics::Utility::CopyNiColorAToFloat(&ps_DiffuseColor, NiColorA(sunLight->GetDiffuseColor(), 1.0f));
-		BSGraphics::Utility::CopyNiColorAToFloat(&ps_AmbientColor, NiColorA(sunLight->GetAmbientColor(), dword_141E32FBC));
+		BSGraphics::Utility::CopyNiColorAToFloat(&ps_AmbientColor, NiColorA(sunLight->GetAmbientColor(), BSShaderManager::St.fInvFrameBufferRange));
 
 		// NiPoint3 normalizedDir = NiDirectionalLight::GetWorldDirection().Unitize();
 		NiPoint3 normalizedDir = sunLight->GetWorldDirection();
@@ -144,7 +144,9 @@ void BSDistantTreeShader::RestoreTechnique(uint32_t Technique)
 void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	auto renderer = BSGraphics::Renderer::QInstance();
-	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto state = renderer->GetRendererShadowState();
+
+	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	//
 	// GetXMFromNiPosAdjust is a custom function to remove the original global variable
@@ -156,14 +158,14 @@ void BSDistantTreeShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags
 	//		flt_14304E214 = flt_14304E220;
 	//
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
-	XMMATRIX prevGeoTransform = BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetWorldTransform(), renderer->m_PreviousPosAdjust);
+	XMMATRIX prevGeoTransform = BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetWorldTransform(), state->m_PreviousPosAdjust);
 
 	//
 	// VS: p1 float4x4 WorldViewProj
 	// VS: p2 float4x4 World
 	// VS: p3 float4x4 PreviousWorld
 	//
-	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixMultiplyTranspose(geoTransform, renderer->m_CameraData.m_ViewProjMat);
+	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixMultiplyTranspose(geoTransform, state->m_CameraData.m_ViewProjMat);
 	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(geoTransform);
 	vertexCG.ParamVS<XMMATRIX, 3>() = XMMatrixTranspose(prevGeoTransform);
 

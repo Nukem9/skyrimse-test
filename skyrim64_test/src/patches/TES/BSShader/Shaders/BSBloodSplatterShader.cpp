@@ -1,6 +1,5 @@
 #include "../../../../common.h"
 #include "../../BSGraphics/BSGraphicsUtility.h"
-#include "../../BSGraphicsState.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "BSBloodSplatterShaderProperty.h"
@@ -63,13 +62,9 @@ bool BSBloodSplatterShader::SetupTechnique(uint32_t Technique)
 	{
 		// Use the sun or nearest light source to draw a water-like reflection from blood
 		if (iAdaptedLightRenderTarget <= 0)
-		{
 			renderer->SetTexture(TexSlot::FlareHDR, BSGraphics::gState.pDefaultHeightMap->QRendererTexture());
-		}
 		else
-		{
 			renderer->SetShaderResource(TexSlot::FlareHDR, renderer->Data.pRenderTargets[iAdaptedLightRenderTarget].SRV);
-		}
 
 		renderer->SetTextureMode(TexSlot::FlareHDR, 0, 1);
 		renderer->AlphaBlendStateSetMode(5);
@@ -97,10 +92,12 @@ void BSBloodSplatterShader::RestoreTechnique(uint32_t Technique)
 void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	auto renderer = BSGraphics::Renderer::QInstance();
+	auto state = renderer->GetRendererShadowState();
+
 	auto property = static_cast<const BSBloodSplatterShaderProperty *>(Pass->m_ShaderProperty);
 
-	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto pixelCG = renderer->GetShaderConstantGroup(state->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	//
 	// PS: p0 float Alpha
@@ -116,7 +113,7 @@ void BSBloodSplatterShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFla
 	// VS: p0 float4x4 WorldViewProj
 	//
 	XMMATRIX geoTransform = BSShaderUtil::GetXMFromNi(Pass->m_Geometry->GetWorldTransform());
-	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, renderer->m_CameraData.m_ViewProjMat);
+	XMMATRIX worldViewProj = XMMatrixMultiplyTranspose(geoTransform, state->m_CameraData.m_ViewProjMat);
 
 	vertexCG.ParamVS<XMMATRIX, 0>() = worldViewProj;
 

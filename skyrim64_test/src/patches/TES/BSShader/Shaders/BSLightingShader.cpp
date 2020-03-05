@@ -3,7 +3,6 @@
 #include "../../NiMain/NiSourceTexture.h"
 #include "../../BSGraphics/BSGraphicsUtility.h"
 #include "../../TES.h"
-#include "../../BSGraphicsState.h"
 #include "../../Setting.h"
 #include "../../NiMain/NiDirectionalLight.h"
 #include "../../NiMain/BSMultiIndexTriShape.h"
@@ -103,29 +102,17 @@ AutoPtr(uintptr_t, qword_14304F260, 0x304F260);
 AutoPtr(float, flt_143257C50, 0x3257C50);// fLightingOutputColourClampPostLit_General
 AutoPtr(float, flt_143257C54, 0x3257C54);// fLightingOutputColourClampPostEnv_General
 AutoPtr(float, flt_143257C58, 0x3257C58);// fLightingOutputColourClampPostSpec_General
-AutoPtr(float, flt_141E32F54, 0x1E32F54);
-AutoPtr(float, flt_141E32F58, 0x1E32F58);
-AutoPtr(float, flt_141E32F5C, 0x1E32F5C);
-AutoPtr(float, flt_141E32F60, 0x1E32F60);
 AutoPtr(int, dword_141E33BA0, 0x1E33BA0);
-AutoPtr(BYTE, byte_141E32F66, 0x1E32F66);// bEnableCharacterLighting
-AutoPtr(float, xmmword_141E3302C, 0x1E3302C);// CharacterLightingStrength { Primary, Secondary, Luminance, Max Luminance } 
-AutoPtr(XMVECTORF32, xmmword_141E3301C, 0x1E3301C);
-AutoPtr(int, dword_141E33040, 0x1E33040);
 AutoPtr(uintptr_t, qword_1431F5810, 0x31F5810);// ImagespaceShaderManager
 AutoPtr(XMVECTORF32, xmmword_14187D940, 0x187D940);
 AutoPtr(BYTE, byte_141E32E88, 0x1E32E88);
-AutoPtr(uintptr_t, qword_14304EF00, 0x304EF00);
 AutoPtr(float, flt_143257C40, 0x3257C40);
 //AutoPtr(uint32_t, dword_141E3527C, 0x1E3527C);// Replaced by TLS
 //AutoPtr(uint32_t, dword_141E35280, 0x1E35280);// Replaced by TLS
 AutoPtr(NiColorA, dword_1431F5540, 0x31F5540);// Unknown setting from SceneGraph
 AutoPtr(NiColorA, dword_1431F5550, 0x31F5550);// 4x fMapMenuOverlayScale settings
 //AutoPtr(float, xmmword_141880020, 0x1880020);
-AutoPtr(float, flt_141E32F40, 0x1E32F40);// Part of BSShaderManager timer array
-AutoPtr(float, flt_141E32FD8, 0x1E32FD8);
-AutoPtr(float, flt_141E32FB8, 0x1E32FB8);
-AutoPtr(BYTE, byte_1431F547C, 0x31F547C);
+AutoPtr(BYTE, byte_1431F547C, 0x31F547C);// BSShaderManager::bLODFadeInProgress
 AutoPtr(XMFLOAT4, xmmword_141E32FC8, 0x1E32FC8);
 
 DefineIniSetting(bEnableSnowMask, Display);
@@ -189,18 +176,18 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 
 	// Check if shaders exist
 	uint32_t rawTechnique = GetRawTechnique(Technique);
-	uint32_t vertexShaderTechnique = GetVertexTechnique(rawTechnique);
-	uint32_t pixelShaderTechnique = GetPixelTechnique(rawTechnique);
 
-	if (!BeginTechnique(vertexShaderTechnique, pixelShaderTechnique, false))
+	if (!BeginTechnique(GetVertexTechnique(rawTechnique), GetPixelTechnique(rawTechnique), false))
 		return false;
 
 	//m_CurrentRawTechnique = rawTechnique;
 	TLS_m_CurrentRawTechnique = rawTechnique;
 
-	auto *renderer = BSGraphics::Renderer::QInstance();
-	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto renderer = BSGraphics::Renderer::QInstance();
+	auto state = renderer->GetRendererShadowState();
+
+	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
+	auto pixelCG = renderer->GetShaderConstantGroup(state->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 
 	renderer->SetTextureFilterMode(0, 3);
 	renderer->SetTextureFilterMode(1, 3);
@@ -294,8 +281,8 @@ bool BSLightingShader::SetupTechnique(uint32_t Technique)
 	}
 
 	ID3D11Buffer *cbuffer12;
-	renderer->m_DeviceContext->PSGetConstantBuffers(12, 1, &cbuffer12);
-	renderer->m_DeviceContext->DSSetConstantBuffers(12, 1, &cbuffer12);
+	renderer->Data.pContext->PSGetConstantBuffers(12, 1, &cbuffer12);
+	renderer->Data.pContext->DSSetConstantBuffers(12, 1, &cbuffer12);
 	cbuffer12->Release();
 
 	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
@@ -307,7 +294,7 @@ void BSLightingShader::RestoreTechnique(uint32_t Technique)
 {
 	BSSHADER_FORWARD_CALL(TECHNIQUE, &BSLightingShader::RestoreTechnique, Technique);
 
-	auto *renderer = BSGraphics::Renderer::QInstance();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	if (TLS_m_CurrentRawTechnique & RAW_FLAG_DEFSHADOW)
 		renderer->SetShaderResource(14, nullptr);
@@ -325,9 +312,11 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 {
 	BSSHADER_FORWARD_CALL(MATERIAL, &BSLightingShader::SetupMaterial, Material);
 
-	auto *renderer = BSGraphics::Renderer::QInstance();
-	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
-	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
+	auto renderer = BSGraphics::Renderer::QInstance();
+	auto state = renderer->GetRendererShadowState();
+
+	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
+	auto pixelCG = renderer->GetShaderConstantGroup(state->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_MATERIAL);
 
 	const uint32_t rawTechnique = TLS_m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
@@ -600,10 +589,10 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	{
 		XMVECTORF32& texcoordOffset = vertexCG.ParamVS<XMVECTORF32, 11>();
 
-		texcoordOffset.f[0] = lightingMaterial->kTexCoordOffset[dword_141E33040].x;
-		texcoordOffset.f[1] = lightingMaterial->kTexCoordOffset[dword_141E33040].y;
-		texcoordOffset.f[2] = lightingMaterial->kTexCoordScale[dword_141E33040].x;
-		texcoordOffset.f[3] = lightingMaterial->kTexCoordScale[dword_141E33040].y;
+		texcoordOffset.f[0] = lightingMaterial->kTexCoordOffset[BSShaderManager::St.uiTextureTransformCurrentBuffer].x;
+		texcoordOffset.f[1] = lightingMaterial->kTexCoordOffset[BSShaderManager::St.uiTextureTransformCurrentBuffer].y;
+		texcoordOffset.f[2] = lightingMaterial->kTexCoordScale[BSShaderManager::St.uiTextureTransformCurrentBuffer].x;
+		texcoordOffset.f[3] = lightingMaterial->kTexCoordScale[BSShaderManager::St.uiTextureTransformCurrentBuffer].y;
 	}
 
 	if (rawTechnique & RAW_FLAG_SPECULAR)
@@ -628,7 +617,7 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	if (rawTechnique & RAW_FLAG_AMBIENT_SPECULAR)
 	{
 		// PS: p6 float4 AmbientSpecularTintAndFresnelPower
-		pixelCG.ParamPS<XMVECTORF32, 6>() = xmmword_141E3301C;
+		BSGraphics::Utility::CopyNiColorAToFloat(&pixelCG.ParamPS<XMVECTOR, 6>(), BSShaderManager::St.AmbientSpecular);
 	}
 
 	// These two conditions were originally separate code blocks
@@ -663,15 +652,13 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 
 	if (setDiffuseNormalSamplers)
 	{
-		if (lightingMaterial->iDiffuseRenderTargetSourceIndex == -1)
+		if (lightingMaterial->iDiffuseRenderTargetSourceIndex == RENDER_TARGET_NONE)
 		{
 			MatSetTextureSlot(0, lightingMaterial->spDiffuseTexture, lightingMaterial);
 		}
 		else
 		{
-			auto v90 = (ID3D11ShaderResourceView *)*(&qword_14304EF00 + 6 * lightingMaterial->iDiffuseRenderTargetSourceIndex);
-
-			renderer->SetShaderResource(0, v90);
+			renderer->SetShaderResource(0, renderer->Data.pRenderTargets[lightingMaterial->iDiffuseRenderTargetSourceIndex].SRV);
 			renderer->SetTextureAddressMode(0, lightingMaterial->eTextureClampMode);
 		}
 
@@ -700,18 +687,15 @@ void BSLightingShader::SetupMaterial(BSShaderMaterial const *Material)
 	{
 		if (dword_141E33BA0 >= 0)
 		{
-			auto v99 = (ID3D11ShaderResourceView *)*(&qword_14304EF00 + 6 * (signed int)sub_141314170(g_ModuleBase + 0x1E33B98));
-
-			renderer->SetShaderResource(11, v99);
+			renderer->SetShaderResource(11, renderer->Data.pRenderTargets[sub_141314170(g_ModuleBase + 0x1E33B98)].SRV);
 			renderer->SetTextureAddressMode(11, 0);
 		}
 
 		// PS: p35 float4 CharacterLightParams
-		XMVECTORF32& characterLightParams = pixelCG.ParamPS<XMVECTORF32, 35>();
+		XMVECTOR& characterLightParams = pixelCG.ParamPS<XMVECTOR, 35>();
 
-		// if (bEnableCharacterRimLighting)
-		if (byte_141E32F66)
-			characterLightParams.v = _mm_loadu_ps(&xmmword_141E3302C);
+		if (BSShaderManager::St.CharacterLightEnabled)
+			BSGraphics::Utility::CopyNiColorAToFloat(&characterLightParams, BSShaderManager::St.CharacterLightParams);
 	}
 
 	renderer->FlushConstantGroupVSPS(&vertexCG, &pixelCG);
@@ -728,7 +712,7 @@ void GetInverseWorldMatrix(const NiTransform& Transform, bool Skinned, XMMATRIX&
 {
 	if (Skinned)
 	{
-		const NiPoint3 posAdjust = BSGraphics::Renderer::QInstance()->m_PosAdjust;
+		const NiPoint3 posAdjust = BSGraphics::Renderer::QInstance()->GetRendererShadowState()->m_PosAdjust;
 
 		// XMMatrixIdentity(), row[3] = { world.x, world.y, world.z, 1.0f }, XMMatrixInverse()
 		OutMatrix = XMMatrixInverse(nullptr, XMMatrixTranslation(posAdjust.x, posAdjust.y, posAdjust.z));
@@ -746,10 +730,12 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::SetupGeometry, Pass, RenderFlags);
 
+	auto renderer = BSGraphics::Renderer::QInstance();
+	auto state = renderer->GetRendererShadowState();
+
 	auto property = static_cast<BSLightingShaderProperty *>(Pass->m_ShaderProperty);
-	auto *renderer = BSGraphics::Renderer::QInstance();
-	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto pixelCG = renderer->GetShaderConstantGroup(state->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	const uint32_t rawTechnique = TLS_m_CurrentRawTechnique;
 	const uint32_t baseTechniqueID = (rawTechnique >> 24) & 0x3F;
@@ -805,7 +791,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	case RAW_TECHNIQUE_LODOBJHD:
 	case RAW_TECHNIQUE_LODLANDNOISE:
 		GeometrySetupConstantWorld(vertexCG, Pass->m_Geometry->GetWorldTransform(), false, nullptr);
-		GeometrySetupConstantWorld(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, &renderer->m_PreviousPosAdjust);
+		GeometrySetupConstantWorld(vertexCG, Pass->m_Geometry->GetWorldTransform(), true, &state->m_PreviousPosAdjust);
 		isLOD = true;
 		break;
 
@@ -821,14 +807,14 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		const NiTransform& temp = (RenderFlags & 0x10) ? world : Pass->m_Geometry->GetPreviousWorldTransform();
 
 		GeometrySetupConstantWorld(vertexCG, world, false, nullptr);
-		GeometrySetupConstantWorld(vertexCG, temp, true, &renderer->m_PreviousPosAdjust);
+		GeometrySetupConstantWorld(vertexCG, temp, true, &state->m_PreviousPosAdjust);
 	}
 
 	XMMATRIX inverseWorldMatrix;
 	GetInverseWorldMatrix(Pass->m_Geometry->GetWorldTransform(), false, inverseWorldMatrix);
 
 	GeometrySetupConstantDirectionalLight(pixelCG, Pass, inverseWorldMatrix, renderSpace);
-	GeometrySetupConstantDirectionalAmbientLight(pixelCG, Pass->m_Geometry->GetWorldTransform(), renderSpace);
+	GeometrySetupConstantDirectionalAmbientLight(pixelCG, Pass->m_Geometry->GetWorldTransform().m_Rotate, renderSpace);
 
 	// PS: p7 float4 MaterialData (Write #1)
 	{
@@ -955,9 +941,9 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		{
 			auto& position = BSShaderManager::GetCurrentAccumulator()->m_EyePosition;
 
-			eyePosition.x = position.x - renderer->m_PosAdjust.x;
-			eyePosition.y = position.y - renderer->m_PosAdjust.y;
-			eyePosition.z = position.z - renderer->m_PosAdjust.z;
+			eyePosition.x = position.x - state->m_PosAdjust.x;
+			eyePosition.y = position.y - state->m_PosAdjust.y;
+			eyePosition.z = position.z - state->m_PosAdjust.z;
 		}
 	}
 
@@ -1019,7 +1005,7 @@ void BSLightingShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	BSSHADER_FORWARD_CALL(GEOMETRY, &BSLightingShader::RestoreGeometry, Pass, RenderFlags);
 
-	auto *renderer = BSGraphics::Renderer::QInstance();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	if (Pass->m_AccumulationHint == 10)
 		renderer->DepthStencilStateSetStencilMode(DEPTH_STENCIL_STENCIL_MODE_DEFAULT, 255);
@@ -1239,15 +1225,15 @@ std::string BSLightingShader::GetTechniqueString(uint32_t Technique)
 
 void BSLightingShader::TechUpdateHighDetailRangeConstants(BSGraphics::VertexCGroup& VertexCG)
 {
-	auto *renderer = BSGraphics::Renderer::QInstance();
+	auto state = BSGraphics::Renderer::QInstance()->GetRendererShadowState();
 
 	// VS: p12 float4 HighDetailRange
 	BSGraphics::Utility::CopyNiColorAToFloat(&VertexCG.ParamVS<XMVECTOR, 12>(),
 		NiColorA(
-			flt_141E32F54 - renderer->m_PosAdjust.x,
-			flt_141E32F58 - renderer->m_PosAdjust.y,
-			flt_141E32F5C - 15.0f,
-			flt_141E32F60 - 15.0f));
+			BSShaderManager::St.LoadedRange.r - state->m_PosAdjust.x,
+			BSShaderManager::St.LoadedRange.g - state->m_PosAdjust.y,
+			BSShaderManager::St.LoadedRange.b - 15.0f,
+			BSShaderManager::St.LoadedRange.a - 15.0f));
 }
 
 void BSLightingShader::TechUpdateFogConstants(BSGraphics::VertexCGroup& VertexCG, BSGraphics::PixelCGroup& PixelCG)
@@ -1386,7 +1372,7 @@ SRWLOCK asdf = SRWLOCK_INIT;
 void BSLightingShader::GeometrySetupConstantLandBlendParams(const BSGraphics::VertexCGroup& VertexCG, const NiPoint3& Translate, float OffsetX, float OffsetY)
 {
 	float v4 = 0.0f;
-	float v6 = (flt_141E32F40 - flt_141E32FD8) / (flt_141E32FB8 * 5.0f);
+	float v6 = (BSShaderManager::St.fTimerValues[BSShaderManager::TIMER_MODE_DEFAULT] - BSShaderManager::St.kfGriddArrayLerpStart) / (BSShaderManager::St.fLandLOFadeSeconds * 5.0f);
 
 	if (v6 >= 0.0f)
 		v4 = fmin(1.0f, v6);
@@ -1465,23 +1451,17 @@ void BSLightingShader::GeometrySetupConstantDirectionalLight(const BSGraphics::P
 	XMStoreFloat3(&dirLightDirection, XMVector3Normalize(lightDir));
 }
 
-void BSLightingShader::GeometrySetupConstantDirectionalAmbientLight(const BSGraphics::PixelCGroup& PixelCG, const NiTransform& Transform, Space RenderSpace)
+void BSLightingShader::GeometrySetupConstantDirectionalAmbientLight(const BSGraphics::PixelCGroup& PixelCG, const NiMatrix3& ModelToWorld, Space RenderSpace)
 {
 	// PS: p5 float3x4 DirectionalAmbient
 	auto directionalAmbient = PixelCG.ParamPS<float[3][4], 5>();
 
-	// BSShaderManager::St.DirectionalAmbientTransform
-	NiTransform unkTransform = *(NiTransform *)(g_ModuleBase + 0x1E32FE8);
+	NiTransform xform = BSShaderManager::St.DirectionalAmbientTransform;
 
 	if (RenderSpace == Space::Model)
-	{
-		unkTransform = unkTransform * Transform;
-		unkTransform.m_Translate.x = *(float *)(g_ModuleBase + 0x1E3300C);
-		unkTransform.m_Translate.y = *(float *)(g_ModuleBase + 0x1E33010);
-		unkTransform.m_Translate.z = *(float *)(g_ModuleBase + 0x1E33014);
-	}
+		xform.m_Rotate = xform.m_Rotate * ModelToWorld;
 
-	BSShaderUtil::StoreTransform3x4NoScale(directionalAmbient, unkTransform);
+	BSShaderUtil::StoreTransform3x4NoScale(directionalAmbient, xform);
 }
 
 void BSLightingShader::GeometrySetupEmitColorConstants(const BSGraphics::PixelCGroup& PixelCG, BSLightingShaderProperty *Property)
@@ -1513,8 +1493,8 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::PixelC
 		NiPoint3 worldPos = niLight->GetWorldTranslate();
 		float dimmer = niLight->GetDimmer() * screenSpaceLight->GetLODDimmer();
 
-		// if (bLiteBrite->value.b)
-		//	dimmer = 0.0f;
+		if (BSShaderManager::St.bLiteBrite)
+			dimmer = 0.0f;
 
 		pointLightColor[i].f[0] = dimmer * niLight->GetDiffuseColor().r;
 		pointLightColor[i].f[1] = dimmer * niLight->GetDiffuseColor().g;
@@ -1527,7 +1507,7 @@ void BSLightingShader::GeometrySetupConstantPointLights(const BSGraphics::PixelC
 		}
 		else
 		{
-			worldPos = worldPos - BSGraphics::Renderer::QInstance()->m_PosAdjust;
+			worldPos = worldPos - BSGraphics::Renderer::QInstance()->GetRendererShadowState()->m_PosAdjust;
 
 			pointLightPosition[i].v = worldPos.AsXmm();
 			pointLightPosition[i].f[3] = niLight->GetSpecularColor().r;
@@ -1595,7 +1575,7 @@ void BSLightingShader::GenerateProjectionMatrix(const NiTransform& ObjectWorldTr
 	temp.m_Rotate.m_pEntry[2][1] = 0.0f;
 	temp.m_Rotate.m_pEntry[2][2] = 1.0f;
 
-	temp.m_Translate = BSGraphics::Renderer::QInstance()->m_PosAdjust;
+	temp.m_Translate = BSGraphics::Renderer::QInstance()->GetRendererShadowState()->m_PosAdjust;
 	temp.m_fScale = 1.0f;
 
 	if (ModelSpace)

@@ -1,7 +1,6 @@
 #include "../../../rendering/common.h"
 #include "../../../../common.h"
 #include "../../BSGraphics/BSGraphicsUtility.h"
-#include "../../BSGraphicsState.h"
 #include "../../NiMain/NiNode.h"
 #include "../../NiMain/NiCamera.h"
 #include "../BSShaderManager.h"
@@ -42,7 +41,6 @@ using namespace DirectX;
 using namespace BSGraphics;
 
 AutoPtr(__int64, qword_1431F5810, 0x31F5810);
-AutoPtr(float, dword_141E32FBC, 0x1E32FBC);
 AutoPtr(NiNode *, qword_1431F55F8, 0x31F55F8);// Points to "World" node in main SceneGraph
 AutoPtr(float, qword_143257D80, 0x3257D80);
 
@@ -133,10 +131,12 @@ void BSSkyShader::RestoreTechnique(uint32_t Technique)
 void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 {
 	auto renderer = BSGraphics::Renderer::QInstance();
+	auto state = renderer->GetRendererShadowState();
+
 	auto property = static_cast<const BSSkyShaderProperty *>(Pass->m_ShaderProperty);
 
-	auto vertexCG = renderer->GetShaderConstantGroup(renderer->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
-	auto pixelCG = renderer->GetShaderConstantGroup(renderer->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
+	auto pixelCG = renderer->GetShaderConstantGroup(state->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_GEOMETRY);
 
 	uint32_t rawTechnique = GAME_TLS(uint32_t, 0x9F0);
 	NiTransform geoTransform = Pass->m_Geometry->GetWorldTransform();
@@ -156,7 +156,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	// VS: p1 float4x4 World
 	//
 	XMMATRIX xmmGeoTransform = BSShaderUtil::GetXMFromNi(geoTransform);
-	vertexCG.ParamVS<XMMATRIX, 0>() = XMMatrixMultiplyTranspose(xmmGeoTransform, renderer->m_CameraData.m_ViewProjMat);
+	vertexCG.ParamVS<XMMATRIX, 0>() = XMMatrixMultiplyTranspose(xmmGeoTransform, state->m_CameraData.m_ViewProjMat);
 	vertexCG.ParamVS<XMMATRIX, 1>() = XMMatrixTranspose(xmmGeoTransform);
 
 	//
@@ -165,7 +165,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	// NOTE: Unlike BSDistantTreeShader and BSGrassShader, this uses GetPreviousWorldTransform() instead
 	// of GetWorldTransform()...?
 	//
-	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetPreviousWorldTransform(), renderer->m_PreviousPosAdjust));
+	vertexCG.ParamVS<XMMATRIX, 2>() = XMMatrixTranspose(BSShaderUtil::GetXMFromNiPosAdjust(Pass->m_Geometry->GetPreviousWorldTransform(), state->m_PreviousPosAdjust));
 
 	//
 	// VS: p4 float3 EyePosition (adjusted to relative coordinates, not world)
@@ -174,9 +174,9 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		XMFLOAT3& eyePos = vertexCG.ParamVS<XMFLOAT3, 4>();
 
 		auto& position = BSShaderManager::GetCurrentAccumulator()->m_EyePosition;
-		eyePos.x = position.x - renderer->m_PosAdjust.x;
-		eyePos.y = position.y - renderer->m_PosAdjust.y;
-		eyePos.z = position.z - renderer->m_PosAdjust.z;
+		eyePos.x = position.x - state->m_PosAdjust.x;
+		eyePos.y = position.y - state->m_PosAdjust.y;
+		eyePos.z = position.z - state->m_PosAdjust.z;
 	}
 
 	//
@@ -192,14 +192,14 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 			else
 				pparams.x = property->fBlendValue;
 
-			pparams.y = dword_141E32FBC * *(float *)(qword_1431F5810 + 228);
+			pparams.y = BSShaderManager::St.fInvFrameBufferRange * *(float *)(qword_1431F5810 + 228);
 
 			// VS: p5 float2 TexCoordOff
 			vertexCG.ParamVS<XMFLOAT2, 5>() = *((XMFLOAT2 *)&qword_143257D80 + property->usCloudLayer);
 		}
 		else if (property->uiSkyObjectType != BSSkyShaderProperty::SO_MOON && property->uiSkyObjectType != BSSkyShaderProperty::SO_SUN_GLARE)
 		{
-			pparams.y = dword_141E32FBC * *(float *)(qword_1431F5810 + 228);
+			pparams.y = BSShaderManager::St.fInvFrameBufferRange * *(float *)(qword_1431F5810 + 228);
 		}
 		else
 		{
@@ -210,7 +210,7 @@ void BSSkyShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	//
 	// VS: p6 float VParams
 	//
-	vertexCG.ParamVS<float, 6>() = dword_141E32FBC;
+	vertexCG.ParamVS<float, 6>() = BSShaderManager::St.fInvFrameBufferRange;
 
 	//
 	// VS: p3 float4 BlendColor[3]

@@ -6,7 +6,7 @@ using namespace DirectX;
 
 XMMATRIX BSShaderUtil::GetXMFromNi(const NiTransform& Transform)
 {
-	return GetXMFromNiPosAdjust(Transform, BSGraphics::Renderer::QInstance()->m_PosAdjust);
+	return GetXMFromNiPosAdjust(Transform, BSGraphics::Renderer::QInstance()->GetRendererShadowState()->m_PosAdjust);
 }
 
 XMMATRIX BSShaderUtil::GetXMFromNiPosAdjust(const NiTransform& Transform, const NiPoint3& PosAdjust)

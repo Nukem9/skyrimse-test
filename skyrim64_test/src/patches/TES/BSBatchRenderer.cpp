@@ -1,7 +1,6 @@
 #include "../rendering/common.h"
 #include "../../common.h"
 #include "BSGraphics/BSGraphicsRenderer.h"
-#include "BSGraphicsState.h"
 #include "MemoryContextTracker.h"
 #include "BSSpinLock.h"
 #include "BSBatchRenderer.h"
@@ -337,13 +336,6 @@ void BSBatchRenderer::ClearRenderPasses()
 	m_ActivePassIndexList.RemoveAllNodes(sub_14131F910, (void *)(g_ModuleBase + 0x34B5230));
 }
 
-void UnmapDynamicData()
-{
-	auto *renderer = BSGraphics::Renderer::QInstance();
-
-	renderer->m_DeviceContext->Unmap(renderer->m_DynamicBuffers[renderer->m_CurrentDynamicBufferIndex], 0);
-}
-
 void BSBatchRenderer::RenderPersistentPassList(PersistentPassList *PassList, uint32_t RenderFlags)
 {
 	if (!PassList->m_Head)
@@ -486,12 +478,12 @@ void BSBatchRenderer::RenderPassImmediately_Skinned(BSRenderPass *Pass, bool Alp
 		if (dynamicTri)
 		{
 			const uint32_t size = dynamicTri->QDynamicDataSize();
-			void *vertexBuffer = BSGraphics::Renderer::QInstance()->MapDynamicBuffer(size, &skinData.m_VertexBufferOffset);
+			void *vertexBuffer = BSGraphics::Renderer::QInstance()->AllocateAndMapDynamicVertexBuffer(size, &skinData.m_VertexBufferOffset);
 
 			memcpy(vertexBuffer, dynamicTri->LockDynamicDataForRead(), size);
 
 			dynamicTri->UnlockDynamicData();
-			UnmapDynamicData();
+			BSGraphics::Renderer::QInstance()->UnmapDynamicVertexBuffer();
 		}
 
 		// Renders multiple skinned instances (SetupTechnique, SetBoneMatrix)
@@ -552,7 +544,7 @@ void BSBatchRenderer::Draw(BSRenderPass *Pass)
 				renderer->UnmapDynamicTriShapeDynamicData(triShape, &drawData);
 			}
 
-			renderer->DrawDynamicTriShape(triShape, &drawData, 0, particleCount * 2);
+			renderer->DrawDynamicTriShapeUnknown(triShape, &drawData, 0, particleCount * 2);
 		}
 	}
 	break;
@@ -597,7 +589,7 @@ void BSBatchRenderer::Draw(BSRenderPass *Pass)
 			renderer->UnmapDynamicTriShapeDynamicData(rendererData, &dynTriShape->DrawData);
 		}
 
-		renderer->DrawDynamicTriShape(rendererData, &dynTriShape->DrawData, 0, dynTriShape->m_TriangleCount);
+		renderer->DrawDynamicTriShapeUnknown(rendererData, &dynTriShape->DrawData, 0, dynTriShape->m_TriangleCount);
 	}
 	break;
 
