@@ -109,7 +109,7 @@ private:
 
 	static void GeometrySetupConstantWorld(BSGraphics::VertexCGroup& VertexCG, const NiTransform& Transform, bool IsPreviousWorld, const NiPoint3 *PosAdjust);
 	static void GeometrySetupConstantLandBlendParams(const BSGraphics::VertexCGroup& VertexCG, const NiPoint3& Translate, float OffsetX, float OffsetY);
-	static void GeometrySetupTreeAnimConstants(const BSGraphics::VertexCGroup& VertexCG, BSLightingShaderProperty *Property);
+	static void GeometrySetupConstantTreeParams(const BSGraphics::VertexCGroup& VertexCG, BSLightingShaderProperty *Property);
 	static void GeometrySetupConstantDirectionalLight(const BSGraphics::PixelCGroup& PixelCG, const BSRenderPass *Pass, DirectX::XMMATRIX& InvWorld, Space RenderSpace);
 	static void GeometrySetupConstantDirectionalAmbientLight(const BSGraphics::PixelCGroup& PixelCG, const NiMatrix3& ModelToWorld, Space RenderSpace);
 	static void GeometrySetupEmitColorConstants(const BSGraphics::PixelCGroup& PixelCG, BSLightingShaderProperty *Property);

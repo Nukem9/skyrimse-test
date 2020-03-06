@@ -90,6 +90,7 @@ DEFINE_SHADER_DESCRIPTOR(
 // - A lock is held in GeometrySetupConstantLandBlendParams()
 // - "Bones" and "IndexScale" vertex constants are not used in the game (undefined types)
 // - AmbientSpecularTintAndFresnelPower has a bug where it's set in SetupMaterial() rather than SetupGeometry()
+// - An unknown/redundant global variable edit was removed in GeometrySetupConstantLandBlendParams (BSShaderManager::St.kOldGridArrayCenter)
 //
 using namespace DirectX;
 using namespace BSGraphics;
@@ -112,8 +113,9 @@ AutoPtr(float, flt_143257C40, 0x3257C40);
 AutoPtr(NiColorA, dword_1431F5540, 0x31F5540);// Unknown setting from SceneGraph
 AutoPtr(NiColorA, dword_1431F5550, 0x31F5550);// 4x fMapMenuOverlayScale settings
 //AutoPtr(float, xmmword_141880020, 0x1880020);
-AutoPtr(BYTE, byte_1431F547C, 0x31F547C);// BSShaderManager::bLODFadeInProgress
+AutoPtr(bool, byte_1431F547C, 0x31F547C);// BSShaderManager::bLODFadeInProgress
 AutoPtr(XMFLOAT4, xmmword_141E32FC8, 0x1E32FC8);
+AutoPtr(BSFadeNode *, qword_1431F5410, 0x31F5410);
 
 DefineIniSetting(bEnableSnowMask, Display);
 DefineIniSetting(iLandscapeMultiNormalTilingFactor, Display);
@@ -796,7 +798,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		break;
 
 	case RAW_TECHNIQUE_TREE:
-		GeometrySetupTreeAnimConstants(vertexCG, property);
+		GeometrySetupConstantTreeParams(vertexCG, property);
 		break;
 	}
 
@@ -991,7 +993,7 @@ void BSLightingShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 		if (rawTechnique & RAW_FLAG_SPECULAR)
 			v99 = property->fSpecularLODFade;
 
-		if ((RenderFlags & 2) == 0)
+		if ((RenderFlags & 0x2) == 0)
 			v98 = 1.0f;
 
 		ssrParams.f[3] = v98 * v99;
@@ -1249,7 +1251,7 @@ void BSLightingShader::TechUpdateFogConstants(BSGraphics::VertexCGroup& VertexCG
 		fogColor.f[0] = *(float *)(fogParams + 56);
 		fogColor.f[1] = *(float *)(fogParams + 60);
 		fogColor.f[2] = *(float *)(fogParams + 64);
-		fogColor.f[3] = TES::flt_141E32FBC;
+		fogColor.f[3] = BSShaderManager::St.fInvFrameBufferRange;
 
 		// VS: p14 float4 FogNearColor
 		VertexCG.ParamVS<XMVECTORF32, 14>() = fogColor;
@@ -1288,7 +1290,7 @@ void BSLightingShader::TechUpdateFogConstants(BSGraphics::VertexCGroup& VertexCG
 
 void BSLightingShader::MatSetEnvTexture(const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material)
 {
-	auto *renderer = BSGraphics::Renderer::QInstance();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->SetTexture(4, Texture);
 	renderer->SetTextureAddressMode(4, Material->eTextureClampMode);
@@ -1296,7 +1298,7 @@ void BSLightingShader::MatSetEnvTexture(const NiSourceTexture *Texture, const BS
 
 void BSLightingShader::MatSetEnvMaskTexture(const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material)
 {
-	auto *renderer = BSGraphics::Renderer::QInstance();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->SetTexture(5, Texture ? Texture : BSGraphics::gState.pDefaultTextureNormalMap);
 	renderer->SetTextureAddressMode(5, Material->eTextureClampMode);
@@ -1304,7 +1306,7 @@ void BSLightingShader::MatSetEnvMaskTexture(const NiSourceTexture *Texture, cons
 
 void BSLightingShader::MatSetTextureSlot(int Slot, const NiSourceTexture *Texture, const BSLightingShaderMaterialBase *Material)
 {
-	auto *renderer = BSGraphics::Renderer::QInstance();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	renderer->SetTexture(Slot, Texture);
 	renderer->SetTextureAddressMode(Slot, Material->eTextureClampMode);
@@ -1312,7 +1314,7 @@ void BSLightingShader::MatSetTextureSlot(int Slot, const NiSourceTexture *Textur
 
 void BSLightingShader::MatSetMultiTextureLandOverrides(const BSLightingShaderMaterialLandscape *Material)
 {
-	auto *renderer = BSGraphics::Renderer::QInstance();
+	auto renderer = BSGraphics::Renderer::QInstance();
 
 	// This overrides all 12 samplers for land parameters if set in the property (max 6 diffuse, 6 normal)
 	renderer->SetTexture(0, Material->spDiffuseTexture);
@@ -1367,66 +1369,73 @@ void BSLightingShader::GeometrySetupConstantWorld(BSGraphics::VertexCGroup& Vert
 		BSShaderUtil::TransposeStoreMatrix3x4(&VertexCG.ParamVS<float, 1>(), projMatrix);
 }
 
-SRWLOCK asdf = SRWLOCK_INIT;
-
 void BSLightingShader::GeometrySetupConstantLandBlendParams(const BSGraphics::VertexCGroup& VertexCG, const NiPoint3& Translate, float OffsetX, float OffsetY)
 {
-	float v4 = 0.0f;
-	float v6 = (BSShaderManager::St.fTimerValues[BSShaderManager::TIMER_MODE_DEFAULT] - BSShaderManager::St.kfGriddArrayLerpStart) / (BSShaderManager::St.fLandLOFadeSeconds * 5.0f);
+	float alpha = 0.0f;
+	float fadeTime = (BSShaderManager::St.fTimerValues[BSShaderManager::TIMER_MODE_DEFAULT] - BSShaderManager::St.kfGriddArrayLerpStart) / (BSShaderManager::St.fLandLOFadeSeconds * 5.0f);
 
-	if (v6 >= 0.0f)
-		v4 = fmin(1.0f, v6);
+	if (fadeTime >= 0.0f)
+		alpha = fmin(1.0f, fadeTime);
 
-	/*
-	FO4 code:
+	float deltaX = BSShaderManager::St.kGridArrayCenter.x - BSShaderManager::St.kOldGridArrayCenter.x;
+	float deltaY = BSShaderManager::St.kGridArrayCenter.y - BSShaderManager::St.kOldGridArrayCenter.y;
 
-	v7 = NiPoint2::operator-(&unk_10194FD8, &v10, &unk_10194FD0, &v11, LODWORD(v6));
-	v8 = NiPoint2::operator*(v7);
-	NiPoint2::operator+(&unk_10194FD0, &v12, v8);
-	*/
-
-	// v11 might be wildly incorrect (swap?): v11 = _mm_unpacklo_ps(LODWORD(xmmword_141E32FC8[0]), LODWORD(xmmword_141E32FC8[1]));
-	AcquireSRWLockExclusive(&asdf);
-	XMFLOAT2 v11;
-	v11.x = xmmword_141E32FC8.x;
-	v11.y = xmmword_141E32FC8.y;
-
-	float v9 = xmmword_141E32FC8.z - xmmword_141E32FC8.x;
-	float v10 = xmmword_141E32FC8.w - xmmword_141E32FC8.y;
-
-	*(XMFLOAT2 *)&xmmword_141E32FC8 = v11;
-	ReleaseSRWLockExclusive(&asdf);
-
-	v11.x += (v9 * v4);
-	v11.y += (v10 * v4);
-
-	if (v4 == 1.0f)
-		byte_1431F547C = 0;
+	// BSShaderManager::bLODFadeInProgress
+	if (alpha == 1.0f)
+		byte_1431F547C = false;
 
 	// VS: p3 float4 LandBlendParams
 	XMVECTORF32& landBlendParams = VertexCG.ParamVS<XMVECTORF32, 3>();
 
 	landBlendParams.f[0] = OffsetX;
 	landBlendParams.f[1] = OffsetY;
-	landBlendParams.f[2] = v11.x - Translate.x;
-	landBlendParams.f[3] = v11.y - Translate.y;
+	landBlendParams.f[2] = (BSShaderManager::St.kOldGridArrayCenter.x + (deltaX * alpha)) - Translate.x;
+	landBlendParams.f[3] = (BSShaderManager::St.kOldGridArrayCenter.y + (deltaY * alpha)) - Translate.y;
 }
 
-void BSLightingShader::GeometrySetupTreeAnimConstants(const BSGraphics::VertexCGroup& VertexCG, BSLightingShaderProperty *Property)
+void BSLightingShader::GeometrySetupConstantTreeParams(const BSGraphics::VertexCGroup& VertexCG, BSLightingShaderProperty *Property)
 {
-	// Tree leaf animations
-	// __int64 __fastcall sub_14130BC60(__int64 a1, __int64 a2)
+	uintptr_t leafAnimNode = 0;
 
-	struct tempbufdata
+	if (Property->pFadeNode && Property->pFadeNode != qword_1431F5410)
+		leafAnimNode = (*(__int64(__cdecl **)())(*(uintptr_t *)Property->pFadeNode + 0x1F8))();
+
+	// VS: p4 float4 TreeParams
+	XMVECTORF32& treeParams = VertexCG.ParamVS<XMVECTORF32, 4>();
 	{
-		char _pad[8];
-		void *ptr;
-	} temp;
+		float invDistToCamera = 0.0f;
+		float amplitude = 1.0f;
+		float leafFrequency = 1.0f;
 
-	temp.ptr = VertexCG.RawData();
+		if (leafAnimNode)
+		{
+			invDistToCamera = 1.0f / sqrt(*(float *)(leafAnimNode + 0x158));
+			amplitude = *(float *)(leafAnimNode + 0x15C);
+			leafFrequency = *(float *)(leafAnimNode + 0x160);
+		}
 
-	AutoFunc(void(__fastcall *)(tempbufdata *, BSLightingShaderProperty *), GeometrySetupTreeAnimConstants, 0x130BC60);
-	GeometrySetupTreeAnimConstants(&temp, Property);
+		float dampenStart = BSShaderManager::St.fLeafAnimDampenDistStartSPU;
+		float dampenEnd = BSShaderManager::St.fLeafAnimDampenDistEndSPU;
+		float amplitudeLimit = std::max((1.0f - ((invDistToCamera - dampenStart) / (dampenEnd - dampenStart))) * amplitude, 0.0f);
+
+		treeParams.f[0] = 0.0f;// Timer?
+		treeParams.f[1] = *(float *)((uintptr_t)BSShaderManager::St.pShadowSceneNode[0] + 0x304);// Wind magnitude
+		treeParams.f[2] = std::min(amplitude, amplitudeLimit);
+		treeParams.f[3] = leafFrequency;
+	}
+
+	// VS: p5 float2 WindTimers
+	XMFLOAT2& windTimers = VertexCG.ParamVS<XMFLOAT2, 5>();
+	{
+		windTimers.x = 0.0f;
+		windTimers.y = 0.0f;
+
+		if (leafAnimNode)
+		{
+			windTimers.x = *(float *)(leafAnimNode + 0x164) * 6.0f;
+			windTimers.y = *(float *)(leafAnimNode + 0x168) * 6.0f;
+		}
+	}
 }
 
 void BSLightingShader::GeometrySetupConstantDirectionalLight(const BSGraphics::PixelCGroup& PixelCG, const BSRenderPass *Pass, XMMATRIX& InvWorld, Space RenderSpace)
