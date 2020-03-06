@@ -68,7 +68,7 @@ HRESULT WINAPI hk_IDXGISwapChain_Present(IDXGISwapChain *This, UINT SyncInterval
 	QueryPerformanceCounter(&g_FrameStart);
 	init = true;
 
-	BSGraphics::Renderer::OnNewFrame();
+	BSGraphics::Renderer::QInstance()->OnNewFrame();
 
 	return hr;
 }
@@ -251,15 +251,13 @@ HRESULT WINAPI hk_D3D11CreateDeviceAndSwapChain(
 
 	g_SwapChain = *ppSwapChain;
 
-	BSGraphics::Renderer::FlushThreadedVars();
-	BSGraphics::Renderer::Initialize(g_Device);
+	BSGraphics::Renderer::QInstance()->Initialize();
 
     // Now hook the render function
 	*(PBYTE *)&ptrPresent = Detours::X64::DetourClassVTable(*(PBYTE *)*ppSwapChain, &hk_IDXGISwapChain_Present, 8);
 
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0x131F0D0, (PBYTE)&BSBatchRenderer::RenderPassImmediately);
 	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6FC40, (PBYTE)&BSGraphics::Renderer::SetDirtyStates);
-	Detours::X64::DetourFunction((PBYTE)g_ModuleBase + 0xD6BF30, (PBYTE)&sub_140D6BF00);
 	*(PBYTE *)&FinishAccumulating_Standard_PreResolveDepth = Detours::X64::DetourFunctionClass((PBYTE)g_ModuleBase + 0x12E1960, &BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth);
 
 	g_GPUTimers.Create(g_Device, 1);

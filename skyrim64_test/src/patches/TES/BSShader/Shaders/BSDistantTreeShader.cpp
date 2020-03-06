@@ -108,7 +108,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 	}
 
 	// Sun is always of type NiDirectionalLight *
-	NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)(TES::qword_141E32F20 + 512))->GetLight());
+	NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)((uintptr_t)BSShaderManager::St.pShadowSceneNode[0] + 512))->GetLight());
 
 	if (sunLight)
 	{

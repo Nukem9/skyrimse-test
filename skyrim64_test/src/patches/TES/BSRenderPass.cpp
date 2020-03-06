@@ -21,7 +21,7 @@ void BSRenderPass::Set(BSShader *Shader, BSShaderProperty *ShaderProperty, BSGeo
 	SetLights(NumLights, SceneLights);
 }
 
-void BSRenderPass::SetLights(uint8_t NumLights, BSLight ** SceneLights)
+void BSRenderPass::SetLights(uint8_t NumLights, BSLight **SceneLights)
 {
 	AssertMsg(NumLights <= MaxLightInArrayC, "MaxLightInArrayC is too small");
 

@@ -15,7 +15,7 @@
 #include "../patches/TES/NiMain/NiCamera.h"
 
 extern LARGE_INTEGER g_FrameDelta;
-extern std::vector<std::pair<ID3D11ShaderResourceView *, std::string>> g_ResourceViews;
+std::vector<std::pair<ID3D11ShaderResourceView *, std::string>> g_ResourceViews;
 extern ID3D11ShaderResourceView *g_OcclusionTextureSRV;
 
 namespace ui

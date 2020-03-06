@@ -7,6 +7,8 @@
 
 #define CHECK_RESULT(ReturnVar, Statement) do { (ReturnVar) = (Statement); AssertMsgVa(SUCCEEDED(ReturnVar), "Renderer target '%s' creation failed. HR = 0x%X.", Name, (ReturnVar)); } while (0)
 
+thread_local D3D_PRIMITIVE_TOPOLOGY TopoOverride;
+
 namespace BSGraphics
 {
 	std::mutex InputLayoutLock;
@@ -21,6 +23,14 @@ namespace BSGraphics
 	bool FrameCompletedQueryPending[RingBufferMaxFrames];
 
 	GpuCircularBuffer *ShaderConstantBuffer;
+
+	void BeginEvent(wchar_t *Name)
+	{
+	}
+
+	void EndEvent()
+	{
+	}
 
 	Renderer *Renderer::QInstance()
 	{
@@ -801,18 +811,7 @@ namespace BSGraphics
 		// 1: modifiedBits == 0 { Do nothing }
 		// 2: modifiedBits > 0  { Build minimal state change [X entries] before submitting it to DX }
 		//
-#define for_each_bit(itr, bits) for (unsigned long itr; _BitScanForward(&itr, bits); bits &= ~(1 << itr))
-
-		// Compute shader unordered access views (UAVs)
-		if (uint32_t bits = state->m_CSUAVModifiedBits; bits != 0)
-		{
-			AssertMsg((bits & 0xFFFFFF00) == 0, "CSUAVModifiedBits must not exceed 7th index");
-
-			for_each_bit(i, bits)
-				context->CSSetUnorderedAccessViews(i, 1, &state->m_CSUAV[i], nullptr);
-
-			state->m_CSUAVModifiedBits = 0;
-		}
+#define for_each_bit(Iterator, Bits) for (unsigned long Iterator; _BitScanForward(&Iterator, Bits); Bits &= ~(1 << Iterator))
 
 		// Pixel shader samplers
 		if (uint32_t bits = state->m_PSSamplerModifiedBits; bits != 0)
@@ -865,6 +864,17 @@ namespace BSGraphics
 				context->CSSetShaderResources(i, 1, &state->m_CSTexture[i]);
 
 			state->m_CSResourceModifiedBits = 0;
+		}
+
+		// Compute shader unordered access views (UAVs)
+		if (uint32_t bits = state->m_CSUAVModifiedBits; bits != 0)
+		{
+			AssertMsg((bits & 0xFFFFFF00) == 0, "CSUAVModifiedBits must not exceed 7th index");
+
+			for_each_bit(i, bits)
+				context->CSSetUnorderedAccessViews(i, 1, &state->m_CSUAV[i], nullptr);
+
+			state->m_CSUAVModifiedBits = 0;
 		}
 
 #undef for_each_bit
@@ -1201,6 +1211,17 @@ namespace BSGraphics
 		}
 	}
 
+	void BSGraphics::Renderer::SetShaderResource(uint32_t Index, ID3D11ShaderResourceView *Resource)
+	{
+		auto s = GetRendererShadowState();
+
+		if (s->m_PSTexture[Index] != Resource)
+		{
+			s->m_PSTexture[Index] = Resource;
+			s->m_PSResourceModifiedBits |= 1 << Index;
+		}
+	}
+
 	ComPtr<ID3DBlob> Renderer::CompileShader(const wchar_t *FilePath, const std::vector<std::pair<const char *, const char *>>& Defines, const char *ProgramType)
 	{
 		// Build defines (aka convert vector->D3DCONSTANT array)
@@ -1323,7 +1344,7 @@ namespace BSGraphics
 		return ds;
 	}
 
-	void ReflectConstantBuffers(ComPtr<ID3D11ShaderReflection> Reflector, Buffer *ConstantGroups, uint32_t MaxGroups, std::function<const char *(int Index)> GetConstant, uint8_t *Offsets, uint32_t MaxOffsets)
+	void Renderer::ReflectConstantBuffers(ComPtr<ID3D11ShaderReflection> Reflector, Buffer *ConstantGroups, uint32_t MaxGroups, std::function<const char *(int Index)> GetConstant, uint8_t *Offsets, uint32_t MaxOffsets)
 	{
 		D3D11_SHADER_DESC desc;
 		Assert(SUCCEEDED(Reflector->GetDesc(&desc)));
@@ -1382,7 +1403,7 @@ namespace BSGraphics
 		//mapBufferConsts(Reflector->GetConstantBufferByName("PerGeometry"), &ConstantGroups[2]);
 	}
 
-	void ReflectSamplers(ComPtr<ID3D11ShaderReflection> Reflector, std::function<const char *(int Index)> GetSampler)
+	void Renderer::ReflectSamplers(ComPtr<ID3D11ShaderReflection> Reflector, std::function<const char *(int Index)> GetSampler)
 	{
 		D3D11_SHADER_DESC desc;
 		Assert(SUCCEEDED(Reflector->GetDesc(&desc)));
@@ -1562,6 +1583,11 @@ namespace BSGraphics
 		return (void *)((uintptr_t)resource.pData + frameDataOffset);
 	}
 
+	void BSGraphics::Renderer::UnmapDynamicVertexBuffer()
+	{
+		Data.pContext->Unmap(Globals.m_DynamicVertexBuffers[Globals.m_CurrentDynamicVertexBuffer], 0);
+	}
+
 	void *Renderer::MapDynamicTriShapeDynamicData(BSDynamicTriShape *DynTriShape, DynamicTriShape *TriShape, DynamicTriShapeDrawData *DrawData, uint32_t VertexSize)
 	{
 		if (VertexSize <= 0)
@@ -1572,7 +1598,7 @@ namespace BSGraphics
 
 	void Renderer::UnmapDynamicTriShapeDynamicData(DynamicTriShape *TriShape, DynamicTriShapeDrawData *DrawData)
 	{
-		Data.pContext->Unmap(Globals.m_DynamicVertexBuffers[Globals.m_CurrentDynamicVertexBuffer], 0);
+		UnmapDynamicVertexBuffer();
 	}
 
 	CustomConstantGroup Renderer::GetShaderConstantGroup(uint32_t Size, ConstantGroupLevel Level)

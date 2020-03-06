@@ -141,7 +141,7 @@ void BSGrassShader::SetupGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 	}
 	else
 	{
-		NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)(TES::qword_141E32F20 + 512))->GetLight());
+		NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)((uintptr_t)BSShaderManager::St.pShadowSceneNode[0] + 512))->GetLight());
 
 		data->AmbientColor = sunLight->GetAmbientColor();
 		data->DirLightColor = sunLight->GetDiffuseColor();

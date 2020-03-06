@@ -5,7 +5,7 @@
 #include "TES/TESForm.h"
 #include "TES/BSReadWriteLock.h"
 #include "TES/BGSDistantTreeBlock.h"
-#include "TES/BSGraphicsRenderer.h"
+#include "TES/BSGraphics/BSGraphicsRenderer.h"
 #include "TES/BSCullingProcess.h"
 #include "TES/BSJobs.h"
 #include "TES/BSTaskManager.h"
@@ -28,7 +28,6 @@ void PatchThreading();
 void PatchWindow();
 void PatchFileIO();
 
-void PatchBSGraphicsRenderTargetManager();
 void PatchBSThread();
 void PatchMemory();
 void PatchTESForm();
@@ -77,7 +76,6 @@ void Patch_TESV()
 	//PatchFileIO();
 	PatchTESForm();
 	PatchBSThread();
-	PatchBSGraphicsRenderTargetManager();
 	PatchLogging();
 
 	//
