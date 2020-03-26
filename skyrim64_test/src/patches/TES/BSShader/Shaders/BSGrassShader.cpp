@@ -1,5 +1,6 @@
 #include "../../../../common.h"
 #include "../../NiMain/NiDirectionalLight.h"
+#include "../../NiMain/NiFogProperty.h"
 #include "../../BSGraphics/BSGraphicsUtility.h"
 #include "../../TES.h"
 #include "../../BSTArray.h"
@@ -232,7 +233,7 @@ void BSGrassShader::RestoreGeometry(BSRenderPass *Pass, uint32_t RenderFlags)
 
 void BSGrassShader::UpdateFogParameters()
 {
-	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(TES::byte_141E32FE0);
+	auto fogParams = BSShaderManager::GetCurrentFogProperty();
 
 	if (!fogParams)
 		return;
@@ -240,8 +241,8 @@ void BSGrassShader::UpdateFogParameters()
 	// Default to black when no fog is active
 	NiColorA color = NiColorA::BLACK;
 
-	if (*(float *)(fogParams + 80) != 0.0f || *(float *)(fogParams + 84) != 0.0f)
-		color = NiColorA(*(float *)(fogParams + 56), *(float *)(fogParams + 60), *(float *)(fogParams + 64), BSShaderManager::St.fInvFrameBufferRange);
+	if (fogParams->fStartDistance != 0.0f || fogParams->fEndDistance != 0.0f)
+		color = NiColorA(fogParams->m_kNearColor, BSShaderManager::St.fInvFrameBufferRange);
 
 	BSGraphics::Utility::CopyNiColorAToFloat(&TLS_FogNearColor, color);
 }

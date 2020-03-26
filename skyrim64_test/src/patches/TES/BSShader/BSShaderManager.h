@@ -54,6 +54,8 @@
 #define BSSM_BLOOD_SPLATTER					0x5C006074
 #define BSSM_TILE							0x5C006075
 
+class BSFogProperty;
+
 class BSShaderManager
 {
 public:
@@ -163,7 +165,8 @@ public:
 	static void SetCurrentAccumulator(BSShaderAccumulator *Accumulator);
 	static BSShaderAccumulator *GetCurrentAccumulator();
 
-	static class BSFogProperty *GetFogProperty(uint32_t Index);
+	static BSFogProperty *GetFogProperty(uint32_t ScenegraphIndex);
+	static BSFogProperty *GetCurrentFogProperty();
 };
 
 enum class BSSM_SHADER_TYPE

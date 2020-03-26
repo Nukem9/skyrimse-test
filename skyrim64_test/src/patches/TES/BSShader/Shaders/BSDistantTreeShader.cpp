@@ -4,6 +4,7 @@
 #include "../../BSGraphics/BSGraphicsUtility.h"
 #include "../../NiMain/NiSourceTexture.h"
 #include "../../NiMain/NiDirectionalLight.h"
+#include "../../NiMain/NiFogProperty.h"
 #include "../BSLight.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
@@ -71,9 +72,7 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 
 	auto vertexCG = renderer->GetShaderConstantGroup(state->m_CurrentVertexShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
 	auto pixelCG = renderer->GetShaderConstantGroup(state->m_CurrentPixelShader, BSGraphics::CONSTANT_GROUP_LEVEL_TECHNIQUE);
-
-	// fogParams is of type NiFogProperty *
-	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(TES::byte_141E32FE0);
+	auto fogParams = BSShaderManager::GetCurrentFogProperty();
 
 	if (fogParams)
 	{
@@ -81,34 +80,30 @@ bool BSDistantTreeShader::SetupTechnique(uint32_t Technique)
 		XMVECTOR& vs_fogNearColor = vertexCG.ParamVS<XMVECTOR, 5>();// VS: p5 float4 FogNearColor
 		XMVECTOR& vs_fogFarColor = vertexCG.ParamVS<XMVECTOR, 6>();	// VS: p6 float4 FogFarColor
 
-		float v19 = *(float *)(fogParams + 84);
-		float v20 = *(float *)(fogParams + 80);
-		float v21 = *(float *)(fogParams + 132);
-		float v22 = *(float *)(fogParams + 136);
+		float fogStart = fogParams->fStartDistance;
+		float fogEnd = fogParams->fEndDistance;
 
-		if (v19 != 0.0f || v20 != 0.0f)
+		if (fogEnd != 0.0f || fogStart != 0.0f)
 		{
 			BSGraphics::Utility::CopyNiColorAToFloat(&vs_fogParam,
-				NiColorA((1.0f / (v19 - v20)) * v20, 1.0f / (v19 - v20), v21, v22));
+				NiColorA((1.0f / (fogEnd - fogStart)) * fogStart, 1.0f / (fogEnd - fogStart), fogParams->fPower, fogParams->fClamp));
 
-			// NiFogProperty::GetFogNearColor(v6);
 			BSGraphics::Utility::CopyNiColorAToFloat(&vs_fogNearColor,
-				NiColorA(*(float *)(fogParams + 56), *(float *)(fogParams + 60), *(float *)(fogParams + 64), BSShaderManager::St.fInvFrameBufferRange));
+				NiColorA(fogParams->m_kNearColor, BSShaderManager::St.fInvFrameBufferRange));
 
-			// NiFogProperty::GetFogFarColor(v6);
 			BSGraphics::Utility::CopyNiColorAToFloat(&vs_fogFarColor,
-				NiColorA(*(float *)(fogParams + 68), *(float *)(fogParams + 72), *(float *)(fogParams + 76), 1.0f));
+				NiColorA(fogParams->m_kFarColor, 1.0f));
 		}
 		else
 		{
-			BSGraphics::Utility::CopyNiColorAToFloat(&vs_fogParam, NiColorA(500000.0f, 0.0f, v21, 0.0f));
+			BSGraphics::Utility::CopyNiColorAToFloat(&vs_fogParam, NiColorA(500000.0f, 0.0f, fogParams->fPower, 0.0f));
 			BSGraphics::Utility::CopyNiColorAToFloat(&vs_fogNearColor, NiColorA::BLACK);
 			BSGraphics::Utility::CopyNiColorAToFloat(&vs_fogFarColor, NiColorA::BLACK);
 		}
 	}
 
 	// Sun is always of type NiDirectionalLight *
-	NiDirectionalLight *sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)((uintptr_t)BSShaderManager::St.pShadowSceneNode[0] + 512))->GetLight());
+	auto sunLight = static_cast<NiDirectionalLight *>((*(BSLight **)((uintptr_t)BSShaderManager::St.pShadowSceneNode[0] + 512))->GetLight());
 
 	if (sunLight)
 	{

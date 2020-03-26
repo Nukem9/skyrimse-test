@@ -27,10 +27,15 @@ BSShaderAccumulator *BSShaderManager::GetCurrentAccumulator()
 	return PerThreadAccumulator;
 }
 
-class BSFogProperty *BSShaderManager::GetFogProperty(uint32_t Index)
+BSFogProperty *BSShaderManager::GetFogProperty(uint32_t ScenegraphIndex)
 {
 	AutoFunc(uintptr_t(__fastcall *)(BYTE), sub_1412AC860, 0x12AC860);
-	uintptr_t fogParams = sub_1412AC860((BYTE)Index);
+	uintptr_t fogParams = sub_1412AC860((BYTE)ScenegraphIndex);
 
 	return (class BSFogProperty *)fogParams;
+}
+
+BSFogProperty *BSShaderManager::GetCurrentFogProperty()
+{
+	return GetFogProperty(St.cSceneGraph);
 }

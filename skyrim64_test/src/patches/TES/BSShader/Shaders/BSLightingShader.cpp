@@ -6,6 +6,7 @@
 #include "../../Setting.h"
 #include "../../NiMain/NiDirectionalLight.h"
 #include "../../NiMain/BSMultiIndexTriShape.h"
+#include "../../NiMain/NiFogProperty.h"
 #include "../BSShaderManager.h"
 #include "../BSShaderUtil.h"
 #include "../BSLight.h"
@@ -1240,7 +1241,7 @@ void BSLightingShader::TechUpdateHighDetailRangeConstants(BSGraphics::VertexCGro
 
 void BSLightingShader::TechUpdateFogConstants(BSGraphics::VertexCGroup& VertexCG, BSGraphics::PixelCGroup& PixelCG)
 {
-	uintptr_t fogParams = (uintptr_t)BSShaderManager::GetFogProperty(TES::byte_141E32FE0);
+	auto fogParams = BSShaderManager::GetCurrentFogProperty();
 
 	if (!fogParams)
 		return;
@@ -1248,9 +1249,9 @@ void BSLightingShader::TechUpdateFogConstants(BSGraphics::VertexCGroup& VertexCG
 	// Set both vertex & pixel here
 	{
 		XMVECTORF32 fogColor;
-		fogColor.f[0] = *(float *)(fogParams + 56);
-		fogColor.f[1] = *(float *)(fogParams + 60);
-		fogColor.f[2] = *(float *)(fogParams + 64);
+		fogColor.f[0] = fogParams->m_kNearColor.r;
+		fogColor.f[1] = fogParams->m_kNearColor.g;
+		fogColor.f[2] = fogParams->m_kNearColor.b;
 		fogColor.f[3] = BSShaderManager::St.fInvFrameBufferRange;
 
 		// VS: p14 float4 FogNearColor
@@ -1262,25 +1263,22 @@ void BSLightingShader::TechUpdateFogConstants(BSGraphics::VertexCGroup& VertexCG
 
 	// VS: p15 float4 FogFarColor
 	XMVECTORF32& fogFarColor = VertexCG.ParamVS<XMVECTORF32, 15>();
-	fogFarColor.f[0] = *(float *)(fogParams + 68);
-	fogFarColor.f[1] = *(float *)(fogParams + 72);
-	fogFarColor.f[2] = *(float *)(fogParams + 76);
+	fogFarColor.f[0] = fogParams->m_kFarColor.r;
+	fogFarColor.f[1] = fogParams->m_kFarColor.g;
+	fogFarColor.f[2] = fogParams->m_kFarColor.b;
 	fogFarColor.f[3] = 0.0f;
 
 	// VS: p13 float4 FogParam
 	XMVECTORF32& fogParam = VertexCG.ParamVS<XMVECTORF32, 13>();
 
-	float v5 = *(float *)(fogParams + 84);
-	float v6 = *(float *)(fogParams + 80);
-
-	if (v5 != 0.0f || v6 != 0.0f)
+	if (fogParams->fEndDistance != 0.0f || fogParams->fStartDistance != 0.0f)
 	{
-		float fogMultiplier = 1.0f / (v5 - v6);
+		float invRange = 1.0f / (fogParams->fEndDistance - fogParams->fStartDistance);
 
-		fogParam.f[0] = fogMultiplier * v6;
-		fogParam.f[1] = fogMultiplier;
-		fogParam.f[2] = *(float *)(fogParams + 132);
-		fogParam.f[3] = *(float *)(fogParams + 136);
+		fogParam.f[0] = invRange * fogParams->fStartDistance;
+		fogParam.f[1] = invRange;
+		fogParam.f[2] = fogParams->fPower;
+		fogParam.f[3] = fogParams->fClamp;
 	}
 	else
 	{
