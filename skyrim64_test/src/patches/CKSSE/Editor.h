@@ -79,6 +79,8 @@ const char *hk_call_1417F4A04(int ActorValueIndex);
 uint32_t BSSystemDir__NextEntry(__int64 a1, bool *IsComplete);
 bool BSResource__LooseFileLocation__FileExists(const char *CanonicalFullPath, uint32_t *TotalSize);
 void hk_call_1412DD706(HWND WindowHandle, uint32_t *ControlId);
+std::vector<class TESObjectREFR_CK *> CreateCellPersistentMapCopy(__int64 List);
+int sub_141BBF220(__int64 a1, __int64 a2);
 int sub_141BBF320(__int64 a1, __int64 a2);
 void hk_call_141CF03C9(__int64 a1, bool Enable);
 void hk_call_141CE8269(__int64 a1);

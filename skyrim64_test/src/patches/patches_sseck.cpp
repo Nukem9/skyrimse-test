@@ -644,6 +644,7 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash when cell references are added/removed during initialization, similar to the broken iterator in InventoryChanges
 	//
+	XUtil::DetourJump(OFFSET(0x1BBF220, 1530), &sub_141BBF220);
 	XUtil::DetourJump(OFFSET(0x1BBF320, 1530), &sub_141BBF320);
 
 	//

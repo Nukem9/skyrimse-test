@@ -1072,44 +1072,67 @@ void hk_call_1412DD706(HWND WindowHandle, uint32_t *ControlId)
 		((void(__fastcall *)(__int64))OFFSET(0x14AD7F0, 1530))(previewControl);
 }
 
-int sub_141BBF320(__int64 a1, __int64 a2)
+std::vector<TESObjectREFR_CK *> CreateCellPersistentMapCopy(__int64 List)
 {
 	// Create a copy of the cell's persistent ref hashmap and increase the ref count for all elements
-	std::vector<__int64> temporaryCellRefList;
+	std::vector<TESObjectREFR_CK *> temporaryCellRefList;
+
+	struct
 	{
-		struct
-		{
-			uintptr_t unk1;
-			uintptr_t unk2;
-			uint32_t unk3;
-		} currIter, endIter;
+		uintptr_t unk1;
+		uintptr_t unk2;
+		uint32_t unk3;
+	} currIter, endIter;
 
-		((void(__fastcall *)(__int64, void *))OFFSET(0x12D4700, 1530))(a1, &currIter);
-		((void(__fastcall *)(__int64, void *))OFFSET(0x12D4FD0, 1530))(a1, &endIter);
+	((void(__fastcall *)(__int64, void *))OFFSET(0x12D4700, 1530))(List, &currIter);
+	((void(__fastcall *)(__int64, void *))OFFSET(0x12D4FD0, 1530))(List, &endIter);
 
-		while (((bool(__fastcall *)(void *, void *))OFFSET(0x12D32B0, 1530))(&currIter, &endIter))
-		{
-			// Increase refcount via BSHandleRefObject::IncRefCount
-			__int64 refr;
+	while (((bool(__fastcall *)(void *, void *))OFFSET(0x12D32B0, 1530))(&currIter, &endIter))
+	{
+		// Increase refcount via BSHandleRefObject::IncRefCount
+		TESObjectREFR_CK *refr;
 
-			((__int64(__fastcall *)(__int64 *, __int64))OFFSET(0x1348900, 1530))(&refr, currIter.unk1);
-			temporaryCellRefList.push_back(refr);
+		((__int64(__fastcall *)(TESObjectREFR_CK **, __int64))OFFSET(0x1348900, 1530))(&refr, currIter.unk1);
+		temporaryCellRefList.push_back(refr);
 
-			// Move to next element
-			((void(__fastcall *)(void *))OFFSET(0x12D3AC0, 1530))(&currIter);
-		}
+		// Move to next element
+		((void(__fastcall *)(void *))OFFSET(0x12D3AC0, 1530))(&currIter);
 	}
 
-	// Now parse the entire list separately - allow InitItem() to modify the cell's hashmap without invalidating any iterators
+	return temporaryCellRefList;
+}
+
+int sub_141BBF220(__int64 a1, __int64 a2)
+{
+	auto& cellRefList = CreateCellPersistentMapCopy(a1);
 	int status = 1;
 
-	for (__int64 refr : temporaryCellRefList)
+	// Unknown init function
+	for (TESObjectREFR_CK *refr : cellRefList)
 	{
 		if (status != 1)
 			break;
 
 		// Automatically decrements ref count
-		status = ((int(__fastcall *)(__int64, __int64 *))OFFSET(0x1BC8B00, 1530))(*(__int64 *)a2, &refr);
+		status = ((int(__fastcall *)(__int64, TESObjectREFR_CK **))OFFSET(0x1BC88B0, 1530))(*(__int64 *)a2, &refr);
+	}
+
+	return status;
+}
+
+int sub_141BBF320(__int64 a1, __int64 a2)
+{
+	auto& cellRefList = CreateCellPersistentMapCopy(a1);
+	int status = 1;
+
+	// Now parse the entire list separately - allow InitItem() to modify the cell's hashmap without invalidating any iterators
+	for (TESObjectREFR_CK *refr : cellRefList)
+	{
+		if (status != 1)
+			break;
+
+		// Automatically decrements ref count
+		status = ((int(__fastcall *)(__int64, TESObjectREFR_CK **))OFFSET(0x1BC8B00, 1530))(*(__int64 *)a2, &refr);
 	}
 
 	return status;
