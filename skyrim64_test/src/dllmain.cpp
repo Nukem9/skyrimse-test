@@ -42,12 +42,6 @@ void ApplyPatches()
 		Patch_TESVCreationKit();
 		break;
 #endif
-
-#if FALLOUT4
-	case GAME_EXECUTABLE_TYPE::CREATIONKIT_FALLOUT4:
-		Patch_Fallout4CreationKit();
-		break;
-#endif
 	}
 }
 
@@ -80,21 +74,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			g_LoadType = GAME_EXECUTABLE_TYPE::GAME_SKYRIM;
 			break;
 
-		case CRC32("fallout4launcher"):
-			g_LoadType = GAME_EXECUTABLE_TYPE::LAUNCHER_FALLOUT4;
-			break;
-
-		case CRC32("fallout4"):
-		case CRC32("fallout4_dump"):
-			g_LoadType = GAME_EXECUTABLE_TYPE::GAME_FALLOUT4;
-			break;
-
 		case CRC32("creationkit"):
 		case CRC32("creationkit_1530"):
 		case CRC32("creationkit_1573"):
-			if (strstr(modulePath, "fallout 4"))
-				g_LoadType = GAME_EXECUTABLE_TYPE::CREATIONKIT_FALLOUT4;
-			else
 				g_LoadType = GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM;
 			break;
 		}
@@ -104,10 +86,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		{
 		case GAME_EXECUTABLE_TYPE::GAME_SKYRIM:
 		case GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM:
-		case GAME_EXECUTABLE_TYPE::GAME_FALLOUT4:
-		case GAME_EXECUTABLE_TYPE::CREATIONKIT_FALLOUT4:
 #if SKYRIM64_CREATIONKIT_ONLY
-			if (g_LoadType != GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM && g_LoadType != GAME_EXECUTABLE_TYPE::CREATIONKIT_FALLOUT4)
+			if (g_LoadType != GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM)
 				return TRUE;
 #endif
 

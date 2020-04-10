@@ -67,7 +67,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)Dependencies\detours;$(SolutionDir)Dependencies\zydis\msvc\zydis;$(SolutionDir)Dependencies\zydis\include;$(SolutionDir)Dependencies\tbb\include;$(SolutionDir)Dependencies;E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(OutDir);E:\Program Files %28x86%29\IntelSWTools\VTune Amplifier 2019\lib64;$(LibraryPath)</LibraryPath>
-    <TargetName>SSE_winhttp</TargetName>
+    <TargetName>winhttp</TargetName>
     <IntDir>$(SolutionDir)x64\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='EditAndContinue|x64'">
