@@ -75,7 +75,7 @@ void DumpEnableBreakpoint()
 	if (TempNTSITAddress)
 	{
 		memcpy(&TempNTSIT, (void *)TempNTSITAddress, sizeof(TempNTSIT));
-		*(uint8_t **)&NtSetInformationThread = Detours::X64::DetourFunctionClass((PBYTE)TempNTSITAddress, &hk_NtSetInformationThread);
+		*(uintptr_t *)&NtSetInformationThread = Detours::X64::DetourFunctionClass(TempNTSITAddress, &hk_NtSetInformationThread);
 	}
 }
 

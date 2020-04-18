@@ -143,7 +143,7 @@ void TestHook5()
 {
 	memcpy(hookbuffer, (PBYTE)(g_ModuleBase + 0x1307BD0), 50);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1307BD0), &BSLightingShader::__ctor__);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x1307BD0, &BSLightingShader::__ctor__);
 }
 
 BSLightingShader::BSLightingShader() : BSShader(ShaderConfigLighting.Type)

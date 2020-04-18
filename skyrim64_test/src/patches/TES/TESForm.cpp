@@ -185,7 +185,7 @@ void CRC32_Lazy(int *out, int idIn)
 	sub_140C06030(out, idIn);
 }
 
-uint8_t *origFunc3 = nullptr;
+uintptr_t origFunc3;
 __int64 UnknownFormFunction3(__int64 a1, __int64 a2, int a3, __int64 a4)
 {
 	UpdateFormCache(*(uint32_t *)a4, nullptr, true);
@@ -193,7 +193,7 @@ __int64 UnknownFormFunction3(__int64 a1, __int64 a2, int a3, __int64 a4)
 	return ((decltype(&UnknownFormFunction3))origFunc3)(a1, a2, a3, a4);
 }
 
-uint8_t *origFunc2 = nullptr;
+uintptr_t origFunc2;
 __int64 UnknownFormFunction2(__int64 a1, __int64 a2, int a3, DWORD *formId, __int64 **a5)
 {
 	UpdateFormCache(*formId, nullptr, true);
@@ -201,7 +201,7 @@ __int64 UnknownFormFunction2(__int64 a1, __int64 a2, int a3, DWORD *formId, __in
 	return ((decltype(&UnknownFormFunction2))origFunc2)(a1, a2, a3, formId, a5);
 }
 
-uint8_t *origFunc1 = nullptr;
+uintptr_t origFunc1;
 __int64 UnknownFormFunction1(__int64 a1, __int64 a2, int a3, DWORD *formId, __int64 *a5)
 {
 	UpdateFormCache(*formId, nullptr, true);
@@ -209,7 +209,7 @@ __int64 UnknownFormFunction1(__int64 a1, __int64 a2, int a3, DWORD *formId, __in
 	return ((decltype(&UnknownFormFunction1))origFunc1)(a1, a2, a3, formId, a5);
 }
 
-uint8_t *origFunc0 = nullptr;
+uintptr_t origFunc0;
 void UnknownFormFunction0(__int64 form, bool a2)
 {
 	UpdateFormCache(*(uint32_t *)(form + 0x14), nullptr, true);
@@ -219,11 +219,11 @@ void UnknownFormFunction0(__int64 form, bool a2)
 
 void PatchTESForm()
 {
-	origFunc0 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x194970), &UnknownFormFunction0);
-	origFunc1 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196070), &UnknownFormFunction1);
-	origFunc2 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x195DA0), &UnknownFormFunction2);
-	origFunc3 = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x196960), &UnknownFormFunction3);
-    Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1943B0), &TESForm::LookupFormById);
+	origFunc0 = Detours::X64::DetourFunctionClass(g_ModuleBase + 0x194970, &UnknownFormFunction0);
+	origFunc1 = Detours::X64::DetourFunctionClass(g_ModuleBase + 0x196070, &UnknownFormFunction1);
+	origFunc2 = Detours::X64::DetourFunctionClass(g_ModuleBase + 0x195DA0, &UnknownFormFunction2);
+	origFunc3 = Detours::X64::DetourFunctionClass(g_ModuleBase + 0x196960, &UnknownFormFunction3);
+    Detours::X64::DetourFunctionClass(g_ModuleBase + 0x1943B0, &TESForm::LookupFormById);
 }
 
 #pragma region Form List

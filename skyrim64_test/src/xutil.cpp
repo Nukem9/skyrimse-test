@@ -317,6 +317,19 @@ void XUtil::PatchMemory(uintptr_t Address, uint8_t *Data, size_t Size)
 	FlushInstructionCache(GetCurrentProcess(), (LPVOID)Address, Size);
 }
 
+void XUtil::PatchMemory(uintptr_t Address, std::initializer_list<uint8_t> Data)
+{
+	DWORD d = 0;
+	VirtualProtect((LPVOID)Address, Data.size(), PAGE_EXECUTE_READWRITE, &d);
+
+	uintptr_t i = Address;
+	for (auto value : Data)
+		*(volatile uint8_t *)i++ = value;
+
+	VirtualProtect((LPVOID)Address, Data.size(), d, &d);
+	FlushInstructionCache(GetCurrentProcess(), (LPVOID)Address, Data.size());
+}
+
 void XUtil::PatchMemoryNop(uintptr_t Address, size_t Size)
 {
 	DWORD d = 0;
@@ -331,11 +344,10 @@ void XUtil::PatchMemoryNop(uintptr_t Address, size_t Size)
 
 void XUtil::DetourJump(uintptr_t Target, uintptr_t Destination)
 {
-	Detours::X64::DetourFunction((uint8_t *)Target, (uint8_t *)Destination);
+	Detours::X64::DetourFunction(Target, Destination, Detours::X64Option::USE_REL32_JUMP);
 }
 
 void XUtil::DetourCall(uintptr_t Target, uintptr_t Destination)
 {
-	Detours::X64::DetourFunction((uint8_t *)Target, (uint8_t *)Destination);
-	PatchMemory(Target, (PBYTE)"\xE8", 1);
+	Detours::X64::DetourFunction(Target, Destination, Detours::X64Option::USE_REL32_CALL);
 }

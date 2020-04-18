@@ -81,26 +81,26 @@ void Patch_TESV()
 	//
 	// BGSDistantTreeBlock
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x4A8360), &BGSDistantTreeBlock::UpdateBlockVisibility);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x4A8360, &BGSDistantTreeBlock::UpdateBlockVisibility);
 
 	//
 	// BSCullingProcess
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xD50310), &BSCullingProcess::hk_Process);
+	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xD50310), &BSCullingProcess::hk_Process);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12F93B1), &test1, Detours::X64Option::USE_REL32_JUMP);
-	XUtil::PatchMemory(g_ModuleBase + 0x12F93B1, (PBYTE)"\xE8", 1);
+	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12F93B1), &test1, Detours::X64Option::USE_REL32_JUMP);
+	//XUtil::PatchMemory(g_ModuleBase + 0x12F93B1, (PBYTE)"\xE8", 1);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12F96C9), &test2, Detours::X64Option::USE_REL32_JUMP);
-	XUtil::PatchMemory(g_ModuleBase + 0x12F96C9, (PBYTE)"\xE8", 1);
+	//Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12F96C9), &test2, Detours::X64Option::USE_REL32_JUMP);
+	//XUtil::PatchMemory(g_ModuleBase + 0x12F96C9, (PBYTE)"\xE8", 1);
 
 	//
 	// BSGraphicsRenderer
 	//
-	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>((PBYTE)(g_ModuleBase + 0x133EC20), &BSGraphics::Renderer::IncRef);
-	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>((PBYTE)(g_ModuleBase + 0xD6B9B0), &BSGraphics::Renderer::DecRef);
-	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0x133ED50), &BSGraphics::Renderer::IncRef);
-	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>((PBYTE)(g_ModuleBase + 0xD6C7D0), &BSGraphics::Renderer::DecRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>(g_ModuleBase + 0x133EC20, &BSGraphics::Renderer::IncRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::TriShape *)>(g_ModuleBase + 0xD6B9B0, &BSGraphics::Renderer::DecRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>(g_ModuleBase + 0x133ED50, &BSGraphics::Renderer::IncRef);
+	Detours::X64::DetourFunctionClass<void (BSGraphics::Renderer::*)(BSGraphics::DynamicTriShape *)>(g_ModuleBase + 0xD6C7D0, &BSGraphics::Renderer::DecRef);
 
 	//
 	// BSJobs
@@ -120,106 +120,106 @@ void Patch_TESV()
 		}
 	} static jobhookInstance;
 
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC32109), (PBYTE)jobhookInstance.getCode());
+	Detours::X64::DetourFunction(g_ModuleBase + 0xC32109, (uintptr_t)jobhookInstance.getCode());
 
 	//
 	// BSTaskManager
 	//
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class IOManager")->VTableAddress, &IOManager::QueueTask, 17);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AddCellGrassTask")->VTableAddress, &BSTask::GetName_AddCellGrassTask, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AttachDistant3DTask")->VTableAddress, &BSTask::GetName_AttachDistant3DTask, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AudioLoadForPlaybackTask")->VTableAddress, &BSTask::GetName_AudioLoadForPlaybackTask, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class AudioLoadToCacheTask")->VTableAddress, &BSTask::GetName_AudioLoadToCacheTask, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class BGSParticleObjectCloneTask")->VTableAddress, &BSTask::GetName_BGSParticleObjectCloneTask, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class BSScaleformMovieLoadTask")->VTableAddress, &BSTask::GetName_BSScaleformMovieLoadTask, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class CheckWithinMultiBoundTask")->VTableAddress, &BSTask::GetName_CheckWithinMultiBoundTask, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedFile")->VTableAddress, &BSTask::GetName_QueuedFile, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedPromoteLocationReferencesTask")->VTableAddress, &BSTask::GetName_QueuedPromoteLocationReferencesTask, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class QueuedPromoteReferencesTask")->VTableAddress, &BSTask::GetName_QueuedPromoteReferencesTask, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class IOManager")->VTableAddress, &IOManager::QueueTask, 17);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class AddCellGrassTask")->VTableAddress, &BSTask::GetName_AddCellGrassTask, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class AttachDistant3DTask")->VTableAddress, &BSTask::GetName_AttachDistant3DTask, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class AudioLoadForPlaybackTask")->VTableAddress, &BSTask::GetName_AudioLoadForPlaybackTask, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class AudioLoadToCacheTask")->VTableAddress, &BSTask::GetName_AudioLoadToCacheTask, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class BGSParticleObjectCloneTask")->VTableAddress, &BSTask::GetName_BGSParticleObjectCloneTask, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class BSScaleformMovieLoadTask")->VTableAddress, &BSTask::GetName_BSScaleformMovieLoadTask, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class CheckWithinMultiBoundTask")->VTableAddress, &BSTask::GetName_CheckWithinMultiBoundTask, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class QueuedFile")->VTableAddress, &BSTask::GetName_QueuedFile, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class QueuedPromoteLocationReferencesTask")->VTableAddress, &BSTask::GetName_QueuedPromoteLocationReferencesTask, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class QueuedPromoteReferencesTask")->VTableAddress, &BSTask::GetName_QueuedPromoteReferencesTask, 4);
 
 	//
 	// DirectInput (mouse, keyboard)
 	//
-	Detours::IATHook((PBYTE)g_ModuleBase, "dinput8.dll", "DirectInput8Create", (PBYTE)hk_DirectInput8Create);
+	Detours::IATHook(g_ModuleBase, "dinput8.dll", "DirectInput8Create", (uintptr_t)hk_DirectInput8Create);
 
 	//
 	// MemoryManager
 	//
-	XUtil::PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);													// [3GB  ] MemoryManager - Default/Static/File heaps
-	XUtil::PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);													// [1GB  ] BSSmallBlockAllocator
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x257D740), &bhkThreadMemorySource::__ctor__);	// [512MB] bhkThreadMemorySource
-	XUtil::PatchMemory(g_ModuleBase + 0xC02E60, (PBYTE)"\xC3", 1);													// [64MB ] ScrapHeap init
-	XUtil::PatchMemory(g_ModuleBase + 0xC037C0, (PBYTE)"\xC3", 1);													// [64MB ] ScrapHeap deinit
-																											// [128MB] BSScaleformSysMemMapper is untouched due to complexity
+	XUtil::PatchMemory(g_ModuleBase + 0x59B560, (PBYTE)"\xC3", 1);									// [3GB  ] MemoryManager - Default/Static/File heaps
+	XUtil::PatchMemory(g_ModuleBase + 0x59B170, (PBYTE)"\xC3", 1);									// [1GB  ] BSSmallBlockAllocator
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x257D740, &bhkThreadMemorySource::__ctor__);	// [512MB] bhkThreadMemorySource
+	XUtil::PatchMemory(g_ModuleBase + 0xC02E60, (PBYTE)"\xC3", 1);									// [64MB ] ScrapHeap init
+	XUtil::PatchMemory(g_ModuleBase + 0xC037C0, (PBYTE)"\xC3", 1);									// [64MB ] ScrapHeap deinit
+																									// [128MB] BSScaleformSysMemMapper is untouched due to complexity
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC01DA0), &MemoryManager::Allocate);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC020A0), &MemoryManager::Deallocate);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC02FE0), &ScrapHeap::Allocate);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC03600), &ScrapHeap::Deallocate);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC01DA0, &MemoryManager::Allocate);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC020A0, &MemoryManager::Deallocate);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC02FE0, &ScrapHeap::Allocate);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC03600, &ScrapHeap::Deallocate);
 
 	//
 	// Locking
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06DF0), &BSReadWriteLock::__ctor__);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06E10), &BSReadWriteLock::LockForRead);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC070D0), &BSReadWriteLock::UnlockRead);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06E90), &BSReadWriteLock::LockForWrite);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC070E0), &BSReadWriteLock::UnlockWrite);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07080), &BSReadWriteLock::TryLockForWrite);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07110), &BSReadWriteLock::IsWritingThread);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC06F90), &BSReadWriteLock::LockForReadAndWrite);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC06DF0, &BSReadWriteLock::__ctor__);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC06E10, &BSReadWriteLock::LockForRead);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC070D0, &BSReadWriteLock::UnlockRead);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC06E90, &BSReadWriteLock::LockForWrite);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC070E0, &BSReadWriteLock::UnlockWrite);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC07080, &BSReadWriteLock::TryLockForWrite);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC07110, &BSReadWriteLock::IsWritingThread);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC06F90, &BSReadWriteLock::LockForReadAndWrite);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07130), &BSAutoReadAndWriteLock::Initialize);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC07180), &BSAutoReadAndWriteLock::Deinitialize);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC07130, &BSAutoReadAndWriteLock::Initialize);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC07180, &BSAutoReadAndWriteLock::Deinitialize);
 
 	//
 	// NiRTTI
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0xC66F80), &NiRTTI::__ctor__);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0xC66F80, &NiRTTI::__ctor__);
 
 	//
 	// Setting
 	//
-	//Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INISettingCollection")->VTableAddress, &INISettingCollection::hk_ReadSetting, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INISettingCollection")->VTableAddress, &INISettingCollection::hk_Open, 5);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INISettingCollection")->VTableAddress, &INISettingCollection::hk_Close, 6);
+	//Detours::X64::DetourClassVTable(MSRTTI::Find("class INISettingCollection")->VTableAddress, &INISettingCollection::hk_ReadSetting, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class INISettingCollection")->VTableAddress, &INISettingCollection::hk_Open, 5);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class INISettingCollection")->VTableAddress, &INISettingCollection::hk_Close, 6);
 
-	//Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INIPrefSettingCollection")->VTableAddress, &INIPrefSettingCollection::hk_ReadSetting, 4);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INIPrefSettingCollection")->VTableAddress, &INIPrefSettingCollection::hk_Open, 5);
-	Detours::X64::DetourClassVTable((uint8_t *)MSRTTI::Find("class INIPrefSettingCollection")->VTableAddress, &INIPrefSettingCollection::hk_Close, 6);
+	//Detours::X64::DetourClassVTable(MSRTTI::Find("class INIPrefSettingCollection")->VTableAddress, &INIPrefSettingCollection::hk_ReadSetting, 4);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class INIPrefSettingCollection")->VTableAddress, &INIPrefSettingCollection::hk_Open, 5);
+	Detours::X64::DetourClassVTable(MSRTTI::Find("class INIPrefSettingCollection")->VTableAddress, &INIPrefSettingCollection::hk_Close, 6);
 
 	//
 	// Shaders
 	//
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12ACB20), &BSShaderManager::SetRenderMode);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12AD340), &BSShaderManager::SetCurrentAccumulator);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12AD330), &BSShaderManager::GetCurrentAccumulator);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x12ACB20, &BSShaderManager::SetRenderMode);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x12AD340, &BSShaderManager::SetCurrentAccumulator);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x12AD330, &BSShaderManager::GetCurrentAccumulator);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E0DA0), &BSShaderAccumulator::hk_RegisterObjectDispatch);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E18B0), &BSShaderAccumulator::hk_FinishAccumulatingDispatch);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x12E0DA0, &BSShaderAccumulator::hk_RegisterObjectDispatch);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x12E18B0, &BSShaderAccumulator::hk_FinishAccumulatingDispatch);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1336860), &BSShader::BeginTechnique);
-	*(uint8_t **)&BSShader::Load = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13364A0), &BSShader::hk_Load);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x1336860, &BSShader::BeginTechnique);
+	*(uintptr_t *)&BSShader::Load = Detours::X64::DetourFunctionClass(g_ModuleBase + 0x13364A0, &BSShader::hk_Load);
 
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12EF750), &BSBloodSplatterShader::__ctor__);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1318050), &BSDistantTreeShader::__ctor__);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x13113F0), &BSSkyShader::__ctor__);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x12E4C10), &BSGrassShader::__ctor__);
-	Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x1336C80), &BSParticleShader::__ctor__);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x12EF750, &BSBloodSplatterShader::__ctor__);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x1318050, &BSDistantTreeShader::__ctor__);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x13113F0, &BSSkyShader::__ctor__);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x12E4C10, &BSGrassShader::__ctor__);
+	Detours::X64::DetourFunctionClass(g_ModuleBase + 0x1336C80, &BSParticleShader::__ctor__);
 	TestHook5();// BSLightingShader
 
 	//
 	// TESForm (Note: The function itself needs to be hooked, not the vtable)
 	//
-	Detours::X64::DetourFunctionClass(*(uint8_t **)(MSRTTI::Find("class TESForm")->VTableAddress + 0xB0), &TESForm::hk_GetFullTypeName);
-	Detours::X64::DetourFunctionClass(*(uint8_t **)(MSRTTI::Find("class TESForm")->VTableAddress + 0x190), &TESForm::hk_GetName);
-	Detours::X64::DetourFunctionClass(*(uint8_t **)(MSRTTI::Find("class TESForm")->VTableAddress + 0x198), &TESForm::hk_SetEditorId);
+	Detours::X64::DetourFunctionClass(*(uintptr_t *)(MSRTTI::Find("class TESForm")->VTableAddress + 0xB0), &TESForm::hk_GetFullTypeName);
+	Detours::X64::DetourFunctionClass(*(uintptr_t *)(MSRTTI::Find("class TESForm")->VTableAddress + 0x190), &TESForm::hk_GetName);
+	Detours::X64::DetourFunctionClass(*(uintptr_t *)(MSRTTI::Find("class TESForm")->VTableAddress + 0x198), &TESForm::hk_SetEditorId);
 
 	for (auto ref : MSRTTI::FindAll("class TESObjectREFR"))
 	{
 		// TESObjectREFR has multiple virtual tables
 		if (ref->VFunctionCount == 162)
-			Detours::X64::DetourFunctionClass(*(uint8_t **)(ref->VTableAddress + 0x190), &TESObjectREFR::hk_GetName);
+			Detours::X64::DetourFunctionClass(*(uintptr_t *)(ref->VTableAddress + 0x190), &TESObjectREFR::hk_GetName);
 	}
 
 	//
@@ -269,7 +269,7 @@ void Patch_TESV()
 	//
 	XUtil::PatchMemory(g_ModuleBase + 0x133D94D, (PBYTE)"\x4D\x8B\xCF\x90\x90\x90\x90", 7);
 
-	*(PBYTE *)&TESObjectCell::CreateRootMultiBoundNode = Detours::X64::DetourFunctionClass((PBYTE)(g_ModuleBase + 0x264230), &TESObjectCell::hk_CreateRootMultiBoundNode);
+	*(uintptr_t *)&TESObjectCell::CreateRootMultiBoundNode = Detours::X64::DetourFunctionClass(g_ModuleBase + 0x264230, &TESObjectCell::hk_CreateRootMultiBoundNode);
 
-	*(PBYTE *)&test3_orig = Detours::X64::DetourFunctionClass((uint8_t *)(g_ModuleBase + 0x5B7AD0), &test3);
+	//*(PBYTE *)&test3_orig = Detours::X64::DetourFunctionClass((uint8_t *)(g_ModuleBase + 0x5B7AD0), &test3);
 }

@@ -276,9 +276,6 @@
     <ClInclude Include="src\ui\ui.h" />
     <ClInclude Include="src\ui\ui_renderer.h" />
     <ClInclude Include="src\ui\ui_tracy.h" />
-    <ClInclude Include="src\vfs\vfs.h" />
-    <ClInclude Include="src\vfs\vfs_hook.h" />
-    <ClInclude Include="src\vfs\vfs_util.h" />
     <ClInclude Include="src\xutil.h" />
   </ItemGroup>
   <ItemGroup>
@@ -358,9 +355,6 @@
     <ClCompile Include="src\ui\ui.cpp" />
     <ClCompile Include="src\ui\ui_renderer.cpp" />
     <ClCompile Include="src\ui\ui_tracy.cpp" />
-    <ClCompile Include="src\vfs\vfs.cpp" />
-    <ClCompile Include="src\vfs\vfs_hook.cpp" />
-    <ClCompile Include="src\vfs\vfs_util.cpp" />
     <ClCompile Include="src\xutil.cpp" />
     <ClCompile Include="src\typeinfo\ms_rtti.cpp" />
     <ClCompile Include="src\patches\window.cpp" />

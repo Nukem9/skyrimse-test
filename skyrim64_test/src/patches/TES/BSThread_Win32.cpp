@@ -46,7 +46,7 @@ DWORD WINAPI hk_TaskletEntryFunc(LPVOID lpArg)
 
 void PatchBSThread()
 {
-    *(uint8_t **)&sub_140C06440     = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC07920), (PBYTE)&hk_sub_140C06440);
-    *(uint8_t **)&BSThreadEntryFunc = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC07B10), (PBYTE)&hk_BSThreadEntryFunc);
-    *(uint8_t **)&TaskletEntryFunc  = Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0xC3AF40), (PBYTE)&hk_TaskletEntryFunc);
+    *(uintptr_t *)&sub_140C06440     = Detours::X64::DetourFunction(g_ModuleBase + 0xC07920, (uintptr_t)&hk_sub_140C06440);
+    *(uintptr_t *)&BSThreadEntryFunc = Detours::X64::DetourFunction(g_ModuleBase + 0xC07B10, (uintptr_t)&hk_BSThreadEntryFunc);
+    *(uintptr_t *)&TaskletEntryFunc  = Detours::X64::DetourFunction(g_ModuleBase + 0xC3AF40, (uintptr_t)&hk_TaskletEntryFunc);
 }

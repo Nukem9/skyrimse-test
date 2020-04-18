@@ -113,12 +113,12 @@ int hk_sprintf_s(char *DstBuf, size_t SizeInBytes, const char *Format, ...)
 
 void PatchLogging()
 {
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1CDFE0), (PBYTE)&LogFunc1);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x1660D0), (PBYTE)&LogFunc2);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x578F70), (PBYTE)&LogFunc2);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x179C40), (PBYTE)&LogFunc3);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x5844F0), (PBYTE)&LogFunc4);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x10EF900), (PBYTE)&NavmeshBuilderLog);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x116C9E0), (PBYTE)&LogBNet);
-	Detours::X64::DetourFunction((PBYTE)(g_ModuleBase + 0x142550), (PBYTE)&hk_sprintf_s);
+	Detours::X64::DetourFunction(g_ModuleBase + 0x1CDFE0, (uintptr_t)&LogFunc1);
+	Detours::X64::DetourFunction(g_ModuleBase + 0x1660D0, (uintptr_t)&LogFunc2);
+	Detours::X64::DetourFunction(g_ModuleBase + 0x578F70, (uintptr_t)&LogFunc2);
+	Detours::X64::DetourFunction(g_ModuleBase + 0x179C40, (uintptr_t)&LogFunc3);
+	Detours::X64::DetourFunction(g_ModuleBase + 0x5844F0, (uintptr_t)&LogFunc4);
+	Detours::X64::DetourFunction(g_ModuleBase + 0x10EF900, (uintptr_t)&NavmeshBuilderLog);
+	Detours::X64::DetourFunction(g_ModuleBase + 0x116C9E0, (uintptr_t)&LogBNet);
+	Detours::X64::DetourFunction(g_ModuleBase + 0x142550, (uintptr_t)&hk_sprintf_s);
 }
