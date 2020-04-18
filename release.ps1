@@ -20,7 +20,7 @@ mkdir "Build"
 copy "skyrim64_test.ini" "Build\skyrim64_test.ini"
 
 cd "x64\Release"
-copy "SSE_winhttp.dll" "..\..\Build\winhttp.dll"
+copy "winhttp.dll" "..\..\Build\winhttp.dll"
 copy "tbb.dll" "..\..\Build\tbb.dll"
 copy "tbbmalloc.dll" "..\..\Build\tbbmalloc.dll"
 
@@ -85,14 +85,21 @@ if (!(Test-Path -Path $targetDir)) {
 $versionFileInfo | Out-File -FilePath ($targetDir + "version_info.h") -Encoding ASCII
 }
 
+function Build-Project
+{
+$buildCmd = "/c `"`"%VS2019INSTALLDIR%\Common7\Tools\VsDevCmd.bat`" & msbuild skyrim64_test.sln -m -t:Build -p:Configuration=Release;Platform=x64`""
+Start-Process "cmd.exe" $buildCmd
+}
+
 # Check for params passed on the command line
 $input = $args[0]
 
 if ([string]::IsNullOrWhiteSpace($input)) {
     Write-Host "==================================="
     Write-Host "1: Clean project directory"
-    Write-Host "2: Create release build archives"
-    Write-Host "3: Write version file"
+    Write-Host "2: Build project"
+    Write-Host "3: Create release build archives"
+    Write-Host "4: Write version file"
     Write-Host "==================================="
 
     $input = Read-Host "Selection"
@@ -105,8 +112,11 @@ switch ($input)
         Clean-ProjectDirectory
     } '2' {
         cls
-        Make-GeneralRelease
+        Build-Project
     } '3' {
+        cls
+        Make-GeneralRelease
+    } '4' {
         cls
         Write-VersionFile
     }

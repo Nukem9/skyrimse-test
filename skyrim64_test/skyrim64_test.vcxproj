@@ -91,7 +91,7 @@
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
-      <Command>powershell -ExecutionPolicy Bypass "$(SolutionDir)release.ps1" 3</Command>
+      <Command>powershell -ExecutionPolicy Bypass -File "$(SolutionDir)release.ps1" 4</Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Update version_info.h</Message>
@@ -123,7 +123,7 @@
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
-      <Command>powershell -ExecutionPolicy Bypass "$(SolutionDir)release.ps1" 3</Command>
+      <Command>powershell -ExecutionPolicy Bypass -File "$(SolutionDir)release.ps1" 4</Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Update version_info.h</Message>
@@ -151,7 +151,7 @@
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
-      <Command>powershell -ExecutionPolicy Bypass "$(SolutionDir)release.ps1" 3</Command>
+      <Command>powershell -ExecutionPolicy Bypass -File "$(SolutionDir)release.ps1" 4</Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Update version_info.h</Message>
