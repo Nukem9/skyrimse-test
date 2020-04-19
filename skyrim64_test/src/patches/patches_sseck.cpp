@@ -696,6 +696,11 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x2DB3750, 1530), &BSRenderPass_CK::DeallocatePass);
 	
 	//
+	// Fix for crash when tab control buttons are deleted. Uninitialized TCITEMA structure variables.
+	//
+	XUtil::DetourJump(OFFSET(0x13BC5E0, 1530), &EditorUI::TabControlDeleteItem);
+
+	//
 	// Print a warning when a cloned NiCollisionObject has no name specified in its NIF file. This comes from malformed/ported game assets.
 	//
 	XUtil::DetourCall(OFFSET(0x267B359, 1530), &hk_call_14267B359);
