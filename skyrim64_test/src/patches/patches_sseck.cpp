@@ -706,6 +706,11 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x267B359, 1530), &hk_call_14267B359);
 
 	//
+	// Fix for crash when saving a plugin with an empty single track file path in a Music Track form. Null pointer dereference.
+	//
+	XUtil::DetourCall(OFFSET(0x1A0808C, 1530), &hk_call_141A0808C);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

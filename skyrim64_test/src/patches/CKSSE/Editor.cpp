@@ -1241,3 +1241,8 @@ void hk_call_14267B359(__int64 SourceNode, __int64 DestNode, __int64 CloningProc
 
 	((void(__fastcall *)(__int64, __int64, __int64))OFFSET(0x267B390, 1530))(SourceNode, DestNode, CloningProcess);
 }
+
+size_t hk_call_141A0808C(const char *String)
+{
+	return String ? strlen(String) : 0;
+}
