@@ -103,38 +103,60 @@ size_t MemSize(void *Memory)
 //
 // VS2015 CRT hijacked functions
 //
-void *__fastcall hk_calloc(size_t Count, size_t Size)
+void *hk_calloc(size_t Count, size_t Size)
 {
 	// The allocated memory is always zeroed
 	return MemAlloc(Count * Size, 0, false, true);
 }
 
-void *__fastcall hk_malloc(size_t Size)
+void *hk_malloc(size_t Size)
 {
 	return MemAlloc(Size);
 }
 
-void *__fastcall hk_aligned_malloc(size_t Size, size_t Alignment)
+void *hk_aligned_malloc(size_t Size, size_t Alignment)
 {
 	return MemAlloc(Size, Alignment, true);
 }
 
-void __fastcall hk_free(void *Block)
+void *hk_realloc(void *Memory, size_t Size)
+{
+	void *newMemory = nullptr;
+
+	if (Size > 0)
+	{
+		// Recalloc behaves like calloc if there's no existing allocation. Realloc doesn't. Zero it either way.
+		newMemory = MemAlloc(Size, 0, false, true);
+
+		if (Memory)
+			memcpy(newMemory, Memory, std::min(Size, MemSize(Memory)));
+	}
+
+	MemFree(Memory);
+	return newMemory;
+}
+
+void *hk_recalloc(void *Memory, size_t Count, size_t Size)
+{
+	return hk_realloc(Memory, Count * Size);
+}
+
+void hk_free(void *Block)
 {
 	MemFree(Block);
 }
 
-void __fastcall hk_aligned_free(void *Block)
+void hk_aligned_free(void *Block)
 {
 	MemFree(Block, true);
 }
 
-size_t __fastcall hk_msize(void *Block)
+size_t hk_msize(void *Block)
 {
 	return MemSize(Block);
 }
 
-char *__fastcall hk_strdup(const char *str1)
+char *hk_strdup(const char *str1)
 {
 	size_t len = (strlen(str1) + 1) * sizeof(char);
 	return (char *)memcpy(hk_malloc(len), str1, len);
@@ -178,6 +200,7 @@ void PatchMemory()
 	PatchIAT(hk_calloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc");
 	PatchIAT(hk_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc");
 	PatchIAT(hk_aligned_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_malloc");
+	PatchIAT(hk_recalloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_recalloc");
 	PatchIAT(hk_free, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "free");
 	PatchIAT(hk_aligned_free, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_aligned_free");
 	PatchIAT(hk_msize, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "_msize");
@@ -186,6 +209,7 @@ void PatchMemory()
 	PatchIAT(hk_calloc, "MSVCR110.dll", "calloc");
 	PatchIAT(hk_malloc, "MSVCR110.dll", "malloc");
 	PatchIAT(hk_aligned_malloc, "MSVCR110.dll", "_aligned_malloc");
+	PatchIAT(hk_realloc, "MSVCR110.dll", "realloc");
 	PatchIAT(hk_free, "MSVCR110.dll", "free");
 	PatchIAT(hk_aligned_free, "MSVCR110.dll", "_aligned_free");
 	PatchIAT(hk_msize, "MSVCR110.dll", "_msize");
