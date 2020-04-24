@@ -377,39 +377,35 @@ uint32_t sub_1414974E0_SSE41(BSTArray<void *>& Array, const void *&Target, uint3
 	const __int64 *data = (const __int64 *)Array.QBuffer();
 
 	const uint32_t comparesPerIter = 4;
-	const uint32_t alignedSize = size & ~(comparesPerIter - 1);
+	const uint32_t alignedStartIndex = (StartIndex + comparesPerIter - 1) & ~(comparesPerIter - 1);
 
-	// Compare 4 pointers per iteration (Strips off the last 2 bits from array size)
+	// Initial search, 1-by-1
+	for (uint32_t i = StartIndex; i < alignedStartIndex && i < size; i++)
+	{
+		if (data[i] == (__int64)Target)
+			return i;
+	}
+
+	//
+	// Compare 4 pointers per iteration - use SIMD instructions to generate a bit mask. Set
+	// bit 0 if 'array[i + 0]'=='target', set bit 1 if 'array[i + 1]'=='target', set bit X...
+	//
+	// AVX: mask = _mm256_movemask_pd(_mm256_castsi256_pd(_mm256_cmpeq_epi64(targets, _mm256_loadu_si256((__m256i *)&data[i]))));
+	//
 	const __m128i targets = _mm_set1_epi64x((__int64)Target);
 
-	for (uint32_t i = StartIndex; i < alignedSize; i += comparesPerIter)
+	for (uint32_t i = alignedStartIndex; i < size; i += comparesPerIter)
 	{
-		//
-		// Set bit 0 if 'a1'=='a2', set bit 1 if 'b1'=='b2', set bit X...
-		// AVX: mask = _mm256_movemask_pd(_mm256_castsi256_pd(_mm256_cmpeq_epi64(targets, _mm256_loadu_si256((__m256i *)&data[i]))));
-		//
 		__m128i test1 = _mm_cmpeq_epi64(targets, _mm_loadu_si128((__m128i *)&data[i + 0]));
 		__m128i test2 = _mm_cmpeq_epi64(targets, _mm_loadu_si128((__m128i *)&data[i + 2]));
 
 		int mask = _mm_movemask_pd(_mm_castsi128_pd(_mm_or_si128(test1, test2)));
 
-		if (mask != 0)
+		for (; mask != 0 && i < size; i++)
 		{
-			for (; i < size; i++)
-			{
-				if (data[i] == (__int64)Target)
-					return i;
-			}
-
-			__debugbreak();
-			__assume(0);
+			if (data[i] == (__int64)Target)
+				return i;
 		}
-	}
-
-	for (uint32_t i = alignedSize; i < size; i++)
-	{
-		if (data[i] == (__int64)Target)
-			return i;
 	}
 
 	return 0xFFFFFFFF;
