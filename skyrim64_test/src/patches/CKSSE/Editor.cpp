@@ -373,18 +373,11 @@ uint32_t sub_1414974E0(BSTArray<void *>& Array, const void *&Target, uint32_t St
 
 uint32_t sub_1414974E0_SSE41(BSTArray<void *>& Array, const void *&Target, uint32_t StartIndex, __int64 Unused)
 {
-	const uint32_t size = Array.QSize();
-	const __int64 *data = (const __int64 *)Array.QBuffer();
+	uint32_t index = StartIndex;
+	__int64 *data = (__int64 *)Array.QBuffer();
 
 	const uint32_t comparesPerIter = 4;
-	const uint32_t alignedStartIndex = (StartIndex + comparesPerIter - 1) & ~(comparesPerIter - 1);
-
-	// Initial search, 1-by-1
-	for (uint32_t i = StartIndex; i < alignedStartIndex && i < size; i++)
-	{
-		if (data[i] == (__int64)Target)
-			return i;
-	}
+	const uint32_t vectorizedIterations = (Array.QSize() - index) / comparesPerIter;
 
 	//
 	// Compare 4 pointers per iteration - use SIMD instructions to generate a bit mask. Set
@@ -394,18 +387,25 @@ uint32_t sub_1414974E0_SSE41(BSTArray<void *>& Array, const void *&Target, uint3
 	//
 	const __m128i targets = _mm_set1_epi64x((__int64)Target);
 
-	for (uint32_t i = alignedStartIndex; i < size; i += comparesPerIter)
+	for (uint32_t iter = 0; iter < vectorizedIterations; iter++)
 	{
-		__m128i test1 = _mm_cmpeq_epi64(targets, _mm_loadu_si128((__m128i *)&data[i + 0]));
-		__m128i test2 = _mm_cmpeq_epi64(targets, _mm_loadu_si128((__m128i *)&data[i + 2]));
+		__m128i test1 = _mm_cmpeq_epi64(targets, _mm_loadu_si128((__m128i *)&data[index + 0]));
+		__m128i test2 = _mm_cmpeq_epi64(targets, _mm_loadu_si128((__m128i *)&data[index + 2]));
 
 		int mask = _mm_movemask_pd(_mm_castsi128_pd(_mm_or_si128(test1, test2)));
 
-		for (; mask != 0 && i < size; i++)
-		{
-			if (data[i] == (__int64)Target)
-				return i;
-		}
+		// if (target pointer found) { break into the remainder loop to get the index }
+		if (mask != 0)
+			break;
+
+		index += comparesPerIter;
+	}
+
+	// Scan the rest 1-by-1
+	for (; index < Array.QSize(); index++)
+	{
+		if (data[index] == (__int64)Target)
+			return index;
 	}
 
 	return 0xFFFFFFFF;
