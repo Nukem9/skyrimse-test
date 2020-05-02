@@ -84,29 +84,33 @@ struct NullsubPatch
 	},
 };
 
-bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, bool Extended)
+const NullsubPatch *FindNullsubPatch(uintptr_t SourceAddress, uintptr_t TargetFunction)
+{
+	for (auto& patch : Patches)
+	{
+		if (!memcmp((void *)TargetFunction, patch.Signature, patch.SignatureLength))
+			return &patch;
+	}
+
+	return nullptr;
+}
+
+bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, const NullsubPatch *Patch = nullptr)
 {
 	const bool isJump = (*(uint8_t *)SourceAddress == 0xE9);
-	const void *dest = (void *)TargetFunction;
 
-	//
-	// Check if the given function is "unoptimized" and remove the branch completely. Extended
-	// nullsub checking is riskier because of potential false positives.
-	//
-	for (uint32_t i = 0; i < ARRAYSIZE(Patches); i++)
+	// Check if the given function is "unoptimized" and remove the branch completely
+	if (!Patch)
+		Patch = FindNullsubPatch(SourceAddress, TargetFunction);
+
+	if (Patch)
 	{
-		if (!Extended && i > 0)
-			break;
+		if (isJump)
+			memcpy((void *)SourceAddress, Patch->JumpPatch, 5);
+		else
+			memcpy((void *)SourceAddress, Patch->CallPatch, 5);
 
-		if (!memcmp(dest, Patches[i].Signature, Patches[i].SignatureLength))
-		{
-			if (isJump)
-				memcpy((void *)SourceAddress, Patches[i].JumpPatch, 5);
-			else
-				memcpy((void *)SourceAddress, Patches[i].CallPatch, 5);
-
-			return true;
-		}
+		return true;
 	}
 
 	return false;
@@ -117,12 +121,11 @@ uint64_t ExperimentalPatchEditAndContinue()
 	//
 	// Remove any references to the giant trampoline table generated for edit & continue
 	//
-	// Before: [Function call] -> [E&C stub] -> [Function]
+	// Before: [Function call] -> [E&C trampoline] -> [Function]
 	// After:  [Function call] -> [Function]
 	//
-	uint64_t patchCount = 0;
-	tbb::concurrent_vector<std::pair<uintptr_t, uintptr_t>> branchTargets;
-	std::vector<uintptr_t> secondaryTargets;
+	tbb::concurrent_vector<std::pair<uintptr_t, const NullsubPatch *>> nullsubTargets;
+	tbb::concurrent_vector<uintptr_t> branchTargets;
 
 	// Enumerate all functions present in the x64 exception directory section
 	auto ntHeaders = (PIMAGE_NT_HEADERS64)(g_ModuleBase + ((PIMAGE_DOS_HEADER)g_ModuleBase)->e_lfanew);
@@ -132,14 +135,14 @@ uint64_t ExperimentalPatchEditAndContinue()
 	Assert(sectionRVA > 0 && sectionSize > 0);
 
 	auto functionEntries = (PRUNTIME_FUNCTION)(g_ModuleBase + sectionRVA);
-	uint64_t functionEntryCount = sectionSize / sizeof(RUNTIME_FUNCTION);
+	auto functionEntryCount = sectionSize / sizeof(RUNTIME_FUNCTION);
 
 	// Init threadsafe instruction decoder
 	ZydisDecoder decoder;
 	Assert(ZYDIS_SUCCESS(ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64)));
 
 	std::for_each(std::execution::par_unseq, &functionEntries[0], &functionEntries[functionEntryCount],
-	[&branchTargets, &decoder](const RUNTIME_FUNCTION& Function)
+	[&branchTargets, &nullsubTargets, &decoder](const RUNTIME_FUNCTION& Function)
 	{
 		const uintptr_t ecTableStart = OFFSET(0xFB4000, 1530);
 		const uintptr_t ecTableEnd = OFFSET(0x104C50D, 1530);
@@ -168,34 +171,37 @@ uint64_t ExperimentalPatchEditAndContinue()
 			// if (destination is within E&C table)
 			if (destination >= ecTableStart && destination < ecTableEnd && *(uint8_t *)destination == 0xE9)
 			{
-				// Find where the trampoline actually points to, then mark it for patching
+				// Determine where the E&C trampoline jumps to, then remove it. Each function is processed separately so thread
+				// safety is not an issue when patching. The 0xE9 opcode never changes.
 				uintptr_t real = destination + *(int32_t *)(destination + 1) + 5;
 
-				branchTargets.emplace_back(ip, real);
+				int32_t disp = (int32_t)(real - ip) - 5;
+				memcpy((void *)(ip + 1), &disp, sizeof(disp));
+
+				if (auto patch = FindNullsubPatch(ip, real))
+					nullsubTargets.emplace_back(ip, patch);
+				else
+					branchTargets.emplace_back(ip);
 			}
 		}
 	});
 
-	for (auto [ip, finalDest] : branchTargets)
+	uint64_t patchCount = nullsubTargets.size() + branchTargets.size();
+
+	for (auto [ip, patch] : nullsubTargets)
 	{
-		// The instruction byte (CALL/JMP) is never changed, but displacement is
-		int32_t disp = (int32_t)(finalDest - ip) - 5;
-		memcpy((void *)(ip + 1), &disp, sizeof(disp));
+		uintptr_t destination = ip + *(int32_t *)(ip + 1) + 5;
 
-		patchCount++;
-
-		if (PatchNullsub(ip, finalDest, true))
+		if (PatchNullsub(ip, destination, patch))
 			patchCount++;
-		else
-			secondaryTargets.emplace_back(ip);
 	}
 
 	// Secondary pass to remove nullsubs missed or created above
-	for (uintptr_t target : secondaryTargets)
+	for (uintptr_t ip : branchTargets)
 	{
-		uintptr_t destination = target + *(int32_t *)(target + 1) + 5;
+		uintptr_t destination = ip + *(int32_t *)(ip + 1) + 5;
 
-		if (PatchNullsub(target, destination, true))
+		if (PatchNullsub(ip, destination))
 			patchCount++;
 	}
 
