@@ -1,6 +1,7 @@
 #include "../../common.h"
 #include <tbb/concurrent_vector.h>
 #include <Richedit.h>
+#include <unordered_set>
 #include "EditorUI.h"
 #include "EditorUIDarkMode.h"
 #include "LogWindow.h"
@@ -13,7 +14,7 @@ namespace LogWindow
 	FILE *OutputFileHandle;
 
 	tbb::concurrent_vector<const char *> PendingMessages;
-	std::set<uint64_t> MessageBlacklist;
+	std::unordered_set<uint64_t> MessageBlacklist;
 
 	HWND GetWindow()
 	{
@@ -57,18 +58,18 @@ namespace LogWindow
 			// Output window
 			HINSTANCE instance = (HINSTANCE)GetModuleHandle(nullptr);
 
-			WNDCLASSEX wc;
-			memset(&wc, 0, sizeof(WNDCLASSEX));
-
-			wc.cbSize = sizeof(WNDCLASSEX);
-			wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-			wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-			wc.hInstance = instance;
-			wc.hIcon = LoadIcon(instance, MAKEINTRESOURCE(0x13E));
-			wc.hIconSm = wc.hIcon;
-			wc.lpfnWndProc = WndProc;
-			wc.lpszClassName = TEXT("RTEDITLOG");
-			wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
+			WNDCLASSEX wc
+			{
+				.cbSize = sizeof(WNDCLASSEX),
+				.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS,
+				.lpfnWndProc = WndProc,
+				.hInstance = instance,
+				.hIcon = LoadIcon(instance, MAKEINTRESOURCE(0x13E)),
+				.hCursor = LoadCursor(nullptr, IDC_ARROW),
+				.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH),
+				.lpszClassName = TEXT("RTEDITLOG"),
+				.hIconSm = wc.hIcon,
+			};
 
 			if (!RegisterClassEx(&wc))
 				return false;
@@ -99,10 +100,12 @@ namespace LogWindow
 
 	bool CreateStdoutListener()
 	{
-		SECURITY_ATTRIBUTES saAttr = {};
-		saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-		saAttr.bInheritHandle = TRUE;
-		saAttr.lpSecurityDescriptor = nullptr;
+		SECURITY_ATTRIBUTES saAttr
+		{
+			.nLength = sizeof(SECURITY_ATTRIBUTES),
+			.lpSecurityDescriptor = nullptr,
+			.bInheritHandle = TRUE,
+		};
 
 		if (!CreatePipe(&ExternalPipeReaderHandle, &ExternalPipeWriterHandle, &saAttr, 0))
 			return false;
@@ -113,15 +116,13 @@ namespace LogWindow
 
 		std::thread pipeReader([]()
 		{
-			char logBuffer[16384];
-			memset(logBuffer, 0, sizeof(logBuffer));
+			char logBuffer[16384] = {};
 
 			while (true)
 			{
-				char buffer[4096];
-				memset(buffer, 0, sizeof(buffer));
-
+				char buffer[4096] = {};
 				DWORD bytesRead;
+
 				bool succeeded = ReadFile(ExternalPipeReaderHandle, buffer, ARRAYSIZE(buffer) - 1, &bytesRead, nullptr) != 0;
 
 				// Bail if there's nothing left or the process exited
@@ -162,7 +163,7 @@ namespace LogWindow
 		// Keep reading entries until an empty one is hit
 		for (uint32_t i = 0;; i++)
 		{
-			std::string& message = g_INI.Get("CreationKit_Warnings", "W" + std::to_string(i), "");
+			std::string message = g_INI.Get("CreationKit_Warnings", "W" + std::to_string(i), "");
 
 			if (message.empty())
 				break;
@@ -204,13 +205,13 @@ namespace LogWindow
 
 			MoveWindow(Hwnd, info->x, info->y, winW, winH, FALSE);
 
-			// Set a better font & convert Twips to points (1 point = 20 Twips)
+			// Set a better font & convert points to Twips (1 point = 20 Twips)
 			CHARFORMAT2A format = {};
 			format.cbSize = sizeof(format);
 			format.dwMask = CFM_FACE | CFM_SIZE | CFM_WEIGHT;
 			format.yHeight = g_INI.GetInteger("CreationKit_Log", "FontSize", 10) * 20;
 			format.wWeight = (WORD)g_INI.GetInteger("CreationKit_Log", "FontWeight", FW_NORMAL);
-			strcpy_s(format.szFaceName, g_INI.Get("CreationKit_Log", "Font", "Consolas").c_str());
+			strncpy_s(format.szFaceName, g_INI.Get("CreationKit_Log", "Font", "Consolas").c_str(), _TRUNCATE);
 
 			SendMessageA(richEditHwnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
 
@@ -312,19 +313,16 @@ namespace LogWindow
 				SendMessageA(richEditHwnd, EM_GETSCROLLPOS, 0, (WPARAM)&scrollRange);
 
 			// Get a copy of all elements and clear the global list
-			tbb::concurrent_vector<const char *> messages;
-
-			if (!wParam)
-				messages.swap(PendingMessages);
-			else
-				messages.push_back((const char *)wParam);
+			auto messages(std::move(PendingMessages));
 
 			for (const char *message : messages)
 			{
 				// Move caret to the end, then write
-				CHARRANGE range;
-				range.cpMin = LONG_MAX;
-				range.cpMax = LONG_MAX;
+				CHARRANGE range
+				{
+					.cpMin = LONG_MAX,
+					.cpMax = LONG_MAX,
+				};
 
 				SendMessageA(richEditHwnd, EM_EXSETSEL, 0, (LPARAM)&range);
 				SendMessageA(richEditHwnd, EM_REPLACESEL, FALSE, (LPARAM)message);
@@ -342,10 +340,8 @@ namespace LogWindow
 
 		case UI_LOG_CMD_CLEARTEXT:
 		{
-			char emptyString[1];
-			emptyString[0] = '\0';
-
-			SendMessageA(richEditHwnd, WM_SETTEXT, 0, (LPARAM)&emptyString);
+			// Set to an empty string
+			SendMessageA(richEditHwnd, WM_SETTEXT, 0, (LPARAM)"");
 		}
 		return 0;
 
@@ -378,7 +374,7 @@ namespace LogWindow
 		}
 
 		if (PendingMessages.size() < 50000)
-			PendingMessages.push_back(_strdup(buffer));
+			PendingMessages.emplace_back(_strdup(buffer));
 	}
 
 	void Log(const char *Format, ...)
