@@ -103,52 +103,46 @@ void Patch_TESVCreationKit()
 	//
 	// BSPointerHandle(Manager)
 	//
-	if (g_INI.GetBoolean("CreationKit", "RefrHandleLimitPatch", false))
-	{
-		XUtil::DetourJump(OFFSET(0x141A5C0, 1530), &BSPointerHandleManager<>::InitSDM);
-		XUtil::DetourJump(OFFSET(0x1770910, 1530), &HandleManager::KillSDM);
-		XUtil::DetourJump(OFFSET(0x1770560, 1530), &HandleManager::WarnForUndestroyedHandles);
-		XUtil::DetourJump(OFFSET(0x12E2260, 1530), &BSPointerHandleManagerInterface<>::GetCurrentHandle);
-		XUtil::DetourJump(OFFSET(0x12E1BE0, 1530), &BSPointerHandleManagerInterface<>::CreateHandle);
-		XUtil::DetourJump(OFFSET(0x1291050, 1530), &BSPointerHandleManagerInterface<>::Destroy1);
-		XUtil::DetourJump(OFFSET(0x12E1F70, 1530), &BSPointerHandleManagerInterface<>::Destroy2);
-		XUtil::DetourJump(OFFSET(0x1293870, 1530), &BSPointerHandleManagerInterface<>::GetSmartPointer1);
-		XUtil::DetourJump(OFFSET(0x12E25B0, 1530), &BSPointerHandleManagerInterface<>::GetSmartPointer2);
-		XUtil::DetourJump(OFFSET(0x14C52B0, 1530), &BSPointerHandleManagerInterface<>::IsValid);
+	XUtil::DetourJump(OFFSET(0x141A5C0, 1530), &BSPointerHandleManager<>::InitSDM);
+	XUtil::DetourJump(OFFSET(0x1770910, 1530), &HandleManager::KillSDM);
+	XUtil::DetourJump(OFFSET(0x1770560, 1530), &HandleManager::WarnForUndestroyedHandles);
+	XUtil::DetourJump(OFFSET(0x12E2260, 1530), &BSPointerHandleManagerInterface<>::GetCurrentHandle);
+	XUtil::DetourJump(OFFSET(0x12E1BE0, 1530), &BSPointerHandleManagerInterface<>::CreateHandle);
+	XUtil::DetourJump(OFFSET(0x1291050, 1530), &BSPointerHandleManagerInterface<>::Destroy1);
+	XUtil::DetourJump(OFFSET(0x12E1F70, 1530), &BSPointerHandleManagerInterface<>::Destroy2);
+	XUtil::DetourJump(OFFSET(0x1293870, 1530), &BSPointerHandleManagerInterface<>::GetSmartPointer1);
+	XUtil::DetourJump(OFFSET(0x12E25B0, 1530), &BSPointerHandleManagerInterface<>::GetSmartPointer2);
+	XUtil::DetourJump(OFFSET(0x14C52B0, 1530), &BSPointerHandleManagerInterface<>::IsValid);
 
-		//
-		// Stub out the rest of the functions which shouldn't ever be called now
-		//
-		//XUtil::PatchMemory(OFFSET(0x12E0DC0, 1530), { 0xCC });// BSUntypedPointerHandle::BSUntypedPointerHandle - 1412E0DC0
-		XUtil::PatchMemory(OFFSET(0x12E38A0, 1530), { 0xCC });// BSUntypedPointerHandle::Clear - 1412E38A0
-		XUtil::PatchMemory(OFFSET(0x12E2720, 1530), { 0xCC });// BSUntypedPointerHandle::SetAge - 1412E2720
-		XUtil::PatchMemory(OFFSET(0x12E3970, 1530), { 0xCC });// BSUntypedPointerHandle::SetActive - 1412E3970
-		XUtil::PatchMemory(OFFSET(0x1294740, 1530), { 0xCC });// BSUntypedPointerHandle::GetAge_0 - 141294740
-		XUtil::PatchMemory(OFFSET(0x12E3810, 1530), { 0xCC });// BSUntypedPointerHandle::Set - 1412E3810
-		XUtil::PatchMemory(OFFSET(0x12E2FF0, 1530), { 0xCC });// BSUntypedPointerHandle::GetIndex_0 - 1412E2FF0
-		XUtil::PatchMemory(OFFSET(0x1294A30, 1530), { 0xCC });// BSUntypedPointerHandle::GetIndex - 141294A30
-		XUtil::PatchMemory(OFFSET(0x1294720, 1530), { 0xCC });// BSUntypedPointerHandle::GetAge - 141294720
-		XUtil::PatchMemory(OFFSET(0x1297430, 1530), { 0xCC });// BSUntypedPointerHandle::ClearActive - 141297430
-		XUtil::PatchMemory(OFFSET(0x12973F0, 1530), { 0xCC });// BSUntypedPointerHandle::SetIndex - 1412973F0
-		XUtil::PatchMemory(OFFSET(0x12943B0, 1530), { 0xCC });// BSUntypedPointerHandle::IsBitwiseNull - 1412943B0
-		// sub_14100B0A8 - Unknown operator
-		// sub_1412E1300 - Unknown operator
-		// sub_1412E1210 - Unknown operator
+	// Stub out the rest of the functions which shouldn't ever be called now
+	XUtil::PatchMemory(OFFSET(0x12E38A0, 1530), { 0xCC });// BSUntypedPointerHandle::Clear - 1412E38A0
+	XUtil::PatchMemory(OFFSET(0x12E2720, 1530), { 0xCC });// BSUntypedPointerHandle::SetAge - 1412E2720
+	XUtil::PatchMemory(OFFSET(0x12E3970, 1530), { 0xCC });// BSUntypedPointerHandle::SetActive - 1412E3970
+	XUtil::PatchMemory(OFFSET(0x1294740, 1530), { 0xCC });// BSUntypedPointerHandle::GetAge_0 - 141294740
+	XUtil::PatchMemory(OFFSET(0x12E3810, 1530), { 0xCC });// BSUntypedPointerHandle::Set - 1412E3810
+	XUtil::PatchMemory(OFFSET(0x12E2FF0, 1530), { 0xCC });// BSUntypedPointerHandle::GetIndex_0 - 1412E2FF0
+	XUtil::PatchMemory(OFFSET(0x1294A30, 1530), { 0xCC });// BSUntypedPointerHandle::GetIndex - 141294A30
+	XUtil::PatchMemory(OFFSET(0x1294720, 1530), { 0xCC });// BSUntypedPointerHandle::GetAge - 141294720
+	XUtil::PatchMemory(OFFSET(0x1297430, 1530), { 0xCC });// BSUntypedPointerHandle::ClearActive - 141297430
+	XUtil::PatchMemory(OFFSET(0x12973F0, 1530), { 0xCC });// BSUntypedPointerHandle::SetIndex - 1412973F0
+	XUtil::PatchMemory(OFFSET(0x12943B0, 1530), { 0xCC });// BSUntypedPointerHandle::IsBitwiseNull - 1412943B0
+	//XUtil::PatchMemory(OFFSET(0x12E0DC0, 1530), { 0xCC });// BSUntypedPointerHandle::BSUntypedPointerHandle - 1412E0DC0
+	// sub_14100B0A8 - Unknown operator
+	// sub_1412E1300 - Unknown operator
+	// sub_1412E1210 - Unknown operator
 
-		XUtil::PatchMemory(OFFSET(0x1294590, 1530), { 0xCC });// BSPointerHandle::AgeMatches - 141294590
-		XUtil::PatchMemory(OFFSET(0x128D130, 1530), { 0xCC });// BSPointerHandle::GetPtr - 14128D130
-		XUtil::PatchMemory(OFFSET(0x128C8D0, 1530), { 0xCC });// BSPointerHandle::AssignPtr - 14128C8D0
-		XUtil::PatchMemory(OFFSET(0x1294570, 1530), { 0xCC });// BSPointerHandle::IsActive - 141294570
+	XUtil::PatchMemory(OFFSET(0x1294590, 1530), { 0xCC });// BSPointerHandle::AgeMatches - 141294590
+	XUtil::PatchMemory(OFFSET(0x128D130, 1530), { 0xCC });// BSPointerHandle::GetPtr - 14128D130
+	XUtil::PatchMemory(OFFSET(0x128C8D0, 1530), { 0xCC });// BSPointerHandle::AssignPtr - 14128C8D0
+	XUtil::PatchMemory(OFFSET(0x1294570, 1530), { 0xCC });// BSPointerHandle::IsActive - 141294570
 
-		XUtil::PatchMemory(OFFSET(0x12E3900, 1530), { 0xCC });// BSHandleRefObject::AssignHandleIndex - 1412E3900
-		XUtil::PatchMemory(OFFSET(0x12949D0, 1530), { 0xCC });// BSHandleRefObject::GetIndex - 1412949D0
-		// BSHandleRefObject::QRefCount - 141294CB0
-	}
+	XUtil::PatchMemory(OFFSET(0x12E3900, 1530), { 0xCC });// BSHandleRefObject::AssignHandleIndex - 1412E3900
+	XUtil::PatchMemory(OFFSET(0x12949D0, 1530), { 0xCC });// BSHandleRefObject::GetIndex - 1412949D0
+	// BSHandleRefObject::QRefCount - 141294CB0
 
 	//
 	// FaceGen
 	//
-
 	// Disable automatic FaceGen on save
 	if (g_INI.GetBoolean("CreationKit_FaceGen", "DisableAutoFaceGen", false))
 		XUtil::PatchMemory(OFFSET(0x18DE530, 1530), { 0xC3 });
@@ -402,8 +396,8 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F2C4, 1530), 22);		// Multiple null pointers in call
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F2E4, 1530), 546);	// Remove most of the useless stuff in the function
 
-	XUtil::PatchMemory(OFFSET(0x2E2BC50, 1530), { 0xC3 });// Pointer always null (BSGraphics::State::UpdateTemporalData)
-	XUtil::PatchMemory(OFFSET(0x2E2BAF0, 1530), { 0xC3 });// Pointer always null (BSGraphics::State::UpdateTemporalData)
+	XUtil::PatchMemory(OFFSET(0x2E2BC50, 1530), { 0xC3 });	// Pointer always null (BSGraphics::State::UpdateTemporalData)
+	XUtil::PatchMemory(OFFSET(0x2E2BAF0, 1530), { 0xC3 });	// Pointer always null (BSGraphics::State::UpdateTemporalData)
 
 	XUtil::PatchMemoryNop(OFFSET(0x2DA05C5, 1530), 2);		// Force DEPTH_STENCIL_POST_ZPREPASS_COPY RT to be copied every frame
 
