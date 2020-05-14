@@ -115,7 +115,7 @@ namespace Offsets
 		}
 	}
 
-	const std::array<OffsetEntry, 313> EntryListCK1530
+	const std::array<OffsetEntry, 315> EntryListCK1530
 	{{
 		// Version 1.5.30 RelOffset -> Version 1.5.30 Translated
 		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x102CBEF)
@@ -278,6 +278,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x17F4A04, 1530, "E8 ? ? ? ? B9 04 00 00 00 48 6B C9 03 48 8D ? ? ? ? ? 48", 0, 0x17F4A04)
 		OFFSET_ENTRY(0x18276C9, 1530, "48 89 54 24 ? 48 89 4C 24 ? 48 83 EC 38 45 33 C9 45 33 C0 BA ? ? ? ? 48 8B 4C 24 ? FF 15 ? ? ? ? 48 8B 44 24 ? 48 05 ? ? ? ? 48 8D 15", 0x39, 0x18276C9)
 		OFFSET_ENTRY(0x18A0914, 1530, "E8 ? ? ? ? 8B C0 48 89 44 24 28 EB", 0, 0x18A0914)
+		OFFSET_ENTRY(0x18AE640, 1530, "48 89 54 24 10 48 89 4C 24 08 48 83 EC 68 48 83 3D ? ? ? ? ? 0F", 0, 0x18AE640)
 		OFFSET_ENTRY(0x18DE530, 1530, "48 89 54 24 10 48 89 4C 24 08 48 83 EC 48 48 C7 44 24 38 FE FF FF FF 48 8B 4C 24 58 E8 ? ? ? ? 0F B6 C0 85 C0 0F", 0, 0x18DE530)
 		OFFSET_ENTRY(0x18F4D4A, 1530, "E8 ? ? ? ? 48 8B 44 24 60 48 8B 4C 24 38 48 89 88 80 00 00 00 48", 0, 0x18F4D4A)
 		OFFSET_ENTRY(0x18F5210, 1530, "48 89 4C 24 08 48 83 EC 38 C6 44 24 20 00 41", 0, 0x18F5210)
@@ -418,6 +419,7 @@ namespace Offsets
 		// Data offsets
 		OFFSET_ENTRY(0x3078988, 1530, nullptr, 0, 0x3078988)
 		OFFSET_ENTRY(0x30B9090, 1530, nullptr, 0, 0x30B9090)
+		OFFSET_ENTRY(0x30F0418, 1530, nullptr, 0, 0x30F0418)
 		OFFSET_ENTRY(0x31027F8, 1530, nullptr, 0, 0x31027F8)
 		OFFSET_ENTRY(0x345ECD0, 1530, nullptr, 0, 0x345ECD0)
 		OFFSET_ENTRY(0x3AFAE28, 1530, nullptr, 0, 0x3AFAE28)
@@ -437,7 +439,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x104C50D, 1530, nullptr, 0, 0x104C50D)
 	}};
 
-	const std::array<OffsetEntry, 313> EntryListCK1573
+	const std::array<OffsetEntry, 315> EntryListCK1573
 	{{
 		// Version X.X.XX RelOffset -> Version 1.5.73 Translated
 		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x1025A6E)
@@ -600,6 +602,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x17F4A04, 1530, nullptr, 0, 0x17F3A14)
 		OFFSET_ENTRY(0x18276C9, 1530, nullptr, 0, 0x18266D9)
 		OFFSET_ENTRY(0x18A0914, 1530, nullptr, 0, 0x189F924)
+		OFFSET_ENTRY(0x18AE640, 1530, nullptr, 0, 0x18AD650)
 		OFFSET_ENTRY(0x18DE530, 1530, nullptr, 0, 0x18DD540)
 		OFFSET_ENTRY(0x18F4D4A, 1530, nullptr, 0, 0x18F3D5A)
 		OFFSET_ENTRY(0x18F5210, 1530, nullptr, 0, 0x18F4220)
@@ -740,6 +743,7 @@ namespace Offsets
 		// Data offsets
 		OFFSET_ENTRY(0x3078988, 1530, nullptr, 0, 0x3062CC8)
 		OFFSET_ENTRY(0x30B9090, 1530, nullptr, 0, 0x30A3580)
+		OFFSET_ENTRY(0x30F0418, 1530, nullptr, 0, 0x30DA968)
 		OFFSET_ENTRY(0x31027F8, 1530, nullptr, 0, 0x30ECD48)
 		OFFSET_ENTRY(0x345ECD0, 1530, nullptr, 0, 0x3448E20)
 		OFFSET_ENTRY(0x3AFAE28, 1530, nullptr, 0, 0x3ADC6A8)

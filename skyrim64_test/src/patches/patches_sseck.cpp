@@ -705,6 +705,11 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x1A0808C, 1530), &hk_call_141A0808C);
 
 	//
+	// Fix for the TESClass edit dialog not filling in the "Training" checkbox. Also hide the unused "Recharge" option.
+	//
+	Detours::X64::DetourClassVTable(OFFSET(0x30F0418, 1530), &TESClass__InitializeEditDialog, 86);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

@@ -1242,3 +1242,14 @@ size_t hk_call_141A0808C(const char *String)
 {
 	return String ? strlen(String) : 0;
 }
+
+void TESClass__InitializeEditDialog(TESForm_CK *Class, HWND WindowHandle)
+{
+	// Hide the unused "Recharge" checkbox
+	ShowWindow(GetDlgItem(WindowHandle, 1543), SW_HIDE);
+
+	// If (max training level > 0) update "Training"
+	CheckDlgButton(WindowHandle, 1542, (*(uint8_t *)((__int64)Class + 0x95) > 0) ? BST_CHECKED : BST_UNCHECKED);
+
+	((void(__fastcall *)(TESForm_CK *, HWND))OFFSET(0x18AE640, 1530))(Class, WindowHandle);
+}
