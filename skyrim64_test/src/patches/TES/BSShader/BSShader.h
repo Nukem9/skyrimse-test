@@ -16,7 +16,7 @@ class BSIStream;
 
 #define BSSHADER_FORWARD_CALL_ALWAYS(OptionIndex, Func, ...) \
 { \
-	static uint32_t vtableIndex = VtableIndexUtil::GetIndexOf(Func); \
+	static uint32_t vtableIndex = XUtil::VtableIndexer::GetIndexOf(Func); \
 	auto realFunc = Func; \
 	*(uintptr_t *)&realFunc = *(uintptr_t*)(g_ModuleBase + OriginalVTableBase + (8 * vtableIndex)); \
 	return (this->*realFunc)(__VA_ARGS__); \

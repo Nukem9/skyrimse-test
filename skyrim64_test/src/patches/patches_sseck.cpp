@@ -58,7 +58,7 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "GenerateCrashdumps", true))
 	{
-		SetUnhandledExceptionFilter(DumpExceptionHandler);
+		XUtil::InstallCrashDumpHandler();
 
 		XUtil::PatchMemory(OFFSET(0x247D650, 1530), { 0xC3 });	// StackTrace::MemoryTraceWrite
 		XUtil::PatchMemory(OFFSET(0x24801DF, 1530), { 0xC3 });	// SetUnhandledExceptionFilter, BSWin32ExceptionHandler

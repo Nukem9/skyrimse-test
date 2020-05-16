@@ -13,7 +13,7 @@
 #define AutoFunc(Type, Name, Offset)	static auto Name = ((Type)((uintptr_t)GetModuleHandle(nullptr) + Offset))
 
 #define static_assert_offset(Structure, Member, Offset) struct __declspec(empty_bases) : CheckOffset<offsetof(Structure, Member), Offset> { }
-#define assert_vtable_index(Function, Index) AssertMsgVa(VtableIndexUtil::GetIndexOf(Function) == Index, "Virtual table index does not match (%d != %d)", VtableIndexUtil::GetIndexOf(Function), Index)
+#define assert_vtable_index(Function, Index) AssertMsgVa(XUtil::VtableIndexer::GetIndexOf(Function) == Index, "Virtual table index does not match (%d != %d)", XUtil::VtableIndexer::GetIndexOf(Function), Index)
 
 #define GAME_TLS(Type, Offset) *(Type *)(*(uintptr_t *)(__readgsqword(0x58u) + 8i64 * (*(uint32_t *)(g_ModuleBase + 0x34BBA78))) + (Offset))
 
@@ -38,25 +38,6 @@
 		Thisptr->~Class(); \
 		return Thisptr; \
 	}
-
-class VtableIndexUtil
-{
-private:
-	typedef int(*VtableIndexFn)();
-	static VtableIndexUtil *GlobalInstance;
-
-public:
-	static VtableIndexUtil *Instance();
-
-	template<typename T>
-	static int GetIndexOf(T ptr)
-	{
-		return (Instance()->**((decltype(&ForceVtableReference)*)(&ptr)))();
-	}
-
-private:
-	virtual int ForceVtableReference();
-};
 
 template<void(*ctor)()>
 struct StaticConstructor
@@ -84,6 +65,25 @@ struct __declspec(empty_bases)CheckOffset
 
 namespace XUtil
 {
+	class VtableIndexer
+	{
+	private:
+		using VtableIndexFn = int(*)();
+		inline static VtableIndexer *GlobalInstance;
+
+	public:
+		static VtableIndexer *Instance();
+
+		template<typename T>
+		static int GetIndexOf(T ptr)
+		{
+			return (Instance()->**((decltype(&ForceVtableReference)*)(&ptr)))();
+		}
+
+	private:
+		virtual int ForceVtableReference();
+	};
+
 	void SetThreadName(uint32_t ThreadID, const char *ThreadName);
 	void Trim(char *Buffer, char C);
 	void XAssert(const char *File, int Line, const char *Format, ...);
@@ -92,7 +92,8 @@ namespace XUtil
 	uintptr_t FindPattern(uintptr_t StartAddress, uintptr_t MaxSize, const char *Mask);
 	std::vector<uintptr_t> FindPatterns(uintptr_t StartAddress, uintptr_t MaxSize, const char *Mask);
 	bool GetPESectionRange(uintptr_t ModuleBase, const char *Section, uintptr_t *Start, uintptr_t *End);
-	void PatchMemory(uintptr_t Address, uint8_t *Data, size_t Size);
+
+	void PatchMemory(uintptr_t Address, const uint8_t *Data, size_t Size);
 	void PatchMemory(uintptr_t Address, std::initializer_list<uint8_t> Data);
 	void PatchMemoryNop(uintptr_t Address, size_t Size);
 	void DetourJump(uintptr_t Target, uintptr_t Destination);
@@ -113,4 +114,7 @@ namespace XUtil
 
 		DetourCall(Target, *(uintptr_t *)&Destination);
 	}
+
+	void InstallCrashDumpHandler();
+	LONG WINAPI CrashDumpExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo);
 }

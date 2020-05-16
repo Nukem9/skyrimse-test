@@ -5,7 +5,6 @@
 
 void Patch_TESV();
 void Patch_TESVCreationKit();
-void Patch_Fallout4CreationKit();
 
 void ApplyPatches()
 {
@@ -77,7 +76,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 		case CRC32("creationkit"):
 		case CRC32("creationkit_1530"):
 		case CRC32("creationkit_1573"):
-				g_LoadType = GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM;
+			g_LoadType = GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM;
 			break;
 		}
 
