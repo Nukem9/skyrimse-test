@@ -1054,7 +1054,12 @@ bool BSResource__LooseFileLocation__FileExists(const char *CanonicalFullPath, ui
 	if (fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		return false;
 
-	AssertMsgVa(fileInfo.nFileSizeHigh <= 0, "Need to move to 64-bit file sizes. '%s' exceeds 4GB.", CanonicalFullPath);
+	// The game doesn't support files larger than 4GB
+	if (fileInfo.nFileSizeHigh > 0)
+	{
+		LogWindow::LogWarning(0, "Need to move to 64-bit file sizes. '%s' exceeds 4GB.", CanonicalFullPath);
+		return false;
+	}
 
 	*TotalSize = fileInfo.nFileSizeLow;
 	return true;
