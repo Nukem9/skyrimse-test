@@ -1258,3 +1258,8 @@ void TESClass__InitializeEditDialog(TESForm_CK *Class, HWND WindowHandle)
 
 	((void(__fastcall *)(TESForm_CK *, HWND))OFFSET(0x18AE640, 1530))(Class, WindowHandle);
 }
+
+void hk_call_142D12196()
+{
+	AssertMsg(false, "Creation Kit renderer initialization failed because your graphics card doesn't support D3D11 Feature Level 11 (FL11_0). Updating your drivers may fix this.");
+}

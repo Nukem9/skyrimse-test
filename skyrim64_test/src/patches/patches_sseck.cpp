@@ -695,11 +695,6 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x13BC5E0, 1530), &EditorUI::TabControlDeleteItem);
 
 	//
-	// Print a warning when a cloned NiCollisionObject has no name specified in its NIF file. This comes from malformed/ported game assets.
-	//
-	XUtil::DetourCall(OFFSET(0x267B359, 1530), &hk_call_14267B359);
-
-	//
 	// Fix for crash when saving a plugin with an empty single track file path in a Music Track form. Null pointer dereference.
 	//
 	XUtil::DetourCall(OFFSET(0x1A0808C, 1530), &hk_call_141A0808C);
@@ -708,6 +703,16 @@ void Patch_TESVCreationKit()
 	// Fix for the TESClass edit dialog not filling in the "Training" checkbox. Also hide the unused "Recharge" option.
 	//
 	Detours::X64::DetourClassVTable(OFFSET(0x30F0418, 1530), &TESClass__InitializeEditDialog, 86);
+
+	//
+	// Print a warning when a cloned NiCollisionObject has no name specified in its NIF file. This comes from malformed/ported game assets.
+	//
+	XUtil::DetourCall(OFFSET(0x267B359, 1530), &hk_call_14267B359);
+
+	//
+	// Assert if D3D11 FL11 features are not supported
+	//
+	XUtil::DetourCall(OFFSET(0x2D12196, 1530), &hk_call_142D12196);
 
 	//
 	// Plugin loading optimizations:
