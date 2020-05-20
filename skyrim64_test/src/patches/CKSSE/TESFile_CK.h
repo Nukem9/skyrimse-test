@@ -9,10 +9,11 @@ private:
 public:
 	enum : uint32_t
 	{
-		FILE_RECORD_ESM = 0x1,
-		FILE_RECORD_ACTIVE = 0x8,
-		FILE_RECORD_LOCALIZED = 0x80,
-		FILE_RECORD_ESL = 0x200,
+		FILE_RECORD_ESM = 0x1,			// Master plugin
+		FILE_RECORD_CHECKED = 0x4,		// Pending load/loaded
+		FILE_RECORD_ACTIVE = 0x8,		// Save target
+		FILE_RECORD_LOCALIZED = 0x80,	// Strings removed
+		FILE_RECORD_ESL = 0x200,		// Small file
 	};
 
 	char _pad0[0x58];
@@ -23,6 +24,7 @@ public:
 
 	inline static int (* LoadTESInfo)(TESFile *);
 	inline static __int64 (* WriteTESInfo)(TESFile *);
+	inline static bool AllowMasterESP;
 
 	int hk_LoadTESInfo();
 	__int64 hk_WriteTESInfo();

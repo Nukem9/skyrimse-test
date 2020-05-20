@@ -9,17 +9,30 @@ int TESFile::hk_LoadTESInfo()
 	if (error != 0)
 		return error;
 
-	// If the file is an ESM being loaded as an active file, pretend it's a normal ESP
-	if ((m_RecordFlags & (FILE_RECORD_ESM | FILE_RECORD_ACTIVE)) == (FILE_RECORD_ESM | FILE_RECORD_ACTIVE))
+	const bool masterFile = (m_RecordFlags & FILE_RECORD_ESM) == FILE_RECORD_ESM;
+	const bool activeFile = (m_RecordFlags & FILE_RECORD_ACTIVE) == FILE_RECORD_ACTIVE;
+
+	// If it's an ESM being loaded as the active file, force it to act like a normal ESP
+	if (masterFile && activeFile)
 	{
-		LogWindow::Log("Loading master file '%s' as a plugin...\n", m_FileName);
+		LogWindow::Log("Loading master file '%s' as a plugin\n", m_FileName);
 
 		// Strip ESM flag, clear loaded ONAM data
 		m_RecordFlags &= ~FILE_RECORD_ESM;
 		((void(__fastcall *)(TESFile *))OFFSET(0x166CC60, 1530))(this);
 	}
+	
+	// If loading ESP files as masters, flag everything except for the currently active plugin
+	if (AllowMasterESP)
+	{
+		if (!masterFile && !activeFile && (m_RecordFlags & FILE_RECORD_CHECKED) == FILE_RECORD_CHECKED)
+		{
+			LogWindow::Log("Loading plugin file '%s' as a master\n", m_FileName);
+			m_RecordFlags |= FILE_RECORD_ESM;
+		}
+	}
 
-	return error;
+	return 0;
 }
 
 __int64 TESFile::hk_WriteTESInfo()

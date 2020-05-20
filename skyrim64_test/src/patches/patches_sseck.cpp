@@ -335,6 +335,7 @@ void Patch_TESVCreationKit()
 	//
 	if (g_INI.GetBoolean("CreationKit", "AllowMasterESP", false))
 	{
+		TESFile::AllowMasterESP = true;
 		XUtil::PatchMemoryNop(OFFSET(0x1657279, 1530), 12);
 	}
 
