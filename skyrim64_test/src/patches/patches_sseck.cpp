@@ -701,9 +701,14 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x1A0808C, 1530), &hk_call_141A0808C);
 
 	//
-	// Fix for the TESClass edit dialog not filling in the "Training" checkbox. Also hide the unused "Recharge" option.
+	// Fix for the "Class" edit dialog not filling in the "Training" checkbox. Also hide the unused "Recharge" option.
 	//
 	Detours::X64::DetourClassVTable(OFFSET(0x30F0418, 1530), &TESClass__InitializeEditDialog, 86);
+
+	//
+	// Fix for the "Race" dialog not saving "Specials" if the list box was empty and a new spell was added. Inverted comparison logic.
+	//
+	XUtil::PatchMemory(OFFSET(0x16F5B13, 1530), { 0x74 });
 
 	//
 	// Print a warning when a cloned NiCollisionObject has no name specified in its NIF file. This comes from malformed/ported game assets.
