@@ -310,33 +310,37 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x199DA62, 1530), 5);
 
 	//
-	// Allow saving ESM's directly
+	// AllowSaveESM   - Allow saving ESMs directly without version control
+	// AllowMasterESP - Allow ESP files to act as master files while saving
 	//
-	if (g_INI.GetBoolean("CreationKit", "AllowSaveESM", false))
-	{
-		// Also allow non-game ESMs to be set as "Active File"
-		XUtil::DetourCall(OFFSET(0x13E2D37, 1530), &TESFile::IsActiveFileBlacklist);
-		XUtil::PatchMemoryNop(OFFSET(0x163CA2E, 1530), 2);
+	TESFile::AllowSaveESM = g_INI.GetBoolean("CreationKit", "AllowSaveESM", false);
+	TESFile::AllowMasterESP = g_INI.GetBoolean("CreationKit", "AllowMasterESP", false);
 
+	if (TESFile::AllowSaveESM || TESFile::AllowMasterESP)
+	{
 		*(uintptr_t *)&TESFile::LoadTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1664CC0, 1530), &TESFile::hk_LoadTESInfo);
 		*(uintptr_t *)&TESFile::WriteTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1665520, 1530), &TESFile::hk_WriteTESInfo);
 
-		// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
-		const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
+		if (TESFile::AllowSaveESM)
+		{
+			// Also allow non-game ESMs to be set as "Active File"
+			XUtil::DetourCall(OFFSET(0x13E2D37, 1530), &TESFile::IsActiveFileBlacklist);
+			XUtil::PatchMemoryNop(OFFSET(0x163CA2E, 1530), 2);
 
-		XUtil::PatchMemoryNop(OFFSET(0x164020A, 1530), 12);
-		XUtil::PatchMemory(OFFSET(0x30B9090, 1530), (uint8_t *)newFormat, strlen(newFormat) + 1);
+			// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
+			const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
 
-		XUtil::DetourJump(OFFSET(0x1482DA0, 1530), &OpenPluginSaveDialog);
-	}
+			XUtil::PatchMemoryNop(OFFSET(0x164020A, 1530), 12);
+			XUtil::PatchMemory(OFFSET(0x30B9090, 1530), (uint8_t *)newFormat, strlen(newFormat) + 1);
 
-	//
-	// Allow ESP files to act as master files while saving
-	//
-	if (g_INI.GetBoolean("CreationKit", "AllowMasterESP", false))
-	{
-		TESFile::AllowMasterESP = true;
-		XUtil::PatchMemoryNop(OFFSET(0x1657279, 1530), 12);
+			XUtil::DetourJump(OFFSET(0x1482DA0, 1530), &OpenPluginSaveDialog);
+		}
+
+		if (TESFile::AllowMasterESP)
+		{
+			// Remove the check for IsMaster()
+			XUtil::PatchMemoryNop(OFFSET(0x1657279, 1530), 12);
+		}
 	}
 
 	//

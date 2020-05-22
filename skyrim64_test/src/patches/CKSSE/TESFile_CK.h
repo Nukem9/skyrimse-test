@@ -24,6 +24,7 @@ public:
 
 	inline static int (* LoadTESInfo)(TESFile *);
 	inline static __int64 (* WriteTESInfo)(TESFile *);
+	inline static bool AllowSaveESM;
 	inline static bool AllowMasterESP;
 
 	int hk_LoadTESInfo();

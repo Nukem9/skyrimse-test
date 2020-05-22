@@ -13,13 +13,16 @@ int TESFile::hk_LoadTESInfo()
 	const bool activeFile = (m_RecordFlags & FILE_RECORD_ACTIVE) == FILE_RECORD_ACTIVE;
 
 	// If it's an ESM being loaded as the active file, force it to act like a normal ESP
-	if (masterFile && activeFile)
+	if (AllowSaveESM)
 	{
-		LogWindow::Log("Loading master file '%s' as a plugin\n", m_FileName);
+		if (masterFile && activeFile)
+		{
+			LogWindow::Log("Loading master file '%s' as a plugin\n", m_FileName);
 
-		// Strip ESM flag, clear loaded ONAM data
-		m_RecordFlags &= ~FILE_RECORD_ESM;
-		((void(__fastcall *)(TESFile *))OFFSET(0x166CC60, 1530))(this);
+			// Strip ESM flag, clear loaded ONAM data
+			m_RecordFlags &= ~FILE_RECORD_ESM;
+			((void(__fastcall *)(TESFile *))OFFSET(0x166CC60, 1530))(this);
+		}
 	}
 	
 	// If loading ESP files as masters, flag everything except for the currently active plugin
@@ -39,20 +42,23 @@ __int64 TESFile::hk_WriteTESInfo()
 {
 	bool resetEsmFlag = false;
 
-	if ((m_RecordFlags & FILE_RECORD_ACTIVE) == FILE_RECORD_ACTIVE)
+	if (AllowSaveESM)
 	{
-		const char *extension = strrchr(m_FileName, '.');
-
-		if (extension && !_stricmp(extension, ".esm"))
+		if ((m_RecordFlags & FILE_RECORD_ACTIVE) == FILE_RECORD_ACTIVE)
 		{
-			LogWindow::Log("Regenerating ONAM data for master file '%s'...\n", m_FileName);
+			const char *extension = strrchr(m_FileName, '.');
 
-			((void(__fastcall *)(TESFile *))OFFSET(0x166CCF0, 1530))(this);
-			resetEsmFlag = true;
+			if (extension && !_stricmp(extension, ".esm"))
+			{
+				LogWindow::Log("Regenerating ONAM data for master file '%s'...\n", m_FileName);
+
+				((void(__fastcall *)(TESFile *))OFFSET(0x166CCF0, 1530))(this);
+				resetEsmFlag = true;
+			}
 		}
 	}
 
-	__int64 form = WriteTESInfo(this);
+	auto form = WriteTESInfo(this);
 
 	if (resetEsmFlag)
 		m_RecordFlags &= ~FILE_RECORD_ESM;
