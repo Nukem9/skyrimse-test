@@ -1,4 +1,4 @@
-#include "../common.h"
+#include "../config.h"
 #include <imgui/imgui.h>
 #if SKYRIM64_USE_TRACY
 #include <tracy/server/TracyBadVersion.hpp>
@@ -17,7 +17,7 @@ namespace ui
 
 		// if (needs to be initialized)
 		if (showTracyWindow && !View)
-			View = std::make_unique<tracy::View>("127.0.0.1");
+			View = std::make_unique<tracy::View>();
 
 		// if (needs to be closed)
 		if (!showTracyWindow && View)

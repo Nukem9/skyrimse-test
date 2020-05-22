@@ -25,7 +25,6 @@ extern __itt_heap_function ITT_FreeCallback;
 #define TRACY_ENABLE
 #endif
 #include <tracy/Tracy.hpp>
-#include <tracy/TracyD3D11.hpp>
 
 // TBBMalloc
 #include <tbb/scalable_allocator.h>

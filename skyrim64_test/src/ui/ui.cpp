@@ -58,7 +58,7 @@ namespace ui
 		ImGui::CreateContext();
 
 		ImGuiIO& io = ImGui::GetIO();
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		//io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
 		//io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -88,7 +88,7 @@ namespace ui
 		if (!Initialized)
 			return false;
 
-		return ImGui::IsMouseDragging();
+		return ImGui::IsMouseDragging(ImGuiMouseButton_Left);
 	}
 
 	void BeginFrame()

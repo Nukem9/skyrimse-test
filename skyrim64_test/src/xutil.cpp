@@ -83,7 +83,7 @@ namespace XUtil
 #endif
 
 #if SKYRIM64_USE_TRACY
-			tracy::SetThreadName(GetCurrentThread(), ThreadName);
+			tracy::SetThreadName(ThreadName);
 #endif
 		}
 
