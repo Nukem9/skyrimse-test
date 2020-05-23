@@ -725,6 +725,13 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x2D12196, 1530), &hk_call_142D12196);
 
 	//
+	// Fix for a memory leak in BSShadowLight::ClearShadowMapData after opening "Actor" dialogs (~500kb per instance). The code loops over
+	// a ShadowMapData array and checks if ShadowMapIndex is NOT -1, freeing the data if true. When opening a dialog this is always -1 and
+	// it never gets deallocated. Hacky fix: remove the check.
+	//
+	XUtil::PatchMemoryNop(OFFSET(0x2DCB709, 1530), 6);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
