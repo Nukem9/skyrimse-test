@@ -134,7 +134,7 @@ namespace EditorUIDarkMode
 				format.dwMask = CFM_COLOR;
 				format.crTextColor = RGB(255, 255, 255);
 				SendMessageA(hWnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
-				SendMessageA(hWnd, EM_SETBKGNDCOLOR, FALSE, RGB(56, 56, 56));
+				SendMessageA(hWnd, EM_SETBKGNDCOLOR, 0, RGB(56, 56, 56));
 			}
 			break;
 

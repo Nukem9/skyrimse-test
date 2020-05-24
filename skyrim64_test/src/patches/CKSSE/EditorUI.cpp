@@ -226,15 +226,20 @@ namespace EditorUI
 						std::sort(formList.begin(), formList.end(),
 						[](const VersionControlListItem& A, const VersionControlListItem& B) -> bool
 						{
-							if (A.FormId == B.FormId)
-							{
-								if (int ret = _stricmp(A.EditorId, B.EditorId); ret != 0)
-									return ret < 0;
+							int ret = memcmp(A.Type, B.Type, sizeof(VersionControlListItem::Type));
 
-								return A.FileOffset > B.FileOffset;
-							}
+							if (ret != 0)
+								return ret < 0;
 
-							return A.FormId > B.FormId;
+							ret = _stricmp(A.EditorId, B.EditorId);
+
+							if (ret != 0)
+								return ret < 0;
+
+							if (A.FormId != B.FormId)
+								return A.FormId > B.FormId;
+
+							return A.FileOffset > B.FileOffset;
 						});
 
 						// Dump it to the log
