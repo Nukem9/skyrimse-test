@@ -283,6 +283,7 @@ void Patch_TESVCreationKit()
 		XUtil::DetourJump(OFFSET(0x1FCB030, 1530), &LogWindow::LogWarningUnknown1);
 		XUtil::DetourJump(OFFSET(0x2452480, 1530), &LogWindow::LogWarningUnknown1);
 		XUtil::DetourJump(OFFSET(0x243D5A0, 1530), &LogWindow::LogWarningUnknown1);
+		XUtil::DetourJump(OFFSET(0x27A7DA0, 1530), &LogWindow::LogWarningUnknown1);
 		XUtil::DetourJump(OFFSET(0x27A6150, 1530), &LogWindow::LogWarningUnknown2);
 		XUtil::DetourJump(OFFSET(0x27A6270, 1530), &LogWindow::LogWarningUnknown2);
 		XUtil::DetourCall(OFFSET(0x163D3D1, 1530), &LogWindow::LogWarningUnknown2);

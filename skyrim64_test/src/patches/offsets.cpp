@@ -115,7 +115,7 @@ namespace Offsets
 		}
 	}
 
-	const std::array<OffsetEntry, 318> EntryListCK1530
+	const std::array<OffsetEntry, 319> EntryListCK1530
 	{{
 		// Version 1.5.30 RelOffset -> Version 1.5.30 Translated
 		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x102CBEF)
@@ -379,6 +379,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x26D7910, 1530, "40 57 48 83 EC 30 48 C7 44 24 20 FE FF FF FF 48 89 5C 24 48 48 89 74 24 58 48 8B F2 48 8B D9 8B", 0, 0x26D7910)
 		OFFSET_ENTRY(0x27A6150, 1530, "40 53 B8 60 4E 00 00 E8 ? ? ? ? 48", 0, 0x27A6150)
 		OFFSET_ENTRY(0x27A6270, 1530, "48 8B CA 48 FF 25 ? ? ? ? CC CC CC CC CC CC 40", 0, 0x27A6270)
+		OFFSET_ENTRY(0x27A7DA0, 1530, "48 89 4C 24 08 48 89 54 24 10 4C 89 44 24 18 4C 89 4C 24 20 53 57 48 83 EC 28", 0, 0x27A7DA0)
 		OFFSET_ENTRY(0x27B1720, 1530, nullptr, 0, 0x27B1720)
 		OFFSET_ENTRY(0x2B37750, 1530, nullptr, 0, 0x2B37750)
 		OFFSET_ENTRY(0x2D12196, 1530, "81 BD A8 6D 00 00 00 B0 00 00 74 18 4C 8D 05 ? ? ? ? BA 4E 04 00 00", 12, 0x2D12196)
@@ -442,7 +443,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x104C50D, 1530, nullptr, 0, 0x104C50D)
 	}};
 
-	const std::array<OffsetEntry, 318> EntryListCK1573
+	const std::array<OffsetEntry, 319> EntryListCK1573
 	{{
 		// Version X.X.XX RelOffset -> Version 1.5.73 Translated
 		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x1025A6E)
@@ -706,6 +707,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x26D7910, 1530, nullptr, 0, 0x26D6510)
 		OFFSET_ENTRY(0x27A6150, 1530, nullptr, 0, 0x27A4D50)
 		OFFSET_ENTRY(0x27A6270, 1530, nullptr, 0, 0x27A4E70)
+		OFFSET_ENTRY(0x27A7DA0, 1530, nullptr, 0, 0x27A69A0)
 		OFFSET_ENTRY(0x27B1720, 1530, nullptr, 0, 0x27B0320)
 		OFFSET_ENTRY(0x2B37750, 1530, nullptr, 0, 0x2B36490)
 		OFFSET_ENTRY(0x2D12196, 1530, nullptr, 0, 0x2D04FD6)
