@@ -250,12 +250,13 @@ void CreateLipGenProcess(__int64 a1)
 	strcpy_s(procToolPath, (const char *)(a1 + 0x0));
 	strcat_s(procToolPath, (const char *)(a1 + 0x104));
 
-	PROCESS_INFORMATION *procInfo = (PROCESS_INFORMATION *)(a1 + 0x228);
+	auto procInfo = (PROCESS_INFORMATION *)(a1 + 0x228);
 	memset(procInfo, 0, sizeof(PROCESS_INFORMATION));
 
-	STARTUPINFOA startupInfo;
-	memset(&startupInfo, 0, sizeof(STARTUPINFOA));
-	startupInfo.cb = sizeof(STARTUPINFOA);
+	STARTUPINFOA startupInfo
+	{
+		.cb = sizeof(STARTUPINFOA)
+	};
 
 	if (LogWindow::GetStdoutListenerPipe())
 	{
@@ -482,8 +483,10 @@ void BeginUIDefer()
 
 void SuspendComboBoxUpdates(HWND ComboHandle, bool Suspend)
 {
-	COMBOBOXINFO info = {};
-	info.cbSize = sizeof(COMBOBOXINFO);
+	COMBOBOXINFO info
+	{
+		.cbSize = sizeof(COMBOBOXINFO)
+	};
 
 	if (!GetComboBoxInfo(ComboHandle, &info))
 		return;
@@ -537,17 +540,17 @@ void EndUIDefer()
 			SuspendComboBoxUpdates(control, true);
 
 			// Pre-calculate font widths for resizing, starting with TrueType
-			int fontWidths[UCHAR_MAX + 1];
-			ABC trueTypeFontWidths[UCHAR_MAX + 1];
+			std::array<int, UCHAR_MAX + 1> fontWidths;
+			std::array<ABC, UCHAR_MAX + 1> trueTypeFontWidths;
 
-			if (!GetCharABCWidthsA(hdc, 0, ARRAYSIZE(trueTypeFontWidths) - 1, trueTypeFontWidths))
+			if (!GetCharABCWidthsA(hdc, 0, trueTypeFontWidths.size() - 1, trueTypeFontWidths.data()))
 			{
-				BOOL result = GetCharWidthA(hdc, 0, ARRAYSIZE(fontWidths) - 1, fontWidths);
+				BOOL result = GetCharWidthA(hdc, 0, fontWidths.size() - 1, fontWidths.data());
 				AssertMsg(result, "Failed to determine any font widths");
 			}
 			else
 			{
-				for (int i = 0; i < ARRAYSIZE(fontWidths); i++)
+				for (int i = 0; i < fontWidths.size(); i++)
 					fontWidths[i] = trueTypeFontWidths[i].abcB;
 			}
 
@@ -563,7 +566,7 @@ void EndUIDefer()
 				for (const char *c = display; *c != '\0'; c++)
 					lineSize += fontWidths[*c];
 
-				finalWidth = std::max<int>(finalWidth, lineSize);
+				finalWidth = std::max(finalWidth, lineSize);
 
 				free((void *)display);
 			}
@@ -634,13 +637,13 @@ void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int
 	if (ItemIndex == -1)
 		ItemIndex = INT_MAX;
 
-	LVITEMA item;
-	memset(&item, 0, sizeof(item));
-
-	item.mask = LVIF_PARAM | LVIF_TEXT;
-	item.iItem = ItemIndex;
-	item.lParam = (LPARAM)Parameter;
-	item.pszText = LPSTR_TEXTCALLBACK;
+	LVITEMA item
+	{
+		.mask = LVIF_PARAM | LVIF_TEXT,
+		.iItem = ItemIndex,
+		.pszText = LPSTR_TEXTCALLBACK,
+		.lParam = (LPARAM)Parameter
+	};
 
 	if (UseImage)
 	{
@@ -714,7 +717,7 @@ void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFuncti
 {
 	static std::unordered_map<BSTArray<TESForm_CK *> *, std::pair<void *, uint32_t>> arrayCache;
 
-	auto *formArray = &((BSTArray<TESForm_CK *> *)(TESDataHandler + 104))[FormType];
+	auto formArray = &((BSTArray<TESForm_CK *> *)(TESDataHandler + 104))[FormType];
 	auto itr = arrayCache.find(formArray);
 
 	// If not previously found or any counters changed...
@@ -841,7 +844,7 @@ void ExportFaceGenForSelectedNPCs(__int64 a1, __int64 a2)
 
 void hk_call_141C68FA6(TESForm_CK *DialogForm, __int64 Unused)
 {
-	auto *waterRoot = TESWaterRoot::Singleton();
+	auto waterRoot = TESWaterRoot::Singleton();
 
 	for (uint32_t i = 0; i < waterRoot->m_WaterObjects.QSize(); i++)
 	{
@@ -980,9 +983,9 @@ thread_local bool CachedFileInfoValid;
 
 uint32_t BSSystemDir__NextEntry(__int64 a1, bool *IsComplete)
 {
-	HANDLE& findHandle = *(HANDLE *)a1;
-	LPWIN32_FIND_DATAA findData = (LPWIN32_FIND_DATAA)(a1 + 8);
-	uint32_t& status = *(uint32_t *)(a1 + 0x24C);
+	auto& findHandle = *(HANDLE *)a1;
+	auto findData = (LPWIN32_FIND_DATAA)(a1 + 8);
+	auto& status = *(uint32_t *)(a1 + 0x24C);
 
 	CachedFileInfoValid = true;
 
@@ -1019,8 +1022,10 @@ uint32_t BSSystemDir__NextEntry(__int64 a1, bool *IsComplete)
 
 bool BSResource__LooseFileLocation__FileExists(const char *CanonicalFullPath, uint32_t *TotalSize)
 {
-	WIN32_FILE_ATTRIBUTE_DATA fileInfo;
-	fileInfo.dwFileAttributes = INVALID_FILE_ATTRIBUTES;
+	WIN32_FILE_ATTRIBUTE_DATA fileInfo
+	{
+		.dwFileAttributes = INVALID_FILE_ATTRIBUTES
+	};
 
 	if (CachedFileInfoValid)
 	{
@@ -1105,7 +1110,7 @@ std::vector<TESObjectREFR_CK *> CreateCellPersistentMapCopy(__int64 List)
 
 int sub_141BBF220(__int64 a1, __int64 a2)
 {
-	auto& cellRefList = CreateCellPersistentMapCopy(a1);
+	auto cellRefList = CreateCellPersistentMapCopy(a1);
 	int status = 1;
 
 	// Unknown init function
@@ -1123,7 +1128,7 @@ int sub_141BBF220(__int64 a1, __int64 a2)
 
 int sub_141BBF320(__int64 a1, __int64 a2)
 {
-	auto& cellRefList = CreateCellPersistentMapCopy(a1);
+	auto cellRefList = CreateCellPersistentMapCopy(a1);
 	int status = 1;
 
 	// Now parse the entire list separately - allow InitItem() to modify the cell's hashmap without invalidating any iterators

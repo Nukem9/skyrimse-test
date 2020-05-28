@@ -97,7 +97,7 @@ const NullsubPatch *FindNullsubPatch(uintptr_t SourceAddress, uintptr_t TargetFu
 
 bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, const NullsubPatch *Patch = nullptr)
 {
-	const bool isJump = (*(uint8_t *)SourceAddress == 0xE9);
+	const bool isJump = *(uint8_t *)SourceAddress == 0xE9;
 
 	// Check if the given function is "unoptimized" and remove the branch completely
 	if (!Patch)

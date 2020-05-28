@@ -56,7 +56,7 @@ namespace LogWindow
 			EditorUIDarkMode::InitializeThread();
 
 			// Output window
-			HINSTANCE instance = (HINSTANCE)GetModuleHandle(nullptr);
+			auto instance = (HINSTANCE)GetModuleHandle(nullptr);
 
 			WNDCLASSEX wc
 			{

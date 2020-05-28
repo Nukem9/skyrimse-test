@@ -56,14 +56,15 @@ namespace EditorUI
 		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
 		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_HARDCODEDFORMS, "Save Hardcoded Forms");
 
-		MENUITEMINFO menuInfo;
-		memset(&menuInfo, 0, sizeof(MENUITEMINFO));
-		menuInfo.cbSize = sizeof(MENUITEMINFO);
-		menuInfo.fMask = MIIM_SUBMENU | MIIM_ID | MIIM_STRING;
-		menuInfo.hSubMenu = ExtensionMenuHandle;
-		menuInfo.wID = UI_EXTMENU_ID;
-		menuInfo.dwTypeData = "Extensions";
-		menuInfo.cch = (uint32_t)strlen(menuInfo.dwTypeData);
+		MENUITEMINFO menuInfo
+		{
+			.cbSize = sizeof(MENUITEMINFO),
+			.fMask = MIIM_SUBMENU | MIIM_ID | MIIM_STRING,
+			.wID = UI_EXTMENU_ID,
+			.hSubMenu = ExtensionMenuHandle,
+			.dwTypeData = "Extensions",
+			.cch = (uint32_t)strlen(menuInfo.dwTypeData)
+		};
 		result = result && InsertMenuItem(MainMenu, -1, TRUE, &menuInfo);
 
 		AssertMsg(result, "Failed to create extension submenu");
@@ -74,7 +75,7 @@ namespace EditorUI
 	{
 		if (Message == WM_CREATE)
 		{
-			const CREATESTRUCT *createInfo = (CREATESTRUCT *)lParam;
+			auto createInfo = (const CREATESTRUCT *)lParam;
 
 			if (!_stricmp(createInfo->lpszName, "Creation Kit") && !_stricmp(createInfo->lpszClass, "Creation Kit"))
 			{
@@ -83,15 +84,15 @@ namespace EditorUI
 				MainWindowHandle = Hwnd;
 
 				// Increase status bar spacing
-				int spacing[4] =
-				{
+				std::array<int, 4> spacing
+				{{
 					200,	// 150
 					300,	// 225
 					700,	// 500
 					-1,		// -1
-				};
+				}};
 
-				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_STATUSBAR), SB_SETPARTS, ARRAYSIZE(spacing), (LPARAM)&spacing);
+				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_STATUSBAR), SB_SETPARTS, spacing.size(), (LPARAM)spacing.data());
 
 				// Grass is always enabled by default, make the UI buttons match
 				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEGRASS, MF_CHECKED);
@@ -120,7 +121,7 @@ namespace EditorUI
 
 			case UI_EDITOR_OPENFORMBYID:
 			{
-				auto *form = TESForm_CK::GetFormByNumericID((uint32_t)lParam);
+				auto form = TESForm_CK::GetFormByNumericID((uint32_t)lParam);
 
 				if (form)
 					(*(void(__fastcall **)(TESForm_CK *, HWND, __int64, __int64))(*(__int64 *)form + 720i64))(form, Hwnd, 0, 1);
@@ -142,9 +143,11 @@ namespace EditorUI
 
 			case UI_EXTMENU_AUTOSCROLL:
 			{
-				MENUITEMINFO info;
-				info.cbSize = sizeof(MENUITEMINFO);
-				info.fMask = MIIM_STATE;
+				MENUITEMINFO info
+				{
+					.cbSize = sizeof(MENUITEMINFO),
+					.fMask = MIIM_STATE
+				};
 				GetMenuItemInfo(ExtensionMenuHandle, param, FALSE, &info);
 
 				bool check = !((info.fState & MFS_CHECKED) == MFS_CHECKED);
@@ -164,17 +167,16 @@ namespace EditorUI
 			case UI_EXTMENU_DUMPHAVOKRTTI:
 			case UI_EXTMENU_LOADEDESPINFO:
 			{
-				char filePath[MAX_PATH];
-				memset(filePath, 0, sizeof(filePath));
-
-				OPENFILENAME ofnData;
-				memset(&ofnData, 0, sizeof(OPENFILENAME));
-				ofnData.lStructSize = sizeof(OPENFILENAME);
-				ofnData.lpstrFilter = "Text Files (*.txt)\0*.txt\0\0";
-				ofnData.lpstrFile = filePath;
-				ofnData.nMaxFile = ARRAYSIZE(filePath);
-				ofnData.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-				ofnData.lpstrDefExt = "txt";
+				char filePath[MAX_PATH] = {};
+				OPENFILENAME ofnData
+				{
+					.lStructSize = sizeof(OPENFILENAME),
+					.lpstrFilter = "Text Files (*.txt)\0*.txt\0\0",
+					.lpstrFile = filePath,
+					.nMaxFile = ARRAYSIZE(filePath),
+					.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR,
+					.lpstrDefExt = "txt"
+				};
 
 				if (FILE *f; GetSaveFileName(&ofnData) && fopen_s(&f, filePath, "w") == 0)
 				{
@@ -224,7 +226,7 @@ namespace EditorUI
 
 						// Sort by: form id, then name, then file offset
 						std::sort(formList.begin(), formList.end(),
-						[](const VersionControlListItem& A, const VersionControlListItem& B) -> bool
+						[](const auto& A, const auto& B) -> bool
 						{
 							int ret = memcmp(A.Type, B.Type, sizeof(VersionControlListItem::Type));
 
@@ -270,7 +272,7 @@ namespace EditorUI
 			{
 				for (uint32_t i = 0; i < 2048; i++)
 				{
-					TESForm_CK *form = TESForm_CK::GetFormByNumericID(i);
+					auto form = TESForm_CK::GetFormByNumericID(i);
 
 					if (form)
 					{
@@ -387,13 +389,13 @@ namespace EditorUI
 		}
 		else if (Message == UI_OBJECT_WINDOW_ADD_ITEM)
 		{
-			const bool onlyActiveForms = (bool)GetPropA(DialogHwnd, "ActiveOnly");
-			const auto form = (TESForm_CK *)wParam;
-			bool *allowInsert = (bool *)lParam;
+			auto form = (const TESForm_CK *)wParam;
+			auto allowInsert = (bool *)lParam;
 
 			*allowInsert = true;
 
-			if (onlyActiveForms)
+			// Skip the entry if "Show only active forms" is checked
+			if ((bool)GetPropA(DialogHwnd, "ActiveOnly"))
 			{
 				if (form && !form->GetActive())
 					*allowInsert = false;
@@ -417,7 +419,7 @@ namespace EditorUI
 		}
 		else if (Message == WM_SIZE)
 		{
-			auto *labelRect = (RECT *)OFFSET(0x3AFB570, 1530);
+			auto labelRect = (RECT *)OFFSET(0x3AFB570, 1530);
 
 			// Fix the "World Space" label positioning on window resize
 			RECT label;
@@ -450,13 +452,13 @@ namespace EditorUI
 		}
 		else if (Message == UI_CELL_VIEW_ADD_CELL_ITEM)
 		{
-			const bool onlyActiveForms = (bool)GetPropA(DialogHwnd, "ActiveOnly");
-			const auto form = (TESForm_CK *)wParam;
-			bool *allowInsert = (bool *)lParam;
+			auto form = (const TESForm_CK *)wParam;
+			auto allowInsert = (bool *)lParam;
 
 			*allowInsert = true;
 
-			if (onlyActiveForms)
+			// Skip the entry if "Show only active forms" is checked
+			if ((bool)GetPropA(DialogHwnd, "ActiveOnly"))
 			{
 				if (form && !form->GetActive())
 					*allowInsert = false;
@@ -486,7 +488,7 @@ namespace EditorUI
 
 		case WM_NOTIFY:
 		{
-			LPNMHDR notification = (LPNMHDR)lParam;
+			auto notification = (LPNMHDR)lParam;
 
 			// "SysListView32" control
 			if (notification->idFrom == 5401 && notification->code == LVN_ITEMCHANGED)
@@ -540,12 +542,14 @@ namespace EditorUI
 	BOOL ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask)
 	{
 		// Microsoft's implementation of this define is broken (ListView_SetItemState)
-		LVITEMA lvi = {};
-		lvi.mask = LVIF_STATE;
-		lvi.state = Data;
-		lvi.stateMask = Mask;
+		LVITEMA item
+		{
+			.mask = LVIF_STATE,
+			.state = Data,
+			.stateMask = Mask
+		};
 
-		return (BOOL)SendMessageA(ListViewHandle, LVM_SETITEMSTATE, Index, (LPARAM)&lvi);
+		return (BOOL)SendMessageA(ListViewHandle, LVM_SETITEMSTATE, Index, (LPARAM)&item);
 	}
 
 	void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections)
@@ -565,9 +569,11 @@ namespace EditorUI
 		if (!KeepOtherSelections)
 			ListViewCustomSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
 
-		LVFINDINFOA findInfo = {};
-		findInfo.flags = LVFI_PARAM;
-		findInfo.lParam = (LPARAM)Parameter;
+		LVFINDINFOA findInfo
+		{
+			.flags = LVFI_PARAM,
+			.lParam = (LPARAM)Parameter
+		};
 
 		int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
 
@@ -577,9 +583,11 @@ namespace EditorUI
 
 	void ListViewDeselectItem(HWND ListViewHandle, void *Parameter)
 	{
-		LVFINDINFOA findInfo = {};
-		findInfo.flags = LVFI_PARAM;
-		findInfo.lParam = (LPARAM)Parameter;
+		LVFINDINFOA findInfo
+		{
+			.flags = LVFI_PARAM,
+			.lParam = (LPARAM)Parameter
+		};
 
 		int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
 
