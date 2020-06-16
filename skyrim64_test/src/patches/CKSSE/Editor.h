@@ -95,6 +95,7 @@ void hk_call_14267B359(__int64 SourceNode, __int64 DestNode, __int64 CloningProc
 size_t hk_call_141A0808C(const char *String);
 void TESClass__InitializeEditDialog(TESForm_CK *Class, HWND WindowHandle);
 void hk_call_142D12196();
+void hk_sub_141481390(HWND ControlHandle);
 
 template<typename T, bool Stable = false>
 void ArrayQuickSortRecursive(BSTArray<T>& Array, int(*SortFunction)(const void *, const void *))

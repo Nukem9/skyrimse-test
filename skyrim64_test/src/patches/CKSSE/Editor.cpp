@@ -1268,3 +1268,12 @@ void hk_call_142D12196()
 {
 	AssertMsg(false, "Creation Kit renderer initialization failed because your graphics card doesn't support D3D11 Feature Level 11 (FL11_0). Updating your drivers may fix this.");
 }
+
+void hk_sub_141481390(HWND ControlHandle)
+{
+	auto sub_141481030 = (void(*)(HWND, uint8_t, bool, __int64, __int64, __int64, __int64, __int64))OFFSET(0x1481030, 1530);
+
+	sub_141481030(ControlHandle, 18, true, 0, 0, 0, 0, 0);	// MGEF Magic Effect
+	sub_141481030(ControlHandle, 21, false, 0, 0, 0, 0, 0);	// ENCH Enchantment
+	sub_141481030(ControlHandle, 118, false, 0, 0, 0, 0, 0);// WOOP Word of Power
+}

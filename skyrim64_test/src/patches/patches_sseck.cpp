@@ -733,6 +733,11 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x2DCB709, 1530), 6);
 
 	//
+	// Allow the "PlayerKnows" conditional function to accept enchantments as a function parameter
+	//
+	XUtil::DetourJump(OFFSET(0x1481390, 1530), &hk_sub_141481390);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
