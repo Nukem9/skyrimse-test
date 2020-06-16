@@ -224,7 +224,7 @@ namespace EditorUI
 						XUtil::DetourCall(OFFSET(0x13E32B0, 1530), callback);
 						CallWindowProcA((WNDPROC)OFFSET(0x13E6270, 1530), Hwnd, WM_COMMAND, 1185, 0);
 
-						// Sort by: form id, then name, then file offset
+						// Sort by: type, editor id, form id, then file offset
 						std::sort(formList.begin(), formList.end(),
 						[](const auto& A, const auto& B) -> bool
 						{
@@ -579,6 +579,26 @@ namespace EditorUI
 
 		if (index != -1)
 			ListViewSelectItem(ListViewHandle, index, KeepOtherSelections);
+	}
+
+	void *ListViewGetSelectedItem(HWND ListViewHandle)
+	{
+		if (!ListViewHandle)
+			return nullptr;
+
+		int index = ListView_GetNextItem(ListViewHandle, -1, LVNI_SELECTED);
+
+		if (index == -1)
+			return nullptr;
+
+		LVITEMA item
+		{
+			.mask = LVIF_PARAM,
+			.iItem = index
+		};
+
+		ListView_GetItem(ListViewHandle, &item);
+		return (void *)item.lParam;
 	}
 
 	void ListViewDeselectItem(HWND ListViewHandle, void *Parameter)

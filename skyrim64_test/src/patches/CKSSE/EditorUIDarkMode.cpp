@@ -43,7 +43,6 @@ namespace EditorUIDarkMode
 		"ViewerClass",
 		"SpeakerClass",
 		"LandClass",
-		"NPCClass",
 		"RenderWindow",
 		"#32770",
 		// "BABYGRID",

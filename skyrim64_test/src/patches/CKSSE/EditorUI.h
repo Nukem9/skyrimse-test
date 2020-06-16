@@ -51,6 +51,7 @@ namespace EditorUI
 	BOOL ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask);
 	void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections);
 	void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections);
+	void *ListViewGetSelectedItem(HWND ListViewHandle);
 	void ListViewDeselectItem(HWND ListViewHandle, void *Parameter);
 	void TabControlDeleteItem(HWND TabControlHandle, uint32_t TabIndex);
 }
