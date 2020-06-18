@@ -738,6 +738,12 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x1481390, 1530), &hk_sub_141481390);
 
 	//
+	// Fix for the "Dialogue Branch" dialog showing corrupted starting topic strings. The address of a variable is provided instead of a string
+	// pointer. Change LEA to MOV.
+	//
+	XUtil::PatchMemory(OFFSET(0x17D9F5C, 1530), { 0x4C, 0x8B });
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
