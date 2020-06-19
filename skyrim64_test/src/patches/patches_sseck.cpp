@@ -744,6 +744,11 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x17D9F5C, 1530), { 0x4C, 0x8B });
 
 	//
+	// Fix for the "Bright Light Color" option having incorrect colors in the preferences window. The blue and green channels are swapped.
+	//
+	XUtil::DetourCall(OFFSET(0x1434458, 1530), &hk_call_141434458);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
