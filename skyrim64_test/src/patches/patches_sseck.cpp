@@ -749,6 +749,12 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x1434458, 1530), &hk_call_141434458);
 
 	//
+	// Fix for crash when plugins.txt is present in the game root folder. Buffer overflow in ArchiveManager::OpenMasterArchives when appending
+	// to a string. Skip the parsing code completely.
+	//
+	XUtil::PatchMemoryNop(OFFSET(0x2636E9A, 1530), 6);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
