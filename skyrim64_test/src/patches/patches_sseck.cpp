@@ -96,11 +96,6 @@ void Patch_TESVCreationKit()
 	if (g_INI.GetBoolean("CreationKit", "SteamPatch", false))		PatchSteam();
 
 	//
-	// Experimental
-	//
-	ExperimentalPatchOptimizations();
-
-	//
 	// BSPointerHandle(Manager)
 	//
 	XUtil::DetourJump(OFFSET(0x141A5C0, 1530), &BSPointerHandleManager<>::InitSDM);
@@ -296,7 +291,6 @@ void Patch_TESVCreationKit()
 	}
 
 	// Deferred dialog loading (batched UI updates)
-	PatchTemplatedFormIterator();
 	XUtil::DetourJump(OFFSET(0x13B9AD0, 1530), &InsertComboBoxItem);
 	XUtil::DetourJump(OFFSET(0x13BA4D0, 1530), &InsertListViewItem);
 	XUtil::DetourJump(OFFSET(0x20A9710, 1530), &EditorUI::CSScript_PickScriptsToCompileDlgProc);
@@ -781,6 +775,8 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x2647AC0, 1530), &BSSystemDir__NextEntry);
 	XUtil::DetourJump(OFFSET(0x2676020, 1530), &BSResource__LooseFileLocation__FileExists);
 
-	// Force multiple master loads
-	//XUtil::PatchMemory(OFFSET(0x163CDF3, 1530), { 0xEB });
+	//
+	// Experimental. Must be run last to avoid interfering with other hooks and patches.
+	//
+	ExperimentalPatchOptimizations();
 }

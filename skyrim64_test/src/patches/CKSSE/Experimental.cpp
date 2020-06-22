@@ -4,6 +4,7 @@
 #include <execution>
 #include <intrin.h>
 #include <chrono>
+#include "Editor.h"
 #include "LogWindow.h"
 
 using namespace std::chrono;
@@ -249,6 +250,53 @@ uint64_t ExperimentalPatchLinkedList()
 	return matches.size();
 }
 
+uint64_t ExperimentalPatchTemplatedFormIterator()
+{
+	//
+	// Add a callback that sets a global variable indicating UI dropdown menu entries can be
+	// deferred to prevent a redraw after every new item insert. This reduces dialog initialization time.
+	//
+	// The _templated_ function is designed to iterate over all FORMs of a specific type - it
+	// requires hooking 100-200 separate functions in the EXE as a result. False positives are
+	// a non-issue as long as ctor/dtor calls are balanced.
+	//
+	uint64_t patchCount = 0;
+	const char *pattern = "E8 ? ? ? ? 48 89 44 24 30 48 8B 44 24 30 48 89 44 24 38 48 8B 54 24 38 48 8D 4C 24 28";
+
+	auto matches = XUtil::FindPatterns(g_CodeBase, g_CodeEnd - g_CodeBase, pattern);
+
+	for (uintptr_t addr : matches)
+	{
+		// Make sure the next call points to sub_14102CBEF (a no-op function)
+		addr += 30 /* strlen(maskStr) */ + 11;
+		uintptr_t destination = addr + *(int32_t *)(addr + 1) + 5;
+
+		if (destination != OFFSET(0x102CBEF, 1530))
+			continue;
+
+		// Now look for the matching destructor call
+		uintptr_t end = XUtil::FindPattern(addr, std::min<uintptr_t>(g_CodeEnd - addr, 512), "E8 ? ? ? ? 0F B6 ? ? ? 48 81 C4 ? ? ? ? C3");// sub_140FF81CE, movzx return
+
+		if (!end)
+			end = XUtil::FindPattern(addr, std::min<uintptr_t>(g_CodeEnd - addr, 512), "E8 ? ? ? ? 48 81 C4 ? ? ? ? C3");// sub_140FF81CE
+
+		if (!end)
+			continue;
+
+		// Blacklisted (000000014148C1FF): The "Use Info" dialog has more than one list view and causes problems
+		// Blacklisted (000000014169DFAD): Adding a new faction to an NPC has more than one list view
+		if (addr == OFFSET(0x148C1FF, 1530) || addr == OFFSET(0x169DFAD, 1530))
+			continue;
+
+		XUtil::DetourCall(addr, &BeginUIDefer);
+		XUtil::DetourCall(end, &EndUIDefer);
+
+		patchCount += 2;
+	}
+
+	return patchCount;
+}
+
 void ExperimentalPatchOptimizations()
 {
 	auto timerStart = high_resolution_clock::now();
@@ -275,20 +323,21 @@ void ExperimentalPatchOptimizations()
 		Assert(VirtualProtect((void *)range.Start, range.End - range.Start, PAGE_READWRITE, &range.Protection));
 	}
 
-	uint64_t count1 = ExperimentalPatchMemInit();
-	uint64_t count2 = ExperimentalPatchLinkedList();
-	uint64_t count3 = ExperimentalPatchEditAndContinue();
+	std::array<uint64_t, 4> counts
+	{{
+			ExperimentalPatchMemInit(),
+			ExperimentalPatchLinkedList(),
+			ExperimentalPatchTemplatedFormIterator(),
+			ExperimentalPatchEditAndContinue(),
+	}};
 
 	// Then restore the old permissions
 	for (auto& range : addressRanges)
 	{
-		BOOL ret =
-			VirtualProtect((void *)range.Start, range.End - range.Start, range.Protection, &range.Protection) &&
-			FlushInstructionCache(GetCurrentProcess(), (void *)range.Start, range.End - range.Start);
-
-		Assert(ret);
+		Assert(VirtualProtect((void *)range.Start, range.End - range.Start, range.Protection, &range.Protection));
+		Assert(FlushInstructionCache(GetCurrentProcess(), (void *)range.Start, range.End - range.Start));
 	}
 
 	auto duration = duration_cast<milliseconds>(high_resolution_clock::now() - timerStart).count();
-	LogWindow::Log("%s: (%llu + %llu + %llu) = %llu patches applied in %llums.\n", __FUNCTION__, count1, count2, count3, (count1 + count2 + count3), duration);
+	LogWindow::Log("%s: (%llu + %llu + %llu + %llu) = %llu patches applied in %llums.\n", __FUNCTION__, counts[0], counts[1], counts[2], counts[3], counts[0] + counts[1] + counts[2] + counts[3], duration);
 }

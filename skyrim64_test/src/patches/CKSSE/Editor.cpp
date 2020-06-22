@@ -665,54 +665,6 @@ void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int
 	ListView_InsertItem(ListViewHandle, &item);
 }
 
-void PatchTemplatedFormIterator()
-{
-	//
-	// Add a callback that sets a global variable indicating UI dropdown menu entries can be
-	// deferred to prevent redrawing/resorting after every new item insert, reducing dialog
-	// initialization time.
-	//
-	// The _templated_ function is designed to iterate over all FORMs of a specific type - this
-	// requires hooking 100-200 separate functions in the EXE as a result. False positives are
-	// a non-issue as long as ctor/dtor calls are balanced.
-	//
-	const char *pattern = "E8 ? ? ? ? 48 89 44 24 30 48 8B 44 24 30 48 89 44 24 38 48 8B 54 24 38 48 8D 4C 24 28";
-
-	for (uintptr_t i = g_CodeBase; i < g_CodeEnd;)
-	{
-		uintptr_t addr = XUtil::FindPattern(i, g_CodeEnd - i, pattern);
-
-		if (!addr)
-			break;
-
-		i = addr + 1;
-
-		// Make sure the next call points to sub_14102CBEF or it's a nop from ExperimentalPatchEditAndContinue
-		addr += 30 /* strlen(maskStr) */ + 11;
-		uintptr_t destination = addr + *(int32_t *)(addr + 1) + 5;
-
-		if (destination != OFFSET(0x102CBEF, 1530) && *(uint8_t *)addr != 0x0F)
-			continue;
-
-		// Now look for the matching destructor call
-		uintptr_t end = XUtil::FindPattern(addr, std::min<uintptr_t>(g_CodeEnd - addr, 1000), "E8 ? ? ? ? 48 81 C4 ? ? ? ? C3");// sub_140FF81CE
-
-		if (!end)
-			end = XUtil::FindPattern(addr, std::min<uintptr_t>(g_CodeEnd - addr, 1000), "0F ? ? ? ? 48 81 C4 ? ? ? ? C3");// nopped version
-
-		if (!end)
-			continue;
-
-		// Blacklisted (000000014148C1FF): The "Use Info" dialog which has more than one list view and causes problems
-		// Blacklisted (000000014169DFAD): Adding a new faction to an NPC has more than one list view
-		if (addr == OFFSET(0x148C1FF, 1530) || addr == OFFSET(0x169DFAD, 1530))
-			continue;
-
-		XUtil::DetourCall(addr, &BeginUIDefer);
-		XUtil::DetourCall(end, &EndUIDefer);
-	}
-}
-
 void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *))
 {
 	static std::unordered_map<BSTArray<TESForm_CK *> *, std::pair<void *, uint32_t>> arrayCache;

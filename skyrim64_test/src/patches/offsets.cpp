@@ -118,7 +118,8 @@ namespace Offsets
 	const std::array<OffsetEntry, 325> EntryListCK1530
 	{{
 		// Version 1.5.30 RelOffset -> Version 1.5.30 Translated
-		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x102CBEF)
+		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x102CBEF)// Part of E&C table
+
 		OFFSET_ENTRY(0x1219450, 1530, nullptr, 0, 0x1219450)
 		OFFSET_ENTRY(0x1222200, 1530, "48 89 4C 24 08 48 8B 44 24 08 0F B7 80 98 02 00 00 C3", 0, 0x1222200)
 		OFFSET_ENTRY(0x1223160, 1530, "48 89 4C 24 08 48 83 EC 68 48 C7 44 24 58 FE FF FF FF B8 01 00 00 00 48", 0, 0x1223160)
@@ -452,7 +453,8 @@ namespace Offsets
 	const std::array<OffsetEntry, 325> EntryListCK1573
 	{{
 		// Version X.X.XX RelOffset -> Version 1.5.73 Translated
-		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x1025A6E)
+		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x1025A6E)// Part of E&C table
+
 		OFFSET_ENTRY(0x1219450, 1530, nullptr, 0, 0x1212190)
 		OFFSET_ENTRY(0x1222200, 1530, nullptr, 0, 0x121AF40)
 		OFFSET_ENTRY(0x1223160, 1530, nullptr, 0, 0x121BEA0)

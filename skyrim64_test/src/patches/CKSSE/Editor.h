@@ -47,20 +47,17 @@ bool BSGameDataSystemUtility__IsCCFile(const char *Name);
 uint32_t sub_1414974E0(BSTArray<void *>& Array, const void *&Target, uint32_t StartIndex, __int64 Unused);
 uint32_t sub_1414974E0_SSE41(BSTArray<void *>& Array, const void *&Target, uint32_t StartIndex, __int64 Unused);
 bool sub_1415D5640(__int64 a1, uint32_t *a2);
-
 void UpdateLoadProgressBar();
 void UpdateObjectWindowTreeView(void *Thisptr, HWND ControlHandle);
 void UpdateCellViewCellList(void *Thisptr, HWND ControlHandle, __int64 Unknown);
 void UpdateCellViewObjectList(void *Thisptr, HWND *ControlHandle);
-
+void BeginUIDefer();
+void SuspendComboBoxUpdates(HWND ComboHandle, bool Suspend);
+void EndUIDefer();
 void InsertComboBoxItem(HWND ComboBoxHandle, const char *DisplayText, void *Value, bool AllowResize);
 void InsertListViewItem(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex);
-
-void PatchTemplatedFormIterator();
 void SortDialogueInfo(__int64 TESDataHandler, uint32_t FormType, int(*SortFunction)(const void *, const void *));
-
 void QuitHandler();
-
 void hk_sub_141047AB2(__int64 FileHandle, __int64 *Value);
 void hk_call_14158589F(__int64 Buffer, __int64 *Value);
 bool InitItemPerkRankDataVisitor(PerkRankEntry *Entry, uint32_t *FormId, __int64 UnknownArray);
