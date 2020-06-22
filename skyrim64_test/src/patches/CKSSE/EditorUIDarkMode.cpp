@@ -18,6 +18,7 @@ namespace EditorUIDarkMode
 		{ "MDIClient", ThemeType::MDIClient },
 		{ "Static", ThemeType::Static },
 		{ "Edit", ThemeType::Edit },
+		{ "RichEdit20A", ThemeType::RichEdit },
 		{ "RICHEDIT50W", ThemeType::RichEdit },
 		{ "Button", ThemeType::Button },
 		{ "ComboBox", ThemeType::ComboBox },
