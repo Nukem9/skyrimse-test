@@ -539,6 +539,104 @@ namespace EditorUI
 		return ((LRESULT(__fastcall *)(void *, UINT, WPARAM, LPARAM))OFFSET(0x20ABD90, 1530))(This, Message, wParam, lParam);
 	}
 
+	void RegisterHotkeyFunction(void *This, void(*Callback)(), const char **HotkeyFunction, const char **DisplayText, char VirtualKey, bool Alt, bool Ctrl, bool Shift)
+	{
+#if DUMP_KEYBINDS
+		std::string decodedKey;
+
+		if (Ctrl)
+			decodedKey += "CTRL+";
+
+		if (Shift)
+			decodedKey += "SHIFT+";
+
+		if (Alt)
+			decodedKey += "ALT+";
+
+		if (VirtualKey == VK_ESCAPE)
+			decodedKey += "ESC";
+		else if (VirtualKey == VK_DELETE)
+			decodedKey += "DEL";
+		else if (VirtualKey == VK_TAB)
+			decodedKey += "TAB";
+		else if (VirtualKey >= VK_F1 && VirtualKey <= VK_F12)
+			decodedKey += "F" + std::to_string(VirtualKey - VK_F1 + 1);
+		else if (VirtualKey < VK_PRIOR || VirtualKey > VK_F15)
+			decodedKey += (char)MapVirtualKeyA(VirtualKey, MAPVK_VK_TO_CHAR);
+		else
+			decodedKey += VirtualKey;
+
+		std::string logLine;
+		logLine += *HotkeyFunction;
+		logLine += "=\"" + decodedKey + "\"";
+
+		for (int i = 60 - (int)logLine.length(); i > 0; i--)
+			logLine += " ";
+
+		logLine += "; ";
+		logLine += *DisplayText;
+
+		LogWindow::Log(logLine.c_str());
+#endif
+
+		// Read the setting, strip spaces/quotes, then split by each '+' modifier
+		std::string newKeybind = g_INI.Get("CreationKit_Hotkeys", *HotkeyFunction, "");
+
+		for (size_t i; (i = newKeybind.find("\"")) != std::string::npos;)
+			newKeybind.replace(i, 1, "");
+
+		for (size_t i; (i = newKeybind.find(" ")) != std::string::npos;)
+			newKeybind.replace(i, 1, "");
+
+		if (!newKeybind.empty())
+		{
+			std::transform(newKeybind.begin(), newKeybind.end(), newKeybind.begin(), toupper);
+
+			VirtualKey = 0;
+			Alt = false;
+			Ctrl = false;
+			Shift = false;
+
+			char *context = nullptr;
+			const char *t = strtok_s(newKeybind.data(), "+", &context);
+
+			do
+			{
+				if (!strcmp(t, "CTRL"))
+					Ctrl = true;
+				else if (!strcmp(t, "SHIFT"))
+					Shift = true;
+				else if (!strcmp(t, "ALT"))
+					Alt = true;
+				else if (!strcmp(t, "ESC"))
+					VirtualKey = VK_ESCAPE;
+				else if (!strcmp(t, "DEL"))
+					VirtualKey = VK_DELETE;
+				else if (!strcmp(t, "TAB"))
+					VirtualKey = VK_TAB;
+				else if (strlen(t) > 1 && t[0] == 'F')
+				{
+					// Parse function keys F1 to F12
+					int index = atoi(&t[1]);
+
+					AssertMsgVa(index >= 1 && index <= 12, "Invalid function key index '%s' for hotkey function '%s'", t, *HotkeyFunction);
+
+					VirtualKey = VK_F1 + index - 1;
+				}
+				else
+				{
+					// Parse a regular character
+					AssertMsgVa(strlen(t) == 1, "Invalid or unknown key binding '%s' for hotkey function '%s'", t, *HotkeyFunction);
+
+					// This should be translated with VkKeyScan but virtual keys make things difficult...
+					VirtualKey = t[0];
+				}
+			} while (t = strtok_s(nullptr, "+", &context));
+		}
+
+		((decltype(&RegisterHotkeyFunction))OFFSET(0x12FCB70, 1530))(This, Callback, HotkeyFunction, DisplayText, VirtualKey, Alt, Ctrl, Shift);
+	}
+
 	BOOL ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask)
 	{
 		// Microsoft's implementation of this define is broken (ListView_SetItemState)

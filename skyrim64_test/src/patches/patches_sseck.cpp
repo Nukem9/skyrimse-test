@@ -251,6 +251,11 @@ void Patch_TESVCreationKit()
 		Detours::IATDelayedHook(comDll, "UxTheme.dll", "DrawThemeText", (uintptr_t)&EditorUIDarkMode::Comctl32DrawThemeText);
 	}
 
+	if (g_INI.GetBoolean("CreationKit", "UIHotkeys", false))
+	{
+		Detours::X64::DetourFunctionClass(OFFSET(0x1008538, 1530), &EditorUI::RegisterHotkeyFunction);
+	}
+
 	if (g_INI.GetBoolean("CreationKit", "UI", false))
 	{
 		EditorUI::Initialize();
