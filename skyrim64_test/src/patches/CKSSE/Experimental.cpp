@@ -325,10 +325,10 @@ void ExperimentalPatchOptimizations()
 
 	std::array<uint64_t, 4> counts
 	{{
-			ExperimentalPatchMemInit(),
-			ExperimentalPatchLinkedList(),
-			ExperimentalPatchTemplatedFormIterator(),
-			ExperimentalPatchEditAndContinue(),
+		ExperimentalPatchMemInit(),
+		ExperimentalPatchLinkedList(),
+		ExperimentalPatchTemplatedFormIterator(),
+		ExperimentalPatchEditAndContinue(),
 	}};
 
 	// Then restore the old permissions
