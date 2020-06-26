@@ -48,6 +48,9 @@ void *MemAlloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 		memset(ptr, 0, Size);
 #endif
 
+	if (!ptr && Size <= (128 * 1024 * 1024))
+		AssertMsgVa(false, "A memory allocation failed. This is due to memory leaks in the Creation Kit or not having enough free RAM.\n\nRequested chunk size: %llu bytes.", Size);
+
 #if SKYRIM64_USE_VTUNE
 	__itt_heap_allocate_end(ITT_AllocateCallback, &ptr, Size, Zeroed ? 1 : 0);
 #endif
