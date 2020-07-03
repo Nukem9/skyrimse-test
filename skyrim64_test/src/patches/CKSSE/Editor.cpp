@@ -1239,3 +1239,9 @@ void hk_call_141434458(__int64 a1, uint32_t Color)
 
 	((void(__fastcall *)(__int64, uint32_t))OFFSET(0x1478E60, 1530))(a1, newColor);
 }
+
+BOOL hk_call_1420AD5C9(HWND RichEditControl, const char *Text)
+{
+	SendMessageA(RichEditControl, EM_LIMITTEXT, 500000, 0);
+	return SetWindowTextA(RichEditControl, Text);
+}
