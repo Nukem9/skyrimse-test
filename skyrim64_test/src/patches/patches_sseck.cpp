@@ -274,6 +274,8 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemory(OFFSET(0x16179C0, 1530), { 0xC3 });			// Disable "MEM_CATEGORY_X" log spam
 		XUtil::PatchMemoryNop(OFFSET(0x2DCE6BC, 1530), 5);				// Disable "utility failed id" log spam
 		XUtil::PatchMemoryNop(OFFSET(0x2D270E3, 1530), 5);				// Disable "Should have been converted offline" log spam
+		XUtil::PatchMemoryNop(OFFSET(0x1582E18, 1530), 7);				// Prevent setting redundant colors in the condition list view NM_CUSTOMDRAW (breaks dark theme)
+		XUtil::PatchMemory(OFFSET(0x1582E85, 1530), { 0x74, 0x20 });	// ^
 		XUtil::DetourCall(OFFSET(0x18276C9, 1530), &ArrayQuickSortRecursive<class BGSEntryPointPerkEntry *, true>);// Stable sort for perk entry window
 
 		XUtil::DetourJump(OFFSET(0x1256600, 1530), &LogWindow::LogWarning);
