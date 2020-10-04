@@ -757,6 +757,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x2636E9A, 1530), 6);
 
 	//
+	// Assert when a NiSkinInstance is missing a skeleton root node in NIF files
+	//
+	Detours::X64::DetourClassVTable(OFFSET(0x334FBC0, 1530), &NiSkinInstance__LinkObject, 25);
+	Detours::X64::DetourClassVTable(OFFSET(0x334FD50, 1530), &NiSkinInstance__LinkObject, 25);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

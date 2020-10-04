@@ -1245,3 +1245,14 @@ BOOL hk_call_1420AD5C9(HWND RichEditControl, const char *Text)
 	SendMessageA(RichEditControl, EM_LIMITTEXT, 500000, 0);
 	return SetWindowTextA(RichEditControl, Text);
 }
+
+void NiSkinInstance__LinkObject(__int64 SkinInstance, __int64 Stream)
+{
+	((void(__fastcall *)(__int64, __int64))OFFSET(0x26B9300, 1530))(SkinInstance, Stream);
+
+	// SkinInstance->RootParent can't be null
+	__int64 rootParent = *(__int64 *)(SkinInstance + 0x20);
+	const char *nifPath = (const char *)(Stream + 0x108);
+
+	AssertMsgVa(rootParent, "A mesh's NiSkinInstance is missing a skeleton root node. This is a fatal error. NIF path is \"%s\".", nifPath);
+}

@@ -17,8 +17,8 @@ namespace Offsets
 		uint32_t TranslatedOffset;
 	};
 
-	extern const std::array<OffsetEntry, 330> EntryListCK1530;
-	extern const std::array<OffsetEntry, 330> EntryListCK1573;
+	extern const std::array<OffsetEntry, 333> EntryListCK1530;
+	extern const std::array<OffsetEntry, 333> EntryListCK1573;
 
 	uintptr_t Resolve(uint32_t RelOffset, uint32_t Version);
 	bool CanResolve(uint32_t RelOffset, uint32_t Version);
