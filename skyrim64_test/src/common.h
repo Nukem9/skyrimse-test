@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <vector>
+#include <array>
 #include <unordered_map>
 #include <algorithm>
 #include <d3d11.h>

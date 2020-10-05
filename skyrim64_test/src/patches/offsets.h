@@ -1,6 +1,6 @@
 #pragma once
 
-#include <array>
+#include <vector>
 
 #define OFFSET(RelOffset, Version) (Offsets::Resolve(RelOffset, Version))
 #define OFFSET_ENTRY_KEY(RelOffset, Version) (((uint64_t)(Version) << 32) | (RelOffset))
@@ -17,8 +17,8 @@ namespace Offsets
 		uint32_t TranslatedOffset;
 	};
 
-	extern const std::array<OffsetEntry, 333> EntryListCK1530;
-	extern const std::array<OffsetEntry, 333> EntryListCK1573;
+	extern const std::vector<OffsetEntry> EntryListCK1530;
+	extern const std::vector<OffsetEntry> EntryListCK1573;
 
 	uintptr_t Resolve(uint32_t RelOffset, uint32_t Version);
 	bool CanResolve(uint32_t RelOffset, uint32_t Version);
@@ -26,7 +26,7 @@ namespace Offsets
 	void BuildTableForCKF4Version(uint32_t Version);
 	void BuildTableForCKSSEVersion(uint32_t Version);
 	void BuildTableForGameVersion(uint32_t Version);
-	void BuildTable(const OffsetEntry *Table, size_t Count, bool CurrentVersion);
-	void ValidateTable(const OffsetEntry *Table, size_t Count);
+	void BuildTable(const std::vector<OffsetEntry>& Table, bool CurrentVersion);
+	void ValidateTable(const std::vector<OffsetEntry>& Table);
 	void DumpLoadedTable(const char *FilePath);
 }

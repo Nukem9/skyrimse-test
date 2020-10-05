@@ -1,9 +1,9 @@
 #include "../common.h"
 
-std::unordered_map<uint64_t, uintptr_t> AddressMap;
-
 namespace Offsets
 {
+	std::unordered_map<uint64_t, uintptr_t> AddressMap;
+
 	uintptr_t Resolve(uint32_t RelOffset, uint32_t Version)
 	{
 		return AddressMap.at(OFFSET_ENTRY_KEY(RelOffset, Version));
@@ -22,10 +22,10 @@ namespace Offsets
 	void BuildTableForCKSSEVersion(uint32_t Version)
 	{
 		if (Version >= 1573)
-			BuildTable(EntryListCK1573.data(), EntryListCK1573.size(), Version == 1573);
+			BuildTable(EntryListCK1573, Version == 1573);
 
 		if (Version >= 1530)
-			BuildTable(EntryListCK1530.data(), EntryListCK1530.size(), Version == 1530);
+			BuildTable(EntryListCK1530, Version == 1530);
 	}
 
 	void BuildTableForGameVersion(uint32_t Version)
@@ -33,16 +33,14 @@ namespace Offsets
 		Assert(false);
 	}
 
-	void BuildTable(const OffsetEntry *Table, size_t Count, bool CurrentVersion)
+	void BuildTable(const std::vector<OffsetEntry>& Table, bool CurrentVersion)
 	{
 #if 0
 		ValidateTable(Table, Count);
 #endif
 
-		for (size_t i = 0; i < Count; i++)
+		for (auto& entry : Table)
 		{
-			auto& entry = Table[i];
-
 			auto key = OFFSET_ENTRY_KEY(entry.RelOffset, entry.Version);
 			uintptr_t finalAddress = 0;
 
@@ -71,13 +69,11 @@ namespace Offsets
 		}
 	}
 
-	void ValidateTable(const OffsetEntry *Table, size_t Count)
+	void ValidateTable(const std::vector<OffsetEntry>& Table)
 	{
 		// If a signature is given, it should match the hardcoded address
-		for (size_t i = 0; i < Count; i++)
+		for (auto& entry : Table)
 		{
-			auto& entry = Table[i];
-
 			if (!entry.Signature)
 				continue;
 
@@ -115,7 +111,7 @@ namespace Offsets
 		}
 	}
 
-	const std::array<OffsetEntry, 333> EntryListCK1530
+	const std::vector<OffsetEntry> EntryListCK1530
 	{{
 		// Version 1.5.30 RelOffset -> Version 1.5.30 Translated
 		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x102CBEF)// Part of E&C table
@@ -458,7 +454,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x104C50D, 1530, nullptr, 0, 0x104C50D)
 	}};
 
-	const std::array<OffsetEntry, 333> EntryListCK1573
+	const std::vector<OffsetEntry> EntryListCK1573
 	{{
 		// Version X.X.XX RelOffset -> Version 1.5.73 Translated
 		OFFSET_ENTRY(0x102CBEF, 1530, nullptr, 0, 0x1025A6E)// Part of E&C table
