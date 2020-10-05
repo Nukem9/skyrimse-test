@@ -1256,3 +1256,8 @@ void NiSkinInstance__LinkObject(__int64 SkinInstance, __int64 Stream)
 
 	AssertMsgVa(rootParent, "A mesh's NiSkinInstance is missing a skeleton root node. This is a fatal error. NIF path is \"%s\".", nifPath);
 }
+
+void hk_call_141299CF5()
+{
+	MessageBoxA(nullptr, "Could not get the FlowChart class object. Note that the Creation Kit needs to be run as administrator at least one time to register FlowChartX.", "Error", 0);
+}

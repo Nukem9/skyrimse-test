@@ -763,6 +763,11 @@ void Patch_TESVCreationKit()
 	Detours::X64::DetourClassVTable(OFFSET(0x334FD50, 1530), &NiSkinInstance__LinkObject, 25);
 
 	//
+	// FlowChartX needs to be registered as a COM server dll (DllRegisterServer), but it never tells you that administrator permissions are required
+	//
+	XUtil::DetourCall(OFFSET(0x1299CF5, 1530), &hk_call_141299CF5);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
