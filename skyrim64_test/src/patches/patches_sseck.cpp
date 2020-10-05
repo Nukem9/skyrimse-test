@@ -774,6 +774,13 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x27D1EC0, 1530), &hk_call_1427D0AC0);
 
 	//
+	// Fix for crash when BSLightingShader::SetupMaterial(MULTIINDEXTRISHAPESNOW) incorrectly casts a BSLightingShaderMaterial to
+	// BSLightingShaderMaterialSnow. Force the shader sparkle params to zero instead (xor xmm0, xmm1, xmm2, eax).
+	//
+	XUtil::PatchMemoryNop(OFFSET(0x2DD5460, 1530), 24);
+	XUtil::PatchMemory(OFFSET(0x2DD5460, 1530), { 0x0F, 0x57, 0xC0, 0x0F, 0x57, 0xC9, 0x0F, 0x57, 0xD2, 0x33, 0xC0 });
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
