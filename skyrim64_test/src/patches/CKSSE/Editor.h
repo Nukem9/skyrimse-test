@@ -97,6 +97,7 @@ void hk_call_141434458(__int64 a1, uint32_t Color);
 BOOL hk_call_1420AD5C9(HWND RichEditControl, const char *Text);
 void NiSkinInstance__LinkObject(__int64 SkinInstance, __int64 Stream);
 void hk_call_141299CF5();
+void *hk_call_1427D0AC0(__int64 ResourceManager, uint32_t LineCount, __int64 a3, __int64 a4, __int64 a5, __int64 a6, __int64 a7);
 
 template<typename T, bool Stable = false>
 void ArrayQuickSortRecursive(BSTArray<T>& Array, int(*SortFunction)(const void *, const void *))

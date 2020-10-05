@@ -1261,3 +1261,9 @@ void hk_call_141299CF5()
 {
 	MessageBoxA(nullptr, "Could not get the FlowChart class object. Note that the Creation Kit needs to be run as administrator at least one time to register FlowChartX.", "Error", 0);
 }
+
+void *hk_call_1427D0AC0(__int64 ResourceManager, uint32_t IndexCount, __int64 a3, __int64 a4, __int64 a5, __int64 a6, __int64 a7)
+{
+	// Convert # of indices to # of lines (divide by two)
+	return (*(void *(__fastcall **)(__int64, __int64, __int64, __int64, __int64, __int64, __int64))(*(__int64 *)ResourceManager + 152))(ResourceManager, IndexCount / 2, a3, a4, a5, a6, a7);
+}

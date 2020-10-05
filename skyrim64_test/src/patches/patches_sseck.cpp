@@ -768,6 +768,12 @@ void Patch_TESVCreationKit()
 	XUtil::DetourCall(OFFSET(0x1299CF5, 1530), &hk_call_141299CF5);
 
 	//
+	// Fix for crash when MakeXYZCircles passes an invalid line count to BSShaderResourceManager::CreateLineShape. BGSPrimitiveSphere only creates
+	// these debug marker circles in the editor.
+	//
+	XUtil::DetourCall(OFFSET(0x27D1EC0, 1530), &hk_call_1427D0AC0);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
