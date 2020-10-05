@@ -343,6 +343,108 @@ namespace EditorUIDarkMode
 			return S_OK;
 
 			case SBP_ARROWBTN:		// Arrow button
+			{
+				// Assume the perspective of the arrow pointing upward ( /\ ) in GDI coordinates. NOTE: (0, 0) is the
+				// top left corner of the screen. Awful code, but it works.
+				const int arrowWidth = std::ceil(std::abs(pRect->left - pRect->right) * 0.4f);
+				const int arrowHeight = std::ceil(std::abs(pRect->top - pRect->bottom) * 0.35f);
+
+				std::array<DWORD, 6> counts = { 2, 2, 2, 2, 2, 2 };
+				std::array<POINT, 12> verts
+				{{
+					// Left segment
+					{ 0, -0 },
+					{ (arrowWidth / 2) + 1, -arrowHeight + 2 },
+
+					{ 0, -1 },
+					{ (arrowWidth / 2) + 1, -arrowHeight + 1 },
+
+					{ 0, -2 },
+					{ (arrowWidth / 2) + 1, -arrowHeight + 0 },
+
+					// Right segment (final vertex Y adjusted to avoid a stray pixel)
+					{ arrowWidth - 1, -0 },
+					{ arrowWidth / 2, -arrowHeight + 2 },
+
+					{ arrowWidth - 1, -1 },
+					{ arrowWidth / 2, -arrowHeight + 1 },
+
+					{ arrowWidth - 1, -2 },
+					{ arrowWidth / 2, -arrowHeight + 1 },
+				}};
+
+				bool isHot = false;
+				bool isDisabled = false;
+
+				for (auto& vert : verts)
+				{
+					switch (iStateId)
+					{
+					case ABS_UPHOT:// Up
+					case ABS_UPPRESSED:
+					case ABS_UPHOVER:
+						isHot = true;
+					case ABS_UPDISABLED:
+						isDisabled = true;
+					case ABS_UPNORMAL:
+						vert.x += pRect->left + arrowHeight - 1;
+						vert.y += pRect->bottom - arrowHeight;
+						break;
+
+					case ABS_DOWNHOT:// Down
+					case ABS_DOWNPRESSED:
+					case ABS_DOWNHOVER:
+						isHot = true;
+					case ABS_DOWNDISABLED:
+						isDisabled = true;
+					case ABS_DOWNNORMAL:
+						vert.x += pRect->left + arrowHeight - 1;
+						vert.y = -vert.y + pRect->top + arrowHeight - 1;
+						break;
+
+					case ABS_LEFTHOT:// Left
+					case ABS_LEFTPRESSED:
+					case ABS_LEFTHOVER:
+						isHot = true;
+					case ABS_LEFTDISABLED:
+						isDisabled = true;
+					case ABS_LEFTNORMAL:
+						std::swap(vert.x, vert.y);
+						vert.x += pRect->right - arrowHeight;
+						vert.y += pRect->top + arrowHeight - 1;
+						break;
+
+					case ABS_RIGHTHOT:// Right
+					case ABS_RIGHTPRESSED:
+					case ABS_RIGHTHOVER:
+						isHot = true;
+					case ABS_RIGHTDISABLED:
+						isDisabled = true;
+					case ABS_RIGHTNORMAL:
+						std::swap(vert.x, vert.y);
+						vert.x = -vert.x + pRect->left + arrowHeight - 1;
+						vert.y += pRect->top + arrowHeight - 1;
+						break;
+					}
+				}
+
+				HBRUSH fillColor = scrollbarFill;
+				HGDIOBJ oldPen = SelectObject(hdc, GetStockObject(DC_PEN));
+
+				if (isHot)
+					fillColor = scrollbarFillHighlighted;
+				else if (isDisabled)
+					fillColor = scrollbarFill;
+
+				FillRect(hdc, pRect, fillColor);
+
+				SetDCPenColor(hdc, RGB(255, 255, 255));
+				PolyPolyline(hdc, verts.data(), counts.data(), counts.size());
+
+				SelectObject(hdc, oldPen);
+			}
+			return S_OK;
+
 			case SBP_GRIPPERHORZ:	// Horizontal resize scrollbar
 			case SBP_GRIPPERVERT:	// Vertical resize scrollbar
 			case SBP_SIZEBOX:		// Resize box, bottom right
