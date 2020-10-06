@@ -5,27 +5,12 @@
 
 namespace EditorUIDarkMode
 {
-	enum class ThemeType
-	{
-		None,
-		ScrollBar,
-		StatusBar,
-		MDIClient,
-		Static,
-		Edit,
-		RichEdit,
-		Button,
-		ComboBox,
-		Header,
-		ListView,
-		TreeView,
-		TabControl,
-	};
-
 	void Initialize();
 	void InitializeThread();
+
 	LRESULT CALLBACK CallWndProcCallback(int nCode, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK WindowSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+	LRESULT CALLBACK DialogWindowSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	LRESULT CALLBACK ListViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	LRESULT CALLBACK MDIClientSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 

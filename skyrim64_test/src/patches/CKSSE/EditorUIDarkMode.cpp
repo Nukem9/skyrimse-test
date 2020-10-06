@@ -9,8 +9,22 @@
 
 namespace EditorUIDarkMode
 {
-	tbb::concurrent_unordered_map<HTHEME, ThemeType> ThemeHandles;
-	bool EnableThemeHooking;
+	enum class ThemeType
+	{
+		None,
+		ScrollBar,
+		StatusBar,
+		MDIClient,
+		Static,
+		Edit,
+		RichEdit,
+		Button,
+		ComboBox,
+		Header,
+		ListView,
+		TreeView,
+		TabControl,
+	};
 
 	const std::unordered_map<std::string_view, ThemeType> TargetWindowThemes
 	{
@@ -50,6 +64,9 @@ namespace EditorUIDarkMode
 		// "NiTreeCtrl",
 	};
 
+	bool EnableThemeHooking;
+	tbb::concurrent_unordered_map<HTHEME, ThemeType> ThemeHandles;
+
 	void Initialize()
 	{
 		EnableThemeHooking = true;
@@ -70,8 +87,11 @@ namespace EditorUIDarkMode
 			switch (messageData->message)
 			{
 			case WM_CREATE:
+				SetWindowSubclass(messageData->hwnd, WindowSubclass, 0, reinterpret_cast<DWORD_PTR>(WindowSubclass));
+				break;
+
 			case WM_INITDIALOG:
-				SetWindowSubclass(messageData->hwnd, WindowSubclass, 0, 0);
+				SetWindowSubclass(messageData->hwnd, DialogWindowSubclass, 0, reinterpret_cast<DWORD_PTR>(DialogWindowSubclass));
 				break;
 			}
 		}
@@ -173,7 +193,38 @@ namespace EditorUIDarkMode
 				ThemeHandles.emplace(windowTheme, themeType);
 
 			if (!PermanentWindowSubclasses.count(className))
-				RemoveWindowSubclass(hWnd, WindowSubclass, 0);
+				RemoveWindowSubclass(hWnd, reinterpret_cast<SUBCLASSPROC>(dwRefData), 0);
+		}
+		break;
+		}
+
+		return result;
+	}
+
+	LRESULT CALLBACK DialogWindowSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+	{
+		constexpr COLORREF generalBackgroundColor = RGB(56, 56, 56);
+		static HBRUSH generalBackgroundBrush = CreateSolidBrush(generalBackgroundColor);
+
+		LRESULT result = WindowSubclass(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData);
+
+		switch (uMsg)
+		{
+		case WM_PAINT:
+		{
+			// Special override for DialogBoxIndirectParam (MessageBox) since the bottom half doesn't get themed correctly. ReactOS
+			// says this is MSGBOX_IDTEXT.
+			if (GetDlgItem(hWnd, 0xFFFF))
+			{
+				if (HDC hdc = GetDC(hWnd); hdc)
+				{
+					RECT windowArea;
+					GetClientRect(hWnd, &windowArea);
+
+					FillRect(hdc, &windowArea, generalBackgroundBrush);
+					ReleaseDC(hWnd, hdc);
+				}
+			}
 		}
 		break;
 		}
