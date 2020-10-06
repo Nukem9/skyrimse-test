@@ -241,19 +241,21 @@ namespace EditorUIDarkMode
 			// Paint normally, then apply custom grid lines
 			LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
-			RECT headerRect;
-			GetClientRect(ListView_GetHeader(hWnd), &headerRect);
-
-			RECT listRect;
-			GetClientRect(hWnd, &listRect);
-
 			if (HDC hdc = GetDC(hWnd); hdc)
 			{
+				RECT headerRect;
+				GetClientRect(ListView_GetHeader(hWnd), &headerRect);
+
+				RECT listRect;
+				GetClientRect(hWnd, &listRect);
+
 				HGDIOBJ oldPen = SelectObject(hdc, GetStockObject(DC_PEN));
 				int x = 0 - GetScrollPos(hWnd, SB_HORZ);
 
-				LVCOLUMN colInfo = {};
-				colInfo.mask = LVCF_WIDTH;
+				LVCOLUMN colInfo
+				{
+					.mask = LVCF_WIDTH,
+				};
 
 				for (int col = 0; ListView_GetColumn(hWnd, col, &colInfo); col++)
 				{
@@ -308,6 +310,7 @@ namespace EditorUIDarkMode
 		{
 		case WM_PAINT:
 		{
+			// Custom background color
 			if (HDC hdc = GetDC(hWnd); hdc)
 			{
 				RECT windowArea;
@@ -433,33 +436,33 @@ namespace EditorUIDarkMode
 					{
 					case ABS_UPHOT:// Up
 					case ABS_UPPRESSED:
-					case ABS_UPHOVER:
 						isHot = true;
 					case ABS_UPDISABLED:
 						isDisabled = true;
 					case ABS_UPNORMAL:
+					case ABS_UPHOVER:
 						vert.x += pRect->left + arrowHeight - 1;
 						vert.y += pRect->bottom - arrowHeight;
 						break;
 
 					case ABS_DOWNHOT:// Down
 					case ABS_DOWNPRESSED:
-					case ABS_DOWNHOVER:
 						isHot = true;
 					case ABS_DOWNDISABLED:
 						isDisabled = true;
 					case ABS_DOWNNORMAL:
+					case ABS_DOWNHOVER:
 						vert.x += pRect->left + arrowHeight - 1;
 						vert.y = -vert.y + pRect->top + arrowHeight - 1;
 						break;
 
 					case ABS_LEFTHOT:// Left
 					case ABS_LEFTPRESSED:
-					case ABS_LEFTHOVER:
 						isHot = true;
 					case ABS_LEFTDISABLED:
 						isDisabled = true;
 					case ABS_LEFTNORMAL:
+					case ABS_LEFTHOVER:
 						std::swap(vert.x, vert.y);
 						vert.x += pRect->right - arrowHeight;
 						vert.y += pRect->top + arrowHeight - 1;
@@ -467,11 +470,11 @@ namespace EditorUIDarkMode
 
 					case ABS_RIGHTHOT:// Right
 					case ABS_RIGHTPRESSED:
-					case ABS_RIGHTHOVER:
 						isHot = true;
 					case ABS_RIGHTDISABLED:
 						isDisabled = true;
 					case ABS_RIGHTNORMAL:
+					case ABS_RIGHTHOVER:
 						std::swap(vert.x, vert.y);
 						vert.x = -vert.x + pRect->left + arrowHeight - 1;
 						vert.y += pRect->top + arrowHeight - 1;
