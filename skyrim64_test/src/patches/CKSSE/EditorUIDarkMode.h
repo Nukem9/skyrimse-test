@@ -3,6 +3,8 @@
 #include "../../common.h"
 #include <Uxtheme.h>
 
+#pragma comment(lib, "uxtheme.lib")
+
 namespace EditorUIDarkMode
 {
 	void Initialize();

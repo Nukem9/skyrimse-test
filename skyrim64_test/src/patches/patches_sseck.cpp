@@ -12,6 +12,10 @@
 #include "CKSSE/NavMesh.h"
 #include "CKSSE/EditorUI.h"
 #include "CKSSE/EditorUIDarkMode.h"
+#include "CKSSE/EditorUIDialogs.h"
+#include "CKSSE/CellViewWindow.h"
+#include "CKSSE/ObjectWindow.h"
+#include "CKSSE/MainWindow.h"
 #include "CKSSE/LogWindow.h"
 #include "CKSSE/BSPointerHandleManager.h"
 #include "CKSSE/BSGraphicsRenderTargetManager_CK.h"
@@ -170,7 +174,7 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x13C4C80, 1530), &IsLipDataPresent);
 	XUtil::DetourJump(OFFSET(0x1791240, 1530), &WriteLipData);
 	XUtil::DetourCall(OFFSET(0x13D5443, 1530), &IsWavDataPresent);
-	XUtil::DetourJump(OFFSET(0x13D29B0, 1530), &EditorUI::LipRecordDialogProc);
+	XUtil::DetourJump(OFFSET(0x13D29B0, 1530), &EditorUIDialogs::LipRecordDialogProc);
 
 	//
 	// MemoryManager
@@ -234,10 +238,10 @@ void Patch_TESVCreationKit()
 	//
 	// UI
 	//
-	PatchIAT(hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
-	PatchIAT(hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
-	PatchIAT(hk_EndDialog, "USER32.DLL", "EndDialog");
-	PatchIAT(hk_SendMessageA, "USER32.DLL", "SendMessageA");
+	PatchIAT(EditorUI::hk_CreateDialogParamA, "USER32.DLL", "CreateDialogParamA");
+	PatchIAT(EditorUI::hk_DialogBoxParamA, "USER32.DLL", "DialogBoxParamA");
+	PatchIAT(EditorUI::hk_EndDialog, "USER32.DLL", "EndDialog");
+	PatchIAT(EditorUI::hk_SendMessageA, "USER32.DLL", "SendMessageA");
 
 	if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
 	{
@@ -259,9 +263,10 @@ void Patch_TESVCreationKit()
 	if (g_INI.GetBoolean("CreationKit", "UI", false))
 	{
 		EditorUI::Initialize();
-		*(uintptr_t *)&EditorUI::OldWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x13F3770, 1530), &EditorUI::WndProc);
-		*(uintptr_t *)&EditorUI::OldObjectWindowProc = Detours::X64::DetourFunctionClass(OFFSET(0x12C3ED0, 1530), &EditorUI::ObjectWindowProc);
-		*(uintptr_t *)&EditorUI::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &EditorUI::CellViewProc);
+
+		*(uintptr_t *)&MainWindow::OldWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x13F3770, 1530), &MainWindow::WndProc);
+		*(uintptr_t *)&ObjectWindow::OldObjectWindowProc = Detours::X64::DetourFunctionClass(OFFSET(0x12C3ED0, 1530), &ObjectWindow::ObjectWindowProc);
+		*(uintptr_t *)&CellViewWindowo::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &CellViewWindowo::CellViewProc);
 
 		XUtil::DetourCall(OFFSET(0x20AD5C9, 1530), &hk_call_1420AD5C9);// Raise the papyrus script editor text limit to 500k characters from 64k
 		XUtil::DetourCall(OFFSET(0x1CF03C9, 1530), &hk_call_141CF03C9);// Update the UI options when fog is toggled
@@ -299,13 +304,13 @@ void Patch_TESVCreationKit()
 	}
 
 	// Deferred dialog loading (batched UI updates)
-	XUtil::DetourJump(OFFSET(0x13B9AD0, 1530), &InsertComboBoxItem);
-	XUtil::DetourJump(OFFSET(0x13BA4D0, 1530), &InsertListViewItem);
-	XUtil::DetourJump(OFFSET(0x20A9710, 1530), &EditorUI::CSScript_PickScriptsToCompileDlgProc);
 	XUtil::DetourJump(OFFSET(0x1985F20, 1530), &SortDialogueInfo);
-	XUtil::DetourCall(OFFSET(0x12C8B63, 1530), &UpdateObjectWindowTreeView);
-	XUtil::DetourCall(OFFSET(0x13DAB04, 1530), &UpdateCellViewCellList);
-	XUtil::DetourCall(OFFSET(0x13E117C, 1530), &UpdateCellViewObjectList);
+	XUtil::DetourJump(OFFSET(0x13B9AD0, 1530), &EditorUI::ComboBoxInsertItemDeferred);
+	XUtil::DetourJump(OFFSET(0x13BA4D0, 1530), &EditorUI::ListViewInsertItemDeferred);
+	XUtil::DetourCall(OFFSET(0x12C8B63, 1530), &ObjectWindow::UpdateTreeView);
+	XUtil::DetourCall(OFFSET(0x13DAB04, 1530), &CellViewWindowo::UpdateCellList);
+	XUtil::DetourCall(OFFSET(0x13E117C, 1530), &CellViewWindowo::UpdateObjectList);
+	XUtil::DetourJump(OFFSET(0x20A9710, 1530), &EditorUIDialogs::CSScript_PickScriptsToCompileDlgProc);
 
 	// Disable useless "Processing Topic X..." status bar updates
 	XUtil::PatchMemoryNop(OFFSET(0x199DE29, 1530), 5);
@@ -316,18 +321,18 @@ void Patch_TESVCreationKit()
 	// AllowSaveESM   - Allow saving ESMs directly without version control
 	// AllowMasterESP - Allow ESP files to act as master files while saving
 	//
-	TESFile::AllowSaveESM = g_INI.GetBoolean("CreationKit", "AllowSaveESM", false);
-	TESFile::AllowMasterESP = g_INI.GetBoolean("CreationKit", "AllowMasterESP", false);
+	TESFile_CK::AllowSaveESM = g_INI.GetBoolean("CreationKit", "AllowSaveESM", false);
+	TESFile_CK::AllowMasterESP = g_INI.GetBoolean("CreationKit", "AllowMasterESP", false);
 
-	if (TESFile::AllowSaveESM || TESFile::AllowMasterESP)
+	if (TESFile_CK::AllowSaveESM || TESFile_CK::AllowMasterESP)
 	{
-		*(uintptr_t *)&TESFile::LoadTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1664CC0, 1530), &TESFile::hk_LoadTESInfo);
-		*(uintptr_t *)&TESFile::WriteTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1665520, 1530), &TESFile::hk_WriteTESInfo);
+		*(uintptr_t *)&TESFile_CK::LoadTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1664CC0, 1530), &TESFile_CK::hk_LoadTESInfo);
+		*(uintptr_t *)&TESFile_CK::WriteTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1665520, 1530), &TESFile_CK::hk_WriteTESInfo);
 
-		if (TESFile::AllowSaveESM)
+		if (TESFile_CK::AllowSaveESM)
 		{
 			// Also allow non-game ESMs to be set as "Active File"
-			XUtil::DetourCall(OFFSET(0x13E2D37, 1530), &TESFile::IsActiveFileBlacklist);
+			XUtil::DetourCall(OFFSET(0x13E2D37, 1530), &TESFile_CK::IsActiveFileBlacklist);
 			XUtil::PatchMemoryNop(OFFSET(0x163CA2E, 1530), 2);
 
 			// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
@@ -339,7 +344,7 @@ void Patch_TESVCreationKit()
 			XUtil::DetourJump(OFFSET(0x1482DA0, 1530), &OpenPluginSaveDialog);
 		}
 
-		if (TESFile::AllowMasterESP)
+		if (TESFile_CK::AllowMasterESP)
 		{
 			// Remove the check for IsMaster()
 			XUtil::PatchMemoryNop(OFFSET(0x1657279, 1530), 12);
@@ -463,7 +468,7 @@ void Patch_TESVCreationKit()
 	// dialog. 3682 is reserved exclusively for the PTG functionality, so the button id must be changed. Remapped to
 	// 3683 instead.
 	//
-	XUtil::DetourJump(OFFSET(0x13B9900, 1530), &EditorUI::DialogTabProc);
+	XUtil::DetourJump(OFFSET(0x13B9900, 1530), &EditorUIDialogs::DialogTabProc);
 
 	uint32_t newId = 3683;
 	XUtil::PatchMemory(OFFSET(0x1B0CBC4, 1530), (uint8_t *)&newId, sizeof(uint32_t));// SetDlgItemTextA
@@ -810,5 +815,5 @@ void Patch_TESVCreationKit()
 	//
 	// Experimental. Must be run last to avoid interfering with other hooks and patches.
 	//
-	ExperimentalPatchOptimizations();
+	Experimental::RunOptimizations();
 }

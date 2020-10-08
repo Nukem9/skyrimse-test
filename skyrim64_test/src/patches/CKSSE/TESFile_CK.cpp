@@ -2,7 +2,7 @@
 #include "TESFile_CK.h"
 #include "LogWindow.h"
 
-int TESFile::hk_LoadTESInfo()
+int TESFile_CK::hk_LoadTESInfo()
 {
 	int error = LoadTESInfo(this);
 
@@ -21,7 +21,7 @@ int TESFile::hk_LoadTESInfo()
 
 			// Strip ESM flag, clear loaded ONAM data
 			m_RecordFlags &= ~FILE_RECORD_ESM;
-			((void(__fastcall *)(TESFile *))OFFSET(0x166CC60, 1530))(this);
+			((void(__fastcall *)(TESFile_CK *))OFFSET(0x166CC60, 1530))(this);
 		}
 	}
 	
@@ -38,7 +38,7 @@ int TESFile::hk_LoadTESInfo()
 	return 0;
 }
 
-__int64 TESFile::hk_WriteTESInfo()
+__int64 TESFile_CK::hk_WriteTESInfo()
 {
 	bool resetEsmFlag = false;
 
@@ -52,7 +52,7 @@ __int64 TESFile::hk_WriteTESInfo()
 			{
 				LogWindow::Log("Regenerating ONAM data for master file '%s'...\n", m_FileName);
 
-				((void(__fastcall *)(TESFile *))OFFSET(0x166CCF0, 1530))(this);
+				((void(__fastcall *)(TESFile_CK *))OFFSET(0x166CCF0, 1530))(this);
 				resetEsmFlag = true;
 			}
 		}
@@ -66,7 +66,7 @@ __int64 TESFile::hk_WriteTESInfo()
 	return form;
 }
 
-bool TESFile::IsActiveFileBlacklist()
+bool TESFile_CK::IsActiveFileBlacklist()
 {
 	if ((m_RecordFlags & FILE_RECORD_ESM) == FILE_RECORD_ESM)
 	{

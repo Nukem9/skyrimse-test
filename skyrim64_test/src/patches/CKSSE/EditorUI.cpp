@@ -1,33 +1,36 @@
 #include "../../common.h"
-#include <CommCtrl.h>
-#include <commdlg.h>
-#include "../../typeinfo/ms_rtti.h"
-#include "../../typeinfo/hk_rtti.h"
-#include "TESForm_CK.h"
 #include "EditorUI.h"
 #include "EditorUIDarkMode.h"
+#include "MainWindow.h"
 #include "LogWindow.h"
 
 #pragma comment(lib, "comctl32.lib")
 
 namespace EditorUI
 {
-	HWND MainWindowHandle;
-	HMENU ExtensionMenuHandle;
-
-	WNDPROC OldWndProc;
-	DLGPROC OldObjectWindowProc;
-	DLGPROC OldCellViewProc;
-
-	HWND GetWindow()
+	struct DialogOverrideData
 	{
-		return MainWindowHandle;
-	}
+		DLGPROC DialogFunc;	// Original function pointer
+		bool IsDialog;		// True if it requires EndDialog()
+	};
+
+	std::recursive_mutex DialogOverrideMutex;
+	std::unordered_map<HWND, DialogOverrideData> DialogOverrides;
+	thread_local DialogOverrideData ThreadDialogData;
+
+	bool UseDeferredDialogInsert;
+	HWND DeferredListView;
+	HWND DeferredComboBox;
+	uintptr_t DeferredStringLength;
+	bool DeferredAllowResize;
+	std::vector<std::pair<const char *, void *>> DeferredMenuItems;
 
 	void Initialize()
 	{
 		InitCommonControls();
+
 		EditorUIDarkMode::InitializeThread();
+		MainWindow::Initialize();
 
 		if (!LogWindow::Initialize())
 			MessageBoxA(nullptr, "Failed to create console log window", "Error", MB_ICONERROR);
@@ -39,504 +42,279 @@ namespace EditorUI
 		}
 	}
 
-	bool CreateExtensionMenu(HWND MainWindow, HMENU MainMenu)
+	HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 	{
-		// Create extended menu options
-		ExtensionMenuHandle = CreateMenu();
+		// EndDialog MUST NOT be used
+		ThreadDialogData.DialogFunc = lpDialogFunc;
+		ThreadDialogData.IsDialog = false;
 
-		BOOL result = TRUE;
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_SHOWLOG, "Show Log");
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_CLEARLOG, "Clear Log");
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_STRING | MF_CHECKED, (UINT_PTR)UI_EXTMENU_AUTOSCROLL, "Autoscroll Log");
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPRTTI, "Dump RTTI Data");
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI Data");
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_DUMPHAVOKRTTI, "Dump Havok RTTI Data");
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_LOADEDESPINFO, "Dump Active Forms");
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_SEPARATOR, (UINT_PTR)UI_EXTMENU_SPACER, "");
-		result = result && InsertMenu(ExtensionMenuHandle, -1, MF_BYPOSITION | MF_STRING, (UINT_PTR)UI_EXTMENU_HARDCODEDFORMS, "Save Hardcoded Forms");
-
-		MENUITEMINFO menuInfo
+		// Override certain default dialogs to use this DLL's resources
+		switch ((uintptr_t)lpTemplateName)
 		{
-			.cbSize = sizeof(MENUITEMINFO),
-			.fMask = MIIM_SUBMENU | MIIM_ID | MIIM_STRING,
-			.wID = UI_EXTMENU_ID,
-			.hSubMenu = ExtensionMenuHandle,
-			.dwTypeData = "Extensions",
-			.cch = (uint32_t)strlen(menuInfo.dwTypeData)
-		};
-		result = result && InsertMenuItem(MainMenu, -1, TRUE, &menuInfo);
+		case 0x7A:// "Object Window"
+		case 0x8D:// "Reference"
+		case 0xA2:// "Data"
+		case 0xAF:// "Cell View"
+		case 0xDC:// "Use Report"
+			hInstance = (HINSTANCE)&__ImageBase;
+			break;
+		}
 
-		AssertMsg(result, "Failed to create extension submenu");
-		return result != FALSE;
+		return CreateDialogParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
 	}
 
-	LRESULT CALLBACK WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+	INT_PTR WINAPI hk_DialogBoxParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 	{
-		if (Message == WM_CREATE)
+		// EndDialog MUST be used
+		ThreadDialogData.DialogFunc = lpDialogFunc;
+		ThreadDialogData.IsDialog = true;
+
+		// Override certain default dialogs to use this DLL's resources
+		switch ((uintptr_t)lpTemplateName)
 		{
-			auto createInfo = (const CREATESTRUCT *)lParam;
-
-			if (!_stricmp(createInfo->lpszName, "Creation Kit") && !_stricmp(createInfo->lpszClass, "Creation Kit"))
-			{
-				// Initialize the original window before adding anything
-				LRESULT status = CallWindowProc(OldWndProc, Hwnd, Message, wParam, lParam);
-				MainWindowHandle = Hwnd;
-
-				// Increase status bar spacing
-				std::array<int, 4> spacing
-				{{
-					200,	// 150
-					300,	// 225
-					700,	// 500
-					-1,		// -1
-				}};
-
-				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_STATUSBAR), SB_SETPARTS, spacing.size(), (LPARAM)spacing.data());
-
-				// Grass is always enabled by default, make the UI buttons match
-				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEGRASS, MF_CHECKED);
-				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_TOOLBAR), TB_CHECKBUTTON, UI_EDITOR_TOGGLEGRASS_BUTTON, TRUE);
-
-				// Same for fog
-				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *(bool *)OFFSET(0x4F05728, 1530) ? MF_CHECKED : MF_UNCHECKED);
-
-				// Create custom menu controls
-				CreateExtensionMenu(Hwnd, createInfo->hMenu);
-				return status;
-			}
+		case 0x7A:// "Object Window"
+		case 0x8D:// "Reference"
+		case 0xA2:// "Data"
+		case 0xAF:// "Cell View"
+		case 0xDC:// "Use Report"
+			hInstance = (HINSTANCE)&__ImageBase;
+			break;
 		}
-		else if (Message == WM_COMMAND)
+
+		return DialogBoxParamA(hInstance, lpTemplateName, hWndParent, DialogFuncOverride, dwInitParam);
+	}
+
+	BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult)
+	{
+		std::lock_guard lock(DialogOverrideMutex);
+
+		// Fix for the CK calling EndDialog on a CreateDialogParamA window
+		if (auto itr = DialogOverrides.find(hDlg); itr != DialogOverrides.end() && !itr->second.IsDialog)
 		{
-			const uint32_t param = LOWORD(wParam);
+			DestroyWindow(hDlg);
+			return TRUE;
+		}
 
-			switch (param)
+		return EndDialog(hDlg, nResult);
+	}
+
+	LRESULT WINAPI hk_SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+	{
+		if (hWnd && Msg == WM_DESTROY)
+		{
+			std::lock_guard lock(DialogOverrideMutex);
+
+			// If this is a dialog, we can't call DestroyWindow on it
+			if (auto itr = DialogOverrides.find(hWnd); itr != DialogOverrides.end())
 			{
-			case UI_EDITOR_TOGGLEFOG:
-			{
-				// Call the CTRL+F5 hotkey function directly
-				((void(__fastcall *)())OFFSET(0x1319740, 1530))();
+				if (!itr->second.IsDialog)
+					DestroyWindow(hWnd);
 			}
+
 			return 0;
+		}
 
-			case UI_EDITOR_OPENFORMBYID:
+		return SendMessageA(hWnd, Msg, wParam, lParam);
+	}
+
+	INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		DLGPROC proc = nullptr;
+
+		DialogOverrideMutex.lock();
+		{
+			if (auto itr = DialogOverrides.find(hwndDlg); itr != DialogOverrides.end())
+				proc = itr->second.DialogFunc;
+
+			// if (is new entry)
+			if (!proc)
 			{
-				auto form = TESForm_CK::GetFormByNumericID((uint32_t)lParam);
+				DialogOverrides[hwndDlg] = ThreadDialogData;
+				proc = ThreadDialogData.DialogFunc;
 
-				if (form)
-					(*(void(__fastcall **)(TESForm_CK *, HWND, __int64, __int64))(*(__int64 *)form + 720i64))(form, Hwnd, 0, 1);
+				ThreadDialogData.DialogFunc = nullptr;
+				ThreadDialogData.IsDialog = false;
 			}
-			return 0;
 
-			case UI_EXTMENU_SHOWLOG:
+			// Purge old entries every now and then
+			if (DialogOverrides.size() >= 50)
 			{
-				ShowWindow(LogWindow::GetWindow(), SW_SHOW);
-				SetForegroundWindow(LogWindow::GetWindow());
-			}
-			return 0;
-
-			case UI_EXTMENU_CLEARLOG:
-			{
-				PostMessageA(LogWindow::GetWindow(), UI_LOG_CMD_CLEARTEXT, 0, 0);
-			}
-			return 0;
-
-			case UI_EXTMENU_AUTOSCROLL:
-			{
-				MENUITEMINFO info
+				for (auto itr = DialogOverrides.begin(); itr != DialogOverrides.end();)
 				{
-					.cbSize = sizeof(MENUITEMINFO),
-					.fMask = MIIM_STATE
-				};
-				GetMenuItemInfo(ExtensionMenuHandle, param, FALSE, &info);
-
-				bool check = !((info.fState & MFS_CHECKED) == MFS_CHECKED);
-
-				if (!check)
-					info.fState &= ~MFS_CHECKED;
-				else
-					info.fState |= MFS_CHECKED;
-
-				PostMessageA(LogWindow::GetWindow(), UI_LOG_CMD_AUTOSCROLL, (WPARAM)check, 0);
-				SetMenuItemInfo(ExtensionMenuHandle, param, FALSE, &info);
-			}
-			return 0;
-
-			case UI_EXTMENU_DUMPRTTI:
-			case UI_EXTMENU_DUMPNIRTTI:
-			case UI_EXTMENU_DUMPHAVOKRTTI:
-			case UI_EXTMENU_LOADEDESPINFO:
-			{
-				char filePath[MAX_PATH] = {};
-				OPENFILENAME ofnData
-				{
-					.lStructSize = sizeof(OPENFILENAME),
-					.lpstrFilter = "Text Files (*.txt)\0*.txt\0\0",
-					.lpstrFile = filePath,
-					.nMaxFile = ARRAYSIZE(filePath),
-					.Flags = OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR,
-					.lpstrDefExt = "txt"
-				};
-
-				if (FILE *f; GetSaveFileName(&ofnData) && fopen_s(&f, filePath, "w") == 0)
-				{
-					if (param == UI_EXTMENU_DUMPRTTI)
-						MSRTTI::Dump(f);
-					//else if (param == UI_EXTMENU_DUMPNIRTTI)
-					//	ExportTest(f);
-					else if (param == UI_EXTMENU_DUMPHAVOKRTTI)
+					if (itr->first == hwndDlg || IsWindow(itr->first))
 					{
-						// Convert path to directory
-						*strrchr(filePath, '\\') = '\0';
-						HKRTTI::DumpReflectionData(filePath);
-					}
-					else if (param == UI_EXTMENU_LOADEDESPINFO)
-					{
-						struct VersionControlListItem
-						{
-							const char *EditorId;
-							uint32_t FileOffset;
-							char Type[4];
-							uint32_t FileLength;
-							char GroupType[4];
-							uint32_t FormId;
-							uint32_t VersionControlId;
-							char _pad0[0x8];
-						};
-						static_assert_offset(VersionControlListItem, EditorId, 0x0);
-						static_assert_offset(VersionControlListItem, FileOffset, 0x8);
-						static_assert_offset(VersionControlListItem, Type, 0xC);
-						static_assert_offset(VersionControlListItem, FileLength, 0x10);
-						static_assert_offset(VersionControlListItem, GroupType, 0x14);
-						static_assert_offset(VersionControlListItem, FormId, 0x18);
-						static_assert_offset(VersionControlListItem, VersionControlId, 0x1C);
-						static_assert(sizeof(VersionControlListItem) == 0x28);
-
-						static std::vector<VersionControlListItem> formList;
-
-						// Invoke the dialog, building form list
-						void(*callback)(void *, int, VersionControlListItem *) = [](void *, int, VersionControlListItem *Data)
-						{
-							formList.push_back(*Data);
-							formList.back().EditorId = _strdup(Data->EditorId);
-						};
-
-						XUtil::DetourCall(OFFSET(0x13E32B0, 1530), callback);
-						CallWindowProcA((WNDPROC)OFFSET(0x13E6270, 1530), Hwnd, WM_COMMAND, 1185, 0);
-
-						// Sort by: type, editor id, form id, then file offset
-						std::sort(formList.begin(), formList.end(),
-						[](const auto& A, const auto& B) -> bool
-						{
-							int ret = memcmp(A.Type, B.Type, sizeof(VersionControlListItem::Type));
-
-							if (ret != 0)
-								return ret < 0;
-
-							ret = _stricmp(A.EditorId, B.EditorId);
-
-							if (ret != 0)
-								return ret < 0;
-
-							if (A.FormId != B.FormId)
-								return A.FormId > B.FormId;
-
-							return A.FileOffset > B.FileOffset;
-						});
-
-						// Dump it to the log
-						fprintf(f, "Type, Editor Id, Form Id, File Offset, File Length, Version Control Id\n");
-
-						for (auto& item : formList)
-						{
-							fprintf(f, "%c%c%c%c,\"%s\",%08X,%u,%u,-%08X-\n",
-								item.Type[0], item.Type[1], item.Type[2], item.Type[3],
-								item.EditorId,
-								item.FormId,
-								item.FileOffset,
-								item.FileLength,
-								item.VersionControlId);
-
-							free((void *)item.EditorId);
-						}
-
-						formList.clear();
+						itr++;
+						continue;
 					}
 
-					fclose(f);
+					itr = DialogOverrides.erase(itr);
 				}
 			}
-			return 0;
-
-			case UI_EXTMENU_HARDCODEDFORMS:
-			{
-				for (uint32_t i = 0; i < 2048; i++)
-				{
-					auto form = TESForm_CK::GetFormByNumericID(i);
-
-					if (form)
-					{
-						(*(void(__fastcall **)(TESForm_CK *, __int64))(*(__int64 *)form + 360))(form, 1);
-						LogWindow::Log("SetFormModified(%08X)", i);
-					}
-				}
-
-				// Fake the click on "Save"
-				PostMessageA(Hwnd, WM_COMMAND, 40127, 0);
-			}
-			return 0;
-			}
 		}
-		else if (Message == WM_SETTEXT && Hwnd == GetWindow())
-		{
-			// Continue normal execution but with a custom string
-			char customTitle[1024];
-			sprintf_s(customTitle, "%s [CK64Fixes Rev. %s]", (const char *)lParam, g_GitVersion);
+		DialogOverrideMutex.unlock();
 
-			return CallWindowProc(OldWndProc, Hwnd, Message, wParam, (LPARAM)customTitle);
-		}
-
-		return CallWindowProc(OldWndProc, Hwnd, Message, wParam, lParam);
+		return proc(hwndDlg, uMsg, wParam, lParam);
 	}
 
-	LRESULT CALLBACK DialogTabProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+	void ListViewInsertItemDeferred(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex)
 	{
-		if (Message == WM_INITDIALOG)
+		if (ItemIndex == -1)
+			ItemIndex = INT_MAX;
+
+		LVITEMA item
 		{
-			// If it's the weapon sound dialog tab (id 3327), remap the "Unequip Sound" button (id 3682) to
-			// a non-conflicting one (id 3683)
-			char className[256];
-
-			if (GetClassNameA(Hwnd, className, ARRAYSIZE(className)) > 0)
-			{
-				if (!strcmp(className, "WeaponClass"))
-					SetWindowLongPtr(GetDlgItem(Hwnd, 3682), GWLP_ID, 3683);
-			}
-
-			ShowWindow(Hwnd, SW_HIDE);
-			return 1;
-		}
-
-		return 0;
-	}
-
-	INT_PTR CALLBACK LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam)
-	{
-		// Id's for "Recording..." dialog window
-		switch (Message)
-		{
-		case WM_APP:
-			// Don't actually kill the dialog, just hide it. It gets destroyed later when the parent window closes.
-			SendMessageA(GetDlgItem(DialogHwnd, 31007), PBM_SETPOS, 0, 0);
-			ShowWindow(DialogHwnd, SW_HIDE);
-			PostQuitMessage(0);
-			return TRUE;
-
-		case 272:
-			// OnSaveSoundFile
-			SendMessageA(GetDlgItem(DialogHwnd, 31007), PBM_SETRANGE, 0, 32768 * 1000);
-			SendMessageA(GetDlgItem(DialogHwnd, 31007), PBM_SETSTEP, 1, 0);
-			return TRUE;
-
-		case 273:
-			// Stop recording
-			if (LOWORD(wParam) != 1)
-				return FALSE;
-
-			*(bool *)OFFSET(0x3AFAE28, 1530) = false;
-
-			if (FAILED(((HRESULT(__fastcall *)(bool))OFFSET(0x13D5310, 1530))(false)))
-				MessageBoxA(DialogHwnd, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
-
-			return LipRecordDialogProc(DialogHwnd, WM_APP, 0, 0);
-
-		case 1046:
-			// Start recording
-			ShowWindow(DialogHwnd, SW_SHOW);
-			*(bool *)OFFSET(0x3AFAE28, 1530) = true;
-
-			if (FAILED(((HRESULT(__fastcall *)(bool))OFFSET(0x13D5310, 1530))(true)))
-			{
-				MessageBoxA(DialogHwnd, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
-				return LipRecordDialogProc(DialogHwnd, WM_APP, 0, 0);
-			}
-			return TRUE;
-		}
-
-		return FALSE;
-	}
-
-	INT_PTR CALLBACK ObjectWindowProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam)
-	{
-		if (Message == WM_INITDIALOG)
-		{
-			// Eliminate the flicker when changing categories
-			ListView_SetExtendedListViewStyleEx(GetDlgItem(DialogHwnd, 1041), LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
-		}
-		else if (Message == WM_COMMAND)
-		{
-			const uint32_t param = LOWORD(wParam);
-
-			if (param == UI_OBJECT_WINDOW_CHECKBOX)
-			{
-				bool enableFilter = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
-				SetPropA(DialogHwnd, "ActiveOnly", (HANDLE)enableFilter);
-
-				// Force the list items to update as if it was by timer
-				SendMessageA(DialogHwnd, WM_TIMER, 0x4D, 0);
-				return 1;
-			}
-		}
-		else if (Message == UI_OBJECT_WINDOW_ADD_ITEM)
-		{
-			auto form = (const TESForm_CK *)wParam;
-			auto allowInsert = (bool *)lParam;
-
-			*allowInsert = true;
-
-			// Skip the entry if "Show only active forms" is checked
-			if ((bool)GetPropA(DialogHwnd, "ActiveOnly"))
-			{
-				if (form && !form->GetActive())
-					*allowInsert = false;
-			}
-
-			return 1;
-		}
-
-		return OldObjectWindowProc(DialogHwnd, Message, wParam, lParam);
-	}
-
-	INT_PTR CALLBACK CellViewProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam)
-	{
-		if (Message == WM_INITDIALOG)
-		{
-			// Eliminate the flicker when changing cells
-			ListView_SetExtendedListViewStyleEx(GetDlgItem(DialogHwnd, 1155), LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
-			ListView_SetExtendedListViewStyleEx(GetDlgItem(DialogHwnd, 1156), LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
-
-			ShowWindow(GetDlgItem(DialogHwnd, 1007), SW_HIDE);
-		}
-		else if (Message == WM_SIZE)
-		{
-			auto labelRect = (RECT *)OFFSET(0x3AFB570, 1530);
-
-			// Fix the "World Space" label positioning on window resize
-			RECT label;
-			GetClientRect(GetDlgItem(DialogHwnd, 1164), &label);
-
-			RECT rect;
-			GetClientRect(GetDlgItem(DialogHwnd, 2083), &rect);
-
-			int ddMid = rect.left + ((rect.right - rect.left) / 2);
-			int labelMid = (label.right - label.left) / 2;
-
-			SetWindowPos(GetDlgItem(DialogHwnd, 1164), nullptr, ddMid - (labelMid / 2), labelRect->top, 0, 0, SWP_NOSIZE);
-
-			// Force the dropdown to extend the full length of the column
-			labelRect->right = 0;
-		}
-		else if (Message == WM_COMMAND)
-		{
-			const uint32_t param = LOWORD(wParam);
-
-			if (param == UI_CELL_VIEW_CHECKBOX)
-			{
-				bool enableFilter = SendMessage((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED;
-				SetPropA(DialogHwnd, "ActiveOnly", (HANDLE)enableFilter);
-
-				// Fake the dropdown list being activated
-				SendMessageA(DialogHwnd, WM_COMMAND, MAKEWPARAM(2083, 1), 0);
-				return 1;
-			}
-		}
-		else if (Message == UI_CELL_VIEW_ADD_CELL_ITEM)
-		{
-			auto form = (const TESForm_CK *)wParam;
-			auto allowInsert = (bool *)lParam;
-
-			*allowInsert = true;
-
-			// Skip the entry if "Show only active forms" is checked
-			if ((bool)GetPropA(DialogHwnd, "ActiveOnly"))
-			{
-				if (form && !form->GetActive())
-					*allowInsert = false;
-			}
-
-			return 1;
-		}
-
-		return OldCellViewProc(DialogHwnd, Message, wParam, lParam);
-	}
-
-	LRESULT CSScript_PickScriptsToCompileDlgProc(void *This, UINT Message, WPARAM wParam, LPARAM lParam)
-	{
-		thread_local bool disableListViewUpdates;
-
-		auto updateListViewItems = [This]
-		{
-			if (!disableListViewUpdates)
-				((void(__fastcall *)(void *))OFFSET(0x20A9870, 1530))(This);
+			.mask = LVIF_PARAM | LVIF_TEXT,
+			.iItem = ItemIndex,
+			.pszText = LPSTR_TEXTCALLBACK,
+			.lParam = reinterpret_cast<LPARAM>(Parameter)
 		};
 
-		switch (Message)
+		if (UseImage)
 		{
-		case WM_SIZE:
-			((void(__fastcall *)(void *))OFFSET(0x20A9CF0, 1530))(This);
-			break;
-
-		case WM_NOTIFY:
-		{
-			auto notification = (LPNMHDR)lParam;
-
-			// "SysListView32" control
-			if (notification->idFrom == 5401 && notification->code == LVN_ITEMCHANGED)
-			{
-				updateListViewItems();
-				return 1;
-			}
-		}
-		break;
-
-		case WM_INITDIALOG:
-			disableListViewUpdates = true;
-			((void(__fastcall *)(void *))OFFSET(0x20A99C0, 1530))(This);
-			disableListViewUpdates = false;
-
-			// Update it ONCE after everything is inserted
-			updateListViewItems();
-			break;
-
-		case WM_COMMAND:
-		{
-			const uint32_t param = LOWORD(wParam);
-
-			// "Check All", "Uncheck All", "Check All Checked-Out"
-			if (param == 5474 || param == 5475 || param == 5602)
-			{
-				disableListViewUpdates = true;
-				if (param == 5474)
-					((void(__fastcall *)(void *))OFFSET(0x20AA080, 1530))(This);
-				else if (param == 5475)
-					((void(__fastcall *)(void *))OFFSET(0x20AA130, 1530))(This);
-				else if (param == 5602)
-					((void(__fastcall *)(void *))OFFSET(0x20AA1E0, 1530))(This);
-				disableListViewUpdates = false;
-
-				updateListViewItems();
-				return 1;
-			}
-			else if (param == 1)
-			{
-				// "Compile" button
-				((void(__fastcall *)(void *))OFFSET(0x20A9F30, 1530))(This);
-			}
-		}
-		break;
+			item.mask |= LVIF_IMAGE;
+			item.iImage = I_IMAGECALLBACK;
 		}
 
-		return ((LRESULT(__fastcall *)(void *, UINT, WPARAM, LPARAM))OFFSET(0x20ABD90, 1530))(This, Message, wParam, lParam);
+		if (UseDeferredDialogInsert)
+		{
+			AssertMsg(!DeferredListView || (DeferredListView == ListViewHandle), "Got handles to different list views? Reset probably wasn't called.");
+
+			if (!DeferredListView)
+			{
+				DeferredListView = ListViewHandle;
+				SendMessage(ListViewHandle, WM_SETREDRAW, FALSE, 0);
+			}
+		}
+
+		ListView_InsertItem(ListViewHandle, &item);
+	}
+
+	BOOL ListViewSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask)
+	{
+		// Microsoft's implementation of this define is broken (ListView_SetItemState)
+		LVITEMA item
+		{
+			.mask = LVIF_STATE,
+			.state = Data,
+			.stateMask = Mask
+		};
+
+		return static_cast<BOOL>(SendMessageA(ListViewHandle, LVM_SETITEMSTATE, Index, reinterpret_cast<LPARAM>(&item)));
+	}
+
+	void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections)
+	{
+		if (!KeepOtherSelections)
+			ListViewSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
+
+		if (ItemIndex != -1)
+		{
+			ListView_EnsureVisible(ListViewHandle, ItemIndex, FALSE);
+			ListViewSetItemState(ListViewHandle, ItemIndex, LVIS_SELECTED, LVIS_SELECTED);
+		}
+	}
+
+	void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections)
+	{
+		if (!KeepOtherSelections)
+			ListViewSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
+
+		LVFINDINFOA findInfo
+		{
+			.flags = LVFI_PARAM,
+			.lParam = reinterpret_cast<LPARAM>(Parameter)
+		};
+
+		int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
+
+		if (index != -1)
+			ListViewSelectItem(ListViewHandle, index, KeepOtherSelections);
+	}
+
+	void *ListViewGetSelectedItem(HWND ListViewHandle)
+	{
+		if (!ListViewHandle)
+			return nullptr;
+
+		int index = ListView_GetNextItem(ListViewHandle, -1, LVNI_SELECTED);
+
+		if (index == -1)
+			return nullptr;
+
+		LVITEMA item
+		{
+			.mask = LVIF_PARAM,
+			.iItem = index
+		};
+
+		ListView_GetItem(ListViewHandle, &item);
+		return reinterpret_cast<void *>(item.lParam);
+	}
+
+	void ListViewDeselectItem(HWND ListViewHandle, void *Parameter)
+	{
+		LVFINDINFOA findInfo
+		{
+			.flags = LVFI_PARAM,
+			.lParam = reinterpret_cast<LPARAM>(Parameter)
+		};
+
+		int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
+
+		if (index != -1)
+			ListViewSetItemState(ListViewHandle, index, 0, LVIS_SELECTED);
+	}
+
+	void ComboBoxInsertItemDeferred(HWND ComboBoxHandle, const char *DisplayText, void *Value, bool AllowResize)
+	{
+		if (!ComboBoxHandle)
+			return;
+
+		if (!DisplayText)
+			DisplayText = "NONE";
+
+		if (UseDeferredDialogInsert)
+		{
+			AssertMsg(!DeferredComboBox || (DeferredComboBox == ComboBoxHandle), "Got handles to different combo boxes? Reset probably wasn't called.");
+
+			DeferredComboBox = ComboBoxHandle;
+			DeferredStringLength += strlen(DisplayText) + 1;
+			DeferredAllowResize |= AllowResize;
+
+			// A copy must be created since lifetime isn't guaranteed after this function returns
+			DeferredMenuItems.emplace_back(_strdup(DisplayText), Value);
+		}
+		else
+		{
+			if (AllowResize)
+			{
+				if (HDC hdc = GetDC(ComboBoxHandle); hdc)
+				{
+					if (SIZE size; GetTextExtentPoint32A(hdc, DisplayText, static_cast<int>(strlen(DisplayText)), &size))
+					{
+						LRESULT currentWidth = SendMessageA(ComboBoxHandle, CB_GETDROPPEDWIDTH, 0, 0);
+
+						if (size.cx > currentWidth)
+							SendMessageA(ComboBoxHandle, CB_SETDROPPEDWIDTH, size.cx, 0);
+					}
+
+					ReleaseDC(ComboBoxHandle, hdc);
+				}
+			}
+
+			LRESULT index = SendMessageA(ComboBoxHandle, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(DisplayText));
+
+			if (index != CB_ERR && index != CB_ERRSPACE)
+				SendMessageA(ComboBoxHandle, CB_SETITEMDATA, index, reinterpret_cast<LPARAM>(Value));
+		}
+	}
+
+	void TabControlDeleteItem(HWND TabControlHandle, uint32_t TabIndex)
+	{
+		TCITEMA itemInfo = {};
+
+		if (TabCtrl_GetItem(TabControlHandle, TabIndex, &itemInfo))
+			TabCtrl_DeleteItem(TabControlHandle, TabIndex);
 	}
 
 	void RegisterHotkeyFunction(void *This, void(*Callback)(), const char **HotkeyFunction, const char **DisplayText, char VirtualKey, bool Alt, bool Ctrl, bool Shift)
@@ -562,7 +340,7 @@ namespace EditorUI
 		else if (VirtualKey >= VK_F1 && VirtualKey <= VK_F12)
 			decodedKey += "F" + std::to_string(VirtualKey - VK_F1 + 1);
 		else if (VirtualKey < VK_PRIOR || VirtualKey > VK_F15)
-			decodedKey += (char)MapVirtualKeyA(VirtualKey, MAPVK_VK_TO_CHAR);
+			decodedKey += static_cast<char>(MapVirtualKeyA(VirtualKey, MAPVK_VK_TO_CHAR));
 		else
 			decodedKey += VirtualKey;
 
@@ -570,7 +348,7 @@ namespace EditorUI
 		logLine += *HotkeyFunction;
 		logLine += "=\"" + decodedKey + "\"";
 
-		for (int i = 60 - (int)logLine.length(); i > 0; i--)
+		for (int i = 60 - static_cast<int>(logLine.length()); i > 0; i--)
 			logLine += " ";
 
 		logLine += "; ";
@@ -637,87 +415,126 @@ namespace EditorUI
 		((decltype(&RegisterHotkeyFunction))OFFSET(0x12FCB70, 1530))(This, Callback, HotkeyFunction, DisplayText, VirtualKey, Alt, Ctrl, Shift);
 	}
 
-	BOOL ListViewCustomSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask)
+	void ResetUIDefer()
 	{
-		// Microsoft's implementation of this define is broken (ListView_SetItemState)
-		LVITEMA item
-		{
-			.mask = LVIF_STATE,
-			.state = Data,
-			.stateMask = Mask
-		};
-
-		return (BOOL)SendMessageA(ListViewHandle, LVM_SETITEMSTATE, Index, (LPARAM)&item);
+		UseDeferredDialogInsert = false;
+		DeferredListView = nullptr;
+		DeferredComboBox = nullptr;
+		DeferredStringLength = 0;
+		DeferredAllowResize = false;
+		DeferredMenuItems.clear();
 	}
 
-	void ListViewSelectItem(HWND ListViewHandle, int ItemIndex, bool KeepOtherSelections)
+	void BeginUIDefer()
 	{
-		if (!KeepOtherSelections)
-			ListViewCustomSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
+		ResetUIDefer();
+		UseDeferredDialogInsert = true;
+	}
 
-		if (ItemIndex != -1)
+	void EndUIDefer()
+	{
+		if (!UseDeferredDialogInsert)
+			return;
+
+		if (DeferredListView)
 		{
-			ListView_EnsureVisible(ListViewHandle, ItemIndex, FALSE);
-			ListViewCustomSetItemState(ListViewHandle, ItemIndex, LVIS_SELECTED, LVIS_SELECTED);
+			SendMessage(DeferredListView, WM_SETREDRAW, TRUE, 0);
+			RedrawWindow(DeferredListView, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
 		}
+
+		if (!DeferredMenuItems.empty())
+		{
+			const HWND control = DeferredComboBox;
+
+			// Sort alphabetically if requested to try and speed up inserts
+			int finalWidth = 0;
+			LONG_PTR style = GetWindowLongPtr(control, GWL_STYLE);
+
+			if ((style & CBS_SORT) == CBS_SORT)
+			{
+				std::sort(DeferredMenuItems.begin(), DeferredMenuItems.end(),
+					[](const std::pair<const char *, void *>& a, const std::pair<const char *, void *>& b) -> bool
+				{
+					return _stricmp(a.first, b.first) > 0;
+				});
+			}
+
+			SendMessage(control, CB_INITSTORAGE, DeferredMenuItems.size(), DeferredStringLength * sizeof(char));
+
+			if (HDC hdc = GetDC(control); hdc)
+			{
+				SuspendComboBoxUpdates(control, true);
+
+				// Pre-calculate font widths for resizing, starting with TrueType
+				std::array<int, UCHAR_MAX + 1> fontWidths;
+				std::array<ABC, UCHAR_MAX + 1> trueTypeFontWidths;
+
+				if (!GetCharABCWidthsA(hdc, 0, static_cast<UINT>(trueTypeFontWidths.size() - 1), trueTypeFontWidths.data()))
+				{
+					BOOL result = GetCharWidthA(hdc, 0, static_cast<UINT>(fontWidths.size() - 1), fontWidths.data());
+					AssertMsg(result, "Failed to determine any font widths");
+				}
+				else
+				{
+					for (int i = 0; i < fontWidths.size(); i++)
+						fontWidths[i] = trueTypeFontWidths[i].abcB;
+				}
+
+				// Insert everything all at once
+				for (auto [display, value] : DeferredMenuItems)
+				{
+					LRESULT index = SendMessageA(control, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(display));
+					int lineSize = 0;
+
+					if (index != CB_ERR && index != CB_ERRSPACE)
+						SendMessageA(control, CB_SETITEMDATA, index, reinterpret_cast<LPARAM>(value));
+
+					for (const char *c = display; *c != '\0'; c++)
+						lineSize += fontWidths[*c];
+
+					finalWidth = std::max(finalWidth, lineSize);
+
+					free(const_cast<char *>(display));
+				}
+
+				SuspendComboBoxUpdates(control, false);
+				ReleaseDC(control, hdc);
+			}
+
+			// Resize to fit
+			if (DeferredAllowResize)
+			{
+				LRESULT currentWidth = SendMessage(control, CB_GETDROPPEDWIDTH, 0, 0);
+
+				if (finalWidth > currentWidth)
+					SendMessage(control, CB_SETDROPPEDWIDTH, finalWidth, 0);
+			}
+		}
+
+		ResetUIDefer();
 	}
 
-	void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections)
+	void SuspendComboBoxUpdates(HWND ComboHandle, bool Suspend)
 	{
-		if (!KeepOtherSelections)
-			ListViewCustomSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
-
-		LVFINDINFOA findInfo
+		COMBOBOXINFO info
 		{
-			.flags = LVFI_PARAM,
-			.lParam = (LPARAM)Parameter
+			.cbSize = sizeof(COMBOBOXINFO)
 		};
 
-		int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
+		if (!GetComboBoxInfo(ComboHandle, &info))
+			return;
 
-		if (index != -1)
-			ListViewSelectItem(ListViewHandle, index, KeepOtherSelections);
-	}
-
-	void *ListViewGetSelectedItem(HWND ListViewHandle)
-	{
-		if (!ListViewHandle)
-			return nullptr;
-
-		int index = ListView_GetNextItem(ListViewHandle, -1, LVNI_SELECTED);
-
-		if (index == -1)
-			return nullptr;
-
-		LVITEMA item
+		if (!Suspend)
 		{
-			.mask = LVIF_PARAM,
-			.iItem = index
-		};
-
-		ListView_GetItem(ListViewHandle, &item);
-		return (void *)item.lParam;
-	}
-
-	void ListViewDeselectItem(HWND ListViewHandle, void *Parameter)
-	{
-		LVFINDINFOA findInfo
+			SendMessage(info.hwndList, WM_SETREDRAW, TRUE, 0);
+			SendMessage(ComboHandle, CB_SETMINVISIBLE, 30, 0);
+			SendMessage(ComboHandle, WM_SETREDRAW, TRUE, 0);
+		}
+		else
 		{
-			.flags = LVFI_PARAM,
-			.lParam = (LPARAM)Parameter
-		};
-
-		int index = ListView_FindItem(ListViewHandle, -1, &findInfo);
-
-		if (index != -1)
-			ListViewCustomSetItemState(ListViewHandle, index, 0, LVIS_SELECTED);
-	}
-
-	void TabControlDeleteItem(HWND TabControlHandle, uint32_t TabIndex)
-	{
-		TCITEMA itemInfo = {};
-
-		if (TabCtrl_GetItem(TabControlHandle, TabIndex, &itemInfo))
-			TabCtrl_DeleteItem(TabControlHandle, TabIndex);
+			SendMessage(ComboHandle, WM_SETREDRAW, FALSE, 0);// Prevent repainting until finished
+			SendMessage(ComboHandle, CB_SETMINVISIBLE, 1, 0);// Possible optimization for older libraries (source: MSDN forums)
+			SendMessage(info.hwndList, WM_SETREDRAW, FALSE, 0);
+		}
 	}
 }

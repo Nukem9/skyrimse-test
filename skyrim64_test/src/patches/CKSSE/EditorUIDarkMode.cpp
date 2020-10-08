@@ -1,11 +1,8 @@
 #include "../../common.h"
 #include <tbb/concurrent_unordered_map.h>
-#include <unordered_set>
 #include <vssym32.h>
 #include <Richedit.h>
 #include "EditorUIDarkMode.h"
-
-#pragma comment(lib, "uxtheme.lib")
 
 namespace EditorUIDarkMode
 {
@@ -403,7 +400,7 @@ namespace EditorUIDarkMode
 				const int arrowWidth = std::ceil(std::abs(pRect->left - pRect->right) * 0.4f);
 				const int arrowHeight = std::ceil(std::abs(pRect->top - pRect->bottom) * 0.35f);
 
-				std::array<DWORD, 6> counts = { 2, 2, 2, 2, 2, 2 };
+				std::array<DWORD, 6> counts { 2, 2, 2, 2, 2, 2 };
 				std::array<POINT, 12> verts
 				{{
 					// Left segment
@@ -654,7 +651,7 @@ namespace EditorUIDarkMode
 					else
 						SetDCPenColor(hdc, RGB(29, 38, 48));
 
-					std::array<DWORD, 2> counts = { 2, 2 };
+					std::array<DWORD, 2> counts { 2, 2 };
 					std::array<POINT, 4> verts
 					{{
 						// Right border

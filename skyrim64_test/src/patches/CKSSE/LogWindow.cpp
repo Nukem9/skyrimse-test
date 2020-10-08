@@ -1,10 +1,14 @@
 #include "../../common.h"
 #include <tbb/concurrent_vector.h>
 #include <Richedit.h>
-#include <unordered_set>
 #include "EditorUI.h"
 #include "EditorUIDarkMode.h"
+#include "MainWindow.h"
 #include "LogWindow.h"
+
+#define UI_LOG_CMD_ADDTEXT		(WM_APP + 1)
+#define UI_LOG_CMD_CLEARTEXT	(WM_APP + 2)
+#define UI_LOG_CMD_AUTOSCROLL	(WM_APP + 3)
 
 namespace LogWindow
 {
@@ -37,18 +41,12 @@ namespace LogWindow
 		// File output
 		const std::string logPath = g_INI.Get("CreationKit_Log", "OutputFile", "none");
 
-		if (strcmp(logPath.c_str(), "none") != 0)
+		if (logPath != "none")
 		{
 			if (fopen_s(&OutputFileHandle, logPath.c_str(), "w") != 0)
 				OutputFileHandle = nullptr;
 
 			AssertMsgVa(OutputFileHandle, "Unable to open the log file '%s' for writing. To disable, set the 'OutputFile' INI option to 'none'.", logPath.c_str());
-
-			atexit([]()
-			{
-				if (OutputFileHandle)
-					fclose(OutputFileHandle);
-			});
 		}
 
 		std::thread asyncLogThread([]()
@@ -56,7 +54,7 @@ namespace LogWindow
 			EditorUIDarkMode::InitializeThread();
 
 			// Output window
-			auto instance = (HINSTANCE)GetModuleHandle(nullptr);
+			auto instance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
 
 			WNDCLASSEX wc
 			{
@@ -66,7 +64,7 @@ namespace LogWindow
 				.hInstance = instance,
 				.hIcon = LoadIcon(instance, MAKEINTRESOURCE(0x13E)),
 				.hCursor = LoadCursor(nullptr, IDC_ARROW),
-				.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH),
+				.hbrBackground = static_cast<HBRUSH>(GetStockObject(LTGRAY_BRUSH)),
 				.lpszClassName = TEXT("RTEDITLOG"),
 				.hIconSm = wc.hIcon,
 			};
@@ -188,7 +186,7 @@ namespace LogWindow
 		{
 		case WM_CREATE:
 		{
-			auto info = (const CREATESTRUCT *)lParam;
+			auto info = reinterpret_cast<const CREATESTRUCT *>(lParam);
 
 			// Create the rich edit control (https://docs.microsoft.com/en-us/windows/desktop/Controls/rich-edit-controls)
 			uint32_t style = WS_VISIBLE | WS_CHILD | WS_VSCROLL | ES_MULTILINE | ES_LEFT | ES_NOHIDESEL | ES_AUTOVSCROLL | ES_READONLY;
@@ -210,10 +208,10 @@ namespace LogWindow
 			format.cbSize = sizeof(format);
 			format.dwMask = CFM_FACE | CFM_SIZE | CFM_WEIGHT;
 			format.yHeight = g_INI.GetInteger("CreationKit_Log", "FontSize", 10) * 20;
-			format.wWeight = (WORD)g_INI.GetInteger("CreationKit_Log", "FontWeight", FW_NORMAL);
+			format.wWeight = static_cast<WORD>(g_INI.GetInteger("CreationKit_Log", "FontWeight", FW_NORMAL));
 			strncpy_s(format.szFaceName, g_INI.Get("CreationKit_Log", "Font", "Consolas").c_str(), _TRUNCATE);
 
-			SendMessageA(richEditHwnd, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&format);
+			SendMessageA(richEditHwnd, EM_SETCHARFORMAT, SCF_ALL, reinterpret_cast<LPARAM>(&format));
 
 			// Subscribe to EN_MSGFILTER and EN_SELCHANGE
 			SendMessageA(richEditHwnd, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_SELCHANGE);
@@ -246,18 +244,18 @@ namespace LogWindow
 		case WM_NOTIFY:
 		{
 			static uint64_t lastClickTime;
-			auto notification = (const LPNMHDR)lParam;
+			auto notification = reinterpret_cast<const LPNMHDR>(lParam);
 
 			if (notification->code == EN_MSGFILTER)
 			{
-				auto msgFilter = (const MSGFILTER *)notification;
+				auto msgFilter = reinterpret_cast<const MSGFILTER *>(notification);
 
 				if (msgFilter->msg == WM_LBUTTONDBLCLK)
 					lastClickTime = GetTickCount64();
 			}
 			else if (notification->code == EN_SELCHANGE)
 			{
-				auto selChange = (const SELCHANGE *)notification;
+				auto selChange = reinterpret_cast<const SELCHANGE *>(notification);
 
 				// Mouse double click with a valid selection -> try to parse form id
 				if ((GetTickCount64() - lastClickTime > 1000) || selChange->seltyp == SEL_EMPTY)
@@ -268,7 +266,7 @@ namespace LogWindow
 
 				// Get the line number & text from the selected range
 				LRESULT lineIndex = SendMessageA(richEditHwnd, EM_LINEFROMCHAR, selChange->chrg.cpMin, 0);
-				LRESULT charCount = SendMessageA(richEditHwnd, EM_GETLINE, lineIndex, (LPARAM)&lineData);
+				LRESULT charCount = SendMessageA(richEditHwnd, EM_GETLINE, lineIndex, reinterpret_cast<LPARAM>(&lineData));
 
 				if (charCount > 0)
 				{
@@ -280,7 +278,7 @@ namespace LogWindow
 						if (p[0] == '(' && strlen(p) >= 10 && p[9] == ')')
 						{
 							uint32_t id = strtoul(&p[1], nullptr, 16);
-							PostMessageA(EditorUI::GetWindow(), WM_COMMAND, UI_EDITOR_OPENFORMBYID, id);
+							PostMessageA(MainWindow::GetWindow(), WM_COMMAND, UI_EDITOR_OPENFORMBYID, id);
 						}
 					}
 				}
@@ -310,7 +308,7 @@ namespace LogWindow
 			POINT scrollRange;
 
 			if (!autoScroll)
-				SendMessageA(richEditHwnd, EM_GETSCROLLPOS, 0, (WPARAM)&scrollRange);
+				SendMessageA(richEditHwnd, EM_GETSCROLLPOS, 0, reinterpret_cast<LPARAM>(&scrollRange));
 
 			// Get a copy of all elements and clear the global list
 			auto messages(std::move(PendingMessages));
@@ -324,14 +322,14 @@ namespace LogWindow
 					.cpMax = LONG_MAX,
 				};
 
-				SendMessageA(richEditHwnd, EM_EXSETSEL, 0, (LPARAM)&range);
-				SendMessageA(richEditHwnd, EM_REPLACESEL, FALSE, (LPARAM)message);
+				SendMessageA(richEditHwnd, EM_EXSETSEL, 0, reinterpret_cast<LPARAM>(&range));
+				SendMessageA(richEditHwnd, EM_REPLACESEL, FALSE, reinterpret_cast<LPARAM>(message));
 
-				free((void *)message);
+				free(const_cast<char *>(message));
 			}
 
 			if (!autoScroll)
-				SendMessageA(richEditHwnd, EM_SETSCROLLPOS, 0, (WPARAM)&scrollRange);
+				SendMessageA(richEditHwnd, EM_SETSCROLLPOS, 0, reinterpret_cast<LPARAM>(&scrollRange));
 
 			SendMessageA(richEditHwnd, WM_SETREDRAW, TRUE, 0);
 			RedrawWindow(richEditHwnd, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_NOCHILDREN);
@@ -341,16 +339,41 @@ namespace LogWindow
 		case UI_LOG_CMD_CLEARTEXT:
 		{
 			// Set to an empty string
-			SendMessageA(richEditHwnd, WM_SETTEXT, 0, (LPARAM)"");
+			SendMessageA(richEditHwnd, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(""));
 		}
 		return 0;
 
 		case UI_LOG_CMD_AUTOSCROLL:
-			autoScroll = (bool)wParam;
+			autoScroll = static_cast<bool>(wParam);
 			return 0;
 		}
 
 		return DefWindowProc(Hwnd, Message, wParam, lParam);
+	}
+
+	void Clear()
+	{
+		PostMessageA(LogWindowHandle, UI_LOG_CMD_CLEARTEXT, 0, 0);
+	}
+
+	void BringToFront()
+	{
+		ShowWindow(LogWindowHandle, SW_SHOW);
+		SetForegroundWindow(LogWindowHandle);
+	}
+
+	void EnableAutoscroll(bool Enable)
+	{
+		PostMessageA(LogWindowHandle, UI_LOG_CMD_AUTOSCROLL, static_cast<WPARAM>(Enable), 0);
+	}
+
+	void Log(const char *Format, ...)
+	{
+		va_list va;
+
+		va_start(va, Format);
+		LogVa(Format, va);
+		va_end(va);
 	}
 
 	void LogVa(const char *Format, va_list Va)
@@ -375,15 +398,6 @@ namespace LogWindow
 
 		if (PendingMessages.size() < 50000)
 			PendingMessages.emplace_back(_strdup(buffer));
-	}
-
-	void Log(const char *Format, ...)
-	{
-		va_list va;
-
-		va_start(va, Format);
-		LogVa(Format, va);
-		va_end(va);
 	}
 
 	void LogWarning(int Type, const char *Format, ...)

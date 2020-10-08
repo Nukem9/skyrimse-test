@@ -13,8 +13,11 @@ namespace LogWindow
 
 	LRESULT CALLBACK WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
-	void LogVa(const char *Format, va_list Va);
+	void Clear();
+	void BringToFront();
+	void EnableAutoscroll(bool Enable);
 	void Log(const char *Format, ...);
+	void LogVa(const char *Format, va_list Va);
 	void LogWarning(int Type, const char *Format, ...);
 	void LogWarningUnknown1(const char *Format, ...);
 	void LogWarningUnknown2(__int64 Unused, const char *Format, ...);

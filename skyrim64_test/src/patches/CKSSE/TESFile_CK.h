@@ -1,10 +1,10 @@
 #pragma once
 
-class TESFile
+class TESFile_CK
 {
 private:
-	TESFile();
-	~TESFile();
+	TESFile_CK();
+	~TESFile_CK();
 
 public:
 	enum : uint32_t
@@ -22,8 +22,8 @@ public:
 	char _pad1[0x1D8];
 	uint32_t m_RecordFlags;
 
-	inline static int (* LoadTESInfo)(TESFile *);
-	inline static __int64 (* WriteTESInfo)(TESFile *);
+	inline static int (* LoadTESInfo)(TESFile_CK *);
+	inline static __int64 (* WriteTESInfo)(TESFile_CK *);
 	inline static bool AllowSaveESM;
 	inline static bool AllowMasterESP;
 
@@ -31,6 +31,6 @@ public:
 	__int64 hk_WriteTESInfo();
 	bool IsActiveFileBlacklist();
 };
-static_assert_offset(TESFile, m_FileName, 0x58);
-static_assert_offset(TESFile, m_FilePath, 0x15C);
-static_assert_offset(TESFile, m_RecordFlags, 0x438);
+static_assert_offset(TESFile_CK, m_FileName, 0x58);
+static_assert_offset(TESFile_CK, m_FilePath, 0x15C);
+static_assert_offset(TESFile_CK, m_RecordFlags, 0x438);
