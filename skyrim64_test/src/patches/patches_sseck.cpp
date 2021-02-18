@@ -266,7 +266,7 @@ void Patch_TESVCreationKit()
 
 		*(uintptr_t *)&MainWindow::OldWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x13F3770, 1530), &MainWindow::WndProc);
 		*(uintptr_t *)&ObjectWindow::OldObjectWindowProc = Detours::X64::DetourFunctionClass(OFFSET(0x12C3ED0, 1530), &ObjectWindow::ObjectWindowProc);
-		*(uintptr_t *)&CellViewWindowo::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &CellViewWindowo::CellViewProc);
+		*(uintptr_t *)&CellViewWindow::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &CellViewWindow::CellViewProc);
 
 		XUtil::DetourCall(OFFSET(0x20AD5C9, 1530), &hk_call_1420AD5C9);// Raise the papyrus script editor text limit to 500k characters from 64k
 		XUtil::DetourCall(OFFSET(0x1CF03C9, 1530), &hk_call_141CF03C9);// Update the UI options when fog is toggled
@@ -308,8 +308,8 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x13B9AD0, 1530), &EditorUI::ComboBoxInsertItemDeferred);
 	XUtil::DetourJump(OFFSET(0x13BA4D0, 1530), &EditorUI::ListViewInsertItemDeferred);
 	XUtil::DetourCall(OFFSET(0x12C8B63, 1530), &ObjectWindow::UpdateTreeView);
-	XUtil::DetourCall(OFFSET(0x13DAB04, 1530), &CellViewWindowo::UpdateCellList);
-	XUtil::DetourCall(OFFSET(0x13E117C, 1530), &CellViewWindowo::UpdateObjectList);
+	XUtil::DetourCall(OFFSET(0x13DAB04, 1530), &CellViewWindow::UpdateCellList);
+	XUtil::DetourCall(OFFSET(0x13E117C, 1530), &CellViewWindow::UpdateObjectList);
 	XUtil::DetourJump(OFFSET(0x20A9710, 1530), &EditorUIDialogs::CSScript_PickScriptsToCompileDlgProc);
 
 	// Disable useless "Processing Topic X..." status bar updates

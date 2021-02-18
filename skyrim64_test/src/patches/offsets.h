@@ -23,7 +23,6 @@ namespace Offsets
 	uintptr_t Resolve(uint32_t RelOffset, uint32_t Version);
 	bool CanResolve(uint32_t RelOffset, uint32_t Version);
 
-	void BuildTableForCKF4Version(uint32_t Version);
 	void BuildTableForCKSSEVersion(uint32_t Version);
 	void BuildTableForGameVersion(uint32_t Version);
 	void BuildTable(const std::vector<OffsetEntry>& Table, bool CurrentVersion);

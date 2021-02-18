@@ -2,7 +2,7 @@
 
 #include "../../common.h"
 
-namespace CellViewWindowo
+namespace CellViewWindow
 {
 	extern DLGPROC OldCellViewProc;
 

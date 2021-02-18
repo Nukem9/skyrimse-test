@@ -4,7 +4,7 @@
 #include "EditorUI.h"
 #include "TESForm_CK.h"
 
-namespace CellViewWindowo
+namespace CellViewWindow
 {
 	DLGPROC OldCellViewProc;
 
@@ -20,7 +20,7 @@ namespace CellViewWindowo
 		}
 		else if (Message == WM_SIZE)
 		{
-			auto labelRect = (RECT *)OFFSET(0x3AFB570, 1530);
+			auto labelRect = reinterpret_cast<RECT *>(OFFSET(0x3AFB570, 1530));
 
 			// Fix the "World Space" label positioning on window resize
 			RECT label;

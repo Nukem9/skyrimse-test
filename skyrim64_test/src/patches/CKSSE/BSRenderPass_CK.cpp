@@ -19,8 +19,8 @@ BSRenderPass_CK *BSRenderPass_CK::AllocatePass(BSShader *Shader, BSShaderPropert
 
 	memset(data, 0, size);
 
-	auto *pass = reinterpret_cast<BSRenderPass_CK *>(data);
-	auto *lights = reinterpret_cast<BSLight **>(&pass[1]);
+	auto pass = reinterpret_cast<BSRenderPass_CK *>(data);
+	auto lights = reinterpret_cast<BSLight **>(&pass[1]);
 
 	pass->m_SceneLights = lights;
 	pass->Set(Shader, ShaderProperty, Geometry, PassEnum, NumLights, SceneLights);

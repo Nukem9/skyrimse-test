@@ -14,11 +14,6 @@ namespace Offsets
 		return Resolve(RelOffset, Version) != 0;
 	}
 
-	void BuildTableForCKF4Version(uint32_t Version)
-	{
-		Assert(false);
-	}
-
 	void BuildTableForCKSSEVersion(uint32_t Version)
 	{
 		if (Version >= 1573)
