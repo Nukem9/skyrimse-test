@@ -780,6 +780,11 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x2DD5460, 1530), { 0x0F, 0x57, 0xC0, 0x0F, 0x57, 0xC9, 0x0F, 0x57, 0xD2, 0x33, 0xC0 });
 
 	//
+	// Fix for crash when loading more than 32K animations. The code incorrectly sign-extends an unsigned short. Counterpart to engine fixes.
+	//
+	XUtil::PatchMemory(OFFSET(0x236F20E, 1530), { 0xB7 });
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
