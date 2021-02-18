@@ -5,27 +5,6 @@
 
 namespace EditorUIDialogs
 {
-	LRESULT CALLBACK DialogTabProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
-	{
-		if (Message == WM_INITDIALOG)
-		{
-			// If it's the weapon sound dialog tab (id 3327), remap the "Unequip Sound" button (id 3682) to
-			// a non-conflicting one (id 3683)
-			char className[256];
-
-			if (GetClassNameA(Hwnd, className, ARRAYSIZE(className)) > 0)
-			{
-				if (!strcmp(className, "WeaponClass"))
-					SetWindowLongPtr(GetDlgItem(Hwnd, 3682), GWLP_ID, 3683);
-			}
-
-			ShowWindow(Hwnd, SW_HIDE);
-			return 1;
-		}
-
-		return 0;
-	}
-
 	INT_PTR CALLBACK LipRecordDialogProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 	{
 		// Id's for "Recording..." dialog window

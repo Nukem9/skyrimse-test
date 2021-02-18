@@ -465,16 +465,10 @@ void Patch_TESVCreationKit()
 
 	//
 	// Correct the "Push-to-game not supported" error when clicking the "UnEquip Sound" button on the weapon editor
-	// dialog. 3682 is reserved exclusively for the PTG functionality, so the button id must be changed. Remapped to
-	// 3683 instead.
+	// dialog or "Add" button on the music track dialog. 3682 is reserved exclusively for the PTG functionality, so
+	// the button ids must be changed. Disable PTG code instead.
 	//
-	XUtil::DetourJump(OFFSET(0x13B9900, 1530), &EditorUIDialogs::DialogTabProc);
-
-	uint32_t newId = 3683;
-	XUtil::PatchMemory(OFFSET(0x1B0CBC4, 1530), (uint8_t *)&newId, sizeof(uint32_t));// SetDlgItemTextA
-	XUtil::PatchMemory(OFFSET(0x1B0DCE9, 1530), (uint8_t *)&newId, sizeof(uint32_t));// GetDlgItemTextA
-	newId += 1;
-	XUtil::PatchMemory(OFFSET(0x1B0AFAA, 1530), (uint8_t *)&newId, sizeof(uint32_t));// Patch if() comparison
+	XUtil::PatchMemoryNop(OFFSET(0x1488189, 1530), 6);
 
 	//
 	// Fix for crash (recursive sorting function stack overflow) when saving certain ESP files (i.e 3DNPC.esp)
