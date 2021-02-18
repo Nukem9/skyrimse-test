@@ -210,16 +210,32 @@ namespace EditorUIDarkMode
 		case WM_PAINT:
 		{
 			// Special override for DialogBoxIndirectParam (MessageBox) since the bottom half doesn't get themed correctly. ReactOS
-			// says this is MSGBOX_IDTEXT.
+			// says this is MSGBOX_IDTEXT. Standard message boxes will have 3 buttons or less.
 			if (GetDlgItem(hWnd, 0xFFFF))
 			{
-				if (HDC hdc = GetDC(hWnd); hdc)
-				{
-					RECT windowArea;
-					GetClientRect(hWnd, &windowArea);
+				int buttonCount = 0;
 
-					FillRect(hdc, &windowArea, generalBackgroundBrush);
-					ReleaseDC(hWnd, hdc);
+				EnumChildWindows(hWnd, [](HWND ChildWindow, LPARAM Param)
+				{
+					char classname[256] = {};
+					GetClassName(ChildWindow, classname, std::size(classname));
+
+					if (!_stricmp(classname, "Button"))
+						(*reinterpret_cast<int *>(Param))++;
+
+					return TRUE;
+				}, reinterpret_cast<LPARAM>(&buttonCount));
+
+				if (buttonCount <= 3)
+				{
+					if (HDC hdc = GetDC(hWnd); hdc)
+					{
+						RECT windowArea;
+						GetClientRect(hWnd, &windowArea);
+
+						FillRect(hdc, &windowArea, generalBackgroundBrush);
+						ReleaseDC(hWnd, hdc);
+					}
 				}
 			}
 		}
