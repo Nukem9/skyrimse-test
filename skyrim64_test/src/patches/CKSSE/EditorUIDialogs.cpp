@@ -12,14 +12,14 @@ namespace EditorUIDialogs
 		{
 		case WM_APP:
 			// Don't actually kill the dialog, just hide it. It gets destroyed later when the parent window closes.
-			SendMessageA(GetDlgItem(DialogHwnd, 31007), PBM_SETPOS, 0, 0);
+			SendMessageA(GetDlgItem(DialogHwnd, UI_LIPRECORD_DIALOG_PROGRESSBAR), PBM_SETPOS, 0, 0);
 			ShowWindow(DialogHwnd, SW_HIDE);
 			PostQuitMessage(0);
 			return TRUE;
 
 		case WM_INITDIALOG:
-			SendMessageA(GetDlgItem(DialogHwnd, 31007), PBM_SETRANGE, 0, 32768 * 1000);
-			SendMessageA(GetDlgItem(DialogHwnd, 31007), PBM_SETSTEP, 1, 0);
+			SendMessageA(GetDlgItem(DialogHwnd, UI_LIPRECORD_DIALOG_PROGRESSBAR), PBM_SETRANGE, 0, 32768 * 1000);
+			SendMessageA(GetDlgItem(DialogHwnd, UI_LIPRECORD_DIALOG_PROGRESSBAR), PBM_SETSTEP, 1, 0);
 			return TRUE;
 
 		case WM_COMMAND:
@@ -27,7 +27,7 @@ namespace EditorUIDialogs
 			if (LOWORD(wParam) != UI_LIPRECORD_DIALOG_STOPRECORD)
 				return FALSE;
 
-			*(bool *)OFFSET(0x3AFAE28, 1530) = false;
+			*reinterpret_cast<bool *>(OFFSET(0x3AFAE28, 1530)) = false;
 
 			if (FAILED(((HRESULT(__fastcall *)(bool))OFFSET(0x13D5310, 1530))(false)))
 				MessageBoxA(DialogHwnd, "Error with DirectSoundCapture buffer.", "DirectSound Error", MB_ICONERROR);
@@ -37,7 +37,7 @@ namespace EditorUIDialogs
 		case UI_LIPRECORD_DIALOG_STARTRECORD:
 			// Start recording
 			ShowWindow(DialogHwnd, SW_SHOW);
-			*(bool *)OFFSET(0x3AFAE28, 1530) = true;
+			*reinterpret_cast<bool *>(OFFSET(0x3AFAE28, 1530)) = true;
 
 			if (FAILED(((HRESULT(__fastcall *)(bool))OFFSET(0x13D5310, 1530))(true)))
 			{

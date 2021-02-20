@@ -62,7 +62,7 @@ void HandleManager::WarnForUndestroyedHandles()
 }
 
 template<typename ObjectType, typename Manager>
-inline BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::GetCurrentHandle(ObjectType *Refr)
+BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::GetCurrentHandle(ObjectType *Refr)
 {
 	BSUntypedPointerHandle<> untypedHandle;
 
@@ -78,7 +78,7 @@ inline BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Mana
 }
 
 template<typename ObjectType, typename Manager>
-inline BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::CreateHandle(ObjectType *Refr)
+BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::CreateHandle(ObjectType *Refr)
 {
 	BSUntypedPointerHandle<> untypedHandle;
 
@@ -137,7 +137,7 @@ inline BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Mana
 }
 
 template<typename ObjectType, typename Manager>
-inline void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy1(const BSUntypedPointerHandle<>& Handle)
+void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy1(const BSUntypedPointerHandle<>& Handle)
 {
 	if (Handle.IsBitwiseNull())
 		return;
@@ -166,7 +166,7 @@ inline void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy1(const
 }
 
 template<typename ObjectType, typename Manager>
-inline void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy2(BSUntypedPointerHandle<>& Handle)
+void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy2(BSUntypedPointerHandle<>& Handle)
 {
 	if (Handle.IsBitwiseNull())
 		return;
@@ -198,7 +198,7 @@ inline void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy2(BSUnt
 }
 
 template<typename ObjectType, typename Manager>
-inline bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer1(const BSUntypedPointerHandle<>& Handle, NiPointer<ObjectType>& Out)
+bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer1(const BSUntypedPointerHandle<>& Handle, NiPointer<ObjectType>& Out)
 {
 	if (Handle.IsBitwiseNull())
 	{
@@ -218,7 +218,7 @@ inline bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointe
 }
 
 template<typename ObjectType, typename Manager>
-inline bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer2(BSUntypedPointerHandle<>& Handle, NiPointer<ObjectType>& Out)
+bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer2(BSUntypedPointerHandle<>& Handle, NiPointer<ObjectType>& Out)
 {
 	if (Handle.IsBitwiseNull())
 	{
@@ -242,7 +242,7 @@ inline bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointe
 }
 
 template<typename ObjectType, typename Manager>
-inline bool BSPointerHandleManagerInterface<ObjectType, Manager>::IsValid(const BSUntypedPointerHandle<>& Handle)
+bool BSPointerHandleManagerInterface<ObjectType, Manager>::IsValid(const BSUntypedPointerHandle<>& Handle)
 {
 	const uint32_t handleIndex = Handle.QIndex();
 	auto& arrayHandle = HandleEntries[handleIndex];

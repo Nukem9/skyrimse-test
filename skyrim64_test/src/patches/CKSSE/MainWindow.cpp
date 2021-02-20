@@ -87,7 +87,7 @@ namespace MainWindow
 				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_TOOLBAR), TB_CHECKBUTTON, UI_EDITOR_TOGGLEGRASS_BUTTON, TRUE);
 
 				// Same for fog
-				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *(bool *)OFFSET(0x4F05728, 1530) ? MF_CHECKED : MF_UNCHECKED);
+				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *reinterpret_cast<bool *>(OFFSET(0x4F05728, 1530)) ? MF_CHECKED : MF_UNCHECKED);
 
 				// Create custom menu controls
 				CreateExtensionMenu(Hwnd, createInfo->hMenu);
@@ -210,7 +210,7 @@ namespace MainWindow
 						};
 
 						XUtil::DetourCall(OFFSET(0x13E32B0, 1530), callback);
-						CallWindowProcA((WNDPROC)OFFSET(0x13E6270, 1530), Hwnd, WM_COMMAND, 1185, 0);
+						CallWindowProcA(reinterpret_cast<WNDPROC>(OFFSET(0x13E6270, 1530)), Hwnd, WM_COMMAND, 1185, 0);
 
 						// Sort by: type, editor id, form id, then file offset
 						std::sort(formList.begin(), formList.end(),

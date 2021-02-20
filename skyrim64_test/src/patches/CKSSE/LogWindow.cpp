@@ -133,7 +133,7 @@ namespace LogWindow
 				while (char *end = strchr(logBuffer, '\n'))
 				{
 					*end = '\0';
-					size_t len = (size_t)(end - logBuffer);
+					auto len = static_cast<size_t>(end - logBuffer);
 
 					while (strchr(logBuffer, '\r'))
 						*strchr(logBuffer, '\r') = ' ';
@@ -262,7 +262,7 @@ namespace LogWindow
 					break;
 
 				char lineData[4096];
-				*(uint16_t *)&lineData[0] = ARRAYSIZE(lineData);
+				*reinterpret_cast<uint16_t *>(&lineData[0]) = ARRAYSIZE(lineData);
 
 				// Get the line number & text from the selected range
 				LRESULT lineIndex = SendMessageA(richEditHwnd, EM_LINEFROMCHAR, selChange->chrg.cpMin, 0);

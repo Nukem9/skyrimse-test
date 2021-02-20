@@ -16,6 +16,7 @@
 #define UI_CELL_VIEW_CHECKBOX						2580	// See: resource.rc
 
 #define UI_LIPRECORD_DIALOG_STOPRECORD				1
+#define UI_LIPRECORD_DIALOG_PROGRESSBAR				31007
 #define UI_LIPRECORD_DIALOG_STARTRECORD				(WM_USER + 22)
 
 #define UI_COMIPLESCRIPT_DIALOG_COMPILE				1		// "Compile"
@@ -54,7 +55,7 @@ namespace EditorUI
 	void ComboBoxInsertItemDeferred(HWND ComboBoxHandle, const char *DisplayText, void *Value, bool AllowResize);
 	void TabControlDeleteItem(HWND TabControlHandle, uint32_t TabIndex);
 
-	void RegisterHotkeyFunction(void *This, void(*Callback)(), const char **HotkeyFunction, const char **DisplayText, char VirtualKey, bool Alt, bool Ctrl, bool Shift);
+	void RegisterHotkeyFunction(void *Thisptr, void(*Callback)(), const char **HotkeyFunction, const char **DisplayText, char VirtualKey, bool Alt, bool Ctrl, bool Shift);
 	void ResetUIDefer();
 	void BeginUIDefer();
 	void EndUIDefer();

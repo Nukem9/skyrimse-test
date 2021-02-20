@@ -6,7 +6,7 @@
 
 BSGraphics_CK::Renderer *BSGraphics_CK::Renderer::QInstance()
 {
-	return (Renderer *)OFFSET(0x56B73A0, 1530);
+	return reinterpret_cast<Renderer *>(OFFSET(0x56B73A0, 1530));
 }
 
 void BSGraphics_CK::Renderer::SetResourceName(ID3D11DeviceChild *Resource, const char *Format, ...)
@@ -28,11 +28,11 @@ void BSGraphics_CK::Renderer::CreateRenderTarget(uint32_t TargetIndex, const cha
 {
 	Assert(TargetIndex < RENDER_TARGET_COUNT && TargetIndex != RENDER_TARGET_NONE);
 
-	auto device = *(ID3D11Device **)OFFSET(0x56B6B40, 1530);
+	auto device = *reinterpret_cast<ID3D11Device **>(OFFSET(0x56B6B40, 1530));
 	auto data = &pRenderTargets[TargetIndex];
 
-	HRESULT hr = S_OK;
-	DXGI_FORMAT dxgiFormat = (DXGI_FORMAT)Properties->eFormat;
+	auto hr = S_OK;
+	auto dxgiFormat = static_cast<DXGI_FORMAT>(Properties->eFormat);
 
 	if (Properties->iMipLevel == -1)
 	{
@@ -127,10 +127,9 @@ void BSGraphics_CK::Renderer::CreateDepthStencil(uint32_t TargetIndex, const cha
 {
 	Assert(TargetIndex < RENDER_TARGET_COUNT && TargetIndex != RENDER_TARGET_NONE);
 
-	auto device = *(ID3D11Device **)OFFSET(0x56B6B40, 1530);
+	auto device = *reinterpret_cast<ID3D11Device **>(OFFSET(0x56B6B40, 1530));
 	auto data = &pDepthStencils[TargetIndex];
-
-	HRESULT hr = S_OK;
+	auto hr = S_OK;
 
 	// Create backing texture
 	D3D11_TEXTURE2D_DESC texDesc;
@@ -241,17 +240,16 @@ void BSGraphics_CK::Renderer::CreateCubemapRenderTarget(uint32_t TargetIndex, co
 {
 	Assert(TargetIndex < RENDER_TARGET_CUBEMAP_COUNT);
 
-	auto device = *(ID3D11Device **)OFFSET(0x56B6B40, 1530);
+	auto device = *reinterpret_cast<ID3D11Device **>(OFFSET(0x56B6B40, 1530));
 	auto data = &pCubemapRenderTargets[TargetIndex];
-
-	HRESULT hr = S_OK;
+	auto hr = S_OK;
 
 	D3D11_TEXTURE2D_DESC texDesc;
 	texDesc.Width = Properties->uiWidth;
 	texDesc.Height = Properties->uiHeight;
 	texDesc.MipLevels = 1;
 	texDesc.ArraySize = 6;
-	texDesc.Format = (DXGI_FORMAT)Properties->eFormat;
+	texDesc.Format = static_cast<DXGI_FORMAT>(Properties->eFormat);
 	texDesc.SampleDesc.Count = 1;
 	texDesc.SampleDesc.Quality = 0;
 	texDesc.Usage = D3D11_USAGE_DEFAULT;

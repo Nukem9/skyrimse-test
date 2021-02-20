@@ -19,13 +19,13 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 
 		AssertMsg(rendererData->m_RawVertexData, "Trying to select a triangle with no vertex data!?");
 
-		indices = (uint16_t *)rendererData->m_RawIndexData;
+		indices = reinterpret_cast<const uint16_t *>(rendererData->m_RawIndexData);
 
 		if (BSGeometry::HasVertexAttribute(shape->GetVertexDesc(), 0))
-			vertexData[0] = (uintptr_t)rendererData->m_RawVertexData + shape->GetVertexAttributeOffset(0);
+			vertexData[0] = reinterpret_cast<uintptr_t>(rendererData->m_RawVertexData) + shape->GetVertexAttributeOffset(0);
 
 		if (BSGeometry::HasVertexAttribute(shape->GetVertexDesc(), 3))
-			vertexData[1] = (uintptr_t)rendererData->m_RawVertexData + shape->GetVertexAttributeOffset(3);
+			vertexData[1] = reinterpret_cast<uintptr_t>(rendererData->m_RawVertexData) + shape->GetVertexAttributeOffset(3);
 
 		vertexStrides[0] = shape->GetVertexSize();
 		vertexStrides[1] = shape->GetVertexSize();
@@ -35,8 +35,8 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 		auto shape = static_cast<BSDynamicTriShape *>(pkTriShape);
 		auto rendererData = static_cast<const BSGraphics::DynamicTriShape *>(shape->QRendererData());
 
-		indices = (uint16_t *)rendererData->m_RawIndexData;
-		uintptr_t dynamicData = (uintptr_t)shape->LockDynamicDataForRead();// NOTE: SPINLOCK IS HELD
+		indices = reinterpret_cast<const uint16_t *>(rendererData->m_RawIndexData);
+		auto dynamicData = reinterpret_cast<uintptr_t>(shape->LockDynamicDataForRead());// NOTE: SPINLOCK IS HELD
 
 		// Position
 		if (BSGeometry::HasVertexAttribute(shape->GetVertexDesc(), 0))
@@ -51,7 +51,7 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 			else
 			{
 				if (rendererData->m_RawVertexData)
-					vertexData[0] = (uintptr_t)rendererData->m_RawVertexData + shape->GetVertexAttributeOffset(0);
+					vertexData[0] = reinterpret_cast<uintptr_t>(rendererData->m_RawVertexData) + shape->GetVertexAttributeOffset(0);
 
 				vertexStrides[0] = shape->GetVertexSize();
 			}
@@ -77,7 +77,7 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 			else
 			{
 				if (rendererData->m_RawVertexData)
-					vertexData[1] = (uintptr_t)rendererData->m_RawVertexData + shape->GetVertexAttributeOffset(3);
+					vertexData[1] = reinterpret_cast<uintptr_t>(rendererData->m_RawVertexData) + shape->GetVertexAttributeOffset(3);
 
 				vertexStrides[1] = shape->GetVertexSize();
 			}
@@ -99,11 +99,11 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 			// 0 = position, 1 = normal
 			if (Stream == 1)
 			{
-				uint8_t *data = (uint8_t *)(vertexData[Stream] + (VertexIndex * vertexStrides[Stream]));
+				auto data = reinterpret_cast<const uint8_t *>(vertexData[Stream] + (VertexIndex * vertexStrides[Stream]));
 				return NiPoint3(((float)data[0] / 255.0f) * 2.0f - 1.0f, ((float)data[1] / 255.0f) * 2.0f - 1.0f, ((float)data[2] / 255.0f) * 2.0f - 1.0f);
 			}
 
-			float *data = (float *)(vertexData[Stream] + (VertexIndex * vertexStrides[Stream]));
+			auto data = reinterpret_cast<const float *>(vertexData[Stream] + (VertexIndex * vertexStrides[Stream]));
 			return NiPoint3(data[0], data[1], data[2]);
 		};
 
@@ -131,7 +131,7 @@ bool BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath(NiPoint3& kOr
 
 			if (NiCollisionUtils::IntersectTriangle(kModelOrigin, kModelDir, v[0], v[1], v[2], kPick.GetFrontOnly(), intersect, lineParam, triParam1, triParam2))
 			{
-				NiPick::Record *record = ((NiPick::Record *(__fastcall *)(uintptr_t, BSTriShape *))OFFSET(0x26D7910, 1530))((uintptr_t)&kPick + 0x20, pkTriShape);
+				auto record = ((NiPick::Record *(__fastcall *)(uintptr_t, BSTriShape *))OFFSET(0x26D7910, 1530))((uintptr_t)&kPick + 0x20, pkTriShape);
 				intersectionFound = true;
 
 				// Ray intersection point

@@ -245,7 +245,7 @@ void Patch_TESVCreationKit()
 
 	if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
 	{
-		auto comDll = (uintptr_t)GetModuleHandle("comctl32.dll");
+		auto comDll = reinterpret_cast<uintptr_t>(GetModuleHandle("comctl32.dll"));
 		Assert(comDll);
 
 		EditorUIDarkMode::Initialize();

@@ -49,14 +49,14 @@ namespace EditorUI
 		ThreadDialogData.IsDialog = false;
 
 		// Override certain default dialogs to use this DLL's resources
-		switch ((uintptr_t)lpTemplateName)
+		switch (reinterpret_cast<uintptr_t>(lpTemplateName))
 		{
 		case 0x7A:// "Object Window"
 		case 0x8D:// "Reference"
 		case 0xA2:// "Data"
 		case 0xAF:// "Cell View"
 		case 0xDC:// "Use Report"
-			hInstance = (HINSTANCE)&__ImageBase;
+			hInstance = reinterpret_cast<HINSTANCE>(&__ImageBase);
 			break;
 		}
 
@@ -70,14 +70,14 @@ namespace EditorUI
 		ThreadDialogData.IsDialog = true;
 
 		// Override certain default dialogs to use this DLL's resources
-		switch ((uintptr_t)lpTemplateName)
+		switch (reinterpret_cast<uintptr_t>(lpTemplateName))
 		{
 		case 0x7A:// "Object Window"
 		case 0x8D:// "Reference"
 		case 0xA2:// "Data"
 		case 0xAF:// "Cell View"
 		case 0xDC:// "Use Report"
-			hInstance = (HINSTANCE)&__ImageBase;
+			hInstance = reinterpret_cast<HINSTANCE>(&__ImageBase);
 			break;
 		}
 
@@ -317,7 +317,7 @@ namespace EditorUI
 			TabCtrl_DeleteItem(TabControlHandle, TabIndex);
 	}
 
-	void RegisterHotkeyFunction(void *This, void(*Callback)(), const char **HotkeyFunction, const char **DisplayText, char VirtualKey, bool Alt, bool Ctrl, bool Shift)
+	void RegisterHotkeyFunction(void *Thisptr, void(*Callback)(), const char **HotkeyFunction, const char **DisplayText, char VirtualKey, bool Alt, bool Ctrl, bool Shift)
 	{
 #if DUMP_KEYBINDS
 		std::string decodedKey;
@@ -412,7 +412,7 @@ namespace EditorUI
 			} while (t = strtok_s(nullptr, "+", &context));
 		}
 
-		((decltype(&RegisterHotkeyFunction))OFFSET(0x12FCB70, 1530))(This, Callback, HotkeyFunction, DisplayText, VirtualKey, Alt, Ctrl, Shift);
+		((decltype(&RegisterHotkeyFunction))OFFSET(0x12FCB70, 1530))(Thisptr, Callback, HotkeyFunction, DisplayText, VirtualKey, Alt, Ctrl, Shift);
 	}
 
 	void ResetUIDefer()
@@ -453,7 +453,7 @@ namespace EditorUI
 			if ((style & CBS_SORT) == CBS_SORT)
 			{
 				std::sort(DeferredMenuItems.begin(), DeferredMenuItems.end(),
-					[](const std::pair<const char *, void *>& a, const std::pair<const char *, void *>& b) -> bool
+					[](const auto& a, const auto& b) -> bool
 				{
 					return _stricmp(a.first, b.first) > 0;
 				});
