@@ -126,9 +126,9 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x12973F0, 1530), { 0xCC });// BSUntypedPointerHandle::SetIndex - 1412973F0
 	XUtil::PatchMemory(OFFSET(0x12943B0, 1530), { 0xCC });// BSUntypedPointerHandle::IsBitwiseNull - 1412943B0
 	//XUtil::PatchMemory(OFFSET(0x12E0DC0, 1530), { 0xCC });// BSUntypedPointerHandle::BSUntypedPointerHandle - 1412E0DC0
-	// sub_14100B0A8 - Unknown operator
-	// sub_1412E1300 - Unknown operator
-	// sub_1412E1210 - Unknown operator
+	//XUtil::PatchMemory(0x14100B0A8, { 0xCC });// Unknown operator
+	//XUtil::PatchMemory(0x1412E1300, { 0xCC });// Unknown operator
+	//XUtil::PatchMemory(0x1412E1210, { 0xCC });// Unknown operator
 
 	XUtil::PatchMemory(OFFSET(0x1294590, 1530), { 0xCC });// BSPointerHandle::AgeMatches - 141294590
 	XUtil::PatchMemory(OFFSET(0x128D130, 1530), { 0xCC });// BSPointerHandle::GetPtr - 14128D130
@@ -137,7 +137,7 @@ void Patch_TESVCreationKit()
 
 	XUtil::PatchMemory(OFFSET(0x12E3900, 1530), { 0xCC });// BSHandleRefObject::AssignHandleIndex - 1412E3900
 	XUtil::PatchMemory(OFFSET(0x12949D0, 1530), { 0xCC });// BSHandleRefObject::GetIndex - 1412949D0
-	// BSHandleRefObject::QRefCount - 141294CB0
+	//XUtil::PatchMemory(0x141294CB0, { 0xCC });// BSHandleRefObject::QRefCount - 141294CB0
 
 	//
 	// FaceGen
@@ -783,6 +783,11 @@ void Patch_TESVCreationKit()
 	// Fix for crash when loading more than 32K animations. The code incorrectly sign-extends an unsigned short. Counterpart to engine fixes.
 	//
 	XUtil::PatchMemory(OFFSET(0x236F20E, 1530), { 0xB7 });
+
+	//
+	// Remove the artificial check for remote desktop. No longer needed on modern systems.
+	//
+	XUtil::PatchMemory(OFFSET(0x13F1CC0, 1530), { 0xEB });
 
 	//
 	// Plugin loading optimizations:
