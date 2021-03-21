@@ -85,9 +85,7 @@ namespace Offsets
 
 	void DumpLoadedTable(const char *FilePath)
 	{
-		FILE *out = fopen(FilePath, "w");
-
-		if (out)
+		if (FILE *out; fopen_s(&out, FilePath, "w") == 0)
 		{
 			std::map sorted(AddressMap.begin(), AddressMap.end());
 
@@ -235,6 +233,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x1617680, 1530, "48 89 4C 24 08 48 83 EC 38 48 8B 4C 24 40 E8 ? ? ? ? 48 89 44 24 28 48 8B 4C 24 40 E8 ? ? ? ? 48 89 44 24 20 48", 0, 0x1617680)
 		OFFSET_ENTRY(0x16179C0, 1530, "48 89 4C 24 08 48 83 EC 38 E8 ? ? ? ? 48 8B C8 E8 ? ? ? ? 48 89 44 24 20 48 83 7C 24 20 00 74", 0, 0x16179C0)
 		OFFSET_ENTRY(0x163CA2E, 1530, "75 1B 48 8B 4C 24 28 E8 ? ? ? ? 0F B6 C0 85 C0 74 0A 8B 44 24 20 FF C0 89 44 24 20 48", 0, 0x163CA2E)
+		OFFSET_ENTRY(0x163CD7A, 1530, "0F 84 ? ? ? ? 48 8D 44 24 70 48 89 44 24 68 48 83 7C 24 68 00", 0, 0x163CD7A)
 		OFFSET_ENTRY(0x163CDF3, 1530, "75 21 41 B9 30 20 00 00 4C 8D ? ? ? ? ? 48", 0, 0x163CDF3)
 		OFFSET_ENTRY(0x163D3D1, 1530, nullptr, 0, 0x163D3D1)
 		OFFSET_ENTRY(0x163D56E, 1530, "8B ? ? ? ? ? E8 ? ? ? ? B2 01 48 8B 8C 24 30 0E 00 00 E8", 0, 0x163D56E)
@@ -585,6 +584,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x1617680, 1530, nullptr, 0, 0x16165B0)
 		OFFSET_ENTRY(0x16179C0, 1530, nullptr, 0, 0x16168F0)
 		OFFSET_ENTRY(0x163CA2E, 1530, nullptr, 0, 0x163B8AE)
+		OFFSET_ENTRY(0x163CD7A, 1530, nullptr, 0, 0x163BBFA)
 		OFFSET_ENTRY(0x163CDF3, 1530, nullptr, 0, 0x163BC73)
 		OFFSET_ENTRY(0x163D3D1, 1530, nullptr, 0, 0x163C251)
 		OFFSET_ENTRY(0x163D56E, 1530, nullptr, 0, 0x163C3EE)

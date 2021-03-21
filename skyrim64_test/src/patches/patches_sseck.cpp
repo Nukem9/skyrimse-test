@@ -322,8 +322,9 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x199DA62, 1530), 5);
 
 	//
-	// AllowSaveESM   - Allow saving ESMs directly without version control
-	// AllowMasterESP - Allow ESP files to act as master files while saving
+	// AllowSaveESM         - Allow saving ESMs directly without version control
+	// AllowMasterESP       - Allow ESP files to act as master files while saving
+	// AllowMultipleMasters - Allow multiple master files to be loaded at once. Alias for bAllowMultipleMasterLoads.
 	//
 	TESFile_CK::AllowSaveESM = g_INI.GetBoolean("CreationKit", "AllowSaveESM", false);
 	TESFile_CK::AllowMasterESP = g_INI.GetBoolean("CreationKit", "AllowMasterESP", false);
@@ -353,6 +354,11 @@ void Patch_TESVCreationKit()
 			// Remove the check for IsMaster()
 			XUtil::PatchMemoryNop(OFFSET(0x1657279, 1530), 12);
 		}
+	}
+
+	if (g_INI.GetBoolean("CreationKit", "AllowMultipleMasters", false))
+	{
+		XUtil::PatchMemory(OFFSET(0x163CD7A, 1530), { 0xE9, 0xBA, 0x00, 0x00, 0x00, 0x90 });
 	}
 
 	//
