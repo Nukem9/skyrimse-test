@@ -780,7 +780,7 @@ void hk_call_14135CDD3(__int64 RenderWindowInstance, uint32_t *UntypedPointerHan
 		if (*(__int64 *)(childRefr + 0x70) == *(__int64 *)(parentRefr + 0x70))
 			((void(__fastcall *)(__int64, uint32_t *, bool))OFFSET(0x13059D0, 1530))(RenderWindowInstance, UntypedPointerHandle, Select);
 		else
-			LogWindow::Log("Not selecting child refr 0x%X because parent cells don't match (%p != %p)\n", *(uint32_t *)(childRefr + 0x14), *(__int64 *)(childRefr + 0x70), *(__int64 *)(parentRefr + 0x70));
+			LogWindow::Log("Not selecting child refr (%08X) because parent cells don't match (%p != %p)\n", *(uint32_t *)(childRefr + 0x14), *(__int64 *)(childRefr + 0x70), *(__int64 *)(parentRefr + 0x70));
 	}
 
 	((void(__fastcall *)(__int64 *))OFFSET(0x128BCF0, 1530))(&childRefr);

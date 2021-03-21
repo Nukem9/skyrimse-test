@@ -386,6 +386,14 @@ void Patch_TESVCreationKit()
 	}
 
 	//
+	// Fix for "Select Enable State Parent" selecting objects outside of the current cell or worldspace
+	//
+	if (g_INI.GetBoolean("CreationKit", "SelectEnableStateParentFix", false))
+	{
+		XUtil::DetourCall(OFFSET(0x135CDD3, 1530), &hk_call_14135CDD3);
+	}
+
+	//
 	// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
 	//
 	XUtil::PatchMemory(OFFSET(0x2DC679D, 1530), { 0x4D, 0x89, 0xE1, 0x90, 0x90, 0x90, 0x90 });
@@ -673,11 +681,6 @@ void Patch_TESVCreationKit()
 	//
 	XUtil::DetourCall(OFFSET(0x16B849E, 1530), &hk_call_1416B849E);
 	XUtil::PatchMemoryNop(OFFSET(0x16B84A3, 1530), 1);
-
-	//
-	// Fix for "Select Enable State Parent" selecting objects outside of the current cell or worldspace
-	//
-	//XUtil::DetourCall(OFFSET(0x135CDD3, 1530), &hk_call_14135CDD3);
 
 	//
 	// Fix for the "Data" window not listing plugins according to the user's load order. The CK tries to find plugins.txt in the executable
