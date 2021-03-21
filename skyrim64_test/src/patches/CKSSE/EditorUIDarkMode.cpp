@@ -42,6 +42,7 @@ namespace EditorUIDarkMode
 	const std::unordered_set<std::string_view> PermanentWindowSubclasses
 	{
 		"Creation Kit",
+		"Creation Kit SE",
 		"ActivatorClass",
 		"AlchemyClass",
 		"ArmorClass",

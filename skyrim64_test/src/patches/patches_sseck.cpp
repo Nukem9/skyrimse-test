@@ -794,6 +794,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x13F1CC0, 1530), { 0xEB });
 
 	//
+	// Change the default window class name so legacy editors can be opened without using bAllowMultipleEditors
+	//
+	const char *newWindowClass = "Creation Kit SE";
+	XUtil::PatchMemory(OFFSET(0x38EC648, 1530), (uint8_t *)&newWindowClass, sizeof(newWindowClass));
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)
