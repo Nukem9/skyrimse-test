@@ -95,9 +95,16 @@ void Patch_TESVCreationKit()
 
 	MSRTTI::Initialize();
 
-	if (g_INI.GetBoolean("CreationKit", "ThreadingPatch", false))	PatchThreading();
-	if (g_INI.GetBoolean("CreationKit", "IOPatch", false))			PatchFileIO();
-	if (g_INI.GetBoolean("CreationKit", "SteamPatch", false))		PatchSteam();
+	//
+	// Miscellaneous
+	//
+	PatchThreading();
+
+	if (g_INI.GetBoolean("CreationKit", "IOPatch", false))
+		PatchFileIO();
+
+	if (g_INI.GetBoolean("CreationKit", "SteamPatch", false))
+		PatchSteam();
 
 	//
 	// BSPointerHandle(Manager)
@@ -179,23 +186,20 @@ void Patch_TESVCreationKit()
 	//
 	// MemoryManager
 	//
-	if (g_INI.GetBoolean("CreationKit", "MemoryPatch", false))
-	{
-		PatchMemory();
+	PatchMemory();
 
-		XUtil::PatchMemory(OFFSET(0x1223160, 1530), { 0xC3 });							// [3GB  ] MemoryManager - Default/Static/File heaps
-		XUtil::PatchMemory(OFFSET(0x24400E0, 1530), { 0xC3 });							// [1GB  ] BSSmallBlockAllocator
-		XUtil::DetourJump(OFFSET(0x257D740, 1530), &bhkThreadMemorySource::__ctor__);	// [512MB] bhkThreadMemorySource
-		XUtil::PatchMemory(OFFSET(0x2447D90, 1530), { 0xC3 });							// [64MB ] ScrapHeap init
-		XUtil::PatchMemory(OFFSET(0x24488C0, 1530), { 0xC3 });							// [64MB ] ScrapHeap deinit
-																						// [128MB] BSScaleformSysMemMapper is untouched due to complexity
+	XUtil::PatchMemory(OFFSET(0x1223160, 1530), { 0xC3 });							// [3GB  ] MemoryManager - Default/Static/File heaps
+	XUtil::PatchMemory(OFFSET(0x24400E0, 1530), { 0xC3 });							// [1GB  ] BSSmallBlockAllocator
+	XUtil::DetourJump(OFFSET(0x257D740, 1530), &bhkThreadMemorySource::__ctor__);	// [512MB] bhkThreadMemorySource
+	XUtil::PatchMemory(OFFSET(0x2447D90, 1530), { 0xC3 });							// [64MB ] ScrapHeap init
+	XUtil::PatchMemory(OFFSET(0x24488C0, 1530), { 0xC3 });							// [64MB ] ScrapHeap deinit
+																					// [128MB] BSScaleformSysMemMapper is untouched due to complexity
 
-		XUtil::DetourJump(OFFSET(0x2440380, 1530), &MemoryManager::Allocate);
-		XUtil::DetourJump(OFFSET(0x24407A0, 1530), &MemoryManager::Deallocate);
-		XUtil::DetourJump(OFFSET(0x243FBA0, 1530), &MemoryManager::Size);
-		XUtil::DetourJump(OFFSET(0x2447FA0, 1530), &ScrapHeap::Allocate);
-		XUtil::DetourJump(OFFSET(0x24485F0, 1530), &ScrapHeap::Deallocate);
-	}
+	XUtil::DetourJump(OFFSET(0x2440380, 1530), &MemoryManager::Allocate);
+	XUtil::DetourJump(OFFSET(0x24407A0, 1530), &MemoryManager::Deallocate);
+	XUtil::DetourJump(OFFSET(0x243FBA0, 1530), &MemoryManager::Size);
+	XUtil::DetourJump(OFFSET(0x2447FA0, 1530), &ScrapHeap::Allocate);
+	XUtil::DetourJump(OFFSET(0x24485F0, 1530), &ScrapHeap::Deallocate);
 
 	//
 	// NiRTTI
