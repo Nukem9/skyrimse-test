@@ -36,6 +36,7 @@
 *.opendb
 
 # VS2017
+*.vcxproj.user
 .vs/
 packages/
 x64/
