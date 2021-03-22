@@ -386,29 +386,29 @@ void Patch_TESVCreationKit()
 	}
 
 	//
-	// Fix for "Select Enable State Parent" selecting objects outside of the current cell or worldspace
+	// Workaround for "Select Enable State Parent" selecting objects outside of the current cell or worldspace
 	//
-	if (g_INI.GetBoolean("CreationKit", "SelectEnableStateParentFix", false))
+	if (g_INI.GetBoolean("CreationKit", "EnableStateParentWorkaround", false))
 	{
 		XUtil::DetourCall(OFFSET(0x135CDD3, 1530), &hk_call_14135CDD3);
 	}
 
 	//
-	// Fix for ref links and enable state parent links (2D lines) causing the CK to hang indefinitely when too many objects are
-	// selected. This hack prevents said lines from being created or rendered.
+	// Workaround for ref links and enable state parent links (2D lines) causing the CK to hang indefinitely when too many objects
+	// are selected. This hack prevents said lines from being created or rendered.
 	//
-	if (g_INI.GetBoolean("CreationKit", "RefLinkGeometryHangFix", false))
+	if (g_INI.GetBoolean("CreationKit", "RefLinkGeometryHangWorkaround", false))
 	{
 		XUtil::PatchMemoryNop(OFFSET(0x1C29661, 1530), 5);
 		XUtil::PatchMemoryNop(OFFSET(0x1C296AC, 1530), 5);
 	}
 
 	//
-	// Fix for version control not allowing merges when a plugin index is above 02. Bethesda's VC bitmap files determine check-in
-	// status along with user IDs for each specific form in the game. They're also hardcoded for 2 masters only. Using this hack
-	// for anything EXCEPT merging will break the bitmaps.
+	// Workaround for version control not allowing merges when a plugin index is above 02. Bethesda's VC bitmap files determine
+	// check-in status along with user IDs for each specific form in the game. They're also hardcoded for 2 masters only. Using
+	// this hack for anything EXCEPT merging will break the bitmaps.
 	//
-	if (g_INI.GetBoolean("CreationKit", "VersionControlMergeFix", false))
+	if (g_INI.GetBoolean("CreationKit", "VersionControlMergeWorkaround", false))
 	{
 		XUtil::PatchMemory(OFFSET(0x1458309, 1530), { 0xEB });
 		XUtil::PatchMemory(OFFSET(0x1458375, 1530), { 0xEB });
