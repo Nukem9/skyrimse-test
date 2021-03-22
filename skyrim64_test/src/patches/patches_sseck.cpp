@@ -394,6 +394,16 @@ void Patch_TESVCreationKit()
 	}
 
 	//
+	// Fix for ref links and enable state parent links (2D lines) causing the CK to hang indefinitely when too many objects are
+	// selected. This hack prevents said lines from being created or rendered.
+	//
+	if (g_INI.GetBoolean("CreationKit", "RefLinkGeometryHangFix", false))
+	{
+		XUtil::PatchMemoryNop(OFFSET(0x1C29661, 1530), 5);
+		XUtil::PatchMemoryNop(OFFSET(0x1C296AC, 1530), 5);
+	}
+
+	//
 	// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
 	//
 	XUtil::PatchMemory(OFFSET(0x2DC679D, 1530), { 0x4D, 0x89, 0xE1, 0x90, 0x90, 0x90, 0x90 });
