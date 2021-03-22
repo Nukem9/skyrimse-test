@@ -404,6 +404,17 @@ void Patch_TESVCreationKit()
 	}
 
 	//
+	// Fix for version control not allowing merges when a plugin index is above 02. Bethesda's VC bitmap files determine check-in
+	// status along with user IDs for each specific form in the game. They're also hardcoded for 2 masters only. Using this hack
+	// for anything EXCEPT merging will break the bitmaps.
+	//
+	if (g_INI.GetBoolean("CreationKit", "VersionControlMergeFix", false))
+	{
+		XUtil::PatchMemory(OFFSET(0x1458309, 1530), { 0xEB });
+		XUtil::PatchMemory(OFFSET(0x1458375, 1530), { 0xEB });
+	}
+
+	//
 	// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
 	//
 	XUtil::PatchMemory(OFFSET(0x2DC679D, 1530), { 0x4D, 0x89, 0xE1, 0x90, 0x90, 0x90, 0x90 });
