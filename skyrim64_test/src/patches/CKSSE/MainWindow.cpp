@@ -65,7 +65,7 @@ namespace MainWindow
 		{
 			auto createInfo = reinterpret_cast<const CREATESTRUCT *>(lParam);
 
-			if (!_stricmp(createInfo->lpszName, "Creation Kit") && !_stricmp(createInfo->lpszClass, "Creation Kit"))
+			if (!strcmp(createInfo->lpszName, "Creation Kit SE") && !strcmp(createInfo->lpszClass, "Creation Kit SE"))
 			{
 				// Initialize the original window before adding anything
 				LRESULT status = CallWindowProc(OldWndProc, Hwnd, Message, wParam, lParam);
