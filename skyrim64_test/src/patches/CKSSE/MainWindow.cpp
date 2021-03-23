@@ -71,17 +71,6 @@ namespace MainWindow
 				LRESULT status = CallWindowProc(OldWndProc, Hwnd, Message, wParam, lParam);
 				MainWindowHandle = Hwnd;
 
-				// Increase status bar spacing
-				std::array<int, 4> spacing
-				{
-					200,	// 150
-					300,	// 225
-					700,	// 500
-					-1,		// -1
-				};
-
-				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_STATUSBAR), SB_SETPARTS, spacing.size(), reinterpret_cast<LPARAM>(spacing.data()));
-
 				// Grass is always enabled by default, make the UI buttons match
 				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEGRASS, MF_CHECKED);
 				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_TOOLBAR), TB_CHECKBUTTON, UI_EDITOR_TOGGLEGRASS_BUTTON, TRUE);
@@ -89,12 +78,29 @@ namespace MainWindow
 				// Same for fog
 				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *reinterpret_cast<bool *>(OFFSET(0x4F05728, 1530)) ? MF_CHECKED : MF_UNCHECKED);
 
-				// Create custom menu controls
 				CreateExtensionMenu(Hwnd, createInfo->hMenu);
 				return status;
 			}
 		}
-		else if (Message == WM_COMMAND)
+		else if (Message == WM_SIZE && Hwnd == GetWindow())
+		{
+			// Scale the status bar segments to fit the window size
+			auto scale = [&](int Width)
+			{
+				return static_cast<int>(Width * (LOWORD(lParam) / 1024.0f));
+			};
+
+			std::array<int, 4> spacing
+			{
+				scale(150),	// 150
+				scale(300),	// 225
+				scale(600),	// 500
+				-1,			// -1
+			};
+
+			SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_STATUSBAR), SB_SETPARTS, spacing.size(), reinterpret_cast<LPARAM>(spacing.data()));
+		}
+		else if (Message == WM_COMMAND && Hwnd == GetWindow())
 		{
 			const uint32_t param = LOWORD(wParam);
 
