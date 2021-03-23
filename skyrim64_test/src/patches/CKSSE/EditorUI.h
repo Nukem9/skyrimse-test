@@ -28,6 +28,10 @@
 #define UI_DATA_DIALOG_PLUGINLISTVIEW				1056
 #define UI_DATA_DIALOG_FILTERBOX					1003	// See: resource.rc
 
+#define UI_LOG_CMD_ADDTEXT							(WM_APP + 1)
+#define UI_LOG_CMD_CLEARTEXT						(WM_APP + 2)
+#define UI_LOG_CMD_AUTOSCROLL						(WM_APP + 3)
+
 #define UI_EXTMENU_ID								51001
 #define UI_EXTMENU_SHOWLOG							51002
 #define UI_EXTMENU_CLEARLOG							51003

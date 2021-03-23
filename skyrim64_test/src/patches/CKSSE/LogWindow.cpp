@@ -6,10 +6,6 @@
 #include "MainWindow.h"
 #include "LogWindow.h"
 
-#define UI_LOG_CMD_ADDTEXT		(WM_APP + 1)
-#define UI_LOG_CMD_CLEARTEXT	(WM_APP + 2)
-#define UI_LOG_CMD_AUTOSCROLL	(WM_APP + 3)
-
 namespace LogWindow
 {
 	HWND LogWindowHandle;
@@ -56,37 +52,36 @@ namespace LogWindow
 			// Output window
 			auto instance = static_cast<HINSTANCE>(GetModuleHandle(nullptr));
 
-			WNDCLASSEX wc
+			WNDCLASSEXA wc
 			{
 				.cbSize = sizeof(WNDCLASSEX),
 				.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS,
 				.lpfnWndProc = WndProc,
 				.hInstance = instance,
-				.hIcon = LoadIcon(instance, MAKEINTRESOURCE(0x13E)),
+				.hIcon = LoadIconA(instance, MAKEINTRESOURCE(0x13E)),
 				.hCursor = LoadCursor(nullptr, IDC_ARROW),
 				.hbrBackground = static_cast<HBRUSH>(GetStockObject(LTGRAY_BRUSH)),
-				.lpszClassName = TEXT("RTEDITLOG"),
+				.lpszClassName = "RTEDITLOG",
 				.hIconSm = wc.hIcon,
 			};
 
-			if (!RegisterClassEx(&wc))
+			if (!RegisterClassExA(&wc))
 				return false;
 
-			LogWindowHandle = CreateWindowEx(0, TEXT("RTEDITLOG"), TEXT("Log"), WS_OVERLAPPEDWINDOW, 64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
+			LogWindowHandle = CreateWindowExA(0, "RTEDITLOG", "Log", WS_OVERLAPPEDWINDOW, 64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
 
 			if (!LogWindowHandle)
 				return false;
 
 			// Poll every 100ms for new lines
 			SetTimer(LogWindowHandle, UI_LOG_CMD_ADDTEXT, 100, nullptr);
-			ShowWindow(LogWindowHandle, SW_SHOW);
 			UpdateWindow(LogWindowHandle);
 
 			MSG msg;
-			while (GetMessage(&msg, nullptr, 0, 0) > 0)
+			while (GetMessageA(&msg, nullptr, 0, 0) > 0)
 			{
 				TranslateMessage(&msg);
-				DispatchMessage(&msg);
+				DispatchMessageA(&msg);
 			}
 
 			return true;
@@ -197,12 +192,6 @@ namespace LogWindow
 			if (!richEditHwnd)
 				return -1;
 
-			// Set default position
-			int winW = g_INI.GetInteger("CreationKit_Log", "Width", info->cx);
-			int winH = g_INI.GetInteger("CreationKit_Log", "Height", info->cy);
-
-			MoveWindow(Hwnd, info->x, info->y, winW, winH, FALSE);
-
 			// Set a better font & convert points to Twips (1 point = 20 Twips)
 			CHARFORMAT2A format = {};
 			format.cbSize = sizeof(format);
@@ -215,12 +204,25 @@ namespace LogWindow
 
 			// Subscribe to EN_MSGFILTER and EN_SELCHANGE
 			SendMessageA(richEditHwnd, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_SELCHANGE);
+
+			// Set default position
+			int winX = g_INI.GetInteger("CreationKit_Log", "X", info->x);
+			int winY = g_INI.GetInteger("CreationKit_Log", "Y", info->y);
+			int winW = g_INI.GetInteger("CreationKit_Log", "Width", info->cx);
+			int winH = g_INI.GetInteger("CreationKit_Log", "Height", info->cy);
+
+			MoveWindow(Hwnd, winX, winY, winW, winH, FALSE);
+
+			if (winW != 0 && winH != 0)
+				ShowWindow(Hwnd, SW_SHOW);
 		}
 		return 0;
 
 		case WM_DESTROY:
+		{
 			DestroyWindow(richEditHwnd);
-			return 0;
+		}
+		return 0;
 
 		case WM_SIZE:
 		{
@@ -238,8 +240,10 @@ namespace LogWindow
 		return 0;
 
 		case WM_CLOSE:
+		{
 			ShowWindow(Hwnd, SW_HIDE);
-			return 0;
+		}
+		return 0;
 
 		case WM_NOTIFY:
 		{
@@ -344,8 +348,10 @@ namespace LogWindow
 		return 0;
 
 		case UI_LOG_CMD_AUTOSCROLL:
+		{
 			autoScroll = static_cast<bool>(wParam);
-			return 0;
+		}
+		return 0;
 		}
 
 		return DefWindowProc(Hwnd, Message, wParam, lParam);
