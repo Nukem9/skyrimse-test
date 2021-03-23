@@ -13,6 +13,7 @@
 #include "CKSSE/EditorUI.h"
 #include "CKSSE/EditorUIDarkMode.h"
 #include "CKSSE/EditorUIDialogs.h"
+#include "CKSSE/DataDialogWindow.h"
 #include "CKSSE/CellViewWindow.h"
 #include "CKSSE/ObjectWindow.h"
 #include "CKSSE/MainWindow.h"
@@ -271,6 +272,7 @@ void Patch_TESVCreationKit()
 		*(uintptr_t *)&MainWindow::OldWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x13F3770, 1530), &MainWindow::WndProc);
 		*(uintptr_t *)&ObjectWindow::OldObjectWindowProc = Detours::X64::DetourFunctionClass(OFFSET(0x12C3ED0, 1530), &ObjectWindow::ObjectWindowProc);
 		*(uintptr_t *)&CellViewWindow::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &CellViewWindow::CellViewProc);
+		*(uintptr_t *)&DataDialogWindow::OldDataDialogProc = Detours::X64::DetourFunctionClass(OFFSET(0x13E6270, 1530), &DataDialogWindow::DataDialogProc);
 
 		XUtil::DetourCall(OFFSET(0x20AD5C9, 1530), &hk_call_1420AD5C9);// Raise the papyrus script editor text limit to 500k characters from 64k
 		XUtil::DetourCall(OFFSET(0x1CF03C9, 1530), &hk_call_141CF03C9);// Update the UI options when fog is toggled

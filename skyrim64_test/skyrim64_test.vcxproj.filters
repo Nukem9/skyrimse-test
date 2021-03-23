@@ -383,6 +383,9 @@
     <ClInclude Include="src\patches\CKSSE\EditorUIDialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\DataDialogWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -632,6 +635,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\CKSSE\EditorUIDialogs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\DataDialogWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

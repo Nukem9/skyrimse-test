@@ -167,6 +167,7 @@
     <ClInclude Include="src\patches\CKSSE\BSRenderPass_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSShaderResourceManager_CK.h" />
     <ClInclude Include="src\patches\CKSSE\CellViewWindow.h" />
+    <ClInclude Include="src\patches\CKSSE\DataDialogWindow.h" />
     <ClInclude Include="src\patches\CKSSE\Editor.h" />
     <ClInclude Include="src\patches\CKSSE\EditorUI.h" />
     <ClInclude Include="src\patches\CKSSE\EditorUIDarkMode.h" />
@@ -289,6 +290,7 @@
     <ClCompile Include="src\patches\CKSSE\BSRenderPass_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSShaderResourceManager_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\CellViewWindow.cpp" />
+    <ClCompile Include="src\patches\CKSSE\DataDialogWindow.cpp" />
     <ClCompile Include="src\patches\CKSSE\EditorUIDarkMode.cpp" />
     <ClCompile Include="src\patches\CKSSE\EditorUIDialogs.cpp" />
     <ClCompile Include="src\patches\CKSSE\LogWindow.cpp" />
