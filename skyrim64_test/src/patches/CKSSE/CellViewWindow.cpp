@@ -41,13 +41,22 @@ namespace CellViewWindow
 		{
 			const uint32_t param = LOWORD(wParam);
 
-			if (param == UI_CELL_VIEW_CHECKBOX)
+			if (param == UI_CELL_VIEW_ACTIVE_CELLS_CHECKBOX)
 			{
 				bool enableFilter = SendMessage(reinterpret_cast<HWND>(lParam), BM_GETCHECK, 0, 0) == BST_CHECKED;
-				SetPropA(DialogHwnd, "ActiveOnly", reinterpret_cast<HANDLE>(enableFilter));
+				SetPropA(DialogHwnd, "ActiveCellsOnly", reinterpret_cast<HANDLE>(enableFilter));
 
 				// Fake the dropdown list being activated
 				SendMessageA(DialogHwnd, WM_COMMAND, MAKEWPARAM(2083, 1), 0);
+				return 1;
+			}
+			else if (param == UI_CELL_VIEW_ACTIVE_CELL_OBJECTS_CHECKBOX)
+			{
+				bool enableFilter = SendMessage(reinterpret_cast<HWND>(lParam), BM_GETCHECK, 0, 0) == BST_CHECKED;
+				SetPropA(DialogHwnd, "ActiveObjectsOnly", reinterpret_cast<HANDLE>(enableFilter));
+
+				// Fake a filter text box change
+				SendMessageA(DialogHwnd, WM_COMMAND, MAKEWPARAM(2581, EN_CHANGE), 0);
 				return 1;
 			}
 		}
@@ -58,8 +67,24 @@ namespace CellViewWindow
 
 			*allowInsert = true;
 
-			// Skip the entry if "Show only active forms" is checked
-			if (static_cast<bool>(GetPropA(DialogHwnd, "ActiveOnly")))
+			// Skip the entry if "Show only active cells" is checked
+			if (static_cast<bool>(GetPropA(DialogHwnd, "ActiveCellsOnly")))
+			{
+				if (form && !form->GetActive())
+					*allowInsert = false;
+			}
+
+			return 1;
+		}
+		else if (Message == UI_CELL_VIEW_ADD_CELL_OBJECT_ITEM)
+		{
+			auto form = reinterpret_cast<const TESForm_CK *>(wParam);
+			auto allowInsert = reinterpret_cast<bool *>(lParam);
+
+			*allowInsert = true;
+
+			// Skip the entry if "Show only active objects" is checked
+			if (static_cast<bool>(GetPropA(DialogHwnd, "ActiveObjectsOnly")))
 			{
 				if (form && !form->GetActive())
 					*allowInsert = false;

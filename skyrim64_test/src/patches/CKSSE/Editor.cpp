@@ -811,6 +811,17 @@ void hk_call_14147FB57(HWND ListViewHandle, TESForm_CK *Form, bool UseImage, int
 	((void(__fastcall *)(HWND, TESForm_CK *, bool, int))OFFSET(0x13BA4D0, 1530))(ListViewHandle, Form, UseImage, ItemIndex);
 }
 
+int hk_call_1413E0F3E(HWND **ListViewHandle, TESForm_CK **Form, __int64 a3)
+{
+	bool allowInsert = true;
+	SendMessageA(GetParent(**ListViewHandle), UI_CELL_VIEW_ADD_CELL_OBJECT_ITEM, (WPARAM)*Form, (LPARAM)&allowInsert);
+
+	if (!allowInsert)
+		return 1;
+
+	return ((int(__fastcall *)(HWND *, TESForm_CK **))OFFSET(0x13E1600, 1530))(*ListViewHandle, Form);
+}
+
 float hk_call_14202E0E8(float Delta)
 {
 	return abs(Delta) / 100.0f;

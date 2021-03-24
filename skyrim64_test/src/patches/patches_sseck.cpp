@@ -279,6 +279,7 @@ void Patch_TESVCreationKit()
 		XUtil::DetourCall(OFFSET(0x12D1541, 1530), &hk_call_1412D1541);// Allow forms to be filtered in EditorUI_ObjectWindowProc
 		XUtil::DetourCall(OFFSET(0x147FB57, 1530), &hk_call_14147FB57);// Allow forms to be filtered in EditorUI_CellViewProc
 		XUtil::DetourCall(OFFSET(0x1C9879C, 1530), &hk_call_14147FB57);// ^
+		XUtil::DetourCall(OFFSET(0x13E0F3E, 1530), &hk_call_1413E0F3E);// ^
 		XUtil::PatchMemoryNop(OFFSET(0x1434473, 1530), 2);				// Force bShowReloadShadersButton to always be enabled
 		XUtil::PatchMemoryNop(OFFSET(0x1487B69, 1530), 2);				// Enable push to game button even if version control is disabled
 		XUtil::PatchMemory(OFFSET(0x1487B7C, 1530), { 0xEB });			// ^
