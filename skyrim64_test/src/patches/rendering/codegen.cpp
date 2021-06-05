@@ -104,7 +104,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 
 	auto& s = GetFreeScratch(Patch->Register, Patch->Base, Patch->Index);	// Scratch register
 	auto& mem = MemOpSize(Patch->MemSize);									// Memory operand size
-	auto& memop = mem[s + structMemberOffset];
+	auto memop = mem[s + structMemberOffset];
 
 	if (Patch->Base != ZYDIS_REGISTER_RIP)
 	{
@@ -221,9 +221,9 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 			{
 			case PatchType::MOV_MEM_IMM:mov(memop, (uint32_t)Patch->Immediate); break;
 			case PatchType::ADD_MEM_IMM:add(memop, (uint32_t)Patch->Immediate); break;
-			case PatchType::AND_MEM_IMM:and(memop, (uint32_t)Patch->Immediate); break;
+			case PatchType::AND_MEM_IMM:and_(memop, (uint32_t)Patch->Immediate); break;
 			case PatchType::CMP_MEM_IMM:cmp(memop, (uint32_t)Patch->Immediate); break;
-			case PatchType::OR_MEM_IMM:or(memop, (uint32_t)Patch->Immediate); break;
+			case PatchType::OR_MEM_IMM:or_(memop, (uint32_t)Patch->Immediate); break;
 
 			default:Assert(false); break;
 			}
@@ -238,7 +238,7 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 			{
 			case PatchType::MOV_REG_MEM:mov(r, memop); break;
 			case PatchType::ADD_REG_MEM:add(r, memop); break;
-			case PatchType::AND_REG_MEM:and(r, memop); break;
+			case PatchType::AND_REG_MEM:and_(r, memop); break;
 			case PatchType::CMP_REG_MEM:cmp(r, memop); break;
 			case PatchType::MOVSXD_REG_MEM:movsxd(r64, memop); break;
 			case PatchType::MOVZX_REG_MEM:movzx(r, memop); break;
@@ -246,9 +246,9 @@ PatchCodeGen::PatchCodeGen(const PatchEntry *Patch, uintptr_t Memory, size_t Mem
 
 			case PatchType::MOV_MEM_REG:mov(memop, r); break;
 			case PatchType::ADD_MEM_REG:add(memop, r); break;
-			case PatchType::AND_MEM_REG:and(memop, r); break;
+			case PatchType::AND_MEM_REG:and_(memop, r); break;
 			case PatchType::CMP_MEM_REG:cmp(memop, r); break;
-			case PatchType::OR_MEM_REG:or(memop, r); break;
+			case PatchType::OR_MEM_REG:or_(memop, r); break;
 			case PatchType::XADD_MEM_REG:xadd(memop, r); break;
 
 			default:Assert(false); break;

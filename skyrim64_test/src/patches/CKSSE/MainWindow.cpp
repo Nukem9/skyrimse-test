@@ -52,7 +52,7 @@ namespace MainWindow
 			.fMask = MIIM_SUBMENU | MIIM_ID | MIIM_STRING,
 			.wID = UI_EXTMENU_ID,
 			.hSubMenu = ExtensionMenuHandle,
-			.dwTypeData = "Extensions",
+			.dwTypeData = const_cast<LPSTR>("Extensions"),
 			.cch = static_cast<uint32_t>(strlen(menuInfo.dwTypeData))
 		};
 

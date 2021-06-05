@@ -23,22 +23,22 @@ public:
 	NiRect<float> m_kPort;
 	char _pad0[0x4];
 
-	inline const NiPoint3& NiCamera::GetWorldLocation() const
+	inline const NiPoint3& GetWorldLocation() const
 	{
 		return m_kWorld.m_Translate;
 	}
 
-	inline NiPoint3 NiCamera::GetWorldDirection() const
+	inline NiPoint3 GetWorldDirection() const
 	{
 		return m_kWorld.m_Rotate.GetCol<0>();
 	}
 
-	inline NiPoint3 NiCamera::GetWorldUpVector() const
+	inline NiPoint3 GetWorldUpVector() const
 	{
 		return m_kWorld.m_Rotate.GetCol<1>();
 	}
 
-	inline NiPoint3 NiCamera::GetWorldRightVector() const
+	inline NiPoint3 GetWorldRightVector() const
 	{
 		return m_kWorld.m_Rotate.GetCol<2>();
 	}

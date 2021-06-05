@@ -327,7 +327,7 @@ void VertexShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<P
 		fprintf(file, "// Technique: %s\n\n", TechName);
 
 		// Defines
-		if (auto& defs = BSShader::GetAnySourceDefines(m_Type, m_Shader->m_TechniqueID); defs.size() > 0)
+		if (auto defs = BSShader::GetAnySourceDefines(m_Type, m_Shader->m_TechniqueID); defs.size() > 0)
 		{
 			for (const auto& define : defs)
 				fprintf(file, "#define %s %s\n", define.first, define.second);
@@ -394,7 +394,7 @@ void PixelShaderDecoder::DumpShaderSpecific(const char *TechName, std::vector<Pa
 		fprintf(file, "// Technique: %s\n\n", TechName);
 
 		// Defines
-		if (auto& defs = BSShader::GetAnySourceDefines(m_Type, m_Shader->m_TechniqueID); defs.size() > 0)
+		if (auto defs = BSShader::GetAnySourceDefines(m_Type, m_Shader->m_TechniqueID); defs.size() > 0)
 		{
 			for (auto& define : defs)
 				fprintf(file, "#define %s %s\n", define.first, define.second);

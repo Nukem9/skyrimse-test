@@ -9,7 +9,7 @@ protected:
 	T *m_pObject;
 
 public:
-	static_assert(std::is_base_of_v<NiRefObject, T>, "T must inherit NiRefObject");
+	//static_assert(std::is_base_of_v<NiRefObject, T>, "T must inherit NiRefObject");
 
 	inline NiPointer(T *Object = (T *)nullptr)
 	{

@@ -262,7 +262,7 @@ namespace BSGraphics
 		template<typename U, uint32_t ParamIndex>
 		U& ParamVS() const
 		{
-			static_assert(std::is_same<T, VertexShader>::value, "ParamVS() requires ConstantGroup<VertexShader>");
+			static_assert(std::is_same<T, struct VertexShader>::value, "ParamVS() requires ConstantGroup<VertexShader>");
 			static_assert(ParamIndex < MAX_VS_CONSTANTS);
 
 			return MapVar<U>(m_Shader->m_ConstantOffsets[ParamIndex]);
@@ -271,7 +271,7 @@ namespace BSGraphics
 		template<typename U, uint32_t ParamIndex>
 		U& ParamPS() const
 		{
-			static_assert(std::is_same<T, PixelShader>::value, "ParamPS() requires ConstantGroup<PixelShader>");
+			static_assert(std::is_same<T, struct PixelShader>::value, "ParamPS() requires ConstantGroup<PixelShader>");
 			static_assert(ParamIndex < MAX_PS_CONSTANTS);
 
 			return MapVar<U>(m_Shader->m_ConstantOffsets[ParamIndex]);

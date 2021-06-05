@@ -76,6 +76,8 @@ struct BSTScatterTableDefaultHashPolicy
 	}
 };
 
+void CRC32_Lazy(int *out, int idIn);
+
 template<typename Key>
 struct BSTScatterTableCRCHashPolicy
 {
@@ -134,11 +136,11 @@ class BSTScatterTableKernel : public Traits, public Traits::hasher
 	using table_entry = typename Traits::table_entry;
 
 public:
-	char _pad1[8];				// 0x04  +0
-	uint32_t m_Size;			// 0x0C  +4
-	uint32_t m_Free;			// 0x10  +8
-	uint32_t m_LastFree;		// 0x14  +12
-	table_entry *m_Terminator;	// 0x18  +16
+	char _pad1[8];						// 0x04  +0
+	uint32_t m_Size = 0;				// 0x0C  +4
+	uint32_t m_Free = 0;				// 0x10  +8
+	uint32_t m_LastFree = 0;			// 0x14  +12
+	table_entry *m_Terminator = nullptr;// 0x18  +16
 };
 
 template<class Traits>
@@ -151,6 +153,7 @@ private:
 	const static uint32_t InternalEndOfListMarker = 0x0EFBEADDE;
 
 protected:
+	using kernel = typename BSTScatterTableKernel<Traits>;
 	using key_type = typename Traits::key_type;
 	using mapped_type = typename Traits::mapped_type;
 	using hasher = typename Traits::hasher;
@@ -159,16 +162,12 @@ protected:
 	using const_pointer = typename Traits::const_pointer;
 	using table_entry = typename Traits::table_entry;
 
-	table_entry *m_Table;
+	table_entry *m_Table = nullptr;
 
 public:
 	BSTScatterTableBase()
 	{
-		m_Size			= 0;
-		m_Free			= 0;
-		m_LastFree		= 0;
-		m_Terminator	= (table_entry *)&InternalEndOfListMarker;
-		m_Table			= nullptr;
+		kernel::m_Terminator = (table_entry *)&InternalEndOfListMarker;
 	}
 
 	~BSTScatterTableBase()
@@ -248,7 +247,7 @@ public:
 		if (!m_Table)
 			return const_iterator(nullptr);
 
-		return const_iterator(&m_Table[0], &m_Table[m_Size]);
+		return const_iterator(&m_Table[0], &m_Table[kernel::m_Size]);
 	}
 
 	const_iterator end() const noexcept
@@ -256,21 +255,21 @@ public:
 		if (!m_Table)
 			return const_iterator(nullptr);
 		
-		return const_iterator(&m_Table[m_Size]);
+		return const_iterator(&m_Table[kernel::m_Size]);
 	}
 
 	const_iterator find(const key_type& Key) const
 	{
 		if (m_Table)
 		{
-			table_entry *entry = &m_Table[hasher()(Key) & (m_Size - 1)];
+			table_entry *entry = &m_Table[hasher()(Key) & (kernel::m_Size - 1)];
 
 			if (!entry->IsEmpty())
 			{
-				while (entry != m_Terminator)
+				while (entry != kernel::m_Terminator)
 				{
 					if (entry->GetKey() == Key)
-						return const_iterator(entry, &m_Table[m_Size]);
+						return const_iterator(entry, &m_Table[kernel::m_Size]);
 
 					entry = entry->m_Next;
 				}
@@ -285,11 +284,11 @@ public:
 	{
 		if (m_Table)
 		{
-			table_entry *entry = &m_Table[hasher()(Key) & (m_Size - 1)];
+			table_entry *entry = &m_Table[hasher()(Key) & (kernel::m_Size - 1)];
 
 			if (!entry->IsEmpty())
 			{
-				while (entry != m_Terminator)
+				while (entry != kernel::m_Terminator)
 				{
 					if (entry->GetKey() == Key)
 					{

@@ -44,7 +44,7 @@ public:
 		return m;
 	}
 
-	NiMatrix3 NiMatrix3::operator* (const NiMatrix3& mat) const
+	NiMatrix3 operator* (const NiMatrix3& mat) const
 	{
 		NiMatrix3 prd;
 

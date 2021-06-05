@@ -49,16 +49,20 @@ public:
 	{
 		if (m_pkNext)
 		{
+			BSSimpleList<T> *v6 = nullptr;
+			BSSimpleList<T> *v7 = nullptr;
+			BSSimpleList<T> *v8 = nullptr;
+
 			while (true)
 			{
-				BSSimpleList<T> *v6 = this->m_pkNext;
-				BSSimpleList<T> *v7 = v6->m_pkNext;
+				v6 = this->m_pkNext;
+				v7 = v6->m_pkNext;
 				v6->m_pkNext = nullptr;
 
 				if (Callback)
 					break;
 
-				BSSimpleList<T> *v8 = this->m_pkNext;
+				v8 = this->m_pkNext;
 
 				if (v8)
 				{

@@ -1,3 +1,5 @@
+#define XBYAK_NO_OP_NAMES
+
 #include "common.h"
 #include <xbyak/xbyak.h>
 #include "d3d11_proxy.h"

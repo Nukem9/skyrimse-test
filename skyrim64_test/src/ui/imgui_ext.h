@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 namespace ImGui
 {
 	const char *CommaFormat(__int64 Input);

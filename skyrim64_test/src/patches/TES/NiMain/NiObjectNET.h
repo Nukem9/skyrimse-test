@@ -43,7 +43,7 @@ public:
 		return &m_kName;
 	}
 
-	void SetName(BSFixedString& Name)
+	void SetName(BSFixedString Name)
 	{
 		m_kName = Name;
 	}

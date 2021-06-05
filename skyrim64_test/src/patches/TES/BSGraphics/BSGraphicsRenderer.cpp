@@ -24,7 +24,7 @@ namespace BSGraphics
 
 	GpuCircularBuffer *ShaderConstantBuffer;
 
-	void BeginEvent(wchar_t *Name)
+	void BeginEvent(const wchar_t *Name)
 	{
 	}
 
@@ -95,7 +95,7 @@ namespace BSGraphics
 		LeaveCriticalSection(&Data.RendererLock);
 	}
 
-	void Renderer::BeginEvent(wchar_t *Marker) const
+	void Renderer::BeginEvent(const wchar_t *Marker) const
 	{
 		Data.pContext->BeginEventInt(Marker, 0);
 	}

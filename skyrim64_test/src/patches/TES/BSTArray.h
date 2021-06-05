@@ -112,12 +112,12 @@ public:
 private:
 	_Ty *_Myfirst()
 	{
-		return (_Ty *)QBuffer();
+		return (_Ty *)_Alloc::QBuffer();
 	}
 
 	_Ty *_Mylast()
 	{
-		return ((_Ty *)QBuffer()) + QSize();
+		return ((_Ty *)_Alloc::QBuffer()) + QSize();
 	}
 };
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#define XBYAK_NO_OP_NAMES
+
 #include <xbyak/xbyak.h>
 #include <zydis/include/Zydis/Zydis.h>
 #include "common.h"

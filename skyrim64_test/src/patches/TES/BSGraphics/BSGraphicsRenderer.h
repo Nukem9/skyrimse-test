@@ -13,7 +13,7 @@ namespace BSGraphics
 {
 	using Microsoft::WRL::ComPtr;
 
-	void BeginEvent(wchar_t *Name);
+	void BeginEvent(const wchar_t *Name);
 	void EndEvent();
 
 	// Not an actual class
@@ -195,7 +195,7 @@ namespace BSGraphics
 		void Lock();
 		void Unlock();
 
-		void BeginEvent(wchar_t *Marker) const;
+		void BeginEvent(const wchar_t *Marker) const;
 		void EndEvent() const;
 		void SetResourceName(ID3D11DeviceChild *Resource, const char *Format, ...);
 
@@ -287,7 +287,7 @@ namespace BSGraphics
 		void ValidateShaderReplacement(ID3D11ComputeShader *Original, ID3D11ComputeShader *Replacement);
 		void ValidateShaderReplacement(void *Original, void *Replacement, const GUID& Guid);
 		void RegisterShaderBytecode(void *Shader, const void *Bytecode, size_t BytecodeLength);
-		const std::pair<std::unique_ptr<uint8_t[]>, size_t>& Renderer::GetShaderBytecode(void *Shader);
+		const std::pair<std::unique_ptr<uint8_t[]>, size_t>& GetShaderBytecode(void *Shader);
 
 		//
 		// Buffers
