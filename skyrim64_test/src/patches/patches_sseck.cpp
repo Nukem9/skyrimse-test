@@ -835,6 +835,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x38EC648, 1530), (uint8_t *)&newWindowClass, sizeof(newWindowClass));
 
 	//
+	// Fix for crash when selecting more than 64 races in the armor addon dialog. A for loop reads past the end of a stack-allocated buffer.
+	//
+	XUtil::PatchMemoryNop(OFFSET(0x1AE5A38, 1530), 231);
+	XUtil::DetourJump(OFFSET(0x0FDE26F, 1530), &hk_jmp_140FD722E);
+
+	//
 	// Plugin loading optimizations:
 	//
 	// - TESForm reference map rewrite (above)

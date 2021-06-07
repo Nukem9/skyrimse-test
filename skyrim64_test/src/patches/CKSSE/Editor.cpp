@@ -924,3 +924,23 @@ void *hk_call_1427D0AC0(__int64 ResourceManager, uint32_t IndexCount, __int64 a3
 	// Convert # of indices to # of lines (divide by two)
 	return (*(void *(__fastcall **)(__int64, __int64, __int64, __int64, __int64, __int64, __int64))(*(__int64 *)ResourceManager + 152))(ResourceManager, IndexCount / 2, a3, a4, a5, a6, a7);
 }
+
+void hk_jmp_140FD722E(__int64 a1, HWND DialogWindow)
+{
+	((void(__fastcall *)(__int64, HWND))OFFSET(0x1AE57B0, 1530))(a1, DialogWindow);
+
+	if (LRESULT count = SendDlgItemMessageA(DialogWindow, 2017, LB_GETSELCOUNT, 0, 0); count != LB_ERR)
+	{
+		std::vector<int> items(count);
+		SendDlgItemMessageA(DialogWindow, 2017, LB_GETSELITEMS, count, (LPARAM)items.data());
+
+		for (int item : items)
+		{
+			auto data = SendDlgItemMessageA(DialogWindow, 2017, LB_GETITEMDATA, item, 0);
+			__int64 unknown = *(__int64 *)(a1 + 0x38);
+
+			if (data && data != unknown)
+				((void(__fastcall *)(__int64, __int64 *))OFFSET(0x1AE7340, 1530))(a1 + 0x1A0, &data);
+		}
+	}
+}

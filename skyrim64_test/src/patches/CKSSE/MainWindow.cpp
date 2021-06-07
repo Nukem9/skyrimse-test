@@ -209,7 +209,7 @@ namespace MainWindow
 						static std::vector<VersionControlListItem> formList;
 
 						// Invoke the dialog, building form list
-						void(*callback)(void *, int, VersionControlListItem *) = [](void *, int, VersionControlListItem *Data)
+						auto callback = +[](void *, int, VersionControlListItem *Data)
 						{
 							formList.push_back(*Data);
 							formList.back().EditorId = _strdup(Data->EditorId);
