@@ -27,7 +27,6 @@
 
 void PatchSteam();
 void PatchThreading();
-void PatchFileIO();
 void PatchMemory();
 size_t BNetConvertUnicodeString(char *Destination, size_t DestSize, const wchar_t *Source, size_t SourceSize);
 
@@ -102,9 +101,6 @@ void Patch_TESVCreationKit()
 	// Miscellaneous
 	//
 	PatchThreading();
-
-	if (g_INI.GetBoolean("CreationKit", "IOPatch", false))
-		PatchFileIO();
 
 	if (g_INI.GetBoolean("CreationKit", "SteamPatch", false))
 		PatchSteam();

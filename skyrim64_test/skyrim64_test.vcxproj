@@ -309,7 +309,6 @@
     <ClCompile Include="src\patches\CKSSE\Editor.cpp" />
     <ClCompile Include="src\patches\CKSSE\EditorUI.cpp" />
     <ClCompile Include="src\patches\CKSSE\TESForm_CK.cpp" />
-    <ClCompile Include="src\patches\fileio.cpp" />
     <ClCompile Include="src\patches\patches_sseck.cpp" />
     <ClCompile Include="src\patches\patches_tes.cpp" />
     <ClCompile Include="src\patches\rendering\codegen.cpp" />
