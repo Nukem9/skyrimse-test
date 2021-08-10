@@ -11,9 +11,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MemoryModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -23,11 +20,17 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CreationKit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LipSynchAnim.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="skyrim32_ckt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -35,6 +38,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Loader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LipSynchAnim.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CreationKit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
