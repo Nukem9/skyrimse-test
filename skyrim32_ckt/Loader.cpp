@@ -68,7 +68,7 @@ namespace Loader
 		HMODULE module = GetModuleHandleA(nullptr);
 
 		// Decompress the embedded exe and then initialize it
-		HRSRC resource = FindResourceW(module, MAKEINTRESOURCE(IDR_CK_LIP_BINARY1), L"CK_LIP_BINARY");
+		HRSRC resource = FindResourceA(module, MAKEINTRESOURCE(IDR_CK_LIP_BINARY1), "CK_LIP_BINARY");
 		uint32_t resourceSize = SizeofResource(module, resource);
 
 		if (!resource || resourceSize <= 0)
@@ -130,6 +130,20 @@ namespace Loader
 				PatchMemory(addr, data, 7);
 			}
 		}
+	}
+
+	void SaveResourceToDisk()
+	{
+		/*
+			CUZJTEUgKmY7DQoNCglpZiAoZm9wZW5fcygmZiwgIkNyZWF0aW9uS2l0LnVucGF
+			ja2VkLmV4ZSIsICJyYiIpID09IDApDQoJew0KCQlmc2VlayhmLCAwLCBTRUVLX0
+			VORCk7DQoJCWxvbmcgc2l6ZSA9IGZ0ZWxsKGYpOw0KCQlyZXdpbmQoZik7DQoNC
+			gkJY2hhciAqZXhlRGF0YSA9IG5ldyBjaGFyW3NpemVdOw0KCQlmcmVhZChleGVE
+			YXRhLCBzaXplb2YoY2hhciksIHNpemUsIGYpOw0KCQlzdGJfY29tcHJlc3NfdG9
+			maWxlKChjaGFyICopImNvbXByZXNzZWRfcnNyYy5iaW4iLCBleGVEYXRhLCBzaX
+			plKTsNCgkJZmNsb3NlKGYpOw0KCQlkZWxldGVbXSBleGVEYXRhOw0KCX0NCg0KC
+			XJldHVybiAwOw==
+		*/
 	}
 
 	void ForceReference()

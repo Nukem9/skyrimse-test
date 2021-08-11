@@ -1,78 +1,72 @@
 #include <windows.h>
 #include <stdio.h>
+#include <thread>
+#include <atomic>
 #include "Loader.h"
 #include "CreationKit.h"
 #include "LipSynchAnim.h"
 
-uint32_t g_CreationKitPID;
-HANDLE g_NotifyEvent;
-HANDLE g_WaitEvent;
+std::atomic_uint32_t g_CreationKitPID;
 
-DWORD WINAPI ExitNotifyThread(LPVOID Arg)
+bool RunLipGeneration(const char *Language, const char *FonixDataPath, const char *WavPath, const char *ResampledWavPath, const char *LipPath, const char *Text, bool Resample)
 {
-	// Grab handle to parent process (check for termination)
+	CreationKit::SetFaceFXDataPath(FonixDataPath);
+	CreationKit::SetFaceFXLanguage(Language);
+	CreationKit::SetFaceFXAutoResampling(Resample);
+
+	auto lipAnim = LipSynchAnim::Generate(WavPath, ResampledWavPath, Text, nullptr);
+
+	if (!lipAnim)
+		return false;
+
+	bool result = lipAnim->SaveToFile(LipPath, true, 16, true);
+
+	lipAnim->Free();
+	return result;
+}
+
+void IPCExitNotificationThread()
+{
+	// Grab a handle to the parent process and check for termination
 	HANDLE parentProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, g_CreationKitPID);
 
 	if (!parentProcess)
 	{
-		printf("A CreationKit parent process ID (0x%X) was supplied, but wasn't able to be queried (%d).\n", g_CreationKitPID, GetLastError());
-		return 1;
+		printf("A CreationKit parent process ID (0x%X) was supplied, but wasn't able to be queried (%d).\n", g_CreationKitPID.load(), GetLastError());
+		return;
 	}
 
-	for (DWORD exitCode;; Sleep(2000))
+	for (DWORD exitCode = 0;; Sleep(2000))
 	{
+		if (g_CreationKitPID == 0)
+			break;
+
 		if (GetExitCodeProcess(parentProcess, &exitCode) && exitCode == STILL_ACTIVE)
 			continue;
 
 		g_CreationKitPID = 0;
-
-		CloseHandle(parentProcess);
-		SetEvent(g_NotifyEvent);
 		break;
 	}
 
-	return 0;
+	CloseHandle(parentProcess);
 }
 
-int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
+bool StartCreationKitIPC(uint32_t ProcessID)
 {
-	UNREFERENCED_PARAMETER(hInstance);
-	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(lpCmdLine);
-	UNREFERENCED_PARAMETER(nCmdShow);
-
+	// Disable any kind of buffering when using printf or related functions
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stderr, NULL, _IONBF, 0);
 
-#if 0
-	/*
-	CUZJTEUgKmY7DQoNCglpZiAoZm9wZW5fcygmZiwgIkNyZWF0aW9uS2l0LnVucGF
-	ja2VkLmV4ZSIsICJyYiIpID09IDApDQoJew0KCQlmc2VlayhmLCAwLCBTRUVLX0
-	VORCk7DQoJCWxvbmcgc2l6ZSA9IGZ0ZWxsKGYpOw0KCQlyZXdpbmQoZik7DQoNC
-	gkJY2hhciAqZXhlRGF0YSA9IG5ldyBjaGFyW3NpemVdOw0KCQlmcmVhZChleGVE
-	YXRhLCBzaXplb2YoY2hhciksIHNpemUsIGYpOw0KCQlzdGJfY29tcHJlc3NfdG9
-	maWxlKChjaGFyICopImNvbXByZXNzZWRfcnNyYy5iaW4iLCBleGVEYXRhLCBzaX
-	plKTsNCgkJZmNsb3NlKGYpOw0KCQlkZWxldGVbXSBleGVEYXRhOw0KCX0NCg0KC
-	XJldHVybiAwOw==
-	*/
-#endif
-
-	// Bail immediately if this wasn't launched from the CK
-	if (!getenv("Ckpid") || strlen(getenv("Ckpid")) <= 0)
-		return 1;
-
-	g_CreationKitPID = atoi(getenv("Ckpid"));
-
 	// Establish tunnel
 	char temp[128];
-	sprintf_s(temp, "CkSharedMem%d", g_CreationKitPID);
 
+	sprintf_s(temp, "CkSharedMem%d", ProcessID);
 	HANDLE mapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, TRUE, temp);
 
 	if (!mapping)
 	{
 		printf("Could not create file mapping object (%d).\n", GetLastError());
-		return 1;
+		return false;
 	}
 
 	auto tunnel = reinterpret_cast<CreationKit::LipGenTunnel *>(MapViewOfFile(mapping, FILE_MAP_ALL_ACCESS, 0, 0, 0x40000));
@@ -80,36 +74,43 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	if (!tunnel)
 	{
 		printf("Could not map view of file (%d).\n", GetLastError());
+
 		CloseHandle(mapping);
-		return 1;
+		return false;
 	}
 
-	sprintf_s(temp, "CkNotifyEvent%d", g_CreationKitPID);
-	g_NotifyEvent = OpenEventA(EVENT_ALL_ACCESS, TRUE, temp);
+	sprintf_s(temp, "CkNotifyEvent%d", ProcessID);
+	HANDLE notifyEvent = OpenEventA(EVENT_ALL_ACCESS, TRUE, temp);
 
-	sprintf_s(temp, "CkWaitEvent%d", g_CreationKitPID);
-	g_WaitEvent = OpenEventA(EVENT_ALL_ACCESS, TRUE, temp);
+	sprintf_s(temp, "CkWaitEvent%d", ProcessID);
+	HANDLE waitEvent = OpenEventA(EVENT_ALL_ACCESS, TRUE, temp);
 
-	if (!g_NotifyEvent || !g_WaitEvent)
+	if (!notifyEvent || !waitEvent)
 	{
 		printf("Could not open event handle(s) (%d).\n", GetLastError());
+
 		UnmapViewOfFile(tunnel);
 		CloseHandle(mapping);
-		return 1;
+		return false;
 	}
 
-	CloseHandle(CreateThread(nullptr, 0, ExitNotifyThread, nullptr, 0, nullptr));
+	// Thread to check for parent process exit
+	std::thread exitThread(IPCExitNotificationThread);
+	exitThread.detach();
 
-	//
-	// Wait until the creation kit asks to do something
-	//
-	for (bool ckCodeLoaded = false;;)
+	// Wait until the creation kit asks to do something, then lazy initialize the loader
+	printf("FaceFXWrapper IPC established\n");
+
+	g_CreationKitPID = ProcessID;
+	bool loaderInitialized = false;
+
+	while (true)
 	{
-		DWORD waitStatus = WaitForSingleObject(g_NotifyEvent, 5000);
+		DWORD waitStatus = WaitForSingleObject(notifyEvent, 2500);
 
 		if (waitStatus == WAIT_FAILED)
 		{
-			printf("Failed waiting for CKIT64 notification (%d).\n", GetLastError());
+			printf("Failed waiting for CK64 notification (%d).\n", GetLastError());
 			break;
 		}
 
@@ -120,12 +121,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		if (waitStatus == WAIT_TIMEOUT)
 			continue;
 
-		if (!ckCodeLoaded)
+		if (!std::exchange(loaderInitialized, true))
 		{
-			ckCodeLoaded = true;
-
 			if (!Loader::Initialize())
-				return 1;
+				break;
 		}
 
 		printf("Attempting to create LIP file:\n");
@@ -135,37 +134,90 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		printf("     Fonix data: '%s'\n", tunnel->FonixDataPath);
 		printf("     Language: '%s'\n", tunnel->Language);
 
-		CreationKit::SetFaceFXDataPath(tunnel->FonixDataPath);
-		CreationKit::SetFaceFXLanguage(tunnel->Language);
+		const char *lipPath = "Data\\Sound\\Voice\\Processing\\Temp.lip";
+		printf("Writing temporary LIP file to '%s'\n", lipPath);
 
-		// Generate the lip file, then tell the CK
-		auto lipAnim = LipSynchAnim::Generate(tunnel->InputWAVPath, tunnel->ResampleTempWAVPath, tunnel->DialogueText, nullptr);
-
-		// Write it to disk as a temp copy & free memory
-		if (lipAnim)
-		{
-			printf("Writing temporary LIP file to 'Data\\Sound\\Voice\\Processing\\Temp.lip'\n");
-
-			if (!lipAnim->SaveToFile("Data\\Sound\\Voice\\Processing\\Temp.lip", true, 16, true))
-				printf("LIP data was generated but the file couldn't be saved!\n");
-
-			lipAnim->Free();
-		}
+		if (!RunLipGeneration(tunnel->Language, tunnel->FonixDataPath, tunnel->InputWAVPath, tunnel->ResampleTempWAVPath, lipPath, tunnel->DialogueText, true))
+			printf("Unable to generate LIP data or unable to save to '%s'!\n", lipPath);
 
 		memset(tunnel->InputWAVPath, 0, sizeof(tunnel->InputWAVPath));
 		tunnel->UnknownStatus = true;
 
 		// Done
-		SetEvent(g_WaitEvent);
-		WaitForSingleObject(g_NotifyEvent, INFINITE);
-		SetEvent(g_WaitEvent);
+		SetEvent(waitEvent);
+		WaitForSingleObject(notifyEvent, INFINITE);
+		SetEvent(waitEvent);
 	}
 
-	CloseHandle(g_NotifyEvent);
-	CloseHandle(g_WaitEvent);
+	printf("FaceFXWrapper IPC shutdown\n");
+
+	CloseHandle(notifyEvent);
+	CloseHandle(waitEvent);
 	UnmapViewOfFile(tunnel);
 	CloseHandle(mapping);
 
-	printf("LIPGen tool exiting\n");
+	g_CreationKitPID = 0;
+	return true;
+}
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	// Create the IPC tunnel if this was launched from CreationKit.exe
+	if (const char *pid = getenv("Ckpid"); pid && strlen(pid) > 0)
+	{
+		if (!StartCreationKitIPC(atoi(pid)))
+			return 1;
+
+		return 0;
+	}
+
+	// Use command line processing instead
+	if (AttachConsole(ATTACH_PARENT_PROCESS))
+	{
+		freopen("CONIN$", "r", stdin);
+		freopen("CONOUT$", "w", stdout);
+		freopen("CONOUT$", "w", stderr);
+	}
+
+	switch (__argc)
+	{
+	case 6:
+		if (!Loader::Initialize())
+			return 1;
+
+		// Resampling disabled - use same path for WavPath and ResampledWavPath
+		if (!RunLipGeneration(__argv[1], __argv[2], __argv[3], __argv[3], __argv[4], __argv[5], false))
+		{
+			printf("LIP generation failed\n");
+			return 1;
+		}
+
+		return 0;
+
+	case 7:
+		if (!Loader::Initialize())
+			return 1;
+
+		if (!RunLipGeneration(__argv[1], __argv[2], __argv[3], __argv[4], __argv[5], __argv[6], true))
+		{
+			printf("LIP generation failed\n");
+			return 1;
+		}
+
+		return 0;
+
+	default:
+		printf("\n\nUsage:\n");
+		printf("\tFaceFXWrapper [Lang] [FonixDataPath] [WavPath] [ResampledWavPath] [LipPath] [Text]\n");
+		printf("\tFaceFXWrapper [Lang] [FonixDataPath] [ResampledWavPath] [LipPath] [Text]\n");
+		printf("\n");
+		printf("Examples:\n");
+		printf("\tFaceFXWrapper \"USEnglish\" \"C:\\FonixData.cdf\" \"C:\\input.wav\" \"C:\\input_resampled.wav\" \"C:\\output.lip\" \"Blah Blah Blah\"\n");
+		printf("\tFaceFXWrapper \"USEnglish\" \"C:\\FonixData.cdf\" \"C:\\input_resampled.wav\" \"C:\\output.lip\" \"Blah Blah Blah\"\n");
+		printf("\n");
+
+		return 1;
+	}
+
 	return 0;
 }

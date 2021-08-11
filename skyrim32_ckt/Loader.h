@@ -11,6 +11,7 @@ namespace Loader
 	bool Initialize();
 	bool MapExecutable();
 	void MapTLS();
+	void SaveResourceToDisk();
 	void ForceReference();
 
 	HCUSTOMMODULE MmGetLibrary(LPCSTR Name, void *Userdata);
