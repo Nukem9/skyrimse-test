@@ -28,6 +28,7 @@ namespace CreationKit
 
 	void SetFaceFXDataPath(const char *Path);
 	void SetFaceFXLanguage(const char *Language);
+	void SetFaceFXAutoResampling(bool Resample);
 
 	void FaceFXLogCallback(const char *Text, int Type);
 	void LogCallback(int Type, const char *Format, ...);

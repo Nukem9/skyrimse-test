@@ -35,6 +35,15 @@ namespace CreationKit
 		strcpy_s(tempLanguage, Language);
 	}
 
+	void SetFaceFXAutoResampling(bool Resample)
+	{
+		// If automatic resampling is disabled, the resampled wav must exist already. The original wav file path will be unused.
+		if (Resample)
+			Loader::PatchMemory(0x470BA0, { 0x81, 0xEC, 0x68, 0x01, 0x00, 0x00 });
+		else
+			Loader::PatchMemory(0x470BA0, { 0xB0, 0x01, 0xC3 });
+	}
+
 	void FaceFXLogCallback(const char *Text, int Type)
 	{
 		printf("[FaceFX %02d]: %s\n", Type, Text);
