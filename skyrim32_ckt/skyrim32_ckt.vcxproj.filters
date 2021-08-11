@@ -29,6 +29,9 @@
     <ClInclude Include="LipSynchAnim.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LoaderTLS.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="skyrim32_ckt.cpp">

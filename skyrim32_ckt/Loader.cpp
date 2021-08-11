@@ -25,8 +25,7 @@ namespace Loader
 			return false;
 
 		// Allocate arbitrary TLS chunk
-		int tlsIndex = *(int *)0x1E97DC0;
-		*(void **)(__readfsdword(0x2C) + 4 * tlsIndex) = VirtualAlloc(nullptr, 64 * 1024, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+		MapTLS();
 
 		// Kill MemoryContextTracker ctor/dtor
 		PatchMemory(0x948500, { 0xC2, 0x10, 0x00 });
@@ -45,10 +44,6 @@ namespace Loader
 		DetourFunction(0x587816, &LipSynchAnim::hk_call_00587816, true);
 		DetourFunction(0x58781F, &LipSynchAnim::hk_call_00587816, true);
 
-		// Add logging
-		((int(*)(void *))(0x8BF320))(&CreationKit::FaceFXLogCallback);
-		DetourFunction(0x40AFC0, &CreationKit::LogCallback);
-
 		// Patch WinMain in order to only run CRT initialization
 		PatchMemory(0x48E8B0, { 0xC2, 0x10, 0x00 });
 		PatchMemory(0xE84A16, { 0xEB, 0x0E });
@@ -58,6 +53,10 @@ namespace Loader
 		((void(*)())(0x934B90))();				// BSResource (filesystem)
 		((void(*)())(0x469FE0))();				// LipSynchManager::Init()
 		PatchMemory(0x46AA59, { 0x90, 0x90 });	// Required to force update FonixData.cdf path in TLS
+
+		// Add logging. Must be done after static constructors.
+		((int(*)(void *))(0x8BF320))(&CreationKit::FaceFXLogCallback);
+		DetourFunction(0x40AFC0, &CreationKit::LogCallback);
 
 		return true;
 	}
@@ -97,6 +96,40 @@ namespace Loader
 		}
 
 		return true;
+	}
+
+	void MapTLS()
+	{
+		// Allocate an arbitrary memory region to replace TLS accesses. MemoryModule doesn't handle static TLS slots. These variables are
+		// static on purpose.
+#include "LoaderTLS.inl"
+
+		static int *tlsIndex = reinterpret_cast<int *>(0x1E97DC0);
+		static void *tlsRegion = VirtualAlloc(nullptr, 64 * 1024, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+		static void **pointerToTlsRegionPointer = &tlsRegion;
+
+		// 64 A1 2C 00 00 00		mov eax, large fs:2Ch
+		// 64 8B 0D 2C 00 00 00		mov ecx, large fs:2Ch
+		uint8_t data[7];
+		memset(data, 0x90, sizeof(data));
+
+		for (uintptr_t addr : TLSPatchAddresses)
+		{
+			if (*(uint8_t *)(addr + 0x1) == 0xA1)
+			{
+				data[1] = 0xA1;
+				*(void **)&data[2] = &pointerToTlsRegionPointer;
+
+				PatchMemory(addr, data, 6);
+			}
+			else
+			{
+				*(uint16_t *)&data[1] = *(uint16_t *)(addr + 0x1);
+				*(void **)&data[3] = &pointerToTlsRegionPointer;
+
+				PatchMemory(addr, data, 7);
+			}
+		}
 	}
 
 	void ForceReference()

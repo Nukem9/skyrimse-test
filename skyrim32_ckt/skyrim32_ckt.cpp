@@ -129,11 +129,11 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		}
 
 		printf("Attempting to create LIP file:\n");
-		printf("     Language: '%s'\n", tunnel->Language);
-		printf("     Input data: '%s'\n", tunnel->FonixDataPath);
 		printf("     Input WAV: '%s'\n", tunnel->InputWAVPath);
 		printf("     Resampled input WAV: '%s'\n", tunnel->ResampleTempWAVPath);
 		printf("     Text: '%s'\n", tunnel->DialogueText);
+		printf("     Fonix data: '%s'\n", tunnel->FonixDataPath);
+		printf("     Language: '%s'\n", tunnel->Language);
 
 		CreationKit::SetFaceFXDataPath(tunnel->FonixDataPath);
 		CreationKit::SetFaceFXLanguage(tunnel->Language);

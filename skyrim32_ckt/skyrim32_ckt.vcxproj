@@ -95,6 +95,7 @@
     <ClInclude Include="CreationKit.h" />
     <ClInclude Include="LipSynchAnim.h" />
     <ClInclude Include="Loader.h" />
+    <ClInclude Include="LoaderTLS.inl" />
     <ClInclude Include="MemoryModule.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stb.h" />

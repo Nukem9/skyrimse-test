@@ -25,5 +25,5 @@ public:
 	bool SaveToFile(const char *Path, bool Compress = true, int NumTargets = 16, bool FacegenDefault = true);
 	void Free();
 
-	static int hk_call_00587816(FILE *File, void *Data, int Size);
+	static int __fastcall hk_call_00587816(FILE *File, void *_EDX, void *Data, int Size);
 };

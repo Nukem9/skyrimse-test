@@ -27,7 +27,7 @@ void LipSynchAnim::Free()
 	CreationKit::MemoryManager_Free(nullptr, nullptr, this, false);
 }
 
-int LipSynchAnim::hk_call_00587816(FILE *File, void *Data, int Size)
+int LipSynchAnim::hk_call_00587816(FILE *File, void *_EDX, void *Data, int Size)
 {
 	return fwrite(Data, 1, Size, File);
 }
