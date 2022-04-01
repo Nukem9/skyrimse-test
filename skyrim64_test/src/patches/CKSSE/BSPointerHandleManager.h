@@ -4,25 +4,25 @@
 #include "../TES/BSReadWriteLock.h"
 #include "TESForm_CK.h"
 
-template<int IndexBits = 21, int AgeCountBits = 6>
+template<int IndexBits = 25, int AgeCountBits = 6>
 class BSUntypedPointerHandle
 {
 public:
 	//
-	// NOTE: Handle index bits increased from 20 (vanilla) to 21 (limit doubled)
+	// NOTE: Handle index bits increased from 20 (vanilla) to 25
 	//
-	// 31       28       27    21             0
-	// |--------|--------|-----|--------------|
-	// | Unused | Active | Age | Handle Index |
-	// |--------|--------|-----|--------------|
+	// 31       30       24                   0
+	// |--------|--------|--------------------|
+	// | Active |   Age  |    Handle Index    |
+	// |--------|--------|--------------------|
 	//
 	constexpr static uint32_t INDEX_BITS		= IndexBits;
 	constexpr static uint32_t AGE_BITS			= AgeCountBits;
 	constexpr static uint32_t UNUSED_BIT_START	= INDEX_BITS + AGE_BITS;				// 26 in vanilla
 
-	constexpr static uint32_t INDEX_MASK		= (1u << INDEX_BITS) - 1u;				// 0x00FFFFF
-	constexpr static uint32_t AGE_MASK			= ((1u << AGE_BITS) - 1u) << INDEX_BITS;// 0x3F00000
-	constexpr static uint32_t ACTIVE_BIT_MASK	= 1u << UNUSED_BIT_START;				// 0x4000000
+	constexpr static uint32_t INDEX_MASK		= (1u << INDEX_BITS) - 1u;				// 0x01FFFFFF
+	constexpr static uint32_t AGE_MASK			= ((1u << AGE_BITS) - 1u) << INDEX_BITS;// 0x7E000000
+	constexpr static uint32_t ACTIVE_BIT_MASK	= 1u << UNUSED_BIT_START;				// 0x80000000
 
 	constexpr static uint32_t MAX_HANDLE_COUNT	= 1u << INDEX_BITS;
 

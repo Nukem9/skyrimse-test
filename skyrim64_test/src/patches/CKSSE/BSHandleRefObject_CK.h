@@ -6,13 +6,13 @@ class BSHandleRefObject : public NiRefObject
 {
 private:
 	//
-	// 31             11       10          0
-	// |--------------|--------|-----------|
-	// | Handle Index | Active | Ref Count |
-	// |--------------|--------|-----------|
+	// 31             10       9          0
+	// |--------------|---------|----------|
+	// | Handle Index | Active  |Ref Count |
+	// |--------------|---------|----------|
 	//
-	constexpr static uint32_t ACTIVE_BIT_INDEX = 10;
-	constexpr static uint32_t HANDLE_BIT_INDEX = 11;
+	constexpr static uint32_t ACTIVE_BIT_INDEX = 9;
+	constexpr static uint32_t HANDLE_BIT_INDEX = 10;
 	constexpr static uint32_t REF_COUNT_MASK = (1u << 10) - 1u;
 
 public:
