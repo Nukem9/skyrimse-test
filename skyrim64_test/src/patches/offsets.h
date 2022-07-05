@@ -19,9 +19,15 @@ namespace Offsets
 
 	extern const std::vector<OffsetEntry> EntryListCK1530;
 	extern const std::vector<OffsetEntry> EntryListCK1573;
+	extern const std::vector<OffsetEntry> EntryListCK16438;
 
 	uintptr_t Resolve(uint32_t RelOffset, uint32_t Version);
 	bool CanResolve(uint32_t RelOffset, uint32_t Version);
+
+	bool IsCKVersion16438(void);
+	bool IsCKVersion16438OrNewer(void);
+	bool IsCKVersion1573(void);
+	bool IsCKVersion1573OrNewer(void);
 
 	void BuildTableForCKSSEVersion(uint32_t Version);
 	void BuildTableForGameVersion(uint32_t Version);

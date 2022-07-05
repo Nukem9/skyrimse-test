@@ -65,7 +65,7 @@ namespace MainWindow
 		{
 			auto createInfo = reinterpret_cast<const CREATESTRUCT *>(lParam);
 
-			if (!strcmp(createInfo->lpszName, "Creation Kit SE") && !strcmp(createInfo->lpszClass, "Creation Kit SE"))
+			if (!strcmp(createInfo->lpszName, "Creation Kit SSE") && !strcmp(createInfo->lpszClass, "Creation Kit SSE"))
 			{
 				// Initialize the original window before adding anything
 				LRESULT status = CallWindowProc(OldWndProc, Hwnd, Message, wParam, lParam);
@@ -76,7 +76,7 @@ namespace MainWindow
 				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_TOOLBAR), TB_CHECKBUTTON, UI_EDITOR_TOGGLEGRASS_BUTTON, TRUE);
 
 				// Same for fog
-				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *reinterpret_cast<bool *>(OFFSET(0x4F05728, 1530)) ? MF_CHECKED : MF_UNCHECKED);
+				//CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *reinterpret_cast<bool *>(OFFSET(0x4F05728, 1530)) ? MF_CHECKED : MF_UNCHECKED);
 
 				CreateExtensionMenu(Hwnd, createInfo->hMenu);
 				return status;
