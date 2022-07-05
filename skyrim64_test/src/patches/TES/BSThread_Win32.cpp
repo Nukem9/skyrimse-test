@@ -26,7 +26,9 @@ DWORD WINAPI hk_BSThreadEntryFunc(LPVOID lpArg)
     if (name)
         XUtil::SetThreadName(tid, name);
 
+#if !SKYRIM64_CREATIONKIT_ONLY
     ui::log::Add("Created thread \"%s\" (ID %d)\n", name, tid);
+#endif
 
 	AutoFunc(LPTHREAD_START_ROUTINE, sub_140C0D1C0, 0xC0D1C0);
     return sub_140C0D1C0(lpArg);
@@ -39,7 +41,9 @@ DWORD WINAPI hk_TaskletEntryFunc(LPVOID lpArg)
     sprintf_s(name, "TaskletThread%d", NextTaskletIndex++);
 
     XUtil::SetThreadName(GetCurrentThreadId(), name);
+#if !SKYRIM64_CREATIONKIT_ONLY
 	ui::log::Add("Created thread \"%s\" (ID %d)\n", name, GetCurrentThreadId());
+#endif
 
     return TaskletEntryFunc(lpArg);
 }

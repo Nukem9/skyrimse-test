@@ -1,5 +1,9 @@
 #pragma once
 
+#include "..\config.h"
+
+#if !SKYRIM64_CREATIONKIT_ONLY
+
 namespace ui
 {
 	namespace opt
@@ -58,3 +62,5 @@ namespace ui
 		void Clear();
 	}
 }
+
+#endif

@@ -1,6 +1,9 @@
 #define XBYAK_NO_OP_NAMES
 
 #include "../common.h"
+
+#if !SKYRIM64_CREATIONKIT_ONLY
+
 #include <xbyak/xbyak.h>
 #include "../typeinfo/ms_rtti.h"
 #include "dinput8.h"
@@ -70,7 +73,9 @@ void Patch_TESV()
 
 	PatchThreading();
 	PatchWindow();
+#if SKYRIM64_USE_TRACY
 	PatchD3D11();
+#endif
 	PatchSteam();
 	PatchAchievements();
 	PatchSettings();
@@ -275,3 +280,5 @@ void Patch_TESV()
 
 	//*(PBYTE *)&test3_orig = Detours::X64::DetourFunctionClass((uint8_t *)(g_ModuleBase + 0x5B7AD0), &test3);
 }
+
+#endif

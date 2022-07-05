@@ -2,7 +2,7 @@
 
 #include "../BSShader.h"
 
-class BSBloodSplatterShader : public BSShader
+class __declspec(align(8)) BSBloodSplatterShader : public BSShader
 {
 private:
 	enum Techniques

@@ -13,6 +13,8 @@
 #include <windows.h>
 #include <tchar.h>
 
+#include "..\config.h"
+
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
 //  2018-XX-XX: Platform: Added support for multiple windows via the ImGuiPlatformIO interface.
@@ -420,7 +422,9 @@ struct ImGuiViewportDataWin32
 	~ImGuiViewportDataWin32() { IM_ASSERT(Hwnd == NULL); }
 };
 
+#if !SKYRIM64_CREATIONKIT_ONLY
 HWND WINAPI hk_CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+#endif
 
 static void ImGui_ImplWin32_CreateWindow(ImGuiViewport* viewport)
 {
@@ -442,6 +446,7 @@ static void ImGui_ImplWin32_CreateWindow(ImGuiViewport* viewport)
 	if (viewport->Flags & ImGuiViewportFlags_TopMost)
 		data->DwExStyle |= WS_EX_TOPMOST;
 
+#if !SKYRIM64_CREATIONKIT_ONLY
 	// Create window
 	RECT rect = { (LONG)viewport->Pos.x, (LONG)viewport->Pos.y, (LONG)(viewport->Pos.x + viewport->Size.x), (LONG)(viewport->Pos.y + viewport->Size.y) };
 	::AdjustWindowRectEx(&rect, data->DwStyle, FALSE, data->DwExStyle);
@@ -449,6 +454,7 @@ static void ImGui_ImplWin32_CreateWindow(ImGuiViewport* viewport)
 		data->DwExStyle, _T("ImGui Platform"), _T("No Title Yet"), data->DwStyle,   // Style, class name, window name
 		rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,        // Window area
 		g_hWnd, NULL, ::GetModuleHandle(NULL), NULL);                               // Parent window, Menu, Instance, Param
+#endif
 	data->HwndOwned = true;
 	viewport->PlatformRequestResize = false;
 	viewport->PlatformHandle = data->Hwnd;

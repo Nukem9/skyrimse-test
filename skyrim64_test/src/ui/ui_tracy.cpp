@@ -1,4 +1,7 @@
 #include "../config.h"
+
+#if !SKYRIM64_CREATIONKIT_ONLY
+
 #include <imgui/imgui.h>
 #if SKYRIM64_USE_TRACY
 #include <tracy/server/TracyBadVersion.hpp>
@@ -32,3 +35,5 @@ namespace ui
 #endif
 	}
 }
+
+#endif

@@ -1,5 +1,8 @@
 #include <map>
 #include "../common.h"
+
+#if !SKYRIM64_CREATIONKIT_ONLY
+
 #include "../patches/dinput8.h"
 #include "imgui_ext.h"
 #include "imgui_impl_dx11.h"
@@ -816,3 +819,5 @@ namespace ui::log
 		Mutex.unlock();
 	}
 }
+
+#endif

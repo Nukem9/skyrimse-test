@@ -43,8 +43,10 @@ void UpdateFormCache(uint32_t FormId, TESForm *Value, bool Invalidate)
 
 bool GetFormCache(uint32_t FormId, TESForm *&Form)
 {
+#if !SKYRIM64_CREATIONKIT_ONLY
 	if (!ui::opt::EnableCache)
 		return false;
+#endif
 
 	ProfileCounterInc("Cache Lookups");
 	ProfileTimer("Cache Fetch Time");

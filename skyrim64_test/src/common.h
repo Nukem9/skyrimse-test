@@ -25,8 +25,8 @@ extern __itt_heap_function ITT_FreeCallback;
 // Tracy
 #if SKYRIM64_USE_TRACY
 #define TRACY_ENABLE
-#endif
 #include <tracy/Tracy.hpp>
+#endif
 
 // TBBMalloc
 #include <tbb/scalable_allocator.h>

@@ -19,6 +19,8 @@ using namespace DirectX;
 const int MOC_WIDTH = 1280;
 const int MOC_HEIGHT = 720;
 
+#if SKYRIM64_USE_TRACY
+
 extern ID3D11Texture2D *g_OcclusionTexture;
 extern ID3D11ShaderResourceView *g_OcclusionTextureSRV;
 
@@ -715,3 +717,5 @@ namespace MOC
 		TraverseSceneGraph(camera);
 	}
 }
+
+#endif

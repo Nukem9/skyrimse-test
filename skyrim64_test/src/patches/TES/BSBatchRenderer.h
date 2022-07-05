@@ -5,10 +5,10 @@
 #include "BSTScatterTable.h"
 #include "BSShader/BSShaderManager.h"
 
-class BSBatchRenderer
+class __declspec(align(8)) BSBatchRenderer
 {
 public:
-	struct PersistentPassList
+	struct __declspec(align(8)) PersistentPassList
 	{
 		BSRenderPass *m_Head;
 		BSRenderPass *m_Tail;
@@ -16,7 +16,7 @@ public:
 		void Clear();
 	};
 
-	struct GeometryGroup
+	struct __declspec(align(8)) GeometryGroup
 	{
 		BSBatchRenderer *m_BatchRenderer;
 		PersistentPassList m_PassList;
@@ -29,7 +29,7 @@ public:
 		void ClearAndFreePasses();
 	};
 
-	struct PassGroup
+	struct __declspec(align(8)) PassGroup
 	{
 		BSRenderPass *m_Passes[5];
 		uint32_t m_ValidPassBits;	// OR'd with (1 << PassIndex)

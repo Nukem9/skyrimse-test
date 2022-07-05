@@ -1,6 +1,6 @@
 #pragma once
 
-class NiRefObject
+class __declspec(align(8)) NiRefObject
 {
 private:
 	inline AutoPtr(uint32_t, ms_uiObjects, 0x3038520);
