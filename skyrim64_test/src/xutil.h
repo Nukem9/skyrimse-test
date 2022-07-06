@@ -8,6 +8,9 @@
 #define AssertMsgDebug(Cond, Msg)		AssertMsgVa(Cond, Msg);
 #define AssertMsgVa(Cond, Msg, ...)		if(!(Cond)) XUtil::XAssert(__FILE__, __LINE__, "%s\n\n" Msg, #Cond, ##__VA_ARGS__);
 
+#define PROPERTY(read_func, write_func)	__declspec(property(get = read_func, put = write_func))
+#define READ_PROPERTY(read_func)		__declspec(property(get = read_func))
+
 #define ZoneScopedN(X)
 #define templated(...)					__VA_ARGS__
 #define AutoPtr(Type, Name, Offset)		static Type& Name = (*(Type *)((uintptr_t)GetModuleHandle(nullptr) + Offset))

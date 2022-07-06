@@ -161,6 +161,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\INIReader.h" />
+    <ClInclude Include="src\patches\CKSSE\BGString.h" />
     <ClInclude Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSHandleRefObject_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSPointerHandleManager.h" />
@@ -281,10 +282,12 @@
     <ClInclude Include="src\ui\ui.h" />
     <ClInclude Include="src\ui\ui_renderer.h" />
     <ClInclude Include="src\ui\ui_tracy.h" />
+    <ClInclude Include="src\UtfStr.h" />
     <ClInclude Include="src\xutil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\patches\bnet.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BGString.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSPointerHandleManager.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSRenderPass_CK.cpp" />
@@ -296,6 +299,7 @@
     <ClCompile Include="src\patches\CKSSE\LogWindow.cpp" />
     <ClCompile Include="src\patches\CKSSE\MainWindow.cpp" />
     <ClCompile Include="src\patches\CKSSE\ObjectWindow.cpp" />
+    <ClCompile Include="src\patches\CKSSE\TESDialogSpell.cpp" />
     <ClCompile Include="src\patches\offsets.cpp" />
     <ClCompile Include="src\patches\CKSSE\TESFile_CK.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.cpp" />
@@ -303,6 +307,7 @@
     <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsUtility.cpp" />
     <ClCompile Include="src\patches\TES\BSRenderPass.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp" />
+    <ClCompile Include="src\UtfStr.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />
     <ClCompile Include="src\common.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />

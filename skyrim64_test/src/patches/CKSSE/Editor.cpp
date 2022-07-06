@@ -20,6 +20,77 @@
 
 #pragma comment(lib, "libdeflate.lib")
 
+#include "BGString.h"
+#include "TESDialogSpell.h"
+
+using namespace usse;
+using namespace usse::api;
+
+BOOL hk_usse_BeginPluginSave(VOID) {
+	ConvertorString.Mode = BGSConvertorString::MODE_UTF8;
+	return TRUE;
+}
+
+VOID hk_usse_EndPluginSave(HCURSOR hCursor) {
+	ConvertorString.Mode = BGSConvertorString::MODE_ANSI;
+	SetCursor(hCursor);
+}
+
+BOOL hk_usse_SetDlgItemTextA(HWND hDlg, INT nIDDlgItem, LPCSTR lpString) {
+	switch (nIDDlgItem)
+	{
+	case 1024:
+	case 1025:
+	{
+		if (!lpString || !XUtil::Conversion::IsUtf8Valid(lpString))
+			goto SetTextDef;
+
+		std::string wincp_str = XUtil::Conversion::Utf8ToAnsi(lpString);
+		return SetDlgItemTextA(hDlg, nIDDlgItem, wincp_str.c_str());
+	}
+	default:
+	SetTextDef:
+		return SetDlgItemTextA(hDlg, nIDDlgItem, lpString);
+	}
+}
+
+BOOL hk_usse_SendDlgItemMessageA(HWND hDlg, INT nIDDlgItem, UINT Msg, WPARAM wParam, LPARAM lParam) {
+	if (Msg != WM_GETTEXT && Msg != WM_GETTEXTLENGTH)
+		MsgTextDef:
+	return SendDlgItemMessageA(hDlg, nIDDlgItem, Msg, wParam, lParam);
+
+	HWND hCtrlWnd;
+
+	switch (nIDDlgItem)
+	{
+	case 1024:
+	case 1025:
+	{
+		hCtrlWnd = GetDlgItem(hDlg, nIDDlgItem);
+		INT32 maxlen = GetWindowTextLengthA(hCtrlWnd) << 2;
+
+		if (maxlen <= 0)
+			goto MsgTextDef;
+
+		std::string ansi_str;
+		ansi_str.resize(maxlen);
+		ansi_str.resize(GetWindowTextA(hCtrlWnd, &ansi_str[0], maxlen));
+
+		if (XUtil::Conversion::IsUtf8Valid(ansi_str))
+			goto MsgTextDef;
+
+		std::string utf8_str = XUtil::Conversion::AnsiToUtf8(ansi_str);
+
+		if (Msg == WM_GETTEXT)
+			strncpy((LPSTR)(lParam), utf8_str.c_str(), wParam);
+
+		return utf8_str.length() + 1;
+	}
+	default:
+		goto MsgTextDef;
+	}
+}
+
 struct z_stream_s
 {
 	const void *next_in;

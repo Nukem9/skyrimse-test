@@ -43,6 +43,9 @@ extern __itt_heap_function ITT_FreeCallback;
 #define INI_MAX_LINE 4096
 #include "INIReader.h"
 
+// Unicode
+#include "UtfStr.h"
+
 #include "ui/ui.h"
 #include "xutil.h"
 #include "dump.h"

@@ -14,6 +14,7 @@
 #pragma warning(disable:4996)
 
 #define SKYRIM64_CREATIONKIT_ONLY	1	// Only build code related to the Creation Kit hooks
+#define SKYRIMSE_LAZ_UNICODE_PLUGIN 1   // The mod uses an external module CreationKitUnicodePlugin.dll for to determine encodings and translation
 #define SKYRIM64_GENERATE_OFFSETS	0	// Dump offset list to disk in codegen.cpp
 #define SKYRIM64_USE_VTUNE			0	// Enable VTune instrumentation API
 #define SKYRIM64_USE_VFS			0	// Enable virtual file system

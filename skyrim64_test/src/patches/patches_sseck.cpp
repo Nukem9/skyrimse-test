@@ -7,6 +7,8 @@
 #include "TES/MemoryManager.h"
 #include "TES/bhkThreadMemorySource.h"
 #include "TES/NiMain/NiRTTI.h"
+#include "CKSSE/BGString.h"
+#include "CKSSE/TESDialogSpell.h"
 #include "CKSSE/Experimental.h"
 #include "CKSSE/Editor.h"
 #include "CKSSE/TESFile_CK.h"
@@ -24,6 +26,9 @@
 #include "CKSSE/BSGraphicsRenderTargetManager_CK.h"
 #include "CKSSE/BSShaderResourceManager_CK.h"
 #include "CKSSE/BSRenderPass_CK.h"
+
+using namespace usse;
+using namespace usse::api;
 
 void PatchSteam();
 void PatchThreading();
@@ -63,6 +68,54 @@ void Patch_TESVCreationKit()
 
 		MessageBoxA(nullptr, message, "Version Check", MB_ICONERROR);
 		return;
+	}
+
+	//
+	// Unicode patch
+	//
+	if (g_INI.GetBoolean("CreationKit", "Unicode", true))
+	{
+#if SKYRIMSE_LAZ_UNICODE_PLUGIN
+		// Initialization CreationKitUnicodePlugin.dll
+		BOOL bRes = XUtil::Conversion::LazUnicodePluginInit();
+		if (!bRes)
+			_MESSAGE("Library 'CreationKitUnicodePlugin.dll' no found. Unicode support don't patched.");
+		else if (!Offsets::IsCKVersion1573OrNewer())
+			_MESSAGE("Unicode support is not implemented in version 1.5.3. Unicode support don't patched.");
+		else
+		{
+			// Initial mode
+			// Initially, the original state must be set
+			ConvertorString.Mode = BGSConvertorString::MODE_ANSI;
+
+			// Intercepting the receipt of a string
+			*(uintptr_t*)&BGSLocalizedString_OldGetStrProc = Detours::X64::DetourFunctionClass(OFFSET(0x1215D80, 1573), &BGSLocalizedString::GetStr);
+
+			// Also delete it message "You must close all Dialoge Boxes",
+			// which has problems with programs that work with multiple monitors.
+			XUtil::DetourCall(OFFSET(0x13FC051, 1573), &hk_usse_BeginPluginSave);
+			// I don't quite understand the meaning of calling SetCursor in this function, which deals with saving
+			// But we'll make the call in hook.
+			XUtil::DetourCall(OFFSET(0x13FC0F2, 1573), &hk_usse_EndPluginSave);
+
+			// Deleting book checks, spam in the log is excessive
+			XUtil::PatchMemoryNop(OFFSET(0x163D9A5, 1573), 5);
+
+			// Fix charset Spell/Scroll/Ench etc dialoges
+			*(uintptr_t*)&spell::OldDlgProc = Detours::X64::DetourFunctionClass(OFFSET(0x1486620, 1573), &spell::DlgProc);
+
+			// In the "Data" dialog box, the "author" and "description" controls are independent, and I'm forced to make a trap for WinAPI calls
+			XUtil::DetourCall(OFFSET(0x13E32BB, 1573), &hk_usse_SetDlgItemTextA);
+			XUtil::DetourCall(OFFSET(0x13E32E8, 1573), &hk_usse_SetDlgItemTextA);
+			XUtil::DetourCall(OFFSET(0x13E3313, 1573), &hk_usse_SetDlgItemTextA);
+			XUtil::DetourCall(OFFSET(0x13E3079, 1573), &hk_usse_SendDlgItemMessageA);
+			XUtil::DetourCall(OFFSET(0x13E30DA, 1573), &hk_usse_SendDlgItemMessageA);
+			XUtil::DetourCall(OFFSET(0x13E3113, 1573), &hk_usse_SendDlgItemMessageA);
+			XUtil::DetourCall(OFFSET(0x13E3174, 1573), &hk_usse_SendDlgItemMessageA);
+		}
+#else
+	_MESSAGE("Unfortunately, your compiled version does not support the 'Unicode' option.");
+#endif // !SKYRIMSE_LAZ_UNICODE_PLUGIN
 	}
 
 	//
@@ -315,53 +368,53 @@ void Patch_TESVCreationKit()
 	}
 
 	// Deferred dialog loading (batched UI updates)
-	//XUtil::DetourJump(OFFSET(0x1985F20, 1530), &SortDialogueInfo);
-	//XUtil::DetourJump(OFFSET(0x13B9AD0, 1530), &EditorUI::ComboBoxInsertItemDeferred);
-	//XUtil::DetourJump(OFFSET(0x13BA4D0, 1530), &EditorUI::ListViewInsertItemDeferred);
-	//XUtil::DetourCall(OFFSET(0x12C8B63, 1530), &ObjectWindow::UpdateTreeView);
+	XUtil::DetourJump(OFFSET(0x1985F20, 1530), &SortDialogueInfo);
+	XUtil::DetourJump(OFFSET(0x13B9AD0, 1530), &EditorUI::ComboBoxInsertItemDeferred);
+	XUtil::DetourJump(OFFSET(0x13BA4D0, 1530), &EditorUI::ListViewInsertItemDeferred);
+	XUtil::DetourCall(OFFSET(0x12C8B63, 1530), &ObjectWindow::UpdateTreeView);
 	XUtil::DetourCall(OFFSET(0x13DAB04, 1530), &CellViewWindow::UpdateCellList);
 	XUtil::DetourCall(OFFSET(0x13E117C, 1530), &CellViewWindow::UpdateObjectList);
-	//XUtil::DetourJump(OFFSET(0x20A9710, 1530), &EditorUIDialogs::CSScript_PickScriptsToCompileDlgProc);
+	XUtil::DetourJump(OFFSET(0x20A9710, 1530), &EditorUIDialogs::CSScript_PickScriptsToCompileDlgProc);
 
 	// Disable useless "Processing Topic X..." status bar updates
 	XUtil::PatchMemoryNop(OFFSET(0x199DE29, 1530), 5);
 	XUtil::PatchMemoryNop(OFFSET(0x199EA9E, 1530), 5);
 	XUtil::PatchMemoryNop(OFFSET(0x199DA62, 1530), 5);
 
-	////
-	//// AllowSaveESM         - Allow saving ESMs directly without version control
-	//// AllowMasterESP       - Allow ESP files to act as master files while saving
-	//// AllowMultipleMasters - Allow multiple master files to be loaded at once. Alias for bAllowMultipleMasterLoads.
-	////
-	//TESFile_CK::AllowSaveESM = g_INI.GetBoolean("CreationKit", "AllowSaveESM", false);
-	//TESFile_CK::AllowMasterESP = g_INI.GetBoolean("CreationKit", "AllowMasterESP", false);
+	//
+	// AllowSaveESM         - Allow saving ESMs directly without version control
+	// AllowMasterESP       - Allow ESP files to act as master files while saving
+	// AllowMultipleMasters - Allow multiple master files to be loaded at once. Alias for bAllowMultipleMasterLoads.
+	//
+	TESFile_CK::AllowSaveESM = g_INI.GetBoolean("CreationKit", "AllowSaveESM", false);
+	TESFile_CK::AllowMasterESP = g_INI.GetBoolean("CreationKit", "AllowMasterESP", false);
 
-	//if (TESFile_CK::AllowSaveESM || TESFile_CK::AllowMasterESP)
-	//{
-	//	*(uintptr_t *)&TESFile_CK::LoadTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1664CC0, 1530), &TESFile_CK::hk_LoadTESInfo);
-	//	*(uintptr_t *)&TESFile_CK::WriteTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1665520, 1530), &TESFile_CK::hk_WriteTESInfo);
+	if (TESFile_CK::AllowSaveESM || TESFile_CK::AllowMasterESP)
+	{
+		*(uintptr_t *)&TESFile_CK::LoadTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1664CC0, 1530), &TESFile_CK::hk_LoadTESInfo);
+		*(uintptr_t *)&TESFile_CK::WriteTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1665520, 1530), &TESFile_CK::hk_WriteTESInfo);
 
-	//	if (TESFile_CK::AllowSaveESM)
-	//	{
-	//		// Also allow non-game ESMs to be set as "Active File"
-	//		XUtil::DetourCall(OFFSET(0x13E2D37, 1530), &TESFile_CK::IsActiveFileBlacklist);
-	//		XUtil::PatchMemoryNop(OFFSET(0x163CA2E, 1530), 2);
+		if (TESFile_CK::AllowSaveESM)
+		{
+			// Also allow non-game ESMs to be set as "Active File"
+			XUtil::DetourCall(OFFSET(0x13E2D37, 1530), &TESFile_CK::IsActiveFileBlacklist);
+			XUtil::PatchMemoryNop(OFFSET(0x163CA2E, 1530), 2);
 
-	//		// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
-	//		const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
+			// Disable: "File '%s' is a master file or is in use.\n\nPlease select another file to save to."
+			const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
 
-	//		XUtil::PatchMemoryNop(OFFSET(0x164020A, 1530), 12);
-	//		XUtil::PatchMemory(OFFSET(0x30B9090, 1530), (uint8_t *)newFormat, strlen(newFormat) + 1);
+			XUtil::PatchMemoryNop(OFFSET(0x164020A, 1530), 12);
+			XUtil::PatchMemory(OFFSET(0x30B9090, 1530), (uint8_t *)newFormat, strlen(newFormat) + 1);
 
-	//		XUtil::DetourJump(OFFSET(0x1482DA0, 1530), &OpenPluginSaveDialog);
-	//	}
+			XUtil::DetourJump(OFFSET(0x1482DA0, 1530), &OpenPluginSaveDialog);
+		}
 
-	//	if (TESFile_CK::AllowMasterESP)
-	//	{
-	//		// Remove the check for IsMaster()
-	//		XUtil::PatchMemoryNop(OFFSET(0x1657279, 1530), 12);
-	//	}
-	//}
+		if (TESFile_CK::AllowMasterESP)
+		{
+			// Remove the check for IsMaster()
+			XUtil::PatchMemoryNop(OFFSET(0x1657279, 1530), 12);
+		}
+	}
 
 	if (g_INI.GetBoolean("CreationKit", "AllowMultipleMasters", false))
 	{
@@ -410,33 +463,33 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemoryNop(OFFSET(0x1C296AC, 1530), 5);
 	}
 
-	////
-	//// Workaround for version control not allowing merges when a plugin index is above 02. Bethesda's VC bitmap files determine
-	//// check-in status along with user IDs for each specific form in the game. They're also hardcoded for 2 masters only. Using
-	//// this hack for anything EXCEPT merging will break the bitmaps.
-	////
-	//if (g_INI.GetBoolean("CreationKit", "VersionControlMergeWorkaround", false))
-	//{
-	//	XUtil::PatchMemory(OFFSET(0x1458309, 1530), { 0xEB });
-	//	XUtil::PatchMemory(OFFSET(0x1458375, 1530), { 0xEB });
-	//}
+	//
+	// Workaround for version control not allowing merges when a plugin index is above 02. Bethesda's VC bitmap files determine
+	// check-in status along with user IDs for each specific form in the game. They're also hardcoded for 2 masters only. Using
+	// this hack for anything EXCEPT merging will break the bitmaps.
+	//
+	if (g_INI.GetBoolean("CreationKit", "VersionControlMergeWorkaround", false))
+	{
+		XUtil::PatchMemory(OFFSET(0x1458309, 1530), { 0xEB });
+		XUtil::PatchMemory(OFFSET(0x1458375, 1530), { 0xEB });
+	}
 
-	////
-	//// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
-	////
-	//XUtil::PatchMemory(OFFSET(0x2DC679D, 1530), { 0x4D, 0x89, 0xE1, 0x90, 0x90, 0x90, 0x90 });
+	//
+	// Memory bug fix during BSShadowDirectionalLight calculations (see game patch for more information)
+	//
+	XUtil::PatchMemory(OFFSET(0x2DC679D, 1530), { 0x4D, 0x89, 0xE1, 0x90, 0x90, 0x90, 0x90 });
 
-	////
-	//// Re-enable land shadows. Instead of caching the upload once per frame, upload it on every draw call.
-	//// (BSBatchRenderer::Draw -> GEOMETRY_TYPE_DYNAMIC_TRISHAPE uiFrameCount)
-	////
-	//// Fixes a bug where BSDynamicTriShape dynamic data would be written to 1 of 4 ring buffers in the shadowmap pass and
-	//// cached. At some point later in the frame sub_140D6BF00 would increment a counter and swap the currently used
-	//// buffer. In the main render pass DrawDynamicTriShape would use that new buffer instead of the previous one during
-	//// shadows. The data offset (m_VertexAllocationOffset) was always correct, but the wrong ring buffer was used.
-	////
-	//XUtil::PatchMemoryNop(OFFSET(0x13CECD4, 1530), 6);
-	//XUtil::PatchMemoryNop(OFFSET(0x2DB6A51, 1530), 2);
+	//
+	// Re-enable land shadows. Instead of caching the upload once per frame, upload it on every draw call.
+	// (BSBatchRenderer::Draw -> GEOMETRY_TYPE_DYNAMIC_TRISHAPE uiFrameCount)
+	//
+	// Fixes a bug where BSDynamicTriShape dynamic data would be written to 1 of 4 ring buffers in the shadowmap pass and
+	// cached. At some point later in the frame sub_140D6BF00 would increment a counter and swap the currently used
+	// buffer. In the main render pass DrawDynamicTriShape would use that new buffer instead of the previous one during
+	// shadows. The data offset (m_VertexAllocationOffset) was always correct, but the wrong ring buffer was used.
+	//
+	XUtil::PatchMemoryNop(OFFSET(0x13CECD4, 1530), 6);
+	XUtil::PatchMemoryNop(OFFSET(0x2DB6A51, 1530), 2);
 
 	////
 	//// Re-enable fog rendering in the Render Window by forcing post-process effects (SAO/SAOComposite/SAOFog)

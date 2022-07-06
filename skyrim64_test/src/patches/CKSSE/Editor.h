@@ -3,6 +3,11 @@
 #include "../../common.h"
 #include "../TES/BSTArray.h"
 
+BOOL hk_usse_BeginPluginSave(VOID);
+VOID hk_usse_EndPluginSave(HCURSOR hCursor);
+BOOL hk_usse_SetDlgItemTextA(HWND hDlg, INT nIDDlgItem, LPCSTR lpString);
+BOOL hk_usse_SendDlgItemMessageA(HWND hDlg, INT nIDDlgItem, UINT Msg, WPARAM wParam, LPARAM lParam);
+
 struct z_stream_s;
 class TESForm_CK;
 
