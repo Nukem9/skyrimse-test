@@ -76,7 +76,7 @@ namespace MainWindow
 				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_TOOLBAR), TB_CHECKBUTTON, UI_EDITOR_TOGGLEGRASS_BUTTON, TRUE);
 
 				// Same for fog
-				//CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *reinterpret_cast<bool *>(OFFSET(0x4F05728, 1530)) ? MF_CHECKED : MF_UNCHECKED);
+				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *reinterpret_cast<bool *>(OFFSET(0x4F05728, 1530)) ? MF_CHECKED : MF_UNCHECKED);
 
 				CreateExtensionMenu(Hwnd, createInfo->hMenu);
 				return status;
