@@ -63,7 +63,7 @@ void Patch_TESVCreationKit()
 			"Required versions:\n"
 			"CreationKit.exe 1.5.30 released on 2018-04-13\n"
 			"CreationKit.exe 1.5.73 released on 2019-03-13\n"
-			"CreationKit.exe 1.6.438 released on 2022-04-27\n"
+			"CreationKit.exe 1.6.438 released on 2022-04-25\n"
 			"\nExecutable path: %s", modulePath);
 
 		MessageBoxA(nullptr, message, "Version Check", MB_ICONERROR);
