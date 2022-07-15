@@ -503,10 +503,20 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F003, 1530), 99);		// Pointer always null
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F0AE, 1530), 5);		// Pointer always null (second parameter)
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F270, 1530), 5);		// Pointer always null (second parameter)
-	XUtil::PatchMemoryNop(OFFSET(0x2E2F275, 1530), 38);		// Assert always triggers
-	XUtil::PatchMemoryNop(OFFSET(0x2E2F29B, 1530), 41);		// Assert always triggers
+
+	if (Offsets::IsCKVersion16438())
+	{
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F275, 1530), 0x45);	// Assert always triggers
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F2E4, 1530), 0x213);	// Remove most of the useless stuff in the function
+	}
+	else
+	{
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F275, 1530), 38);		// Assert always triggers
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F29B, 1530), 41);		// Assert always triggers
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F2E4, 1530), 546);	// Remove most of the useless stuff in the function
+	}
+
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F2C4, 1530), 22);		// Multiple null pointers in call
-	XUtil::PatchMemoryNop(OFFSET(0x2E2F2E4, 1530), 546);	// Remove most of the useless stuff in the function
 
 	XUtil::PatchMemory(OFFSET(0x2E2BC50, 1530), { 0xC3 });	// Pointer always null (BSGraphics::State::UpdateTemporalData)
 	XUtil::PatchMemory(OFFSET(0x2E2BAF0, 1530), { 0xC3 });	// Pointer always null (BSGraphics::State::UpdateTemporalData)
