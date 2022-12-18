@@ -699,8 +699,10 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash on null BGSPerkRankArray form ids and perk ranks being reset to 1 on save (i.e DianaVampire2017Asherz.esp)
 	//
-	XUtil::DetourJump(OFFSET(0x168DF70, 1530), &InitItemPerkRankDataVisitor);
-	XUtil::DetourCall(OFFSET(0x168D1CA, 1530), &PerkRankData__LoadFrom);
+	if (!Offsets::IsCKVersion16438OrNewer()) {
+		XUtil::DetourJump(OFFSET(0x168DF70, 1530), &InitItemPerkRankDataVisitor);
+		XUtil::DetourCall(OFFSET(0x168D1CA, 1530), &PerkRankData__LoadFrom);
+	}
 
 	//
 	// Fix use-after-free with a NavMeshInfoMap inserted in the altered forms list during a virtual destructor call. NavMeshInfoMap::Clear.
