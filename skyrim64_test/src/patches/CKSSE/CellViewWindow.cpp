@@ -3,6 +3,9 @@
 #include "CellViewWindow.h"
 #include "EditorUI.h"
 #include "TESForm_CK.h"
+#include "UIBaseWindow.h"
+
+#include "../../../resource.h"
 
 namespace CellViewWindow
 {
@@ -10,8 +13,12 @@ namespace CellViewWindow
 
 	INT_PTR CALLBACK CellViewProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 	{
+		Core::Classes::UI::CUICustomWindow CellViewWindow;
+
 		if (Message == WM_INITDIALOG)
 		{
+			CellViewWindow = DialogHwnd;
+
 			// Eliminate the flicker when changing cells
 			ListView_SetExtendedListViewStyleEx(GetDlgItem(DialogHwnd, 1155), LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
 			ListView_SetExtendedListViewStyleEx(GetDlgItem(DialogHwnd, 1156), LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
@@ -20,11 +27,13 @@ namespace CellViewWindow
 		}
 		else if (Message == WM_SIZE)
 		{
-			auto labelRect = reinterpret_cast<RECT *>(OFFSET(0x3AFB570, 1530));
+			auto labelRect = reinterpret_cast<RECT*>(OFFSET(0x3AFB570, 1530));
+
+			auto handle = GetDlgItem(DialogHwnd, 1164);
 
 			// Fix the "World Space" label positioning on window resize
 			RECT label;
-			GetClientRect(GetDlgItem(DialogHwnd, 1164), &label);
+			GetClientRect(handle, &label);
 
 			RECT rect;
 			GetClientRect(GetDlgItem(DialogHwnd, 2083), &rect);
@@ -32,10 +41,25 @@ namespace CellViewWindow
 			int ddMid = rect.left + ((rect.right - rect.left) / 2);
 			int labelMid = (label.right - label.left) / 2;
 
-			SetWindowPos(GetDlgItem(DialogHwnd, 1164), nullptr, ddMid - (labelMid / 2), labelRect->top, 0, 0, SWP_NOSIZE);
+			SetWindowPos(handle, nullptr, ddMid - (labelMid / 2), labelRect->top, 0, 0, SWP_NOSIZE);
 
 			// Force the dropdown to extend the full length of the column
 			labelRect->right = 0;
+
+			auto result = OldCellViewProc(DialogHwnd, Message, wParam, lParam);
+
+			Core::Classes::UI::CUIBaseControl editSearchObjs = GetDlgItem(DialogHwnd, 2581);
+			Core::Classes::UI::CUIBaseControl listObjs = GetDlgItem(DialogHwnd, 1156);
+			Core::Classes::UI::CUIBaseControl listCheckActiveObjs = GetDlgItem(DialogHwnd, IDC_CELL_VIEW_CHECK_ACTIVE_CELL_OBJECTS);
+			
+			auto left = listObjs.Left;
+			auto width = listObjs.Width;
+			listCheckActiveObjs.Left = left;
+			listCheckActiveObjs.Width = width;
+			editSearchObjs.Left = left;
+			editSearchObjs.Width = width;
+
+			return result;
 		}
 		else if (Message == WM_COMMAND)
 		{
@@ -91,6 +115,16 @@ namespace CellViewWindow
 			}
 
 			return 1;
+		}
+		// Don't let us reduce the window too much
+		else if (Message == WM_GETMINMAXINFO) {
+			if (lParam) {
+				LPMINMAXINFO lpMMI = (LPMINMAXINFO)lParam;
+				lpMMI->ptMinTrackSize.x = 738;
+				lpMMI->ptMinTrackSize.y = 315;
+			}
+
+			return S_OK;
 		}
 
 		return OldCellViewProc(DialogHwnd, Message, wParam, lParam);

@@ -43,6 +43,7 @@ namespace EditorUIDarkMode
 	{
 		"Creation Kit",
 		"Creation Kit SE",
+		"Creation Kit SSE",
 		"ActivatorClass",
 		"AlchemyClass",
 		"ArmorClass",
@@ -68,6 +69,10 @@ namespace EditorUIDarkMode
 	void Initialize()
 	{
 		EnableThemeHooking = true;
+	}
+
+	BOOL IsInitialize() {
+		return EnableThemeHooking;
 	}
 
 	void InitializeThread()

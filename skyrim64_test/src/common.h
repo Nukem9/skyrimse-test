@@ -56,6 +56,7 @@ extern "C" IMAGE_DOS_HEADER __ImageBase;
 
 extern INIReader g_INI;
 
+extern uintptr_t g_hModule;
 extern uintptr_t g_ModuleBase;
 extern uintptr_t g_ModuleSize;
 
@@ -87,3 +88,11 @@ extern GAME_EXECUTABLE_TYPE g_LoadType;
 extern char g_GitVersion[64];
 
 #define PatchIAT(detour, module, procname) Detours::IATHook(g_ModuleBase, (module), (procname), (uintptr_t)(detour));
+
+#ifndef FIXAPI
+#define FIXAPI __stdcall
+#endif // FIXAPI
+
+#ifndef UI_CUSTOM_MESSAGE
+#define UI_CUSTOM_MESSAGE	52000
+#endif // UI_CUSTOM_MESSAGE

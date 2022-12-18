@@ -46,8 +46,9 @@ void ApplyPatches()
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 {
-    if (fdwReason == DLL_PROCESS_ATTACH)
-    {
+	if (fdwReason == DLL_PROCESS_ATTACH)
+	{
+		g_hModule = (uintptr_t)hModule;
 		// Force this dll to be loaded permanently
 		HMODULE temp;
 		GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCSTR)hModule, &temp);
@@ -93,12 +94,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			DumpEnableBreakpoint();
 			break;
 		}
-    }
+	}
 
 #if SKYRIM64 && !SKYRIM64_CREATIONKIT_ONLY
 	if (g_LoadType == GAME_EXECUTABLE_TYPE::GAME_SKYRIM)
 		TLSPatcherCallback(hModule, fdwReason, lpReserved);
 #endif
 
-    return TRUE;
+	return TRUE;
 }

@@ -1,3 +1,26 @@
+//////////////////////////////////////////
+/*
+* Copyright (c) 2020 Nukem9 <email:Nukem@outlook.com>
+* Copyright (c) 2022 Perchik71 <email:perchik71@outlook.com>
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy of this
+* software and associated documentation files (the "Software"), to deal in the Software
+* without restriction, including without limitation the rights to use, copy, modify, merge,
+* publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+* persons to whom the Software is furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in all copies or
+* substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+* PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+* FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+* OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+* DEALINGS IN THE SOFTWARE.
+*/
+//////////////////////////////////////////
+
 #include "../common.h"
 
 namespace Offsets
@@ -479,6 +502,17 @@ namespace Offsets
 		OFFSET_ENTRY(0x1486620, 1573, nullptr, 0, -1)
 		OFFSET_ENTRY(0x163D9A5, 1573, nullptr, 0, -1)
 
+		// Only 1.6.438
+		OFFSET_ENTRY(0x125CFE1, 16438, nullptr, 0, -1)
+		OFFSET_ENTRY(0x125D390, 16438, nullptr, 0, -1)
+		OFFSET_ENTRY(0x1318311, 16438, nullptr, 0, -1)
+		OFFSET_ENTRY(0x1318600, 16438, nullptr, 0, -1)
+		OFFSET_ENTRY(0x134C80A, 16438, nullptr, 0, -1)
+		OFFSET_ENTRY(0x138A8A5, 16438, nullptr, 0, -1)
+		OFFSET_ENTRY(0x138C66D, 16438, nullptr, 0, -1)
+		OFFSET_ENTRY(0x1394F76, 16438, nullptr, 0, -1)
+		OFFSET_ENTRY(0x1395284, 16438, nullptr, 0, -1)
+			
 		// Data offsets
 		OFFSET_ENTRY(0x3078988, 1530, nullptr, 0, 0x3078988)
 		OFFSET_ENTRY(0x30B9090, 1530, nullptr, 0, 0x30B9090)
@@ -853,6 +887,17 @@ namespace Offsets
 		OFFSET_ENTRY(0x13FC0F2, 1573, nullptr, 0, 0x13FC0F2)
 		OFFSET_ENTRY(0x1486620, 1573, nullptr, 0, 0x1486620)
 		OFFSET_ENTRY(0x163D9A5, 1573, nullptr, 0, 0x163D9A5)
+		
+		// Only 1.6.438
+		OFFSET_ENTRY(0x125CFE1, 16438, nullptr, 0, 0x12FD321)
+		OFFSET_ENTRY(0x125D390, 16438, nullptr, 0, 0x12FD6B0)
+		OFFSET_ENTRY(0x1318311, 16438, nullptr, 0, 0x13BA141)
+		OFFSET_ENTRY(0x1318600, 16438, nullptr, 0, 0xFC15D7)
+		OFFSET_ENTRY(0x134C80A, 16438, nullptr, 0, 0x13EEA4A)
+		OFFSET_ENTRY(0x138A8A5, 16438, nullptr, 0, 0x142E5AD)
+		OFFSET_ENTRY(0x138C66D, 16438, nullptr, 0, 0x143037D)
+		OFFSET_ENTRY(0x1394F76, 16438, nullptr, 0, 0x1438C76)
+		OFFSET_ENTRY(0x1395284, 16438, nullptr, 0, 0x1438F84)
 
 		// Data offsets
 		OFFSET_ENTRY(0x3078988, 1530, nullptr, 0, 0x3062CC8)
@@ -970,7 +1015,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x13E0F3E, 1530, nullptr, 0, 0x133AFAE)
 		OFFSET_ENTRY(0x13E117C, 1530, nullptr, 0, 0x133B1EC)
 		OFFSET_ENTRY(0x13E1600, 1530, nullptr, 0, 0x133B670)
-		OFFSET_ENTRY(0x13E2D37, 1530, "48 89 54 24 10 48 89 4C 24 08 48 83 EC 38 48 8B 44 24 48 83 78 18 00 7D 07", 0, 0x133CDA0)
+		OFFSET_ENTRY(0x13E2D37, 1530, "48 89 54 24 10 48 89 4C 24 08 48 83 EC 38 48 8B 44 24 48 83 78 18 00 7D 07", 0, 0x133CDE7)
 		OFFSET_ENTRY(0x13E32B0, 1530, nullptr, 0, 0x133D380)
 		OFFSET_ENTRY(0x13E6270, 1530, nullptr, 0, 0x1340440)
 		OFFSET_ENTRY(0x13F1CC0, 1530, nullptr, 0, 0x134BDE0)
@@ -1229,7 +1274,22 @@ namespace Offsets
 		OFFSET_ENTRY(0x1486620, 1573, nullptr, 0, 0x13E27D0)
 		OFFSET_ENTRY(0x163D9A5, 1573, nullptr, 0, 0x1599965)
 
-		//// Data offsets
+		// Only 1.6.438
+		OFFSET_ENTRY(0x125CFE1, 16438, nullptr, 0, 0x125CFE1)
+		OFFSET_ENTRY(0x125D390, 16438, nullptr, 0, 0x125D390)
+		OFFSET_ENTRY(0x1318311, 16438, nullptr, 0, 0x1318311)
+		OFFSET_ENTRY(0x1318600, 16438, nullptr, 0, 0x1318600)
+		OFFSET_ENTRY(0x134C80A, 16438, nullptr, 0, 0x134C80A)
+		OFFSET_ENTRY(0x138A8A5, 16438, nullptr, 0, 0x138A8A5)
+		OFFSET_ENTRY(0x138C66D, 16438, nullptr, 0, 0x138C66D)
+		OFFSET_ENTRY(0x1394F76, 16438, nullptr, 0, 0x1394F76)
+		OFFSET_ENTRY(0x1395284, 16438, nullptr, 0, 0x1395284)
+		OFFSET_ENTRY(0x1597069, 16438, nullptr, 0, 0x1597069)
+		OFFSET_ENTRY(0x15BDD05, 16438, nullptr, 0, 0x15BDD05)
+		OFFSET_ENTRY(0x15BDD25, 16438, nullptr, 0, 0x15BDD25)
+		OFFSET_ENTRY(0x257CB40, 16438, nullptr, 0, 0x257CB40)
+			
+		// Data offsets
 		OFFSET_ENTRY(0x3078988, 1530, nullptr, 0, 0x2E835D8)
 		OFFSET_ENTRY(0x30B9090, 1530, nullptr, 0, 0x2EC35A0)
 		OFFSET_ENTRY(0x30F0418, 1530, nullptr, 0, 0x2EFA338)

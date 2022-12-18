@@ -1,3 +1,26 @@
+//////////////////////////////////////////
+/*
+* Copyright (c) 2020 Nukem9 <email:Nukem@outlook.com>
+* Copyright (c) 2022 Perchik71 <email:perchik71@outlook.com>
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy of this
+* software and associated documentation files (the "Software"), to deal in the Software
+* without restriction, including without limitation the rights to use, copy, modify, merge,
+* publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+* persons to whom the Software is furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in all copies or
+* substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+* PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+* FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+* OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+* DEALINGS IN THE SOFTWARE.
+*/
+//////////////////////////////////////////
+
 #define XBYAK_NO_OP_NAMES
 
 #include "../common.h"
@@ -26,6 +49,10 @@
 #include "CKSSE/BSGraphicsRenderTargetManager_CK.h"
 #include "CKSSE/BSShaderResourceManager_CK.h"
 #include "CKSSE/BSRenderPass_CK.h"
+#include "CKSSE/RenderWindow_CK.h"
+#include "CKSSE/UIThemeMode.h"
+#include "CKSSE/PreferencesWindow.h"
+#include "CKSSE/BSFile_CK.h"
 
 using namespace usse;
 using namespace usse::api;
@@ -41,6 +68,13 @@ void Patch_TESVCreationKit()
 	{
 		// Released 2018-04-13 / Built Mon Sep 18 18:58:37 2017
 		Offsets::BuildTableForCKSSEVersion(1530);
+
+		MessageBoxA(nullptr, 
+			"Creation Kit version deprecated.\nNot all patches will be installed.\n\n"
+			"Required versions:\n"
+			"CreationKit.exe 1.5.73 released on 2019-03-13\n"
+			"CreationKit.exe 1.6.438 released on 2022-04-25", 
+			"Version Check", MB_ICONERROR);
 	}
 	else if (!_stricmp((const char *)(g_ModuleBase + 0x3062CC8), "1.5.73.0"))
 	{
@@ -61,7 +95,7 @@ void Patch_TESVCreationKit()
 		sprintf_s(message,
 			"Unknown Creation Kit version detected. Patches are disabled.\n\n"
 			"Required versions:\n"
-			"CreationKit.exe 1.5.30 released on 2018-04-13\n"
+			//"CreationKit.exe 1.5.30 released on 2018-04-13\n"
 			"CreationKit.exe 1.5.73 released on 2019-03-13\n"
 			"CreationKit.exe 1.6.438 released on 2022-04-25\n"
 			"\nExecutable path: %s", modulePath);
@@ -305,10 +339,34 @@ void Patch_TESVCreationKit()
 	PatchIAT(EditorUI::hk_EndDialog, "USER32.DLL", "EndDialog");
 	PatchIAT(EditorUI::hk_SendMessageA, "USER32.DLL", "SendMessageA");
 
-	if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
+	int index_theme = 0;
+	if ((index_theme = g_INI.GetInteger("CreationKit", "UITheme", 0)) > 0)
 	{
 		auto comDll = reinterpret_cast<uintptr_t>(GetModuleHandle("comctl32.dll"));
 		Assert(comDll);
+
+		UITheme::Initialize((UITheme::Theme::Theme)index_theme);
+
+		Detours::IATHook(comDll, "USER32.dll", "GetSysColor", (uintptr_t)&UITheme::Comctl32GetSysColor);
+		Detours::IATHook(comDll, "USER32.dll", "GetSysColorBrush", (uintptr_t)&UITheme::Comctl32GetSysColorBrush);
+		Detours::IATDelayedHook(comDll, "UxTheme.dll", "DrawThemeBackground", (uintptr_t)&UITheme::Comctl32DrawThemeBackground);
+		Detours::IATDelayedHook(comDll, "UxTheme.dll", "DrawThemeText", (uintptr_t)&UITheme::Comctl32DrawThemeText);
+
+		if (Offsets::IsCKVersion1573OrNewer()) {
+			// replace main toolbar
+			XUtil::DetourCall(OFFSET(0x1394F76, 16438), &UITheme::Comctl32CreateToolbarEx_1);
+			XUtil::DetourJump(OFFSET(0x1395284, 16438), &UITheme::HideOldTimeOfDayComponents);
+			// replace ImageList_LoadImage for item type
+			XUtil::DetourCall(OFFSET(0x134C80A, 16438), &UITheme::Comctl32ImageList_LoadImageA_1);
+
+			XUtil::DetourCall(OFFSET(0x138C66D, 16438), &PreferencesWindow::hk_InitializeTimeOfDay);
+			XUtil::DetourCall(OFFSET(0x138A8A5, 16438), &PreferencesWindow::hk_SetNewValueTimeOfDay);
+		}
+	}
+	else if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
+	{
+		auto comDll = reinterpret_cast<uintptr_t>(GetModuleHandle("comctl32.dll"));
+		Assert(comDll); 
 
 		EditorUIDarkMode::Initialize();
 		Detours::IATHook(comDll, "USER32.dll", "GetSysColor", (uintptr_t)&EditorUIDarkMode::Comctl32GetSysColor);
@@ -318,18 +376,19 @@ void Patch_TESVCreationKit()
 	}
 
 	if (g_INI.GetBoolean("CreationKit", "UIHotkeys", false))
-	{
 		Detours::X64::DetourFunctionClass(OFFSET(0x1008538, 1530), &EditorUI::RegisterHotkeyFunction);
-	}
 
 	if (g_INI.GetBoolean("CreationKit", "UI", false))
 	{
 		EditorUI::Initialize();
 
-		*(uintptr_t *)&MainWindow::OldWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x13F3770, 1530), &MainWindow::WndProc);
-		*(uintptr_t *)&ObjectWindow::OldObjectWindowProc = Detours::X64::DetourFunctionClass(OFFSET(0x12C3ED0, 1530), &ObjectWindow::ObjectWindowProc);
-		*(uintptr_t *)&CellViewWindow::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &CellViewWindow::CellViewProc);
-		*(uintptr_t *)&DataDialogWindow::OldDataDialogProc = Detours::X64::DetourFunctionClass(OFFSET(0x13E6270, 1530), &DataDialogWindow::DataDialogProc);
+		*(uintptr_t*)&MainWindow::OldWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x13F3770, 1530), &MainWindow::WndProc);
+		*(uintptr_t*)&ObjectWindow::OldObjectWindowProc = Detours::X64::DetourFunctionClass(OFFSET(0x12C3ED0, 1530), &ObjectWindow::ObjectWindowProc);
+		*(uintptr_t*)&CellViewWindow::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &CellViewWindow::CellViewProc);
+		*(uintptr_t*)&DataDialogWindow::OldDataDialogProc = Detours::X64::DetourFunctionClass(OFFSET(0x13E6270, 1530), &DataDialogWindow::DataDialogProc);
+		
+		if (Offsets::IsCKVersion1573OrNewer())
+			*(uintptr_t*)&RenderWindow::OldRenderWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x125D390, 16438), &RenderWindow::RenderWndProc);
 
 		XUtil::DetourCall(OFFSET(0x20AD5C9, 1530), &hk_call_1420AD5C9);// Raise the papyrus script editor text limit to 500k characters from 64k
 		XUtil::DetourCall(OFFSET(0x1CF03C9, 1530), &hk_call_141CF03C9);// Update the UI options when fog is toggled
@@ -346,7 +405,12 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemoryNop(OFFSET(0x1582E18, 1530), 7);				// Prevent setting redundant colors in the condition list view NM_CUSTOMDRAW (breaks dark theme)
 		XUtil::PatchMemory(OFFSET(0x1582E85, 1530), { 0x74, 0x20 });	// ^
 		XUtil::DetourCall(OFFSET(0x18276C9, 1530), &ArrayQuickSortRecursive<class BGSEntryPointPerkEntry *, true>);// Stable sort for perk entry window
-
+		
+		// Fix resize ObjectWindowProc
+		auto OffsetTotal = OFFSET(0x1318311, 16438);
+		XUtil::PatchMemoryNop(OffsetTotal, 0x70);
+		XUtil::DetourCall(OffsetTotal, &ObjectWindow::hk_MoveWindow);
+		
 		XUtil::DetourJump(OFFSET(0x1256600, 1530), &LogWindow::LogWarning);
 		XUtil::DetourJump(OFFSET(0x243D610, 1530), &LogWindow::LogWarning);
 		XUtil::DetourJump(OFFSET(0x1CD29E0, 1530), &LogWindow::LogWarning);
@@ -380,6 +444,12 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x199DE29, 1530), 5);
 	XUtil::PatchMemoryNop(OFFSET(0x199EA9E, 1530), 5);
 	XUtil::PatchMemoryNop(OFFSET(0x199DA62, 1530), 5);
+
+	// for render window
+	if (Offsets::IsCKVersion1573OrNewer()) {
+		//XUtil::DetourJump(OFFSET(0x1392EF6, 16438), &setFlagLoadedPlugin);
+		XUtil::DetourJump(OFFSET(0x125CFE1, 16438), &RenderWindow::setFlagLoadCell);
+	}
 
 	//
 	// AllowSaveESM         - Allow saving ESMs directly without version control
@@ -472,6 +542,31 @@ void Patch_TESVCreationKit()
 	{
 		XUtil::PatchMemory(OFFSET(0x1458309, 1530), { 0xEB });
 		XUtil::PatchMemory(OFFSET(0x1458375, 1530), { 0xEB });
+	}
+
+	// Will force CK to read large pages
+	if (g_INI.GetBoolean("CreationKit", "IOPatch", false) && Offsets::IsCKVersion1573OrNewer())
+	{
+		// 2 kb -> x kb >= 256 kb
+		*(uintptr_t*)&BSFile::ICreateInstance = Detours::X64::DetourFunctionClass(OFFSET(0x257CB40, 16438), &BSFile::hk_ICreateInstance);
+		//
+		XUtil::PatchMemory(OFFSET(0x1597069, 16438), { 0x00, 0x00, 0x04, 0x00 });
+		XUtil::PatchMemory(OFFSET(0x15BDD05, 16438), { 0xEB });
+		XUtil::PatchMemory(OFFSET(0x15BDD25, 16438), { 0x04 });
+
+		PatchIAT(BSFile::hk_fopen, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen");
+		PatchIAT(BSFile::hk_fopen_s, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen_s");
+		PatchIAT(BSFile::hk_fread, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fread");
+		PatchIAT(BSFile::hk_fwrite, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fwrite");
+		PatchIAT(BSFile::hk_fseek, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fseek");
+		PatchIAT(BSFile::hk_ftell, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "ftell");
+		PatchIAT(BSFile::hk_fclose, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fclose");
+		PatchIAT(BSFile::hk_fflush, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fflush");
+		PatchIAT(BSFile::hk_feof, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "feof");
+		PatchIAT(BSFile::hk_fgetc, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fgetc");
+		PatchIAT(BSFile::hk_fgets, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fgets");
+		PatchIAT(BSFile::hk_fputc, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fputc");
+		PatchIAT(BSFile::hk_fputs, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fputs");
 	}
 
 	//
