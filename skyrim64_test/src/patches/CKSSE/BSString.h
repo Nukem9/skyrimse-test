@@ -124,6 +124,7 @@ public:
 		static BSString GetCurrentPath(VOID);
 		static BSString GetFileNameModule(const BSString& mname);
 		static BSString GetApplicationPath(VOID);
+		static BSString GetRelativeDataPath(VOID);
 		static BSString GetDataPath(VOID);
 		static BSString GetFixesPath(VOID);
 

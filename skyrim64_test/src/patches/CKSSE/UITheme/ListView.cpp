@@ -24,6 +24,11 @@
 #include "VarCommon.h"
 #include "ListView.h"
 #include "..\BSString.h"
+#include "..\EditorUI.h"
+#include "..\TESFile_CK.h"
+
+#include "..\LogWindow.h"
+#include "..\..\..\xutil.h"
 
 #define UI_CONTROL_CONDITION_ID 0xFA0
 #define SIZEBUF 1024
@@ -90,9 +95,6 @@ namespace Core {
 					if (lpDrawItem->itemID == -1)
 						return;
 
-					CHAR szFileName[SIZEBUF] = { 0 };
-					CHAR szFileType[SIZEBUF] = { 0 };
-
 					RECT rc = lpDrawItem->rcItem;
 					Graphics::CUICanvas Canvas(lpDrawItem->hDC);
 					
@@ -100,19 +102,20 @@ namespace Core {
 
 					Canvas.Fill(rc, GetThemeSysColor(ThemeColor::ThemeColor_ListView_Color));
 
-					ListView_GetItemText(lpDrawItem->hwndItem, lpDrawItem->itemID, 0, (LPSTR)(&szFileName[0]), SIZEBUF);
-					ListView_GetItemText(lpDrawItem->hwndItem, lpDrawItem->itemID, 1, (LPSTR)(&szFileType[0]), SIZEBUF);
+					BSString FileName;
+					BSString FileType;
 
-					BOOL isMaster = !stricmp(szFileType, "Master File");
+					if (!FileName.Reserved(SIZEBUF) || !FileType.Reserved(SIZEBUF))
+						return;
 
-					if (isMaster)
-					{
-						auto ext = BSString::Utils::ExtractFileExt(szFileName);
-						if (!ext.Compare(".esl"))
-							Canvas.FillWithTransparent(rc, RGB(0, 255, 0), 10);
-						else
-							Canvas.FillWithTransparent(rc, RGB(255, 0, 0), 10);
-					}
+					ListView_GetItemText(lpDrawItem->hwndItem, lpDrawItem->itemID, 0, const_cast<LPSTR>(FileName.Get()), SIZEBUF);
+					ListView_GetItemText(lpDrawItem->hwndItem, lpDrawItem->itemID, 1, const_cast<LPSTR>(FileType.Get()), SIZEBUF);
+
+					auto type = TESFile_CK::GetTypeFile((BSString::Utils::GetRelativeDataPath() + FileName).Get());
+					if ((type & TESFile_CK::FILE_RECORD_ESM) == TESFile_CK::FILE_RECORD_ESM)
+						Canvas.FillWithTransparent(rc, RGB(255, 0, 0), 10);
+					else if ((type & TESFile_CK::FILE_RECORD_ESL) == TESFile_CK::FILE_RECORD_ESL)
+						Canvas.FillWithTransparent(rc, RGB(0, 255, 0), 10);
 
 					// CHECKBOX
 
@@ -148,13 +151,13 @@ namespace Core {
 					ListView_GetSubItemRect(lpDrawItem->hwndItem, lpDrawItem->itemID, 0, LVIR_BOUNDS, (LPRECT)&rcText);
 					rcText.Inflate(-2, -2);
 					rcText.Left += 2 + icon_off;
-					Canvas.TextRect(rcText, szFileName, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+					Canvas.TextRect(rcText, FileName.Get(), DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
 
 					ListView_GetSubItemRect(lpDrawItem->hwndItem, lpDrawItem->itemID, 1, LVIR_BOUNDS, (LPRECT)&rcText);
 					rcText.Inflate(-2, -2);
 					rcText.Left += 2;
 
-					Canvas.TextRect(rcText, szFileType, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+					Canvas.TextRect(rcText, FileType.Get(), DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
 
 					if (Selected)
 						// blend 40%

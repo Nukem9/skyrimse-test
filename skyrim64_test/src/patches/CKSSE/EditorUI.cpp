@@ -288,6 +288,20 @@ namespace EditorUI
 			ListViewSetItemState(ListViewHandle, index, 0, LVIS_SELECTED);
 	}
 
+	void* ListViewGetUserData(HWND ListViewHandle, int ItemIndex) {
+		if (!ListViewHandle || ItemIndex == -1)
+			return nullptr;
+
+		LVITEMA item
+		{
+			.mask = LVIF_PARAM,
+			.iItem = ItemIndex
+		};
+
+		ListView_GetItem(ListViewHandle, &item);
+		return reinterpret_cast<void*>(item.lParam);
+	}
+
 	void ComboBoxInsertItemDeferred(HWND ComboBoxHandle, const char *DisplayText, void *Value, bool AllowResize)
 	{
 		if (!ComboBoxHandle)

@@ -387,8 +387,11 @@ void Patch_TESVCreationKit()
 		*(uintptr_t*)&CellViewWindow::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &CellViewWindow::CellViewProc);
 		*(uintptr_t*)&DataDialogWindow::OldDataDialogProc = Detours::X64::DetourFunctionClass(OFFSET(0x13E6270, 1530), &DataDialogWindow::DataDialogProc);
 		
-		if (Offsets::IsCKVersion1573OrNewer())
+		if (Offsets::IsCKVersion1573OrNewer()) {
 			*(uintptr_t*)&RenderWindow::OldRenderWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x125D390, 16438), &RenderWindow::RenderWndProc);
+
+			XUtil::DetourJump(OFFSET(0x125CFE1, 16438), &RenderWindow::setFlagLoadCell);
+		}
 
 		XUtil::DetourCall(OFFSET(0x20AD5C9, 1530), &hk_call_1420AD5C9);// Raise the papyrus script editor text limit to 500k characters from 64k
 		XUtil::DetourCall(OFFSET(0x1CF03C9, 1530), &hk_call_141CF03C9);// Update the UI options when fog is toggled
@@ -445,12 +448,6 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x199EA9E, 1530), 5);
 	XUtil::PatchMemoryNop(OFFSET(0x199DA62, 1530), 5);
 
-	// for render window
-	if (Offsets::IsCKVersion1573OrNewer()) {
-		//XUtil::DetourJump(OFFSET(0x1392EF6, 16438), &setFlagLoadedPlugin);
-		XUtil::DetourJump(OFFSET(0x125CFE1, 16438), &RenderWindow::setFlagLoadCell);
-	}
-
 	//
 	// AllowSaveESM         - Allow saving ESMs directly without version control
 	// AllowMasterESP       - Allow ESP files to act as master files while saving
@@ -474,54 +471,42 @@ void Patch_TESVCreationKit()
 			const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
 
 			XUtil::PatchMemoryNop(OFFSET(0x164020A, 1530), 12);
-			XUtil::PatchMemory(OFFSET(0x30B9090, 1530), (uint8_t *)newFormat, strlen(newFormat) + 1);
+			XUtil::PatchMemory(OFFSET(0x30B9090, 1530), (uint8_t*)newFormat, strlen(newFormat) + 1);
 
 			XUtil::DetourJump(OFFSET(0x1482DA0, 1530), &OpenPluginSaveDialog);
 		}
 
 		if (TESFile_CK::AllowMasterESP)
-		{
 			// Remove the check for IsMaster()
 			XUtil::PatchMemoryNop(OFFSET(0x1657279, 1530), 12);
-		}
 	}
 
 	if (g_INI.GetBoolean("CreationKit", "AllowMultipleMasters", false))
-	{
 		XUtil::PatchMemory(OFFSET(0x163CD7A, 1530), { 0xE9, 0xBA, 0x00, 0x00, 0x00, 0x90 });
-	}
 
 	//
 	// Skip 'Topic Info' validation during load
 	//
 	if (g_INI.GetBoolean("CreationKit", "SkipTopicInfoValidation", false))
-	{
 		XUtil::PatchMemory(OFFSET(0x19A83C0, 1530), { 0xC3 });
-	}
 
 	//
 	// Remove assertion message boxes
 	//
 	if (g_INI.GetBoolean("CreationKit", "DisableAssertions", false))
-	{
 		XUtil::PatchMemoryNop(OFFSET(0x243D9FE, 1530), 5);
-	}
 
 	//
 	// Force render window to draw at 60fps (SetTimer(1ms))
 	//
 	if (g_INI.GetBoolean("CreationKit", "RenderWindow60FPS", false))
-	{
 		XUtil::PatchMemory(OFFSET(0x1306978, 1530), { 0x01 });
-	}
 
 	//
 	// Workaround for "Select Enable State Parent" selecting objects outside of the current cell or worldspace
 	//
 	if (g_INI.GetBoolean("CreationKit", "EnableStateParentWorkaround", false))
-	{
 		XUtil::DetourCall(OFFSET(0x135CDD3, 1530), &hk_call_14135CDD3);
-	}
 
 	//
 	// Workaround for ref links and enable state parent links (2D lines) causing the CK to hang indefinitely when too many objects
@@ -554,7 +539,7 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemory(OFFSET(0x15BDD05, 16438), { 0xEB });
 		XUtil::PatchMemory(OFFSET(0x15BDD25, 16438), { 0x04 });
 
-		PatchIAT(BSFile::hk_fopen, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen");
+		/*PatchIAT(BSFile::hk_fopen, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen");
 		PatchIAT(BSFile::hk_fopen_s, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen_s");
 		PatchIAT(BSFile::hk_fread, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fread");
 		PatchIAT(BSFile::hk_fwrite, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fwrite");
@@ -566,7 +551,7 @@ void Patch_TESVCreationKit()
 		PatchIAT(BSFile::hk_fgetc, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fgetc");
 		PatchIAT(BSFile::hk_fgets, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fgets");
 		PatchIAT(BSFile::hk_fputc, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fputc");
-		PatchIAT(BSFile::hk_fputs, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fputs");
+		PatchIAT(BSFile::hk_fputs, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fputs");*/
 	}
 
 	//
@@ -655,9 +640,7 @@ void Patch_TESVCreationKit()
 	//
 	// 1.6.438 changed
 	if (!Offsets::IsCKVersion16438())
-	{
 		Detours::X64::DetourClassVTable(OFFSET(0x345ECD0, 1530), &BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath, 34);
-	}
 
 	//
 	// Fix the "Cell View" object list current selection not being synced with the render window

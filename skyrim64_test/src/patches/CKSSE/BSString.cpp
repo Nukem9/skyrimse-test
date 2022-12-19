@@ -508,6 +508,10 @@ BSString BSString::Utils::ChangeFileExt(const BSString& fname, const BSString& e
 	return BSString(fname).Append(ext);
 }
 
+BSString BSString::Utils::GetRelativeDataPath(VOID) {
+	return "Data\\";
+}
+
 BSString BSString::Utils::GetDataPath(VOID) {
 	return GetApplicationPath() + "Data\\";
 }

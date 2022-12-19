@@ -89,6 +89,8 @@ namespace EditorUI
 	void ListViewDeselectItem(HWND ListViewHandle, void *Parameter);
 	void ComboBoxInsertItemDeferred(HWND ComboBoxHandle, const char *DisplayText, void *Value, bool AllowResize);
 	void TabControlDeleteItem(HWND TabControlHandle, uint32_t TabIndex);
+	
+	void* ListViewGetUserData(HWND ListViewHandle, int ItemIndex);
 
 	void RegisterHotkeyFunction(void *Thisptr, void(*Callback)(), const char **HotkeyFunction, const char **DisplayText, char VirtualKey, bool Alt, bool Ctrl, bool Shift);
 	void ResetUIDefer();

@@ -24,6 +24,8 @@
 #include "LogWindow.h"
 #include "../../xutil.h"
 
+#include <io.h> 
+
 #pragma warning(disable : 6011)
 #pragma warning(disable : 6031)
 
@@ -74,6 +76,10 @@ WRAP_FILE* WRAP_FILE::GetInstance(FILE* handle) {
 }
 
 /// 
+
+BOOL FIXAPI FileExists(LPCSTR filename) {
+	return access(filename, 0) != -1;
+}
 
 HANDLE FIXAPI FileCreate(LPCSTR filename, LPCSTR mode) {
 	if (!mode || !filename)

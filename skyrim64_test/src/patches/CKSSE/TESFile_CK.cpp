@@ -2,6 +2,8 @@
 #include "TESFile_CK.h"
 #include "LogWindow.h"
 
+#include <fstream>
+
 int TESFile_CK::hk_LoadTESInfo()
 {
 	int error = LoadTESInfo(this);
@@ -21,7 +23,7 @@ int TESFile_CK::hk_LoadTESInfo()
 
 			// Strip ESM flag, clear loaded ONAM data
 			m_RecordFlags &= ~FILE_RECORD_ESM;
-			((void(__fastcall *)(TESFile_CK *))OFFSET(0x166CC60, 1530))(this);
+			((void(__fastcall*)(TESFile_CK*))OFFSET(0x166CC60, 1530))(this);
 		}
 	}
 	
@@ -52,7 +54,7 @@ __int64 TESFile_CK::hk_WriteTESInfo()
 			{
 				LogWindow::Log("Regenerating ONAM data for master file '%s'...\n", m_FileName);
 
-				((void(__fastcall *)(TESFile_CK *))OFFSET(0x166CCF0, 1530))(this);
+				((void(__fastcall*)(TESFile_CK*))OFFSET(0x166CCF0, 1530))(this);
 				resetEsmFlag = true;
 			}
 		}
@@ -82,4 +84,22 @@ bool TESFile_CK::IsActiveFileBlacklist()
 	}
 
 	return false;
+}
+
+bool TESFile_CK::ReadFirstChunk(const char* fileName, TESChunk_CK& chunk) {
+	std::ifstream ifs(fileName, std::ios::binary);
+	if (!ifs.good())
+		return false;
+	
+	ifs.read(reinterpret_cast<char*>(&chunk), sizeof(TESChunk_CK));
+	ifs.close();
+
+	return true;
+}
+
+uint32_t TESFile_CK::GetTypeFile(const char* fileName) {
+	TESChunk_CK chunk;
+	if (ReadFirstChunk(fileName, chunk))
+		return chunk.flags;
+	return 0;
 }

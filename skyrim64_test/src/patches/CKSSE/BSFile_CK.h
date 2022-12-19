@@ -36,6 +36,7 @@ enum class BSFileModes : DWORD {
 	kFileMode_AppendOnly = 2
 };
 
+BOOL FIXAPI FileExists(LPCSTR filename);
 HANDLE FIXAPI FileCreate(LPCSTR filename, LPCSTR mode);
 VOID FIXAPI FileClose(HANDLE handle);
 INT64 FIXAPI FileSeek(HANDLE handle, INT64 distance, BSFileOrigins origin = BSFileOrigins::kFileOrigin_Current);

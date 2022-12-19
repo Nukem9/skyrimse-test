@@ -23,6 +23,19 @@
 
 #pragma once
 
+#include <stdint.h>
+
+struct TESChunk_CK {
+	char type[4];
+	uint32_t size;
+	uint32_t flags;
+	uint32_t identifier;
+	uint16_t timestamp;
+	uint16_t vercontrol;
+	uint16_t internalver;
+	uint16_t unk;
+};
+
 class TESFile_CK
 {
 private:
@@ -55,6 +68,9 @@ public:
 	int hk_LoadTESInfo();
 	__int64 hk_WriteTESInfo();
 	bool IsActiveFileBlacklist();
+public:
+	static bool ReadFirstChunk(const char* fileName, TESChunk_CK& chunk);
+	static uint32_t GetTypeFile(const char* fileName);
 };
 static_assert_offset(TESFile_CK, m_FileName, 0x58);
 static_assert_offset(TESFile_CK, m_FilePath, 0x15C);
