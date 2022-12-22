@@ -1,6 +1,7 @@
 #include "../../common.h"
 #include "TESFile_CK.h"
 #include "LogWindow.h"
+#include "BSString.h"
 
 #include <fstream>
 
@@ -82,6 +83,14 @@ bool TESFile_CK::IsActiveFileBlacklist()
 			return true;
 		}
 	}
+
+	/*auto type = TESFile_CK::GetTypeFile((BSString::Utils::GetRelativeDataPath() + m_FileName).Get());
+	if ((type & TESFile_CK::FILE_RECORD_ESL) == TESFile_CK::FILE_RECORD_ESL) {
+		MessageBoxA(GetForegroundWindow(), 
+			"Light master files cannot to be open normally.\n"
+			"The probability of getting CTD is very high.\n", 
+			"Warning", MB_ICONWARNING);
+	}*/
 
 	return false;
 }

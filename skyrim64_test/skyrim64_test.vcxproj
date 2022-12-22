@@ -162,7 +162,6 @@
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\INIReader.h" />
     <ClInclude Include="src\patches\CKSSE\BGString.h" />
-    <ClInclude Include="src\patches\CKSSE\BSFile_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSFixedString.h" />
     <ClInclude Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSHandleRefObject_CK.h" />
@@ -325,7 +324,6 @@
   <ItemGroup>
     <ClCompile Include="src\patches\bnet.cpp" />
     <ClCompile Include="src\patches\CKSSE\BGString.cpp" />
-    <ClCompile Include="src\patches\CKSSE\BSFile_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSPointerHandleManager.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSRenderPass_CK.cpp" />

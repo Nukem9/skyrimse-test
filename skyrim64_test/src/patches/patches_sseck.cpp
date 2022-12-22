@@ -52,7 +52,6 @@
 #include "CKSSE/RenderWindow_CK.h"
 #include "CKSSE/UIThemeMode.h"
 #include "CKSSE/PreferencesWindow.h"
-#include "CKSSE/BSFile_CK.h"
 
 using namespace usse;
 using namespace usse::api;
@@ -527,31 +526,6 @@ void Patch_TESVCreationKit()
 	{
 		XUtil::PatchMemory(OFFSET(0x1458309, 1530), { 0xEB });
 		XUtil::PatchMemory(OFFSET(0x1458375, 1530), { 0xEB });
-	}
-
-	// Will force CK to read large pages
-	if (g_INI.GetBoolean("CreationKit", "IOPatch", false) && Offsets::IsCKVersion1573OrNewer())
-	{
-		// 2 kb -> x kb >= 256 kb
-		*(uintptr_t*)&BSFile::ICreateInstance = Detours::X64::DetourFunctionClass(OFFSET(0x257CB40, 16438), &BSFile::hk_ICreateInstance);
-		//
-		XUtil::PatchMemory(OFFSET(0x1597069, 16438), { 0x00, 0x00, 0x04, 0x00 });
-		XUtil::PatchMemory(OFFSET(0x15BDD05, 16438), { 0xEB });
-		XUtil::PatchMemory(OFFSET(0x15BDD25, 16438), { 0x04 });
-
-		/*PatchIAT(BSFile::hk_fopen, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen");
-		PatchIAT(BSFile::hk_fopen_s, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fopen_s");
-		PatchIAT(BSFile::hk_fread, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fread");
-		PatchIAT(BSFile::hk_fwrite, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fwrite");
-		PatchIAT(BSFile::hk_fseek, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fseek");
-		PatchIAT(BSFile::hk_ftell, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "ftell");
-		PatchIAT(BSFile::hk_fclose, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fclose");
-		PatchIAT(BSFile::hk_fflush, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fflush");
-		PatchIAT(BSFile::hk_feof, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "feof");
-		PatchIAT(BSFile::hk_fgetc, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fgetc");
-		PatchIAT(BSFile::hk_fgets, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fgets");
-		PatchIAT(BSFile::hk_fputc, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fputc");
-		PatchIAT(BSFile::hk_fputs, "API-MS-WIN-CRT-STDIO-L1-1-0.DLL", "fputs");*/
 	}
 
 	//

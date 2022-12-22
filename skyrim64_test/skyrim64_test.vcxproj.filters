@@ -518,9 +518,6 @@
     <ClInclude Include="src\patches\CKSSE\TESWater.h">
       <Filter>Header Files\[EditorAPI]</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\BSFile_CK.h">
-      <Filter>Header Files\[EditorAPI]</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -881,9 +878,6 @@
       <Filter>Source Files\[EditorAPI]</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\CKSSE\TESForm_CK.cpp">
-      <Filter>Source Files\[EditorAPI]</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\BSFile_CK.cpp">
       <Filter>Source Files\[EditorAPI]</Filter>
     </ClCompile>
   </ItemGroup>
