@@ -392,6 +392,9 @@ void Patch_TESVCreationKit()
 			XUtil::DetourJump(OFFSET(0x125CFE1, 16438), &RenderWindow::setFlagLoadCell);
 		}
 
+		XUtil::DetourCall(OFFSET(0x1CBF8F0, 1573), &EditorUI::hk_EnableWindow);	// Spell fix disable Casting and Delivery
+		XUtil::DetourCall(OFFSET(0x1CBF918, 1573), &EditorUI::hk_EnableWindow); // ^
+
 		XUtil::DetourCall(OFFSET(0x20AD5C9, 1530), &hk_call_1420AD5C9);// Raise the papyrus script editor text limit to 500k characters from 64k
 		XUtil::DetourCall(OFFSET(0x1CF03C9, 1530), &hk_call_141CF03C9);// Update the UI options when fog is toggled
 		XUtil::DetourCall(OFFSET(0x12D1541, 1530), &hk_call_1412D1541);// Allow forms to be filtered in EditorUI_ObjectWindowProc

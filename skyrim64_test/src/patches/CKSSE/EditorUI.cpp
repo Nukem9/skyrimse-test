@@ -140,6 +140,10 @@ namespace EditorUI
 		return SendMessageA(hWnd, Msg, wParam, lParam);
 	}
 
+	BOOL WINAPI hk_EnableWindow(HWND hwndDlg, BOOL bEnable) {
+		return EnableWindow(hwndDlg, TRUE);
+	}
+
 	INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		DLGPROC proc = nullptr;

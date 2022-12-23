@@ -80,6 +80,7 @@ namespace EditorUI
 	BOOL WINAPI hk_EndDialog(HWND hDlg, INT_PTR nResult);
 	LRESULT WINAPI hk_SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	BOOL WINAPI hk_EnableWindow(HWND hwndDlg, BOOL bEnable);
 
 	void ListViewInsertItemDeferred(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex);
 	BOOL ListViewSetItemState(HWND ListViewHandle, WPARAM Index, UINT Data, UINT Mask);
