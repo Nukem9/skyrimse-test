@@ -501,6 +501,8 @@ namespace Offsets
 		OFFSET_ENTRY(0x13FC0F2, 1573, nullptr, 0, -1)
 		OFFSET_ENTRY(0x1486620, 1573, nullptr, 0, -1)
 		OFFSET_ENTRY(0x163D9A5, 1573, nullptr, 0, -1)
+		OFFSET_ENTRY(0x1CBF8F0, 1573, nullptr, 0, -1)
+		OFFSET_ENTRY(0x1CBF918, 1573, nullptr, 0, -1)
 
 		// Only 1.6.438
 		OFFSET_ENTRY(0x125CFE1, 16438, nullptr, 0, -1)
@@ -1275,6 +1277,8 @@ namespace Offsets
 		OFFSET_ENTRY(0x13FC0F2, 1573, nullptr, 0, 0x1359EF2)
 		OFFSET_ENTRY(0x1486620, 1573, nullptr, 0, 0x13E27D0)
 		OFFSET_ENTRY(0x163D9A5, 1573, nullptr, 0, 0x1599965)
+		OFFSET_ENTRY(0x1CBF8F0, 1573, nullptr, 0, 0x1C19F30)
+		OFFSET_ENTRY(0x1CBF918, 1573, nullptr, 0, 0x1C19F58)
 
 		// Only 1.6.438
 		OFFSET_ENTRY(0x125CFE1, 16438, nullptr, 0, 0x125CFE1)
