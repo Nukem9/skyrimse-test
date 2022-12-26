@@ -3,12 +3,12 @@
 #include "../../common.h"
 #include <Uxtheme.h>
 
-#pragma comment(lib, "uxtheme.lib")
-
 namespace EditorUIDarkMode
 {
 	void Initialize();
 	void InitializeThread();
+
+	BOOL IsInitialize();
 
 	LRESULT CALLBACK CallWndProcCallback(int nCode, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK WindowSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);

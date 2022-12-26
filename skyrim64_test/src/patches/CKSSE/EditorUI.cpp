@@ -1,10 +1,32 @@
 #include "../../common.h"
 #include "EditorUI.h"
 #include "EditorUIDarkMode.h"
+//////////////////////////////////////////
+/*
+* Copyright (c) 2020 Nukem9 <email:Nukem@outlook.com>
+* Copyright (c) 2022 Perchik71 <email:perchik71@outlook.com>
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy of this
+* software and associated documentation files (the "Software"), to deal in the Software
+* without restriction, including without limitation the rights to use, copy, modify, merge,
+* publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+* persons to whom the Software is furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in all copies or
+* substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+* PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+* FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+* OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+* DEALINGS IN THE SOFTWARE.
+*/
+//////////////////////////////////////////
+
+#include "UIThemeMode.h"
 #include "MainWindow.h"
 #include "LogWindow.h"
-
-#pragma comment(lib, "comctl32.lib")
 
 namespace EditorUI
 {
@@ -23,12 +45,13 @@ namespace EditorUI
 	HWND DeferredComboBox;
 	uintptr_t DeferredStringLength;
 	bool DeferredAllowResize;
-	std::vector<std::pair<const char *, void *>> DeferredMenuItems;
+	std::vector<std::pair<const char*, void*>> DeferredMenuItems;
 
 	void Initialize()
 	{
 		InitCommonControls();
 
+		UITheme::InitializeThread();
 		EditorUIDarkMode::InitializeThread();
 		MainWindow::Initialize();
 
@@ -117,6 +140,10 @@ namespace EditorUI
 		return SendMessageA(hWnd, Msg, wParam, lParam);
 	}
 
+	BOOL WINAPI hk_EnableWindow(HWND hwndDlg, BOOL bEnable) {
+		return EnableWindow(hwndDlg, TRUE);
+	}
+
 	INT_PTR CALLBACK DialogFuncOverride(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		DLGPROC proc = nullptr;
@@ -156,7 +183,7 @@ namespace EditorUI
 		return proc(hwndDlg, uMsg, wParam, lParam);
 	}
 
-	void ListViewInsertItemDeferred(HWND ListViewHandle, void *Parameter, bool UseImage, int ItemIndex)
+	void ListViewInsertItemDeferred(HWND ListViewHandle, void* Parameter, bool UseImage, int ItemIndex)
 	{
 		if (ItemIndex == -1)
 			ItemIndex = INT_MAX;
@@ -214,7 +241,7 @@ namespace EditorUI
 		}
 	}
 
-	void ListViewFindAndSelectItem(HWND ListViewHandle, void *Parameter, bool KeepOtherSelections)
+	void ListViewFindAndSelectItem(HWND ListViewHandle, void* Parameter, bool KeepOtherSelections)
 	{
 		if (!KeepOtherSelections)
 			ListViewSetItemState(ListViewHandle, -1, 0, LVIS_SELECTED);
@@ -231,7 +258,7 @@ namespace EditorUI
 			ListViewSelectItem(ListViewHandle, index, KeepOtherSelections);
 	}
 
-	void *ListViewGetSelectedItem(HWND ListViewHandle)
+	void* ListViewGetSelectedItem(HWND ListViewHandle)
 	{
 		if (!ListViewHandle)
 			return nullptr;
@@ -248,10 +275,10 @@ namespace EditorUI
 		};
 
 		ListView_GetItem(ListViewHandle, &item);
-		return reinterpret_cast<void *>(item.lParam);
+		return reinterpret_cast<void*>(item.lParam);
 	}
 
-	void ListViewDeselectItem(HWND ListViewHandle, void *Parameter)
+	void ListViewDeselectItem(HWND ListViewHandle, void* Parameter)
 	{
 		LVFINDINFOA findInfo
 		{
@@ -263,6 +290,20 @@ namespace EditorUI
 
 		if (index != -1)
 			ListViewSetItemState(ListViewHandle, index, 0, LVIS_SELECTED);
+	}
+
+	void* ListViewGetUserData(HWND ListViewHandle, int ItemIndex) {
+		if (!ListViewHandle || ItemIndex == -1)
+			return nullptr;
+
+		LVITEMA item
+		{
+			.mask = LVIF_PARAM,
+			.iItem = ItemIndex
+		};
+
+		ListView_GetItem(ListViewHandle, &item);
+		return reinterpret_cast<void*>(item.lParam);
 	}
 
 	void ComboBoxInsertItemDeferred(HWND ComboBoxHandle, const char *DisplayText, void *Value, bool AllowResize)

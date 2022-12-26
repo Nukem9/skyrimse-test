@@ -7,6 +7,11 @@
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Dwmapi.lib")
+#pragma comment(lib, "uxtheme.lib")
+#pragma comment(lib, "Msimg32.lib")
+#pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "Version.lib")
 
 #pragma comment(lib, "tbb.lib")					// Thread Building Blocks
 #pragma comment(lib, "libzydis.lib")			// Zydis
@@ -31,6 +36,7 @@ __itt_heap_function ITT_FreeCallback;
 
 INIReader g_INI("skyrim64_test.ini");
 
+uintptr_t g_hModule;
 uintptr_t g_ModuleBase;
 uintptr_t g_ModuleSize;
 

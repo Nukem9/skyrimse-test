@@ -17,6 +17,7 @@
 #include "TESWater.h"
 #include "LogWindow.h"
 #include "MainWindow.h"
+#include "RenderWindow_CK.h"
 
 #pragma comment(lib, "libdeflate.lib")
 
@@ -90,6 +91,10 @@ BOOL hk_usse_SendDlgItemMessageA(HWND hDlg, INT nIDDlgItem, UINT Msg, WPARAM wPa
 		goto MsgTextDef;
 	}
 }
+
+//void setFlagLoadedPlugin() {
+//	RenderWindow::unlockInputMessages();
+//}
 
 struct z_stream_s
 {

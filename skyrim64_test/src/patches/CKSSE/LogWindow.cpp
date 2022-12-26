@@ -3,6 +3,7 @@
 #include <Richedit.h>
 #include "EditorUI.h"
 #include "EditorUIDarkMode.h"
+#include "UIThemeMode.h"
 #include "MainWindow.h"
 #include "LogWindow.h"
 
@@ -47,6 +48,7 @@ namespace LogWindow
 
 		std::thread asyncLogThread([]()
 		{
+			UITheme::InitializeThread();
 			EditorUIDarkMode::InitializeThread();
 
 			// Output window
@@ -65,10 +67,16 @@ namespace LogWindow
 				.hIconSm = wc.hIcon,
 			};
 
+			if (UITheme::IsEnabledMode())
+				wc.hbrBackground = (HBRUSH)UITheme::Theme::Comctl32GetSysColorBrush(COLOR_BTNFACE);
+			else
+				wc.hbrBackground = (HBRUSH)GetSysColorBrush(COLOR_BTNFACE);
+
 			if (!RegisterClassExA(&wc))
 				return false;
 
-			LogWindowHandle = CreateWindowExA(0, "RTEDITLOG", "Log", WS_OVERLAPPEDWINDOW, 64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
+			LogWindowHandle = CreateWindowExA(0, "RTEDITLOG", "Console Window", WS_OVERLAPPEDWINDOW,
+				64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
 
 			if (!LogWindowHandle)
 				return false;
