@@ -614,9 +614,12 @@ void Patch_TESVCreationKit()
 	// - Selections not scaling correctly depending on distance (ex. LOD terrain) and NiObject scale.
 	// - The Object Palette window "Conform to slope" option causing broken object angles on placement. SE changed data
 	// layouts and geometry vertex data may not include normals.
+	// 
+	// modify in 1.6.438:
 	//
-	// 1.6.438 changed
-	if (!Offsets::IsCKVersion16438())
+	if (Offsets::IsCKVersion16438OrNewer())
+		Detours::X64::DetourClassVTable(OFFSET(0x345ECD0, 1530), &BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPathEx, 34);
+	else
 		Detours::X64::DetourClassVTable(OFFSET(0x345ECD0, 1530), &BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath, 34);
 
 	//
@@ -716,7 +719,7 @@ void Patch_TESVCreationKit()
 	// Replace direct crash with an assertion when an incompatible texture format is used in the renderer
 	//
 	XUtil::DetourCall(OFFSET(0x2D0CCBF, 1530), &DirectX__LoadFromDDSFile);
-
+	
 	//
 	// Fix for crash when trying to use "Test Radius" on a reference's "3D Data" dialog tab. This code wasn't correctly ported to
 	// BSGeometry from NiGeometry during the LE->SSE transition. Flags & materials need to be fixed as a result.

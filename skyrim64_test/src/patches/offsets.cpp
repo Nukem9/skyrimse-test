@@ -1218,7 +1218,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x267B390, 1530, nullptr, 0, 0x25C8F70)
 		OFFSET_ENTRY(0x269AD20, 1530, nullptr, 0, 0x25E8A10)
 		OFFSET_ENTRY(0x26B9300, 1530, nullptr, 0, 0x2606580)
-		OFFSET_ENTRY(0x26D7910, 1530, nullptr, 0, 0x2626290)// Signature failed: Function was modified (arguments may be affected) patch need disable
+		OFFSET_ENTRY(0x26D7910, 1530, nullptr, 0, 0x2626290)// Signature failed: Function was modified (need NiPick)
 		OFFSET_ENTRY(0x27A6150, 1530, nullptr, 0, 0x26F8190)
 		OFFSET_ENTRY(0x27A6270, 1530, nullptr, 0, 0x26F82B0)
 		OFFSET_ENTRY(0x27A7DA0, 1530, nullptr, 0, 0x26F9F70)
@@ -1298,7 +1298,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x31027F8, 1530, nullptr, 0, 0x2F0C518)
 		OFFSET_ENTRY(0x334FBC0, 1530, nullptr, 0, 0x31575E0)
 		OFFSET_ENTRY(0x334FD50, 1530, nullptr, 0, 0x3157770)
-		OFFSET_ENTRY(0x345ECD0, 1530, nullptr, 0, -1)// 0x26D7910 Signature failed: Function was modified (arguments may be affected) patch need disable
+		OFFSET_ENTRY(0x345ECD0, 1530, nullptr, 0, 0x3262770)
 		OFFSET_ENTRY(0x38EC648, 1530, nullptr, 0, 0x36AD640)
 		OFFSET_ENTRY(0x3AFAE28, 1530, nullptr, 0, 0x38BEB38)
 		OFFSET_ENTRY(0x3AFB570, 1530, nullptr, 0, 0x38BF280)
