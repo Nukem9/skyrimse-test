@@ -30,6 +30,7 @@
 #include "TES/MemoryManager.h"
 #include "TES/bhkThreadMemorySource.h"
 #include "TES/NiMain/NiRTTI.h"
+#include "CKSSE/TES_CK.h"
 #include "CKSSE/BGString.h"
 #include "CKSSE/TESDialogSpell.h"
 #include "CKSSE/Experimental.h"
@@ -529,6 +530,14 @@ void Patch_TESVCreationKit()
 	{
 		XUtil::PatchMemory(OFFSET(0x1458309, 1530), { 0xEB });
 		XUtil::PatchMemory(OFFSET(0x1458375, 1530), { 0xEB });
+	}
+
+	//
+	// Change start of indexing for ESL
+	//
+	if (Offsets::IsCKVersion1573OrNewer() && g_INI.GetBoolean("CreationKit", "PatchCompactFormID", false)) {
+		XUtil::DetourCall(OFFSET(0x13510F8, 16438), &TES_CK::CompactActivePlugin);
+		XUtil::PatchMemory(OFFSET(0x13510F8, 16438) + 5, { 0xEB, 0x23 });
 	}
 
 	//

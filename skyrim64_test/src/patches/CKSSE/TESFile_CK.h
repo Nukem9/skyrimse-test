@@ -68,6 +68,8 @@ public:
 	int hk_LoadTESInfo();
 	__int64 hk_WriteTESInfo();
 	bool IsActiveFileBlacklist();
+
+	uint32_t GetIndexLoader() const;
 public:
 	static bool ReadFirstChunk(const char* fileName, TESChunk_CK& chunk);
 	static uint32_t GetTypeFile(const char* fileName);

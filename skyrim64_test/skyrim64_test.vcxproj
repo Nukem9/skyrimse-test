@@ -183,6 +183,7 @@
     <ClInclude Include="src\patches\CKSSE\ObjectWindow.h" />
     <ClInclude Include="src\patches\CKSSE\PreferencesWindow.h" />
     <ClInclude Include="src\patches\CKSSE\RenderWindow_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\TES_CK.h" />
     <ClInclude Include="src\patches\CKSSE\UIBaseWindow.h" />
     <ClInclude Include="src\patches\CKSSE\UICheckboxControl.h" />
     <ClInclude Include="src\patches\CKSSE\UIGraphics.h" />
@@ -339,6 +340,7 @@
     <ClCompile Include="src\patches\CKSSE\PreferencesWindow.cpp" />
     <ClCompile Include="src\patches\CKSSE\RenderWindow_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\TESDialogSpell.cpp" />
+    <ClCompile Include="src\patches\CKSSE\TES_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\UIBaseWindow.cpp" />
     <ClCompile Include="src\patches\CKSSE\UICheckboxControl.cpp" />
     <ClCompile Include="src\patches\CKSSE\UIGraphics.cpp" />

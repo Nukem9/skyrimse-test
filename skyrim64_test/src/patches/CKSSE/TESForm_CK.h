@@ -2,9 +2,19 @@
 
 #include "../TES/BSTArray.h"
 #include "BSHandleRefObject_CK.h"
+#include "BSString.h"
 
 class TESForm_CK
 {
+public:
+	// Form State
+	enum FormFlags : DWORD {
+		fsMaster = /*00*/ 0x1,				// form is from an esm file
+		fsModified = /*01*/ 0x2,			// form is overriden by active mod or save file
+		fsLinked = /*03*/ 0x8,				// set after formids have been resolved into TESForm*
+		fsDeleted = /*05*/ 0x20,			// set on deletion, not saved in CK
+		fsTemporary = /*0E*/ 0x4000,		// not saved in CK
+	};
 public:
 	using Array = BSTArray<TESForm_CK *>;
 
@@ -15,7 +25,11 @@ public:
 	char _pad1[0x10];
 
 	bool GetActive() const;
+	bool GetMarkedDelete() const;
 	uint32_t GetFormID() const;
+	BSString GetEditorID() const;
+
+	void SetNewFormID(uint32_t NewIndex, bool Unk = true);
 
 	static TESForm_CK *GetFormByNumericID(uint32_t SearchID);
 	static void *AlteredFormList_Create(Array *Array, uint32_t Unknown);

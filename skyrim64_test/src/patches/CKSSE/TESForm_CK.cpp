@@ -9,12 +9,24 @@ std::unordered_map<uint64_t, TESForm_CK::Array *> FormReferenceMap;
 
 bool TESForm_CK::GetActive() const
 {
-	return (FormFlags & 2) != 0;
+	return (FormFlags & FormFlags::fsModified) != 0;
+}
+
+bool TESForm_CK::GetMarkedDelete() const {
+	return (FormFlags & FormFlags::fsDeleted) != 0;
 }
 
 uint32_t TESForm_CK::GetFormID() const
 {
 	return FormID;
+}
+
+BSString TESForm_CK::GetEditorID() const {
+	return thisVirtualCall<char*>(0x1E8, this);
+}
+
+void TESForm_CK::SetNewFormID(uint32_t NewIndex, bool Unk) {
+	thisVirtualCall<char*>(0x310, this, NewIndex, Unk);
 }
 
 TESForm_CK *TESForm_CK::GetFormByNumericID(uint32_t SearchID)

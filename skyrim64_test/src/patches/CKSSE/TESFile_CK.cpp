@@ -112,3 +112,7 @@ uint32_t TESFile_CK::GetTypeFile(const char* fileName) {
 		return chunk.flags;
 	return 0;
 }
+
+uint32_t TESFile_CK::GetIndexLoader() const {
+	return ((uint32_t(__fastcall*)(const TESFile_CK*))OFFSET(0x15C1630, 16438))(this);
+}
