@@ -332,6 +332,7 @@
     <ClCompile Include="src\patches\CKSSE\BSString.cpp" />
     <ClCompile Include="src\patches\CKSSE\CellViewWindow.cpp" />
     <ClCompile Include="src\patches\CKSSE\DataDialogWindow.cpp" />
+    <ClCompile Include="src\patches\CKSSE\DisableENB_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\EditorUIDarkMode.cpp" />
     <ClCompile Include="src\patches\CKSSE\EditorUIDialogs.cpp" />
     <ClCompile Include="src\patches\CKSSE\LogWindow.cpp" />

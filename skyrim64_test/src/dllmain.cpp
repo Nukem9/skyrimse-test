@@ -5,6 +5,7 @@
 
 void Patch_TESV();
 void Patch_TESVCreationKit();
+void Disable_ENB();
 
 void ApplyPatches()
 {
@@ -38,6 +39,7 @@ void ApplyPatches()
 #endif
 
 	case GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM:
+		Disable_ENB();
 		Patch_TESVCreationKit();
 		break;
 #endif
