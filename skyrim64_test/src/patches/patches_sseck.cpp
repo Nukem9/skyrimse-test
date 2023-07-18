@@ -538,6 +538,11 @@ void Patch_TESVCreationKit()
 	if (Offsets::IsCKVersion1573OrNewer() && g_INI.GetBoolean("CreationKit", "PatchCompactFormID", false)) {
 		XUtil::DetourCall(OFFSET(0x13510F8, 16438), &TES_CK::CompactActivePlugin);
 		XUtil::PatchMemory(OFFSET(0x13510F8, 16438) + 5, { 0xEB, 0x23 });
+		
+		auto RelOff = OFFSET(0x15C6A8C, 16438);
+		XUtil::PatchMemoryNop(RelOff, 0x34);
+		XUtil::PatchMemory(RelOff - 3, { 0x4C });
+		XUtil::DetourCall(RelOff, &TES_CK::SetLoaderIdByForm);
 	}
 
 	//

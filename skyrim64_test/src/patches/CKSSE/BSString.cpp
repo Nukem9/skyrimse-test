@@ -48,6 +48,9 @@
 #include "..\TES\MemoryManager.h"
 #include "BSString.h"
 
+#include <sstream>
+#include <iomanip>
+
 #define WDELIMITERS " \t\n\r\f\v"
 
 #define BSSTRING_DEBUG 0

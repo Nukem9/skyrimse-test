@@ -27,10 +27,6 @@
 #include "TESForm_CK.h"
 #include "LogWindow.h"
 
-TESFile_CK* TES_CK::GetActivePlugin() const {
-	return m_ActivePlugin;
-}
-
 uint32_t TES_CK::GetActivePluginMaxFormID() const {
 	return ((uint32_t(__fastcall*)(const TES_CK*))OFFSET(0x159A1D0, 16438))(this);
 }
@@ -47,7 +43,7 @@ uint32_t TES_CK::CompactActivePlugin() {
 	LogWindow::Log("Starting the compact of the active plugin...");
 
 	auto Instance = GetInstance();
-	auto ActivePlugin = Instance->GetActivePlugin();
+	auto ActivePlugin = Instance->GetActiveMod();
 	if (ActivePlugin) {
 		LogWindow::Log("	Active plugin: %s.", ActivePlugin->m_FileName);
 
@@ -56,7 +52,7 @@ uint32_t TES_CK::CompactActivePlugin() {
 		// Result XX000001
 		auto UserMinID = std::min((int)g_INI.GetInteger("CreationKit", "CompactStartFormID", 0x800), 0x800);
 		if (UserMinID <= 0) UserMinID = 1;
-		auto MinFormID = (ActivePlugin->GetIndexLoader() << 24) + UserMinID;
+		auto MinFormID = (ActivePlugin->GetIndexLoader() << 24) | UserMinID;
 
 		LogWindow::Log("	FormID (min/max): %08X/%08X.", MinFormID, MaxFormID);
 		LogWindow::Log("	Total forms: %u.", data->QSize());
@@ -87,3 +83,50 @@ uint32_t TES_CK::CompactActivePlugin() {
 
 	return MaxCurrentFormID;
 }
+
+void TES_CK::SetLoaderIdByForm(const TESFile_CK* load_file)
+{
+	// My attempts to force the code to open compact plugins ignoring the 0x800 limit.
+	// The key difference from Fallout 4 is that this function corrects in the file buffer, 
+	// after reading the dependency index bits of the form.
+
+	// What exactly is the problem: The problem is that any form that has an index less 
+	// than 0x800 is reserved for the engine, well, like the form of a player, money, etc.
+	// Therefore, when opening a plugin with such indexes, it just dumped out a ton of errors, 
+	// and spoiled the index of the forms of the active plugin, making them 00.
+
+	auto IdPtr = (uint32_t*)((uintptr_t)load_file + 0x290);
+	//auto OriginalId = *(byte*)((uintptr_t)load_file + 0x460);
+	auto DependObjs = (void*)((uintptr_t)load_file + 0x468);
+	//auto LoadedId = *(byte*)((uintptr_t)load_file + 0x478);
+	auto DependId = *IdPtr >> 24;
+
+	if (DependId >= 0xFE)
+	{
+		// Usually there is a situation when opening a list of plugins
+
+		*IdPtr &= 0xFFFFFF;
+		return;
+	}
+
+	if (!DependObjs && DependId)
+		LogWindow::Log("Form(%08X) in non-dependent file contains a form with file index bits.", *IdPtr);
+
+	/*if (OriginalId)
+	{
+		if (OriginalId != DependId)
+			LogWindow::Log("Form(%08X) contains different data on the dependency index bits.", *IdPtr);
+
+		*IdPtr |= (LoadedId << 24);
+	}
+	else
+	{*/
+	//	if ((*IdPtr - 1) < 0x7FF)
+	//		*IdPtr &= 0xFFFFFF;
+	//}
+
+	// As a result, i do'nt allow to spoil the index of the form in the buffer, 
+	// while not correcting its loading index.
+}
+
+

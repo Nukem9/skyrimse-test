@@ -84,14 +84,6 @@ bool TESFile_CK::IsActiveFileBlacklist()
 		}
 	}
 
-	/*auto type = TESFile_CK::GetTypeFile((BSString::Utils::GetRelativeDataPath() + m_FileName).Get());
-	if ((type & TESFile_CK::FILE_RECORD_ESL) == TESFile_CK::FILE_RECORD_ESL) {
-		MessageBoxA(GetForegroundWindow(), 
-			"Light master files cannot to be open normally.\n"
-			"The probability of getting CTD is very high.\n", 
-			"Warning", MB_ICONWARNING);
-	}*/
-
 	return false;
 }
 

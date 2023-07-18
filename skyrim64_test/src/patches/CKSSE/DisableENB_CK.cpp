@@ -392,21 +392,28 @@ INT32 Recovery(HMODULE hNewLibrary, LPCSTR szDllName, HMODULE hmod) {
 	return drfRecoveredOk;
 }
 
+void MaybeNeedRecoveryLibrary(const char* LibName, std::vector<PMODULEINFOA>& ModuleList)
+{
+	auto Info = GetModuleInfoByName(LibName, ModuleList);
+	if (Info && !Info->HasSystem) {
+		std::string SystemDirectory(MAX_PATH, '\0');
+		SystemDirectory.resize(GetSystemDirectoryA(&SystemDirectory[0], MAX_PATH));
+		// Detect lib loaded no from system folder
+
+		auto DirectXLibrary = LoadLibraryA((SystemDirectory + "\\" + LibName).c_str());
+		AssertMsgVa(DirectXLibrary, "Library \"%s\" not found in system directory.", LibName);
+		Recovery(DirectXLibrary, LibName, Info->Handle);
+	}
+}
+
 void Disable_ENB() {
 	std::vector<PMODULEINFOA> ModuleList;
 	AssertMsg(GetModuleList(GetCurrentProcess(), ModuleList), 
 		"Failed to get list of libraries by process.");
 
-	auto Info = GetModuleInfoByName("d3d11.dll", ModuleList);
-	if (Info && !Info->HasSystem) {
-		std::string SystemDirectory(MAX_PATH, '\0');
-		SystemDirectory.resize(GetSystemDirectoryA(&SystemDirectory[0], MAX_PATH));
-		// Detect d3d11.dll loaded no from system folder
-
-		auto DirectXLibrary = LoadLibraryA((SystemDirectory + "\\d3d11.dll").c_str());
-		AssertMsg(DirectXLibrary, "Library \"d3d11.dll\" not found in system directory.");
-		Recovery(DirectXLibrary, "d3d11.dll", Info->Handle);
-	}
+	MaybeNeedRecoveryLibrary("d3d9.dll", ModuleList);
+	MaybeNeedRecoveryLibrary("d3d11.dll", ModuleList);
+	MaybeNeedRecoveryLibrary("dxgi.dll", ModuleList);
 	
 	ClearModuleList(ModuleList);
 }

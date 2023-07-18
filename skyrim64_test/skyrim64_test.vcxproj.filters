@@ -521,6 +521,9 @@
     <ClInclude Include="src\patches\CKSSE\TES_CK.h">
       <Filter>Header Files\[EditorAPI]</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiArray.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">

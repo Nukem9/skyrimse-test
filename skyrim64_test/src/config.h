@@ -2,6 +2,7 @@
 
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
+#define WINDOWS_IGNORE_PACKING_MISMATCH
 
 #pragma warning(disable:4722)
 #pragma warning(disable:4311)

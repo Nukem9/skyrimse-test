@@ -7,6 +7,7 @@
 
 #include "NiColor.h"
 #include "NiTransform.h"
+#include "NiArray.h"
 
 #include "NiTexture.h"
 //#include "NiSourceTexture.h"

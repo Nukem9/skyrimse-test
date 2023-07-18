@@ -114,6 +114,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
       <OmitFramePointers>true</OmitFramePointers>
+      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -277,6 +278,7 @@
     <ClInclude Include="src\patches\TES\NiMain\BSTriShape.h" />
     <ClInclude Include="src\patches\TES\NiMain\common.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiArray.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiCamera.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiCollisionUtils.h" />
