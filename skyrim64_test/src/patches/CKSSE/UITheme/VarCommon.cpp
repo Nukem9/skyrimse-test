@@ -22,6 +22,18 @@
 
 #include "VarCommon.h"
 
+// for gdi+ (min/max)
+#include <algorithm>
+
+#define min std::min
+#define max std::max
+
+// Microsoft: It's probably cool when you need to make several includes instead of one 
+// Perchik71: NO
+#include <gdiplusenums.h>
+#include <gdiplustypes.h>
+#include <gdiplus.h>
+
 namespace Core
 {
 	namespace UI
@@ -30,7 +42,7 @@ namespace Core
 		{
 			Core::Classes::UI::CUIFont* ThemeFont;
 
-			constexpr COLORREF szConstDark[63]
+			constexpr COLORREF szConstDark[64]
 			{
 				RGB(52, 52, 52),											// ThemeColor_Default
 				RGB(32, 32, 32),											// ThemeColor_ListView_Color
@@ -87,8 +99,9 @@ namespace Core
 				RGB(42, 101, 143),											// ThemeColor_Progress_Fill_Gradient_End
 				RGB(87, 159, 209),											// ThemeColor_Progress_Fill_Highlighter
 				RGB(103, 175, 225),											// ThemeColor_Progress_Fill_Highlighter_Up
-				RGB(0, 122, 204),											// ThemeColor_Border_Window,
-				RGB(255, 255, 255),											// ThemeColor_StatusBar_Text
+				RGB(0, 122, 204),											// ThemeColor_Border_Window
+				RGB(32, 32, 32),											// ThemeColor_StatusBar_Back
+				RGB(187, 187, 187),											// ThemeColor_StatusBar_Text
 				RGB(255, 255, 255),											// ThemeColor_Caption_Text
 				RGB(34, 34, 34),											// ThemeColor_Header_Normal_Gradient_Start
 				RGB(27, 27, 27),											// ThemeColor_Header_Normal_Gradient_End
@@ -97,7 +110,7 @@ namespace Core
 				RGB(160, 201, 235)											// ThemeColor_ListView_Owner_Selected
 			};
 
-			constexpr COLORREF szConstDarkGray[63]
+			constexpr COLORREF szConstDarkGray[64]
 			{
 				RGB(83, 83, 83),											// ThemeColor_Default
 				RGB(58, 58, 58),											// ThemeColor_ListView_Color
@@ -154,8 +167,9 @@ namespace Core
 				RGB(50, 120, 169),											// ThemeColor_Progress_Fill_Gradient_End
 				RGB(87, 159, 209),											// ThemeColor_Progress_Fill_Highlighter
 				RGB(103, 175, 225),											// ThemeColor_Progress_Fill_Highlighter_Up
-				RGB(0, 129, 224),											// ThemeColor_Border_Window,
-				RGB(255, 255, 255),											// ThemeColor_StatusBar_Text
+				RGB(0, 129, 224),											// ThemeColor_Border_Window
+				RGB(57, 57, 57),											// ThemeColor_StatusBar_Back
+				RGB(200, 200, 200),											// ThemeColor_StatusBar_Text
 				RGB(255, 255, 255),											// ThemeColor_Caption_Text
 				RGB(60, 60, 60),											// ThemeColor_Header_Normal_Gradient_Start
 				RGB(55, 55, 55),											// ThemeColor_Header_Normal_Gradient_End
@@ -164,7 +178,7 @@ namespace Core
 				RGB(160, 201, 235)											// ThemeColor_ListView_Owner_Selected
 			};
 
-			constexpr COLORREF szConstGray[63]
+			constexpr COLORREF szConstGray[64]
 			{
 				RGB(184, 184, 184),											// ThemeColor_Default
 				RGB(238, 238, 238),											// ThemeColor_ListView_Color
@@ -221,8 +235,9 @@ namespace Core
 				RGB(133, 48, 137),											// ThemeColor_Progress_Fill_Gradient_End
 				RGB(186, 71, 192),											// ThemeColor_Progress_Fill_Highlighter
 				RGB(173, 62, 179),											// ThemeColor_Progress_Fill_Highlighter_Up
-				RGB(132, 0, 132),											// ThemeColor_Border_Window,
-				RGB(255, 255, 255),											// ThemeColor_StatusBar_Text
+				RGB(132, 0, 132),											// ThemeColor_Border_Window
+				RGB(128, 128, 128),											// ThemeColor_StatusBar_Back
+				RGB(24, 24, 24),											// ThemeColor_StatusBar_Text
 				RGB(20, 20, 20),											// ThemeColor_Caption_Text
 				RGB(166, 166, 166),											// ThemeColor_Header_Normal_Gradient_Start
 				RGB(147, 147, 147),											// ThemeColor_Header_Normal_Gradient_End
@@ -231,7 +246,7 @@ namespace Core
 				RGB(242, 176, 173)											// ThemeColor_ListView_Owner_Selected
 			};
 
-			constexpr COLORREF szConstLight[63]
+			constexpr COLORREF szConstLight[64]
 			{
 				RGB(214, 214, 214),											// ThemeColor_Default
 				RGB(255, 255, 255),											// ThemeColor_ListView_Color
@@ -288,8 +303,9 @@ namespace Core
 				RGB(133, 48, 137),											// ThemeColor_Progress_Fill_Gradient_End
 				RGB(186, 71, 192),											// ThemeColor_Progress_Fill_Highlighter
 				RGB(173, 62, 179),											// ThemeColor_Progress_Fill_Highlighter_Up
-				RGB(132, 0, 132),											// ThemeColor_Border_Window,
-				RGB(255, 255, 255),											// ThemeColor_StatusBar_Text
+				RGB(132, 0, 132),											// ThemeColor_Border_Window
+				RGB(148, 148, 148),											// ThemeColor_StatusBar_Back
+				RGB(34, 34, 34),											// ThemeColor_StatusBar_Text
 				RGB(20, 20, 20),											// ThemeColor_Caption_Text
 				RGB(196, 196, 196),											// ThemeColor_Header_Normal_Gradient_Start
 				RGB(177, 177, 177),											// ThemeColor_Header_Normal_Gradient_End
@@ -403,6 +419,68 @@ namespace Core
 				default:
 					return ::GetSysColorBrush(nIndex);
 				}
+			}
+
+			HBITMAP FIXAPI LoadImageFromResource(HINSTANCE hInst, DWORD dwResId, LPCSTR ResType)
+			{
+				// https://code911.top/howto/c-gdi-how-to-get-and-load-image-from-resource
+
+				HBITMAP Result;
+
+				IStream* pStream = nullptr;
+				Gdiplus::Bitmap* pBmp = nullptr;
+				HGLOBAL hGlobal = nullptr;
+				// get the handle to the resource
+				HRSRC hrsrc = FindResourceA(hInst, MAKEINTRESOURCEA(dwResId), ResType);     
+				if (hrsrc)
+				{
+					DWORD dwResourceSize = SizeofResource(hInst, hrsrc);
+					if (dwResourceSize > 0)
+					{
+						HGLOBAL hGlobalResource = LoadResource(hInst, hrsrc); // load it
+						if (hGlobalResource)
+						{
+							void* imagebytes = LockResource(hGlobalResource); // get a pointer to the file bytes
+							// copy image bytes into a real hglobal memory handle
+							hGlobal = ::GlobalAlloc(GHND, dwResourceSize);
+							if (hGlobal)
+							{
+								void* pBuffer = ::GlobalLock(hGlobal);
+								if (pBuffer)
+								{
+									memcpy(pBuffer, imagebytes, dwResourceSize);
+									HRESULT hr = CreateStreamOnHGlobal(hGlobal, TRUE, &pStream);
+									if (SUCCEEDED(hr))
+									{
+										// pStream now owns the global handle and will invoke GlobalFree on release
+										hGlobal = nullptr;
+										pBmp = new Gdiplus::Bitmap(pStream);
+									}
+								}
+							}
+						}
+					}
+				}
+				if (pStream)
+				{
+					pStream->Release();
+					pStream = nullptr;
+				}
+				if (hGlobal)
+				{
+					GlobalFree(hGlobal);
+					hGlobal = nullptr;
+				}
+
+				if (!pBmp)
+					return 0;
+				else
+				{
+					pBmp->GetHBITMAP(0, &Result);
+					delete pBmp;
+				}
+					
+				return Result;
 			}
 		}
 	}

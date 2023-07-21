@@ -42,24 +42,24 @@ namespace Core
 						RECT rc = *pRect;
 						rc.bottom = rc.top + 12;
 
-						canvas.Fill(rc, GetThemeSysColor(ThemeColor::ThemeColor_Border_Window));
+						canvas.Fill(rc, GetThemeSysColor(ThemeColor::ThemeColor_StatusBar_Back));
 
 						// 1px by height from bottom can safely paint over
 						rc = *pRect;
 						rc.top = rc.bottom - 1;
 
-						canvas.Fill(rc, GetThemeSysColor(ThemeColor::ThemeColor_Border_Window));
+						canvas.Fill(rc, GetThemeSysColor(ThemeColor::ThemeColor_StatusBar_Back));
 
 						// 17px needs to be painted over in the rightmost corner
 						rc = *pRect;
 						rc.left = rc.right - 17;
 
-						canvas.Fill(rc, GetThemeSysColor(ThemeColor::ThemeColor_Border_Window));
+						canvas.Fill(rc, GetThemeSysColor(ThemeColor::ThemeColor_StatusBar_Back));
 					}
 
 					VOID FIXAPI DrawBackground(Graphics::CUICanvas& canvas, LPCRECT pRect)
 					{
-						canvas.Fill(*pRect, GetThemeSysColor(ThemeColor::ThemeColor_Border_Window));
+						canvas.Fill(*pRect, GetThemeSysColor(ThemeColor::ThemeColor_StatusBar_Back));
 					}
 				}
 

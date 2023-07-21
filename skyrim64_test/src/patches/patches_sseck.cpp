@@ -461,8 +461,8 @@ void Patch_TESVCreationKit()
 
 	if (TESFile_CK::AllowSaveESM || TESFile_CK::AllowMasterESP)
 	{
-		*(uintptr_t *)&TESFile_CK::LoadTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1664CC0, 1530), &TESFile_CK::hk_LoadTESInfo);
-		*(uintptr_t *)&TESFile_CK::WriteTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1665520, 1530), &TESFile_CK::hk_WriteTESInfo);
+		*(uintptr_t*)&TESFile_CK::LoadTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1664CC0, 1530), &TESFile_CK::hk_LoadTESInfo);
+		*(uintptr_t*)&TESFile_CK::WriteTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1665520, 1530), &TESFile_CK::hk_WriteTESInfo);
 
 		if (TESFile_CK::AllowSaveESM)
 		{
@@ -536,10 +536,18 @@ void Patch_TESVCreationKit()
 	// Change start of indexing for ESL
 	//
 	if (Offsets::IsCKVersion1573OrNewer() && g_INI.GetBoolean("CreationKit", "PatchCompactFormID", false)) {
-		XUtil::DetourCall(OFFSET(0x13510F8, 16438), &TES_CK::CompactActivePlugin);
-		XUtil::PatchMemory(OFFSET(0x13510F8, 16438) + 5, { 0xEB, 0x23 });
+		auto RelOff = OFFSET(0x159A397, 16438);
+		XUtil::PatchMemoryNop(RelOff, 0xF);
+		XUtil::DetourCall(RelOff, &TES_CK::GetActivePluginMinFormID);
+
+		// Set new formId force
+		if (g_INI.GetBoolean("CreationKit", "PatchCompactFormIDForced", false))
+			XUtil::PatchMemoryNop(OFFSET(0x159A635, 16438), 2);
+
+		//XUtil::DetourCall(OFFSET(0x13510F8, 16438), &TES_CK::CompactActivePlugin);
+		//XUtil::PatchMemory(OFFSET(0x13510F8, 16438) + 5, { 0xEB, 0x23 });
 		
-		auto RelOff = OFFSET(0x15C6A8C, 16438);
+		RelOff = OFFSET(0x15C6A8C, 16438);
 		XUtil::PatchMemoryNop(RelOff, 0x34);
 		XUtil::PatchMemory(RelOff - 3, { 0x4C });
 		XUtil::DetourCall(RelOff, &TES_CK::SetLoaderIdByForm);
@@ -658,7 +666,7 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash (recursive sorting function stack overflow) when saving certain ESP files (i.e 3DNPC.esp)
 	//
-	XUtil::DetourJump(OFFSET(0x1651590, 1530), &ArrayQuickSortRecursive<class TESForm_CK *>);
+	XUtil::DetourJump(OFFSET(0x1651590, 1530), &ArrayQuickSortRecursive<class TESForm_CK*>);
 
 	//
 	// Fix for incorrect NavMesh assertion while saving certain ESP files (i.e 3DNPC.esp). Fixed in 1.5.73.
@@ -727,7 +735,7 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash (invalid parameter termination) when the "Unable to find variable" warning would exceed the buffer size
 	//
-	XUtil::PatchMemory(OFFSET(0x31027F8, 1530), (uint8_t *)", Text \"%.240s\"", strlen(", Text \"%.240s\"") + 1);
+	XUtil::PatchMemory(OFFSET(0x31027F8, 1530), (uint8_t*)", Text \"%.240s\"", strlen(", Text \"%.240s\"") + 1);
 
 	//
 	// Replace direct crash with an assertion when an incompatible texture format is used in the renderer

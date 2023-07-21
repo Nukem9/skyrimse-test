@@ -27,8 +27,22 @@
 #include "TESForm_CK.h"
 #include "LogWindow.h"
 
-uint32_t TES_CK::GetActivePluginMaxFormID() const {
-	return ((uint32_t(__fastcall*)(const TES_CK*))OFFSET(0x159A1D0, 16438))(this);
+uint32_t TES_CK::GetActivePluginMinFormID()
+{
+	auto Instance = GetInstance();
+	AssertMsg(Instance, "The main data store has not been created.");
+	
+	auto ActivePlugin = Instance->GetActiveMod();
+	AssertMsg(ActivePlugin, "The plugin is not selected as active.");
+
+	auto UserMinID = std::min((int)g_INI.GetInteger("CreationKit", "CompactStartFormID", 0x800), 0x800);
+	if (UserMinID <= 0) UserMinID = 1;
+	auto MinFormID = (ActivePlugin->GetIndexLoader() << 24) | UserMinID;
+	return MinFormID;
+}
+
+uint32_t TES_CK::GetActivePluginMaxFormID() {
+	return ((uint32_t(__fastcall*)(const TES_CK*))OFFSET(0x159A1D0, 16438))(GetInstance());
 }
 
 TES_CK* TES_CK::GetInstance() {

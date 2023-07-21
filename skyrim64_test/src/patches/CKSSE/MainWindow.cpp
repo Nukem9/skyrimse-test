@@ -396,8 +396,15 @@ namespace MainWindow
 			char modulePath[MAX_PATH];
 			GetModuleFileNameA((HMODULE)g_hModule, modulePath, MAX_PATH);
 			GetFileVersion(modulePath, versionApp);
-
-			sprintf_s(customTitle, "%s [CK64Fixes Rev. %s: v%s]", (LPCSTR)lParam, g_GitVersion, versionApp.c_str());
+			
+			if ((g_crc32_ck == CRC32_ORIGINAL_CK1573_PATCHED_51) || (g_crc32_ck == CRC32_ORIGINAL_CK1573_PATCHED_63))
+				sprintf_s(customTitle, "%s [CK64Fixes Rev. %s: v%s] [Unofficial patched installed]", (LPCSTR)lParam, 
+					g_GitVersion, versionApp.c_str());
+			else if (g_crc32_ck == CRC32_ORIGINAL_CK16438_NOSTEAM)
+				sprintf_s(customTitle, "%s [CK64Fixes Rev. %s: v%s] [Cured]", (LPCSTR)lParam,
+					g_GitVersion, versionApp.c_str());
+			else
+				sprintf_s(customTitle, "%s [CK64Fixes Rev. %s: v%s]", (LPCSTR)lParam, g_GitVersion, versionApp.c_str());
 
 			return CallWindowProc(OldWndProc, Hwnd, Message, wParam, reinterpret_cast<LPARAM>(customTitle));
 		}

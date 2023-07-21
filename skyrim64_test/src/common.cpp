@@ -11,6 +11,7 @@
 #pragma comment(lib, "uxtheme.lib")
 #pragma comment(lib, "Msimg32.lib")
 #pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "Version.lib")
 
 #pragma comment(lib, "tbb.lib")					// Thread Building Blocks
@@ -35,6 +36,8 @@ __itt_heap_function ITT_FreeCallback;
 #endif
 
 INIReader g_INI("skyrim64_test.ini");
+
+uint32_t g_crc32_ck;
 
 uintptr_t g_hModule;
 uintptr_t g_ModuleBase;

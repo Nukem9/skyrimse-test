@@ -28,6 +28,8 @@
 #include "MainWindow.h"
 #include "LogWindow.h"
 
+#include "..\..\..\resource.h"
+
 namespace EditorUI
 {
 	struct DialogOverrideData
@@ -65,6 +67,70 @@ namespace EditorUI
 		}
 	}
 
+	INT_PTR CALLBACK DialogFuncLogo(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		static uint32_t AppLogoWidth	= 448;
+		static uint32_t AppLogoHeight	= 360;
+		static HBITMAP	BackgroundImage;
+
+		HDC		dc, hdcMem;
+		HBITMAP oldBitmap;
+		BITMAP	bitmap;
+		RECT	rcWnd;
+
+		switch (uMsg)
+		{
+		case WM_INITDIALOG:
+		{
+			BackgroundImage = Core::UI::Theme::LoadImageFromResource(
+				reinterpret_cast<HINSTANCE>(&__ImageBase), IDB_LOGOFIXES, "PNG");
+
+			SendMessage(GetDlgItem(hwndDlg, 40), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)BackgroundImage);
+
+			// Let's make it so that if the picture is a different size, the window will be size for it
+			GetObject(BackgroundImage, sizeof(bitmap), &bitmap);
+			AppLogoWidth = bitmap.bmWidth;
+			AppLogoHeight = bitmap.bmHeight;
+
+			Core::Classes::UI::CUIMonitor monitor = Core::Classes::UI::Screen.MonitorFromWindow(hwndDlg);
+			Core::Classes::UI::CRECT wa = monitor.WorkAreaRect;
+
+			MoveWindow(hwndDlg, 
+				wa.Left + ((wa.Width - AppLogoWidth) >> 1), 
+				wa.Top + ((wa.Height - AppLogoHeight) >> 1),
+				AppLogoWidth, AppLogoHeight, TRUE);
+			ShowWindow(hwndDlg, SW_SHOW);
+			return (INT_PTR)TRUE;
+		}
+		case WM_DESTROY:
+		{
+			return (INT_PTR)TRUE;
+		}
+		}
+
+		return (INT_PTR)FALSE;
+	}
+
+	INT_PTR CALLBACK DialogFuncAbout(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		if (DialogFuncLogo(hwndDlg, uMsg, wParam, lParam))
+			return (INT_PTR)TRUE;
+
+		switch (uMsg)
+		{
+		case WM_ACTIVATE:
+		{
+			if (LOWORD(wParam) == WA_INACTIVE)
+			{
+				hk_EndDialog(hwndDlg, 1);
+				return (INT_PTR)TRUE;
+			}
+		}
+		}
+
+		return (INT_PTR)FALSE;
+	}
+
 	HWND WINAPI hk_CreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 	{
 		// EndDialog MUST NOT be used
@@ -74,6 +140,16 @@ namespace EditorUI
 		// Override certain default dialogs to use this DLL's resources
 		switch (reinterpret_cast<uintptr_t>(lpTemplateName))
 		{
+		case 0x64:// "About"
+			lpTemplateName = (LPCSTR)0xEB;
+			ThreadDialogData.DialogFunc = DialogFuncAbout;
+			hInstance = reinterpret_cast<HINSTANCE>(&__ImageBase);
+			break;
+		case 0xEB:// "Logo"
+			lpTemplateName = (LPCSTR)0xEB;
+			ThreadDialogData.DialogFunc = DialogFuncLogo;
+			hInstance = reinterpret_cast<HINSTANCE>(&__ImageBase);
+			break;
 		case 0x7A:// "Object Window"
 		case 0x8D:// "Reference"
 		case 0xA2:// "Data"
@@ -95,6 +171,16 @@ namespace EditorUI
 		// Override certain default dialogs to use this DLL's resources
 		switch (reinterpret_cast<uintptr_t>(lpTemplateName))
 		{
+		case 0x64:// "About"
+			lpTemplateName = (LPCSTR)0xEB;
+			ThreadDialogData.DialogFunc = DialogFuncAbout;
+			hInstance = reinterpret_cast<HINSTANCE>(&__ImageBase);
+			break;
+		case 0xEB:// "Logo"
+			lpTemplateName = (LPCSTR)0xEB;
+			ThreadDialogData.DialogFunc = DialogFuncLogo;
+			hInstance = reinterpret_cast<HINSTANCE>(&__ImageBase);
+			break;
 		case 0x7A:// "Object Window"
 		case 0x8D:// "Reference"
 		case 0xA2:// "Data"

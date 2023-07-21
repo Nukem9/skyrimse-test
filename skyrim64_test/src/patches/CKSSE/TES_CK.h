@@ -41,7 +41,8 @@ public:
 		TESFileArray loadedMods;		// 10
 	};
 public:
-	uint32_t GetActivePluginMaxFormID() const;
+	static uint32_t GetActivePluginMinFormID();
+	static uint32_t GetActivePluginMaxFormID();
 
 	inline const TESFileList* GetMods(VOID) const { return &modList.modInfoList; }
 	inline const TESFileArray* GetLoadedMods(VOID) const { return &modList.loadedMods; }

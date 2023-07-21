@@ -62,6 +62,10 @@
 
 #include <tbb/concurrent_unordered_map.h>
 
+#if THEME_DEBUG
+#include <fstream>
+#endif
+
 /*
 
 This file is part of Fallout 4 Fixes source code.
@@ -410,16 +414,43 @@ namespace UITheme
 						<< "x: " << lpCreateStruct->x << " "
 						<< "y: " << lpCreateStruct->y << std::endl;
 #endif
-					if ((lpCreateStruct->hInstance) && (lpCreateStruct->hInstance != GetModuleHandleA("comdlg32.dll"))) {
+					
+					if ((lpCreateStruct->hInstance) &&
+						(lpCreateStruct->hInstance != GetModuleHandleA("comdlg32.dll"))) {
 						if (WindowHandles.find(messageData->hwnd) == WindowHandles.end()) {
 							SetWindowSubclass(messageData->hwnd, WindowSubclass, 0, reinterpret_cast<DWORD_PTR>(WindowSubclass));
 							WindowHandles.emplace(messageData->hwnd, FALSE);
 						}
 					}
-						
 				}
 			}
 			else if (messageData->message == WM_INITDIALOG) {
+#if THEME_DEBUG	
+				LPCREATESTRUCTA lpCreateStruct = (LPCREATESTRUCTA)messageData->lParam;
+				if (lpCreateStruct) {
+					ofs << "WM_CREATE: " << std::endl
+						<< "cx: " << lpCreateStruct->cx << " "
+						<< "cy: " << lpCreateStruct->cy << " "
+						<< "hInstance: " << lpCreateStruct->hInstance << " "
+						<< "dwExStyle: " << lpCreateStruct->dwExStyle << " "
+						<< "hMenu: " << lpCreateStruct->hMenu << " "
+						<< "hwndParent: " << lpCreateStruct->hwndParent << " "
+						<< "lpCreateParams: " << lpCreateStruct->lpCreateParams << " ";
+					if (lpCreateStruct->lpszName)
+						ofs << "lpszName: " << (std::string(lpCreateStruct->lpszName)).c_str() << " ";
+					else
+						ofs << "lpszName: <NULL> ";
+
+					if (lpCreateStruct->lpszClass)
+						ofs << "lpszClass: " << (std::string(lpCreateStruct->lpszName)).c_str() << " ";
+					else
+						ofs << "lpszClass: <NULL> ";
+
+					ofs << "style: " << lpCreateStruct->style << " "
+						<< "x: " << lpCreateStruct->x << " "
+						<< "y: " << lpCreateStruct->y << std::endl;
+				}
+#endif
 				auto wnd = WindowHandles.find(messageData->hwnd);
 				if (wnd == WindowHandles.end()) {
 					if (!ExcludeSubclassKnownWindows(messageData->hwnd))

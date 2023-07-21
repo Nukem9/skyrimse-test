@@ -56,6 +56,14 @@ extern "C" IMAGE_DOS_HEADER __ImageBase;
 
 extern INIReader g_INI;
 
+extern uint32_t g_crc32_ck;
+
+constexpr static uint32_t CRC32_ORIGINAL_CK1573 = 0x624E8C84;
+constexpr static uint32_t CRC32_ORIGINAL_CK1573_PATCHED_51 = 0xB4E5BA2A;
+constexpr static uint32_t CRC32_ORIGINAL_CK1573_PATCHED_63 = 0x668F3CB3;
+constexpr static uint32_t CRC32_ORIGINAL_CK16438 = 0x3FDB3994;
+constexpr static uint32_t CRC32_ORIGINAL_CK16438_NOSTEAM = 0x748A3CC4;
+
 extern uintptr_t g_hModule;
 extern uintptr_t g_ModuleBase;
 extern uintptr_t g_ModuleSize;

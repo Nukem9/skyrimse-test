@@ -1,3 +1,6 @@
+#include <array>
+#include <unordered_map>
+
 static constexpr uint32_t crc_table[256] =
 {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -72,6 +75,8 @@ constexpr uint32_t CRC32(const char *in)
 
 	return ~crc;
 }
+
+uint32_t CRC32_file(const char* filename);
 
 struct Entry
 {

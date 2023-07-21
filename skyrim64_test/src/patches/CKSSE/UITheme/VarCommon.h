@@ -108,6 +108,7 @@ namespace Core
 				ThemeColor_Progress_Fill_Highlighter,
 				ThemeColor_Progress_Fill_Highlighter_Up,
 				ThemeColor_Border_Window,
+				ThemeColor_StatusBar_Back,
 				ThemeColor_StatusBar_Text,
 				ThemeColor_Caption_Text,
 				ThemeColor_Header_Normal_Gradient_Start,
@@ -122,6 +123,7 @@ namespace Core
 			DWORD FIXAPI Comctl32GetSysColor(INT nIndex);
 			HBRUSH FIXAPI Comctl32GetSysColorBrush(INT nIndex);
 			HBRUSH FIXAPI Comctl32GetSysColorBrushEx(INT nIndex, BOOL reCreate = TRUE);
+			HBITMAP FIXAPI LoadImageFromResource(HINSTANCE hInst, DWORD dwResId, LPCSTR ResType);
 		}
 	}
 }
