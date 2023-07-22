@@ -10,10 +10,10 @@ A collection of modifications, enhancements, and reverse engineered resources fo
 :white_check_mark: Multiple UI Fix View Menu section and etc  
 :white_check_mark: Create master files and open them as plugins  
 :white_check_mark: Opening plugins as master files if they are in dependencies  
-:white_check_mark: Filtering by active forms and cell
-:white_check_mark: Filtering mods in the Data dialog
-:white_check_mark: Fix compact plugin
-:white_check_mark: Added Unicode support
+:white_check_mark: Filtering by active forms and cell  
+:white_check_mark: Filtering mods in the Data dialog  
+:white_check_mark: Fix compact plugin  
+:white_check_mark: Added Unicode support  
 Many other patches and fixes.
 
 # Unicode
@@ -23,11 +23,11 @@ For understanding, the application uses the ancient **ANSI** type string represe
 In **Win10**, in the language settings, there is now an option to work with UTF-8, you need to turn it off otherwise there will be only "?".
 
 # License
-![MIT License](https://camo.githubusercontent.com/20666e1b72ed1ea8f0a7c1d1e0ea35769a7c24f879ecc27ac16641b46f225a01/68747470733a2f2f6f70656e736f757263652e6f72672f74726164656d61726b732f6f70656e736f757263652f4f53492d417070726f7665642d4c6963656e73652d313030783133372e706e67)
+![MIT License](https://en.wikipedia.org/wiki/MIT_License#/media/File:MIT_logo.svg)
 
 MIT License
 
-Copyright (c) 2021 Nukem9 <email:Nukem@outlook.com>
+Copyright (c) 2021 Nukem9 <email:Nukem@outlook.com>  
 Copyright (c) 2022-2023 Perchik71 <email:timencevaleksej@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
