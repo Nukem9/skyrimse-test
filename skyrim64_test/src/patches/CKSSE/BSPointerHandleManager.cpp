@@ -1,55 +1,7 @@
 #include "../../common.h"
 #include "BSPointerHandleManager.h"
 
-template class BSPointerHandleManager<>;
 template class BSPointerHandleManagerInterface<>;
-
-template<typename HandleType>
-void BSPointerHandleManager<HandleType>::InitSDM()
-{
-	FreeListHead = 0;
-	HandleEntries.resize(HandleType::MAX_HANDLE_COUNT);
-
-	for (uint32_t i = 0; i < HandleType::MAX_HANDLE_COUNT; i++)
-	{
-		if ((i + 1) >= HandleType::MAX_HANDLE_COUNT)
-			HandleEntries[i].SetNextFreeEntry(i);
-		else
-			HandleEntries[i].SetNextFreeEntry(i + 1);
-	}
-
-	FreeListTail = HandleType::MAX_HANDLE_COUNT - 1;
-}
-
-template<typename HandleType>
-void BSPointerHandleManager<HandleType>::KillSDM()
-{
-	HandleManagerLock.LockForWrite();
-
-	for (uint32_t i = 0; i < HandleType::MAX_HANDLE_COUNT; i++)
-	{
-		auto& arrayHandle = HandleEntries[i];
-
-		if (!arrayHandle.IsInUse())
-			continue;
-
-		if (arrayHandle.GetPointer())
-			arrayHandle.GetPointer()->ClearHandleEntryIndex();
-
-		arrayHandle.SetPointer(nullptr);
-		arrayHandle.SetNotInUse();
-
-		if (FreeListTail == 0xFFFFFFFF)
-			FreeListHead = i;
-		else
-			HandleEntries[FreeListTail].SetNextFreeEntry(i);
-
-		arrayHandle.SetNextFreeEntry(i);
-		FreeListTail = i;
-	}
-
-	HandleManagerLock.UnlockWrite();
-}
 
 void HandleManager::KillSDM()
 {
@@ -62,25 +14,26 @@ void HandleManager::WarnForUndestroyedHandles()
 }
 
 template<typename ObjectType, typename Manager>
-BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::GetCurrentHandle(ObjectType *Refr)
+BSUntypedPointerHandle BSPointerHandleManagerInterface<ObjectType, Manager>::GetCurrentHandle(ObjectType *Refr)
 {
-	BSUntypedPointerHandle<> untypedHandle;
+	BSUntypedPointerHandle untypedHandle;
 
 	if (Refr && Refr->IsHandleValid())
 	{
-		auto& handle = Manager::HandleEntries[Refr->QHandleEntryIndex()];
-		untypedHandle.Set(Refr->QHandleEntryIndex(), handle.QAge());
+		auto& handle = Manager::HandleEntries[Refr->GetHandleEntryIndex()];
+		untypedHandle.Set(Refr->GetHandleEntryIndex(), handle.GetAge());
 
-		AssertMsg(untypedHandle.QAge() == handle.QAge(), "BSPointerHandleManagerInterface::GetCurrentHandle - Handle already exists but has wrong age!");
+		AssertMsg(untypedHandle.GetAge() == handle.GetAge(), 
+			"BSPointerHandleManagerInterface::GetCurrentHandle - Handle already exists but has wrong age!");
 	}
 
 	return untypedHandle;
 }
 
 template<typename ObjectType, typename Manager>
-BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::CreateHandle(ObjectType *Refr)
+BSUntypedPointerHandle BSPointerHandleManagerInterface<ObjectType, Manager>::CreateHandle(ObjectType *Refr)
 {
-	BSUntypedPointerHandle<> untypedHandle;
+	BSUntypedPointerHandle untypedHandle;
 
 	if (!Refr)
 		return untypedHandle;
@@ -98,7 +51,7 @@ BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::C
 
 		if (untypedHandle == Manager::NullHandle)
 		{
-			if (Manager::FreeListHead == 0xFFFFFFFF)
+			if (Manager::FreeListHead == Manager::INVALID_INDEX)
 			{
 				untypedHandle.SetBitwiseNull();
 				AssertMsgVa(false, "OUT OF HANDLE ARRAY ENTRIES. Null handle created for pointer 0x%p.", Refr);
@@ -109,24 +62,24 @@ BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::C
 				newHandle.IncrementAge();
 				newHandle.SetInUse();
 
-				untypedHandle.Set(newHandle.QNextFreeEntry(), newHandle.QAge());
+				untypedHandle.Set(newHandle.GetNextFreeEntry(), newHandle.GetAge());
 				newHandle.SetPointer(Refr);
 
 				Refr->SetHandleEntryIndex(Manager::FreeListHead);
-				Assert(Refr->QHandleEntryIndex() == Manager::FreeListHead);
+				Assert(Refr->GetHandleEntryIndex() == Manager::FreeListHead);
 
-				if (newHandle.QNextFreeEntry() == Manager::FreeListHead)
+				if (newHandle.GetNextFreeEntry() == Manager::FreeListHead)
 				{
 					// Table reached the maximum count
 					Assert(Manager::FreeListHead == Manager::FreeListTail);
 
-					Manager::FreeListHead = 0xFFFFFFFF;
-					Manager::FreeListTail = 0xFFFFFFFF;
+					Manager::FreeListHead = Manager::INVALID_INDEX;
+					Manager::FreeListTail = Manager::INVALID_INDEX;
 				}
 				else
 				{
 					Assert(Manager::FreeListHead != Manager::FreeListTail);
-					Manager::FreeListHead = newHandle.QNextFreeEntry();
+					Manager::FreeListHead = newHandle.GetNextFreeEntry();
 				}
 			}
 		}
@@ -137,23 +90,23 @@ BSUntypedPointerHandle<> BSPointerHandleManagerInterface<ObjectType, Manager>::C
 }
 
 template<typename ObjectType, typename Manager>
-void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy1(const BSUntypedPointerHandle<>& Handle)
+void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy1(const BSUntypedPointerHandle& Handle)
 {
 	if (Handle.IsBitwiseNull())
 		return;
 
 	Manager::HandleManagerLock.LockForWrite();
 	{
-		const uint32_t handleIndex = Handle.QIndex();
+		const auto handleIndex = Handle.GetIndex();
 		auto& arrayHandle = Manager::HandleEntries[handleIndex];
 
-		if (arrayHandle.IsValid(Handle.QAge()))
+		if (arrayHandle.IsValid(Handle.GetAge()))
 		{
 			arrayHandle.GetPointer()->ClearHandleEntryIndex();
 			arrayHandle.SetPointer(nullptr);
 			arrayHandle.SetNotInUse();
 
-			if (Manager::FreeListTail == 0xFFFFFFFF)
+			if (Manager::FreeListTail == Manager::INVALID_INDEX)
 				Manager::FreeListHead = handleIndex;
 			else
 				Manager::HandleEntries[Manager::FreeListTail].SetNextFreeEntry(handleIndex);
@@ -166,23 +119,23 @@ void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy1(const BSUnty
 }
 
 template<typename ObjectType, typename Manager>
-void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy2(BSUntypedPointerHandle<>& Handle)
+void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy2(BSUntypedPointerHandle& Handle)
 {
 	if (Handle.IsBitwiseNull())
 		return;
 
 	Manager::HandleManagerLock.LockForWrite();
 	{
-		const uint32_t handleIndex = Handle.QIndex();
+		const auto handleIndex = Handle.GetIndex();
 		auto& arrayHandle = Manager::HandleEntries[handleIndex];
 
-		if (arrayHandle.IsValid(Handle.QAge()))
+		if (arrayHandle.IsValid(Handle.GetAge()))
 		{
 			arrayHandle.GetPointer()->ClearHandleEntryIndex();
 			arrayHandle.SetPointer(nullptr);
 			arrayHandle.SetNotInUse();
 
-			if (Manager::FreeListTail == 0xFFFFFFFF)
+			if (Manager::FreeListTail == Manager::INVALID_INDEX)
 				Manager::FreeListHead = handleIndex;
 			else
 				Manager::HandleEntries[Manager::FreeListTail].SetNextFreeEntry(handleIndex);
@@ -198,7 +151,7 @@ void BSPointerHandleManagerInterface<ObjectType, Manager>::Destroy2(BSUntypedPoi
 }
 
 template<typename ObjectType, typename Manager>
-bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer1(const BSUntypedPointerHandle<>& Handle, NiPointer<ObjectType>& Out)
+bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer1(const BSUntypedPointerHandle& Handle, NiPointer<ObjectType>& Out)
 {
 	if (Handle.IsBitwiseNull())
 	{
@@ -206,19 +159,19 @@ bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer1(cons
 		return false;
 	}
 
-	const uint32_t handleIndex = Handle.QIndex();
+	const auto handleIndex = Handle.GetIndex();
 	auto& arrayHandle = Manager::HandleEntries[handleIndex];
 
-	Out = static_cast<TESObjectREFR_CK *>(arrayHandle.GetPointer());
+	Out = static_cast<TESObjectREFR_CK*>(arrayHandle.GetPointer());
 
-	if (!arrayHandle.IsValid(Handle.QAge()) || Out->QHandleEntryIndex() != handleIndex)
+	if (!arrayHandle.IsValid(Handle.GetAge()) || Out->GetHandleEntryIndex() != handleIndex)
 		Out = nullptr;
 
 	return Out != nullptr;
 }
 
 template<typename ObjectType, typename Manager>
-bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer2(BSUntypedPointerHandle<>& Handle, NiPointer<ObjectType>& Out)
+bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer2(BSUntypedPointerHandle& Handle, NiPointer<ObjectType>& Out)
 {
 	if (Handle.IsBitwiseNull())
 	{
@@ -226,31 +179,33 @@ bool BSPointerHandleManagerInterface<ObjectType, Manager>::GetSmartPointer2(BSUn
 		return false;
 	}
 
-	const uint32_t handleIndex = Handle.QIndex();
+	const auto handleIndex = Handle.GetIndex();
 	auto& arrayHandle = Manager::HandleEntries[handleIndex];
 
-	Out = static_cast<TESObjectREFR_CK *>(arrayHandle.GetPointer());
+	Out = static_cast<TESObjectREFR_CK*>(arrayHandle.GetPointer());
 
-	if (!arrayHandle.IsValid(Handle.QAge()) || Out->QHandleEntryIndex() != handleIndex)
+//#if !SKYRIM64_USE_64BIT_REFOBJS
+	if (!arrayHandle.IsValid(Handle.GetAge()) || Out->GetHandleEntryIndex() != handleIndex)
 	{
 		// Identical to GetSmartPointer1 except for this Handle.SetBitwiseNull();
 		Handle.SetBitwiseNull();
 		Out = nullptr;
 	}
+//#endif
 
 	return Out != nullptr;
 }
 
 template<typename ObjectType, typename Manager>
-bool BSPointerHandleManagerInterface<ObjectType, Manager>::IsValid(const BSUntypedPointerHandle<>& Handle)
+bool BSPointerHandleManagerInterface<ObjectType, Manager>::IsValid(const BSUntypedPointerHandle& Handle)
 {
-	const uint32_t handleIndex = Handle.QIndex();
+	const auto handleIndex = Handle.GetIndex();
 	auto& arrayHandle = Manager::HandleEntries[handleIndex];
 
 	// Handle.IsBitwiseNull(); -- This if() is optimized away because the result is irrelevant
 
-	if (!arrayHandle.IsValid(Handle.QAge()))
+	if (!arrayHandle.IsValid(Handle.GetAge()))
 		return false;
 
-	return arrayHandle.GetPointer()->QHandleEntryIndex() == handleIndex;
+	return arrayHandle.GetPointer()->GetHandleEntryIndex() == handleIndex;
 }

@@ -92,8 +92,7 @@ namespace DataDialogWindow
 
 			ImageList.ReCreate(16, 16, TRUE, Core::Classes::UI::ilct24Bit);
 
-			if (UITheme::IsEnabledMode() && ((UITheme::Theme::GetTheme() == UITheme::Theme::Theme_Dark) ||
-				(UITheme::Theme::GetTheme() == UITheme::Theme::Theme_DarkGray))) {
+			if (UITheme::IsEnabledMode() && UITheme::Theme::IsDarkTheme()) {
 				ImageList.AddFromResource((HINSTANCE)g_hModule, MAKEINTRESOURCEA(IDB_BITMAP4), RGB(32, 32, 32));
 				ImageList.AddFromResource((HINSTANCE)g_hModule, MAKEINTRESOURCEA(IDB_BITMAP2), RGB(32, 32, 32));
 			}

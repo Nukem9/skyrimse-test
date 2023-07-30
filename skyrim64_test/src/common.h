@@ -83,6 +83,16 @@ extern HMODULE g_DllVTune;
 extern HMODULE g_DllDXGI;
 extern HMODULE g_DllD3D11;
 
+#if SKYRIM64_USE_CUSTOM_MEMORY
+typedef void* (*check_alloc_func_t)(size_t size);
+typedef void (*check_dealloc_func_t)(void* ptr);
+typedef size_t(*check_size_func_t)(void* ptr);
+
+static check_alloc_func_t FastMemoryAlloc;
+static check_dealloc_func_t FastMemoryFree;
+static check_size_func_t FastMemorySize;
+#endif
+
 enum class GAME_EXECUTABLE_TYPE
 {
 	UNKNOWN,

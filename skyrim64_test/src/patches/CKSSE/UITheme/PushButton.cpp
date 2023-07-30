@@ -58,36 +58,71 @@ namespace Core
 						canvas.LineTo(rc_temp[1].Right, rc_temp[1].Top);
 					}
 
+					VOID FIXAPI DrawPushButton_Stylesheet_Flat(Graphics::CUICanvas& canvas, LPCRECT pRect,
+						COLORREF clColorBody, COLORREF clColorDivider)
+					{
+						Core::Classes::UI::CRECT rc_temp[2];
+						rc_temp[0] = *pRect;
+						
+						canvas.Fill(rc_temp[0], GetThemeSysColor(ThemeColor::ThemeColor_Default));
+
+						canvas.Pen.Style = Core::Classes::UI::psSolid;
+						canvas.Pen.Color = clColorDivider;
+						canvas.Brush.Color = clColorBody;
+
+						canvas.RoundRect(rc_temp[0], 2, 2);
+					}
+
 					VOID FIXAPI DrawPushButton_Normal(Graphics::CUICanvas& canvas, LPCRECT pRect)
 					{
-						DrawPushButton_Stylesheet(canvas, pRect, GetThemeSysColor(ThemeColor::ThemeColor_Default_Gradient_Start),
-							GetThemeSysColor(ThemeColor::ThemeColor_Default_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Gradient_Start),
-							GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter),
-							GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color));
+						if (GetTheme() == Theme::Theme_NightBlue)
+							DrawPushButton_Stylesheet_Flat(canvas, pRect,
+								GetThemeSysColor(ThemeColor::ThemeColor_Edit_Color),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Ver2));
+						else
+							DrawPushButton_Stylesheet(canvas, pRect, GetThemeSysColor(ThemeColor::ThemeColor_Default_Gradient_Start),
+								GetThemeSysColor(ThemeColor::ThemeColor_Default_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Gradient_Start),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color));
 					}
 
 					VOID FIXAPI DrawPushButton_Hot(Graphics::CUICanvas& canvas, LPCRECT pRect)
 					{
-						DrawPushButton_Stylesheet(canvas, pRect, GetThemeSysColor(ThemeColor::ThemeColor_Button_Hot_Gradient_Start),
-							GetThemeSysColor(ThemeColor::ThemeColor_Button_Hot_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Hot_Gradient_Start),
-							GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Hot_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter),
-							GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color));
+						if (GetTheme() == Theme::Theme_NightBlue)
+							DrawPushButton_Stylesheet_Flat(canvas, pRect,
+								GetThemeSysColor(ThemeColor::ThemeColor_Edit_Color),
+								GetThemeSysColor(ThemeColor::ThemeColor_Button_Hot_Gradient_Start));
+						else
+							DrawPushButton_Stylesheet(canvas, pRect, GetThemeSysColor(ThemeColor::ThemeColor_Button_Hot_Gradient_Start),
+								GetThemeSysColor(ThemeColor::ThemeColor_Button_Hot_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Hot_Gradient_Start),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Hot_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color));
 					}
 
 					VOID FIXAPI DrawPushButton_Pressed(Graphics::CUICanvas& canvas, LPCRECT pRect)
 					{
-						DrawPushButton_Stylesheet(canvas, pRect, GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Gradient_Start),
-							GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Pressed),
-							GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Pressed), GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Divider),
-							GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color));
+						if (GetTheme() == Theme::Theme_NightBlue)
+							DrawPushButton_Stylesheet_Flat(canvas, pRect,
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Pressed),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Pressed));
+						else
+							DrawPushButton_Stylesheet(canvas, pRect, GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Gradient_Start),
+								GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Pressed),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Pressed), GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Divider),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color));
 					}
 
 					VOID FIXAPI DrawPushButton_Disabled(Graphics::CUICanvas& canvas, LPCRECT pRect)
 					{
-						DrawPushButton_Stylesheet(canvas, pRect, GetThemeSysColor(ThemeColor::ThemeColor_Button_Disabled_Gradient_Start),
-							GetThemeSysColor(ThemeColor::ThemeColor_Button_Disabled_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Disabled_Gradient_Start),
-							GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Disabled_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Button_Light_Disabled_Divider),
-							GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color_Disabled));
+						if (GetTheme() == Theme::Theme_NightBlue)
+							DrawPushButton_Stylesheet_Flat(canvas, pRect,
+								GetThemeSysColor(ThemeColor::ThemeColor_Default),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Ver2));
+						else
+							DrawPushButton_Stylesheet(canvas, pRect, GetThemeSysColor(ThemeColor::ThemeColor_Button_Disabled_Gradient_Start),
+								GetThemeSysColor(ThemeColor::ThemeColor_Button_Disabled_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Disabled_Gradient_Start),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Highlighter_Disabled_Gradient_End), GetThemeSysColor(ThemeColor::ThemeColor_Button_Light_Disabled_Divider),
+								GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color_Disabled));
 					}
 				}
 

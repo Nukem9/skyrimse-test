@@ -201,7 +201,7 @@ void Patch_TESVCreationKit()
 	//
 	// BSPointerHandle(Manager)
 	//
-	XUtil::DetourJump(OFFSET(0x141A5C0, 1530), &BSPointerHandleManager<>::InitSDM);
+	XUtil::DetourJump(OFFSET(0x141A5C0, 1530), &BSPointerHandleManager::InitSDM);
 	XUtil::DetourJump(OFFSET(0x1770910, 1530), &HandleManager::KillSDM);
 	XUtil::DetourJump(OFFSET(0x1770560, 1530), &HandleManager::WarnForUndestroyedHandles);
 	XUtil::DetourJump(OFFSET(0x12E2260, 1530), &BSPointerHandleManagerInterface<>::GetCurrentHandle);
@@ -238,6 +238,15 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x12949D0, 1530), { 0xCC });// BSHandleRefObject::GetIndex - 1412949D0
 	//XUtil::PatchMemory(0x141294CB0, { 0xCC });// BSHandleRefObject::QRefCount - 141294CB0
 
+	//
+	// BSHandleRefObject
+	//
+	if (Offsets::IsCKVersion1573OrNewer())
+	{
+		XUtil::DetourJump(OFFSET(0x11ECE80, 16438), &BSHandleRefObject::IncRefCount);
+		XUtil::DetourJump(OFFSET(0x11E9E50, 16438), &BSHandleRefObject::DecRefCount);	
+	}
+	
 	//
 	// FaceGen
 	//
@@ -1024,8 +1033,8 @@ void Patch_TESVCreationKit()
 	XUtil::DetourJump(OFFSET(0x2647AC0, 1530), &BSSystemDir__NextEntry);
 	XUtil::DetourJump(OFFSET(0x2676020, 1530), &BSResource__LooseFileLocation__FileExists);
 
-	////
-	//// Experimental. Must be run last to avoid interfering with other hooks and patches.
-	////
+	//
+	// Experimental. Must be run last to avoid interfering with other hooks and patches.
+	//
 	Experimental::RunOptimizations();
 }

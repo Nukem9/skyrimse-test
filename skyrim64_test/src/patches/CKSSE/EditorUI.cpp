@@ -24,6 +24,8 @@
 */
 //////////////////////////////////////////
 
+#pragma warning (disable : 4101)
+
 #include "UIThemeMode.h"
 #include "MainWindow.h"
 #include "LogWindow.h"

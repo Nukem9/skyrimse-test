@@ -56,9 +56,12 @@ namespace Core
 							{ 2 + rc_temp.Left, 7 + rc_temp.Top }
 						};
 
-						canvas.Pen.Color = clShadow;
-						canvas.Brush.Color = clShadow;
-						canvas.Polygon(ps, 6);
+						if (GetTheme() != Theme::Theme_NightBlue)
+						{
+							canvas.Pen.Color = clShadow;
+							canvas.Brush.Color = clShadow;
+							canvas.Polygon(ps, 6);
+						}
 
 						canvas.Pen.Color = clColor;
 						canvas.Brush.Color = clColor;

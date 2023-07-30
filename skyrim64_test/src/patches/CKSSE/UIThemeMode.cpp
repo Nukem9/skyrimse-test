@@ -232,7 +232,7 @@ namespace UITheme
 		INT iNumButtons, INT dxButton, INT dyButton, INT dxBitmap, INT dyBitmap, UINT uStructSize) {
 		HIMAGELIST hImageList;
 
-		if ((Theme::GetTheme() != Theme::Theme_Light) && (Theme::GetTheme() != Theme::Theme_Gray))
+		if (UITheme::Theme::IsDarkTheme())
 			hImageList = ImageList_LoadImageA((HINSTANCE)g_hModule, MAKEINTRESOURCEA(IDB_BITMAP7), 16, 0,
 				RGB(56, 56, 56), IMAGE_BITMAP, LR_CREATEDIBSECTION | LR_LOADTRANSPARENT);
 		else
@@ -253,7 +253,7 @@ namespace UITheme
 	}
 
 	HIMAGELIST FIXAPI Comctl32ImageList_LoadImageA_1(HINSTANCE hi, LPCSTR lpbmp, INT cx, INT cGrow, COLORREF crMask, UINT uType, UINT uFlags) {
-		if ((Theme::GetTheme() != Theme::Theme_Light) && (Theme::GetTheme() != Theme::Theme_Gray))
+		if (UITheme::Theme::IsDarkTheme())
 			return ImageList_LoadImageA((HINSTANCE)g_hModule, MAKEINTRESOURCEA(IDB_BITMAP5),
 				cx, cGrow, crMask, IMAGE_BITMAP, LR_CREATEDIBSECTION | LR_LOADTRANSPARENT);
 		else
@@ -1287,12 +1287,23 @@ namespace UITheme
 					Theme::CheckBox::Render::DrawCheck_Disabled(Canvas, pRect);
 					break;
 				case CBS_CHECKEDNORMAL:
-					Theme::PushButton::Render::DrawPushButton_Normal(Canvas, pRect);
+					if (Theme::GetTheme() == Theme::Theme_NightBlue)
+						Theme::PushButton::Render::DrawPushButton_Pressed(Canvas, pRect);
+					else
+						Theme::PushButton::Render::DrawPushButton_Normal(Canvas, pRect);
 					Theme::CheckBox::Render::DrawCheck_Normal(Canvas, pRect);
 					break;
 				case CBS_CHECKEDHOT:
-					Theme::PushButton::Render::DrawPushButton_Hot(Canvas, pRect);
-					Theme::CheckBox::Render::DrawCheck_Hot(Canvas, pRect);
+					if (Theme::GetTheme() == Theme::Theme_NightBlue)
+					{
+						Theme::PushButton::Render::DrawPushButton_Pressed(Canvas, pRect);
+						Theme::CheckBox::Render::DrawCheck_Normal(Canvas, pRect);
+					}
+					else
+					{
+						Theme::PushButton::Render::DrawPushButton_Hot(Canvas, pRect);
+						Theme::CheckBox::Render::DrawCheck_Hot(Canvas, pRect);
+					}
 					break;
 				case CBS_CHECKEDPRESSED:
 					Theme::PushButton::Render::DrawPushButton_Pressed(Canvas, pRect);

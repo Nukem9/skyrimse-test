@@ -7,6 +7,7 @@
 #include "BSString.h"
 #include "TESForm_CK.h"
 #include "ObjectWindow.h"
+#include "BSPointerHandleManager.h"
 #include "../../typeinfo/hk_rtti.h"
 #include "../../typeinfo/ms_rtti.h"
 
@@ -85,9 +86,10 @@ namespace MainWindow
 		insertItem(MF_STRING, UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI Data");
 		insertItem(MF_STRING, UI_EXTMENU_DUMPHAVOKRTTI, "Dump Havok RTTI Data");
 		insertItem(MF_STRING, UI_EXTMENU_LOADEDESPINFO, "Dump Active Forms");
+		insertItem(MF_STRING, UI_EXTMENU_SDM, "Dump SDM Info");
 		insertItem(MF_SEPARATOR, UI_EXTMENU_SPACER, "");
 		insertItem(MF_STRING, UI_EXTMENU_HARDCODEDFORMS, "Save Hardcoded Forms");
-
+		
 		MENUITEMINFO menuInfo
 		{
 			.cbSize = sizeof(MENUITEMINFO),
@@ -344,6 +346,17 @@ namespace MainWindow
 
 					fclose(f);
 				}
+			}
+			return 0;
+
+			case UI_EXTMENU_SDM:
+			{
+				auto head = BSPointerHandleManager::GetHead();
+				auto tail = BSPointerHandleManager::GetTail();
+
+				LogWindow::Log("Dump SDM Info:\n\tHead: 0x%08X\n\tTail: 0x%08X\n\tMax: 0x%08X\n\tFree: %.2f",
+					head, tail, BSUntypedPointerHandle::MAX_HANDLE_COUNT, 100.0f -
+					((((long double)head) * 100.0f) / (long double)BSUntypedPointerHandle::MAX_HANDLE_COUNT));
 			}
 			return 0;
 

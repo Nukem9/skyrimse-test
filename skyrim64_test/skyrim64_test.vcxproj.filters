@@ -930,13 +930,7 @@
     <Image Include="..\Resources\uncheck.bmp" />
     <Image Include="..\Resources\uncheck_darktheme.bmp" />
     <Image Include="..\Resources\check.bmp" />
-    <Image Include="..\Resources\logo.bmp" />
     <Image Include="..\resources\bitmap9.bmp" />
-    <Image Include="..\Resources\logo_bethesda_game_studio_m.bmp" />
-    <Image Include="..\Resources\logo_bethesda_game_studio.png" />
-    <Image Include="..\Resources\logo_bethesda_game_studio.ico" />
-    <Image Include="..\Resources\logo_ckfixes.ico" />
-    <Image Include="..\Resources\Bethesda_logo.bmp" />
     <Image Include="..\Resources\developers.bmp" />
     <Image Include="..\Resources\logo_new.png" />
   </ItemGroup>

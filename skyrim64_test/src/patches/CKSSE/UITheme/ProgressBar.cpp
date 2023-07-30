@@ -49,11 +49,19 @@ namespace Core
 					{
 						Graphics::CRECT rc = *pRect;
 
-						canvas.GradientFill(rc, GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Gradient_Start), 
-							GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Gradient_End),
-							Graphics::gdVert);
+						if (GetTheme() != Theme::Theme_NightBlue)
+						{
+							canvas.GradientFill(rc, GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Gradient_Start),
+								GetThemeSysColor(ThemeColor::ThemeColor_Button_Pressed_Gradient_End),
+								Graphics::gdVert);
 
-						canvas.Frame(rc, GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color));
+							canvas.Frame(rc, GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color));
+						}
+						else
+						{
+							canvas.Fill(rc, GetThemeSysColor(ThemeColor::ThemeColor_Edit_Color));
+							canvas.Frame(rc, GetThemeSysColor(ThemeColor::ThemeColor_Divider_Color_Ver2));
+						}
 					}
 
 					VOID FIXAPI DrawFill(Graphics::CUICanvas& canvas, LPCRECT pRect)

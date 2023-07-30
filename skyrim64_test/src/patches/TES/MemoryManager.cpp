@@ -41,6 +41,8 @@ void *MemAlloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 
 #if SKYRIM64_USE_PAGE_HEAP
 	void *ptr = VirtualAlloc(nullptr, Size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+#elif SKYRIM64_USE_CUSTOM_MEMORY
+	void* ptr = FastMemoryAlloc(Size);
 #else
 	void *ptr = scalable_aligned_malloc(Size, Alignment);
 
@@ -72,6 +74,8 @@ void MemFree(void *Memory, bool Aligned = false)
 
 #if SKYRIM64_USE_PAGE_HEAP
 	VirtualFree(Memory, 0, MEM_RELEASE);
+#elif SKYRIM64_USE_CUSTOM_MEMORY
+	FastMemoryFree(Memory);
 #else
 	scalable_aligned_free(Memory);
 #endif
@@ -92,6 +96,8 @@ size_t MemSize(void *Memory)
 	VirtualQuery(Memory, &info, sizeof(MEMORY_BASIC_INFORMATION));
 
 	size_t result = info.RegionSize;
+#elif SKYRIM64_USE_CUSTOM_MEMORY
+	size_t result = FastMemorySize(Memory);
 #else
 	size_t result = scalable_msize(Memory);
 #endif

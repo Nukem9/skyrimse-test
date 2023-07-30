@@ -42,7 +42,7 @@ namespace Core
 		{
 			Core::Classes::UI::CUIFont* ThemeFont;
 
-			constexpr COLORREF szConstDark[64]
+			constexpr COLORREF szConstDark[66]
 			{
 				RGB(52, 52, 52),											// ThemeColor_Default
 				RGB(32, 32, 32),											// ThemeColor_ListView_Color
@@ -107,10 +107,12 @@ namespace Core
 				RGB(27, 27, 27),											// ThemeColor_Header_Normal_Gradient_End
 				RGB(44, 44, 44),											// ThemeColor_Header_Hot_Gradient_Start
 				RGB(37, 37, 37),											// ThemeColor_Header_Hot_Gradient_End
-				RGB(160, 201, 235)											// ThemeColor_ListView_Owner_Selected
+				RGB(160, 201, 235),											// ThemeColor_ListView_Owner_Selected
+				RGB(0, 122, 204),											// ThemeColor_SelectedItem_Back
+				RGB(187, 187, 187),											// ThemeColor_SelectedItem_Text
 			};
 
-			constexpr COLORREF szConstDarkGray[64]
+			constexpr COLORREF szConstDarkGray[66]
 			{
 				RGB(83, 83, 83),											// ThemeColor_Default
 				RGB(58, 58, 58),											// ThemeColor_ListView_Color
@@ -175,10 +177,12 @@ namespace Core
 				RGB(55, 55, 55),											// ThemeColor_Header_Normal_Gradient_End
 				RGB(70, 70, 70),											// ThemeColor_Header_Hot_Gradient_Start
 				RGB(65, 65, 65),											// ThemeColor_Header_Hot_Gradient_End
-				RGB(160, 201, 235)											// ThemeColor_ListView_Owner_Selected
+				RGB(160, 201, 235),											// ThemeColor_ListView_Owner_Selected
+				RGB(0, 129, 224),											// ThemeColor_SelectedItem_Back
+				RGB(200, 200, 200),											// ThemeColor_SelectedItem_Text
 			};
 
-			constexpr COLORREF szConstGray[64]
+			constexpr COLORREF szConstGray[66]
 			{
 				RGB(184, 184, 184),											// ThemeColor_Default
 				RGB(238, 238, 238),											// ThemeColor_ListView_Color
@@ -205,8 +209,8 @@ namespace Core
 				RGB(184, 184, 184),											// ThemeColor_Divider_Highlighter_Gradient_Start
 				RGB(199, 199, 199),											// ThemeColor_Divider_Highlighter_Gradient_End
 				RGB(184, 184, 184),											// ThemeColor_Divider_Highlighter_Hot_Gradient_Start
-				RGB(186, 131, 176),											// ThemeColor_Divider_Highlighter_Hot_Gradient_End
-				RGB(201, 109, 205),											// ThemeColor_Divider_Highlighter_Pressed
+				RGB(100, 125, 154),											// ThemeColor_Divider_Highlighter_Hot_Gradient_End
+				RGB(83, 147, 190),											// ThemeColor_Divider_Highlighter_Pressed
 				RGB(139, 139, 139),											// ThemeColor_Button_Pressed_Gradient_Start
 				RGB(130, 130, 130),											// ThemeColor_Button_Pressed_Gradient_End
 				RGB(239, 239, 239),											// ThemeColor_Button_Hot_Gradient_Start
@@ -226,7 +230,7 @@ namespace Core
 				RGB(174, 174, 174),											// ThemeColor_ScrollBar_Thumb_Highlighter
 				RGB(184, 184, 184),											// ThemeColor_ScrollBar_Thumb_Highlighter_Hot
 				RGB(76, 76, 76),											// ThemeColor_Shape
-				RGB(179, 0, 179),											// ThemeColor_Shape_Hot
+				RGB(123, 198, 225),											// ThemeColor_Shape_Hot
 				RGB(55, 55, 55),											// ThemeColor_Shape_Pressed
 				RGB(129, 129, 129),											// ThemeColor_Shape_Disabled
 				RGB(220, 220, 220),											// ThemeColor_Shape_Shadow
@@ -235,7 +239,7 @@ namespace Core
 				RGB(133, 48, 137),											// ThemeColor_Progress_Fill_Gradient_End
 				RGB(186, 71, 192),											// ThemeColor_Progress_Fill_Highlighter
 				RGB(173, 62, 179),											// ThemeColor_Progress_Fill_Highlighter_Up
-				RGB(132, 0, 132),											// ThemeColor_Border_Window
+				RGB(0, 144, 255),											// ThemeColor_Border_Window
 				RGB(128, 128, 128),											// ThemeColor_StatusBar_Back
 				RGB(24, 24, 24),											// ThemeColor_StatusBar_Text
 				RGB(20, 20, 20),											// ThemeColor_Caption_Text
@@ -243,10 +247,12 @@ namespace Core
 				RGB(147, 147, 147),											// ThemeColor_Header_Normal_Gradient_End
 				RGB(176, 176, 176),											// ThemeColor_Header_Hot_Gradient_Start
 				RGB(157, 157, 157),											// ThemeColor_Header_Hot_Gradient_End
-				RGB(242, 176, 173)											// ThemeColor_ListView_Owner_Selected
+				RGB(242, 176, 173),											// ThemeColor_ListView_Owner_Selected											
+				RGB(117, 197, 255),											// ThemeColor_SelectedItem_Back
+				RGB(32, 32, 32),											// ThemeColor_SelectedItem_Text
 			};
 
-			constexpr COLORREF szConstLight[64]
+			constexpr COLORREF szConstLight[66]
 			{
 				RGB(214, 214, 214),											// ThemeColor_Default
 				RGB(255, 255, 255),											// ThemeColor_ListView_Color
@@ -273,8 +279,8 @@ namespace Core
 				RGB(214, 214, 214),											// ThemeColor_Divider_Highlighter_Gradient_Start
 				RGB(232, 232, 232),											// ThemeColor_Divider_Highlighter_Gradient_End
 				RGB(214, 214, 214),											// ThemeColor_Divider_Highlighter_Hot_Gradient_Start
-				RGB(186, 131, 176),											// ThemeColor_Divider_Highlighter_Hot_Gradient_End
-				RGB(201, 109, 205),											// ThemeColor_Divider_Highlighter_Pressed
+				RGB(100, 125, 154),											// ThemeColor_Divider_Highlighter_Hot_Gradient_End
+				RGB(83, 147, 190),											// ThemeColor_Divider_Highlighter_Pressed
 				RGB(169, 169, 169),											// ThemeColor_Button_Pressed_Gradient_Start
 				RGB(160, 160, 160),											// ThemeColor_Button_Pressed_Gradient_End
 				RGB(243, 243, 243),											// ThemeColor_Button_Hot_Gradient_Start
@@ -294,7 +300,7 @@ namespace Core
 				RGB(190, 190, 190),											// ThemeColor_ScrollBar_Thumb_Highlighter
 				RGB(200, 200, 200),											// ThemeColor_ScrollBar_Thumb_Highlighter_Hot
 				RGB(94, 94, 94),											// ThemeColor_Shape
-				RGB(179, 0, 179),											// ThemeColor_Shape_Hot
+				RGB(123, 198, 225),											// ThemeColor_Shape_Hot
 				RGB(71, 71, 71),											// ThemeColor_Shape_Pressed
 				RGB(149, 149, 149),											// ThemeColor_Shape_Disabled
 				RGB(240, 240, 240),											// ThemeColor_Shape_Shadow
@@ -303,7 +309,7 @@ namespace Core
 				RGB(133, 48, 137),											// ThemeColor_Progress_Fill_Gradient_End
 				RGB(186, 71, 192),											// ThemeColor_Progress_Fill_Highlighter
 				RGB(173, 62, 179),											// ThemeColor_Progress_Fill_Highlighter_Up
-				RGB(132, 0, 132),											// ThemeColor_Border_Window
+				RGB(0, 144, 255),											// ThemeColor_Border_Window
 				RGB(148, 148, 148),											// ThemeColor_StatusBar_Back
 				RGB(34, 34, 34),											// ThemeColor_StatusBar_Text
 				RGB(20, 20, 20),											// ThemeColor_Caption_Text
@@ -311,7 +317,80 @@ namespace Core
 				RGB(177, 177, 177),											// ThemeColor_Header_Normal_Gradient_End
 				RGB(206, 206, 206),											// ThemeColor_Header_Hot_Gradient_Start
 				RGB(187, 187, 187),											// ThemeColor_Header_Hot_Gradient_End
-				RGB(242, 176, 173)											// ThemeColor_ListView_Owner_Selected
+				RGB(242, 176, 173),											// ThemeColor_ListView_Owner_Selected
+				RGB(117, 197, 255),											// ThemeColor_SelectedItem_Back
+				RGB(32, 32, 32),											// ThemeColor_SelectedItem_Text
+			};
+
+			constexpr COLORREF szNightBlue[66]
+			{
+				RGB(34, 37, 50),											// ThemeColor_Default
+				RGB(18, 19, 22),											// ThemeColor_ListView_Color
+				RGB(18, 19, 22),											// ThemeColor_TreeView_Color
+				RGB(18, 19, 22),											// ThemeColor_Edit_Color
+				RGB(25, 27, 35),											// ThemeColor_Edit_Color_Disabled
+				RGB(92, 100, 126),											// ThemeColor_Text_1
+				RGB(118, 126, 154),											// ThemeColor_Text_2
+				RGB(163, 168, 182),											// ThemeColor_Text_3
+				RGB(180, 184, 195),											// ThemeColor_Text_4
+				RGB(18, 19, 22),											// ThemeColor_MDIWindow
+				RGB(36, 39, 53),											// ThemeColor_Default_Gradient_Start
+				RGB(56, 62, 84),											// ThemeColor_Default_Gradient_End
+				RGB(49, 53, 68),											// ThemeColor_Divider_Highlighter_Disabled_Gradient_Start
+				RGB(49, 53, 68),											// ThemeColor_Divider_Highlighter_Disabled_Gradient_End
+				RGB(31, 31, 33),											// ThemeColor_Divider_Color
+				RGB(39, 39, 41),											// ThemeColor_Divider_Color_Disabled
+				RGB(62, 67, 85),											// ThemeColor_Divider_Highlighter
+				RGB(90, 99, 126),											// ThemeColor_Divider_Highlighter_Hot
+				RGB(49, 54, 70),											// ThemeColor_Divider_Color_Ver2
+				RGB(41, 45, 58),											// ThemeColor_Divider_Color_Disabled_Ver2
+				RGB(73, 80, 101),											// ThemeColor_Divider_Highlighter_Ver2
+				RGB(62, 67, 83),											// ThemeColor_Divider_Highlighter_Disabled_Ver2
+				RGB(50, 55, 73),											// ThemeColor_Divider_Highlighter_Gradient_Start
+				RGB(62, 67, 89),											// ThemeColor_Divider_Highlighter_Gradient_End
+				RGB(58, 63, 82),											// ThemeColor_Divider_Highlighter_Hot_Gradient_Start
+				RGB(69, 78, 99),											// ThemeColor_Divider_Highlighter_Hot_Gradient_End
+				RGB(0, 144, 255),											// ThemeColor_Divider_Highlighter_Pressed	
+				RGB(38, 41, 53),											// ThemeColor_Button_Pressed_Gradient_Start
+				RGB(28, 31, 38),											// ThemeColor_Button_Pressed_Gradient_End
+				RGB(98, 108, 138),											// ThemeColor_Button_Hot_Gradient_Start
+				RGB(78, 86, 109),											// ThemeColor_Button_Hot_Gradient_End
+				RGB(31, 33, 41),											// ThemeColor_Button_Pressed_Divider
+				RGB(78, 86, 109),											// ThemeColor_Button_Light_Disabled_Divider
+				RGB(65, 70, 90),											// ThemeColor_Button_Disabled_Gradient_Start
+				RGB(57, 63, 81),											// ThemeColor_Button_Disabled_Gradient_End
+				RGB(50, 55, 71),											// ThemeColor_CheckBox_Gradient_Start
+				RGB(28, 31, 38),											// ThemeColor_CheckBox_Gradient_End
+				RGB(63, 69, 88),											// ThemeColor_ScrollBar_Gradient_Start
+				RGB(53, 58, 74),											// ThemeColor_ScrollBar_Gradient_End
+				RGB(78, 86, 109),											// ThemeColor_ScrollBar_Thumb_Gradient_Start
+				RGB(61, 67, 86),											// ThemeColor_ScrollBar_Thumb_Gradient_End
+				RGB(98, 108, 138),											// ThemeColor_ScrollBar_Thumb_Gradient_Hot_Start
+				RGB(78, 86, 109),											// ThemeColor_ScrollBar_Thumb_Gradient_Hot_End
+				RGB(105, 116, 148),											// ThemeColor_ScrollBar_Thumb_Highlighter
+				RGB(125, 135, 162),											// ThemeColor_ScrollBar_Thumb_Highlighter_Hot
+				RGB(190, 190, 190),											// ThemeColor_Shape
+				RGB(0, 144, 255),											// ThemeColor_Shape_Hot
+				RGB(220, 220, 220),											// ThemeColor_Shape_Pressed
+				RGB(110, 110, 110),											// ThemeColor_Shape_Disabled
+				RGB(20, 20, 20),											// ThemeColor_Shape_Shadow
+				RGB(38, 38, 38),											// ThemeColor_Shape_Shadow_Disabled
+				RGB(70, 149, 205),											// ThemeColor_Progress_Fill_Gradient_Start
+				RGB(42, 101, 143),											// ThemeColor_Progress_Fill_Gradient_End
+				RGB(87, 159, 209),											// ThemeColor_Progress_Fill_Highlighter
+				RGB(103, 175, 225),											// ThemeColor_Progress_Fill_Highlighter_Up
+				RGB(68, 173, 255),											// ThemeColor_Border_Window
+				RGB(18, 19, 22),											// ThemeColor_StatusBar_Back
+				RGB(139, 142, 151),											// ThemeColor_StatusBar_Text
+				RGB(255, 255, 255),											// ThemeColor_Caption_Text
+				RGB(48, 52, 69),											// ThemeColor_Header_Normal_Gradient_Start
+				RGB(48, 52, 69),											// ThemeColor_Header_Normal_Gradient_End
+				RGB(58, 64, 84),											// ThemeColor_Header_Hot_Gradient_Start
+				RGB(58, 64, 84),											// ThemeColor_Header_Hot_Gradient_End
+				RGB(54, 108, 152),											// ThemeColor_ListView_Owner_Selected
+				RGB(0, 129, 224),											// ThemeColor_SelectedItem_Back
+				RGB(200, 200, 200),											// ThemeColor_SelectedItem_Text
+				//58, 64, 84
 			};
 
 			HBRUSH hThemeDefaultBrush = NULL;
@@ -349,6 +428,9 @@ namespace Core
 				case Theme_Dark:
 					szCurrentScheme = const_cast<COLORREF*>(szConstDark);
 					break;
+				case Theme_NightBlue:
+					szCurrentScheme = const_cast<COLORREF*>(szNightBlue);
+					break;
 				}
 
 				DeleteObject(hThemeDefaultBrush);
@@ -366,8 +448,8 @@ namespace Core
 				hThemeDividerBrush = CreateSolidBrush(GetThemeSysColor(ThemeColor_Divider_Color));
 				hThemeText4Brush = CreateSolidBrush(GetThemeSysColor(ThemeColor_Text_4));
 				hThemeBorderWindowBrush = CreateSolidBrush(GetThemeSysColor(ThemeColor_Border_Window));
-				hThemeHighlightBrush = CreateSolidBrush(GetThemeSysColor(ThemeColor_Border_Window));
-				hThemeHighlightTextBrush = CreateSolidBrush(GetThemeSysColor(ThemeColor_StatusBar_Text));
+				hThemeHighlightBrush = CreateSolidBrush(GetThemeSysColor(ThemeColor_SelectedItem_Back));
+				hThemeHighlightTextBrush = CreateSolidBrush(GetThemeSysColor(ThemeColor_SelectedItem_Text));
 			}
 
 			COLORREF FIXAPI GetThemeSysColor(const ThemeColor color)
@@ -389,8 +471,8 @@ namespace Core
 				case COLOR_WINDOWTEXT: return GetThemeSysColor(ThemeColor_Text_4);
 				case COLOR_ACTIVEBORDER: return GetThemeSysColor(ThemeColor_Border_Window);
 				case COLOR_INACTIVEBORDER: return GetThemeSysColor(ThemeColor_Divider_Color);
-				case COLOR_HIGHLIGHT: return GetThemeSysColor(ThemeColor_Border_Window);
-				case COLOR_HIGHLIGHTTEXT: return GetThemeSysColor(ThemeColor_StatusBar_Text);
+				case COLOR_HIGHLIGHT: return GetThemeSysColor(ThemeColor_SelectedItem_Back);
+				case COLOR_HIGHLIGHTTEXT: return GetThemeSysColor(ThemeColor_SelectedItem_Text);
 				default:
 					return ::GetSysColor(nIndex);
 				}
@@ -481,6 +563,13 @@ namespace Core
 				}
 					
 				return Result;
+			}
+
+			bool FIXAPI IsDarkTheme()
+			{
+				return
+					(generalCurentTheme == Theme_DarkGray) || (generalCurentTheme == Theme_Dark) ||
+					(generalCurentTheme == Theme_NightBlue);
 			}
 		}
 	}

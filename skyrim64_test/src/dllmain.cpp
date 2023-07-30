@@ -68,6 +68,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 {
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
+#if SKYRIM64_USE_CUSTOM_MEMORY
+		auto Mall = LoadLibraryA("Mallock.dll");
+
+		FastMemoryAlloc = (check_alloc_func_t)GetProcAddress(Mall, "FastAlignedMemoryAlloc");
+		FastMemoryFree = (check_dealloc_func_t)GetProcAddress(Mall, "FastMemoryFree");
+		FastMemorySize = (check_size_func_t)GetProcAddress(Mall, "FastGetMemorySize");
+#endif
+
 		g_hModule = (uintptr_t)hModule;
 		// Force this dll to be loaded permanently
 		HMODULE temp;
@@ -110,7 +118,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			if (g_LoadType != GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM)
 				return TRUE;
 #endif
-			Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+			if (g_LoadType == GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM)
+				Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
 			DumpEnableBreakpoint();
 			break;
 		}
@@ -119,8 +129,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 	{
 		// Guaranteed to work, even with a rough killing of the process
 
-		if ((g_LoadType == GAME_EXECUTABLE_TYPE::GAME_SKYRIM) ||
-			(g_LoadType == GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM))
+		if (g_LoadType == GAME_EXECUTABLE_TYPE::CREATIONKIT_SKYRIM)
 			Gdiplus::GdiplusShutdown(gdiplusToken);
 	}
 

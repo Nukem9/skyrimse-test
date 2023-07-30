@@ -44,7 +44,8 @@ namespace Core
 				Theme_Light = 1,
 				Theme_Gray,
 				Theme_DarkGray,
-				Theme_Dark
+				Theme_Dark,
+				Theme_NightBlue
 			};
 
 			Theme FIXAPI GetTheme(VOID);
@@ -115,7 +116,9 @@ namespace Core
 				ThemeColor_Header_Normal_Gradient_End,
 				ThemeColor_Header_Hot_Gradient_Start,
 				ThemeColor_Header_Hot_Gradient_End,
-				ThemeColor_ListView_Owner_Selected
+				ThemeColor_ListView_Owner_Selected,
+				ThemeColor_SelectedItem_Back,
+				ThemeColor_SelectedItem_Text
 			};
 
 			inline COLORREF FIXAPI GetThemeSysColor(const ThemeColor color);
@@ -124,6 +127,8 @@ namespace Core
 			HBRUSH FIXAPI Comctl32GetSysColorBrush(INT nIndex);
 			HBRUSH FIXAPI Comctl32GetSysColorBrushEx(INT nIndex, BOOL reCreate = TRUE);
 			HBITMAP FIXAPI LoadImageFromResource(HINSTANCE hInst, DWORD dwResId, LPCSTR ResType);
+
+			bool FIXAPI IsDarkTheme();
 		}
 	}
 }
