@@ -20,7 +20,6 @@ static ULONG_PTR					gdiplusToken;
 
 void Patch_TESV();
 void Patch_TESVCreationKit();
-void Disable_ENB();
 
 void ApplyPatches()
 {
@@ -57,7 +56,6 @@ void ApplyPatches()
 		// Get CRC32 file
 		g_crc32_ck = CRC32_file("CreationKit.exe");
 
-		Disable_ENB();
 		Patch_TESVCreationKit();
 		break;
 #endif
@@ -65,7 +63,7 @@ void ApplyPatches()
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
-{
+{	
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
 #if SKYRIM64_USE_CUSTOM_MEMORY

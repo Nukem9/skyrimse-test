@@ -57,6 +57,7 @@
 using namespace usse;
 using namespace usse::api;
 
+void Disable_ENB();
 void PatchSteam();
 void PatchThreading();
 void PatchMemory();
@@ -67,14 +68,16 @@ void Patch_TESVCreationKit()
 	if (!_stricmp((const char *)(g_ModuleBase + 0x3078988), "1.5.3.0"))
 	{
 		// Released 2018-04-13 / Built Mon Sep 18 18:58:37 2017
-		Offsets::BuildTableForCKSSEVersion(1530);
+		//Offsets::BuildTableForCKSSEVersion(1530);
 
 		MessageBoxA(nullptr, 
-			"Creation Kit version deprecated.\nNot all patches will be installed.\n\n"
+			"Creation Kit version deprecated.\nPatches are disabled.\n\n"
 			"Required versions:\n"
 			"CreationKit.exe 1.5.73 released on 2019-03-13\n"
 			"CreationKit.exe 1.6.438 released on 2022-04-25", 
 			"Version Check", MB_ICONERROR);
+
+		return;
 	}
 	else if (!_stricmp((const char *)(g_ModuleBase + 0x3062CC8), "1.5.73.0"))
 	{
@@ -188,6 +191,14 @@ void Patch_TESVCreationKit()
 		PatchIAT((void(*)())purecallHandler, "VCRUNTIME140.DLL", "_purecall");
 	}
 
+	//
+	// Disable ENB d3d11.dll etc
+	//
+	if (g_INI.GetBoolean("CreationKit", "ENBProtect", false))
+	{
+		Disable_ENB();
+	}
+
 	MSRTTI::Initialize();
 
 	//
@@ -238,15 +249,25 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x12949D0, 1530), { 0xCC });// BSHandleRefObject::GetIndex - 1412949D0
 	//XUtil::PatchMemory(0x141294CB0, { 0xCC });// BSHandleRefObject::QRefCount - 141294CB0
 
-	//
-	// BSHandleRefObject
-	//
+	
 	if (Offsets::IsCKVersion1573OrNewer())
 	{
+		//
+		// BSHandleRefObject
+		//
+
 		XUtil::DetourJump(OFFSET(0x11ECE80, 16438), &BSHandleRefObject::IncRefCount);
 		XUtil::DetourJump(OFFSET(0x11E9E50, 16438), &BSHandleRefObject::DecRefCount);	
+
+		//
+		// %.2f -> %.3f and %.02f -> %.03f
+		//
+
+	//	XUtil::PatchMemory(OFFSET(0x2E6831E, 16438), { 0x33 });
+	//	XUtil::PatchMemory(OFFSET(0x2E68327, 16438), { 0x33 });
+	//	XUtil::PatchMemory(OFFSET(0x174E9D4, 16438), { 0x03 });
 	}
-	
+
 	//
 	// FaceGen
 	//
@@ -268,8 +289,8 @@ void Patch_TESVCreationKit()
 
 	// Allow variable tint mask resolution
 	uint32_t tintResolution = g_INI.GetInteger("CreationKit_FaceGen", "TintMaskResolution", 512);
-	XUtil::PatchMemory(OFFSET(0x2DA588C, 1530), (uint8_t *)&tintResolution, sizeof(uint32_t));
-	XUtil::PatchMemory(OFFSET(0x2DA5899, 1530), (uint8_t *)&tintResolution, sizeof(uint32_t));
+	XUtil::PatchMemory(OFFSET(0x2DA588C, 1530), (uint8_t*)&tintResolution, sizeof(uint32_t));
+	XUtil::PatchMemory(OFFSET(0x2DA5899, 1530), (uint8_t*)&tintResolution, sizeof(uint32_t));
 
 	// Prevent internal filesystem reloads when exporting FaceGen for many NPCs
 	XUtil::DetourJump(OFFSET(0x12D1AC0, 1530), &ExportFaceGenForSelectedNPCs);
@@ -837,6 +858,14 @@ void Patch_TESVCreationKit()
 	// Fix for TESObjectLAND vertex normals becoming corrupted when saving worldspaces with a parent worldspace. Invalid memcpy() size supplied.
 	//
 	XUtil::PatchMemory(OFFSET(0x1B93216, 1530), { 0x41, 0xB8, 0x63, 0x03, 0x00, 0x00 });
+
+	//
+	// Fix 
+	//
+	/*if (Offsets::IsCKVersion16438())
+	{
+		XUtil::DetourJump(OFFSET(0x2B20140, 16438), &__CKSSEFIXES_TESLandEditorFix);
+	}*/
 
 	//
 	// Fix for the "Object Palette" preview window not working. Window render state has to be set to '2'.
