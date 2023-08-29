@@ -61,6 +61,7 @@ void Disable_ENB();
 void PatchSteam();
 void PatchThreading();
 void PatchMemory();
+void PatchPointerHandleManager();
 size_t BNetConvertUnicodeString(char *Destination, size_t DestSize, const wchar_t *Source, size_t SourceSize);
 
 void Patch_TESVCreationKit()
@@ -249,7 +250,7 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x12949D0, 1530), { 0xCC });// BSHandleRefObject::GetIndex - 1412949D0
 	//XUtil::PatchMemory(0x141294CB0, { 0xCC });// BSHandleRefObject::QRefCount - 141294CB0
 
-	
+#if SKYRIM64_USE_64BIT_REFOBJS
 	if (Offsets::IsCKVersion1573OrNewer())
 	{
 		//
@@ -257,15 +258,31 @@ void Patch_TESVCreationKit()
 		//
 
 		XUtil::DetourJump(OFFSET(0x11ECE80, 16438), &BSHandleRefObject::IncRefCount);
-		XUtil::DetourJump(OFFSET(0x11E9E50, 16438), &BSHandleRefObject::DecRefCount);	
+		XUtil::DetourJump(OFFSET(0x11E9E50, 16438), &BSHandleRefObject::DecRefCount);
 
-		//
-		// %.2f -> %.3f and %.02f -> %.03f
-		//
+		PatchPointerHandleManager();
+	}
+#endif
 
-	//	XUtil::PatchMemory(OFFSET(0x2E6831E, 16438), { 0x33 });
-	//	XUtil::PatchMemory(OFFSET(0x2E68327, 16438), { 0x33 });
-	//	XUtil::PatchMemory(OFFSET(0x174E9D4, 16438), { 0x03 });
+	if (Offsets::IsCKVersion16438())
+	{
+		// remove spam "Compiling Vertex Shader: %s %s - TechnicID: %u"
+		XUtil::PatchMemory(OFFSET(0x2C2B220, 16438), { 0xE9, 0x94, 0x00 });
+		XUtil::PatchMemory(OFFSET(0x2B30ECE, 16438), { 0xE9, 0x99, 0x00 });
+		
+		// remove spam "Compiling Pixel Shader: %s %s - TechnicID: %u"
+		XUtil::PatchMemory(OFFSET(0x2C2B450, 16438), { 0xE9, 0x94, 0x00 });
+		XUtil::PatchMemory(OFFSET(0x2B31881, 16438), { 0xE9, 0x8A, 0x00 });
+	}
+	else if(Offsets::IsCKVersion1573())
+	{
+		// remove spam "Compiling Vertex Shader: %s %s - TechnicID: %u"
+		XUtil::PatchMemory(OFFSET(0x2C2B220, 16438), { 0xE9, 0x9F, 0x00 });
+		XUtil::PatchMemory(OFFSET(0x2B30ECE, 16438), { 0xE9, 0x9A, 0x00 });
+
+		// remove spam "Compiling Pixel Shader: %s %s - TechnicID: %u"
+		XUtil::PatchMemory(OFFSET(0x2C2B450, 16438), { 0xE9, 0x9F, 0x00 });
+		XUtil::PatchMemory(OFFSET(0x2B31881, 16438), { 0xE9, 0x8A, 0x00 });
 	}
 
 	//

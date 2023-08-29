@@ -874,7 +874,7 @@ namespace Offsets
 		OFFSET_ENTRY(0x2E44920, 1530, nullptr, 0, -1)// Signature failed: Function was removed, patch no longer needed
 		OFFSET_ENTRY(0x2E54B7E, 1530, nullptr, 0, 0x2E47D7E)
 		OFFSET_ENTRY(0x2E54B88, 1530, nullptr, 0, 0x2E47D88)
-		OFFSET_ENTRY(0x2E558DB, 1530, nullptr, 0, 0x2E48ADB)
+		OFFSET_ENTRY(0x2E558DB, 1530, nullptr, 0, 0x2E48ADB)	
 
 		// Only with 1.5.73 version
 		OFFSET_ENTRY(0x1215D80, 1573, "48 89 4C 24 08 48 8B 44 24 08 48 8B 00 C3", 0, 0x1215D80) // The third in a row
@@ -909,8 +909,14 @@ namespace Offsets
 		OFFSET_ENTRY(0x159A635, 16438, nullptr, 0, 0x163E675)
 		OFFSET_ENTRY(0x15C1630, 16438, nullptr, 0, 0x1665770)
 		OFFSET_ENTRY(0x15C6A8C, 16438, nullptr, 0, 0x166ABCC)
+#if 0
 		OFFSET_ENTRY(0x11ECE80, 16438, nullptr, 0, 0x128CD30)
 		OFFSET_ENTRY(0x11E9E50, 16438, nullptr, 0, 0x1289D00)
+#endif
+		OFFSET_ENTRY(0x2C2B220, 16438, nullptr, 0, 0x2DFC533)
+		OFFSET_ENTRY(0x2B30ECE, 16438, nullptr, 0, 0x2D01893)
+		OFFSET_ENTRY(0x2C2B450, 16438, nullptr, 0, 0x2DFC8A3)
+		OFFSET_ENTRY(0x2B31881, 16438, nullptr, 0, 0x2D021B2)
 
 		// Data offsets
 		OFFSET_ENTRY(0x3078988, 1530, nullptr, 0, 0x3062CC8)
@@ -1309,8 +1315,25 @@ namespace Offsets
 		OFFSET_ENTRY(0x159A635, 16438, nullptr, 0, 0x159A635)
 		OFFSET_ENTRY(0x15C1630, 16438, nullptr, 0, 0x15C1630)
 		OFFSET_ENTRY(0x15C6A8C, 16438, nullptr, 0, 0x15C6A8C)
+#if 0
 		OFFSET_ENTRY(0x11ECE80, 16438, nullptr, 0, 0x11ECE80)
 		OFFSET_ENTRY(0x11E9E50, 16438, nullptr, 0, 0x11E9E50)
+#endif
+		OFFSET_ENTRY(0x2C2B220, 16438, nullptr, 0, 0x2C2B220)
+		OFFSET_ENTRY(0x2B30ECE, 16438, nullptr, 0, 0x2B30ECE)
+		OFFSET_ENTRY(0x2C2B450, 16438, nullptr, 0, 0x2C2B450)
+		OFFSET_ENTRY(0x2B31881, 16438, nullptr, 0, 0x2B31881)
+
+			
+		
+		
+		
+			
+		
+
+
+		OFFSET_ENTRY(0x2B20140, 16438, nullptr, 0, 0x2B20140) // fix land (only 1.6)
+		OFFSET_ENTRY(0x2E63450, 16438, nullptr, 0, 0x2E63450) // ^
 			
 		// Data offsets
 		OFFSET_ENTRY(0x3078988, 1530, nullptr, 0, 0x2E835D8)

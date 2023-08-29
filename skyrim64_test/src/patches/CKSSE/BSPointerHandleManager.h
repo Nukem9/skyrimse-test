@@ -75,8 +75,8 @@ public:
 };
 
 #if SKYRIM64_USE_64BIT_REFOBJS
-typedef IBSUntypedPointerHandle<uint64_t, 25, 6> BSUntypedPointerHandle;
-static_assert(sizeof(BSUntypedPointerHandle) == 0x8);
+typedef IBSUntypedPointerHandle<uint32_t, 25, 6> BSUntypedPointerHandle;
+static_assert(sizeof(BSUntypedPointerHandle) == 0x4);
 #else
 typedef IBSUntypedPointerHandle<uint32_t, 21, 6> BSUntypedPointerHandle;
 static_assert(sizeof(BSUntypedPointerHandle) == 0x4);
@@ -87,11 +87,7 @@ class BSPointerHandle : public HandleType
 {
 };
 
-#if SKYRIM64_USE_64BIT_REFOBJS
-static_assert(sizeof(BSPointerHandle<TESObjectREFR_CK>) == 0x8);
-#else
 static_assert(sizeof(BSPointerHandle<TESObjectREFR_CK>) == 0x4);
-#endif
 
 template<typename _Ty, typename HandleType = BSUntypedPointerHandle>
 class IBSPointerHandleManager

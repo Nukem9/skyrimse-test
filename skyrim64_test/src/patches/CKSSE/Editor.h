@@ -131,3 +131,6 @@ void ArrayQuickSortRecursive(BSTArray<T>& Array, int(*SortFunction)(const void *
 	else
 		std::sort(&Array[0], &Array[Array.QSize()], compare);
 }
+
+//extern "C"  void __CKSSEFIXES_TESLandEditorFix(uintptr_t a1, uint32_t a2, uintptr_t a3, uint32_t a4,
+//	uint64_t a5, double a6, double a7, uintptr_t a8);

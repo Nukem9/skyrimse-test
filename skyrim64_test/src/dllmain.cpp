@@ -66,14 +66,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 {	
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
-#if SKYRIM64_USE_CUSTOM_MEMORY
-		auto Mall = LoadLibraryA("Mallock.dll");
-
-		FastMemoryAlloc = (check_alloc_func_t)GetProcAddress(Mall, "FastAlignedMemoryAlloc");
-		FastMemoryFree = (check_dealloc_func_t)GetProcAddress(Mall, "FastMemoryFree");
-		FastMemorySize = (check_size_func_t)GetProcAddress(Mall, "FastGetMemorySize");
-#endif
-
 		g_hModule = (uintptr_t)hModule;
 		// Force this dll to be loaded permanently
 		HMODULE temp;

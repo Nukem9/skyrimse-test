@@ -1020,3 +1020,9 @@ void hk_jmp_140FD722E(__int64 a1, HWND DialogWindow)
 		}
 	}
 }
+//
+//void hk_call_142B20140(intptr_t a1, uint32_t a2, uintptr_t a3, uint32_t a4,
+//	uint64_t a5, double a6, double a7, uintptr_t a8)
+//{
+//	__CKSSEFIXES_TESLandEditorFix(a1, a2, a3, a4, a5, a6, a7, a8);
+//}

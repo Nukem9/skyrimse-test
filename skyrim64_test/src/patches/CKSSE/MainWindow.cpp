@@ -354,8 +354,8 @@ namespace MainWindow
 				auto head = BSPointerHandleManager::GetHead();
 				auto tail = BSPointerHandleManager::GetTail();
 
-				LogWindow::Log("Dump SDM Info:\n\tHead: 0x%08X\n\tTail: 0x%08X\n\tMax: 0x%08X\n\tFree: %.2f",
-					head, tail, BSUntypedPointerHandle::MAX_HANDLE_COUNT, 100.0f -
+				LogWindow::Log("Dump SDM Info:\n\tHead: 0x%08X\n\tTail: 0x%08X\n\tMax: 0x%08X\n\tCapacity: %.2f%%",
+					head, tail, BSUntypedPointerHandle::MAX_HANDLE_COUNT, 
 					((((long double)head) * 100.0f) / (long double)BSUntypedPointerHandle::MAX_HANDLE_COUNT));
 			}
 			return 0;

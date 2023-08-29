@@ -22,5 +22,4 @@
 #define SKYRIM64_USE_PROFILER		0	// Enable built-in profiler macros / "profiler.h"
 #define SKYRIM64_USE_TRACY			0	// Enable tracy client + server / https://bitbucket.org/wolfpld/tracy/overview
 #define SKYRIM64_USE_PAGE_HEAP		0	// Treat every memory allocation as a separate page (4096 bytes) for debugging
-#define SKYRIM64_USE_CUSTOM_MEMORY	0	// Loaded Mallock.dll
-#define SKYRIM64_USE_64BIT_REFOBJS	1	// Extension of valid refs
+#define SKYRIM64_USE_64BIT_REFOBJS	0	// Extension of valid refs (no release)

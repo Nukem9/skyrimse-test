@@ -934,4 +934,9 @@
     <Image Include="..\Resources\developers.bmp" />
     <Image Include="..\Resources\logo_new.png" />
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="src\patches\CKSSE\TESLandEditorFix_CK.asm">
+      <Filter>Source Files\patches</Filter>
+    </MASM>
+  </ItemGroup>
 </Project>
