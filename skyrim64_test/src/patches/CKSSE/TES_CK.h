@@ -52,6 +52,8 @@ public:
 	static TES_CK* GetInstance();
 	static uint32_t CompactActivePlugin();
 	static void SetLoaderIdByForm(const TESFile_CK* load_file);
+	static void LoadTesFile(const TESFile_CK* load_file);
+	static void LoadTesFileFinal();
 private:
 	char pad0[0x68];
 	UnkArray arrForm[0x8A];							// All array forms by type

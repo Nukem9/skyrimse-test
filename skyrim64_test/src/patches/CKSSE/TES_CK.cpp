@@ -24,8 +24,11 @@
 #include "..\offsets.h"
 #include "..\..\xutil.h"
 #include "..\TES\BSTArray.h"
+#include "BSString.h"
 #include "TESForm_CK.h"
 #include "LogWindow.h"
+#include "BSResourceArchive.h"
+#include "BSArchiveManager.h"
 
 uint32_t TES_CK::GetActivePluginMinFormID()
 {
@@ -59,7 +62,7 @@ uint32_t TES_CK::CompactActivePlugin() {
 	auto Instance = GetInstance();
 	auto ActivePlugin = Instance->GetActiveMod();
 	if (ActivePlugin) {
-		LogWindow::Log("	Active plugin: %s.", ActivePlugin->m_FileName);
+		LogWindow::Log("	Active plugin: %s.", ActivePlugin->GetFileName().c_str());
 
 		// Result XX000FFF
 		auto MaxFormID = Instance->GetActivePluginMaxFormID();
@@ -143,4 +146,50 @@ void TES_CK::SetLoaderIdByForm(const TESFile_CK* load_file)
 	// while not correcting its loading index.
 }
 
+std::vector<const TESFile_CK*> g_SelectedFilesArray;
 
+VOID FIXAPI AttachBSAFile(LPCSTR _filename) {
+	if (BSArchiveManager::IsAvailableForLoad(_filename))
+		goto attach_ba2;
+
+	return;
+
+attach_ba2:
+	BSResourceArchive::LoadArchive(_filename);
+}
+
+void TES_CK::LoadTesFile(const TESFile_CK* load_file)
+{
+	// Sometimes duplicated
+	if (std::find(g_SelectedFilesArray.begin(), g_SelectedFilesArray.end(), load_file) == 
+		g_SelectedFilesArray.end()) {
+		if (load_file->IsActive()) {
+			_MESSAGE_FMT("Load active file %s...", load_file->GetFileName().c_str());
+			//#if FALLOUT4_DEVELOPER_MODE
+			//			File->Dump();
+			//#endif // !FALLOUT4_DEVELOPER_MODE
+		}
+		else if (load_file->IsMaster() || load_file->IsSmallMaster())
+			_MESSAGE_FMT("Load master file %s...", load_file->GetFileName().c_str());
+		else
+			_MESSAGE_FMT("Load file %s...", load_file->GetFileName().c_str());
+
+		g_SelectedFilesArray.push_back(load_file);
+	}
+
+	if (g_OwnArchiveLoader)
+	{
+		auto sname = load_file->GetFileName();
+		sname.Copy(0, sname.FindLastOf('.'));
+
+		AttachBSAFile(*(sname + ".bsa"));
+		AttachBSAFile(*(sname + " - Textures.bsa"));
+	}
+
+	((void(__fastcall*)(const TESFile_CK*))OFFSET(0x1664CC0, 1530))(load_file);
+}
+
+void TES_CK::LoadTesFileFinal()
+{
+	g_SelectedFilesArray.clear();
+}

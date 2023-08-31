@@ -55,7 +55,10 @@ extern __itt_heap_function ITT_FreeCallback;
 extern "C" IMAGE_DOS_HEADER __ImageBase;
 
 extern INIReader g_INI;
+extern INIReader g_INI_ck_conf;
+extern INIReader g_INI_ck_User_conf;
 
+extern bool g_OwnArchiveLoader;
 extern uint32_t g_crc32_ck;
 
 constexpr static uint32_t CRC32_ORIGINAL_CK1573 = 0x624E8C84;

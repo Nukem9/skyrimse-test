@@ -524,6 +524,12 @@
     <ClInclude Include="src\patches\TES\NiMain\NiArray.h">
       <Filter>Header Files\[EditorAPI]</Filter>
     </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSResourceArchive.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSArchiveManager.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -894,6 +900,12 @@
     </ClCompile>
     <ClCompile Include="src\profiler_internal.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BSResourceArchive.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BSArchiveManager.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

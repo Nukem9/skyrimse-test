@@ -108,3 +108,23 @@ uint32_t TESFile_CK::GetTypeFile(const char* fileName) {
 uint32_t TESFile_CK::GetIndexLoader() const {
 	return ((uint32_t(__fastcall*)(const TESFile_CK*))OFFSET(0x15C1630, 16438))(this);
 }
+
+SYSTEMTIME FileTimeToSystemTimeEx(const FILETIME& Time) {
+	SYSTEMTIME T;
+	FILETIME Local_File_Time;
+
+	FileTimeToLocalFileTime(&Time, &Local_File_Time);
+	FileTimeToSystemTime(&Local_File_Time, &T);
+
+	return T;
+}
+
+SYSTEMTIME TESFile_CK::GetCreationTime(VOID) const
+{
+	return FileTimeToSystemTimeEx(m_findData.ftCreationTime);
+}
+
+SYSTEMTIME TESFile_CK::GetLastWriteTime(VOID) const
+{
+	return FileTimeToSystemTimeEx(m_findData.ftLastWriteTime);
+}

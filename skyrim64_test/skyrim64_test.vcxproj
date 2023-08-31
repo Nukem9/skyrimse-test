@@ -165,11 +165,13 @@
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\INIReader.h" />
     <ClInclude Include="src\patches\CKSSE\BGString.h" />
+    <ClInclude Include="src\patches\CKSSE\BSArchiveManager.h" />
     <ClInclude Include="src\patches\CKSSE\BSFixedString.h" />
     <ClInclude Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSHandleRefObject_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSPointerHandleManager.h" />
     <ClInclude Include="src\patches\CKSSE\BSRenderPass_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\BSResourceArchive.h" />
     <ClInclude Include="src\patches\CKSSE\BSShaderResourceManager_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSString.h" />
     <ClInclude Include="src\patches\CKSSE\BSStringCache.h" />
@@ -329,9 +331,11 @@
   <ItemGroup>
     <ClCompile Include="src\patches\bnet.cpp" />
     <ClCompile Include="src\patches\CKSSE\BGString.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BSArchiveManager.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSPointerHandleManager.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSRenderPass_CK.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BSResourceArchive.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSShaderResourceManager_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSString.cpp" />
     <ClCompile Include="src\patches\CKSSE\CellViewWindow.cpp" />

@@ -36,7 +36,10 @@ __itt_heap_function ITT_FreeCallback;
 #endif
 
 INIReader g_INI("skyrim64_test.ini");
+INIReader g_INI_ck_conf("CreationKit.ini");
+INIReader g_INI_ck_User_conf("CreationKitCustom.ini");
 
+bool g_OwnArchiveLoader;
 uint32_t g_crc32_ck;
 
 uintptr_t g_hModule;

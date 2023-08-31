@@ -123,7 +123,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 			Gdiplus::GdiplusShutdown(gdiplusToken);
 	}
 
-
 #if SKYRIM64 && !SKYRIM64_CREATIONKIT_ONLY
 	if (g_LoadType == GAME_EXECUTABLE_TYPE::GAME_SKYRIM)
 		TLSPatcherCallback(hModule, fdwReason, lpReserved);

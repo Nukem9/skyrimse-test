@@ -103,6 +103,21 @@ namespace XUtil
 	void DetourJump(uintptr_t Target, uintptr_t Destination);
 	void DetourCall(uintptr_t Target, uintptr_t Destination);
 
+	static const char* whitespaceDelimiters = " \t\n\r\f\v";
+
+	inline std::string& trim(std::string& str) {
+
+		str.erase(str.find_last_not_of(whitespaceDelimiters) + 1);
+		str.erase(0, str.find_first_not_of(whitespaceDelimiters));
+
+		return str;
+	}
+
+	inline std::string trim(const char* s) {
+		std::string str(s);
+		return trim(str);
+	}
+
 	template<typename T>
 	void DetourJump(uintptr_t Target, T Destination)
 	{

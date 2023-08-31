@@ -53,6 +53,8 @@
 #include "CKSSE/RenderWindow_CK.h"
 #include "CKSSE/UIThemeMode.h"
 #include "CKSSE/PreferencesWindow.h"
+#include "CKSSE/BSResourceArchive.h"
+#include "CKSSE/BSArchiveManager.h"
 
 using namespace usse;
 using namespace usse::api;
@@ -283,6 +285,35 @@ void Patch_TESVCreationKit()
 		// remove spam "Compiling Pixel Shader: %s %s - TechnicID: %u"
 		XUtil::PatchMemory(OFFSET(0x2C2B450, 16438), { 0xE9, 0x9F, 0x00 });
 		XUtil::PatchMemory(OFFSET(0x2B31881, 16438), { 0xE9, 0x8A, 0x00 });
+	}
+
+	if (Offsets::IsCKVersion1573OrNewer())
+	{
+		//
+		// BSArchiveManager
+		//
+
+		g_OwnArchiveLoader = g_INI.GetBoolean("CreationKit", "OwnArchiveLoader", false);
+
+		*(uintptr_t*)&BSResourceArchive::OldLoadArchive =
+			Detours::X64::DetourFunctionClass(OFFSET(0x2654420, 1573),
+				&BSResourceArchive::hk_LoadArchive);
+
+		//XUtil::PatchMemoryNop(OFFSET(0x163C251, 1573), 5);
+		XUtil::DetourCall(OFFSET(0x1665615, 1573), &TES_CK::LoadTesFile);
+		XUtil::DetourJump(OFFSET(0x1436BF6, 1573), &TES_CK::LoadTesFileFinal);
+
+		if (g_OwnArchiveLoader)
+			BSArchiveManager::Initialize();
+
+		//
+		// Remove spam "Cell name %s for cell %s (%08X) is too long. The maximum length allowed is 33 characters."
+		//
+		XUtil::PatchMemoryNop(OFFSET(0x1BA1B50, 1573), 5);
+		//
+		// Remove spam "ASSERTION: Data array for partition does not match partition count."
+		//
+		XUtil::PatchMemory(OFFSET(0x2681EDE, 1573), { 0xEB });	
 	}
 
 	//
