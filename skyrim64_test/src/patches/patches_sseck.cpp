@@ -314,6 +314,14 @@ void Patch_TESVCreationKit()
 		// Remove spam "ASSERTION: Data array for partition does not match partition count."
 		//
 		XUtil::PatchMemory(OFFSET(0x2681EDE, 1573), { 0xEB });	
+		//
+		// Fix crash When getting some kind of index. Sometimes there is an object where after dereferencing rax 
+		// becomes equal to 1, which leads to a crash when dereferencing it. Let's add the check to 1.
+		//
+		XUtil::PatchMemory(OFFSET(0x2579637, 16438), { 0x0E, 0x83, 0xF8, 0x01, 0x74, 0x09,
+			0x8B, 0x40, 0xF8, 0x25, 0xFF, 0xFF, 0xFF, 0x00, 0xC3, 0xC3 });
+		XUtil::PatchMemory(OFFSET(0x2579E77, 16438), { 0x0E, 0x83, 0xF8, 0x01, 0x74, 0x09,
+			0x8B, 0x40, 0xF8, 0x25, 0xFF, 0xFF, 0xFF, 0x00, 0xC3, 0xC3 });
 	}
 
 	//
@@ -906,14 +914,6 @@ void Patch_TESVCreationKit()
 	// Fix for TESObjectLAND vertex normals becoming corrupted when saving worldspaces with a parent worldspace. Invalid memcpy() size supplied.
 	//
 	XUtil::PatchMemory(OFFSET(0x1B93216, 1530), { 0x41, 0xB8, 0x63, 0x03, 0x00, 0x00 });
-
-	//
-	// Fix 
-	//
-	/*if (Offsets::IsCKVersion16438())
-	{
-		XUtil::DetourJump(OFFSET(0x2B20140, 16438), &__CKSSEFIXES_TESLandEditorFix);
-	}*/
 
 	//
 	// Fix for the "Object Palette" preview window not working. Window render state has to be set to '2'.
