@@ -31,11 +31,4 @@ namespace RenderWindow {
 
 	//void unlockInputMessages();
 	void setFlagLoadCell();
-
-	namespace Land
-	{
-		extern DLGPROC OldLandEditorWndProc;
-
-		INT_PTR CALLBACK LandEditorWndProc(HWND DialogHwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	}
 }
