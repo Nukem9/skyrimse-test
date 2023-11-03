@@ -1,5 +1,6 @@
 #include "common.h"
 #include <atomic>
+#include <thread>
 #include <DbgHelp.h>
 
 namespace XUtil

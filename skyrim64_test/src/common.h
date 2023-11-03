@@ -28,9 +28,6 @@ extern __itt_heap_function ITT_FreeCallback;
 #include <tracy/Tracy.hpp>
 #endif
 
-// TBBMalloc
-#include <tbb/scalable_allocator.h>
-
 // Detours
 #include <detours/Detours.h>
 

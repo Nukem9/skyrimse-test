@@ -30,6 +30,8 @@
 #include "MainWindow.h"
 #include "LogWindow.h"
 
+#include <mutex>
+
 #include "..\..\..\resource.h"
 
 namespace EditorUI

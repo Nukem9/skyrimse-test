@@ -30,6 +30,9 @@
     <Filter Include="Source Files\[Windows]">
       <UniqueIdentifier>{4d808a4a-e5cb-4cd2-a8c3-cdd9a38f00ea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Memex">
+      <UniqueIdentifier>{8530bcc4-ac98-47df-aa29-57206ba44556}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dump.h">
@@ -529,6 +532,12 @@
     </ClInclude>
     <ClInclude Include="src\patches\CKSSE\BSArchiveManager.h">
       <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\memex\VMMConfig.h">
+      <Filter>Memex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\memex\VMM.h">
+      <Filter>Memex</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

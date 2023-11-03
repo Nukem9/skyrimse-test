@@ -1,3 +1,5 @@
+#include "../../../../Dependencies/memex/vmm.h"
+
 #include "../../common.h"
 #include "MemoryManager.h"
 
@@ -42,8 +44,7 @@ void *MemAlloc(size_t Size, size_t Alignment = 0, bool Aligned = false, bool Zer
 #if SKYRIM64_USE_PAGE_HEAP
 	void *ptr = VirtualAlloc(nullptr, Size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #else
-	void *ptr = scalable_aligned_malloc(Size, Alignment);
-
+	void* ptr = voltek::scalable_alloc(Size);
 	if (ptr && Zeroed)
 		memset(ptr, 0, Size);
 #endif
@@ -73,7 +74,7 @@ void MemFree(void *Memory, bool Aligned = false)
 #if SKYRIM64_USE_PAGE_HEAP
 	VirtualFree(Memory, 0, MEM_RELEASE);
 #else
-	scalable_aligned_free(Memory);
+	voltek::scalable_free(Memory);
 #endif
 
 #if SKYRIM64_USE_VTUNE
@@ -93,7 +94,7 @@ size_t MemSize(void *Memory)
 
 	size_t result = info.RegionSize;
 #else
-	size_t result = scalable_msize(Memory);
+	size_t result = voltek::scalable_msize(Memory);
 #endif
 
 #if SKYRIM64_USE_VTUNE
@@ -198,7 +199,7 @@ void ScrapHeap::Deallocate(void *Memory)
 
 void PatchMemory()
 {
-	scalable_allocation_mode(TBBMALLOC_USE_HUGE_PAGES, 1);
+	voltek::scalable_memory_manager_initialize();
 
 	PatchIAT(hk_calloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "calloc");
 	PatchIAT(hk_malloc, "API-MS-WIN-CRT-HEAP-L1-1-0.DLL", "malloc");
