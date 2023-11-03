@@ -84,7 +84,9 @@ namespace UITheme
 		}
 	};
 
-	const std::unordered_set<std::string_view> PermanentWindowSubclasses{
+	const std::unordered_set<std::string_view, std::hash<std::string_view>, 
+		std::equal_to<std::string_view>, voltek::allocator<std::string_view>>
+		PermanentWindowSubclasses{
 		"Creation Kit",
 		"Creation Kit SE",
 		"Creation Kit SSE",
@@ -108,10 +110,12 @@ namespace UITheme
 	};
 
 	// List of created windows
-	concurrency::concurrent_unordered_map<HWND, BOOL> WindowHandles;
+	concurrency::concurrent_unordered_map<HWND, BOOL, std::hash<HTHEME>,
+		std::equal_to<HTHEME>, voltek::allocator<std::pair<const HWND, BOOL>>> WindowHandles;
 
 	// List of registered visual styles themes
-	concurrency::concurrent_unordered_map<HTHEME, ThemeType> ThemeHandles;
+	concurrency::concurrent_unordered_map<HTHEME, ThemeType, std::hash<HTHEME>,
+		std::equal_to<HTHEME>, voltek::allocator<std::pair<const HTHEME, ThemeType>>> ThemeHandles;
 	BOOL EnableThemeHooking;
 
 #if THEME_DEBUG

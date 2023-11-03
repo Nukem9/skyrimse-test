@@ -23,7 +23,8 @@ namespace EditorUIDarkMode
 		TabControl,
 	};
 
-	const std::unordered_map<std::string_view, ThemeType> TargetWindowThemes
+	const std::unordered_map<std::string_view, ThemeType, std::hash<std::string_view>,
+		std::equal_to<std::string_view>, voltek::allocator<std::pair<const std::string_view, ThemeType>>> TargetWindowThemes
 	{
 		{ "msctls_statusbar32", ThemeType::StatusBar },
 		{ "MDIClient", ThemeType::MDIClient },
@@ -39,7 +40,8 @@ namespace EditorUIDarkMode
 		{ "SysTabControl32", ThemeType::TabControl },
 	};
 
-	const std::unordered_set<std::string_view> PermanentWindowSubclasses
+	const std::unordered_set<std::string_view, std::hash<std::string_view>,
+		std::equal_to<std::string_view>, voltek::allocator<std::string_view>> PermanentWindowSubclasses
 	{
 		"Creation Kit",
 		"Creation Kit SE",
@@ -64,7 +66,8 @@ namespace EditorUIDarkMode
 	};
 
 	bool EnableThemeHooking;
-	concurrency::concurrent_unordered_map<HTHEME, ThemeType> ThemeHandles;
+	concurrency::concurrent_unordered_map<HTHEME, ThemeType, std::hash<HTHEME>,
+		std::equal_to<HTHEME>, voltek::allocator<std::pair<const HTHEME, ThemeType>>> ThemeHandles;
 
 	void Initialize()
 	{

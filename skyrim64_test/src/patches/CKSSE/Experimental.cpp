@@ -65,8 +65,9 @@ namespace Experimental
 		// Before: [Function call] -> [E&C trampoline] -> [Function]
 		// After:  [Function call] -> [Function]
 		//
-		concurrency::concurrent_unordered_map<uintptr_t, const NullsubPatch*> nullsubTargets;
-		concurrency::concurrent_vector<uintptr_t> branchTargets;
+		concurrency::concurrent_unordered_map<uintptr_t, const NullsubPatch*, std::hash<uintptr_t>,
+			std::equal_to<uintptr_t>, voltek::allocator<std::pair<const uintptr_t, const NullsubPatch*>>> nullsubTargets;
+		concurrency::concurrent_vector<uintptr_t, voltek::allocator<uintptr_t>> branchTargets;
 
 		// Enumerate all functions present in the x64 exception directory section
 		auto ntHeaders = (PIMAGE_NT_HEADERS64)(g_ModuleBase + ((PIMAGE_DOS_HEADER)g_ModuleBase)->e_lfanew);

@@ -13,6 +13,8 @@
 #include <d3d11.h>
 #include <d3d11_2.h>
 
+#include "..\..\..\..\Dependencies\memex\vmm.h"
+
 // Intel VTune
 #if SKYRIM64_USE_VTUNE
 #include <ittnotify.h>
