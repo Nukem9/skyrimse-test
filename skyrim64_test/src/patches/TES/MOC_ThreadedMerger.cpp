@@ -1,6 +1,8 @@
 #include <thread>
 #include "../../common.h"
 #include "MOC_ThreadedMerger.h"
+#include <intrin.h>
+#include <algorithm>
 
 MOC_ThreadedMerger::MOC_ThreadedMerger(uint32_t Width, uint32_t Height, uint32_t Threads, bool EnableCPUConservation)
 {

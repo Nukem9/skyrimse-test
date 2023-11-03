@@ -1,5 +1,6 @@
 #include "../../common.h"
-#include <tbb/concurrent_vector.h>
+#include <thread>
+#include <concurrent_vector.h>
 #include <Richedit.h>
 #include "EditorUI.h"
 #include "EditorUIDarkMode.h"
@@ -14,7 +15,7 @@ namespace LogWindow
 	HANDLE ExternalPipeWriterHandle;
 	FILE *OutputFileHandle;
 
-	tbb::concurrent_vector<const char *> PendingMessages;
+	concurrency::concurrent_vector<const char*> PendingMessages;
 	std::unordered_set<uint64_t> MessageBlacklist;
 
 	HWND GetWindow()
@@ -411,7 +412,7 @@ namespace LogWindow
 		}
 
 		if (PendingMessages.size() < 50000)
-			PendingMessages.emplace_back(_strdup(buffer));
+			PendingMessages.push_back(_strdup(buffer));
 	}
 
 	void LogWarning(int Type, const char *Format, ...)

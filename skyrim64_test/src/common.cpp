@@ -14,7 +14,6 @@
 #pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "Version.lib")
 
-#pragma comment(lib, "tbb.lib")					// Thread Building Blocks
 #pragma comment(lib, "libzydis.lib")			// Zydis
 #pragma comment(lib, "libmoc.lib")				// MaskedOcclusionCulling
 #pragma comment(lib, "libmeshoptimizer.lib")	// Meshoptimizer
@@ -28,8 +27,6 @@ __itt_heap_function ITT_AllocateCallback;
 __itt_heap_function ITT_ReallocateCallback;
 __itt_heap_function ITT_FreeCallback;
 #endif
-
-#pragma comment(lib, "tbbmalloc.lib")			// TBB Allocator
 
 #if SKYRIM64_USE_TRACY
 #pragma comment(lib, "libtracy.lib")			// Tracy

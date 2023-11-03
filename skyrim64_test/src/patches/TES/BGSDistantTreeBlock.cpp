@@ -1,4 +1,4 @@
-#include <tbb/concurrent_hash_map.h>
+#include <concurrent_unordered_map.h>
 #include "../../common.h"
 #include "NiMain/NiNode.h"
 #include "Setting.h"
@@ -7,11 +7,11 @@
 AutoPtr(uintptr_t, qword_141EE43A8, 0x1EE43A8);
 DefineIniSetting(bEnableStippleFade, Display);
 
-tbb::concurrent_hash_map<uint32_t, TESObjectREFR *> InstanceFormCache;
+concurrency::concurrent_unordered_map<uint32_t, TESObjectREFR*> InstanceFormCache;
 
 void BGSDistantTreeBlock::InvalidateCachedForm(uint32_t FormId)
 {
-	InstanceFormCache.erase(FormId & 0x00FFFFFF);
+	InstanceFormCache.unsafe_erase(FormId & 0x00FFFFFF);
 }
 
 void BGSDistantTreeBlock::UpdateBlockVisibility(ResourceData *Data)
@@ -28,12 +28,12 @@ void BGSDistantTreeBlock::UpdateBlockVisibility(ResourceData *Data)
 			const uint32_t maskedFormId = instance->FormId & 0x00FFFFFF;
 
 			// Check if this instance was cached, otherwise search each plugin
-			tbb::concurrent_hash_map<uint32_t, TESObjectREFR *>::accessor accessor;
-			TESObjectREFR *treeReference = nullptr;
-
-			if (InstanceFormCache.find(accessor, maskedFormId))
+			concurrency::concurrent_unordered_map<uint32_t, TESObjectREFR*>::iterator iterator;
+			TESObjectREFR* treeReference = nullptr;
+			iterator = InstanceFormCache.find(maskedFormId);
+			if (iterator != InstanceFormCache.end())
 			{
-				treeReference = accessor->second;
+				treeReference = iterator->second;
 			}
 			else
 			{
@@ -60,7 +60,7 @@ void BGSDistantTreeBlock::UpdateBlockVisibility(ResourceData *Data)
 
 					if (baseForm)
 					{
-						if ((*(uint32_t *)((__int64)baseForm + 16) >> 6) & 1 || *(uint8_t *)((__int64)baseForm + 0x1A) == 38)
+						if ((*(uint32_t*)((__int64)baseForm + 16) >> 6) & 1 || *(uint8_t *)((__int64)baseForm + 0x1A) == 38)
 							treeReference = ref;
 
 						if (treeReference)

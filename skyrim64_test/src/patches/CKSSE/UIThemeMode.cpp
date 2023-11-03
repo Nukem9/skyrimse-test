@@ -59,8 +59,7 @@
 #include "UITheme/RichEdit20.h"
 #include "UITheme/Memo.h"
 #include "UITheme/CustomCaption.h"
-
-#include <tbb/concurrent_unordered_map.h>
+#include <concurrent_unordered_map.h>
 
 #if THEME_DEBUG
 #include <fstream>
@@ -109,10 +108,10 @@ namespace UITheme
 	};
 
 	// List of created windows
-	tbb::concurrent_unordered_map<HWND, BOOL> WindowHandles;
+	concurrency::concurrent_unordered_map<HWND, BOOL> WindowHandles;
 
 	// List of registered visual styles themes
-	tbb::concurrent_unordered_map<HTHEME, ThemeType> ThemeHandles;
+	concurrency::concurrent_unordered_map<HTHEME, ThemeType> ThemeHandles;
 	BOOL EnableThemeHooking;
 
 #if THEME_DEBUG
@@ -376,7 +375,7 @@ namespace UITheme
 				return FALSE;
 		}
 
-		ThemeHandles.emplace(hTheme, eTheme);
+		ThemeHandles.insert(std::make_pair(hTheme, eTheme));
 
 		return TRUE;
 	}
@@ -419,7 +418,7 @@ namespace UITheme
 						(lpCreateStruct->hInstance != GetModuleHandleA("comdlg32.dll"))) {
 						if (WindowHandles.find(messageData->hwnd) == WindowHandles.end()) {
 							SetWindowSubclass(messageData->hwnd, WindowSubclass, 0, reinterpret_cast<DWORD_PTR>(WindowSubclass));
-							WindowHandles.emplace(messageData->hwnd, FALSE);
+							WindowHandles.insert(std::make_pair(messageData->hwnd, FALSE));
 						}
 					}
 				}
@@ -456,7 +455,7 @@ namespace UITheme
 					if (!ExcludeSubclassKnownWindows(messageData->hwnd))
 					{
 						SetWindowSubclass(messageData->hwnd, DialogSubclass, 0, reinterpret_cast<DWORD_PTR>(DialogSubclass));
-						WindowHandles.emplace(messageData->hwnd, TRUE);
+						WindowHandles.insert(std::make_pair(messageData->hwnd, TRUE));
 					}
 				}
 				else {

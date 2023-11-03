@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atomic>
-#include <tbb/concurrent_queue.h>
+#include <concurrent_queue.h>
 #include <MaskedOcclusionCulling/MaskedOcclusionCulling.h>
 #include "../../common.h"
 
@@ -31,12 +31,12 @@ private:
 	void (*m_TraverseSceneCallback)(MaskedOcclusionCulling *MOC, void *UserData);
 	void (*m_RenderGeometryCallback)(MaskedOcclusionCulling *MOC, void *UserData);
 
-	std::vector<MaskedOcclusionCulling *> m_MOCInstances;	// Each thread has a MaskedOcclusionCulling instance
-	std::vector<std::atomic_bool> m_ThreadInitialized;		// True if thread is ready
-	std::vector<std::atomic_bool> m_ThreadWorking;			// True is thread is processing something
-	tbb::concurrent_queue<CullPacket> m_PendingPackets;		// Queue of packets that each thread accesses
+	std::vector<MaskedOcclusionCulling *> m_MOCInstances;		// Each thread has a MaskedOcclusionCulling instance
+	std::vector<std::atomic_bool> m_ThreadInitialized;			// True if thread is ready
+	std::vector<std::atomic_bool> m_ThreadWorking;				// True is thread is processing something
+	concurrency::concurrent_queue<CullPacket> m_PendingPackets;	// Queue of packets that each thread accesses
 
-	std::atomic<MaskedOcclusionCulling *> m_FinalBuffer;	// Final scene depth buffer after calling Flush()
+	std::atomic<MaskedOcclusionCulling *> m_FinalBuffer;		// Final scene depth buffer after calling Flush()
 
 public:
 	MOC_ThreadedMerger(uint32_t Width, uint32_t Height, uint32_t Threads = 1, bool EnableCPUConservation = true);

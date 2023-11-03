@@ -1,6 +1,7 @@
 #include "../../common.h"
 #include <zydis/include/Zydis/Zydis.h>
-#include <tbb/concurrent_vector.h>
+#include <concurrent_unordered_map.h>
+#include <concurrent_vector.h>
 #include <execution>
 #include <intrin.h>
 #include <chrono>
@@ -64,8 +65,8 @@ namespace Experimental
 		// Before: [Function call] -> [E&C trampoline] -> [Function]
 		// After:  [Function call] -> [Function]
 		//
-		tbb::concurrent_vector<std::pair<uintptr_t, const NullsubPatch *>> nullsubTargets;
-		tbb::concurrent_vector<uintptr_t> branchTargets;
+		concurrency::concurrent_unordered_map<uintptr_t, const NullsubPatch*> nullsubTargets;
+		concurrency::concurrent_vector<uintptr_t> branchTargets;
 
 		// Enumerate all functions present in the x64 exception directory section
 		auto ntHeaders = (PIMAGE_NT_HEADERS64)(g_ModuleBase + ((PIMAGE_DOS_HEADER)g_ModuleBase)->e_lfanew);
@@ -90,10 +91,10 @@ namespace Experimental
 			for (uint32_t offset = Function.BeginAddress; offset < Function.EndAddress;)
 			{
 				const uintptr_t ip = g_ModuleBase + offset;
-				const uint8_t opcode = *(uint8_t *)ip;
+				const uint8_t opcode = *(uint8_t*)ip;
 				ZydisDecodedInstruction instruction;
 
-				if (!ZYDIS_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, (void *)ip, ZYDIS_MAX_INSTRUCTION_LENGTH, ip, &instruction)))
+				if (!ZYDIS_SUCCESS(ZydisDecoderDecodeBuffer(&decoder, (void*)ip, ZYDIS_MAX_INSTRUCTION_LENGTH, ip, &instruction)))
 				{
 					// Decode failed. Always increase byte offset by 1.
 					offset += 1;
@@ -106,22 +107,22 @@ namespace Experimental
 				if (opcode != 0xE9 && opcode != 0xE8)
 					continue;
 
-				uintptr_t destination = ip + *(int32_t *)(ip + 1) + 5;
+				uintptr_t destination = ip + *(int32_t*)(ip + 1) + 5;
 
 				// if (destination is within E&C table)
-				if (destination >= ecTableStart && destination < ecTableEnd && *(uint8_t *)destination == 0xE9)
+				if (destination >= ecTableStart && destination < ecTableEnd && *(uint8_t*)destination == 0xE9)
 				{
 					// Determine where the E&C trampoline jumps to, then remove it. Each function is processed separately so thread
 					// safety is not an issue when patching. The 0xE9 opcode never changes.
-					uintptr_t real = destination + *(int32_t *)(destination + 1) + 5;
+					uintptr_t real = destination + *(int32_t*)(destination + 1) + 5;
 
 					int32_t disp = (int32_t)(real - ip) - 5;
 					memcpy((void *)(ip + 1), &disp, sizeof(disp));
 
 					if (auto patch = FindNullsubPatch(ip, real))
-						nullsubTargets.emplace_back(ip, patch);
+						nullsubTargets.insert(std::make_pair(ip, patch));
 					else
-						branchTargets.emplace_back(ip);
+						branchTargets.push_back(ip);
 				}
 			}
 		});
@@ -130,7 +131,7 @@ namespace Experimental
 
 		for (auto [ip, patch] : nullsubTargets)
 		{
-			uintptr_t destination = ip + *(int32_t *)(ip + 1) + 5;
+			uintptr_t destination = ip + *(int32_t*)(ip + 1) + 5;
 
 			if (PatchNullsub(ip, destination, patch))
 				patchCount++;
@@ -139,7 +140,7 @@ namespace Experimental
 		// Secondary pass to remove nullsubs missed or created above
 		for (uintptr_t ip : branchTargets)
 		{
-			uintptr_t destination = ip + *(int32_t *)(ip + 1) + 5;
+			uintptr_t destination = ip + *(int32_t*)(ip + 1) + 5;
 
 			if (PatchNullsub(ip, destination))
 				patchCount++;
@@ -181,9 +182,9 @@ namespace Experimental
 		for (uintptr_t match : matches)
 		{
 			if (hasSSE41)
-				memcpy((void *)match, "\xF3\x0F\x6F\x01\x66\x0F\x38\x17\xC0\x0F\x94\xC0\xC3", 13);
+				memcpy((void*)match, "\xF3\x0F\x6F\x01\x66\x0F\x38\x17\xC0\x0F\x94\xC0\xC3", 13);
 			else
-				memcpy((void *)match, "\x48\x83\x39\x00\x75\x0A\x48\x83\x79\x08\x00\x75\x03\xB0\x01\xC3\x32\xC0\xC3", 19);
+				memcpy((void*)match, "\x48\x83\x39\x00\x75\x0A\x48\x83\x79\x08\x00\x75\x03\xB0\x01\xC3\x32\xC0\xC3", 19);
 		}
 
 		return matches.size();
@@ -208,7 +209,7 @@ namespace Experimental
 		{
 			// Make sure the next call points to sub_14102CBEF (a no-op function)
 			addr += 30 /* strlen(maskStr) */ + 11;
-			uintptr_t destination = addr + *(int32_t *)(addr + 1) + 5;
+			uintptr_t destination = addr + *(int32_t*)(addr + 1) + 5;
 
 			if (destination != OFFSET(0x102CBEF, 1530))
 				continue;
@@ -319,7 +320,7 @@ namespace Experimental
 
 	bool PatchNullsub(uintptr_t SourceAddress, uintptr_t TargetFunction, const NullsubPatch *Patch)
 	{
-		const bool isJump = *(uint8_t *)SourceAddress == 0xE9;
+		const bool isJump = *(uint8_t*)SourceAddress == 0xE9;
 
 		// Check if the given function is "unoptimized" and remove the branch completely
 		if (!Patch)
@@ -328,9 +329,9 @@ namespace Experimental
 		if (Patch)
 		{
 			if (isJump)
-				memcpy((void *)SourceAddress, Patch->JumpPatch, 5);
+				memcpy((void*)SourceAddress, Patch->JumpPatch, 5);
 			else
-				memcpy((void *)SourceAddress, Patch->CallPatch, 5);
+				memcpy((void*)SourceAddress, Patch->CallPatch, 5);
 
 			return true;
 		}
