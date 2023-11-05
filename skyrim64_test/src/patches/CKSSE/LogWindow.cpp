@@ -15,8 +15,9 @@ namespace LogWindow
 	HANDLE ExternalPipeWriterHandle;
 	FILE *OutputFileHandle;
 
-	concurrency::concurrent_vector<const char*> PendingMessages;
-	std::unordered_set<uint64_t> MessageBlacklist;
+	concurrency::concurrent_vector<const char*, voltek::allocator<const char*>> PendingMessages;
+	std::unordered_set<uint64_t, std::hash<uint64_t>,
+		std::equal_to<uint64_t>, voltek::allocator<uint64_t>> MessageBlacklist;
 
 	HWND GetWindow()
 	{
