@@ -9,7 +9,7 @@ class IBSUntypedPointerHandle
 {
 public:
 	//
-	// NOTE: Handle index bits increased from 20 (vanilla) to 21 (limit doubled)
+	// NOTE: Handle index bits increased from 20 (vanilla) to 21 (limit doubled) or to 23 (limit doubled)
 	//
 	// 31       27       26    20             0
 	// |--------|--------|-----|--------------|
@@ -76,6 +76,9 @@ public:
 
 #if SKYRIM64_USE_64BIT_REFOBJS
 typedef IBSUntypedPointerHandle<uint32_t, 25, 6> BSUntypedPointerHandle;
+static_assert(sizeof(BSUntypedPointerHandle) == 0x4);
+#elif SKYRIM64_PRE_HANDLE32_REF
+typedef IBSUntypedPointerHandle<uint32_t, 23, 6> BSUntypedPointerHandle;
 static_assert(sizeof(BSUntypedPointerHandle) == 0x4);
 #else
 typedef IBSUntypedPointerHandle<uint32_t, 21, 6> BSUntypedPointerHandle;

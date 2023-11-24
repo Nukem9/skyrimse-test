@@ -23,3 +23,4 @@
 #define SKYRIM64_USE_TRACY			0	// Enable tracy client + server / https://bitbucket.org/wolfpld/tracy/overview
 #define SKYRIM64_USE_PAGE_HEAP		0	// Treat every memory allocation as a separate page (4096 bytes) for debugging
 #define SKYRIM64_USE_64BIT_REFOBJS	0	// Extension of valid refs (no release)
+#define SKYRIM64_PRE_HANDLE32_REF   1
