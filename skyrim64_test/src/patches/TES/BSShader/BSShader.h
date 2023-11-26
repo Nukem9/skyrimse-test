@@ -101,7 +101,7 @@ public:
 	}
 };
 
-class NiBoneMatrixSetterI
+class __declspec(align(8)) NiBoneMatrixSetterI
 {
 public:
 	virtual ~NiBoneMatrixSetterI()
@@ -112,13 +112,13 @@ public:
 };
 static_assert(sizeof(NiBoneMatrixSetterI) == 0x8);
 
-class BSReloadShaderI
+class __declspec(align(8)) BSReloadShaderI
 {
 public:
 	virtual void ReloadShaders(BSIStream *Stream) = 0;
 };
 
-class BSShader : public NiRefObject, public NiBoneMatrixSetterI, public BSReloadShaderI
+class __declspec(align(8)) BSShader : public NiRefObject, public NiBoneMatrixSetterI, public BSReloadShaderI
 {
 private:
 	template<typename T>

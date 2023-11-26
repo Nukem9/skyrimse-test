@@ -8,7 +8,7 @@ class NiStream;
 class NiCloningProcess;
 class NiObjectGroup;
 
-class NiObject : public NiRefObject
+class __declspec(align(8)) NiObject : public NiRefObject
 {
 public:
 	virtual const NiRTTI						*GetRTTI() const;

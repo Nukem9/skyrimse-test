@@ -1,3 +1,26 @@
+//////////////////////////////////////////
+/*
+* Copyright (c) 2020 Nukem9 <email:Nukem@outlook.com>
+* Copyright (c) 2022 Perchik71 <email:perchik71@outlook.com>
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy of this
+* software and associated documentation files (the "Software"), to deal in the Software
+* without restriction, including without limitation the rights to use, copy, modify, merge,
+* publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+* persons to whom the Software is furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in all copies or
+* substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+* PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+* FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+* OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+* DEALINGS IN THE SOFTWARE.
+*/
+//////////////////////////////////////////
+
 #define XBYAK_NO_OP_NAMES
 
 #include "../common.h"
@@ -7,6 +30,9 @@
 #include "TES/MemoryManager.h"
 #include "TES/bhkThreadMemorySource.h"
 #include "TES/NiMain/NiRTTI.h"
+#include "CKSSE/TES_CK.h"
+#include "CKSSE/BGString.h"
+#include "CKSSE/TESDialogSpell.h"
 #include "CKSSE/Experimental.h"
 #include "CKSSE/Editor.h"
 #include "CKSSE/TESFile_CK.h"
@@ -24,10 +50,20 @@
 #include "CKSSE/BSGraphicsRenderTargetManager_CK.h"
 #include "CKSSE/BSShaderResourceManager_CK.h"
 #include "CKSSE/BSRenderPass_CK.h"
+#include "CKSSE/RenderWindow_CK.h"
+#include "CKSSE/UIThemeMode.h"
+#include "CKSSE/PreferencesWindow.h"
+#include "CKSSE/BSResourceArchive.h"
+#include "CKSSE/BSArchiveManager.h"
 
+using namespace usse;
+using namespace usse::api;
+
+void Disable_ENB();
 void PatchSteam();
 void PatchThreading();
 void PatchMemory();
+void PatchPointerHandleManager();
 size_t BNetConvertUnicodeString(char *Destination, size_t DestSize, const wchar_t *Source, size_t SourceSize);
 
 void Patch_TESVCreationKit()
@@ -35,12 +71,26 @@ void Patch_TESVCreationKit()
 	if (!_stricmp((const char *)(g_ModuleBase + 0x3078988), "1.5.3.0"))
 	{
 		// Released 2018-04-13 / Built Mon Sep 18 18:58:37 2017
-		Offsets::BuildTableForCKSSEVersion(1530);
+		//Offsets::BuildTableForCKSSEVersion(1530);
+
+		MessageBoxA(nullptr, 
+			"Creation Kit version deprecated.\nPatches are disabled.\n\n"
+			"Required versions:\n"
+			"CreationKit.exe 1.5.73 released on 2019-03-13\n"
+			"CreationKit.exe 1.6.438 released on 2022-04-25", 
+			"Version Check", MB_ICONERROR);
+
+		return;
 	}
 	else if (!_stricmp((const char *)(g_ModuleBase + 0x3062CC8), "1.5.73.0"))
 	{
 		// Released 2019-03-13 / Built Tue Mar 05 18:25:55 2019
 		Offsets::BuildTableForCKSSEVersion(1573);
+	}
+	else if (!_stricmp((const char*)(g_ModuleBase + 0x2E835D8), "1.6.438.0"))
+	{
+		// Released 2022-04-27
+		Offsets::BuildTableForCKSSEVersion(16438);
 	}
 	else
 	{
@@ -51,12 +101,61 @@ void Patch_TESVCreationKit()
 		sprintf_s(message,
 			"Unknown Creation Kit version detected. Patches are disabled.\n\n"
 			"Required versions:\n"
-			"CreationKit.exe 1.5.30 released on 2018-04-13\n"
+			//"CreationKit.exe 1.5.30 released on 2018-04-13\n"
 			"CreationKit.exe 1.5.73 released on 2019-03-13\n"
+			"CreationKit.exe 1.6.438 released on 2022-04-25\n"
 			"\nExecutable path: %s", modulePath);
 
 		MessageBoxA(nullptr, message, "Version Check", MB_ICONERROR);
 		return;
+	}
+
+	//
+	// Unicode patch
+	//
+	if (g_INI.GetBoolean("CreationKit", "Unicode", true))
+	{
+#if SKYRIMSE_LAZ_UNICODE_PLUGIN
+		// Initialization CreationKitUnicodePlugin.dll
+		BOOL bRes = XUtil::Conversion::LazUnicodePluginInit();
+		if (!bRes)
+			_MESSAGE("Library 'CreationKitUnicodePlugin.dll' no found. Unicode support don't patched.");
+		else if (!Offsets::IsCKVersion1573OrNewer())
+			_MESSAGE("Unicode support is not implemented in version 1.5.3. Unicode support don't patched.");
+		else
+		{
+			// Initial mode
+			// Initially, the original state must be set
+			ConvertorString.Mode = BGSConvertorString::MODE_ANSI;
+
+			// Intercepting the receipt of a string
+			*(uintptr_t*)&BGSLocalizedString_OldGetStrProc = Detours::X64::DetourFunctionClass(OFFSET(0x1215D80, 1573), &BGSLocalizedString::GetStr);
+
+			// Also delete it message "You must close all Dialoge Boxes",
+			// which has problems with programs that work with multiple monitors.
+			XUtil::DetourCall(OFFSET(0x13FC051, 1573), &hk_usse_BeginPluginSave);
+			// I don't quite understand the meaning of calling SetCursor in this function, which deals with saving
+			// But we'll make the call in hook.
+			XUtil::DetourCall(OFFSET(0x13FC0F2, 1573), &hk_usse_EndPluginSave);
+
+			// Deleting book checks, spam in the log is excessive
+			XUtil::PatchMemoryNop(OFFSET(0x163D9A5, 1573), 5);
+
+			// Fix charset Spell/Scroll/Ench etc dialoges
+			*(uintptr_t*)&spell::OldDlgProc = Detours::X64::DetourFunctionClass(OFFSET(0x1486620, 1573), &spell::DlgProc);
+
+			// In the "Data" dialog box, the "author" and "description" controls are independent, and I'm forced to make a trap for WinAPI calls
+			XUtil::DetourCall(OFFSET(0x13E32BB, 1573), &hk_usse_SetDlgItemTextA);
+			XUtil::DetourCall(OFFSET(0x13E32E8, 1573), &hk_usse_SetDlgItemTextA);
+			XUtil::DetourCall(OFFSET(0x13E3313, 1573), &hk_usse_SetDlgItemTextA);
+			XUtil::DetourCall(OFFSET(0x13E3079, 1573), &hk_usse_SendDlgItemMessageA);
+			XUtil::DetourCall(OFFSET(0x13E30DA, 1573), &hk_usse_SendDlgItemMessageA);
+			XUtil::DetourCall(OFFSET(0x13E3113, 1573), &hk_usse_SendDlgItemMessageA);
+			XUtil::DetourCall(OFFSET(0x13E3174, 1573), &hk_usse_SendDlgItemMessageA);
+		}
+#else
+	_MESSAGE("Unfortunately, your compiled version does not support the 'Unicode' option.");
+#endif // !SKYRIMSE_LAZ_UNICODE_PLUGIN
 	}
 
 	//
@@ -95,6 +194,14 @@ void Patch_TESVCreationKit()
 		PatchIAT((void(*)())purecallHandler, "VCRUNTIME140.DLL", "_purecall");
 	}
 
+	//
+	// Disable ENB d3d11.dll etc
+	//
+	if (g_INI.GetBoolean("CreationKit", "ENBProtect", false))
+	{
+		Disable_ENB();
+	}
+
 	MSRTTI::Initialize();
 
 	//
@@ -108,7 +215,7 @@ void Patch_TESVCreationKit()
 	//
 	// BSPointerHandle(Manager)
 	//
-	XUtil::DetourJump(OFFSET(0x141A5C0, 1530), &BSPointerHandleManager<>::InitSDM);
+	XUtil::DetourJump(OFFSET(0x141A5C0, 1530), &BSPointerHandleManager::InitSDM);
 	XUtil::DetourJump(OFFSET(0x1770910, 1530), &HandleManager::KillSDM);
 	XUtil::DetourJump(OFFSET(0x1770560, 1530), &HandleManager::WarnForUndestroyedHandles);
 	XUtil::DetourJump(OFFSET(0x12E2260, 1530), &BSPointerHandleManagerInterface<>::GetCurrentHandle);
@@ -145,6 +252,78 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemory(OFFSET(0x12949D0, 1530), { 0xCC });// BSHandleRefObject::GetIndex - 1412949D0
 	//XUtil::PatchMemory(0x141294CB0, { 0xCC });// BSHandleRefObject::QRefCount - 141294CB0
 
+#if SKYRIM64_USE_64BIT_REFOBJS
+	if (Offsets::IsCKVersion1573OrNewer())
+	{
+		//
+		// BSHandleRefObject
+		//
+
+		XUtil::DetourJump(OFFSET(0x11ECE80, 16438), &BSHandleRefObject::IncRefCount);
+		XUtil::DetourJump(OFFSET(0x11E9E50, 16438), &BSHandleRefObject::DecRefCount);
+
+		PatchPointerHandleManager();
+	}
+#endif
+
+	if (Offsets::IsCKVersion16438())
+	{
+		// remove spam "Compiling Vertex Shader: %s %s - TechnicID: %u"
+		XUtil::PatchMemory(OFFSET(0x2C2B220, 16438), { 0xE9, 0x94, 0x00 });
+		XUtil::PatchMemory(OFFSET(0x2B30ECE, 16438), { 0xE9, 0x99, 0x00 });
+		
+		// remove spam "Compiling Pixel Shader: %s %s - TechnicID: %u"
+		XUtil::PatchMemory(OFFSET(0x2C2B450, 16438), { 0xE9, 0x94, 0x00 });
+		XUtil::PatchMemory(OFFSET(0x2B31881, 16438), { 0xE9, 0x8A, 0x00 });
+	}
+	else if(Offsets::IsCKVersion1573())
+	{
+		// remove spam "Compiling Vertex Shader: %s %s - TechnicID: %u"
+		XUtil::PatchMemory(OFFSET(0x2C2B220, 16438), { 0xE9, 0x9F, 0x00 });
+		XUtil::PatchMemory(OFFSET(0x2B30ECE, 16438), { 0xE9, 0x9A, 0x00 });
+
+		// remove spam "Compiling Pixel Shader: %s %s - TechnicID: %u"
+		XUtil::PatchMemory(OFFSET(0x2C2B450, 16438), { 0xE9, 0x9F, 0x00 });
+		XUtil::PatchMemory(OFFSET(0x2B31881, 16438), { 0xE9, 0x8A, 0x00 });
+	}
+
+	if (Offsets::IsCKVersion1573OrNewer())
+	{
+		//
+		// BSArchiveManager
+		//
+
+		g_OwnArchiveLoader = g_INI.GetBoolean("CreationKit", "OwnArchiveLoader", false);
+
+		*(uintptr_t*)&BSResourceArchive::OldLoadArchive =
+			Detours::X64::DetourFunctionClass(OFFSET(0x2654420, 1573),
+				&BSResourceArchive::hk_LoadArchive);
+
+		//XUtil::PatchMemoryNop(OFFSET(0x163C251, 1573), 5);
+		XUtil::DetourCall(OFFSET(0x1665615, 1573), &TES_CK::LoadTesFile);
+		XUtil::DetourJump(OFFSET(0x1436BF6, 1573), &TES_CK::LoadTesFileFinal);
+
+		if (g_OwnArchiveLoader)
+			BSArchiveManager::Initialize();
+
+		//
+		// Remove spam "Cell name %s for cell %s (%08X) is too long. The maximum length allowed is 33 characters."
+		//
+		XUtil::PatchMemoryNop(OFFSET(0x1BA1B50, 1573), 5);
+		//
+		// Remove spam "ASSERTION: Data array for partition does not match partition count."
+		//
+		XUtil::PatchMemory(OFFSET(0x2681EDE, 1573), { 0xEB });	
+		//
+		// Fix crash When getting some kind of index. Sometimes there is an object where after dereferencing rax 
+		// becomes equal to 1, which leads to a crash when dereferencing it. Let's add the check to 1.
+		//
+		XUtil::PatchMemory(OFFSET(0x2579637, 16438), { 0x0E, 0x83, 0xF8, 0x01, 0x74, 0x09,
+			0x8B, 0x40, 0xF8, 0x25, 0xFF, 0xFF, 0xFF, 0x00, 0xC3, 0xC3 });
+		XUtil::PatchMemory(OFFSET(0x2579E77, 16438), { 0x0E, 0x83, 0xF8, 0x01, 0x74, 0x09,
+			0x8B, 0x40, 0xF8, 0x25, 0xFF, 0xFF, 0xFF, 0x00, 0xC3, 0xC3 });
+	}
+
 	//
 	// FaceGen
 	//
@@ -166,8 +345,8 @@ void Patch_TESVCreationKit()
 
 	// Allow variable tint mask resolution
 	uint32_t tintResolution = g_INI.GetInteger("CreationKit_FaceGen", "TintMaskResolution", 512);
-	XUtil::PatchMemory(OFFSET(0x2DA588C, 1530), (uint8_t *)&tintResolution, sizeof(uint32_t));
-	XUtil::PatchMemory(OFFSET(0x2DA5899, 1530), (uint8_t *)&tintResolution, sizeof(uint32_t));
+	XUtil::PatchMemory(OFFSET(0x2DA588C, 1530), (uint8_t*)&tintResolution, sizeof(uint32_t));
+	XUtil::PatchMemory(OFFSET(0x2DA5899, 1530), (uint8_t*)&tintResolution, sizeof(uint32_t));
 
 	// Prevent internal filesystem reloads when exporting FaceGen for many NPCs
 	XUtil::DetourJump(OFFSET(0x12D1AC0, 1530), &ExportFaceGenForSelectedNPCs);
@@ -246,10 +425,34 @@ void Patch_TESVCreationKit()
 	PatchIAT(EditorUI::hk_EndDialog, "USER32.DLL", "EndDialog");
 	PatchIAT(EditorUI::hk_SendMessageA, "USER32.DLL", "SendMessageA");
 
-	if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
+	int index_theme = 0;
+	if ((index_theme = g_INI.GetInteger("CreationKit", "UITheme", 0)) > 0)
 	{
 		auto comDll = reinterpret_cast<uintptr_t>(GetModuleHandle("comctl32.dll"));
 		Assert(comDll);
+
+		UITheme::Initialize((UITheme::Theme::Theme)index_theme);
+
+		Detours::IATHook(comDll, "USER32.dll", "GetSysColor", (uintptr_t)&UITheme::Comctl32GetSysColor);
+		Detours::IATHook(comDll, "USER32.dll", "GetSysColorBrush", (uintptr_t)&UITheme::Comctl32GetSysColorBrush);
+		Detours::IATDelayedHook(comDll, "UxTheme.dll", "DrawThemeBackground", (uintptr_t)&UITheme::Comctl32DrawThemeBackground);
+		Detours::IATDelayedHook(comDll, "UxTheme.dll", "DrawThemeText", (uintptr_t)&UITheme::Comctl32DrawThemeText);
+
+		if (Offsets::IsCKVersion1573OrNewer()) {
+			// replace main toolbar
+			XUtil::DetourCall(OFFSET(0x1394F76, 16438), &UITheme::Comctl32CreateToolbarEx_1);
+			XUtil::DetourJump(OFFSET(0x1395284, 16438), &UITheme::HideOldTimeOfDayComponents);
+			// replace ImageList_LoadImage for item type
+			XUtil::DetourCall(OFFSET(0x134C80A, 16438), &UITheme::Comctl32ImageList_LoadImageA_1);
+
+			XUtil::DetourCall(OFFSET(0x138C66D, 16438), &PreferencesWindow::hk_InitializeTimeOfDay);
+			XUtil::DetourCall(OFFSET(0x138A8A5, 16438), &PreferencesWindow::hk_SetNewValueTimeOfDay);
+		}
+	}
+	else if (g_INI.GetBoolean("CreationKit", "UIDarkTheme", false))
+	{
+		auto comDll = reinterpret_cast<uintptr_t>(GetModuleHandle("comctl32.dll"));
+		Assert(comDll); 
 
 		EditorUIDarkMode::Initialize();
 		Detours::IATHook(comDll, "USER32.dll", "GetSysColor", (uintptr_t)&EditorUIDarkMode::Comctl32GetSysColor);
@@ -259,18 +462,25 @@ void Patch_TESVCreationKit()
 	}
 
 	if (g_INI.GetBoolean("CreationKit", "UIHotkeys", false))
-	{
 		Detours::X64::DetourFunctionClass(OFFSET(0x1008538, 1530), &EditorUI::RegisterHotkeyFunction);
-	}
 
 	if (g_INI.GetBoolean("CreationKit", "UI", false))
 	{
 		EditorUI::Initialize();
 
-		*(uintptr_t *)&MainWindow::OldWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x13F3770, 1530), &MainWindow::WndProc);
-		*(uintptr_t *)&ObjectWindow::OldObjectWindowProc = Detours::X64::DetourFunctionClass(OFFSET(0x12C3ED0, 1530), &ObjectWindow::ObjectWindowProc);
-		*(uintptr_t *)&CellViewWindow::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &CellViewWindow::CellViewProc);
-		*(uintptr_t *)&DataDialogWindow::OldDataDialogProc = Detours::X64::DetourFunctionClass(OFFSET(0x13E6270, 1530), &DataDialogWindow::DataDialogProc);
+		*(uintptr_t*)&MainWindow::OldWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x13F3770, 1530), &MainWindow::WndProc);
+		*(uintptr_t*)&ObjectWindow::OldObjectWindowProc = Detours::X64::DetourFunctionClass(OFFSET(0x12C3ED0, 1530), &ObjectWindow::ObjectWindowProc);
+		*(uintptr_t*)&CellViewWindow::OldCellViewProc = Detours::X64::DetourFunctionClass(OFFSET(0x13D8F40, 1530), &CellViewWindow::CellViewProc);
+		*(uintptr_t*)&DataDialogWindow::OldDataDialogProc = Detours::X64::DetourFunctionClass(OFFSET(0x13E6270, 1530), &DataDialogWindow::DataDialogProc);
+		
+		if (Offsets::IsCKVersion1573OrNewer()) {
+			*(uintptr_t*)&RenderWindow::OldRenderWndProc = Detours::X64::DetourFunctionClass(OFFSET(0x125D390, 16438), &RenderWindow::RenderWndProc);
+
+			XUtil::DetourJump(OFFSET(0x125CFE1, 16438), &RenderWindow::setFlagLoadCell);
+
+			XUtil::DetourCall(OFFSET(0x1CBF8F0, 1573), &EditorUI::hk_EnableWindow);	// Spell fix disable Casting and Delivery
+			XUtil::DetourCall(OFFSET(0x1CBF918, 1573), &EditorUI::hk_EnableWindow); // ^
+		}
 
 		XUtil::DetourCall(OFFSET(0x20AD5C9, 1530), &hk_call_1420AD5C9);// Raise the papyrus script editor text limit to 500k characters from 64k
 		XUtil::DetourCall(OFFSET(0x1CF03C9, 1530), &hk_call_141CF03C9);// Update the UI options when fog is toggled
@@ -287,7 +497,12 @@ void Patch_TESVCreationKit()
 		XUtil::PatchMemoryNop(OFFSET(0x1582E18, 1530), 7);				// Prevent setting redundant colors in the condition list view NM_CUSTOMDRAW (breaks dark theme)
 		XUtil::PatchMemory(OFFSET(0x1582E85, 1530), { 0x74, 0x20 });	// ^
 		XUtil::DetourCall(OFFSET(0x18276C9, 1530), &ArrayQuickSortRecursive<class BGSEntryPointPerkEntry *, true>);// Stable sort for perk entry window
-
+		
+		// Fix resize ObjectWindowProc
+		auto OffsetTotal = OFFSET(0x1318311, 16438);
+		XUtil::PatchMemoryNop(OffsetTotal, 0x70);
+		XUtil::DetourCall(OffsetTotal, &ObjectWindow::hk_MoveWindow);
+		
 		XUtil::DetourJump(OFFSET(0x1256600, 1530), &LogWindow::LogWarning);
 		XUtil::DetourJump(OFFSET(0x243D610, 1530), &LogWindow::LogWarning);
 		XUtil::DetourJump(OFFSET(0x1CD29E0, 1530), &LogWindow::LogWarning);
@@ -332,8 +547,8 @@ void Patch_TESVCreationKit()
 
 	if (TESFile_CK::AllowSaveESM || TESFile_CK::AllowMasterESP)
 	{
-		*(uintptr_t *)&TESFile_CK::LoadTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1664CC0, 1530), &TESFile_CK::hk_LoadTESInfo);
-		*(uintptr_t *)&TESFile_CK::WriteTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1665520, 1530), &TESFile_CK::hk_WriteTESInfo);
+		*(uintptr_t*)&TESFile_CK::LoadTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1664CC0, 1530), &TESFile_CK::hk_LoadTESInfo);
+		*(uintptr_t*)&TESFile_CK::WriteTESInfo = Detours::X64::DetourFunctionClass(OFFSET(0x1665520, 1530), &TESFile_CK::hk_WriteTESInfo);
 
 		if (TESFile_CK::AllowSaveESM)
 		{
@@ -345,54 +560,42 @@ void Patch_TESVCreationKit()
 			const char *newFormat = "File '%s' is in use.\n\nPlease select another file to save to.";
 
 			XUtil::PatchMemoryNop(OFFSET(0x164020A, 1530), 12);
-			XUtil::PatchMemory(OFFSET(0x30B9090, 1530), (uint8_t *)newFormat, strlen(newFormat) + 1);
+			XUtil::PatchMemory(OFFSET(0x30B9090, 1530), (uint8_t*)newFormat, strlen(newFormat) + 1);
 
 			XUtil::DetourJump(OFFSET(0x1482DA0, 1530), &OpenPluginSaveDialog);
 		}
 
 		if (TESFile_CK::AllowMasterESP)
-		{
 			// Remove the check for IsMaster()
 			XUtil::PatchMemoryNop(OFFSET(0x1657279, 1530), 12);
-		}
 	}
 
 	if (g_INI.GetBoolean("CreationKit", "AllowMultipleMasters", false))
-	{
 		XUtil::PatchMemory(OFFSET(0x163CD7A, 1530), { 0xE9, 0xBA, 0x00, 0x00, 0x00, 0x90 });
-	}
 
 	//
 	// Skip 'Topic Info' validation during load
 	//
 	if (g_INI.GetBoolean("CreationKit", "SkipTopicInfoValidation", false))
-	{
 		XUtil::PatchMemory(OFFSET(0x19A83C0, 1530), { 0xC3 });
-	}
 
 	//
 	// Remove assertion message boxes
 	//
 	if (g_INI.GetBoolean("CreationKit", "DisableAssertions", false))
-	{
 		XUtil::PatchMemoryNop(OFFSET(0x243D9FE, 1530), 5);
-	}
 
 	//
 	// Force render window to draw at 60fps (SetTimer(1ms))
 	//
 	if (g_INI.GetBoolean("CreationKit", "RenderWindow60FPS", false))
-	{
 		XUtil::PatchMemory(OFFSET(0x1306978, 1530), { 0x01 });
-	}
 
 	//
 	// Workaround for "Select Enable State Parent" selecting objects outside of the current cell or worldspace
 	//
 	if (g_INI.GetBoolean("CreationKit", "EnableStateParentWorkaround", false))
-	{
 		XUtil::DetourCall(OFFSET(0x135CDD3, 1530), &hk_call_14135CDD3);
-	}
 
 	//
 	// Workaround for ref links and enable state parent links (2D lines) causing the CK to hang indefinitely when too many objects
@@ -413,6 +616,27 @@ void Patch_TESVCreationKit()
 	{
 		XUtil::PatchMemory(OFFSET(0x1458309, 1530), { 0xEB });
 		XUtil::PatchMemory(OFFSET(0x1458375, 1530), { 0xEB });
+	}
+
+	//
+	// Change start of indexing for ESL
+	//
+	if (Offsets::IsCKVersion1573OrNewer() && g_INI.GetBoolean("CreationKit", "PatchCompactFormID", false)) {
+		auto RelOff = OFFSET(0x159A397, 16438);
+		XUtil::PatchMemoryNop(RelOff, 0xF);
+		XUtil::DetourCall(RelOff, &TES_CK::GetActivePluginMinFormID);
+
+		// Set new formId force
+		if (g_INI.GetBoolean("CreationKit", "PatchCompactFormIDForced", false))
+			XUtil::PatchMemoryNop(OFFSET(0x159A635, 16438), 2);
+
+		//XUtil::DetourCall(OFFSET(0x13510F8, 16438), &TES_CK::CompactActivePlugin);
+		//XUtil::PatchMemory(OFFSET(0x13510F8, 16438) + 5, { 0xEB, 0x23 });
+		
+		RelOff = OFFSET(0x15C6A8C, 16438);
+		XUtil::PatchMemoryNop(RelOff, 0x34);
+		XUtil::PatchMemory(RelOff - 3, { 0x4C });
+		XUtil::DetourCall(RelOff, &TES_CK::SetLoaderIdByForm);
 	}
 
 	//
@@ -444,10 +668,20 @@ void Patch_TESVCreationKit()
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F003, 1530), 99);		// Pointer always null
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F0AE, 1530), 5);		// Pointer always null (second parameter)
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F270, 1530), 5);		// Pointer always null (second parameter)
-	XUtil::PatchMemoryNop(OFFSET(0x2E2F275, 1530), 38);		// Assert always triggers
-	XUtil::PatchMemoryNop(OFFSET(0x2E2F29B, 1530), 41);		// Assert always triggers
+
+	if (Offsets::IsCKVersion16438())
+	{
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F275, 1530), 0x45);	// Assert always triggers
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F2E4, 1530), 0x213);	// Remove most of the useless stuff in the function
+	}
+	else
+	{
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F275, 1530), 38);		// Assert always triggers
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F29B, 1530), 41);		// Assert always triggers
+		XUtil::PatchMemoryNop(OFFSET(0x2E2F2E4, 1530), 546);	// Remove most of the useless stuff in the function
+	}
+
 	XUtil::PatchMemoryNop(OFFSET(0x2E2F2C4, 1530), 22);		// Multiple null pointers in call
-	XUtil::PatchMemoryNop(OFFSET(0x2E2F2E4, 1530), 546);	// Remove most of the useless stuff in the function
 
 	XUtil::PatchMemory(OFFSET(0x2E2BC50, 1530), { 0xC3 });	// Pointer always null (BSGraphics::State::UpdateTemporalData)
 	XUtil::PatchMemory(OFFSET(0x2E2BAF0, 1530), { 0xC3 });	// Pointer always null (BSGraphics::State::UpdateTemporalData)
@@ -488,8 +722,13 @@ void Patch_TESVCreationKit()
 	// - Selections not scaling correctly depending on distance (ex. LOD terrain) and NiObject scale.
 	// - The Object Palette window "Conform to slope" option causing broken object angles on placement. SE changed data
 	// layouts and geometry vertex data may not include normals.
+	// 
+	// modify in 1.6.438:
 	//
-	Detours::X64::DetourClassVTable(OFFSET(0x345ECD0, 1530), &BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath, 34);
+	if (Offsets::IsCKVersion16438OrNewer())
+		Detours::X64::DetourClassVTable(OFFSET(0x345ECD0, 1530), &BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPathEx, 34);
+	else
+		Detours::X64::DetourClassVTable(OFFSET(0x345ECD0, 1530), &BSShaderResourceManager_CK::FindIntersectionsTriShapeFastPath, 34);
 
 	//
 	// Fix the "Cell View" object list current selection not being synced with the render window
@@ -513,7 +752,7 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash (recursive sorting function stack overflow) when saving certain ESP files (i.e 3DNPC.esp)
 	//
-	XUtil::DetourJump(OFFSET(0x1651590, 1530), &ArrayQuickSortRecursive<class TESForm_CK *>);
+	XUtil::DetourJump(OFFSET(0x1651590, 1530), &ArrayQuickSortRecursive<class TESForm_CK*>);
 
 	//
 	// Fix for incorrect NavMesh assertion while saving certain ESP files (i.e 3DNPC.esp). Fixed in 1.5.73.
@@ -531,8 +770,10 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash on null BGSPerkRankArray form ids and perk ranks being reset to 1 on save (i.e DianaVampire2017Asherz.esp)
 	//
-	XUtil::DetourJump(OFFSET(0x168DF70, 1530), &InitItemPerkRankDataVisitor);
-	XUtil::DetourCall(OFFSET(0x168D1CA, 1530), &PerkRankData__LoadFrom);
+	if (!Offsets::IsCKVersion16438OrNewer()) {
+		XUtil::DetourJump(OFFSET(0x168DF70, 1530), &InitItemPerkRankDataVisitor);
+		XUtil::DetourCall(OFFSET(0x168D1CA, 1530), &PerkRankData__LoadFrom);
+	}
 
 	//
 	// Fix use-after-free with a NavMeshInfoMap inserted in the altered forms list during a virtual destructor call. NavMeshInfoMap::Clear.
@@ -580,13 +821,13 @@ void Patch_TESVCreationKit()
 	//
 	// Fix for crash (invalid parameter termination) when the "Unable to find variable" warning would exceed the buffer size
 	//
-	XUtil::PatchMemory(OFFSET(0x31027F8, 1530), (uint8_t *)", Text \"%.240s\"", strlen(", Text \"%.240s\"") + 1);
+	XUtil::PatchMemory(OFFSET(0x31027F8, 1530), (uint8_t*)", Text \"%.240s\"", strlen(", Text \"%.240s\"") + 1);
 
 	//
 	// Replace direct crash with an assertion when an incompatible texture format is used in the renderer
 	//
 	XUtil::DetourCall(OFFSET(0x2D0CCBF, 1530), &DirectX__LoadFromDDSFile);
-
+	
 	//
 	// Fix for crash when trying to use "Test Radius" on a reference's "3D Data" dialog tab. This code wasn't correctly ported to
 	// BSGeometry from NiGeometry during the LE->SSE transition. Flags & materials need to be fixed as a result.
@@ -754,6 +995,12 @@ void Patch_TESVCreationKit()
 	//
 	// Print a warning when a cloned NiCollisionObject has no name specified in its NIF file. This comes from malformed/ported game assets.
 	//
+	// In version 1.6.438 function was changed (restore)
+	if (Offsets::IsCKVersion16438OrNewer())
+	{
+		// Delete new code
+		XUtil::PatchMemoryNop(OFFSET(0x267B359, 1530), 0x69);
+	}
 	XUtil::DetourCall(OFFSET(0x267B359, 1530), &hk_call_14267B359);
 
 	//
@@ -827,7 +1074,7 @@ void Patch_TESVCreationKit()
 	//
 	// Change the default window class name so legacy editors can be opened without using bAllowMultipleEditors
 	//
-	const char *newWindowClass = "Creation Kit SE";
+	const char *newWindowClass = "Creation Kit SSE";
 	XUtil::PatchMemory(OFFSET(0x38EC648, 1530), (uint8_t *)&newWindowClass, sizeof(newWindowClass));
 
 	//

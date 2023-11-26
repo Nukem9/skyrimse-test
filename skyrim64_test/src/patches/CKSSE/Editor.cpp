@@ -17,8 +17,84 @@
 #include "TESWater.h"
 #include "LogWindow.h"
 #include "MainWindow.h"
+#include "RenderWindow_CK.h"
 
 #pragma comment(lib, "libdeflate.lib")
+
+#include "BGString.h"
+#include "TESDialogSpell.h"
+
+using namespace usse;
+using namespace usse::api;
+
+BOOL hk_usse_BeginPluginSave(VOID) {
+	ConvertorString.Mode = BGSConvertorString::MODE_UTF8;
+	return TRUE;
+}
+
+VOID hk_usse_EndPluginSave(HCURSOR hCursor) {
+	ConvertorString.Mode = BGSConvertorString::MODE_ANSI;
+	SetCursor(hCursor);
+}
+
+BOOL hk_usse_SetDlgItemTextA(HWND hDlg, INT nIDDlgItem, LPCSTR lpString) {
+	switch (nIDDlgItem)
+	{
+	case 1024:
+	case 1025:
+	{
+		if (!lpString || !XUtil::Conversion::IsUtf8Valid(lpString))
+			goto SetTextDef;
+
+		std::string wincp_str = XUtil::Conversion::Utf8ToAnsi(lpString);
+		return SetDlgItemTextA(hDlg, nIDDlgItem, wincp_str.c_str());
+	}
+	default:
+	SetTextDef:
+		return SetDlgItemTextA(hDlg, nIDDlgItem, lpString);
+	}
+}
+
+BOOL hk_usse_SendDlgItemMessageA(HWND hDlg, INT nIDDlgItem, UINT Msg, WPARAM wParam, LPARAM lParam) {
+	if (Msg != WM_GETTEXT && Msg != WM_GETTEXTLENGTH)
+		MsgTextDef:
+	return SendDlgItemMessageA(hDlg, nIDDlgItem, Msg, wParam, lParam);
+
+	HWND hCtrlWnd;
+
+	switch (nIDDlgItem)
+	{
+	case 1024:
+	case 1025:
+	{
+		hCtrlWnd = GetDlgItem(hDlg, nIDDlgItem);
+		INT32 maxlen = GetWindowTextLengthA(hCtrlWnd) << 2;
+
+		if (maxlen <= 0)
+			goto MsgTextDef;
+
+		std::string ansi_str;
+		ansi_str.resize(maxlen);
+		ansi_str.resize(GetWindowTextA(hCtrlWnd, &ansi_str[0], maxlen));
+
+		if (XUtil::Conversion::IsUtf8Valid(ansi_str))
+			goto MsgTextDef;
+
+		std::string utf8_str = XUtil::Conversion::AnsiToUtf8(ansi_str);
+
+		if (Msg == WM_GETTEXT)
+			strncpy((LPSTR)(lParam), utf8_str.c_str(), wParam);
+
+		return utf8_str.length() + 1;
+	}
+	default:
+		goto MsgTextDef;
+	}
+}
+
+//void setFlagLoadedPlugin() {
+//	RenderWindow::unlockInputMessages();
+//}
 
 struct z_stream_s
 {
@@ -944,3 +1020,9 @@ void hk_jmp_140FD722E(__int64 a1, HWND DialogWindow)
 		}
 	}
 }
+//
+//void hk_call_142B20140(intptr_t a1, uint32_t a2, uintptr_t a3, uint32_t a4,
+//	uint64_t a5, double a6, double a7, uintptr_t a8)
+//{
+//	__CKSSEFIXES_TESLandEditorFix(a1, a2, a3, a4, a5, a6, a7, a8);
+//}

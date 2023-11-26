@@ -1,4 +1,7 @@
 #include "../common.h"
+
+#if !SKYRIM64_CREATIONKIT_ONLY
+
 #include <future>
 #include "dinput8.h"
 
@@ -141,3 +144,5 @@ void PatchWindow()
 
 	PatchIAT(hk_CreateWindowExA, "USER32.DLL", "CreateWindowExA");
 }
+
+#endif

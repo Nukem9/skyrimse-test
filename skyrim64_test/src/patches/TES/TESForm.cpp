@@ -1,4 +1,4 @@
-#include <tbb/concurrent_hash_map.h>
+#include <concurrent_unordered_map.h>
 #include "../../common.h"
 #include "BSTScatterTable.h"
 #include "BSReadWriteLock.h"
@@ -9,10 +9,10 @@
 AutoPtr(bool, byte_141EE9B98, 0x1EE9B98);
 
 AutoPtr(BSReadWriteLock, GlobalFormLock, 0x1EEA0D0);
-AutoPtr(templated(BSTCRCScatterTable<uint32_t, TESForm *> *), GlobalFormList, 0x1EE9C38);
+AutoPtr(templated(BSTCRCScatterTable<uint32_t, TESForm*>*), GlobalFormList, 0x1EE9C38);
 
-tbb::concurrent_hash_map<uint32_t, TESForm *> g_FormMap[TES_FORM_MASTER_COUNT];
-tbb::concurrent_hash_map<uint32_t, const char *> g_EditorNameMap;
+concurrency::concurrent_unordered_map<uint32_t, TESForm*> g_FormMap[TES_FORM_MASTER_COUNT];
+concurrency::concurrent_unordered_map<uint32_t, const char*> g_EditorNameMap;
 
 // The form list is maintained at the end of this file
 struct FormEnumEntry
@@ -34,7 +34,7 @@ void UpdateFormCache(uint32_t FormId, TESForm *Value, bool Invalidate)
 	const unsigned int baseId = (FormId & 0x00FFFFFF);
 
 	if (Invalidate)
-		g_FormMap[masterId].erase(baseId);
+		g_FormMap[masterId].unsafe_erase(baseId);
 	else
 		g_FormMap[masterId].insert(std::make_pair(baseId, Value));
 
@@ -43,8 +43,10 @@ void UpdateFormCache(uint32_t FormId, TESForm *Value, bool Invalidate)
 
 bool GetFormCache(uint32_t FormId, TESForm *&Form)
 {
+#if !SKYRIM64_CREATIONKIT_ONLY
 	if (!ui::opt::EnableCache)
 		return false;
+#endif
 
 	ProfileCounterInc("Cache Lookups");
 	ProfileTimer("Cache Fetch Time");
@@ -54,11 +56,10 @@ bool GetFormCache(uint32_t FormId, TESForm *&Form)
 
 	// Is it present in our map?
 	{
-		tbb::concurrent_hash_map<uint32_t, TESForm *>::accessor accessor;
-
-		if (g_FormMap[masterId].find(accessor, baseId))
+		auto iterator = g_FormMap[masterId].find(baseId);
+		if (iterator != g_FormMap[masterId].end())
 		{
-			Form = accessor->second;
+			Form = iterator->second;
 			return true;
 		}
 	}
@@ -77,10 +78,9 @@ void TESForm::hk_GetFullTypeName(char *Buffer, uint32_t BufferSize)
 
 const char *TESForm::hk_GetName()
 {
-	tbb::concurrent_hash_map<uint32_t, const char *>::accessor accessor;
-
-	if (g_EditorNameMap.find(accessor, GetId()))
-		return accessor->second;
+	auto iterator = g_EditorNameMap.find(GetId());
+	if (iterator != g_EditorNameMap.end())
+		return iterator->second;
 
 	// By default Skyrim returns an empty string
 	return "";

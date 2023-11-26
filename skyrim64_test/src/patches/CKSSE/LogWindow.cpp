@@ -1,8 +1,10 @@
 #include "../../common.h"
-#include <tbb/concurrent_vector.h>
+#include <thread>
+#include <concurrent_vector.h>
 #include <Richedit.h>
 #include "EditorUI.h"
 #include "EditorUIDarkMode.h"
+#include "UIThemeMode.h"
 #include "MainWindow.h"
 #include "LogWindow.h"
 
@@ -13,8 +15,9 @@ namespace LogWindow
 	HANDLE ExternalPipeWriterHandle;
 	FILE *OutputFileHandle;
 
-	tbb::concurrent_vector<const char *> PendingMessages;
-	std::unordered_set<uint64_t> MessageBlacklist;
+	concurrency::concurrent_vector<const char*, voltek::allocator<const char*>> PendingMessages;
+	std::unordered_set<uint64_t, std::hash<uint64_t>,
+		std::equal_to<uint64_t>, voltek::allocator<uint64_t>> MessageBlacklist;
 
 	HWND GetWindow()
 	{
@@ -47,6 +50,7 @@ namespace LogWindow
 
 		std::thread asyncLogThread([]()
 		{
+			UITheme::InitializeThread();
 			EditorUIDarkMode::InitializeThread();
 
 			// Output window
@@ -65,10 +69,16 @@ namespace LogWindow
 				.hIconSm = wc.hIcon,
 			};
 
+			if (UITheme::IsEnabledMode())
+				wc.hbrBackground = (HBRUSH)UITheme::Theme::Comctl32GetSysColorBrush(COLOR_BTNFACE);
+			else
+				wc.hbrBackground = (HBRUSH)GetSysColorBrush(COLOR_BTNFACE);
+
 			if (!RegisterClassExA(&wc))
 				return false;
 
-			LogWindowHandle = CreateWindowExA(0, "RTEDITLOG", "Log", WS_OVERLAPPEDWINDOW, 64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
+			LogWindowHandle = CreateWindowExA(0, "RTEDITLOG", "Console Window", WS_OVERLAPPEDWINDOW,
+				64, 64, 1024, 480, nullptr, nullptr, instance, nullptr);
 
 			if (!LogWindowHandle)
 				return false;
@@ -403,7 +413,7 @@ namespace LogWindow
 		}
 
 		if (PendingMessages.size() < 50000)
-			PendingMessages.emplace_back(_strdup(buffer));
+			PendingMessages.push_back(_strdup(buffer));
 	}
 
 	void LogWarning(int Type, const char *Format, ...)

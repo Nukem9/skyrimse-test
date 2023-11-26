@@ -1,5 +1,5 @@
 #include "../../common.h"
-#include <tbb/concurrent_unordered_map.h>
+#include <concurrent_unordered_map.h>
 #include <vssym32.h>
 #include <Richedit.h>
 #include "EditorUIDarkMode.h"
@@ -23,7 +23,8 @@ namespace EditorUIDarkMode
 		TabControl,
 	};
 
-	const std::unordered_map<std::string_view, ThemeType> TargetWindowThemes
+	const std::unordered_map<std::string_view, ThemeType, std::hash<std::string_view>,
+		std::equal_to<std::string_view>, voltek::allocator<std::pair<const std::string_view, ThemeType>>> TargetWindowThemes
 	{
 		{ "msctls_statusbar32", ThemeType::StatusBar },
 		{ "MDIClient", ThemeType::MDIClient },
@@ -39,10 +40,12 @@ namespace EditorUIDarkMode
 		{ "SysTabControl32", ThemeType::TabControl },
 	};
 
-	const std::unordered_set<std::string_view> PermanentWindowSubclasses
+	const std::unordered_set<std::string_view, std::hash<std::string_view>,
+		std::equal_to<std::string_view>, voltek::allocator<std::string_view>> PermanentWindowSubclasses
 	{
 		"Creation Kit",
 		"Creation Kit SE",
+		"Creation Kit SSE",
 		"ActivatorClass",
 		"AlchemyClass",
 		"ArmorClass",
@@ -63,11 +66,16 @@ namespace EditorUIDarkMode
 	};
 
 	bool EnableThemeHooking;
-	tbb::concurrent_unordered_map<HTHEME, ThemeType> ThemeHandles;
+	concurrency::concurrent_unordered_map<HTHEME, ThemeType, std::hash<HTHEME>,
+		std::equal_to<HTHEME>, voltek::allocator<std::pair<const HTHEME, ThemeType>>> ThemeHandles;
 
 	void Initialize()
 	{
 		EnableThemeHooking = true;
+	}
+
+	BOOL IsInitialize() {
+		return EnableThemeHooking;
 	}
 
 	void InitializeThread()
@@ -181,14 +189,14 @@ namespace EditorUIDarkMode
 
 			if (scrollBarTheme)
 			{
-				ThemeHandles.emplace(scrollBarTheme, ThemeType::ScrollBar);
+				ThemeHandles.insert(std::make_pair(scrollBarTheme, ThemeType::ScrollBar));
 
 				// TODO: This is a hack...the handle should be valid as long as at least one window is still open
 				CloseThemeData(scrollBarTheme);
 			}
 
 			if (HTHEME windowTheme = GetWindowTheme(hWnd); windowTheme)
-				ThemeHandles.emplace(windowTheme, themeType);
+				ThemeHandles.insert(std::make_pair(windowTheme, themeType));
 
 			if (!PermanentWindowSubclasses.count(className))
 				RemoveWindowSubclass(hWnd, reinterpret_cast<SUBCLASSPROC>(dwRefData), 0);

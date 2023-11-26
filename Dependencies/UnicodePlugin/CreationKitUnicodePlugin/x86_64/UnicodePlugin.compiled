@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Compiler Value="D:\Developers\IDE\Lazarus64\fpc\3.0.4\bin\x86_64-win64\fpc.exe" Date="1351329191"/>
+  <Params Value=" -Rintel -MObjFPC -Scghi -CX -WR -O3 -Xs -XX -l -vewnhibq -FiD:\Developers\Projects\Fallout4Test\Dependencies\UnicodePlugin\CreationKitUnicodePlugin\x86_64 -FuD:\Developers\IDE\Lazarus64\lcl\units\x86_64-win64 -FuD:\Developers\IDE\Lazarus64\components\lazutils\lib\x86_64-win64 -FuD:\Developers\IDE\Lazarus64\packager\units\x86_64-win64 -FuD:\Developers\Projects\Fallout4Test\Dependencies\UnicodePlugin\ -FUD:\Developers\Projects\Fallout4Test\Dependencies\UnicodePlugin\CreationKitUnicodePlugin\x86_64\ -FED:\Developers\Projects\Fallout4Test\Dependencies\UnicodePlugin\x86_64\ -oD:\Developers\Projects\Fallout4Test\Dependencies\UnicodePlugin\x86_64\CreationKitUnicodePlugin.dll UnicodePlugin.lpr"/>
+</CONFIG>

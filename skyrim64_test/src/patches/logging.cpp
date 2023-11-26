@@ -7,19 +7,25 @@ void LogVa(const char *Format, va_list va)
 	char buffer[2048];
 	vsnprintf_s(buffer, _TRUNCATE, Format, va);
 
+#if !SKYRIM64_CREATIONKIT_ONLY
 	ui::log::Add("%s\n", buffer);
+#endif
 }
 
 bool LogBNet(const char *String)
 {
+#if !SKYRIM64_CREATIONKIT_ONLY
 	ui::log::Add("%s\n", String);
+#endif
 	return true;
 }
 
 void NavmeshBuilderLog(__int64 a1, const char *Format, ...)
 {
+#if !SKYRIM64_CREATIONKIT_ONLY
 	if (!ui::opt::LogNavmeshProcessing)
 		return;
+#endif
 
 	va_list va;
 	va_start(va, Format);
@@ -27,7 +33,9 @@ void NavmeshBuilderLog(__int64 a1, const char *Format, ...)
 	char buffer[2048];
 	vsnprintf_s(buffer, _TRUNCATE, Format, va);
 
+#if !SKYRIM64_CREATIONKIT_ONLY
 	ui::log::Add("[NAV] %s\n", buffer);
+#endif
 	va_end(va);
 }
 
@@ -62,8 +70,10 @@ void LogFunc2(const char *Format, ...)
 		STARTS_WITH(Format, " %s failed to get") ||
 		STARTS_WITH(Format, " %s is not being allowed to advance");
 
+#if !SKYRIM64_CREATIONKIT_ONLY
 	if (!ui::opt::LogQuestSceneActions && isQuest)
 		return;
+#endif
 
 	va_list va;
 	va_start(va, Format);
@@ -71,7 +81,10 @@ void LogFunc2(const char *Format, ...)
 	char buffer[2048];
 	vsnprintf_s(buffer, _TRUNCATE, Format, va);
 
+#if !SKYRIM64_CREATIONKIT_ONLY
 	ui::log::Add(isQuest ? "[QST]%s\n" : "%s\n", buffer);
+#endif
+
 	va_end(va);
 }
 
@@ -107,7 +120,10 @@ int hk_sprintf_s(char *DstBuf, size_t SizeInBytes, const char *Format, ...)
 		STARTS_WITH(Format, "%u.%u.%I64i.%u.%"))
 		return len;
 
+#if !SKYRIM64_CREATIONKIT_ONLY
 	ui::log::Add("%s\n", DstBuf);
+#endif
+
 	return len;
 }
 

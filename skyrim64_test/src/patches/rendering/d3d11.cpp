@@ -1,6 +1,9 @@
 #define XBYAK_NO_OP_NAMES
 
 #include "common.h"
+
+#if !SKYRIM64_CREATIONKIT_ONLY
+
 #include <xbyak/xbyak.h>
 #include "d3d11_proxy.h"
 #include "GpuTimer.h"
@@ -13,6 +16,8 @@
 #include "../TES/BSShader/Shaders/BSGrassShader.h"
 #include "../TES/BSGraphics/BSGraphicsRenderer.h"
 #include "../TES/BSBatchRenderer.h"
+
+#if SKYRIM64_USE_TRACY
 
 ID3D11Texture2D *g_OcclusionTexture;
 ID3D11ShaderResourceView *g_OcclusionTextureSRV;
@@ -312,3 +317,6 @@ void PatchD3D11()
     PatchIAT(hk_CreateDXGIFactory, "dxgi.dll", "CreateDXGIFactory");
     PatchIAT(hk_D3D11CreateDeviceAndSwapChain, "d3d11.dll", "D3D11CreateDeviceAndSwapChain");
 }
+
+#endif
+#endif

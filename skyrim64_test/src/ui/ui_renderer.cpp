@@ -1,4 +1,7 @@
 #include "../common.h"
+
+#if !SKYRIM64_CREATIONKIT_ONLY
+
 #include "../patches/dinput8.h"
 #include "../patches/TES/Setting.h"
 #include "../patches/rendering/GpuTimer.h"
@@ -13,6 +16,8 @@
 #include "../patches/TES/NiMain/BSMultiBoundNode.h"
 #include "../patches/TES/BSShader/BSShaderProperty.h"
 #include "../patches/TES/NiMain/NiCamera.h"
+
+#if SKYRIM64_USE_TRACY
 
 extern LARGE_INTEGER g_FrameDelta;
 std::vector<std::pair<ID3D11ShaderResourceView *, std::string>> g_ResourceViews;
@@ -592,3 +597,6 @@ namespace ui
 		}
 	}
 }
+
+#endif
+#endif

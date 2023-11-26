@@ -4,7 +4,10 @@
 #include "MainWindow.h"
 #include "EditorUI.h"
 #include "LogWindow.h"
+#include "BSString.h"
 #include "TESForm_CK.h"
+#include "ObjectWindow.h"
+#include "BSPointerHandleManager.h"
 #include "../../typeinfo/hk_rtti.h"
 #include "../../typeinfo/ms_rtti.h"
 
@@ -14,14 +17,54 @@ namespace MainWindow
 	HMENU ExtensionMenuHandle;
 	WNDPROC OldWndProc;
 
+	static Core::Classes::UI::CUIMainWindow MainWindow;
+
 	HWND GetWindow()
 	{
 		return MainWindowHandle;
 	}
 
+	Core::Classes::UI::CUIMainWindow& FIXAPI GetWindowObj() {
+		return MainWindow;
+	}
+
 	void Initialize()
 	{
 		// Does nothing. Kept for consistency.
+	}
+
+	bool GetFileVersion(LPCSTR pszFilePath, BSString& result)
+	{
+		DWORD dwSize = 0;
+		BYTE* pbVersionInfo = NULL;
+		VS_FIXEDFILEINFO* pFileInfo = NULL;
+		UINT puLenFileInfo = 0;
+
+		// Get the version information for the file requested
+		dwSize = GetFileVersionInfoSize(pszFilePath, NULL);
+		if (dwSize == 0)
+			return false;
+
+		pbVersionInfo = new BYTE[dwSize];
+		if (!pbVersionInfo)
+			return false;
+
+		if (!GetFileVersionInfo(pszFilePath, 0, dwSize, pbVersionInfo)) {
+			delete[] pbVersionInfo;
+			return false;
+		}
+
+		if (!VerQueryValue(pbVersionInfo, TEXT("\\"), (LPVOID*)&pFileInfo, &puLenFileInfo)) {
+			delete[] pbVersionInfo;
+			return false;
+		}
+
+		char temp[100];
+		sprintf_s(temp, "%d.%d", (pFileInfo->dwFileVersionMS >> 16) & 0xFF, (pFileInfo->dwFileVersionMS) & 0xFF);
+		result = temp;
+
+		delete[] pbVersionInfo;
+		return true;
 	}
 
 	void CreateExtensionMenu(HWND MainWindow, HMENU MainMenu)
@@ -43,9 +86,10 @@ namespace MainWindow
 		insertItem(MF_STRING, UI_EXTMENU_DUMPNIRTTI, "Dump NiRTTI Data");
 		insertItem(MF_STRING, UI_EXTMENU_DUMPHAVOKRTTI, "Dump Havok RTTI Data");
 		insertItem(MF_STRING, UI_EXTMENU_LOADEDESPINFO, "Dump Active Forms");
+		insertItem(MF_STRING, UI_EXTMENU_SDM, "Dump SDM Info");
 		insertItem(MF_SEPARATOR, UI_EXTMENU_SPACER, "");
 		insertItem(MF_STRING, UI_EXTMENU_HARDCODEDFORMS, "Save Hardcoded Forms");
-
+		
 		MENUITEMINFO menuInfo
 		{
 			.cbSize = sizeof(MENUITEMINFO),
@@ -61,14 +105,17 @@ namespace MainWindow
 
 	LRESULT CALLBACK WndProc(HWND Hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 	{
+		Core::Classes::UI::CUIMenuItem MenuItem;
+
 		if (Message == WM_CREATE)
 		{
 			auto createInfo = reinterpret_cast<const CREATESTRUCT *>(lParam);
 
-			if (!strcmp(createInfo->lpszName, "Creation Kit SE") && !strcmp(createInfo->lpszClass, "Creation Kit SE"))
+			if (!strcmp(createInfo->lpszName, "Creation Kit SSE") && !strcmp(createInfo->lpszClass, "Creation Kit SSE"))
 			{
 				// Initialize the original window before adding anything
 				LRESULT status = CallWindowProc(OldWndProc, Hwnd, Message, wParam, lParam);
+				MainWindow = Hwnd;
 				MainWindowHandle = Hwnd;
 
 				// Grass is always enabled by default, make the UI buttons match
@@ -76,9 +123,33 @@ namespace MainWindow
 				SendMessageA(GetDlgItem(Hwnd, UI_EDITOR_TOOLBAR), TB_CHECKBUTTON, UI_EDITOR_TOGGLEGRASS_BUTTON, TRUE);
 
 				// Same for fog
-				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *reinterpret_cast<bool *>(OFFSET(0x4F05728, 1530)) ? MF_CHECKED : MF_UNCHECKED);
+				CheckMenuItem(GetMenu(Hwnd), UI_EDITOR_TOGGLEFOG, *reinterpret_cast<bool*>(OFFSET(0x4F05728, 1530)) ? MF_CHECKED : MF_UNCHECKED);
 
+				// Create custom menu controls
+				MainWindow.MainMenu = createInfo->hMenu;
 				CreateExtensionMenu(Hwnd, createInfo->hMenu);
+
+				// All main menus change to uppercase letters
+				for (UINT i = 0; i < MainWindow.MainMenu.Count(); i++) {
+					MenuItem = MainWindow.MainMenu.GetItemByPos(i);
+					MenuItem.Text = BSString(MenuItem.Text).UpperCase().c_str();
+				}
+
+				Core::Classes::UI::CUIMenu ViewMenu = MainWindow.MainMenu.GetSubMenuItem(2);
+
+				// How annoying is this window Warnings, delete from the menu.
+				ViewMenu.Remove(0xA043);
+
+				// Fix show/hide object window
+				MenuItem = ViewMenu.GetItemByPos(2);
+				MenuItem.Checked = TRUE;
+
+				// Fix display text hotkey toggle sound marker
+				ViewMenu.GetItem(40677).Text = "Sound Marker\tCtrl-N";
+				// Deprecated
+				ViewMenu.GetItem(290).Enabled = FALSE;
+				ViewMenu.GetItem(40032).Enabled = FALSE;
+
 				return status;
 			}
 		}
@@ -118,7 +189,7 @@ namespace MainWindow
 				auto form = TESForm_CK::GetFormByNumericID(static_cast<uint32_t>(lParam));
 
 				if (form)
-					(*(void(__fastcall **)(TESForm_CK *, HWND, __int64, __int64))(*(__int64 *)form + 720i64))(form, Hwnd, 0, 1);
+					(*(void(__fastcall **)(TESForm_CK*, HWND, __int64, __int64))(*(__int64*)form + 720i64))(form, Hwnd, 0, 1);
 			}
 			return 0;
 
@@ -131,6 +202,22 @@ namespace MainWindow
 			case UI_EXTMENU_CLEARLOG:
 			{
 				LogWindow::Clear();
+			}
+			return 0;
+
+			case UI_EDITOR_TOGGLEOBJECTWND:
+			{
+				ObjectWindow::OBJWNDS Wnds = ObjectWindow::GetAllWindowObj();
+
+				for (auto Wnd : Wnds) {
+					Wnd.second->ObjectWindow.Visible = !Wnd.second->ObjectWindow.Visible;
+					if (Wnd.second->ObjectWindow.Visible)
+						Wnd.second->ObjectWindow.Foreground();
+				}
+
+				// Change the checkbox
+				MenuItem = MainWindow.MainMenu.GetItem(UI_EDITOR_TOGGLEOBJECTWND);
+				MenuItem.Checked = !MenuItem.Checked;
 			}
 			return 0;
 
@@ -262,6 +349,17 @@ namespace MainWindow
 			}
 			return 0;
 
+			case UI_EXTMENU_SDM:
+			{
+				auto head = BSPointerHandleManager::GetHead();
+				auto tail = BSPointerHandleManager::GetTail();
+
+				LogWindow::Log("Dump SDM Info:\n\tHead: 0x%08X\n\tTail: 0x%08X\n\tMax: 0x%08X\n\tCapacity: %.2f%%",
+					head, tail, BSUntypedPointerHandle::MAX_HANDLE_COUNT, 
+					((((long double)head) * 100.0f) / (long double)BSUntypedPointerHandle::MAX_HANDLE_COUNT));
+			}
+			return 0;
+
 			case UI_EXTMENU_HARDCODEDFORMS:
 			{
 				for (uint32_t i = 0; i < 2048; i++)
@@ -270,7 +368,7 @@ namespace MainWindow
 
 					if (form)
 					{
-						(*(void(__fastcall **)(TESForm_CK *, __int64))(*(__int64 *)form + 360))(form, 1);
+						(*(void(__fastcall **)(TESForm_CK*, __int64))(*(__int64*)form + 360))(form, 1);
 						LogWindow::Log("SetFormModified(%08X)", i);
 					}
 				}
@@ -279,13 +377,47 @@ namespace MainWindow
 				PostMessageA(Hwnd, WM_COMMAND, 40127, 0);
 			}
 			return 0;
+
+			case WM_SHOWWINDOW: 
+			{
+				// Getting additional child Windows
+				MainWindow.FindToolWindow();
+			}
+			return 0;
+
+			case  WM_GETMINMAXINFO:
+			{
+				// https://social.msdn.microsoft.com/Forums/vstudio/en-US/fb4de52d-66d4-44da-907c-0357d6ba894c/swmaximize-is-same-as-fullscreen?forum=vcgeneral
+
+				RECT WorkArea;
+				SystemParametersInfoA(SPI_GETWORKAREA, 0, &WorkArea, 0);
+				((MINMAXINFO*)lParam)->ptMaxSize.x = (WorkArea.right - WorkArea.left);
+				((MINMAXINFO*)lParam)->ptMaxSize.y = (WorkArea.bottom - WorkArea.top);
+				((MINMAXINFO*)lParam)->ptMaxPosition.x = WorkArea.left;
+				((MINMAXINFO*)lParam)->ptMaxPosition.y = WorkArea.top;	
+			}
+			return 0;
+
 			}
 		}
 		else if (Message == WM_SETTEXT && Hwnd == GetWindow())
 		{
 			// Continue normal execution but with a custom string
 			char customTitle[1024];
-			sprintf_s(customTitle, "%s [CK64Fixes Rev. %s]", reinterpret_cast<const char *>(lParam), g_GitVersion);
+			BSString versionApp;
+
+			char modulePath[MAX_PATH];
+			GetModuleFileNameA((HMODULE)g_hModule, modulePath, MAX_PATH);
+			GetFileVersion(modulePath, versionApp);
+			
+			if ((g_crc32_ck == CRC32_ORIGINAL_CK1573_PATCHED_51) || (g_crc32_ck == CRC32_ORIGINAL_CK1573_PATCHED_63))
+				sprintf_s(customTitle, "%s [CK64Fixes Rev. %s: v%s] [Unofficial patched installed]", (LPCSTR)lParam, 
+					g_GitVersion, versionApp.c_str());
+			else if (g_crc32_ck == CRC32_ORIGINAL_CK16438_NOSTEAM)
+				sprintf_s(customTitle, "%s [CK64Fixes Rev. %s: v%s] [Cured]", (LPCSTR)lParam,
+					g_GitVersion, versionApp.c_str());
+			else
+				sprintf_s(customTitle, "%s [CK64Fixes Rev. %s: v%s]", (LPCSTR)lParam, g_GitVersion, versionApp.c_str());
 
 			return CallWindowProc(OldWndProc, Hwnd, Message, wParam, reinterpret_cast<LPARAM>(customTitle));
 		}

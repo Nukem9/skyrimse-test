@@ -43,7 +43,9 @@
     <InterproceduralOptimization>true</InterproceduralOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -114,6 +116,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalOptions>/D "NOMINMAX" /D "ZYDIS_STATIC_DEFINE"  /D "TRACY_ON_DEMAND" /D "_REENTRANT" /D "JEMALLOC_EXPORT=" %(AdditionalOptions)</AdditionalOptions>
       <OmitFramePointers>true</OmitFramePointers>
+      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -121,6 +124,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalOptions>/ignore:4104 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>..\Dependencies\memex;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vmm-x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>powershell -ExecutionPolicy Bypass -File "$(SolutionDir)release.ps1" 4</Command>
@@ -158,14 +163,22 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Dependencies\memex\VMM.h" />
+    <ClInclude Include="..\Dependencies\memex\VMMConfig.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\INIReader.h" />
+    <ClInclude Include="src\patches\CKSSE\BGString.h" />
+    <ClInclude Include="src\patches\CKSSE\BSArchiveManager.h" />
+    <ClInclude Include="src\patches\CKSSE\BSFixedString.h" />
     <ClInclude Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSHandleRefObject_CK.h" />
     <ClInclude Include="src\patches\CKSSE\BSPointerHandleManager.h" />
     <ClInclude Include="src\patches\CKSSE\BSRenderPass_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\BSResourceArchive.h" />
     <ClInclude Include="src\patches\CKSSE\BSShaderResourceManager_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\BSString.h" />
+    <ClInclude Include="src\patches\CKSSE\BSStringCache.h" />
     <ClInclude Include="src\patches\CKSSE\CellViewWindow.h" />
     <ClInclude Include="src\patches\CKSSE\DataDialogWindow.h" />
     <ClInclude Include="src\patches\CKSSE\Editor.h" />
@@ -177,6 +190,40 @@
     <ClInclude Include="src\patches\CKSSE\MainWindow.h" />
     <ClInclude Include="src\patches\CKSSE\NavMesh.h" />
     <ClInclude Include="src\patches\CKSSE\ObjectWindow.h" />
+    <ClInclude Include="src\patches\CKSSE\PreferencesWindow.h" />
+    <ClInclude Include="src\patches\CKSSE\RenderWindow_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\TES_CK.h" />
+    <ClInclude Include="src\patches\CKSSE\UIBaseWindow.h" />
+    <ClInclude Include="src\patches\CKSSE\UICheckboxControl.h" />
+    <ClInclude Include="src\patches\CKSSE\UIGraphics.h" />
+    <ClInclude Include="src\patches\CKSSE\UIImageList.h" />
+    <ClInclude Include="src\patches\CKSSE\UIMenus.h" />
+    <ClInclude Include="src\patches\CKSSE\UIThemeMode.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\CheckBox.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\ComboBox.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\CustomBox.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\CustomCaption.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\EditText.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\GroupBox.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\Header.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\ListBox.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\ListView.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\MDIClient.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\Memo.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\PageControl.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\PopupMenu.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\ProgressBar.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\PushButton.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\RadioButton.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\RichEdit20.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\ScrollBar.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\StatusBar.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\TimeOfDay.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\ToolBar.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\TrackBar.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\TreeView.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\UpDown.h" />
+    <ClInclude Include="src\patches\CKSSE\UITheme\VarCommon.h" />
     <ClInclude Include="src\patches\offsets.h" />
     <ClInclude Include="src\patches\CKSSE\TESFile_CK.h" />
     <ClInclude Include="src\patches\CKSSE\TESForm_CK.h" />
@@ -239,6 +286,7 @@
     <ClInclude Include="src\patches\TES\NiMain\BSTriShape.h" />
     <ClInclude Include="src\patches\TES\NiMain\common.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h" />
+    <ClInclude Include="src\patches\TES\NiMain\NiArray.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiCamera.h" />
     <ClInclude Include="src\patches\TES\NiMain\NiCollisionUtils.h" />
@@ -281,21 +329,62 @@
     <ClInclude Include="src\ui\ui.h" />
     <ClInclude Include="src\ui\ui_renderer.h" />
     <ClInclude Include="src\ui\ui_tracy.h" />
+    <ClInclude Include="src\UtfStr.h" />
     <ClInclude Include="src\xutil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\patches\bnet.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BGString.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BSArchiveManager.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSPointerHandleManager.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSRenderPass_CK.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BSResourceArchive.cpp" />
     <ClCompile Include="src\patches\CKSSE\BSShaderResourceManager_CK.cpp" />
+    <ClCompile Include="src\patches\CKSSE\BSString.cpp" />
     <ClCompile Include="src\patches\CKSSE\CellViewWindow.cpp" />
     <ClCompile Include="src\patches\CKSSE\DataDialogWindow.cpp" />
+    <ClCompile Include="src\patches\CKSSE\DisableENB_CK.cpp" />
     <ClCompile Include="src\patches\CKSSE\EditorUIDarkMode.cpp" />
     <ClCompile Include="src\patches\CKSSE\EditorUIDialogs.cpp" />
     <ClCompile Include="src\patches\CKSSE\LogWindow.cpp" />
     <ClCompile Include="src\patches\CKSSE\MainWindow.cpp" />
     <ClCompile Include="src\patches\CKSSE\ObjectWindow.cpp" />
+    <ClCompile Include="src\patches\CKSSE\PreferencesWindow.cpp" />
+    <ClCompile Include="src\patches\CKSSE\RenderWindow_CK.cpp" />
+    <ClCompile Include="src\patches\CKSSE\TESDialogSpell.cpp" />
+    <ClCompile Include="src\patches\CKSSE\TES_CK.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UIBaseWindow.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UICheckboxControl.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UIGraphics.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UIImageList.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UIMenus.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UIThemeMode.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\CheckBox.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\ComboBox.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\CustomBox.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\CustomCaption.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\EditText.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\GroupBox.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\Header.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\ListBox.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\ListView.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\MDIClient.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\Memo.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\PageControl.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\PopupMenu.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\ProgressBar.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\PushButton.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\RadioButton.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\RichEdit20.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\ScrollBar.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\StatusBar.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\TimeOfDay.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\ToolBar.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\TrackBar.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\TreeView.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\UpDown.cpp" />
+    <ClCompile Include="src\patches\CKSSE\UITheme\VarCommon.cpp" />
     <ClCompile Include="src\patches\offsets.cpp" />
     <ClCompile Include="src\patches\CKSSE\TESFile_CK.cpp" />
     <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.cpp" />
@@ -303,6 +392,8 @@
     <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsUtility.cpp" />
     <ClCompile Include="src\patches\TES\BSRenderPass.cpp" />
     <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp" />
+    <ClCompile Include="src\profiler_internal.cpp" />
+    <ClCompile Include="src\UtfStr.cpp" />
     <ClCompile Include="src\winhttp_exports.cpp" />
     <ClCompile Include="src\common.cpp" />
     <ClCompile Include="src\patches\achievements.cpp" />
@@ -369,6 +460,9 @@
     <ClCompile Include="src\patches\window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <MASM Include="src\patches\CKSSE\TESLandEditorFix_CK.asm">
+      <FileType>Document</FileType>
+    </MASM>
     <None Include="src\patches\rendering\d3d11_codegen_tables.inl" />
     <None Include="src\patches\rendering\d3d11_tls_patchlist.inl" />
     <None Include="src\patches\rendering\d3d11_tls_xreflist.inl" />
@@ -380,6 +474,20 @@
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\resources\bitmap9.bmp" />
+    <Image Include="..\Resources\check.bmp" />
+    <Image Include="..\Resources\check_darktheme.bmp" />
+    <Image Include="..\Resources\developers.bmp" />
+    <Image Include="..\Resources\logo_new.png" />
+    <Image Include="..\Resources\toolbar.bmp" />
+    <Image Include="..\Resources\toolbar_light.bmp" />
+    <Image Include="..\Resources\types.bmp" />
+    <Image Include="..\Resources\uncheck.bmp" />
+    <Image Include="..\Resources\uncheck_darktheme.bmp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
 </Project>

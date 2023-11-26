@@ -7,8 +7,13 @@
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Dwmapi.lib")
+#pragma comment(lib, "uxtheme.lib")
+#pragma comment(lib, "Msimg32.lib")
+#pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "gdiplus.lib")
+#pragma comment(lib, "Version.lib")
 
-#pragma comment(lib, "tbb.lib")					// Thread Building Blocks
 #pragma comment(lib, "libzydis.lib")			// Zydis
 #pragma comment(lib, "libmoc.lib")				// MaskedOcclusionCulling
 #pragma comment(lib, "libmeshoptimizer.lib")	// Meshoptimizer
@@ -23,14 +28,18 @@ __itt_heap_function ITT_ReallocateCallback;
 __itt_heap_function ITT_FreeCallback;
 #endif
 
-#pragma comment(lib, "tbbmalloc.lib")			// TBB Allocator
-
 #if SKYRIM64_USE_TRACY
 #pragma comment(lib, "libtracy.lib")			// Tracy
 #endif
 
 INIReader g_INI("skyrim64_test.ini");
+INIReader g_INI_ck_conf("CreationKit.ini");
+INIReader g_INI_ck_User_conf("CreationKitCustom.ini");
 
+bool g_OwnArchiveLoader;
+uint32_t g_crc32_ck;
+
+uintptr_t g_hModule;
 uintptr_t g_ModuleBase;
 uintptr_t g_ModuleSize;
 

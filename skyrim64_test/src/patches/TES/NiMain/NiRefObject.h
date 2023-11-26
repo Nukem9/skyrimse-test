@@ -1,22 +1,75 @@
 #pragma once
 
-class NiRefObject
-{
-private:
-	inline AutoPtr(uint32_t, ms_uiObjects, 0x3038520);
+#include "..\..\..\config.h"
 
+#include <Windows.h>
+
+#if 0
+
+// Since the object occupies 16 bytes, the number it stores is shifted by 4 bytes in the original, 
+// I use this space
+
+class __declspec(align(8)) NiRefObject
+{
 protected:
-	uint32_t m_uiRefCount;
+	volatile LONGLONG m_uiRefCount;
 
 public:
 	NiRefObject() : m_uiRefCount(0)
 	{
-		InterlockedIncrement(&ms_uiObjects);
+		InterlockedIncrement64(&m_uiRefCount);
 	}
 
 	virtual ~NiRefObject()
 	{
-		InterlockedDecrement(&ms_uiObjects);
+		InterlockedDecrement64(&m_uiRefCount);
+	}
+
+	virtual void DeleteThis()
+	{
+		if (this)
+			this->~NiRefObject();
+	}
+
+	uint64_t IncRefCount()
+	{
+		return (uint64_t)InterlockedIncrement64(&m_uiRefCount);
+	}
+
+	uint64_t DecRefCount()
+	{
+		uint64_t count = (uint64_t)InterlockedDecrement64(&m_uiRefCount);
+
+		if (count <= 0)
+			DeleteThis();
+
+		return count;
+	}
+
+	void GetViewerStrings(void(*Callback)(const char*, ...), bool Recursive) const
+	{
+		Callback("-- NiRefObject --\n");
+		Callback("This = 0x%p\n", this);
+		Callback("Ref Count = %u\n", m_uiRefCount);
+	}
+};
+
+#else
+
+class __declspec(align(8)) NiRefObject
+{
+protected:
+	volatile ULONG m_uiRefCount;
+
+public:
+	NiRefObject() : m_uiRefCount(0)
+	{
+		InterlockedIncrement(&m_uiRefCount);
+	}
+
+	virtual ~NiRefObject()
+	{
+		InterlockedDecrement(&m_uiRefCount);
 	}
 
 	virtual void DeleteThis()
@@ -27,12 +80,12 @@ public:
 
 	uint32_t IncRefCount()
 	{
-		return InterlockedIncrement(&m_uiRefCount);
+		return (uint32_t)InterlockedIncrement(&m_uiRefCount);
 	}
 
 	uint32_t DecRefCount()
 	{
-		uint32_t count = InterlockedDecrement(&m_uiRefCount);
+		uint32_t count = (uint32_t)InterlockedDecrement(&m_uiRefCount);
 
 		if (count <= 0)
 			DeleteThis();
@@ -40,17 +93,13 @@ public:
 		return count;
 	}
 
-	void GetViewerStrings(void(*Callback)(const char *, ...), bool Recursive) const
+	void GetViewerStrings(void(*Callback)(const char*, ...), bool Recursive) const
 	{
 		Callback("-- NiRefObject --\n");
 		Callback("This = 0x%p\n", this);
 		Callback("Ref Count = %u\n", m_uiRefCount);
 	}
-
-	static uint32_t GetTotalObjectCount()
-	{
-		return ms_uiObjects;
-	}
 };
+#endif
+
 static_assert(sizeof(NiRefObject) == 0x10);
-//static_assert_offset(NiRefObject, m_uiRefCount, 0x8);

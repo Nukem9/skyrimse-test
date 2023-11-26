@@ -12,18 +12,33 @@
     <Filter Include="Source Files\patches">
       <UniqueIdentifier>{6ecca651-f6ac-4430-b4b5-a9d5fb31e2fc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\[UITheme]">
+      <UniqueIdentifier>{ba0046b9-d448-4e34-a14f-3616adcbad9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\[EditorAPI]">
+      <UniqueIdentifier>{e0a97cb7-d1b7-49aa-bc9d-f8eea9f7c234}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\[EditorAPI]">
+      <UniqueIdentifier>{856239b4-b121-420a-ad48-ef96a5154fc8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\[UITheme]">
+      <UniqueIdentifier>{566102ca-54f3-489d-8a61-745d14c1543c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\[Windows]">
+      <UniqueIdentifier>{65d82647-95ad-434b-9b55-19130cedc7c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\[Windows]">
+      <UniqueIdentifier>{4d808a4a-e5cb-4cd2-a8c3-cdd9a38f00ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Memex">
+      <UniqueIdentifier>{8530bcc4-ac98-47df-aa29-57206ba44556}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dump.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\dinput8.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSReadWriteLock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\TESForm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\profiler.h">
@@ -35,13 +50,7 @@
     <ClInclude Include="src\xutil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSTScatterTable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\MemoryManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSThread_Win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\imgui_impl_dx11.h">
@@ -65,88 +74,7 @@
     <ClInclude Include="src\patches\rendering\common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSSpinLock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\MemoryContextTracker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSBatchRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSTArray.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSShaderManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSShaderProperty.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSShaderRenderTargets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSShaderAccumulator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSShaderMaterial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSDistantTreeShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSGrassShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSShaderUtil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiColor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiRefObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiTransform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiTexture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderProperty.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiSourceTexture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiSkinInstance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\rendering\GpuCircularBuffer.h">
@@ -155,91 +83,19 @@
     <ClInclude Include="src\patches\TES\Setting.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSTList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSRenderPass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\NiMain\common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\BSTriShape.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\BSDynamicTriShape.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShaderProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\rendering\GpuTimer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShaderProperty.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSShader_Dumper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BGSDistantTreeBlock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiLight.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSLight.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\BSShadowLight.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiDirectionalLight.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiMatrix.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiPoint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\rendering\d3d11_proxy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSParticleShader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\ui_renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\BSNiNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\BSMultiBoundNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\MOC.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiRTTI.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiCullingProcess.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiFrustum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSTLocklessQueue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSCullingProcess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\TES\MOC_ThreadedMerger.h">
@@ -251,13 +107,7 @@
     <ClInclude Include="src\ui\ui_tracy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSJobs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSTaskManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\typeinfo\hk_rtti.h">
@@ -269,46 +119,16 @@
     <ClInclude Include="src\patches\TES\Console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiPointer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\TES\NavMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\INIReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\TESForm_CK.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\bhkThreadMemorySource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\INIReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderMaterial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSEffectShaderMaterial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\TES.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiPick.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiCollisionUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\BSShaderResourceManager_CK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\CKSSE\Editor.h">
@@ -320,71 +140,404 @@
     <ClInclude Include="src\patches\CKSSE\Experimental.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\LogWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\CKSSE\NavMesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\TESFile_CK.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\TESForm_CK.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\TESWater.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\BSHandleRefObject_CK.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\BSPointerHandleManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\offsets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\BSRenderPass_CK.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\patches\CKSSE\EditorUIDarkMode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\BSMultiIndexTriShape.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsUtility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsState.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsRenderTargetManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\TES\NiMain\NiFogProperty.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\MainWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\ObjectWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\CellViewWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\patches\CKSSE\EditorUIDialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\patches\CKSSE\DataDialogWindow.h">
+    <ClInclude Include="src\UtfStr.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\CheckBox.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\ComboBox.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\CustomBox.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\CustomCaption.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\EditText.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\GroupBox.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\Header.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\ListBox.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\ListView.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\MDIClient.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\Memo.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\PageControl.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\PopupMenu.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\ProgressBar.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\PushButton.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\RadioButton.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\RichEdit20.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\ScrollBar.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\StatusBar.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\TimeOfDay.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\ToolBar.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\TrackBar.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\TreeView.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\UpDown.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UITheme\VarCommon.h">
+      <Filter>Header Files\[UITheme]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BGSDistantTreeBlock.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BGString.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\bhkThreadMemorySource.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSBatchRenderer.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShaderProperty.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSCullingProcess.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSDistantTreeShader.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\BSDynamicTriShape.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSEffectShaderMaterial.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\BSGeometry.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsRenderTargetManager.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsState.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsTypes.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSGraphics\BSGraphicsUtility.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSGrassShader.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSHandleRefObject_CK.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSJobs.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSLight.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShader.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderMaterial.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSLightingShaderProperty.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\BSMultiBoundNode.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\BSMultiIndexTriShape.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\BSNiNode.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSParticleShader.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSPointerHandleManager.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSReadWriteLock.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSRenderPass.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSRenderPass_CK.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShader.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShader_Dumper.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderAccumulator.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderManager.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderMaterial.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderProperty.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderRenderTargets.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSShaderResourceManager_CK.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShaderUtil.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\BSShadowLight.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShader.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSShader\Shaders\BSSkyShaderProperty.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSSpinLock.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSTArray.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSTaskManager.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSThread_Win32.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSTList.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSTLocklessQueue.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\BSTriShape.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\BSTScatterTable.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiAlphaProperty.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiAVObject.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiCamera.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiCollisionUtils.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiColor.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiCullingProcess.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiDirectionalLight.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiFogProperty.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiFrustum.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiLight.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiMatrix.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiNode.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiObject.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiObjectNET.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiPick.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiPoint.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiPointer.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiRefObject.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiRTTI.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiSkinInstance.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiSourceTexture.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiTexture.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiTransform.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UIBaseWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UICheckboxControl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UIGraphics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UIImageList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UIMenus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\UIThemeMode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSFixedString.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSString.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSStringCache.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\CellViewWindow.h">
+      <Filter>Header Files\[Windows]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\DataDialogWindow.h">
+      <Filter>Header Files\[Windows]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\MainWindow.h">
+      <Filter>Header Files\[Windows]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\RenderWindow_CK.h">
+      <Filter>Header Files\[Windows]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\LogWindow.h">
+      <Filter>Header Files\[Windows]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\ObjectWindow.h">
+      <Filter>Header Files\[Windows]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\PreferencesWindow.h">
+      <Filter>Header Files\[Windows]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\TES.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\TESFile_CK.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\TESForm.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\TESForm_CK.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\TESForm_CK.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\TESWater.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\TES_CK.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\TES\NiMain\NiArray.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSResourceArchive.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="src\patches\CKSSE\BSArchiveManager.h">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\memex\VMMConfig.h">
+      <Filter>Memex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\memex\VMM.h">
+      <Filter>Memex</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -406,9 +559,6 @@
     <ClCompile Include="src\patches\dinput8.cpp">
       <Filter>Source Files\patches</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSReadWriteLock.cpp">
-      <Filter>Source Files\patches</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\TES\TESForm.cpp">
       <Filter>Source Files\patches</Filter>
     </ClCompile>
@@ -423,9 +573,6 @@
     </ClCompile>
     <ClCompile Include="src\patches\TES\MemoryManager.cpp">
       <Filter>Source Files\patches</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSThread_Win32.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\steam.cpp">
       <Filter>Source Files</Filter>
@@ -451,64 +598,13 @@
     <ClCompile Include="src\patches\rendering\d3d11_tls.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSSpinLock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSBatchRenderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\BSShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\BSShaderManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\BSShaderRenderTargets.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\BSShaderAccumulator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\BSShaderProperty.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\BSShaderUtil.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSDistantTreeShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSSkyShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSGrassShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSLightingShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\rendering\GpuCircularBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\rendering\GpuTimer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\BSShader_Dumper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BGSDistantTreeBlock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\NiMain\NiMain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\rendering\d3d11_proxy.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSParticleShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\Setting.cpp">
@@ -520,9 +616,6 @@
     <ClCompile Include="src\patches\TES\MOC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\TES\MOC_ThreadedMerger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -532,19 +625,10 @@
     <ClCompile Include="src\ui\ui_tracy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSJobs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSTaskManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\typeinfo\hk_rtti.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\typeinfo\ms_rtti.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\typeinfo\ni_rtti.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\TES\Console.cpp">
@@ -556,28 +640,7 @@
     <ClCompile Include="src\patches\patches_tes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\bhkThreadMemorySource.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\winhttp_exports.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\bnet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\BSShaderResourceManager_CK.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\LogWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\TESFile_CK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\CKSSE\Editor.cpp">
@@ -586,56 +649,272 @@
     <ClCompile Include="src\patches\CKSSE\EditorUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\TESForm_CK.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\CKSSE\Experimental.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\patches_sseck.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\BSPointerHandleManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\offsets.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\BSRenderPass_CK.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSRenderPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\patches\CKSSE\EditorUIDarkMode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsUtility.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsState.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderTargetManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\MainWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\ObjectWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\CellViewWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\patches\CKSSE\EditorUIDialogs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\patches\CKSSE\DataDialogWindow.cpp">
+    <ClCompile Include="src\UtfStr.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BGSDistantTreeBlock.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BGString.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\bhkThreadMemorySource.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\bnet.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSBatchRenderer.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSBloodSplatterShader.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSDistantTreeShader.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderer.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsRenderTargetManager.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BSGraphicsRenderTargetManager_CK.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsState.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSGraphics\BSGraphicsUtility.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSGrassShader.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSJobs.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSLightingShader.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSParticleShader.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BSPointerHandleManager.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSRenderPass.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BSRenderPass_CK.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShader.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShader_Dumper.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderAccumulator.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderManager.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderProperty.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderRenderTargets.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BSShaderResourceManager_CK.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\BSShaderUtil.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSShader\Shaders\BSSkyShader.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSSpinLock.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSTaskManager.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSThread_Win32.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\NiMain\NiRTTI.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\NiMain\NiCollisionUtils.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\NiMain\NiMain.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\typeinfo\ni_rtti.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\CheckBox.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\ComboBox.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\CustomBox.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\CustomCaption.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\EditText.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\GroupBox.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\Header.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\ListBox.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\ListView.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\MDIClient.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\Memo.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\PageControl.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\PopupMenu.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\ProgressBar.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\PushButton.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\RadioButton.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\RichEdit20.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\ScrollBar.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\StatusBar.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\TimeOfDay.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\ToolBar.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\TrackBar.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\TreeView.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\UpDown.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UITheme\VarCommon.cpp">
+      <Filter>Source Files\[UITheme]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UIBaseWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UICheckboxControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UIGraphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UIImageList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UIMenus.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\UIThemeMode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\TES\BSReadWriteLock.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BSString.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\CellViewWindow.cpp">
+      <Filter>Source Files\[Windows]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\DataDialogWindow.cpp">
+      <Filter>Source Files\[Windows]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\LogWindow.cpp">
+      <Filter>Source Files\[Windows]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\MainWindow.cpp">
+      <Filter>Source Files\[Windows]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\PreferencesWindow.cpp">
+      <Filter>Source Files\[Windows]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\ObjectWindow.cpp">
+      <Filter>Source Files\[Windows]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\RenderWindow_CK.cpp">
+      <Filter>Source Files\[Windows]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\TESDialogSpell.cpp">
+      <Filter>Source Files\[Windows]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\TESFile_CK.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\TESForm_CK.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\TES_CK.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\DisableENB_CK.cpp">
+      <Filter>Source Files\patches</Filter>
+    </ClCompile>
+    <ClCompile Include="src\profiler_internal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BSResourceArchive.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
+    </ClCompile>
+    <ClCompile Include="src\patches\CKSSE\BSArchiveManager.cpp">
+      <Filter>Source Files\[EditorAPI]</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -645,23 +924,40 @@
     <None Include="src\patches\rendering\d3d11_tls_xreflist.inl">
       <Filter>Header Files</Filter>
     </None>
-    <None Include="src\patches\TES\BSShader\BSShaderConstants.inl">
-      <Filter>Header Files</Filter>
-    </None>
-    <None Include="src\patches\TES\BSShader\BSShaderManagerInfo.inl">
-      <Filter>Header Files</Filter>
-    </None>
     <None Include="src\patches\rendering\d3d11_codegen_tables.inl">
-      <Filter>Header Files</Filter>
-    </None>
-    <None Include="src\patches\TES\NiMain\NiRTTI.inl">
       <Filter>Header Files</Filter>
     </None>
     <None Include="src\typeinfo\ni_rtti.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="src\patches\TES\BSShader\BSShaderConstants.inl">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </None>
+    <None Include="src\patches\TES\BSShader\BSShaderManagerInfo.inl">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </None>
+    <None Include="src\patches\TES\NiMain\NiRTTI.inl">
+      <Filter>Header Files\[EditorAPI]</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Resources\check_darktheme.bmp" />
+    <Image Include="..\Resources\toolbar.bmp" />
+    <Image Include="..\Resources\toolbar_light.bmp" />
+    <Image Include="..\Resources\types.bmp" />
+    <Image Include="..\Resources\uncheck.bmp" />
+    <Image Include="..\Resources\uncheck_darktheme.bmp" />
+    <Image Include="..\Resources\check.bmp" />
+    <Image Include="..\resources\bitmap9.bmp" />
+    <Image Include="..\Resources\developers.bmp" />
+    <Image Include="..\Resources\logo_new.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="src\patches\CKSSE\TESLandEditorFix_CK.asm">
+      <Filter>Source Files\patches</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

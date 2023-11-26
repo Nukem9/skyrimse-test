@@ -8,6 +8,10 @@
 #define AssertMsgDebug(Cond, Msg)		AssertMsgVa(Cond, Msg);
 #define AssertMsgVa(Cond, Msg, ...)		if(!(Cond)) XUtil::XAssert(__FILE__, __LINE__, "%s\n\n" Msg, #Cond, ##__VA_ARGS__);
 
+#define PROPERTY(read_func, write_func)	__declspec(property(get = read_func, put = write_func))
+#define READ_PROPERTY(read_func)		__declspec(property(get = read_func))
+
+#define ZoneScopedN(X)
 #define templated(...)					__VA_ARGS__
 #define AutoPtr(Type, Name, Offset)		static Type& Name = (*(Type *)((uintptr_t)GetModuleHandle(nullptr) + Offset))
 #define AutoFunc(Type, Name, Offset)	static auto Name = ((Type)((uintptr_t)GetModuleHandle(nullptr) + Offset))
@@ -99,6 +103,21 @@ namespace XUtil
 	void DetourJump(uintptr_t Target, uintptr_t Destination);
 	void DetourCall(uintptr_t Target, uintptr_t Destination);
 
+	static const char* whitespaceDelimiters = " \t\n\r\f\v";
+
+	inline std::string& trim(std::string& str) {
+
+		str.erase(str.find_last_not_of(whitespaceDelimiters) + 1);
+		str.erase(0, str.find_first_not_of(whitespaceDelimiters));
+
+		return str;
+	}
+
+	inline std::string trim(const char* s) {
+		std::string str(s);
+		return trim(str);
+	}
+
 	template<typename T>
 	void DetourJump(uintptr_t Target, T Destination)
 	{
@@ -117,4 +136,31 @@ namespace XUtil
 
 	void InstallCrashDumpHandler();
 	LONG WINAPI CrashDumpExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo);
+}
+
+// thread-safe template versions of thisVirtualCall()
+
+template<typename TR>
+__forceinline TR thisVirtualCall(size_t reloff, const void* ths) {
+	return (*(TR(__fastcall**)(const void*))(*(__int64*)ths + reloff))(ths);
+}
+
+template<typename TR, typename T1>
+__forceinline TR thisVirtualCall(size_t reloff, const void* ths, T1 a1) {
+	return (*(TR(__fastcall**)(const void*, T1))(*(__int64*)ths + reloff))(ths, a1);
+}
+
+template<typename TR, typename T1, typename T2>
+__forceinline TR thisVirtualCall(size_t reloff, const void* ths, T1 a1, T2 a2) {
+	return (*(TR(__fastcall**)(const void*, T1, T2))(*(__int64*)ths + reloff))(ths, a1, a2);
+}
+
+template<typename TR, typename T1, typename T2, typename T3>
+__forceinline TR thisVirtualCall(size_t reloff, const void* ths, T1 a1, T2 a2, T3 a3) {
+	return (*(TR(__fastcall**)(const void*, T1, T2, T3))(*(__int64*)ths + reloff))(ths, a1, a2, a3);
+}
+
+template<typename TR, typename T1, typename T2, typename T3, typename T4>
+__forceinline TR thisVirtualCall(size_t reloff, const void* ths, T1 a1, T2 a2, T3 a3, T4 a4) {
+	return (*(TR(__fastcall**)(const void*, T1, T2, T3, T4))(*(__int64*)ths + reloff))(ths, a1, a2, a3, a4);
 }

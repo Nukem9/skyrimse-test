@@ -23,3 +23,6 @@ namespace LogWindow
 	void LogWarningUnknown2(__int64 Unused, const char *Format, ...);
 	void LogAssert(const char *File, int Line, const char *Message, ...);
 }
+
+#define _MESSAGE(x)				LogWindow::Log(x)
+#define _MESSAGE_FMT(x, ...)	LogWindow::Log(x, ##__VA_ARGS__)

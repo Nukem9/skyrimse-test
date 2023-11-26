@@ -180,7 +180,9 @@ void BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth(BSShaderAc
 	if (!once)
 	{
 		once = true;
+#if !SKYRIM64_CREATIONKIT_ONLY
 		MOC::Init();
+#endif
 	}
 
 	if (!Accumulator->m_pkCamera)
@@ -203,9 +205,10 @@ void BSShaderAccumulator::FinishAccumulating_Standard_PreResolveDepth(BSShaderAc
 
 	if (Accumulator == MainPassAccumulator)
 	{
+#if !SKYRIM64_CREATIONKIT_ONLY
 		if (ui::opt::RealtimeOcclusionView)
 			MOC::UpdateDepthViewTexture();
-
+#endif
 		//MOC::SendTraverseCommand((NiCamera *)Accumulator->m_pkCamera);
 	}
 
